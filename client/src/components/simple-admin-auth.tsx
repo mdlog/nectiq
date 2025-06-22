@@ -106,7 +106,7 @@ export function SimpleAdminAuth({ onAuthSuccess }: SimpleAdminAuthProps) {
             <Shield className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-2xl text-white">Admin Access</CardTitle>
-          <p className="text-gray-400">Enter authorized wallet address</p>
+          <p className="text-gray-400">Connect your authorized wallet to access the admin panel</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert className="bg-blue-900/20 border-blue-600">

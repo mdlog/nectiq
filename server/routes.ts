@@ -335,10 +335,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ success: false, message: "Unauthorized wallet address" });
       }
 
-      // Verify signature (simplified verification - in production use ethers.js)
-      // For demo purposes, we verify the message format contains the wallet address
-      if (!message.includes(walletAddress) || !message.includes("Admin Authentication Request")) {
-        return res.status(403).json({ success: false, message: "Invalid authentication message" });
+      // Verify signature using ethers.js
+      try {
+        const recoveredAddress = ethers.verifyMessage(message, signature);
+        if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+          return res.status(403).json({ success: false, message: "Invalid signature" });
+        }
+      } catch (error) {
+        console.error("Signature verification failed:", error);
+        return res.status(403).json({ success: false, message: "Invalid signature format" });
       }
 
       // Find or create admin user
