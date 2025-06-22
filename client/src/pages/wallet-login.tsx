@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, LogOut, Copy, Check, Shield, User } from "lucide-react";
+import { Wallet, LogOut, Copy, Check, Shield, User, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 
 export default function WalletLoginPage() {
   const { address, isConnected, chain } = useAccount();
@@ -15,6 +17,7 @@ export default function WalletLoginPage() {
   const { disconnect } = useDisconnect();
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const copyAddress = async () => {
     if (address) {
@@ -32,13 +35,41 @@ export default function WalletLoginPage() {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  const handleAuth = () => {
-    if (isConnected) {
-      // In a real app, this would authenticate with the backend
-      toast({
-        title: "Authentication",
-        description: "Wallet authentication would happen here",
+  // Auto-login mutation for wallet authentication
+  const authMutation = useMutation({
+    mutationFn: async ({ address }: { address: string }) => {
+      const response = await fetch('/api/auth/wallet-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          address, 
+          signature: "auto_register", 
+          message: `Auto-register wallet ${address}` 
+        }),
       });
+      if (!response.ok) throw new Error('Authentication failed');
+      return response.json();
+    },
+    onSuccess: (user) => {
+      toast({
+        title: "Authentication Successful",
+        description: `Welcome ${user.username}! You are now logged in.`,
+      });
+      // Navigate to dashboard after successful authentication
+      navigate('/');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Authentication Failed",
+        description: error.message || "Failed to authenticate with wallet",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAuth = () => {
+    if (isConnected && address) {
+      authMutation.mutate({ address });
     }
   };
 
@@ -90,13 +121,22 @@ export default function WalletLoginPage() {
                   )}
 
                   <div className="flex gap-3">
-                    <Button onClick={handleAuth} className="flex-1">
-                      <User className="mr-2" size={16} />
-                      Authenticate & Continue
+                    <Button 
+                      onClick={handleAuth} 
+                      className="flex-1"
+                      disabled={authMutation.isPending}
+                    >
+                      {authMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <User className="mr-2" size={16} />
+                      )}
+                      {authMutation.isPending ? "Authenticating..." : "Authenticate & Continue"}
                     </Button>
                     <Button
                       onClick={() => disconnect()}
                       variant="destructive"
+                      disabled={authMutation.isPending}
                     >
                       <LogOut className="mr-2" size={16} />
                       Disconnect
