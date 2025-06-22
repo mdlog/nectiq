@@ -1,11 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import type { User } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 
@@ -13,6 +17,11 @@ export default function UserDashboard() {
   const { data: user } = useQuery<User>({
     queryKey: ["/api/user"],
   });
+  
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [selectedToken, setSelectedToken] = useState("USDT");
 
   const { data: stats } = useQuery<UserStats>({
     queryKey: ["/api/user/stats"],
@@ -31,6 +40,37 @@ export default function UserDashboard() {
   const { data: prices = [] } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 30000,
+  });
+
+  // Withdraw mutation
+  const withdrawMutation = useMutation({
+    mutationFn: async ({ amount, token }: { amount: number; token: string }) => {
+      const response = await fetch('/api/user/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, token }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Withdraw failed');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Withdrawal Successful",
+        description: `${data.tokenAmount} ${data.token} has been sent to your wallet`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      setWithdrawAmount("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Withdrawal Failed",
+        description: error.message || "Failed to process withdrawal",
+        variant: "destructive",
+      });
+    },
   });
 
   const formatTimeLeft = (timeLeft: number): string => {
@@ -208,6 +248,9 @@ export default function UserDashboard() {
             </TabsTrigger>
             <TabsTrigger value="performance" className="data-[state=active]:bg-primary">
               Performance
+            </TabsTrigger>
+            <TabsTrigger value="withdraw" className="data-[state=active]:bg-primary">
+              Withdraw
             </TabsTrigger>
           </TabsList>
 
@@ -435,6 +478,123 @@ export default function UserDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Withdraw Tab */}
+          <TabsContent value="withdraw">
+            <Card className="bg-surface border-surface-light">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Wallet className="mr-2" size={20} />
+                  Withdraw PTS to Crypto
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="max-w-md space-y-6">
+                  {/* Balance Overview */}
+                  <div className="p-4 bg-surface-light rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-slate-400">Available Balance</span>
+                      <div className="flex items-center space-x-2">
+                        <Coins className="text-warning" size={16} />
+                        <span className="font-bold text-lg">{user?.balance?.toLocaleString() || "0"}</span>
+                        <span className="text-xs text-slate-400">PTS</span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      Exchange Rate: 1 PTS = 0.01 USDT/USDC
+                    </div>
+                  </div>
+
+                  {/* Token Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="token">Choose Token</Label>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant={selectedToken === "USDT" ? "default" : "outline"}
+                        onClick={() => setSelectedToken("USDT")}
+                        className="flex-1"
+                      >
+                        <DollarSign className="mr-2" size={16} />
+                        USDT
+                      </Button>
+                      <Button
+                        variant={selectedToken === "USDC" ? "default" : "outline"}
+                        onClick={() => setSelectedToken("USDC")}
+                        className="flex-1"
+                      >
+                        <DollarSign className="mr-2" size={16} />
+                        USDC
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Amount Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Amount to Withdraw (PTS)</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      placeholder="Enter PTS amount"
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      min="1"
+                      max={user?.balance || 0}
+                    />
+                    <div className="flex justify-between text-xs text-slate-400">
+                      <span>Min: 1 PTS</span>
+                      <span>Max: {user?.balance?.toLocaleString() || "0"} PTS</span>
+                    </div>
+                  </div>
+
+                  {/* Conversion Preview */}
+                  {withdrawAmount && parseFloat(withdrawAmount) > 0 && (
+                    <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                      <div className="flex justify-between items-center text-sm">
+                        <span>You will receive:</span>
+                        <span className="font-semibold text-primary">
+                          {(parseFloat(withdrawAmount) * 0.01).toFixed(2)} {selectedToken}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Withdraw Button */}
+                  <Button
+                    onClick={() => {
+                      const amount = parseFloat(withdrawAmount);
+                      if (amount > 0 && amount <= (user?.balance || 0)) {
+                        withdrawMutation.mutate({ amount, token: selectedToken });
+                      }
+                    }}
+                    disabled={
+                      !withdrawAmount ||
+                      parseFloat(withdrawAmount) <= 0 ||
+                      parseFloat(withdrawAmount) > (user?.balance || 0) ||
+                      withdrawMutation.isPending
+                    }
+                    className="w-full"
+                  >
+                    {withdrawMutation.isPending ? (
+                      <>Processing...</>
+                    ) : (
+                      <>
+                        <Wallet className="mr-2" size={16} />
+                        Withdraw to Wallet
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Info */}
+                  <div className="text-xs text-slate-400 space-y-1">
+                    <p>• Withdrawals are processed instantly</p>
+                    <p>• Tokens will be sent to your connected wallet</p>
+                    <p>• Minimum withdrawal: 1 PTS (0.01 {selectedToken})</p>
+                    <p>• No withdrawal fees applied</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

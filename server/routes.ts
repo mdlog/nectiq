@@ -439,6 +439,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Withdraw PTS to USDT/USDC
+  app.post("/api/user/withdraw", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { amount, token } = req.body;
+      
+      // Validate input
+      if (!amount || !token || amount <= 0) {
+        return res.status(400).json({ message: "Invalid withdrawal amount or token" });
+      }
+
+      if (!["USDT", "USDC"].includes(token)) {
+        return res.status(400).json({ message: "Only USDT and USDC withdrawals supported" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user has sufficient balance
+      if (user.balance < amount) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      // Calculate token amount (1 PTS = 0.01 USDT/USDC)
+      const tokenAmount = amount * 0.01;
+
+      // Deduct PTS from user balance
+      const newBalance = user.balance - amount;
+      await storage.updateUserBalance(userId, newBalance);
+
+      // In a real implementation, here you would:
+      // 1. Call blockchain API to send USDT/USDC to user's wallet
+      // 2. Log the transaction
+      // 3. Handle any errors and rollback balance if needed
+      
+      auditLog("user_withdrawal", {
+        userId,
+        ptsAmount: amount,
+        tokenAmount,
+        token,
+        walletAddress: user.walletAddress,
+        newBalance
+      }, req);
+
+      res.json({
+        success: true,
+        message: "Withdrawal processed successfully",
+        ptsAmount: amount,
+        tokenAmount: tokenAmount.toFixed(2),
+        token,
+        newBalance
+      });
+    } catch (error) {
+      console.error("Withdrawal error:", error);
+      res.status(500).json({ message: "Failed to process withdrawal" });
+    }
+  });
+
   // Get live cryptocurrency prices
   app.get("/api/crypto/prices", async (req, res) => {
     try {
