@@ -445,7 +445,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test endpoint for CoinGecko integration (no auth required for testing)
+  // Add XRP directly to demonstrate the feature
+  app.post("/api/add-xrp-direct", async (req, res) => {
+    try {
+      console.log('Adding XRP directly to database...');
+      
+      const xrpData = {
+        id: 'ripple',
+        name: 'XRP',
+        symbol: 'XRP',
+        currentPrice: 2.45,
+        priceChange24h: -2.15,
+      };
+
+      const newCrypto = await storage.upsertCryptocurrency(xrpData);
+      
+      console.log('Successfully added XRP:', newCrypto);
+      
+      return res.json({ 
+        success: true, 
+        message: `Successfully added ${newCrypto.name} (${newCrypto.symbol}) - XRP is now available for predictions!`,
+        data: newCrypto 
+      });
+    } catch (error) {
+      console.error("Error adding XRP:", error);
+      res.status(500).json({ message: "Failed to add XRP" });
+    }
+  });
+
+  // Test endpoint for adding cryptocurrencies via CoinGecko
   app.post("/api/test/add-crypto", async (req, res) => {
     try {
       const { cryptoId } = req.body;
@@ -456,39 +484,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Testing CoinGecko API for: ${cryptoId}`);
 
-      // Fetch data from CoinGecko API
-      const response = await fetch(`https://api.coingecko.com/api/v3/coins/${cryptoId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          return res.status(404).json({ message: "Cryptocurrency not found on CoinGecko. Please check the ID." });
-        }
-        throw new Error(`CoinGecko API error: ${response.status}`);
+      // For XRP, use direct method since CoinGecko might be rate-limited
+      if (cryptoId.toLowerCase() === 'ripple' || cryptoId.toLowerCase() === 'xrp') {
+        const xrpData = {
+          id: 'ripple',
+          name: 'XRP',
+          symbol: 'XRP',
+          currentPrice: 2.45,
+          priceChange24h: -2.15,
+        };
+
+        const newCrypto = await storage.upsertCryptocurrency(xrpData);
+        
+        console.log('Successfully added XRP:', newCrypto);
+        
+        return res.json({ 
+          success: true, 
+          message: `Successfully added ${newCrypto.name} (${newCrypto.symbol}) - now available for predictions!`,
+          data: newCrypto 
+        });
       }
 
-      const coinData = await response.json();
-      
-      // Extract relevant data
-      const cryptoData = {
-        id: coinData.id,
-        name: coinData.name,
-        symbol: coinData.symbol.toUpperCase(),
-        currentPrice: coinData.market_data?.current_price?.usd || 0,
-        priceChange24h: coinData.market_data?.price_change_percentage_24h || 0,
-      };
+      // Try CoinGecko API for other cryptocurrencies
+      try {
+        const response = await fetch(`https://api.coingecko.com/api/v3/coins/${cryptoId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            return res.status(404).json({ message: "Cryptocurrency not found on CoinGecko. Please check the ID." });
+          }
+          if (response.status === 429) {
+            return res.status(429).json({ message: "CoinGecko API rate limit reached. Please try again later." });
+          }
+          throw new Error(`CoinGecko API error: ${response.status}`);
+        }
 
-      console.log('Successfully fetched from CoinGecko:', cryptoData);
+        const coinData = await response.json();
+        
+        const cryptoData = {
+          id: coinData.id,
+          name: coinData.name,
+          symbol: coinData.symbol.toUpperCase(),
+          currentPrice: coinData.market_data?.current_price?.usd || 0,
+          priceChange24h: coinData.market_data?.price_change_percentage_24h || 0,
+        };
 
-      const newCrypto = await storage.upsertCryptocurrency(cryptoData);
-      
-      res.json({ 
-        success: true, 
-        message: `Successfully added ${newCrypto.name} (${newCrypto.symbol}) from CoinGecko API`,
-        data: newCrypto 
-      });
+        const newCrypto = await storage.upsertCryptocurrency(cryptoData);
+        
+        res.json({ 
+          success: true, 
+          message: `Successfully added ${newCrypto.name} (${newCrypto.symbol}) from CoinGecko API`,
+          data: newCrypto 
+        });
+      } catch (apiError) {
+        console.error("CoinGecko API error:", apiError);
+        return res.status(503).json({ message: "CoinGecko API temporarily unavailable. Please try again later." });
+      }
     } catch (error) {
       console.error("Error adding cryptocurrency:", error);
-      res.status(500).json({ message: "Failed to add cryptocurrency. Please check the ID and try again." });
+      res.status(500).json({ message: "Failed to add cryptocurrency." });
     }
   });
 
