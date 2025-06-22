@@ -80,6 +80,16 @@ export function Header() {
                     {address.slice(0, 6)}...{address.slice(-4)}
                   </span>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDisconnect}
+                  disabled={logoutMutation.isPending}
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                  title="Disconnect wallet"
+                >
+                  <LogOut size={16} />
+                </Button>
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                   <User className="text-white" size={16} />
                 </div>
