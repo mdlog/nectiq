@@ -615,6 +615,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Create new user
+  app.post("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const { username, walletAddress, balance } = req.body;
+      
+      if (!username || !walletAddress) {
+        return res.status(400).json({ message: "Username and wallet address are required" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByWalletAddress(walletAddress);
+      if (existingUser) {
+        return res.status(400).json({ message: "User with this wallet address already exists" });
+      }
+
+      const user = await storage.createUser({
+        username,
+        walletAddress,
+        authMethod: "admin_created",
+        isAdmin: false,
+      });
+
+      // Set initial balance
+      if (balance !== undefined) {
+        await storage.updateUserBalance(user.id, balance);
+      }
+
+      auditLog("USER_CREATED", { 
+        createdUserId: user.id, 
+        username, 
+        walletAddress,
+        createdBy: req.session.userId 
+      }, req);
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  // Admin: Update user
+  app.put("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { username, balance, isAdmin } = req.body;
+
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Update user balance if provided
+      if (balance !== undefined) {
+        await storage.updateUserBalance(userId, balance);
+      }
+
+      // Get updated user
+      const updatedUser = await storage.getUser(userId);
+
+      auditLog("USER_UPDATED", { 
+        updatedUserId: userId, 
+        changes: { username, balance, isAdmin },
+        updatedBy: req.session.userId 
+      }, req);
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Admin: Delete user
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Prevent deleting admin users
+      if (user.isAdmin) {
+        return res.status(403).json({ message: "Cannot delete admin users" });
+      }
+
+      // Delete user
+      await storage.deleteUser(userId);
+
+      auditLog("USER_DELETED", { 
+        deletedUserId: userId, 
+        username: user.username,
+        deletedBy: req.session.userId 
+      }, req);
+
+      res.json({ success: true, message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   app.get("/api/admin/predictions", requireAdmin, async (req, res) => {
     try {
       const predictions = await storage.getRecentPredictions(100); // Get recent predictions

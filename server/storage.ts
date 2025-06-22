@@ -55,6 +55,9 @@ export interface IStorage {
 
   // Leaderboard operations
   getTopPredictors(limit?: number): Promise<User[]>;
+
+  // User management operations
+  deleteUser(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -181,6 +184,17 @@ export class DatabaseStorage implements IStorage {
 
   async getTopPredictors(limit: number = 10): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.totalRewards)).limit(limit);
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    // Delete user's predictions first (cascade)
+    await db.delete(predictions).where(eq(predictions.userId, id));
+    
+    // Delete user's rewards
+    await db.delete(rewards).where(eq(rewards.userId, id));
+    
+    // Delete the user
+    await db.delete(users).where(eq(users.id, id));
   }
 }
 
@@ -373,6 +387,19 @@ export class MemStorage implements IStorage {
 
   async deleteCryptocurrency(id: string): Promise<void> {
     this.cryptocurrencies.delete(id);
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    // Delete user's predictions
+    const userPredictions = Array.from(this.predictions.values()).filter(p => p.userId === id);
+    userPredictions.forEach(p => this.predictions.delete(p.id));
+    
+    // Delete user's rewards  
+    const userRewards = Array.from(this.rewards.values()).filter(r => r.userId === id);
+    userRewards.forEach(r => this.rewards.delete(r.id));
+    
+    // Delete the user
+    this.users.delete(id);
   }
 }
 
