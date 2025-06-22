@@ -62,11 +62,23 @@ export const withdrawals = pgTable("withdrawals", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const purchases = pgTable("purchases", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  ptsAmount: integer("pts_amount").notNull(),
+  paymentAmount: varchar("payment_amount", { length: 50 }).notNull(),
+  paymentToken: varchar("payment_token", { length: 10 }).notNull(),
+  transactionHash: varchar("transaction_hash", { length: 66 }),
+  status: varchar("status", { length: 20 }).notNull().default("completed"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   predictions: many(predictions),
   rewards: many(rewards),
   withdrawals: many(withdrawals),
+  purchases: many(purchases),
 }));
 
 export const predictionsRelations = relations(predictions, ({ one, many }) => ({
@@ -91,6 +103,13 @@ export const rewardsRelations = relations(rewards, ({ one }) => ({
 export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
   user: one(users, {
     fields: [withdrawals.userId],
+    references: [users.id],
+  }),
+}));
+
+export const purchasesRelations = relations(purchases, ({ one }) => ({
+  user: one(users, {
+    fields: [purchases.userId],
     references: [users.id],
   }),
 }));

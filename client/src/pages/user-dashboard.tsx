@@ -13,6 +13,48 @@ import { useState } from "react";
 import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 
+// Purchase History Component
+function PurchaseHistory() {
+  const { data: purchases = [] } = useQuery<any[]>({
+    queryKey: ["/api/user/purchases"],
+  });
+
+  if (purchases.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-slate-400 mb-2">No purchases yet</div>
+        <div className="text-sm text-slate-500">Your purchase history will appear here</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 max-h-96 overflow-y-auto">
+      {purchases.map((purchase) => (
+        <div key={purchase.id} className="p-3 bg-surface-light rounded-lg border border-surface-light">
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                <Coins className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <div className="font-medium text-sm">{purchase.ptsAmount.toLocaleString()} PTS</div>
+                <div className="text-xs text-slate-500">Paid with {purchase.paymentAmount} {purchase.paymentToken}</div>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+              {purchase.status}
+            </Badge>
+          </div>
+          <div className="text-xs text-slate-400">
+            {new Date(purchase.createdAt).toLocaleDateString()} at {new Date(purchase.createdAt).toLocaleTimeString()}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Withdrawal History Component
 function WithdrawalHistory() {
   const { data: withdrawals = [] } = useQuery<Withdrawal[]>({
@@ -64,6 +106,8 @@ export default function UserDashboard() {
   const { toast } = useToast();
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [selectedToken, setSelectedToken] = useState("USDT");
+  const [buyAmount, setBuyAmount] = useState("");
+  const [selectedPaymentToken, setSelectedPaymentToken] = useState("ETH");
 
   const { data: stats } = useQuery<UserStats>({
     queryKey: ["/api/user/stats"],
@@ -111,6 +155,38 @@ export default function UserDashboard() {
       toast({
         title: "Withdrawal Failed",
         description: error.message || "Failed to process withdrawal",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Buy PTS mutation
+  const buyPTSMutation = useMutation({
+    mutationFn: async ({ ptsAmount, paymentToken }: { ptsAmount: number; paymentToken: string }) => {
+      const response = await fetch('/api/user/buy-pts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ptsAmount, paymentToken }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Purchase failed');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Purchase Successful",
+        description: `${data.ptsAmount} PTS has been added to your balance`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/purchases"] });
+      setBuyAmount("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Purchase Failed",
+        description: error.message || "Failed to process purchase",
         variant: "destructive",
       });
     },
@@ -294,6 +370,9 @@ export default function UserDashboard() {
             </TabsTrigger>
             <TabsTrigger value="withdraw" className="data-[state=active]:bg-primary">
               Withdraw
+            </TabsTrigger>
+            <TabsTrigger value="buy-pts" className="data-[state=active]:bg-primary">
+              Buy PTS
             </TabsTrigger>
           </TabsList>
 
@@ -651,6 +730,184 @@ export default function UserDashboard() {
                 </CardHeader>
                 <CardContent>
                   <WithdrawalHistory />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Buy PTS Tab */}
+          <TabsContent value="buy-pts">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Buy PTS Form */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Coins className="mr-2" size={20} />
+                    Buy PTS with Crypto
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Current Balance */}
+                    <div className="p-4 bg-surface-light rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-slate-400">Current PTS Balance</span>
+                        <div className="flex items-center space-x-2">
+                          <Coins className="text-warning" size={16} />
+                          <span className="font-bold text-lg">{user?.balance?.toLocaleString() || "0"}</span>
+                          <span className="text-xs text-slate-400">PTS</span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        Use PTS to make predictions and earn rewards
+                      </div>
+                    </div>
+
+                    {/* Payment Token Selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor="paymentToken">Choose Payment Method</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          variant={selectedPaymentToken === "ETH" ? "default" : "outline"}
+                          onClick={() => setSelectedPaymentToken("ETH")}
+                          className="flex flex-col items-center p-4 h-auto"
+                        >
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mb-1">
+                            Ξ
+                          </div>
+                          <span className="text-xs">ETH</span>
+                        </Button>
+                        <Button
+                          variant={selectedPaymentToken === "USDT" ? "default" : "outline"}
+                          onClick={() => setSelectedPaymentToken("USDT")}
+                          className="flex flex-col items-center p-4 h-auto"
+                        >
+                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold mb-1">
+                            $
+                          </div>
+                          <span className="text-xs">USDT</span>
+                        </Button>
+                        <Button
+                          variant={selectedPaymentToken === "USDC" ? "default" : "outline"}
+                          onClick={() => setSelectedPaymentToken("USDC")}
+                          className="flex flex-col items-center p-4 h-auto"
+                        >
+                          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mb-1">
+                            $
+                          </div>
+                          <span className="text-xs">USDC</span>
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Amount Input */}
+                    <div className="space-y-2">
+                      <Label htmlFor="buyAmount">Amount to Purchase (PTS)</Label>
+                      <Input
+                        id="buyAmount"
+                        type="number"
+                        placeholder="Enter PTS amount"
+                        value={buyAmount}
+                        onChange={(e) => setBuyAmount(e.target.value)}
+                        min="100"
+                        max="1000000"
+                      />
+                      <div className="flex justify-between text-xs text-slate-400">
+                        <span>Min: 100 PTS</span>
+                        <span>Max: 1,000,000 PTS</span>
+                      </div>
+                    </div>
+
+                    {/* Exchange Rates */}
+                    <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                      <div className="text-sm font-medium mb-2">Exchange Rates:</div>
+                      <div className="space-y-1 text-xs text-slate-400">
+                        <div className="flex justify-between">
+                          <span>ETH → PTS:</span>
+                          <span>1 ETH = 300,000 PTS</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>USDT → PTS:</span>
+                          <span>1 USDT = 100 PTS</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>USDC → PTS:</span>
+                          <span>1 USDC = 100 PTS</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Preview */}
+                    {buyAmount && parseFloat(buyAmount) > 0 && (
+                      <div className="p-3 bg-success/10 rounded-lg border border-success/20">
+                        <div className="flex justify-between items-center text-sm">
+                          <span>You will pay:</span>
+                          <span className="font-semibold text-success">
+                            {selectedPaymentToken === "ETH" 
+                              ? (parseFloat(buyAmount) / 300000).toFixed(6) 
+                              : (parseFloat(buyAmount) / 100).toFixed(2)
+                            } {selectedPaymentToken}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm mt-1">
+                          <span>You will receive:</span>
+                          <span className="font-semibold text-primary">
+                            {parseFloat(buyAmount).toLocaleString()} PTS
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Buy Button */}
+                    <Button
+                      onClick={() => {
+                        const amount = parseFloat(buyAmount);
+                        if (amount >= 100 && amount <= 1000000) {
+                          buyPTSMutation.mutate({ 
+                            ptsAmount: amount, 
+                            paymentToken: selectedPaymentToken 
+                          });
+                        }
+                      }}
+                      disabled={
+                        !buyAmount ||
+                        parseFloat(buyAmount) < 100 ||
+                        parseFloat(buyAmount) > 1000000 ||
+                        buyPTSMutation.isPending
+                      }
+                      className="w-full"
+                    >
+                      {buyPTSMutation.isPending ? (
+                        <>Processing Payment...</>
+                      ) : (
+                        <>
+                          <Coins className="mr-2" size={16} />
+                          Buy PTS with {selectedPaymentToken}
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Info */}
+                    <div className="text-xs text-slate-400 space-y-1">
+                      <p>• Payments are processed via your connected wallet</p>
+                      <p>• PTS will be added to your balance instantly</p>
+                      <p>• Supported tokens: ETH, USDT, USDC</p>
+                      <p>• Network fees apply based on current gas prices</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Purchase History */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Clock className="mr-2" size={20} />
+                    Recent Purchases
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PurchaseHistory />
                 </CardContent>
               </Card>
             </div>
