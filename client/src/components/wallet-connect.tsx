@@ -42,20 +42,35 @@ export function WalletConnect() {
     try {
       // First disconnect wallet
       disconnect();
+      
+      // Clear wagmi localStorage data
+      localStorage.removeItem('wagmi.wallet');
+      localStorage.removeItem('wagmi.connected');
+      localStorage.removeItem('wagmi.store');
+      localStorage.removeItem('wagmi.cache');
+      localStorage.removeItem('walletconnect');
+      
       // Then logout from server
       await logoutMutation.mutateAsync();
       
       // Force page refresh to ensure wallet state is completely cleared
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 1000);
     } catch (error) {
       // Ensure wallet is disconnected even if server logout fails
       disconnect();
       
+      // Clear wagmi localStorage data even on error
+      localStorage.removeItem('wagmi.wallet');
+      localStorage.removeItem('wagmi.connected');
+      localStorage.removeItem('wagmi.store');
+      localStorage.removeItem('wagmi.cache');
+      localStorage.removeItem('walletconnect');
+      
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 1000);
     }
   };
 

@@ -36,31 +36,47 @@ export function Header() {
     try {
       // First disconnect wallet
       disconnect();
+      
+      // Clear wagmi localStorage data
+      localStorage.removeItem('wagmi.wallet');
+      localStorage.removeItem('wagmi.connected');
+      localStorage.removeItem('wagmi.store');
+      localStorage.removeItem('wagmi.cache');
+      localStorage.removeItem('walletconnect');
+      
       // Then logout from server
       await logoutMutation.mutateAsync();
-      
-      // Force page refresh to ensure wallet state is completely cleared
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
       
       toast({
         title: "Disconnected",
         description: "Wallet disconnected successfully",
       });
+      
+      // Force page refresh to ensure wallet state is completely cleared
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (error) {
       console.error("Disconnect error:", error);
       // Still disconnect wallet even if server call fails
       disconnect();
       
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      // Clear wagmi localStorage data even on error
+      localStorage.removeItem('wagmi.wallet');
+      localStorage.removeItem('wagmi.connected');
+      localStorage.removeItem('wagmi.store');
+      localStorage.removeItem('wagmi.cache');
+      localStorage.removeItem('walletconnect');
       
       toast({
         title: "Disconnected", 
         description: "Wallet disconnected successfully",
       });
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
   };
 
