@@ -558,9 +558,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { ptsAmount, paymentToken } = req.body;
 
       // Enhanced security validation
-      const validation = SecurityValidator.validateAmount(ptsAmount, 100, 1000000, true);
-      if (!validation.valid) {
-        return res.status(400).json({ message: validation.error });
+      if (!ptsAmount || typeof ptsAmount !== 'number' || ptsAmount < 100 || ptsAmount > 1000000 || !Number.isInteger(ptsAmount)) {
+        return res.status(400).json({ message: "PTS amount must be an integer between 100 and 1,000,000" });
       }
 
       // Validate payment token
@@ -574,7 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found or wallet not connected" });
       }
 
-      const numAmount = validation.value!;
+      const numAmount = ptsAmount;
 
       // Calculate payment amount based on exchange rates
       let paymentAmount: number;
