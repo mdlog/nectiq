@@ -57,7 +57,7 @@ export function LivePrices() {
         Live Prices
         <div className="ml-auto flex items-center text-xs text-green-400">
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-1"></div>
-          LIVE
+          REAL-TIME
         </div>
       </h3>
       
