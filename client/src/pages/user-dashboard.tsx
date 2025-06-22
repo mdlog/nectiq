@@ -10,8 +10,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import type { User } from "@shared/schema";
+import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
+
+// Withdrawal History Component
+function WithdrawalHistory() {
+  const { data: withdrawals = [] } = useQuery<Withdrawal[]>({
+    queryKey: ["/api/user/withdrawals"],
+  });
+
+  if (withdrawals.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-slate-400 mb-2">No withdrawals yet</div>
+        <div className="text-sm text-slate-500">Your withdrawal history will appear here</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 max-h-96 overflow-y-auto">
+      {withdrawals.map((withdrawal) => (
+        <div key={withdrawal.id} className="p-3 bg-surface-light rounded-lg border border-surface-light">
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <div className="font-medium text-sm">{withdrawal.tokenAmount} {withdrawal.token}</div>
+                <div className="text-xs text-slate-500">{withdrawal.ptsAmount.toLocaleString()} PTS</div>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+              {withdrawal.status}
+            </Badge>
+          </div>
+          <div className="text-xs text-slate-400">
+            {new Date(withdrawal.createdAt).toLocaleDateString()} at {new Date(withdrawal.createdAt).toLocaleTimeString()}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function UserDashboard() {
   const { data: user } = useQuery<User>({
@@ -62,6 +104,7 @@ export default function UserDashboard() {
         description: `${data.tokenAmount} ${data.token} has been sent to your wallet`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/withdrawals"] });
       setWithdrawAmount("");
     },
     onError: (error: any) => {
