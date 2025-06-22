@@ -22,17 +22,26 @@ export function WalletLogin({ onLoginSuccess }: WalletLoginProps) {
   // Check if user already exists with this wallet
   const { data: existingUser, refetch: checkUser } = useQuery({
     queryKey: ['/api/auth/wallet-user', address],
+    queryFn: async () => {
+      if (!address) return null;
+      const response = await fetch(`/api/auth/wallet-user?address=${address}`);
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error('Failed to check user');
+      return response.json();
+    },
     enabled: isConnected && !!address,
     retry: false,
   });
 
   const loginMutation = useMutation({
     mutationFn: async ({ address, signature, message }: { address: string; signature: string; message: string }) => {
-      return apiRequest({
-        url: '/api/auth/wallet-login',
+      const response = await fetch('/api/auth/wallet-login', {
         method: 'POST',
-        body: { address, signature, message },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, signature, message }),
       });
+      if (!response.ok) throw new Error('Login failed');
+      return response.json();
     },
     onSuccess: (user) => {
       toast({
@@ -57,11 +66,13 @@ export function WalletLogin({ onLoginSuccess }: WalletLoginProps) {
       message: string; 
       username: string;
     }) => {
-      return apiRequest({
-        url: '/api/auth/wallet-register',
+      const response = await fetch('/api/auth/wallet-register', {
         method: 'POST',
-        body: { address, signature, message, username },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, signature, message, username }),
       });
+      if (!response.ok) throw new Error('Registration failed');
+      return response.json();
     },
     onSuccess: (user) => {
       toast({
