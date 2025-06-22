@@ -139,10 +139,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      // Verify signature (basic verification - in production, use a proper crypto library)
-      const user = await storage.getUserByWalletAddress(address);
+      // Check if user exists, if not create one
+      let user = await storage.getUserByWalletAddress(address);
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        // Auto-register new wallet address
+        const username = `user_${address.slice(-6)}`;
+        user = await storage.createUser({
+          username: username,
+          walletAddress: address,
+          authMethod: "wallet",
+          isAdmin: false
+        });
       }
 
       // Set session
@@ -271,10 +278,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get current user (demo user for now)
+  // Get current user
   app.get("/api/user", async (req, res) => {
     try {
-      const user = await storage.getUser(1); // Demo user
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -287,7 +299,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user statistics
   app.get("/api/user/stats", async (req, res) => {
     try {
-      const user = await storage.getUser(1);
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -335,9 +352,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new prediction
   app.post("/api/predictions", async (req, res) => {
     try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const validatedData = insertPredictionSchema.parse(req.body);
       
-      const user = await storage.getUser(1); // Demo user
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -350,7 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const prediction = await storage.createPrediction({
         ...validatedData,
-        userId: 1, // Demo user
+        userId: userId,
         targetTime
       });
 
@@ -367,7 +389,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's active predictions
   app.get("/api/predictions/active", async (req, res) => {
     try {
-      const predictions = await storage.getUserPredictions(1); // Demo user
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const predictions = await storage.getUserPredictions(userId);
       const activePredictions = predictions.filter(p => p.status === "pending");
       
       // Add current prices and time left
@@ -415,7 +442,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get recent rewards
   app.get("/api/rewards/recent", async (req, res) => {
     try {
-      const rewards = await storage.getRecentRewards(1, 5); // Demo user, last 5 rewards
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const rewards = await storage.getRecentRewards(userId, 5);
       
       const enrichedRewards = await Promise.all(
         rewards.map(async (reward) => {
