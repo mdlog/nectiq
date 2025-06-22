@@ -582,22 +582,24 @@ export default function UserDashboard() {
                           )}
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-3">
-                              {crypto.image ? (
+                              <div className="relative w-8 h-8 flex-shrink-0">
                                 <img 
-                                  src={crypto.image} 
+                                  src={crypto.image || getDefaultCryptoImage(crypto.id)} 
                                   alt={crypto.name}
-                                  className="w-8 h-8 rounded-full"
+                                  className="w-8 h-8 rounded-full object-cover"
                                   onError={(e) => {
                                     // Fallback to colored icon if image fails to load
-                                    const target = e.target as HTMLElement;
-                                    target.style.display = 'none';
+                                    const target = e.target as HTMLImageElement;
                                     const fallback = target.nextElementSibling as HTMLElement;
-                                    if (fallback) fallback.style.display = 'flex';
+                                    if (fallback) {
+                                      target.style.display = 'none';
+                                      fallback.style.display = 'flex';
+                                    }
                                   }}
                                 />
-                              ) : null}
-                              <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full flex items-center justify-center text-white text-sm font-bold ${crypto.image ? 'hidden' : ''}`}>
-                                {getCryptoIcon(crypto.id)}
+                                <div className={`absolute inset-0 w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full items-center justify-center text-white text-sm font-bold hidden`}>
+                                  {getCryptoIcon(crypto.id)}
+                                </div>
                               </div>
                               <div>
                                 <p className="font-semibold">{crypto.symbol}</p>
