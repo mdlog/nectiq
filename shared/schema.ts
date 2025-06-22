@@ -79,6 +79,7 @@ export const rewardsRelations = relations(rewards, ({ one }) => ({
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  uid: true,
   balance: true,
   totalPredictions: true,
   correctPredictions: true,
