@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -481,8 +481,10 @@ export default function AdminPanel() {
             <TabsTrigger value="users" className="data-[state=active]:bg-primary">Users</TabsTrigger>
             <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary">Cryptocurrencies</TabsTrigger>
             <TabsTrigger value="predictions" className="data-[state=active]:bg-primary">Predictions</TabsTrigger>
-            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary">Leaderboard</TabsTrigger>
-            <TabsTrigger value="activity" className="data-[state=active]:bg-primary">Recent Activity</TabsTrigger>
+            <TabsTrigger value="transactions" className="data-[state=active]:bg-primary">Transactions</TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-primary">Security</TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-primary">Settings</TabsTrigger>
+            <TabsTrigger value="activity" className="data-[state=active]:bg-primary">Activity</TabsTrigger>
           </TabsList>
 
           {/* Users Tab - Full CRUD Management */}
@@ -941,6 +943,286 @@ export default function AdminPanel() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Transactions Tab */}
+          <TabsContent value="transactions">
+            <div className="space-y-6">
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <DollarSign className="mr-2" size={20} />
+                    Transaction Monitoring
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <Card className="bg-surface-light">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-slate-400">PTS Purchases</p>
+                            <p className="text-2xl font-bold">247</p>
+                          </div>
+                          <Coins className="h-8 w-8 text-blue-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-surface-light">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-slate-400">Withdrawals</p>
+                            <p className="text-2xl font-bold">89</p>
+                          </div>
+                          <TrendingUp className="h-8 w-8 text-green-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-surface-light">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-slate-400">Total Volume</p>
+                            <p className="text-2xl font-bold">$125K</p>
+                          </div>
+                          <BarChart3 className="h-8 w-8 text-purple-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Token</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-blue-100 text-blue-700">
+                            Purchase
+                          </Badge>
+                        </TableCell>
+                        <TableCell>EpicPrincess</TableCell>
+                        <TableCell>100 PTS</TableCell>
+                        <TableCell>ETH</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-green-100 text-green-700">
+                            Completed
+                          </Badge>
+                        </TableCell>
+                        <TableCell>2 hours ago</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Security Tab */}
+          <TabsContent value="security">
+            <div className="space-y-6">
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Shield className="mr-2" size={20} />
+                    Security Dashboard
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <Card className="bg-surface-light">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-slate-400">Security Alerts</p>
+                            <p className="text-2xl font-bold text-red-500">3</p>
+                          </div>
+                          <AlertTriangle className="h-8 w-8 text-red-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-surface-light">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-slate-400">Failed Logins</p>
+                            <p className="text-2xl font-bold text-orange-500">12</p>
+                          </div>
+                          <Lock className="h-8 w-8 text-orange-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-surface-light">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-slate-400">Rate Limits Hit</p>
+                            <p className="text-2xl font-bold text-yellow-500">8</p>
+                          </div>
+                          <Zap className="h-8 w-8 text-yellow-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-surface-light">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-slate-400">Blocked IPs</p>
+                            <p className="text-2xl font-bold">5</p>
+                          </div>
+                          <Ban className="h-8 w-8 text-gray-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Recent Security Events</h3>
+                    <div className="space-y-3">
+                      <Alert className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>High:</strong> Multiple failed login attempts from IP 192.168.1.100 (15 attempts in 10 minutes)
+                        </AlertDescription>
+                      </Alert>
+                      <Alert className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>Medium:</strong> Rate limit exceeded for user EpicPrincess (500+ requests in 1 minute)
+                        </AlertDescription>
+                      </Alert>
+                      <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>Info:</strong> New admin login from 0x4C6165...c5B6 at 5:17 PM
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings">
+            <div className="space-y-6">
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Settings className="mr-2" size={20} />
+                    System Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Platform Configuration */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Platform Configuration</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="min-prediction">Minimum Prediction Amount (PTS)</Label>
+                        <Input id="min-prediction" defaultValue="10" type="number" />
+                      </div>
+                      <div>
+                        <Label htmlFor="max-prediction">Maximum Prediction Amount (PTS)</Label>
+                        <Input id="max-prediction" defaultValue="10000" type="number" />
+                      </div>
+                      <div>
+                        <Label htmlFor="withdrawal-fee">Withdrawal Fee (%)</Label>
+                        <Input id="withdrawal-fee" defaultValue="2.5" type="number" step="0.1" />
+                      </div>
+                      <div>
+                        <Label htmlFor="min-withdrawal">Minimum Withdrawal (PTS)</Label>
+                        <Input id="min-withdrawal" defaultValue="1000" type="number" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Exchange Rates */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Exchange Rates</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="eth-rate">ETH to PTS Rate</Label>
+                        <Input id="eth-rate" defaultValue="300000" type="number" />
+                        <p className="text-xs text-slate-500 mt-1">1 ETH = 300,000 PTS</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="usdt-rate">USDT to PTS Rate</Label>
+                        <Input id="usdt-rate" defaultValue="100" type="number" />
+                        <p className="text-xs text-slate-500 mt-1">1 USDT = 100 PTS</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="pts-usdt-rate">PTS to USDT Rate</Label>
+                        <Input id="pts-usdt-rate" defaultValue="0.01" type="number" step="0.001" />
+                        <p className="text-xs text-slate-500 mt-1">1 PTS = 0.01 USDT</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Security Settings */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Security Settings</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="rate-limit">Rate Limit (requests/minute)</Label>
+                        <Input id="rate-limit" defaultValue="500" type="number" />
+                      </div>
+                      <div>
+                        <Label htmlFor="max-predictions">Max Predictions per Hour</Label>
+                        <Input id="max-predictions" defaultValue="5" type="number" />
+                      </div>
+                      <div>
+                        <Label htmlFor="max-withdrawals">Max Withdrawals per Hour</Label>
+                        <Input id="max-withdrawals" defaultValue="5" type="number" />
+                      </div>
+                      <div>
+                        <Label htmlFor="session-timeout">Session Timeout (hours)</Label>
+                        <Input id="session-timeout" defaultValue="24" type="number" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Admin Controls */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Admin Controls</h3>
+                    <div className="space-y-4">
+                      <Button variant="outline" className="w-full md:w-auto">
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Clear Cache
+                      </Button>
+                      <Button variant="outline" className="w-full md:w-auto">
+                        <Database className="mr-2 h-4 w-4" />
+                        Backup Database
+                      </Button>
+                      <Button variant="outline" className="w-full md:w-auto">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Export Logs
+                      </Button>
+                      <Button variant="destructive" className="w-full md:w-auto">
+                        <AlertTriangle className="mr-2 h-4 w-4" />
+                        Emergency Stop
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button className="bg-green-600 hover:bg-green-700">
+                      Save All Settings
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Recent Activity Tab */}
