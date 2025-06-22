@@ -199,6 +199,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple admin authentication endpoint
+  app.post("/api/admin/authenticate", async (req, res) => {
+    try {
+      const { walletAddress } = req.body;
+      
+      if (!walletAddress) {
+        return res.status(400).json({ message: "Wallet address required" });
+      }
+
+      const adminWallet = "0x4c6165286739696849fb3e77a16b0639d762c5b6";
+      
+      if (walletAddress.toLowerCase() !== adminWallet.toLowerCase()) {
+        return res.status(403).json({ message: "Admin access denied" });
+      }
+
+      // Create or get admin user
+      let user = await storage.getUserByWalletAddress(walletAddress);
+      if (!user) {
+        user = await storage.createUser({
+          username: `admin_${walletAddress.slice(-6)}`,
+          walletAddress: walletAddress,
+          authMethod: "wallet",
+          isAdmin: true
+        });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+      req.session.isAdmin = true;
+      
+      res.json({ success: true, user: user });
+    } catch (error) {
+      console.error("Admin authentication error:", error);
+      res.status(500).json({ message: "Failed to authenticate admin" });
+    }
+  });
+
   // Get current user (demo user for now)
   app.get("/api/user", async (req, res) => {
     try {

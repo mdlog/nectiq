@@ -158,12 +158,35 @@ export default function AdminPanel() {
                 Admin access requires wallet authentication with an authorized address.
               </p>
               <div className="space-y-2">
-                <Button 
-                  onClick={() => window.location.href = '/wallet-login'}
-                  className="w-full"
-                >
-                  Connect Wallet
-                </Button>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const walletInput = e.currentTarget.elements.namedItem('walletAddress') as HTMLInputElement;
+                  if (walletInput.value.trim()) {
+                    apiRequest('/api/admin/authenticate', {
+                      method: 'POST',
+                      body: JSON.stringify({ walletAddress: walletInput.value.trim() }),
+                      headers: { 'Content-Type': 'application/json' }
+                    }).then(() => {
+                      window.location.reload();
+                    }).catch(error => {
+                      toast({
+                        title: "Authentication Failed",
+                        description: error.message || "Invalid admin wallet address",
+                        variant: "destructive",
+                      });
+                    });
+                  }
+                }} className="space-y-3">
+                  <Input 
+                    name="walletAddress"
+                    placeholder="Enter admin wallet address"
+                    className="w-full"
+                    required
+                  />
+                  <Button type="submit" className="w-full">
+                    Authenticate as Admin
+                  </Button>
+                </form>
                 <Button 
                   onClick={() => window.location.href = '/'}
                   variant="outline"
