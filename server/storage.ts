@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count } from "drizzle-orm";
 
@@ -59,6 +59,10 @@ export interface IStorage {
   // Withdrawal operations
   createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
   getUserWithdrawals(userId: number, limit?: number): Promise<Withdrawal[]>;
+
+  // Purchase operations
+  createPurchase(purchase: InsertPurchase): Promise<Purchase>;
+  getUserPurchases(userId: number, limit?: number): Promise<Purchase[]>;
 
   // User management operations
   deleteUser(id: number): Promise<void>;
@@ -202,6 +206,18 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(withdrawals).where(eq(withdrawals.userId, userId)).orderBy(desc(withdrawals.createdAt)).limit(limit);
   }
 
+  async createPurchase(insertPurchase: InsertPurchase): Promise<Purchase> {
+    const [purchase] = await db
+      .insert(purchases)
+      .values(insertPurchase)
+      .returning();
+    return purchase;
+  }
+
+  async getUserPurchases(userId: number, limit: number = 10): Promise<Purchase[]> {
+    return await db.select().from(purchases).where(eq(purchases.userId, userId)).orderBy(desc(purchases.createdAt)).limit(limit);
+  }
+
   async deleteUser(id: number): Promise<void> {
     // Delete user's predictions first (cascade)
     await db.delete(predictions).where(eq(predictions.userId, id));
@@ -223,10 +239,12 @@ export class MemStorage implements IStorage {
   private cryptocurrencies: Map<string, Cryptocurrency>;
   private rewards: Map<number, Reward>;
   private withdrawals: Map<number, Withdrawal>;
+  private purchases: Map<number, Purchase>;
   private currentUserId: number;
   private currentPredictionId: number;
   private currentRewardId: number;
   private currentWithdrawalId: number;
+  private currentPurchaseId: number;
 
   constructor() {
     this.users = new Map();
@@ -234,10 +252,12 @@ export class MemStorage implements IStorage {
     this.cryptocurrencies = new Map();
     this.rewards = new Map();
     this.withdrawals = new Map();
+    this.purchases = new Map();
     this.currentUserId = 1;
     this.currentPredictionId = 1;
     this.currentRewardId = 1;
     this.currentWithdrawalId = 1;
+    this.currentPurchaseId = 1;
 
     // Create default users with some test data
     this.createUser({ username: "demo", password: "demo" });

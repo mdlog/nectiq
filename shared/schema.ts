@@ -165,3 +165,11 @@ export type InsertReward = z.infer<typeof insertRewardSchema>;
 
 export type Withdrawal = typeof withdrawals.$inferSelect;
 export type InsertWithdrawal = z.infer<typeof insertWithdrawalSchema>;
+
+export const insertPurchaseSchema = createInsertSchema(purchases).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Purchase = typeof purchases.$inferSelect;
+export type InsertPurchase = z.infer<typeof insertPurchaseSchema>;
