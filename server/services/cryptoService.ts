@@ -180,7 +180,8 @@ export class CryptoService {
       'polygon': '4713',
       'chainlink': '877',
       'litecoin': '2',
-      'shiba-inu': '11939'
+      'shiba-inu': '11939',
+      'tron': '1094'
     };
     
     const imageId = imageIdMap[coinId] || '1'; // Default to Bitcoin if not found
