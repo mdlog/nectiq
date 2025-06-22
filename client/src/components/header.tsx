@@ -19,10 +19,11 @@ export function Header() {
           </div>
           
           <nav className="hidden md:flex space-x-8">
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Dashboard</a>
+            <a href="/" className="text-slate-300 hover:text-white transition-colors">Dashboard</a>
             <a href="#" className="text-slate-300 hover:text-white transition-colors">Predictions</a>
             <a href="#" className="text-slate-300 hover:text-white transition-colors">Leaderboard</a>
             <a href="#" className="text-slate-300 hover:text-white transition-colors">Rewards</a>
+            <a href="/admin" className="text-primary hover:text-primary/80 transition-colors font-semibold">Admin</a>
           </nav>
 
           <div className="flex items-center space-x-4">

@@ -180,6 +180,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  app.get("/api/admin/stats", async (req, res) => {
+    try {
+      const users = await storage.getTopPredictors(1000); // Get all users
+      const allPredictions = await storage.getRecentPredictions(1000); // Get all predictions
+      
+      const totalUsers = users.length;
+      const totalPredictions = allPredictions.length;
+      const activeUsers = users.filter(u => u.totalPredictions > 0).length;
+      const totalRewards = users.reduce((sum, u) => sum + u.totalRewards, 0);
+      const totalStaked = allPredictions.reduce((sum, p) => sum + p.stakeAmount, 0);
+      
+      let accuracySum = 0;
+      let accuracyCount = 0;
+      users.forEach(user => {
+        if (user.totalPredictions > 0) {
+          accuracySum += (user.correctPredictions / user.totalPredictions) * 100;
+          accuracyCount++;
+        }
+      });
+      const accuracyAverage = accuracyCount > 0 ? accuracySum / accuracyCount : 0;
+
+      res.json({
+        totalUsers,
+        totalPredictions,
+        totalRewards,
+        activeUsers,
+        accuracyAverage,
+        totalStaked
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get admin stats" });
+    }
+  });
+
+  app.get("/api/admin/users", async (req, res) => {
+    try {
+      const users = await storage.getTopPredictors(1000); // Get all users
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get users" });
+    }
+  });
+
+  app.get("/api/admin/predictions", async (req, res) => {
+    try {
+      const predictions = await storage.getRecentPredictions(100); // Get recent predictions
+      res.json(predictions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get predictions" });
+    }
+  });
+
+  app.get("/api/admin/activity", async (req, res) => {
+    try {
+      const recentActivity = await storage.getRecentPredictions(20); // Get recent 20 activities
+      res.json(recentActivity);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get recent activity" });
+    }
+  });
+
   // Start background task to check predictions every minute
   setInterval(async () => {
     try {

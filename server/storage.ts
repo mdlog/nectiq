@@ -48,8 +48,24 @@ export class MemStorage implements IStorage {
     this.currentPredictionId = 1;
     this.currentRewardId = 1;
 
-    // Create default user
+    // Create default users with some test data
     this.createUser({ username: "demo", password: "demo" });
+    this.createUser({ username: "alice", password: "alice123" });
+    this.createUser({ username: "bob", password: "bob123" });
+    this.createUser({ username: "charlie", password: "charlie123" });
+
+    // Add some test predictions and stats for demo purposes
+    this.initializeDemoData();
+  }
+
+  private async initializeDemoData() {
+    // Update some users with sample stats
+    await this.updateUserStats(2, 15, 12, 850); // Alice - high accuracy
+    await this.updateUserStats(3, 8, 5, 320);   // Bob - medium accuracy
+    await this.updateUserStats(4, 22, 14, 1200); // Charlie - most active
+    await this.updateUserBalance(2, 1850);
+    await this.updateUserBalance(3, 820);
+    await this.updateUserBalance(4, 2200);
   }
 
   async getUser(id: number): Promise<User | undefined> {
