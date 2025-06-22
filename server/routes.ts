@@ -199,6 +199,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Direct admin access route - bypasses all browser extension conflicts
+  app.get("/admin-direct/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const adminToken = "secure-admin-2024";
+      
+      if (token !== adminToken) {
+        return res.redirect("/?error=invalid-access");
+      }
+
+      const adminWallet = "0x4c6165286739696849fb3e77a16b0639d762c5b6";
+      
+      // Create or get admin user
+      let user = await storage.getUserByWalletAddress(adminWallet);
+      if (!user) {
+        user = await storage.createUser({
+          username: `admin_${adminWallet.slice(-6)}`,
+          walletAddress: adminWallet,
+          authMethod: "direct",
+          isAdmin: true
+        });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+      req.session.isAdmin = true;
+
+      // Redirect to admin panel
+      res.redirect("/admin?access=granted");
+    } catch (error) {
+      console.error("Direct admin access error:", error);
+      res.redirect("/?error=auth-failed");
+    }
+  });
+
   // Simple admin authentication endpoint
   app.post("/api/admin/authenticate", async (req, res) => {
     try {
