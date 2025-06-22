@@ -356,10 +356,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(prediction);
     } catch (error) {
+      console.error("Prediction creation error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid prediction data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create prediction" });
+      res.status(500).json({ message: "Failed to create prediction", error: String(error) });
     }
   });
 

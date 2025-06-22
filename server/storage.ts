@@ -12,7 +12,7 @@ export interface IStorage {
   updateUserStats(id: number, totalPredictions: number, correctPredictions: number, totalRewards: number): Promise<void>;
 
   // Prediction operations
-  createPrediction(prediction: InsertPrediction): Promise<Prediction>;
+  createPrediction(prediction: any): Promise<Prediction>;
   getPrediction(id: number): Promise<Prediction | undefined>;
   getUserPredictions(userId: number): Promise<Prediction[]>;
   getActivePredictions(): Promise<Prediction[]>;
@@ -72,10 +72,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id));
   }
 
-  async createPrediction(insertPrediction: InsertPrediction): Promise<Prediction> {
+  async createPrediction(predictionData: any): Promise<Prediction> {
     const [prediction] = await db
       .insert(predictions)
-      .values(insertPrediction)
+      .values(predictionData)
       .returning();
     return prediction;
   }
@@ -213,8 +213,12 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
     const user: User = { 
-      ...insertUser, 
-      id, 
+      id,
+      username: insertUser.username,
+      password: insertUser.password || null,
+      walletAddress: insertUser.walletAddress || null,
+      authMethod: insertUser.authMethod || "password",
+      isAdmin: insertUser.isAdmin || false,
       balance: 1000,
       totalPredictions: 0,
       correctPredictions: 0,
@@ -238,15 +242,21 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async createPrediction(insertPrediction: InsertPrediction): Promise<Prediction> {
+  async createPrediction(predictionData: any): Promise<Prediction> {
     const id = this.currentPredictionId++;
     const prediction: Prediction = {
-      ...insertPrediction,
       id,
+      userId: predictionData.userId,
+      cryptocurrency: predictionData.cryptocurrency,
+      predictedPrice: predictionData.predictedPrice,
       actualPrice: null,
+      stakeAmount: predictionData.stakeAmount,
+      timeframe: predictionData.timeframe,
+      targetTime: predictionData.targetTime,
+      createdAt: new Date(),
       completedAt: null,
       status: "pending",
-      rewardAmount: 0,
+      rewardAmount: null,
       accuracy: null,
       createdAt: new Date(),
     };
