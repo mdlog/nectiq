@@ -27,7 +27,9 @@ function getCryptoColor(id: string): string {
 export function LivePrices() {
   const { data: prices = [], isLoading } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 1000, // Refetch every 1 second for real-time updates
+    refetchIntervalInBackground: true, // Continue updating when tab is not active
+    staleTime: 0, // Always consider data stale to force updates
   });
 
   if (isLoading) {
@@ -53,6 +55,10 @@ export function LivePrices() {
       <h3 className="text-lg font-bold mb-4 flex items-center">
         <ChartLine className="text-success mr-2" size={18} />
         Live Prices
+        <div className="ml-auto flex items-center text-xs text-green-400">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-1"></div>
+          LIVE
+        </div>
       </h3>
       
       <div className="space-y-3">

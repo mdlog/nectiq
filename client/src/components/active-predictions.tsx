@@ -46,7 +46,9 @@ function calculateAccuracy(predicted: string, current: string): number {
 export function ActivePredictions() {
   const { data: predictions = [], isLoading } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 1000, // Refetch every 1 second for real-time updates
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   if (isLoading) {
