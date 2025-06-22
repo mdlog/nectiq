@@ -9,6 +9,7 @@ import { config, projectId } from './lib/web3Config';
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 import AdminPanel from "@/pages/admin";
+import Leaderboard from "@/pages/leaderboard";
 import NotFound from "@/pages/not-found";
 import HowToPlay from "@/pages/how-to-play";
 import TermsConditions from "@/pages/terms-conditions";
@@ -61,6 +62,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={UserDashboard} />
+      <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/admin" component={AdminPanel} />
       <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/terms-conditions" component={TermsConditions} />

@@ -94,8 +94,8 @@ export function Header() {
           <nav className="hidden md:flex space-x-8">
             <a href="/" className="text-slate-300 hover:text-white transition-colors">Home</a>
             <a href="/dashboard" className="text-slate-300 hover:text-white transition-colors">My Dashboard</a>
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Leaderboard</a>
-            <a href="#" className="text-slate-300 hover:text-white transition-colors">Rewards</a>
+            <a href="/leaderboard" className="text-slate-300 hover:text-white transition-colors">Leaderboard</a>
+            <a href="/how-to-play" className="text-slate-300 hover:text-white transition-colors">How to Play</a>
             <a href="/admin" className="text-primary hover:text-primary/80 transition-colors font-semibold">Admin</a>
           </nav>
 
