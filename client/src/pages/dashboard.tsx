@@ -1,4 +1,5 @@
 import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import { HeroStats } from "@/components/hero-stats";
 import { PredictionForm } from "@/components/prediction-form";
 import { ActivePredictions } from "@/components/active-predictions";
@@ -30,6 +31,8 @@ export default function Dashboard() {
         
         <RulesSection />
       </main>
+      
+      <Footer />
     </div>
   );
 }

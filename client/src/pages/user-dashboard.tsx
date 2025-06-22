@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star } from "lucide-react";
+import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -428,6 +429,8 @@ export default function UserDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+      
+      <Footer />
     </div>
   );
 }
