@@ -60,16 +60,15 @@ export function WalletLogin({ onLoginSuccess }: WalletLoginProps) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async ({ address, signature, message, username }: { 
+    mutationFn: async ({ address, signature, message }: { 
       address: string; 
       signature: string; 
       message: string; 
-      username: string;
     }) => {
       const response = await fetch('/api/auth/wallet-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, signature, message, username }),
+        body: JSON.stringify({ address, signature, message }),
       });
       if (!response.ok) throw new Error('Registration failed');
       return response.json();
@@ -111,9 +110,8 @@ export function WalletLogin({ onLoginSuccess }: WalletLoginProps) {
       });
 
       if (isRegistering) {
-        // Generate username from wallet address
-        const username = `user_${address.slice(-8)}`;
-        registerMutation.mutate({ address, signature, message, username });
+        // Auto-registration with random username
+        registerMutation.mutate({ address, signature, message });
       } else {
         loginMutation.mutate({ address, signature, message });
       }
