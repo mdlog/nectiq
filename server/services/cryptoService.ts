@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { storage } from '../storage';
 
 export interface CryptoPrice {
   id: string;
@@ -60,9 +61,51 @@ export class CryptoService {
       }
     }
     
-    // If we have real cached prices, add small realistic fluctuations
-    if (this.cachedRealPrices.length > 0) {
-      return this.addRealtimeFluctuations(this.cachedRealPrices);
+    // Get database cryptocurrencies and merge with CoinGecko data
+    let allPrices: CryptoPrice[] = [];
+    
+    try {
+      // Get all cryptocurrencies from database
+      const dbCryptos = await storage.getAllCryptocurrencies();
+      
+      // Convert database cryptos to CryptoPrice format
+      const dbPrices: CryptoPrice[] = dbCryptos.map(crypto => ({
+        id: crypto.id,
+        symbol: crypto.symbol,
+        name: crypto.name,
+        current_price: parseFloat(crypto.currentPrice || '0'),
+        price_change_percentage_24h: parseFloat(crypto.priceChange24h || '0')
+      }));
+      
+      // If we have real cached prices from CoinGecko, merge them
+      if (this.cachedRealPrices.length > 0) {
+        // Create a map of CoinGecko prices for easier lookup
+        const coinGeckoMap = new Map(this.cachedRealPrices.map(p => [p.id, p]));
+        
+        // Start with database prices
+        allPrices = [...dbPrices];
+        
+        // Add/update with CoinGecko data (CoinGecko data takes precedence for real-time prices)
+        for (const cgPrice of this.cachedRealPrices) {
+          const existingIndex = allPrices.findIndex(p => p.id === cgPrice.id);
+          if (existingIndex >= 0) {
+            // Update existing with real-time CoinGecko data
+            allPrices[existingIndex] = cgPrice;
+          } else {
+            // Add new CoinGecko crypto
+            allPrices.push(cgPrice);
+          }
+        }
+        
+        return this.addRealtimeFluctuations(allPrices);
+      }
+      
+      // If no CoinGecko data but we have database cryptos, add fluctuations to them
+      if (dbPrices.length > 0) {
+        return this.addRealtimeFluctuations(dbPrices);
+      }
+    } catch (error) {
+      console.error('Error fetching database cryptocurrencies:', error);
     }
     
     // Only use fallback if no real data available

@@ -454,8 +454,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: 'ripple',
         name: 'XRP',
         symbol: 'XRP',
-        currentPrice: 2.45,
-        priceChange24h: -2.15,
+        currentPrice: '2.45',
+        priceChange24h: '-2.15',
       };
 
       const newCrypto = await storage.upsertCryptocurrency(xrpData);
@@ -490,8 +490,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: 'ripple',
           name: 'XRP',
           symbol: 'XRP',
-          currentPrice: 2.45,
-          priceChange24h: -2.15,
+          currentPrice: '2.45',
+          priceChange24h: '-2.15',
         };
 
         const newCrypto = await storage.upsertCryptocurrency(xrpData);
