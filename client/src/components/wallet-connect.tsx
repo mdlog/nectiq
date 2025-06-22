@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Wallet, LogOut, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 export function WalletConnect() {
   const { address, isConnected, chain } = useAccount();
@@ -12,6 +14,41 @@ export function WalletConnect() {
   const { disconnect } = useDisconnect();
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest('POST', '/api/auth/logout');
+    },
+    onSuccess: () => {
+      // Clear all cached data
+      queryClient.clear();
+      toast({
+        title: "Disconnected",
+        description: "Wallet disconnected and logged out successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to logout properly",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDisconnect = async () => {
+    try {
+      // First logout from server
+      await logoutMutation.mutateAsync();
+      // Then disconnect wallet
+      disconnect();
+    } catch (error) {
+      // Even if server logout fails, still disconnect wallet
+      disconnect();
+    }
+  };
 
   const copyAddress = async () => {
     if (address) {
@@ -62,12 +99,13 @@ export function WalletConnect() {
           )}
           
           <Button
-            onClick={() => disconnect()}
+            onClick={handleDisconnect}
             variant="destructive"
             className="w-full"
+            disabled={logoutMutation.isPending}
           >
             <LogOut className="mr-2" size={16} />
-            Disconnect Wallet
+            {logoutMutation.isPending ? "Disconnecting..." : "Disconnect Wallet"}
           </Button>
         </CardContent>
       </Card>

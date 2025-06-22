@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { ChartLine, Coins, User, Wallet } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ChartLine, Coins, User, Wallet, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAccount } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import type { User as UserType } from "@shared/schema";
 
 export function Header() {
@@ -10,6 +12,39 @@ export function Header() {
   });
   
   const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest('POST', '/api/auth/logout');
+    },
+    onSuccess: () => {
+      queryClient.clear();
+      toast({
+        title: "Disconnected",
+        description: "Wallet disconnected successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to logout properly",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDisconnect = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      disconnect();
+    } catch (error) {
+      disconnect();
+    }
+  };
 
   return (
     <header className="bg-surface border-b border-surface-light">

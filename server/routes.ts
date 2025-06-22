@@ -84,6 +84,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Logout endpoint - clears session
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      // Clear the session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Error destroying session:", err);
+          return res.status(500).json({ message: "Failed to logout" });
+        }
+        res.clearCookie('connect.sid'); // Clear session cookie
+        res.json({ message: "Logged out successfully" });
+      });
+    } catch (error) {
+      console.error("Error during logout:", error);
+      res.status(500).json({ message: "Failed to logout" });
+    }
+  });
+
   app.post("/api/auth/wallet-register", async (req, res) => {
     try {
       const { address, signature, message, username } = req.body;
