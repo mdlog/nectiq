@@ -815,6 +815,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Balance must be 0-1000000 PTS" });
       }
 
+      // Check for duplicate username/wallet
+      const existingUserByUsername = await storage.getUserByUsername(username);
+      if (existingUserByUsername) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+
+      const existingUserByWallet = await storage.getUserByWalletAddress(walletAddress);
+      if (existingUserByWallet) {
+        return res.status(409).json({ message: "Wallet address already registered" });
+      }
+
       // Check if user already exists
       const existingUser = await storage.getUserByWalletAddress(walletAddress);
       if (existingUser) {
