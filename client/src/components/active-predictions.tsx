@@ -7,11 +7,12 @@ function formatTimeLeft(timeLeft: number): string {
   
   const hours = Math.floor(timeLeft / (1000 * 60 * 60));
   const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
   
   if (hours > 0) {
-    return `${hours}h ${minutes}m left`;
+    return `${hours}h ${minutes}m ${seconds}s left`;
   }
-  return `${minutes}m left`;
+  return `${minutes}m ${seconds}s left`;
 }
 
 function getCryptoIcon(crypto: string): string {
