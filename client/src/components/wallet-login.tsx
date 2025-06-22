@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, User } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -131,6 +131,41 @@ export function WalletLogin({ onLoginSuccess }: WalletLoginProps) {
       checkUser();
     }
   }, [isConnected, address, checkUser]);
+
+  // Auto-login for new wallets using the wallet-login endpoint that handles auto-registration
+  const autoLoginMutation = useMutation({
+    mutationFn: async ({ address }: { address: string }) => {
+      const response = await fetch('/api/auth/wallet-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          address, 
+          signature: "auto_register", 
+          message: `Auto-register wallet ${address}` 
+        }),
+      });
+      if (!response.ok) throw new Error('Auto-registration failed');
+      return response.json();
+    },
+    onSuccess: (user) => {
+      toast({
+        title: "Account Created",
+        description: `Welcome ${user.username}! Your account has been created automatically.`,
+      });
+      onLoginSuccess(user);
+    },
+    onError: (error: any) => {
+      console.error('Auto-registration error:', error);
+    },
+  });
+
+  // Auto-register new wallets when detected
+  useEffect(() => {
+    if (isConnected && address && existingUser === null && !autoLoginMutation.isPending) {
+      console.log(`Auto-registering new wallet: ${address}`);
+      autoLoginMutation.mutate({ address });
+    }
+  }, [isConnected, address, existingUser]);
 
   if (!isConnected || !address) {
     return (
