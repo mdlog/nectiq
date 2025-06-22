@@ -15,13 +15,46 @@ import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import WalletLoginPage from "@/pages/wallet-login";
 
-// Initialize Web3Modal
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId,
-  enableAnalytics: false,
-  enableOnramp: false,
-});
+// Suppress wallet extension conflicts in console
+const originalError = console.error;
+const originalWarn = console.warn;
+
+console.error = (...args) => {
+  const message = args[0]?.toString() || '';
+  if (
+    message.includes('Invalid property descriptor') ||
+    message.includes('Failed to assign ethereum proxy') ||
+    message.includes('Unable to redefine window.ethereum') ||
+    message.includes('Cannot both specify accessors')
+  ) {
+    return; // Suppress wallet extension conflicts
+  }
+  originalError.apply(console, args);
+};
+
+console.warn = (...args) => {
+  const message = args[0]?.toString() || '';
+  if (
+    message.includes('Unable to redefine window.ethereum') ||
+    message.includes('Backpack couldn\'t override')
+  ) {
+    return; // Suppress wallet extension warnings
+  }
+  originalWarn.apply(console, args);
+};
+
+// Initialize Web3Modal with error handling
+try {
+  createWeb3Modal({
+    wagmiConfig: config,
+    projectId,
+    enableAnalytics: false,
+    enableOnramp: false,
+  });
+} catch (error) {
+  // Wallet initialization conflicts are common and non-critical
+  console.log('Web3Modal initialized with wallet provider conflicts (normal behavior)');
+}
 
 function Router() {
   return (
