@@ -13,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import type { User, Prediction, Reward, Cryptocurrency } from "@shared/schema";
 import type { LeaderboardEntry } from "@/types";
+import { SimpleAdminAuth } from "@/components/simple-admin-auth";
 
 interface AdminStats {
   totalUsers: number;

@@ -278,6 +278,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple admin authentication endpoint
+  app.post("/api/admin/simple-auth", async (req, res) => {
+    try {
+      const { walletAddress } = req.body;
+      
+      if (!walletAddress) {
+        return res.status(400).json({ success: false, message: "Wallet address required" });
+      }
+
+      // Check if wallet address is authorized admin
+      const ADMIN_WALLET = "0x4C6165286739696849Fb3e77A16b0639D762c5B6";
+      const isAuthorized = walletAddress.toLowerCase() === ADMIN_WALLET.toLowerCase();
+      
+      if (!isAuthorized) {
+        return res.status(403).json({ success: false, message: "Unauthorized wallet address" });
+      }
+
+      // Find or create admin user
+      let user = await storage.getUserByWalletAddress(walletAddress);
+      if (!user) {
+        user = await storage.createUser({
+          username: `admin_${walletAddress.slice(-6)}`,
+          walletAddress: walletAddress,
+          authMethod: "wallet",
+          isAdmin: true,
+        });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+      req.session.isAdmin = true;
+      
+      res.json({ success: true, message: "Admin access granted" });
+    } catch (error) {
+      console.error("Simple admin auth error:", error);
+      res.status(500).json({ success: false, message: "Authentication failed" });
+    }
+  });
+
   // Get current user
   app.get("/api/user", async (req, res) => {
     try {
