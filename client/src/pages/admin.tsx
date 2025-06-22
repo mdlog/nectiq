@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
@@ -27,6 +29,13 @@ interface AdminStats {
 export default function AdminPanel() {
   const [newCryptoId, setNewCryptoId] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [newUser, setNewUser] = useState({
+    username: "",
+    walletAddress: "",
+    balance: 5000,
+  });
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -111,6 +120,86 @@ export default function AdminPanel() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete cryptocurrency",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // User CRUD mutations
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: typeof newUser) => {
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User created successfully",
+      });
+      setNewUser({ username: "", walletAddress: "", balance: 5000 });
+      setIsCreateUserOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ id, balance }: { id: number; balance: number }) => {
+      const response = await fetch(`/api/admin/users/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ balance }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User updated successfully",
+      });
+      setEditingUser(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
         variant: "destructive",
       });
     },
@@ -396,53 +485,218 @@ export default function AdminPanel() {
             <TabsTrigger value="activity" className="data-[state=active]:bg-primary">Recent Activity</TabsTrigger>
           </TabsList>
 
-          {/* Users Tab */}
+          {/* Users Tab - Full CRUD Management */}
           <TabsContent value="users">
-            <Card className="bg-surface border-surface-light">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="mr-2" size={20} />
-                  User Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold">{user.username[0].toUpperCase()}</span>
+            <div className="space-y-6">
+              {/* Add New User Card */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center">
+                      <UserPlus className="mr-2" size={20} />
+                      User Management
+                    </span>
+                    <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="bg-blue-600 hover:bg-blue-700">
+                          <Plus className="mr-2" size={16} />
+                          Add New User
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New User</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="username">Username</Label>
+                            <Input
+                              id="username"
+                              value={newUser.username}
+                              onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                              placeholder="Enter username"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="walletAddress">Wallet Address</Label>
+                            <Input
+                              id="walletAddress"
+                              value={newUser.walletAddress}
+                              onChange={(e) => setNewUser({ ...newUser, walletAddress: e.target.value })}
+                              placeholder="0x..."
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="balance">Initial Balance (PTS)</Label>
+                            <Input
+                              id="balance"
+                              type="number"
+                              value={newUser.balance}
+                              onChange={(e) => setNewUser({ ...newUser, balance: parseInt(e.target.value) || 0 })}
+                              placeholder="5000"
+                            />
+                          </div>
+                          <Button
+                            onClick={() => createUserMutation.mutate(newUser)}
+                            disabled={createUserMutation.isPending}
+                            className="w-full"
+                          >
+                            {createUserMutation.isPending ? "Creating..." : "Create User"}
+                          </Button>
                         </div>
-                        <div>
-                          <p className="font-semibold">{user.username}</p>
-                          <p className="text-sm text-slate-400">ID: {user.id}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-6">
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Balance</p>
-                          <p className="font-semibold">{user.balance.toLocaleString()}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Predictions</p>
-                          <p className="font-semibold">{user.totalPredictions}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Accuracy</p>
-                          <p className="font-semibold text-success">
-                            {user.totalPredictions > 0 ? ((user.correctPredictions / user.totalPredictions) * 100).toFixed(1) : 0}%
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Rewards</p>
-                          <p className="font-semibold text-warning">{user.totalRewards.toLocaleString()}</p>
-                        </div>
-                      </div>
+                      </DialogContent>
+                    </Dialog>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* Users Table */}
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>User</TableHead>
+                          <TableHead>UID</TableHead>
+                          <TableHead>Wallet Address</TableHead>
+                          <TableHead>Balance</TableHead>
+                          <TableHead>Predictions</TableHead>
+                          <TableHead>Accuracy</TableHead>
+                          <TableHead>Rewards</TableHead>
+                          <TableHead>Admin</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-sm font-semibold">
+                                    {user.username[0].toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="font-medium">{user.username}</p>
+                                  <p className="text-sm text-gray-500">ID: {user.id}</p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="font-mono text-xs">
+                                {user.uid}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm font-mono">
+                                {user.walletAddress ? 
+                                  `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 
+                                  "Not set"
+                                }
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-semibold">{user.balance?.toLocaleString() || 0} PTS</span>
+                            </TableCell>
+                            <TableCell>{user.totalPredictions}</TableCell>
+                            <TableCell>
+                              <span className="font-semibold text-green-600">
+                                {user.totalPredictions > 0 ? 
+                                  ((user.correctPredictions / user.totalPredictions) * 100).toFixed(1) : 
+                                  0
+                                }%
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-semibold text-orange-600">
+                                {user.totalRewards?.toLocaleString() || 0}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {user.isAdmin ? (
+                                <Badge variant="destructive">Admin</Badge>
+                              ) : (
+                                <Badge variant="secondary">User</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setEditingUser(user)}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Edit User: {user.username}</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div>
+                                        <Label htmlFor="edit-balance">Balance (PTS)</Label>
+                                        <Input
+                                          id="edit-balance"
+                                          type="number"
+                                          defaultValue={user.balance}
+                                          onChange={(e) => {
+                                            if (editingUser) {
+                                              setEditingUser({ ...editingUser, balance: parseInt(e.target.value) || 0 });
+                                            }
+                                          }}
+                                        />
+                                      </div>
+                                      <Button
+                                        onClick={() => {
+                                          if (editingUser) {
+                                            updateUserMutation.mutate({
+                                              id: editingUser.id,
+                                              balance: editingUser.balance,
+                                            });
+                                          }
+                                        }}
+                                        disabled={updateUserMutation.isPending}
+                                        className="w-full"
+                                      >
+                                        {updateUserMutation.isPending ? "Updating..." : "Update User"}
+                                      </Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                                {!user.isAdmin && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (confirm(`Are you sure you want to delete user "${user.username}"? This action cannot be undone.`)) {
+                                        deleteUserMutation.mutate(user.id);
+                                      }
+                                    }}
+                                    disabled={deleteUserMutation.isPending}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <UserX className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {users.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                      <p>No users found. Create your first user to get started.</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Cryptocurrencies Tab */}
