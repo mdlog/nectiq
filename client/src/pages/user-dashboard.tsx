@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
@@ -110,6 +110,14 @@ export default function UserDashboard() {
   const [selectedToken, setSelectedToken] = useState("USDT");
   const [buyAmount, setBuyAmount] = useState("");
   const [selectedPaymentToken, setSelectedPaymentToken] = useState("ETH");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Manual refresh function for Market Overview
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await refetchPrices();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   const { data: stats } = useQuery<UserStats>({
     queryKey: ["/api/user/stats"],
@@ -125,9 +133,9 @@ export default function UserDashboard() {
     refetchInterval: 30000,
   });
 
-  const { data: prices = [] } = useQuery<CryptoPrice[]>({
+  const { data: prices = [], isLoading: pricesLoading, refetch: refetchPrices } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 30000,
+    refetchInterval: 3000, // Real-time updates every 3 seconds
   });
 
   // Withdraw mutation
@@ -521,38 +529,83 @@ export default function UserDashboard() {
           <TabsContent value="market">
             <Card className="bg-surface border-surface-light">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="mr-2" size={20} />
-                  Market Overview
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <TrendingUp className="mr-2" size={20} />
+                    Market Overview
+                    <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      LIVE
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing || pricesLoading}
+                    className="flex items-center space-x-2"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {prices.map((crypto) => {
-                    const isPositive = crypto.price_change_percentage_24h >= 0;
-                    
-                    return (
-                      <div key={crypto.id} className="p-4 bg-surface-light rounded-lg border border-slate-600">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full flex items-center justify-center text-white text-sm font-bold`}>
-                              {getCryptoIcon(crypto.id)}
-                            </div>
-                            <div>
-                              <p className="font-semibold">{crypto.symbol}</p>
-                              <p className="text-xs text-slate-400">{crypto.name}</p>
-                            </div>
+                {pricesLoading && prices.length === 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <div key={i} className="p-4 bg-surface-light rounded-lg border border-slate-600 animate-pulse">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                          <div>
+                            <div className="h-4 bg-gray-300 rounded w-12 mb-1"></div>
+                            <div className="h-3 bg-gray-300 rounded w-16"></div>
                           </div>
                         </div>
                         <div className="text-center">
-                          <p className="text-lg font-bold">${crypto.current_price.toLocaleString()}</p>
-                          <p className={`text-sm ${isPositive ? "text-success" : "text-error"}`}>
-                            {isPositive ? "+" : ""}{crypto.price_change_percentage_24h.toFixed(2)}% (24h)
-                          </p>
+                          <div className="h-6 bg-gray-300 rounded w-24 mx-auto mb-2"></div>
+                          <div className="h-4 bg-gray-300 rounded w-16 mx-auto"></div>
                         </div>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {prices.map((crypto) => {
+                      const isPositive = crypto.price_change_percentage_24h >= 0;
+                      
+                      return (
+                        <div key={crypto.id} className="p-4 bg-surface-light rounded-lg border border-slate-600 relative">
+                          {pricesLoading && (
+                            <div className="absolute top-2 right-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full flex items-center justify-center text-white text-sm font-bold`}>
+                                {getCryptoIcon(crypto.id)}
+                              </div>
+                              <div>
+                                <p className="font-semibold">{crypto.symbol}</p>
+                                <p className="text-xs text-slate-400">{crypto.name}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-lg font-bold">${crypto.current_price.toLocaleString()}</p>
+                            <p className={`text-sm ${isPositive ? "text-success" : "text-error"}`}>
+                              {isPositive ? "+" : ""}{crypto.price_change_percentage_24h.toFixed(2)}% (24h)
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="mt-4 text-center">
+                  <p className="text-xs text-slate-500">
+                    Prices update automatically every 3 seconds • Last updated: {new Date().toLocaleTimeString()}
+                  </p>
                 </div>
               </CardContent>
             </Card>
