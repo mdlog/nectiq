@@ -6,6 +6,7 @@ import { predictionService } from "./services/predictionService";
 import { insertPredictionSchema, insertCryptocurrencySchema } from "@shared/schema";
 import { z } from "zod";
 import { ethers } from "ethers";
+import { SecurityValidator } from "./security";
 
 // Security audit logging
 const auditLog = (event: string, details: any, req: Request) => {
@@ -543,6 +544,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching withdrawals:", error);
       res.status(500).json({ message: "Failed to fetch withdrawal history" });
+    }
+  });
+
+  // Buy PTS with crypto
+  app.post("/api/user/buy-pts", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { ptsAmount, paymentToken } = req.body;
+
+      // Enhanced security validation
+      const validation = SecurityValidator.validateAmount(ptsAmount, 100, 1000000, true);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+
+      // Validate payment token
+      const validTokens = ["ETH", "USDT", "USDC"];
+      if (!paymentToken || !validTokens.includes(paymentToken)) {
+        return res.status(400).json({ message: "Invalid payment token" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || !user.walletAddress) {
+        return res.status(404).json({ message: "User not found or wallet not connected" });
+      }
+
+      const numAmount = validation.value!;
+
+      // Calculate payment amount based on exchange rates
+      let paymentAmount: number;
+      switch (paymentToken) {
+        case "ETH":
+          paymentAmount = numAmount / 300000; // 1 ETH = 300,000 PTS
+          break;
+        case "USDT":
+        case "USDC":
+          paymentAmount = numAmount / 100; // 1 USDT/USDC = 100 PTS
+          break;
+        default:
+          return res.status(400).json({ message: "Unsupported payment token" });
+      }
+
+      // Create purchase record
+      const purchase = await storage.createPurchase({
+        userId,
+        ptsAmount: numAmount,
+        paymentAmount: paymentAmount.toFixed(6),
+        paymentToken,
+        status: "completed"
+      });
+
+      // Add PTS to user balance atomically
+      const newBalance = user.balance + numAmount;
+      await storage.updateUserBalance(userId, newBalance);
+
+      // In a real implementation, here you would:
+      // 1. Interact with Web3 wallet to receive payment
+      // 2. Verify transaction on blockchain
+      // 3. Handle payment confirmation
+      // 4. Process refunds if payment fails
+
+      auditLog("user_purchase", {
+        userId,
+        ptsAmount: numAmount,
+        paymentAmount,
+        paymentToken,
+        walletAddress: user.walletAddress,
+        newBalance,
+        purchaseId: purchase.id
+      }, req);
+
+      res.json({
+        success: true,
+        message: "Purchase completed successfully",
+        ptsAmount: numAmount,
+        paymentAmount: paymentAmount.toFixed(6),
+        paymentToken,
+        newBalance,
+        purchaseId: purchase.id
+      });
+    } catch (error) {
+      console.error("Purchase error:", error);
+      res.status(500).json({ message: "Failed to process purchase" });
+    }
+  });
+
+  // Get user purchase history
+  app.get("/api/user/purchases", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const userId = session.userId;
+      const purchases = await storage.getUserPurchases(userId, 10);
+      res.json(purchases);
+    } catch (error) {
+      console.error("Error fetching purchases:", error);
+      res.status(500).json({ message: "Failed to fetch purchase history" });
     }
   });
 

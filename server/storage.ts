@@ -450,6 +450,28 @@ export class MemStorage implements IStorage {
       .slice(0, limit);
   }
 
+  async createPurchase(insertPurchase: InsertPurchase): Promise<Purchase> {
+    const purchase: Purchase = {
+      id: this.currentPurchaseId++,
+      userId: insertPurchase.userId,
+      ptsAmount: insertPurchase.ptsAmount,
+      paymentAmount: insertPurchase.paymentAmount,
+      paymentToken: insertPurchase.paymentToken,
+      transactionHash: insertPurchase.transactionHash || null,
+      status: insertPurchase.status || "completed",
+      createdAt: new Date(),
+    };
+    this.purchases.set(purchase.id, purchase);
+    return purchase;
+  }
+
+  async getUserPurchases(userId: number, limit: number = 10): Promise<Purchase[]> {
+    return Array.from(this.purchases.values())
+      .filter(purchase => purchase.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
   async deleteUser(id: number): Promise<void> {
     // Delete user's predictions
     const userPredictions = Array.from(this.predictions.values()).filter(p => p.userId === id);
@@ -462,6 +484,10 @@ export class MemStorage implements IStorage {
     // Delete user's withdrawals
     const userWithdrawals = Array.from(this.withdrawals.values()).filter(w => w.userId === id);
     userWithdrawals.forEach(w => this.withdrawals.delete(w.id));
+    
+    // Delete user's purchases
+    const userPurchases = Array.from(this.purchases.values()).filter(p => p.userId === id);
+    userPurchases.forEach(p => this.purchases.delete(p.id));
     
     // Delete the user
     this.users.delete(id);
