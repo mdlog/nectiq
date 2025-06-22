@@ -1,44 +1,75 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, Wallet, Lock } from "lucide-react";
+import { Shield, Wallet, Lock, Key } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+// Extend Window interface for ethereum
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: any[] }) => Promise<any>;
+    };
+  }
+}
 
 interface SimpleAdminAuthProps {
   onAuthSuccess: () => void;
 }
 
 export function SimpleAdminAuth({ onAuthSuccess }: SimpleAdminAuthProps) {
-  const [walletAddress, setWalletAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleDirectAccess = async () => {
-    if (!walletAddress.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter your wallet address",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleWalletConnect = async () => {
     setIsLoading(true);
     try {
-      // Simple admin authentication with wallet address
-      const response = await apiRequest("POST", "/api/admin/simple-auth", {
-        walletAddress: walletAddress.trim(),
+      // Check if wallet is available
+      if (!window.ethereum) {
+        toast({
+          title: "Wallet Not Found",
+          description: "Please install a Web3 wallet like MetaMask",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Request wallet connection
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const walletAddress = accounts[0];
+
+      if (!walletAddress) {
+        toast({
+          title: "Connection Failed",
+          description: "No wallet address found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create message to sign
+      const message = `Admin Authentication Request\nTimestamp: ${Date.now()}\nAddress: ${walletAddress}`;
+      
+      // Request signature from wallet
+      const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, walletAddress],
+      });
+
+      // Send signed authentication to server
+      const response = await apiRequest("POST", "/api/admin/wallet-auth", {
+        walletAddress,
+        message,
+        signature,
       });
 
       const result = await response.json() as { success: boolean; message: string };
       if (result.success) {
         toast({
           title: "Access Granted",
-          description: "Welcome to admin panel",
+          description: "Admin authentication successful",
         });
         onAuthSuccess();
       } else {
@@ -48,12 +79,20 @@ export function SimpleAdminAuth({ onAuthSuccess }: SimpleAdminAuthProps) {
           variant: "destructive",
         });
       }
-    } catch (error) {
-      toast({
-        title: "Authentication Failed",
-        description: "Unable to verify admin access",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      if (error.code === 4001) {
+        toast({
+          title: "Authentication Cancelled",
+          description: "Wallet signature was cancelled",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Authentication Failed",
+          description: "Unable to verify wallet signature",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -70,35 +109,20 @@ export function SimpleAdminAuth({ onAuthSuccess }: SimpleAdminAuthProps) {
           <p className="text-gray-400">Enter authorized wallet address</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert className="bg-yellow-900/20 border-yellow-600">
-            <Lock className="h-4 w-4" />
-            <AlertDescription className="text-yellow-200">
-              Only authorized wallet addresses can access the admin panel
+          <Alert className="bg-blue-900/20 border-blue-600">
+            <Key className="h-4 w-4" />
+            <AlertDescription className="text-blue-200">
+              Connect your authorized wallet to access the admin panel securely
             </AlertDescription>
           </Alert>
 
-          <div className="space-y-2">
-            <Label htmlFor="wallet" className="text-gray-200">Wallet Address</Label>
-            <div className="relative">
-              <Wallet className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                id="wallet"
-                type="text"
-                placeholder="0x..."
-                value={walletAddress}
-                onChange={(e) => setWalletAddress(e.target.value)}
-                className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                onKeyDown={(e) => e.key === "Enter" && handleDirectAccess()}
-              />
-            </div>
-          </div>
-
           <Button 
-            onClick={handleDirectAccess}
+            onClick={handleWalletConnect}
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
           >
-            {isLoading ? "Verifying..." : "Access Admin Panel"}
+            <Wallet className="w-4 h-4" />
+            {isLoading ? "Authenticating..." : "Connect Wallet & Sign"}
           </Button>
 
           <div className="text-center">
