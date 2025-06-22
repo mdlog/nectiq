@@ -778,8 +778,24 @@ export default function AdminPanel() {
                     {cryptocurrencies.map((crypto) => (
                       <div key={crypto.id} className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
                         <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                            <span className="text-primary font-bold text-sm">{crypto.symbol}</span>
+                          <div className="relative w-10 h-10 flex-shrink-0">
+                            <img 
+                              src={crypto.id === 'solana' ? '/attached_assets/solana_1750613756851.png' : `https://coin-images.coingecko.com/coins/images/${crypto.id === 'bitcoin' ? '1' : crypto.id === 'ethereum' ? '279' : crypto.id === 'binancecoin' ? '825' : crypto.id === 'cardano' ? '975' : crypto.id === 'avalanche-2' ? '12559' : '1'}/large/${crypto.id}.png`}
+                              alt={crypto.name}
+                              className="w-10 h-10 rounded-full object-cover"
+                              onError={(e) => {
+                                // Fallback to colored icon with symbol if image fails to load
+                                const target = e.target as HTMLImageElement;
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                if (fallback) {
+                                  target.style.display = 'none';
+                                  fallback.style.display = 'flex';
+                                }
+                              }}
+                            />
+                            <div className="w-10 h-10 bg-primary/10 rounded-full hidden items-center justify-center">
+                              <span className="text-primary font-bold text-sm">{crypto.symbol}</span>
+                            </div>
                           </div>
                           <div>
                             <p className="font-semibold">{crypto.name}</p>
