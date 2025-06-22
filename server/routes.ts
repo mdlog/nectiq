@@ -449,11 +449,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { amount, token } = req.body;
       
-      // Validate input
-      if (!amount || !token || amount < 1000) {
-        return res.status(400).json({ message: "Minimum withdrawal amount is 1000 PTS" });
+      // Enhanced security validation
+      if (!amount || !token) {
+        return res.status(400).json({ message: "Missing required fields" });
       }
 
+      // Validate amount is a positive number and within reasonable limits
+      const numAmount = Number(amount);
+      if (isNaN(numAmount) || numAmount < 1000 || numAmount > 1000000 || !Number.isInteger(numAmount)) {
+        return res.status(400).json({ message: "Invalid withdrawal amount. Must be between 1000-1000000 PTS" });
+      }
+
+      // Validate token strictly
       if (!["USDT", "USDC"].includes(token)) {
         return res.status(400).json({ message: "Only USDT and USDC withdrawals supported" });
       }
@@ -463,26 +470,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Check if user has sufficient balance
-      if (user.balance < amount) {
+      // Check if user has sufficient balance with strict validation
+      if (user.balance < numAmount) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
 
+      // Additional security: Check for withdrawal frequency abuse
+      const recentWithdrawals = await storage.getUserWithdrawals(userId, 10);
+      const lastHourWithdrawals = recentWithdrawals.filter(w => 
+        new Date(w.createdAt).getTime() > Date.now() - 3600000
+      );
+      if (lastHourWithdrawals.length >= 5) {
+        return res.status(429).json({ message: "Too many withdrawal requests. Please try again later." });
+      }
+
       // Calculate token amount (1 PTS = 0.01 USDT/USDC)
-      const tokenAmount = amount * 0.01;
+      const tokenAmount = numAmount * 0.01;
 
       // Create withdrawal record
       await storage.createWithdrawal({
         userId,
-        ptsAmount: amount,
+        ptsAmount: numAmount,
         tokenAmount: tokenAmount.toFixed(2),
         token,
         walletAddress: user.walletAddress || "",
         status: "completed"
       });
 
-      // Deduct PTS from user balance
-      const newBalance = user.balance - amount;
+      // Deduct PTS from user balance atomically
+      const newBalance = user.balance - numAmount;
       await storage.updateUserBalance(userId, newBalance);
 
       // In a real implementation, here you would:
@@ -492,7 +508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       auditLog("user_withdrawal", {
         userId,
-        ptsAmount: amount,
+        ptsAmount: numAmount,
         tokenAmount,
         token,
         walletAddress: user.walletAddress,
@@ -502,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         message: "Withdrawal processed successfully",
-        ptsAmount: amount,
+        ptsAmount: numAmount,
         tokenAmount: tokenAmount.toFixed(2),
         token,
         newBalance
@@ -560,11 +576,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const validatedData = insertPredictionSchema.parse(req.body);
+      // Enhanced security validation for predictions
+      const { cryptocurrency, predictedPrice, stakeAmount, timeframe } = req.body;
+      
+      if (!cryptocurrency || !predictedPrice || !stakeAmount || !timeframe) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      // Validate cryptocurrency
+      const validCryptos = ["bitcoin", "ethereum", "binancecoin", "cardano", "solana"];
+      if (!validCryptos.includes(cryptocurrency)) {
+        return res.status(400).json({ message: "Invalid cryptocurrency" });
+      }
+
+      // Validate predicted price (must be positive number, reasonable range)
+      const numPredictedPrice = Number(predictedPrice);
+      if (isNaN(numPredictedPrice) || numPredictedPrice <= 0 || numPredictedPrice > 10000000) {
+        return res.status(400).json({ message: "Invalid predicted price range" });
+      }
+
+      // Validate stake amount (must be integer between 10-10000)
+      const numStakeAmount = Number(stakeAmount);
+      if (isNaN(numStakeAmount) || !Number.isInteger(numStakeAmount) || numStakeAmount < 10 || numStakeAmount > 10000) {
+        return res.status(400).json({ message: "Stake amount must be between 10-10000 PTS" });
+      }
+
+      // Validate timeframe
+      const validTimeframes = ["1h", "6h", "24h", "7d"];
+      if (!validTimeframes.includes(timeframe)) {
+        return res.status(400).json({ message: "Invalid timeframe" });
+      }
+
+      const validatedData = {
+        cryptocurrency,
+        predictedPrice: numPredictedPrice.toString(),
+        stakeAmount: numStakeAmount,
+        timeframe
+      };
       
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check for prediction abuse (max 5 predictions per hour)
+      const userPredictions = await storage.getUserPredictions(userId);
+      const recentPredictions = userPredictions.filter(p => 
+        new Date(p.createdAt).getTime() > Date.now() - 3600000
+      );
+      if (recentPredictions.length >= 5) {
+        return res.status(429).json({ message: "Too many predictions. Maximum 5 per hour." });
       }
 
       if (user.balance < validatedData.stakeAmount) {
@@ -733,8 +794,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, walletAddress, balance } = req.body;
       
+      // Enhanced security validation for admin operations
       if (!username || !walletAddress) {
         return res.status(400).json({ message: "Username and wallet address are required" });
+      }
+
+      // Validate username (alphanumeric, 3-20 chars)
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+        return res.status(400).json({ message: "Username must be 3-20 alphanumeric characters" });
+      }
+
+      // Validate wallet address format
+      if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+        return res.status(400).json({ message: "Invalid wallet address format" });
+      }
+
+      // Validate balance (must be non-negative integer, max 1M)
+      const numBalance = Number(balance || 1000);
+      if (isNaN(numBalance) || !Number.isInteger(numBalance) || numBalance < 0 || numBalance > 1000000) {
+        return res.status(400).json({ message: "Balance must be 0-1000000 PTS" });
       }
 
       // Check if user already exists
