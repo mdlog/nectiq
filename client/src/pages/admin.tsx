@@ -158,31 +158,45 @@ export default function AdminPanel() {
                 Admin access requires wallet authentication with an authorized address.
               </p>
               <div className="space-y-2">
-                <form onSubmit={(e) => {
+                <form onSubmit={async (e) => {
                   e.preventDefault();
                   const walletInput = e.currentTarget.elements.namedItem('walletAddress') as HTMLInputElement;
                   if (walletInput.value.trim()) {
-                    apiRequest('/api/admin/authenticate', {
-                      method: 'POST',
-                      body: JSON.stringify({ walletAddress: walletInput.value.trim() }),
-                      headers: { 'Content-Type': 'application/json' }
-                    }).then(() => {
-                      window.location.reload();
-                    }).catch(error => {
+                    try {
+                      const response = await fetch('/api/admin/authenticate', {
+                        method: 'POST',
+                        body: JSON.stringify({ walletAddress: walletInput.value.trim() }),
+                        headers: { 'Content-Type': 'application/json' }
+                      });
+                      
+                      if (response.ok) {
+                        window.location.reload();
+                      } else {
+                        const error = await response.json();
+                        toast({
+                          title: "Authentication Failed",
+                          description: error.message || "Invalid admin wallet address",
+                          variant: "destructive",
+                        });
+                      }
+                    } catch (error) {
                       toast({
                         title: "Authentication Failed",
-                        description: error.message || "Invalid admin wallet address",
+                        description: "Failed to authenticate. Please check your wallet address.",
                         variant: "destructive",
                       });
-                    });
+                    }
                   }
                 }} className="space-y-3">
                   <Input 
                     name="walletAddress"
-                    placeholder="Enter admin wallet address"
+                    placeholder="0x4c6165286739696849fb3e77a16b0639d762c5b6"
                     className="w-full"
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the authorized admin wallet address
+                  </p>
                   <Button type="submit" className="w-full">
                     Authenticate as Admin
                   </Button>
