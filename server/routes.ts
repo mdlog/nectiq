@@ -445,13 +445,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/cryptocurrencies", requireAdmin, async (req, res) => {
     try {
-      const cryptoData = insertCryptocurrencySchema.parse(req.body);
+      const { cryptoId } = req.body;
+      
+      if (!cryptoId || typeof cryptoId !== 'string') {
+        return res.status(400).json({ message: "Cryptocurrency ID is required" });
+      }
+
+      // Fetch data from CoinGecko API
+      const response = await fetch(`https://api.coingecko.com/api/v3/coins/${cryptoId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          return res.status(404).json({ message: "Cryptocurrency not found on CoinGecko. Please check the ID." });
+        }
+        throw new Error(`CoinGecko API error: ${response.status}`);
+      }
+
+      const coinData = await response.json();
+      
+      // Extract relevant data
+      const cryptoData = {
+        id: coinData.id,
+        name: coinData.name,
+        symbol: coinData.symbol.toUpperCase(),
+        currentPrice: coinData.market_data?.current_price?.usd || 0,
+        priceChange24h: coinData.market_data?.price_change_percentage_24h || 0,
+      };
+
       const newCrypto = await storage.upsertCryptocurrency(cryptoData);
       
       auditLog('admin_crypto_added', { 
         cryptoId: newCrypto.id, 
         name: newCrypto.name,
-        symbol: newCrypto.symbol 
+        symbol: newCrypto.symbol,
+        source: 'coingecko_api'
       }, req);
       
       res.json(newCrypto);
@@ -460,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid cryptocurrency data", errors: error.errors });
       } else {
-        res.status(500).json({ message: "Failed to add cryptocurrency" });
+        res.status(500).json({ message: "Failed to add cryptocurrency. Please check the ID and try again." });
       }
     }
   });

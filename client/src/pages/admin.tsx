@@ -24,13 +24,7 @@ interface AdminStats {
 }
 
 export default function AdminPanel() {
-  const [newCrypto, setNewCrypto] = useState({
-    id: "",
-    name: "",
-    symbol: "",
-    currentPrice: "",
-    priceChange24h: ""
-  });
+  const [newCryptoId, setNewCryptoId] = useState("");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -65,25 +59,24 @@ export default function AdminPanel() {
   });
 
   const addCryptoMutation = useMutation({
-    mutationFn: async (cryptoData: typeof newCrypto) => {
+    mutationFn: async (cryptoId: string) => {
       const response = await fetch("/api/admin/cryptocurrencies", {
         method: "POST",
-        body: JSON.stringify({
-          ...cryptoData,
-          currentPrice: parseFloat(cryptoData.currentPrice),
-          priceChange24h: parseFloat(cryptoData.priceChange24h),
-        }),
+        body: JSON.stringify({ cryptoId }),
         headers: { "Content-Type": "application/json" },
       });
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to add cryptocurrency");
+      }
       return response.json();
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Cryptocurrency added successfully",
+        description: "Cryptocurrency added successfully from CoinGecko",
       });
-      setNewCrypto({ id: "", name: "", symbol: "", currentPrice: "", priceChange24h: "" });
+      setNewCryptoId("");
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cryptocurrencies"] });
       queryClient.invalidateQueries({ queryKey: ["/api/crypto/prices"] });
     },
@@ -123,15 +116,15 @@ export default function AdminPanel() {
 
   const handleAddCrypto = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCrypto.id || !newCrypto.name || !newCrypto.symbol || !newCrypto.currentPrice) {
+    if (!newCryptoId.trim()) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please enter a CoinGecko cryptocurrency ID",
         variant: "destructive",
       });
       return;
     }
-    addCryptoMutation.mutate(newCrypto);
+    addCryptoMutation.mutate(newCryptoId.trim().toLowerCase());
   };
 
   // Check if user lacks admin permissions
@@ -358,69 +351,41 @@ export default function AdminPanel() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddCrypto} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="crypto-id">ID (CoinGecko)</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="crypto-id">CoinGecko ID</Label>
                         <Input
                           id="crypto-id"
-                          placeholder="e.g., dogecoin"
-                          value={newCrypto.id}
-                          onChange={(e) => setNewCrypto({ ...newCrypto, id: e.target.value })}
+                          placeholder="e.g., dogecoin, shiba-inu, pepe"
+                          value={newCryptoId}
+                          onChange={(e) => setNewCryptoId(e.target.value)}
                           required
                         />
+                        <p className="text-sm text-slate-400">
+                          Enter the CoinGecko ID of the cryptocurrency. All other data will be fetched automatically.
+                        </p>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="crypto-name">Name</Label>
-                        <Input
-                          id="crypto-name"
-                          placeholder="e.g., Dogecoin"
-                          value={newCrypto.name}
-                          onChange={(e) => setNewCrypto({ ...newCrypto, name: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="crypto-symbol">Symbol</Label>
-                        <Input
-                          id="crypto-symbol"
-                          placeholder="e.g., DOGE"
-                          value={newCrypto.symbol}
-                          onChange={(e) => setNewCrypto({ ...newCrypto, symbol: e.target.value.toUpperCase() })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="crypto-price">Current Price ($)</Label>
-                        <Input
-                          id="crypto-price"
-                          type="number"
-                          step="0.000001"
-                          placeholder="0.00"
-                          value={newCrypto.currentPrice}
-                          onChange={(e) => setNewCrypto({ ...newCrypto, currentPrice: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="crypto-change">24h Change (%)</Label>
-                        <Input
-                          id="crypto-change"
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={newCrypto.priceChange24h}
-                          onChange={(e) => setNewCrypto({ ...newCrypto, priceChange24h: e.target.value })}
-                        />
+                      <div className="flex items-end">
+                        <Button 
+                          type="submit" 
+                          className="w-full"
+                          disabled={addCryptoMutation.isPending}
+                        >
+                          {addCryptoMutation.isPending ? "Adding..." : "Add from CoinGecko"}
+                        </Button>
                       </div>
                     </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full md:w-auto"
-                      disabled={addCryptoMutation.isPending}
-                    >
-                      {addCryptoMutation.isPending ? "Adding..." : "Add Cryptocurrency"}
-                    </Button>
                   </form>
+                  
+                  {/* Help Section */}
+                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How to find CoinGecko ID:</h4>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>1. Go to coingecko.com and search for your cryptocurrency</li>
+                      <li>2. Look at the URL: coingecko.com/en/coins/<strong>cryptocurrency-id</strong></li>
+                      <li>3. Use that ID here (e.g., "bitcoin", "ethereum", "dogecoin")</li>
+                    </ul>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -453,9 +418,9 @@ export default function AdminPanel() {
                           <div className="text-center">
                             <p className="text-sm text-slate-400">24h Change</p>
                             <p className={`font-semibold ${
-                              (crypto.priceChange24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'
+                              Number(crypto.priceChange24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'
                             }`}>
-                              {crypto.priceChange24h ? `${crypto.priceChange24h.toFixed(2)}%` : 'N/A'}
+                              {crypto.priceChange24h ? `${Number(crypto.priceChange24h).toFixed(2)}%` : 'N/A'}
                             </p>
                           </div>
                           <div className="text-center">
