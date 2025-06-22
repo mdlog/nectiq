@@ -8,8 +8,9 @@ import { z } from "zod";
 
 // Authorized admin wallet addresses - add your wallet addresses here
 const ADMIN_WALLET_ADDRESSES = [
-  "0x742d35Cc6634C0532925a3b8D489C73a4AE38f1e", // Example admin wallet
-  "0x8ba1f109551bD432803012645Hac136c2a512bEe",  // Example admin wallet 2
+  // Add your admin wallet addresses here (lowercase format)
+  // Example: "0x742d35cc6634c0532925a3b8d489c73a4ae38f1e",
+  // Example: "0x8ba1f109551bd432803012645hac136c2a512bee",
 ];
 
 // Admin authentication middleware
@@ -352,6 +353,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(recentActivity);
     } catch (error) {
       res.status(500).json({ message: "Failed to get recent activity" });
+    }
+  });
+
+  // Check admin status for current user
+  app.get("/api/admin/check", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.json({ isAdmin: false, reason: "Not authenticated" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.json({ isAdmin: false, reason: "User not found" });
+      }
+
+      const isAuthorizedAdmin = user.walletAddress && 
+        ADMIN_WALLET_ADDRESSES.includes(user.walletAddress.toLowerCase());
+      
+      res.json({ 
+        isAdmin: isAuthorizedAdmin || user.isAdmin,
+        walletAddress: user.walletAddress,
+        reason: isAuthorizedAdmin ? "Authorized wallet" : user.isAdmin ? "Admin flag" : "No admin access"
+      });
+    } catch (error) {
+      console.error("Admin check error:", error);
+      res.status(500).json({ message: "Error checking admin status" });
     }
   });
 

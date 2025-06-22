@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { User, Prediction, Reward } from "@shared/schema";
 import type { LeaderboardEntry } from "@/types";
 
@@ -18,25 +19,74 @@ interface AdminStats {
 }
 
 export default function AdminPanel() {
-  const { data: stats } = useQuery<AdminStats>({
+  const { data: stats, error: statsError, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
+    retry: false,
   });
 
-  const { data: users = [] } = useQuery<User[]>({
+  const { data: users = [], error: usersError } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+    retry: false,
   });
 
-  const { data: predictions = [] } = useQuery<Prediction[]>({
+  const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
     queryKey: ["/api/admin/predictions"],
+    retry: false,
   });
 
   const { data: leaderboard = [] } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/leaderboard"],
   });
 
-  const { data: recentActivity = [] } = useQuery<Prediction[]>({
+  const { data: recentActivity = [], error: activityError } = useQuery<Prediction[]>({
     queryKey: ["/api/admin/activity"],
+    retry: false,
   });
+
+  // Check if user lacks admin permissions
+  const isUnauthorized = (statsError as any)?.message?.includes("403") || 
+                         (statsError as any)?.message?.includes("Admin access required") ||
+                         (usersError as any)?.message?.includes("403") ||
+                         (predictionsError as any)?.message?.includes("403") ||
+                         (activityError as any)?.message?.includes("403");
+
+  if (isUnauthorized) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex-1 flex items-center justify-center p-6">
+          <Card className="max-w-md mx-auto">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+                <Lock className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <CardTitle className="text-xl font-bold text-red-600 dark:text-red-400">
+                Akses Ditolak
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Hanya pengguna dengan wallet tertentu yang dapat mengakses panel admin.
+                </AlertDescription>
+              </Alert>
+              <p className="text-sm text-muted-foreground">
+                Silakan hubungi administrator untuk mendapatkan akses ke panel admin.
+              </p>
+              <Button 
+                onClick={() => window.location.href = '/'}
+                variant="outline"
+                className="w-full"
+              >
+                Kembali ke Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const formatTimeAgo = (date: Date | string) => {
     const now = new Date();
