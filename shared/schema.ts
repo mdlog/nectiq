@@ -83,11 +83,14 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const insertPredictionSchema = createInsertSchema(predictions).omit({
   id: true,
+  userId: true,
   actualPrice: true,
   completedAt: true,
   status: true,
   rewardAmount: true,
   accuracy: true,
+  targetTime: true,
+  createdAt: true,
 }).extend({
   timeframe: z.enum(["1h", "6h", "24h", "7d"]),
   cryptocurrency: z.enum(["bitcoin", "ethereum", "binancecoin", "cardano", "solana"]),
