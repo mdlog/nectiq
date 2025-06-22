@@ -471,6 +471,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate token amount (1 PTS = 0.01 USDT/USDC)
       const tokenAmount = amount * 0.01;
 
+      // Create withdrawal record
+      await storage.createWithdrawal({
+        userId,
+        ptsAmount: amount,
+        tokenAmount: tokenAmount.toFixed(2),
+        token,
+        walletAddress: user.walletAddress,
+        status: "completed"
+      });
+
       // Deduct PTS from user balance
       const newBalance = user.balance - amount;
       await storage.updateUserBalance(userId, newBalance);

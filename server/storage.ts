@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count } from "drizzle-orm";
 
@@ -55,6 +55,10 @@ export interface IStorage {
 
   // Leaderboard operations
   getTopPredictors(limit?: number): Promise<User[]>;
+
+  // Withdrawal operations
+  createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
+  getUserWithdrawals(userId: number, limit?: number): Promise<Withdrawal[]>;
 
   // User management operations
   deleteUser(id: number): Promise<void>;
@@ -186,12 +190,27 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).orderBy(desc(users.totalRewards)).limit(limit);
   }
 
+  async createWithdrawal(insertWithdrawal: InsertWithdrawal): Promise<Withdrawal> {
+    const [withdrawal] = await db
+      .insert(withdrawals)
+      .values(insertWithdrawal)
+      .returning();
+    return withdrawal;
+  }
+
+  async getUserWithdrawals(userId: number, limit: number = 10): Promise<Withdrawal[]> {
+    return await db.select().from(withdrawals).where(eq(withdrawals.userId, userId)).orderBy(desc(withdrawals.createdAt)).limit(limit);
+  }
+
   async deleteUser(id: number): Promise<void> {
     // Delete user's predictions first (cascade)
     await db.delete(predictions).where(eq(predictions.userId, id));
     
     // Delete user's rewards
     await db.delete(rewards).where(eq(rewards.userId, id));
+    
+    // Delete user's withdrawals
+    await db.delete(withdrawals).where(eq(withdrawals.userId, id));
     
     // Delete the user
     await db.delete(users).where(eq(users.id, id));
@@ -203,18 +222,22 @@ export class MemStorage implements IStorage {
   private predictions: Map<number, Prediction>;
   private cryptocurrencies: Map<string, Cryptocurrency>;
   private rewards: Map<number, Reward>;
+  private withdrawals: Map<number, Withdrawal>;
   private currentUserId: number;
   private currentPredictionId: number;
   private currentRewardId: number;
+  private currentWithdrawalId: number;
 
   constructor() {
     this.users = new Map();
     this.predictions = new Map();
     this.cryptocurrencies = new Map();
     this.rewards = new Map();
+    this.withdrawals = new Map();
     this.currentUserId = 1;
     this.currentPredictionId = 1;
     this.currentRewardId = 1;
+    this.currentWithdrawalId = 1;
 
     // Create default users with some test data
     this.createUser({ username: "demo", password: "demo" });
@@ -389,6 +412,23 @@ export class MemStorage implements IStorage {
     this.cryptocurrencies.delete(id);
   }
 
+  async createWithdrawal(insertWithdrawal: InsertWithdrawal): Promise<Withdrawal> {
+    const withdrawal: Withdrawal = {
+      id: this.currentWithdrawalId++,
+      ...insertWithdrawal,
+      createdAt: new Date(),
+    };
+    this.withdrawals.set(withdrawal.id, withdrawal);
+    return withdrawal;
+  }
+
+  async getUserWithdrawals(userId: number, limit: number = 10): Promise<Withdrawal[]> {
+    return Array.from(this.withdrawals.values())
+      .filter(w => w.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
   async deleteUser(id: number): Promise<void> {
     // Delete user's predictions
     const userPredictions = Array.from(this.predictions.values()).filter(p => p.userId === id);
@@ -397,6 +437,10 @@ export class MemStorage implements IStorage {
     // Delete user's rewards  
     const userRewards = Array.from(this.rewards.values()).filter(r => r.userId === id);
     userRewards.forEach(r => this.rewards.delete(r.id));
+    
+    // Delete user's withdrawals
+    const userWithdrawals = Array.from(this.withdrawals.values()).filter(w => w.userId === id);
+    userWithdrawals.forEach(w => this.withdrawals.delete(w.id));
     
     // Delete the user
     this.users.delete(id);
