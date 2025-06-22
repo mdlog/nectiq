@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChartLine, Coins, User } from "lucide-react";
+import { ChartLine, Coins, User, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAccount } from 'wagmi';
 import type { User as UserType } from "@shared/schema";
 
 export function Header() {

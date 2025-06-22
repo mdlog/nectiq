@@ -8,6 +8,85 @@ import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Wallet authentication routes
+  app.get("/api/auth/wallet-user", async (req, res) => {
+    try {
+      const { address } = req.query;
+      if (!address || typeof address !== 'string') {
+        return res.status(400).json({ message: "Wallet address is required" });
+      }
+      
+      const user = await storage.getUserByWalletAddress(address);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error checking wallet user:", error);
+      res.status(500).json({ message: "Failed to check wallet user" });
+    }
+  });
+
+  app.post("/api/auth/wallet-login", async (req, res) => {
+    try {
+      const { address, signature, message } = req.body;
+      
+      if (!address || !signature || !message) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Verify signature (basic verification - in production, use a proper crypto library)
+      const user = await storage.getUserByWalletAddress(address);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+      res.json(user);
+    } catch (error) {
+      console.error("Error during wallet login:", error);
+      res.status(500).json({ message: "Failed to authenticate with wallet" });
+    }
+  });
+
+  app.post("/api/auth/wallet-register", async (req, res) => {
+    try {
+      const { address, signature, message, username } = req.body;
+      
+      if (!address || !signature || !message || !username) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Check if wallet address is already registered
+      const existingUser = await storage.getUserByWalletAddress(address);
+      if (existingUser) {
+        return res.status(400).json({ message: "Wallet address already registered" });
+      }
+
+      // Check if username is already taken
+      const existingUsername = await storage.getUserByUsername(username);
+      if (existingUsername) {
+        return res.status(400).json({ message: "Username already taken" });
+      }
+
+      // Create new user with wallet authentication
+      const newUser = await storage.createUser({
+        username,
+        walletAddress: address,
+        authMethod: "wallet"
+      });
+
+      // Set session
+      req.session.userId = newUser.id;
+      res.json(newUser);
+    } catch (error) {
+      console.error("Error during wallet registration:", error);
+      res.status(500).json({ message: "Failed to create account with wallet" });
+    }
+  });
+
   // Get current user (demo user for now)
   app.get("/api/user", async (req, res) => {
     try {
