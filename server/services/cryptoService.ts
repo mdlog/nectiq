@@ -7,6 +7,7 @@ export interface CryptoPrice {
   name: string;
   current_price: number;
   price_change_percentage_24h: number;
+  image?: string;
 }
 
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
@@ -30,25 +31,25 @@ export class CryptoService {
     // Try to fetch real prices every minute to avoid rate limits
     if (now - this.lastFetchTime > this.CACHE_DURATION) {
       try {
-        const response = await axios.get(`${COINGECKO_API_BASE}/simple/price`, {
+        const response = await axios.get(`${COINGECKO_API_BASE}/coins/markets`, {
           params: {
             ids: SUPPORTED_CRYPTOCURRENCIES.join(','),
-            vs_currencies: 'usd',
-            include_24hr_change: true
+            vs_currency: 'usd',
+            order: 'market_cap_desc',
+            per_page: 10,
+            page: 1,
+            sparkline: false
           }
         });
 
-        this.cachedRealPrices = [];
-        for (const [id, data] of Object.entries(response.data)) {
-          const priceData = data as any;
-          this.cachedRealPrices.push({
-            id,
-            symbol: this.getSymbolFromId(id),
-            name: this.getNameFromId(id),
-            current_price: priceData.usd,
-            price_change_percentage_24h: priceData.usd_24h_change || 0
-          });
-        }
+        this.cachedRealPrices = response.data.map((coin: any) => ({
+          id: coin.id,
+          symbol: coin.symbol.toUpperCase(),
+          name: coin.name,
+          current_price: coin.current_price,
+          price_change_percentage_24h: coin.price_change_percentage_24h || 0,
+          image: coin.image
+        }));
         
         this.lastFetchTime = now;
         console.log('✅ Successfully fetched real crypto prices from CoinGecko');
@@ -172,35 +173,40 @@ export class CryptoService {
         symbol: 'BTC',
         name: 'Bitcoin',
         current_price: 67500 + (timeVariation * 500) + (microVariation * 67500),
-        price_change_percentage_24h: 1.85 + (timeVariation * 0.5)
+        price_change_percentage_24h: 1.85 + (timeVariation * 0.5),
+        image: 'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png'
       },
       {
         id: 'ethereum',
         symbol: 'ETH',
         name: 'Ethereum',
         current_price: 3850 + (timeVariation * 80) + (microVariation * 3850),
-        price_change_percentage_24h: -0.75 + (timeVariation * 0.4)
+        price_change_percentage_24h: -0.75 + (timeVariation * 0.4),
+        image: 'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png'
       },
       {
         id: 'binancecoin',
         symbol: 'BNB',
         name: 'Binance Coin',
         current_price: 615 + (timeVariation * 12) + (microVariation * 615),
-        price_change_percentage_24h: 0.65 + (timeVariation * 0.3)
+        price_change_percentage_24h: 0.65 + (timeVariation * 0.3),
+        image: 'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png'
       },
       {
         id: 'cardano',
         symbol: 'ADA',
         name: 'Cardano',
         current_price: 0.48 + (timeVariation * 0.01) + (microVariation * 0.48),
-        price_change_percentage_24h: -1.12 + (timeVariation * 0.6)
+        price_change_percentage_24h: -1.12 + (timeVariation * 0.6),
+        image: 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png'
       },
       {
         id: 'solana',
         symbol: 'SOL',
         name: 'Solana',
         current_price: 168 + (timeVariation * 8) + (microVariation * 168),
-        price_change_percentage_24h: 2.45 + (timeVariation * 0.7)
+        price_change_percentage_24h: 2.45 + (timeVariation * 0.7),
+        image: 'https://coin-images.coingecko.com/coins/images/4128/large/solana.png'
       }
     ];
   }

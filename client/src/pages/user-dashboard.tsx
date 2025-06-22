@@ -582,7 +582,21 @@ export default function UserDashboard() {
                           )}
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-3">
-                              <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full flex items-center justify-center text-white text-sm font-bold`}>
+                              {crypto.image ? (
+                                <img 
+                                  src={crypto.image} 
+                                  alt={crypto.name}
+                                  className="w-8 h-8 rounded-full"
+                                  onError={(e) => {
+                                    // Fallback to colored icon if image fails to load
+                                    const target = e.target as HTMLElement;
+                                    target.style.display = 'none';
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) fallback.style.display = 'flex';
+                                  }}
+                                />
+                              ) : null}
+                              <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full flex items-center justify-center text-white text-sm font-bold ${crypto.image ? 'hidden' : ''}`}>
                                 {getCryptoIcon(crypto.id)}
                               </div>
                               <div>
