@@ -16,8 +16,8 @@ export function Footer() {
               <h3 className="text-xl font-bold">CryptoPredikt</h3>
             </div>
             <p className="text-slate-400 mb-4 max-w-md">
-              Platform prediksi harga cryptocurrency yang gamified. Buat prediksi akurat, 
-              dapatkan reward, dan bersaing di leaderboard global.
+              Gamified cryptocurrency price prediction platform. Make accurate predictions, 
+              earn rewards, and compete on the global leaderboard.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-slate-400 hover:text-white transition-colors">
@@ -38,12 +38,12 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <a href="/" className="text-slate-400 hover:text-white transition-colors">
-                  Beranda
+                  Home
                 </a>
               </li>
               <li>
                 <a href="/dashboard" className="text-slate-400 hover:text-white transition-colors">
-                  Dashboard Saya
+                  My Dashboard
                 </a>
               </li>
               <li>
@@ -53,7 +53,7 @@ export function Footer() {
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                  Riwayat Reward
+                  Reward History
                 </a>
               </li>
             </ul>
@@ -61,30 +61,30 @@ export function Footer() {
 
           {/* Support Links */}
           <div>
-            <h4 className="font-semibold mb-4">Bantuan</h4>
+            <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2">
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <HelpCircle size={16} className="mr-2" />
-                  Cara Bermain
+                  How to Play
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <FileText size={16} className="mr-2" />
-                  Syarat & Ketentuan
+                  Terms & Conditions
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <Shield size={16} className="mr-2" />
-                  Kebijakan Privasi
+                  Privacy Policy
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <Mail size={16} className="mr-2" />
-                  Kontak Support
+                  Contact Support
                 </a>
               </li>
             </ul>
@@ -95,12 +95,12 @@ export function Footer() {
         <div className="border-t border-surface-light mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-slate-400 text-sm mb-4 md:mb-0">
-              © {currentYear} CryptoPredikt. Semua hak dilindungi.
+              © {currentYear} CryptoPredikt. All rights reserved.
             </div>
             <div className="flex flex-wrap gap-6 text-sm text-slate-400">
-              <span>Sistem Scoring Berlapis</span>
+              <span>Tiered Scoring System</span>
               <span>•</span>
-              <span>Reward hingga 5x</span>
+              <span>Up to 5x Rewards</span>
               <span>•</span>
               <span>Real-time Data</span>
             </div>
@@ -110,9 +110,9 @@ export function Footer() {
         {/* Disclaimer */}
         <div className="mt-6 p-4 bg-surface-light rounded-lg border border-slate-600">
           <p className="text-xs text-slate-400 text-center">
-            <strong>Disclaimer:</strong> Platform ini hanya untuk hiburan dan edukasi. 
-            Prediksi cryptocurrency memiliki risiko tinggi. Tidak ada jaminan keuntungan finansial. 
-            Harga cryptocurrency sangat volatil dan dapat berubah drastis.
+            <strong>Disclaimer:</strong> This platform is for entertainment and educational purposes only. 
+            Cryptocurrency prediction carries high risks. No financial gain is guaranteed. 
+            Cryptocurrency prices are highly volatile and can change drastically.
           </p>
         </div>
       </div>
