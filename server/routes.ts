@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { cryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
+import { achievementService } from "./services/achievementService";
+import { dailyChallengeService } from "./services/dailyChallengeService";
 import { insertPredictionSchema, insertCryptocurrencySchema } from "@shared/schema";
 import { z } from "zod";
 import { ethers } from "ethers";
@@ -1250,6 +1252,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Admin check error:", error);
       res.status(500).json({ message: "Error checking admin status" });
+    }
+  });
+
+  // Achievement System Routes
+  app.get("/api/achievements", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const userId = session.userId;
+      
+      // Update achievements first
+      await achievementService.checkAndUpdateAchievements(userId);
+      
+      // Get user achievements
+      const userAchievements = await achievementService.getUserAchievements(userId);
+      res.json(userAchievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  app.get("/api/achievements/all", async (req, res) => {
+    try {
+      const achievements = await achievementService.getAllAchievements();
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching all achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  // Daily Challenges Routes
+  app.get("/api/challenges/today", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const userId = session.userId;
+      
+      // Update challenge progress
+      await dailyChallengeService.updateChallengeProgress(userId);
+      
+      // Get today's challenges
+      const challenges = await dailyChallengeService.getUserTodayChallenges(userId);
+      res.json(challenges);
+    } catch (error) {
+      console.error("Error fetching daily challenges:", error);
+      res.status(500).json({ message: "Failed to fetch daily challenges" });
+    }
+  });
+
+  app.get("/api/challenges/history", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const userId = session.userId;
+      const limit = parseInt(req.query.limit as string) || 7;
+      
+      const history = await dailyChallengeService.getUserChallengeHistory(userId, limit);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching challenge history:", error);
+      res.status(500).json({ message: "Failed to fetch challenge history" });
     }
   });
 
