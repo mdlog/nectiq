@@ -19,7 +19,7 @@ export const users = pgTable("users", {
 export const predictions = pgTable("predictions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  cryptocurrency: varchar("cryptocurrency", { length: 10 }).notNull(),
+  cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(),
   predictedPrice: numeric("predicted_price", { precision: 18, scale: 8 }).notNull(),
   actualPrice: numeric("actual_price", { precision: 18, scale: 8 }),
   stakeAmount: integer("stake_amount").notNull(),
