@@ -48,7 +48,7 @@ export class CryptoService {
           name: coin.name,
           current_price: coin.current_price,
           price_change_percentage_24h: coin.price_change_percentage_24h || 0,
-          image: coin.image
+          image: coin.id === 'solana' ? '/attached_assets/solana_1750613756851.png' : coin.image
         }));
         
         this.lastFetchTime = now;

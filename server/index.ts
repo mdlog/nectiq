@@ -61,6 +61,9 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
+// Serve static files from attached_assets
+app.use('/attached_assets', express.static('attached_assets'));
+
 // Simple rate limiting middleware - adjusted for development
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
