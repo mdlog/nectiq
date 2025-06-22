@@ -6,7 +6,9 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"),
+  walletAddress: text("wallet_address"),
+  authMethod: varchar("auth_method", { length: 20 }).notNull().default("password"), // "password" or "wallet"
   balance: integer("balance").notNull().default(1000),
   totalPredictions: integer("total_predictions").notNull().default(0),
   correctPredictions: integer("correct_predictions").notNull().default(0),
