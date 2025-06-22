@@ -1,0 +1,194 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { cryptoService } from "./services/cryptoService";
+import { predictionService } from "./services/predictionService";
+import { insertPredictionSchema } from "@shared/schema";
+import { z } from "zod";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Get current user (demo user for now)
+  app.get("/api/user", async (req, res) => {
+    try {
+      const user = await storage.getUser(1); // Demo user
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get user" });
+    }
+  });
+
+  // Get user statistics
+  app.get("/api/user/stats", async (req, res) => {
+    try {
+      const user = await storage.getUser(1);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const accuracyRate = user.totalPredictions > 0 
+        ? (user.correctPredictions / user.totalPredictions) * 100 
+        : 0;
+
+      const topPredictors = await storage.getTopPredictors();
+      const userRank = topPredictors.findIndex(u => u.id === user.id) + 1;
+
+      res.json({
+        totalPredictions: user.totalPredictions,
+        accuracy: parseFloat(accuracyRate.toFixed(1)),
+        rank: userRank > 0 ? userRank : null,
+        totalRewards: user.totalRewards
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get user stats" });
+    }
+  });
+
+  // Get live cryptocurrency prices
+  app.get("/api/crypto/prices", async (req, res) => {
+    try {
+      const prices = await cryptoService.getCurrentPrices();
+      
+      // Update storage with latest prices
+      for (const price of prices) {
+        await storage.upsertCryptocurrency({
+          id: price.id,
+          symbol: price.symbol,
+          name: price.name,
+          currentPrice: price.current_price.toString(),
+          priceChange24h: price.price_change_percentage_24h.toString()
+        });
+      }
+
+      res.json(prices);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get crypto prices" });
+    }
+  });
+
+  // Create new prediction
+  app.post("/api/predictions", async (req, res) => {
+    try {
+      const validatedData = insertPredictionSchema.parse(req.body);
+      
+      const user = await storage.getUser(1); // Demo user
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.balance < validatedData.stakeAmount) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      const targetTime = predictionService.getTargetTime(validatedData.timeframe);
+
+      const prediction = await storage.createPrediction({
+        ...validatedData,
+        userId: 1, // Demo user
+        targetTime
+      });
+
+      res.json(prediction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid prediction data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create prediction" });
+    }
+  });
+
+  // Get user's active predictions
+  app.get("/api/predictions/active", async (req, res) => {
+    try {
+      const predictions = await storage.getUserPredictions(1); // Demo user
+      const activePredictions = predictions.filter(p => p.status === "pending");
+      
+      // Add current prices and time left
+      const enrichedPredictions = await Promise.all(
+        activePredictions.map(async (prediction) => {
+          const crypto = await storage.getCryptocurrency(prediction.cryptocurrency);
+          const timeLeft = new Date(prediction.targetTime).getTime() - Date.now();
+          
+          return {
+            ...prediction,
+            currentPrice: crypto?.currentPrice || "0",
+            timeLeft: Math.max(0, timeLeft)
+          };
+        })
+      );
+
+      res.json(enrichedPredictions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get active predictions" });
+    }
+  });
+
+  // Get top predictors (leaderboard)
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      const topPredictors = await storage.getTopPredictors(10);
+      
+      const leaderboard = topPredictors.map(user => ({
+        id: user.id,
+        username: user.username,
+        totalPredictions: user.totalPredictions,
+        correctPredictions: user.correctPredictions,
+        accuracy: user.totalPredictions > 0 
+          ? parseFloat(((user.correctPredictions / user.totalPredictions) * 100).toFixed(1))
+          : 0,
+        totalRewards: user.totalRewards
+      }));
+
+      res.json(leaderboard);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get leaderboard" });
+    }
+  });
+
+  // Get recent rewards
+  app.get("/api/rewards/recent", async (req, res) => {
+    try {
+      const rewards = await storage.getRecentRewards(1, 5); // Demo user, last 5 rewards
+      
+      const enrichedRewards = await Promise.all(
+        rewards.map(async (reward) => {
+          const prediction = await storage.getPrediction(reward.predictionId);
+          return {
+            ...reward,
+            cryptocurrency: prediction?.cryptocurrency || "",
+            accuracy: prediction?.accuracy || "0"
+          };
+        })
+      );
+
+      res.json(enrichedRewards);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get recent rewards" });
+    }
+  });
+
+  // Process expired predictions (manual trigger)
+  app.post("/api/predictions/process", async (req, res) => {
+    try {
+      await predictionService.checkAndProcessExpiredPredictions();
+      res.json({ message: "Predictions processed successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to process predictions" });
+    }
+  });
+
+  // Start background task to check predictions every minute
+  setInterval(async () => {
+    try {
+      await predictionService.checkAndProcessExpiredPredictions();
+    } catch (error) {
+      console.error("Error in prediction processing background task:", error);
+    }
+  }, 60000); // Check every minute
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
