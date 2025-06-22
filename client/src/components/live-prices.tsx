@@ -62,7 +62,9 @@ export function LivePrices() {
       </h3>
       
       <div className="space-y-3">
-        {prices.map((crypto) => {
+        {prices
+          .sort((a, b) => b.current_price - a.current_price)
+          .map((crypto) => {
           const isPositive = crypto.price_change_percentage_24h >= 0;
           
           return (
