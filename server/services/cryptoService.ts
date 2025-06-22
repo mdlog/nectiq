@@ -69,13 +69,14 @@ export class CryptoService {
       // Get all cryptocurrencies from database
       const dbCryptos = await storage.getAllCryptocurrencies();
       
-      // Convert database cryptos to CryptoPrice format
+      // Convert database cryptos to CryptoPrice format with proper image URLs
       const dbPrices: CryptoPrice[] = dbCryptos.map(crypto => ({
         id: crypto.id,
         symbol: crypto.symbol,
         name: crypto.name,
         current_price: parseFloat(crypto.currentPrice || '0'),
-        price_change_percentage_24h: parseFloat(crypto.priceChange24h || '0')
+        price_change_percentage_24h: parseFloat(crypto.priceChange24h || '0'),
+        image: this.getCryptoImageUrl(crypto.id)
       }));
       
       // If we have real cached prices from CoinGecko, merge them
@@ -158,6 +159,32 @@ export class CryptoService {
       'solana': 'Solana'
     };
     return mapping[id] || id;
+  }
+
+  private getCryptoImageUrl(coinId: string): string {
+    // Special case for Solana - use custom gradient logo
+    if (coinId === 'solana') {
+      return '/attached_assets/solana_1750613756851.png';
+    }
+    
+    // Map of CoinGecko IDs to their image IDs for accurate logo fetching
+    const imageIdMap: { [key: string]: string } = {
+      'bitcoin': '1',
+      'ethereum': '279', 
+      'binancecoin': '825',
+      'cardano': '975',
+      'solana': '4128',
+      'avalanche-2': '12559',
+      'ripple': '44',
+      'dogecoin': '5',
+      'polygon': '4713',
+      'chainlink': '877',
+      'litecoin': '2',
+      'shiba-inu': '11939'
+    };
+    
+    const imageId = imageIdMap[coinId] || '1'; // Default to Bitcoin if not found
+    return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${coinId}.png`;
   }
 
   private getFallbackPrices(): CryptoPrice[] {
