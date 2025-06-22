@@ -8,6 +8,8 @@ export function Header() {
   const { data: user } = useQuery<UserType>({
     queryKey: ["/api/user"],
   });
+  
+  const { address, isConnected } = useAccount();
 
   return (
     <header className="bg-surface border-b border-surface-light">
@@ -34,9 +36,35 @@ export function Header() {
               <span className="font-semibold">{user?.balance?.toLocaleString() || "0"}</span>
               <span className="text-xs text-slate-400">PTS</span>
             </div>
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <User className="text-white" size={16} />
-            </div>
+            
+            {isConnected && address ? (
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-3 py-1 rounded-lg border border-green-200 dark:border-green-800">
+                  <Wallet className="text-green-600 dark:text-green-400" size={16} />
+                  <span className="text-xs font-mono text-green-700 dark:text-green-300">
+                    {address.slice(0, 6)}...{address.slice(-4)}
+                  </span>
+                </div>
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                  <User className="text-white" size={16} />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.href = '/wallet-login'}
+                  className="flex items-center space-x-2"
+                >
+                  <Wallet size={16} />
+                  <span>Connect Wallet</span>
+                </Button>
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                  <User className="text-white" size={16} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
