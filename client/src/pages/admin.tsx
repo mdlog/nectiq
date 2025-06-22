@@ -26,6 +26,7 @@ interface AdminStats {
 
 export default function AdminPanel() {
   const [newCryptoId, setNewCryptoId] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -134,6 +135,11 @@ export default function AdminPanel() {
                          (usersError as any)?.message?.includes("401") ||
                          (predictionsError as any)?.message?.includes("401") ||
                          (activityError as any)?.message?.includes("401");
+
+  // Show simplified authentication if not authenticated
+  if (!isAuthenticated && isUnauthorized) {
+    return <SimpleAdminAuth onAuthSuccess={() => setIsAuthenticated(true)} />;
+  }
 
   if (isUnauthorized) {
     return (
