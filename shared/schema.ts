@@ -51,10 +51,22 @@ export const rewards = pgTable("rewards", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const withdrawals = pgTable("withdrawals", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  ptsAmount: integer("pts_amount").notNull(),
+  tokenAmount: varchar("token_amount", { length: 50 }).notNull(),
+  token: varchar("token", { length: 10 }).notNull(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("completed"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   predictions: many(predictions),
   rewards: many(rewards),
+  withdrawals: many(withdrawals),
 }));
 
 export const predictionsRelations = relations(predictions, ({ one, many }) => ({
@@ -73,6 +85,13 @@ export const rewardsRelations = relations(rewards, ({ one }) => ({
   prediction: one(predictions, {
     fields: [rewards.predictionId],
     references: [predictions.id],
+  }),
+}));
+
+export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
+  user: one(users, {
+    fields: [withdrawals.userId],
+    references: [users.id],
   }),
 }));
 
@@ -107,6 +126,11 @@ export const insertRewardSchema = createInsertSchema(rewards).omit({
   id: true,
 });
 
+export const insertWithdrawalSchema = createInsertSchema(withdrawals).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -119,3 +143,6 @@ export type InsertCryptocurrency = z.infer<typeof insertCryptocurrencySchema>;
 
 export type Reward = typeof rewards.$inferSelect;
 export type InsertReward = z.infer<typeof insertRewardSchema>;
+
+export type Withdrawal = typeof withdrawals.$inferSelect;
+export type InsertWithdrawal = z.infer<typeof insertWithdrawalSchema>;
