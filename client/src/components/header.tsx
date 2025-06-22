@@ -96,7 +96,9 @@ export function Header() {
             <a href="/dashboard" className="text-slate-300 hover:text-white transition-colors">My Dashboard</a>
             <a href="/leaderboard" className="text-slate-300 hover:text-white transition-colors">Leaderboard</a>
             <a href="/how-to-play" className="text-slate-300 hover:text-white transition-colors">How to Play</a>
-            <a href="/admin" className="text-primary hover:text-primary/80 transition-colors font-semibold">Admin</a>
+            {address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
+              <a href="/admin" className="text-primary hover:text-primary/80 transition-colors font-semibold">Admin</a>
+            )}
           </nav>
 
           <div className="flex items-center space-x-4">

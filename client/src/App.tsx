@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { WagmiProvider } from 'wagmi';
+import { WagmiProvider, useAccount } from 'wagmi';
 import { createWeb3Modal } from '@web3modal/wagmi';
 import { config, projectId } from './lib/web3Config';
 import Dashboard from "@/pages/dashboard";
@@ -57,13 +57,25 @@ try {
   console.log('Web3Modal initialized with wallet provider conflicts (normal behavior)');
 }
 
+// Protected Admin Component
+function ProtectedAdmin() {
+  const { address } = useAccount();
+  const AUTHORIZED_WALLET = "0x4C6165286739696849Fb3e77A16b0639D762c5B6";
+  
+  if (!address || address.toLowerCase() !== AUTHORIZED_WALLET.toLowerCase()) {
+    return <NotFound />;
+  }
+  
+  return <AdminPanel />;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={UserDashboard} />
       <Route path="/leaderboard" component={Leaderboard} />
-      <Route path="/admin" component={AdminPanel} />
+      <Route path="/admin" component={ProtectedAdmin} />
       <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/terms-conditions" component={TermsConditions} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
