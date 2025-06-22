@@ -2,6 +2,29 @@ import { users, predictions, cryptocurrencies, rewards, type User, type InsertUs
 import { db } from "./db";
 import { eq, desc, count } from "drizzle-orm";
 
+// Generate unique 9-digit UID
+function generateUID(): string {
+  return Math.floor(100000000 + Math.random() * 900000000).toString();
+}
+
+// Check if UID already exists and generate a new one if needed
+async function generateUniqueUID(): Promise<string> {
+  let uid: string;
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  do {
+    uid = generateUID();
+    const existingUser = await db.select().from(users).where(eq(users.uid, uid)).limit(1);
+    if (existingUser.length === 0) {
+      return uid;
+    }
+    attempts++;
+  } while (attempts < maxAttempts);
+  
+  throw new Error("Failed to generate unique UID after multiple attempts");
+}
+
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -51,9 +74,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    const uid = await generateUniqueUID();
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values({ ...insertUser, uid })
       .returning();
     return user;
   }
