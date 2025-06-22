@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import type { User } from "@shared/schema";
@@ -122,6 +123,14 @@ export default function UserDashboard() {
                 <span className="text-xs text-slate-400">PTS</span>
               </div>
               {getRankBadge(stats?.rank)}
+              <Button 
+                variant="outline" 
+                className="bg-surface-light border-surface-light" 
+                onClick={() => window.location.href = '/'}
+              >
+                <ArrowLeft className="mr-2" size={16} />
+                Back to App
+              </Button>
             </div>
           </div>
         </div>
