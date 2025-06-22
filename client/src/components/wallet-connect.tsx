@@ -40,13 +40,22 @@ export function WalletConnect() {
 
   const handleDisconnect = async () => {
     try {
-      // First logout from server
+      // First disconnect wallet
+      disconnect();
+      // Then logout from server
       await logoutMutation.mutateAsync();
-      // Then disconnect wallet
-      disconnect();
+      
+      // Force page refresh to ensure wallet state is completely cleared
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error) {
-      // Even if server logout fails, still disconnect wallet
+      // Ensure wallet is disconnected even if server logout fails
       disconnect();
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     }
   };
 

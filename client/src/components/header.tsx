@@ -21,28 +21,46 @@ export function Header() {
       await apiRequest('POST', '/api/auth/logout');
     },
     onSuccess: () => {
+      // Clear all cached data
       queryClient.clear();
-      toast({
-        title: "Disconnected",
-        description: "Wallet disconnected successfully",
-      });
+      // Invalidate specific queries
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
     },
     onError: (error) => {
       console.error("Logout error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to logout properly",
-        variant: "destructive",
-      });
     },
   });
 
   const handleDisconnect = async () => {
     try {
+      // First disconnect wallet
+      disconnect();
+      // Then logout from server
       await logoutMutation.mutateAsync();
-      disconnect();
+      
+      // Force page refresh to ensure wallet state is completely cleared
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+      toast({
+        title: "Disconnected",
+        description: "Wallet disconnected successfully",
+      });
     } catch (error) {
+      console.error("Disconnect error:", error);
+      // Still disconnect wallet even if server call fails
       disconnect();
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+      toast({
+        title: "Disconnected", 
+        description: "Wallet disconnected successfully",
+      });
     }
   };
 
