@@ -73,12 +73,140 @@ export const purchases = pgTable("purchases", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Achievement System Tables
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'prediction_count', 'accuracy', 'streak', 'rewards'
+  target: integer("target").notNull(), // target value to achieve
+  reward: integer("reward").notNull(), // PTS reward
+  icon: varchar("icon", { length: 50 }).notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  achievementId: integer("achievement_id").references(() => achievements.id).notNull(),
+  progress: integer("progress").default(0),
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Daily Challenges Tables
+export const dailyChallenges = pgTable("daily_challenges", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'make_predictions', 'accuracy_target', 'login_streak'
+  target: integer("target").notNull(),
+  reward: integer("reward").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userDailyChallenges = pgTable("user_daily_challenges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  challengeId: integer("challenge_id").references(() => dailyChallenges.id).notNull(),
+  progress: integer("progress").default(0),
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  date: varchar("date", { length: 10 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Referral System Tables
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referrerId: integer("referrer_id").references(() => users.id).notNull(),
+  referredId: integer("referred_id").references(() => users.id).notNull(),
+  referralCode: varchar("referral_code", { length: 20 }).notNull(),
+  reward: integer("reward").default(1000), // 1000 PTS bonus
+  isRewarded: boolean("is_rewarded").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User Analytics Tables
+export const userAnalytics = pgTable("user_analytics", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  predictionsCount: integer("predictions_count").default(0),
+  correctPredictions: integer("correct_predictions").default(0),
+  totalStaked: integer("total_staked").default(0),
+  totalRewards: integer("total_rewards").default(0),
+  winStreak: integer("win_streak").default(0),
+  maxWinStreak: integer("max_win_streak").default(0),
+  loginStreak: integer("login_streak").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   predictions: many(predictions),
   rewards: many(rewards),
   withdrawals: many(withdrawals),
   purchases: many(purchases),
+  achievements: many(userAchievements),
+  dailyChallenges: many(userDailyChallenges),
+  referralsGiven: many(referrals, { relationName: "referrer" }),
+  referralsReceived: many(referrals, { relationName: "referred" }),
+  analytics: many(userAnalytics),
+}));
+
+export const achievementsRelations = relations(achievements, ({ many }) => ({
+  userAchievements: many(userAchievements),
+}));
+
+export const userAchievementsRelations = relations(userAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userAchievements.userId],
+    references: [users.id],
+  }),
+  achievement: one(achievements, {
+    fields: [userAchievements.achievementId],
+    references: [achievements.id],
+  }),
+}));
+
+export const dailyChallengesRelations = relations(dailyChallenges, ({ many }) => ({
+  userChallenges: many(userDailyChallenges),
+}));
+
+export const userDailyChallengesRelations = relations(userDailyChallenges, ({ one }) => ({
+  user: one(users, {
+    fields: [userDailyChallenges.userId],
+    references: [users.id],
+  }),
+  challenge: one(dailyChallenges, {
+    fields: [userDailyChallenges.challengeId],
+    references: [dailyChallenges.id],
+  }),
+}));
+
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  referrer: one(users, {
+    fields: [referrals.referrerId],
+    references: [users.id],
+    relationName: "referrer",
+  }),
+  referred: one(users, {
+    fields: [referrals.referredId],
+    references: [users.id],
+    relationName: "referred",
+  }),
+}));
+
+export const userAnalyticsRelations = relations(userAnalytics, ({ one }) => ({
+  user: one(users, {
+    fields: [userAnalytics.userId],
+    references: [users.id],
+  }),
 }));
 
 export const predictionsRelations = relations(predictions, ({ one, many }) => ({
@@ -173,3 +301,45 @@ export const insertPurchaseSchema = createInsertSchema(purchases).omit({
 
 export type Purchase = typeof purchases.$inferSelect;
 export type InsertPurchase = z.infer<typeof insertPurchaseSchema>;
+
+// Achievement types
+export const insertAchievementSchema = createInsertSchema(achievements);
+export const insertUserAchievementSchema = createInsertSchema(userAchievements).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
+
+// Daily Challenge types
+export const insertDailyChallengeSchema = createInsertSchema(dailyChallenges);
+export const insertUserDailyChallengeSchema = createInsertSchema(userDailyChallenges).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type DailyChallenge = typeof dailyChallenges.$inferSelect;
+export type InsertDailyChallenge = z.infer<typeof insertDailyChallengeSchema>;
+export type UserDailyChallenge = typeof userDailyChallenges.$inferSelect;
+export type InsertUserDailyChallenge = z.infer<typeof insertUserDailyChallengeSchema>;
+
+// Referral types
+export const insertReferralSchema = createInsertSchema(referrals).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = z.infer<typeof insertReferralSchema>;
+
+// Analytics types
+export const insertUserAnalyticsSchema = createInsertSchema(userAnalytics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type UserAnalytics = typeof userAnalytics.$inferSelect;
+export type InsertUserAnalytics = z.infer<typeof insertUserAnalyticsSchema>;
