@@ -416,6 +416,7 @@ export class MemStorage implements IStorage {
     const withdrawal: Withdrawal = {
       id: this.currentWithdrawalId++,
       ...insertWithdrawal,
+      status: insertWithdrawal.status || "completed",
       createdAt: new Date(),
     };
     this.withdrawals.set(withdrawal.id, withdrawal);

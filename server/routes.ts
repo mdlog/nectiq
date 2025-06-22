@@ -477,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ptsAmount: amount,
         tokenAmount: tokenAmount.toFixed(2),
         token,
-        walletAddress: user.walletAddress,
+        walletAddress: user.walletAddress || "",
         status: "completed"
       });
 
@@ -510,6 +510,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Withdrawal error:", error);
       res.status(500).json({ message: "Failed to process withdrawal" });
+    }
+  });
+
+  // Get user withdrawal history
+  app.get("/api/user/withdrawals", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const userId = session.userId;
+      const withdrawals = await storage.getUserWithdrawals(userId, 10);
+      res.json(withdrawals);
+    } catch (error) {
+      console.error("Error fetching withdrawals:", error);
+      res.status(500).json({ message: "Failed to fetch withdrawal history" });
     }
   });
 

@@ -482,15 +482,17 @@ export default function UserDashboard() {
 
           {/* Withdraw Tab */}
           <TabsContent value="withdraw">
-            <Card className="bg-surface border-surface-light">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Wallet className="mr-2" size={20} />
-                  Withdraw PTS to Crypto
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="max-w-md space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Withdrawal Form */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Wallet className="mr-2" size={20} />
+                    Withdraw PTS to Crypto
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
                   {/* Balance Overview */}
                   <div className="p-4 bg-surface-light rounded-lg">
                     <div className="flex items-center justify-between mb-2">
@@ -592,9 +594,23 @@ export default function UserDashboard() {
                     <p>• Minimum withdrawal: 1000 PTS (10.00 {selectedToken})</p>
                     <p>• No withdrawal fees applied</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Withdrawal History */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Clock className="mr-2" size={20} />
+                    Withdrawal History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <WithdrawalHistory />
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
