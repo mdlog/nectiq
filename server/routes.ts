@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { cryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
-import { insertPredictionSchema } from "@shared/schema";
+import { insertPredictionSchema, insertCryptocurrencySchema } from "@shared/schema";
 import { z } from "zod";
 
 // Security audit logging
@@ -428,6 +428,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(recentActivity);
     } catch (error) {
       res.status(500).json({ message: "Failed to get recent activity" });
+    }
+  });
+
+  // Admin cryptocurrency management
+  app.get("/api/admin/cryptocurrencies", requireAdmin, async (req, res) => {
+    try {
+      const cryptocurrencies = await storage.getAllCryptocurrencies();
+      auditLog('admin_crypto_list_viewed', { count: cryptocurrencies.length }, req);
+      res.json(cryptocurrencies);
+    } catch (error) {
+      console.error("Error fetching cryptocurrencies:", error);
+      res.status(500).json({ message: "Failed to fetch cryptocurrencies" });
+    }
+  });
+
+  app.post("/api/admin/cryptocurrencies", requireAdmin, async (req, res) => {
+    try {
+      const cryptoData = insertCryptocurrencySchema.parse(req.body);
+      const newCrypto = await storage.upsertCryptocurrency(cryptoData);
+      
+      auditLog('admin_crypto_added', { 
+        cryptoId: newCrypto.id, 
+        name: newCrypto.name,
+        symbol: newCrypto.symbol 
+      }, req);
+      
+      res.json(newCrypto);
+    } catch (error) {
+      console.error("Error adding cryptocurrency:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid cryptocurrency data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to add cryptocurrency" });
+      }
+    }
+  });
+
+  app.delete("/api/admin/cryptocurrencies/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCryptocurrency(id);
+      
+      auditLog('admin_crypto_deleted', { cryptoId: id }, req);
+      res.json({ message: "Cryptocurrency deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting cryptocurrency:", error);
+      res.status(500).json({ message: "Failed to delete cryptocurrency" });
     }
   });
 

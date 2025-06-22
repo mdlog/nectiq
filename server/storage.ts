@@ -23,6 +23,7 @@ export interface IStorage {
   getCryptocurrency(id: string): Promise<Cryptocurrency | undefined>;
   getAllCryptocurrencies(): Promise<Cryptocurrency[]>;
   upsertCryptocurrency(crypto: InsertCryptocurrency): Promise<Cryptocurrency>;
+  deleteCryptocurrency(id: string): Promise<void>;
 
   // Reward operations
   createReward(reward: InsertReward): Promise<Reward>;
@@ -132,6 +133,10 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return result;
+  }
+
+  async deleteCryptocurrency(id: string): Promise<void> {
+    await db.delete(cryptocurrencies).where(eq(cryptocurrencies.id, id));
   }
 
   async createReward(insertReward: InsertReward): Promise<Reward> {
@@ -329,6 +334,10 @@ export class MemStorage implements IStorage {
         return accuracyB - accuracyA;
       })
       .slice(0, limit);
+  }
+
+  async deleteCryptocurrency(id: string): Promise<void> {
+    this.cryptocurrencies.delete(id);
   }
 }
 
