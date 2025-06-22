@@ -18,6 +18,7 @@ export function WalletLogin({ onLoginSuccess }: WalletLoginProps) {
   const { signMessage, isPending: isSigningPending } = useSignMessage();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const autoRegistrationAttempted = useRef<Set<string>>(new Set());
 
   // Check if user already exists with this wallet
   const { data: existingUser, refetch: checkUser } = useQuery({
@@ -161,8 +162,14 @@ export function WalletLogin({ onLoginSuccess }: WalletLoginProps) {
 
   // Auto-register new wallets when detected
   useEffect(() => {
-    if (isConnected && address && existingUser === null && !autoLoginMutation.isPending) {
+    if (isConnected && 
+        address && 
+        existingUser === null && 
+        !autoLoginMutation.isPending &&
+        !autoRegistrationAttempted.current.has(address)) {
+      
       console.log(`Auto-registering new wallet: ${address}`);
+      autoRegistrationAttempted.current.add(address);
       autoLoginMutation.mutate({ address });
     }
   }, [isConnected, address, existingUser]);
