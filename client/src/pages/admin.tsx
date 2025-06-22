@@ -485,8 +485,18 @@ export default function AdminPanel() {
                       <li>2. Look at the URL: coingecko.com/en/coins/<strong>cryptocurrency-id</strong></li>
                       <li>3. Use that ID here (e.g., "bitcoin", "ethereum", "ripple")</li>
                     </ul>
-                    <div className="mt-3 p-2 bg-blue-100 dark:bg-blue-900/30 rounded text-xs">
-                      <strong>Note:</strong> For XRP, use "ripple" as the CoinGecko ID
+                    <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded">
+                      <p className="text-xs text-yellow-800 dark:text-yellow-200 font-medium mb-2">Common CoinGecko IDs:</p>
+                      <div className="text-xs text-yellow-700 dark:text-yellow-300 grid grid-cols-2 gap-1">
+                        <span>• Avalanche: "avalanche-2"</span>
+                        <span>• Polygon: "matic-network"</span>
+                        <span>• XRP: "ripple"</span>
+                        <span>• Chainlink: "chainlink"</span>
+                        <span>• Dogecoin: "dogecoin"</span>
+                        <span>• Litecoin: "litecoin"</span>
+                        <span>• Polkadot: "polkadot"</span>
+                        <span>• Shiba Inu: "shiba-inu"</span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
