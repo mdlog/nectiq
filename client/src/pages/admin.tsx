@@ -1,12 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { User, Prediction, Reward } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
+import type { User, Prediction, Reward, Cryptocurrency } from "@shared/schema";
 import type { LeaderboardEntry } from "@/types";
 
 interface AdminStats {
@@ -19,6 +24,17 @@ interface AdminStats {
 }
 
 export default function AdminPanel() {
+  const [newCrypto, setNewCrypto] = useState({
+    id: "",
+    name: "",
+    symbol: "",
+    currentPrice: "",
+    priceChange24h: ""
+  });
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: stats, error: statsError, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     retry: false,
@@ -42,6 +58,81 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/activity"],
     retry: false,
   });
+
+  const { data: cryptocurrencies = [] } = useQuery<Cryptocurrency[]>({
+    queryKey: ["/api/admin/cryptocurrencies"],
+    retry: false,
+  });
+
+  const addCryptoMutation = useMutation({
+    mutationFn: async (cryptoData: typeof newCrypto) => {
+      const response = await fetch("/api/admin/cryptocurrencies", {
+        method: "POST",
+        body: JSON.stringify({
+          ...cryptoData,
+          currentPrice: parseFloat(cryptoData.currentPrice),
+          priceChange24h: parseFloat(cryptoData.priceChange24h),
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Cryptocurrency added successfully",
+      });
+      setNewCrypto({ id: "", name: "", symbol: "", currentPrice: "", priceChange24h: "" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/cryptocurrencies"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/crypto/prices"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add cryptocurrency",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCryptoMutation = useMutation({
+    mutationFn: async (cryptoId: string) => {
+      const response = await fetch(`/api/admin/cryptocurrencies/${cryptoId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Cryptocurrency deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/cryptocurrencies"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/crypto/prices"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete cryptocurrency",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddCrypto = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCrypto.id || !newCrypto.name || !newCrypto.symbol || !newCrypto.currentPrice) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    addCryptoMutation.mutate(newCrypto);
+  };
 
   // Check if user lacks admin permissions
   const isUnauthorized = (statsError as any)?.message?.includes("403") || 
@@ -199,6 +290,7 @@ export default function AdminPanel() {
         <Tabs defaultValue="users" className="space-y-4">
           <TabsList className="bg-surface border border-surface-light">
             <TabsTrigger value="users" className="data-[state=active]:bg-primary">Users</TabsTrigger>
+            <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary">Cryptocurrencies</TabsTrigger>
             <TabsTrigger value="predictions" className="data-[state=active]:bg-primary">Predictions</TabsTrigger>
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary">Leaderboard</TabsTrigger>
             <TabsTrigger value="activity" className="data-[state=active]:bg-primary">Recent Activity</TabsTrigger>
@@ -251,6 +343,150 @@ export default function AdminPanel() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Cryptocurrencies Tab */}
+          <TabsContent value="cryptocurrencies">
+            <div className="space-y-6">
+              {/* Add New Cryptocurrency Form */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Plus className="mr-2" size={20} />
+                    Add New Cryptocurrency
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleAddCrypto} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="crypto-id">ID (CoinGecko)</Label>
+                        <Input
+                          id="crypto-id"
+                          placeholder="e.g., dogecoin"
+                          value={newCrypto.id}
+                          onChange={(e) => setNewCrypto({ ...newCrypto, id: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="crypto-name">Name</Label>
+                        <Input
+                          id="crypto-name"
+                          placeholder="e.g., Dogecoin"
+                          value={newCrypto.name}
+                          onChange={(e) => setNewCrypto({ ...newCrypto, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="crypto-symbol">Symbol</Label>
+                        <Input
+                          id="crypto-symbol"
+                          placeholder="e.g., DOGE"
+                          value={newCrypto.symbol}
+                          onChange={(e) => setNewCrypto({ ...newCrypto, symbol: e.target.value.toUpperCase() })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="crypto-price">Current Price ($)</Label>
+                        <Input
+                          id="crypto-price"
+                          type="number"
+                          step="0.000001"
+                          placeholder="0.00"
+                          value={newCrypto.currentPrice}
+                          onChange={(e) => setNewCrypto({ ...newCrypto, currentPrice: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="crypto-change">24h Change (%)</Label>
+                        <Input
+                          id="crypto-change"
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={newCrypto.priceChange24h}
+                          onChange={(e) => setNewCrypto({ ...newCrypto, priceChange24h: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <Button 
+                      type="submit" 
+                      className="w-full md:w-auto"
+                      disabled={addCryptoMutation.isPending}
+                    >
+                      {addCryptoMutation.isPending ? "Adding..." : "Add Cryptocurrency"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Existing Cryptocurrencies List */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Coins className="mr-2" size={20} />
+                    Manage Cryptocurrencies ({cryptocurrencies.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {cryptocurrencies.map((crypto) => (
+                      <div key={crypto.id} className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <span className="text-primary font-bold text-sm">{crypto.symbol}</span>
+                          </div>
+                          <div>
+                            <p className="font-semibold">{crypto.name}</p>
+                            <p className="text-sm text-slate-400">ID: {crypto.id}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-6">
+                          <div className="text-center">
+                            <p className="text-sm text-slate-400">Current Price</p>
+                            <p className="font-semibold">${crypto.currentPrice?.toLocaleString() || 'N/A'}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm text-slate-400">24h Change</p>
+                            <p className={`font-semibold ${
+                              (crypto.priceChange24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'
+                            }`}>
+                              {crypto.priceChange24h ? `${crypto.priceChange24h.toFixed(2)}%` : 'N/A'}
+                            </p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm text-slate-400">Last Updated</p>
+                            <p className="text-sm">
+                              {crypto.lastUpdated ? new Date(crypto.lastUpdated).toLocaleDateString() : 'N/A'}
+                            </p>
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteCryptoMutation.mutate(crypto.id)}
+                            disabled={deleteCryptoMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {cryptocurrencies.length === 0 && (
+                      <div className="text-center py-12">
+                        <Coins className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-slate-300 mb-2">No Cryptocurrencies</h3>
+                        <p className="text-slate-400">Add your first cryptocurrency to get started</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Predictions Tab */}
