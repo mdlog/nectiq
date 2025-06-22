@@ -1,4 +1,6 @@
 import { users, predictions, cryptocurrencies, rewards, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, count } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -28,6 +30,123 @@ export interface IStorage {
 
   // Leaderboard operations
   getTopPredictors(limit?: number): Promise<User[]>;
+}
+
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUserBalance(id: number, balance: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ balance })
+      .where(eq(users.id, id));
+  }
+
+  async updateUserStats(id: number, totalPredictions: number, correctPredictions: number, totalRewards: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ totalPredictions, correctPredictions, totalRewards })
+      .where(eq(users.id, id));
+  }
+
+  async createPrediction(insertPrediction: InsertPrediction): Promise<Prediction> {
+    const [prediction] = await db
+      .insert(predictions)
+      .values(insertPrediction)
+      .returning();
+    return prediction;
+  }
+
+  async getPrediction(id: number): Promise<Prediction | undefined> {
+    const [prediction] = await db.select().from(predictions).where(eq(predictions.id, id));
+    return prediction || undefined;
+  }
+
+  async getUserPredictions(userId: number): Promise<Prediction[]> {
+    return await db.select().from(predictions).where(eq(predictions.userId, userId)).orderBy(desc(predictions.createdAt));
+  }
+
+  async getActivePredictions(): Promise<Prediction[]> {
+    return await db.select().from(predictions).where(eq(predictions.status, "pending"));
+  }
+
+  async updatePredictionResult(id: number, actualPrice: string, accuracy: string, rewardAmount: number, status: string): Promise<void> {
+    await db
+      .update(predictions)
+      .set({ 
+        actualPrice, 
+        accuracy, 
+        rewardAmount, 
+        status, 
+        completedAt: new Date() 
+      })
+      .where(eq(predictions.id, id));
+  }
+
+  async getRecentPredictions(limit: number = 10): Promise<Prediction[]> {
+    return await db.select().from(predictions).orderBy(desc(predictions.createdAt)).limit(limit);
+  }
+
+  async getCryptocurrency(id: string): Promise<Cryptocurrency | undefined> {
+    const [crypto] = await db.select().from(cryptocurrencies).where(eq(cryptocurrencies.id, id));
+    return crypto || undefined;
+  }
+
+  async getAllCryptocurrencies(): Promise<Cryptocurrency[]> {
+    return await db.select().from(cryptocurrencies);
+  }
+
+  async upsertCryptocurrency(crypto: InsertCryptocurrency): Promise<Cryptocurrency> {
+    const [result] = await db
+      .insert(cryptocurrencies)
+      .values({ ...crypto, lastUpdated: new Date() })
+      .onConflictDoUpdate({
+        target: cryptocurrencies.id,
+        set: {
+          currentPrice: crypto.currentPrice,
+          priceChange24h: crypto.priceChange24h,
+          lastUpdated: new Date(),
+        },
+      })
+      .returning();
+    return result;
+  }
+
+  async createReward(insertReward: InsertReward): Promise<Reward> {
+    const [reward] = await db
+      .insert(rewards)
+      .values(insertReward)
+      .returning();
+    return reward;
+  }
+
+  async getUserRewards(userId: number): Promise<Reward[]> {
+    return await db.select().from(rewards).where(eq(rewards.userId, userId)).orderBy(desc(rewards.createdAt));
+  }
+
+  async getRecentRewards(userId: number, limit: number = 10): Promise<Reward[]> {
+    return await db.select().from(rewards).where(eq(rewards.userId, userId)).orderBy(desc(rewards.createdAt)).limit(limit);
+  }
+
+  async getTopPredictors(limit: number = 10): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.totalRewards)).limit(limit);
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -203,4 +322,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
