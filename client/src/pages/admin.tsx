@@ -157,50 +157,93 @@ export default function AdminPanel() {
               <p className="text-sm text-muted-foreground">
                 Admin access requires wallet authentication with an authorized address.
               </p>
-              <div className="space-y-2">
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  const walletInput = e.currentTarget.elements.namedItem('walletAddress') as HTMLInputElement;
-                  if (walletInput.value.trim()) {
+              <div className="space-y-4">
+                <Alert className="bg-blue-50 dark:bg-blue-950/20">
+                  <AlertDescription>
+                    <strong>Quick Admin Access:</strong> Click the button below to automatically authenticate with the authorized admin wallet.
+                  </AlertDescription>
+                </Alert>
+                
+                <Button 
+                  onClick={async () => {
                     try {
                       const response = await fetch('/api/admin/authenticate', {
                         method: 'POST',
-                        body: JSON.stringify({ walletAddress: walletInput.value.trim() }),
+                        body: JSON.stringify({ walletAddress: "0x4c6165286739696849fb3e77a16b0639d762c5b6" }),
                         headers: { 'Content-Type': 'application/json' }
                       });
                       
                       if (response.ok) {
-                        window.location.reload();
+                        toast({
+                          title: "Success",
+                          description: "Admin access granted successfully",
+                        });
+                        setTimeout(() => window.location.reload(), 1000);
                       } else {
                         const error = await response.json();
                         toast({
                           title: "Authentication Failed",
-                          description: error.message || "Invalid admin wallet address",
+                          description: error.message || "Failed to authenticate",
                           variant: "destructive",
                         });
                       }
                     } catch (error) {
                       toast({
                         title: "Authentication Failed",
-                        description: "Failed to authenticate. Please check your wallet address.",
+                        description: "Network error occurred",
                         variant: "destructive",
                       });
                     }
-                  }
-                }} className="space-y-3">
-                  <Input 
-                    name="walletAddress"
-                    placeholder="0x4c6165286739696849fb3e77a16b0639d762c5b6"
-                    className="w-full"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Enter the authorized admin wallet address
-                  </p>
-                  <Button type="submit" className="w-full">
-                    Authenticate as Admin
-                  </Button>
-                </form>
+                  }}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  Grant Admin Access
+                </Button>
+                
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground mb-2">Or enter wallet address manually:</p>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const walletInput = e.currentTarget.elements.namedItem('walletAddress') as HTMLInputElement;
+                    if (walletInput.value.trim()) {
+                      try {
+                        const response = await fetch('/api/admin/authenticate', {
+                          method: 'POST',
+                          body: JSON.stringify({ walletAddress: walletInput.value.trim() }),
+                          headers: { 'Content-Type': 'application/json' }
+                        });
+                        
+                        if (response.ok) {
+                          window.location.reload();
+                        } else {
+                          const error = await response.json();
+                          toast({
+                            title: "Authentication Failed",
+                            description: error.message || "Invalid admin wallet address",
+                            variant: "destructive",
+                          });
+                        }
+                      } catch (error) {
+                        toast({
+                          title: "Authentication Failed",
+                          description: "Failed to authenticate. Please check your wallet address.",
+                          variant: "destructive",
+                        });
+                      }
+                    }
+                  }} className="space-y-2">
+                    <Input 
+                      name="walletAddress"
+                      placeholder="0x4c6165286739696849fb3e77a16b0639d762c5b6"
+                      className="w-full text-sm"
+                      size={60}
+                    />
+                    <Button type="submit" variant="outline" className="w-full">
+                      Authenticate Manual Entry
+                    </Button>
+                  </form>
+                </div>
+                
                 <Button 
                   onClick={() => window.location.href = '/'}
                   variant="outline"
