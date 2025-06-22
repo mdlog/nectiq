@@ -450,8 +450,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { amount, token } = req.body;
       
       // Validate input
-      if (!amount || !token || amount <= 0) {
-        return res.status(400).json({ message: "Invalid withdrawal amount or token" });
+      if (!amount || !token || amount < 1000) {
+        return res.status(400).json({ message: "Minimum withdrawal amount is 1000 PTS" });
       }
 
       if (!["USDT", "USDC"].includes(token)) {

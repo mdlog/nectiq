@@ -538,11 +538,11 @@ export default function UserDashboard() {
                       placeholder="Enter PTS amount"
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
-                      min="1"
+                      min="1000"
                       max={user?.balance || 0}
                     />
                     <div className="flex justify-between text-xs text-slate-400">
-                      <span>Min: 1 PTS</span>
+                      <span>Min: 1000 PTS</span>
                       <span>Max: {user?.balance?.toLocaleString() || "0"} PTS</span>
                     </div>
                   </div>
@@ -563,13 +563,13 @@ export default function UserDashboard() {
                   <Button
                     onClick={() => {
                       const amount = parseFloat(withdrawAmount);
-                      if (amount > 0 && amount <= (user?.balance || 0)) {
+                      if (amount >= 1000 && amount <= (user?.balance || 0)) {
                         withdrawMutation.mutate({ amount, token: selectedToken });
                       }
                     }}
                     disabled={
                       !withdrawAmount ||
-                      parseFloat(withdrawAmount) <= 0 ||
+                      parseFloat(withdrawAmount) < 1000 ||
                       parseFloat(withdrawAmount) > (user?.balance || 0) ||
                       withdrawMutation.isPending
                     }
@@ -589,7 +589,7 @@ export default function UserDashboard() {
                   <div className="text-xs text-slate-400 space-y-1">
                     <p>• Withdrawals are processed instantly</p>
                     <p>• Tokens will be sent to your connected wallet</p>
-                    <p>• Minimum withdrawal: 1 PTS (0.01 {selectedToken})</p>
+                    <p>• Minimum withdrawal: 1000 PTS (10.00 {selectedToken})</p>
                     <p>• No withdrawal fees applied</p>
                   </div>
                 </div>
