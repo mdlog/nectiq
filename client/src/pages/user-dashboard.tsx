@@ -584,7 +584,7 @@ export default function UserDashboard() {
                             <div className="flex items-center space-x-3">
                               <div className="relative w-8 h-8 flex-shrink-0">
                                 <img 
-                                  src={crypto.image || getDefaultCryptoImage(crypto.id)} 
+                                  src={crypto.image || `https://coin-images.coingecko.com/coins/images/${crypto.id === 'bitcoin' ? '1' : crypto.id === 'ethereum' ? '279' : crypto.id === 'binancecoin' ? '825' : crypto.id === 'cardano' ? '975' : crypto.id === 'solana' ? '4128' : '1'}/large/${crypto.id}.png`} 
                                   alt={crypto.name}
                                   className="w-8 h-8 rounded-full object-cover"
                                   onError={(e) => {
