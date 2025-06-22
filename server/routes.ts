@@ -8,9 +8,7 @@ import { z } from "zod";
 
 // Authorized admin wallet addresses - add your wallet addresses here
 const ADMIN_WALLET_ADDRESSES = [
-  // Add your admin wallet addresses here (lowercase format)
-  // Example: "0x742d35cc6634c0532925a3b8d489c73a4ae38f1e",
-  // Example: "0x8ba1f109551bd432803012645hac136c2a512bee",
+  "0x4c6165286739696849fb3e77a16b0639d762c5b6" // Your admin wallet address
 ];
 
 // Admin authentication middleware
