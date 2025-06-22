@@ -6,32 +6,100 @@ import { predictionService } from "./services/predictionService";
 import { insertPredictionSchema } from "@shared/schema";
 import { z } from "zod";
 
-// Authorized admin wallet addresses - add your wallet addresses here
-const ADMIN_WALLET_ADDRESSES = [
-  "0x4c6165286739696849fb3e77a16b0639d762c5b6" // Your admin wallet address
-];
+// Security audit logging
+const auditLog = (event: string, details: any, req: Request) => {
+  const timestamp = new Date().toISOString();
+  const ip = req.ip || req.connection.remoteAddress;
+  const userAgent = req.get('User-Agent');
+  
+  console.log(`[SECURITY AUDIT] ${timestamp} - ${event}`, {
+    ip,
+    userAgent,
+    details,
+    headers: {
+      origin: req.get('Origin'),
+      referer: req.get('Referer'),
+      'x-forwarded-for': req.get('X-Forwarded-For')
+    }
+  });
+};
 
-// Admin authentication middleware
+// Authorized admin wallet addresses from environment variable for security
+const ADMIN_WALLET_ADDRESSES = (process.env.ADMIN_WALLET_ADDRESSES || "0x4c6165286739696849fb3e77a16b0639d762c5b6")
+  .split(',')
+  .map(addr => addr.trim().toLowerCase());
+
+// Rate limiting for admin endpoints
+const adminAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const ADMIN_RATE_LIMIT = 5; // 5 attempts per 15 minutes
+const ADMIN_RATE_WINDOW = 15 * 60 * 1000; // 15 minutes
+
+// Admin authentication middleware with enhanced security
 const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    
+    // Rate limiting check
+    const attempts = adminAttempts.get(clientIP);
+    if (attempts && attempts.count >= ADMIN_RATE_LIMIT && (now - attempts.lastAttempt) < ADMIN_RATE_WINDOW) {
+      return res.status(429).json({ message: "Too many admin access attempts. Try again later." });
+    }
+
     const userId = (req as any).session?.userId;
     if (!userId) {
+      // Record failed attempt
+      adminAttempts.set(clientIP, { 
+        count: (attempts?.count || 0) + 1, 
+        lastAttempt: now 
+      });
+      auditLog('ADMIN_ACCESS_DENIED_NO_SESSION', { clientIP }, req);
       return res.status(401).json({ message: "Authentication required" });
     }
 
     const user = await storage.getUser(userId);
     if (!user) {
+      adminAttempts.set(clientIP, { 
+        count: (attempts?.count || 0) + 1, 
+        lastAttempt: now 
+      });
       return res.status(401).json({ message: "User not found" });
     }
 
-    // Check if user is admin by wallet address
+    // Strict admin verification - must have wallet address AND be in authorized list
     const isAuthorizedAdmin = user.walletAddress && 
-      ADMIN_WALLET_ADDRESSES.includes(user.walletAddress.toLowerCase());
+      ADMIN_WALLET_ADDRESSES.includes(user.walletAddress.toLowerCase()) &&
+      user.authMethod === 'wallet'; // Ensure wallet authentication
 
-    if (!isAuthorizedAdmin && !user.isAdmin) {
-      return res.status(403).json({ message: "Admin access required" });
+    if (!isAuthorizedAdmin) {
+      adminAttempts.set(clientIP, { 
+        count: (attempts?.count || 0) + 1, 
+        lastAttempt: now 
+      });
+      auditLog('ADMIN_ACCESS_DENIED_UNAUTHORIZED', { 
+        clientIP, 
+        userId: user.id, 
+        walletAddress: user.walletAddress,
+        authMethod: user.authMethod 
+      }, req);
+      return res.status(403).json({ message: "Admin access denied" });
     }
 
+    // Reset rate limit on successful admin access
+    adminAttempts.delete(clientIP);
+    
+    // Log successful admin access
+    auditLog('ADMIN_ACCESS_GRANTED', { 
+      clientIP, 
+      userId: user.id, 
+      walletAddress: user.walletAddress,
+      endpoint: req.path 
+    }, req);
+    
+    // Add additional security headers for admin endpoints
+    res.setHeader('X-Admin-Session', 'true');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    
     next();
   } catch (error) {
     console.error("Admin auth error:", error);
