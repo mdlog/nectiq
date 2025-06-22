@@ -379,6 +379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Deduct stake amount from user balance
       const newBalance = user.balance - validatedData.stakeAmount;
       await storage.updateUserBalance(userId, newBalance);
+      console.log(`Balance deducted: User ${userId} balance ${user.balance} -> ${newBalance} (stake: ${validatedData.stakeAmount})`);
 
       res.json(prediction);
     } catch (error) {
