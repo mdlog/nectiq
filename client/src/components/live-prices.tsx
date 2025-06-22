@@ -70,8 +70,24 @@ export function LivePrices() {
           return (
             <div key={crypto.id} className="crypto-card flex items-center justify-between p-3 bg-surface-light rounded-lg hover:bg-slate-700">
               <div className="flex items-center space-x-3">
-                <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full flex items-center justify-center text-white text-sm font-bold`}>
-                  {getCryptoIcon(crypto.id)}
+                <div className="relative w-8 h-8 flex-shrink-0">
+                  <img 
+                    src={crypto.image || `https://coin-images.coingecko.com/coins/images/${crypto.id === 'bitcoin' ? '1' : crypto.id === 'ethereum' ? '279' : crypto.id === 'binancecoin' ? '825' : crypto.id === 'cardano' ? '975' : crypto.id === 'solana' ? '4128' : '1'}/large/${crypto.id}.png`} 
+                    alt={crypto.name}
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      // Fallback to colored icon if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      const fallback = target.nextElementSibling as HTMLElement;
+                      if (fallback) {
+                        target.style.display = 'none';
+                        fallback.style.display = 'flex';
+                      }
+                    }}
+                  />
+                  <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-sm font-bold`}>
+                    {getCryptoIcon(crypto.id)}
+                  </div>
                 </div>
                 <div>
                   <p className="font-semibold text-sm">{crypto.symbol}</p>
