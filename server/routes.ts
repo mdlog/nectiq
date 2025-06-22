@@ -25,6 +25,27 @@ const auditLog = (event: string, details: any, req: Request) => {
   });
 };
 
+// Generate random username for new wallet connections
+const generateRandomUsername = (): string => {
+  const adjectives = [
+    'Crypto', 'Digital', 'Smart', 'Golden', 'Silver', 'Lucky', 'Fast', 'Bold',
+    'Cool', 'Epic', 'Super', 'Mega', 'Ultra', 'Pro', 'Elite', 'Prime',
+    'Alpha', 'Beta', 'Gamma', 'Delta', 'Omega', 'Stellar', 'Cosmic', 'Quantum'
+  ];
+  
+  const nouns = [
+    'Trader', 'Player', 'Predictor', 'Hunter', 'Master', 'Expert', 'Guru', 'Ninja',
+    'Wizard', 'Champion', 'Hero', 'Legend', 'King', 'Queen', 'Prince', 'Princess',
+    'Dragon', 'Phoenix', 'Eagle', 'Wolf', 'Lion', 'Tiger', 'Shark', 'Whale'
+  ];
+  
+  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const number = Math.floor(Math.random() * 9999) + 1;
+  
+  return `${adjective}${noun}${number}`;
+};
+
 // Authorized admin wallet addresses from environment variable for security
 const ADMIN_WALLET_ADDRESSES = (process.env.ADMIN_WALLET_ADDRESSES || "0x4c6165286739696849fb3e77a16b0639d762c5b6")
   .split(',')
@@ -143,14 +164,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user exists, if not create one
       let user = await storage.getUserByWalletAddress(address);
       if (!user) {
-        // Auto-register new wallet address
-        const username = `user_${address.slice(-6)}`;
+        // Auto-register new wallet address with random username
+        const username = generateRandomUsername();
         user = await storage.createUser({
           username: username,
           walletAddress: address,
           authMethod: "wallet",
           isAdmin: false
         });
+        
+        console.log(`🎉 User baru terdaftar otomatis: ${username} dengan wallet ${address.slice(0, 6)}...${address.slice(-4)}`);
       }
 
       // Set session
@@ -173,9 +196,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/wallet-register", async (req, res) => {
     try {
-      const { address, signature, message, username } = req.body;
+      const { address, signature, message } = req.body;
       
-      if (!address || !signature || !message || !username) {
+      if (!address || !signature || !message) {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
@@ -185,11 +208,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Wallet address already registered" });
       }
 
-      // Check if username is already taken
-      const existingUsername = await storage.getUserByUsername(username);
-      if (existingUsername) {
-        return res.status(400).json({ message: "Username already taken" });
-      }
+      // Generate random username for auto-registration
+      const username = generateRandomUsername();
 
       // Create new user with wallet authentication
       const newUser = await storage.createUser({
@@ -197,6 +217,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         walletAddress: address,
         authMethod: "wallet"
       });
+
+      console.log(`🎉 User baru terdaftar otomatis: ${username} dengan wallet ${address.slice(0, 6)}...${address.slice(-4)}`);
 
       // Set session
       req.session.userId = newUser.id;
