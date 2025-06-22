@@ -7,6 +7,9 @@ import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 import AdminPanel from "@/pages/admin";
 import NotFound from "@/pages/not-found";
+import HowToPlay from "@/pages/how-to-play";
+import TermsConditions from "@/pages/terms-conditions";
+import PrivacyPolicy from "@/pages/privacy-policy";
 
 function Router() {
   return (
@@ -14,6 +17,9 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={UserDashboard} />
       <Route path="/admin" component={AdminPanel} />
+      <Route path="/how-to-play" component={HowToPlay} />
+      <Route path="/terms-conditions" component={TermsConditions} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -64,19 +64,19 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors flex items-center">
+                <a href="/how-to-play" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <HelpCircle size={16} className="mr-2" />
                   How to Play
                 </a>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors flex items-center">
+                <a href="/terms-conditions" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <FileText size={16} className="mr-2" />
                   Terms & Conditions
                 </a>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors flex items-center">
+                <a href="/privacy-policy" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <Shield size={16} className="mr-2" />
                   Privacy Policy
                 </a>
