@@ -258,7 +258,6 @@ export class MemStorage implements IStorage {
       status: "pending",
       rewardAmount: null,
       accuracy: null,
-      createdAt: new Date(),
     };
     this.predictions.set(id, prediction);
     return prediction;
