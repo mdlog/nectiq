@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
+import { Achievements } from "@/components/achievements";
+import { DailyChallenges } from "@/components/daily-challenges";
 
 // Purchase History Component
 function PurchaseHistory() {
@@ -359,6 +361,12 @@ export default function UserDashboard() {
             <TabsTrigger value="predictions" className="data-[state=active]:bg-primary">
               My Predictions
             </TabsTrigger>
+            <TabsTrigger value="achievements" className="data-[state=active]:bg-primary">
+              Achievements
+            </TabsTrigger>
+            <TabsTrigger value="challenges" className="data-[state=active]:bg-primary">
+              Daily Challenges
+            </TabsTrigger>
             <TabsTrigger value="rewards" className="data-[state=active]:bg-primary">
               Reward History
             </TabsTrigger>
@@ -451,6 +459,16 @@ export default function UserDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Achievements Tab */}
+          <TabsContent value="achievements">
+            <Achievements />
+          </TabsContent>
+
+          {/* Daily Challenges Tab */}
+          <TabsContent value="challenges">
+            <DailyChallenges />
           </TabsContent>
 
           {/* Rewards Tab */}
