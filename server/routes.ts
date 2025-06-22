@@ -1,10 +1,44 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { cryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
 import { insertPredictionSchema } from "@shared/schema";
 import { z } from "zod";
+
+// Authorized admin wallet addresses - add your wallet addresses here
+const ADMIN_WALLET_ADDRESSES = [
+  "0x742d35Cc6634C0532925a3b8D489C73a4AE38f1e", // Example admin wallet
+  "0x8ba1f109551bD432803012645Hac136c2a512bEe",  // Example admin wallet 2
+];
+
+// Admin authentication middleware
+const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).session?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Check if user is admin by wallet address
+    const isAuthorizedAdmin = user.walletAddress && 
+      ADMIN_WALLET_ADDRESSES.includes(user.walletAddress.toLowerCase());
+
+    if (!isAuthorizedAdmin && !user.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Admin auth error:", error);
+    res.status(500).json({ message: "Authentication error" });
+  }
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -259,8 +293,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin routes
-  app.get("/api/admin/stats", async (req, res) => {
+  // Admin routes - protected by wallet-based authentication
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     try {
       const users = await storage.getTopPredictors(1000); // Get all users
       const allPredictions = await storage.getRecentPredictions(1000); // Get all predictions
@@ -294,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/users", async (req, res) => {
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
       const users = await storage.getTopPredictors(1000); // Get all users
       res.json(users);
@@ -303,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/predictions", async (req, res) => {
+  app.get("/api/admin/predictions", requireAdmin, async (req, res) => {
     try {
       const predictions = await storage.getRecentPredictions(100); // Get recent predictions
       res.json(predictions);
@@ -312,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/activity", async (req, res) => {
+  app.get("/api/admin/activity", requireAdmin, async (req, res) => {
     try {
       const recentActivity = await storage.getRecentPredictions(20); // Get recent 20 activities
       res.json(recentActivity);
