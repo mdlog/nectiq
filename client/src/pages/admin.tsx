@@ -128,11 +128,11 @@ export default function AdminPanel() {
   };
 
   // Check if user lacks admin permissions
-  const isUnauthorized = (statsError as any)?.message?.includes("403") || 
-                         (statsError as any)?.message?.includes("Admin access required") ||
-                         (usersError as any)?.message?.includes("403") ||
-                         (predictionsError as any)?.message?.includes("403") ||
-                         (activityError as any)?.message?.includes("403");
+  const isUnauthorized = (statsError as any)?.message?.includes("401") || 
+                         (statsError as any)?.message?.includes("Authentication required") ||
+                         (usersError as any)?.message?.includes("401") ||
+                         (predictionsError as any)?.message?.includes("401") ||
+                         (activityError as any)?.message?.includes("401");
 
   if (isUnauthorized) {
     return (
@@ -140,30 +140,38 @@ export default function AdminPanel() {
         <div className="flex-1 flex items-center justify-center p-6">
           <Card className="max-w-md mx-auto">
             <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-                <Lock className="w-6 h-6 text-red-600 dark:text-red-400" />
+              <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
+                <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <CardTitle className="text-xl font-bold text-red-600 dark:text-red-400">
-                Akses Ditolak
+              <CardTitle className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                Admin Access Required
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  Hanya pengguna dengan wallet tertentu yang dapat mengakses panel admin.
+                  Please connect your authorized wallet to access the admin panel.
                 </AlertDescription>
               </Alert>
               <p className="text-sm text-muted-foreground">
-                Silakan hubungi administrator untuk mendapatkan akses ke panel admin.
+                Admin access requires wallet authentication with an authorized address.
               </p>
-              <Button 
-                onClick={() => window.location.href = '/'}
-                variant="outline"
-                className="w-full"
-              >
-                Kembali ke Dashboard
-              </Button>
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => window.location.href = '/wallet-login'}
+                  className="w-full"
+                >
+                  Connect Wallet
+                </Button>
+                <Button 
+                  onClick={() => window.location.href = '/'}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Back to Dashboard
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -356,7 +364,7 @@ export default function AdminPanel() {
                         <Label htmlFor="crypto-id">CoinGecko ID</Label>
                         <Input
                           id="crypto-id"
-                          placeholder="e.g., dogecoin, shiba-inu, pepe"
+                          placeholder="e.g., ripple, dogecoin, shiba-inu"
                           value={newCryptoId}
                           onChange={(e) => setNewCryptoId(e.target.value)}
                           required
@@ -383,8 +391,11 @@ export default function AdminPanel() {
                     <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                       <li>1. Go to coingecko.com and search for your cryptocurrency</li>
                       <li>2. Look at the URL: coingecko.com/en/coins/<strong>cryptocurrency-id</strong></li>
-                      <li>3. Use that ID here (e.g., "bitcoin", "ethereum", "dogecoin")</li>
+                      <li>3. Use that ID here (e.g., "bitcoin", "ethereum", "ripple")</li>
                     </ul>
+                    <div className="mt-3 p-2 bg-blue-100 dark:bg-blue-900/30 rounded text-xs">
+                      <strong>Note:</strong> For XRP, use "ripple" as the CoinGecko ID
+                    </div>
                   </div>
                 </CardContent>
               </Card>
