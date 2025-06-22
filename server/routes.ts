@@ -376,6 +376,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetTime
       });
 
+      // Deduct stake amount from user balance
+      const newBalance = user.balance - validatedData.stakeAmount;
+      await storage.updateUserBalance(userId, newBalance);
+
       res.json(prediction);
     } catch (error) {
       console.error("Prediction creation error:", error);
