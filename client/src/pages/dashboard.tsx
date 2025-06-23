@@ -8,6 +8,7 @@ import { TopPredictors } from "@/components/top-predictors";
 import { RecentRewards } from "@/components/recent-rewards";
 import { RulesSection } from "@/components/rules-section";
 import CryptoChart from "@/components/crypto-chart";
+import TradingViewChart from "@/components/tradingview-chart";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,10 +79,10 @@ export default function Dashboard() {
 
           {/* Main Content - Center */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Chart Section */}
+            {/* Professional TradingView Chart Section */}
             {selectedCrypto && showChart ? (
               <div className="space-y-4">
-                <CryptoChart
+                <TradingViewChart
                   cryptoId={selectedCrypto.id}
                   symbol={selectedCrypto.symbol}
                   name={selectedCrypto.name}
@@ -98,7 +99,7 @@ export default function Dashboard() {
                     Select a Cryptocurrency
                   </h3>
                   <p className="text-gray-500">
-                    Choose a cryptocurrency from Live Prices to view its interactive chart and start making predictions.
+                    Choose a cryptocurrency from Live Prices to view professional TradingView charts and start making predictions.
                   </p>
                 </CardContent>
               </Card>
