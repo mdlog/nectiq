@@ -85,6 +85,12 @@ export default function AdminPanel() {
     retry: false,
   });
 
+  // Security monitoring queries
+  const { data: securityData } = useQuery<any>({
+    queryKey: ["/api/admin/security-events"],
+    retry: false,
+  });
+
   const addCryptoMutation = useMutation({
     mutationFn: async (cryptoId: string) => {
       const response = await fetch("/api/admin/cryptocurrencies", {
@@ -1373,7 +1379,9 @@ export default function AdminPanel() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-slate-400">Security Alerts</p>
-                            <p className="text-2xl font-bold text-red-500">3</p>
+                            <p className="text-2xl font-bold text-red-500">
+                              {securityData?.stats?.securityAlerts || 0}
+                            </p>
                           </div>
                           <AlertTriangle className="h-8 w-8 text-red-500" />
                         </div>
@@ -1384,7 +1392,9 @@ export default function AdminPanel() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-slate-400">Failed Logins</p>
-                            <p className="text-2xl font-bold text-orange-500">12</p>
+                            <p className="text-2xl font-bold text-orange-500">
+                              {securityData?.stats?.failedLogins || 0}
+                            </p>
                           </div>
                           <Lock className="h-8 w-8 text-orange-500" />
                         </div>
@@ -1395,7 +1405,9 @@ export default function AdminPanel() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-slate-400">Rate Limits Hit</p>
-                            <p className="text-2xl font-bold text-yellow-500">8</p>
+                            <p className="text-2xl font-bold text-yellow-500">
+                              {securityData?.stats?.rateLimitsHit || 0}
+                            </p>
                           </div>
                           <Zap className="h-8 w-8 text-yellow-500" />
                         </div>
@@ -1406,7 +1418,9 @@ export default function AdminPanel() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-slate-400">Blocked IPs</p>
-                            <p className="text-2xl font-bold">5</p>
+                            <p className="text-2xl font-bold">
+                              {securityData?.stats?.blockedIPs || 0}
+                            </p>
                           </div>
                           <Ban className="h-8 w-8 text-gray-500" />
                         </div>
@@ -1416,25 +1430,59 @@ export default function AdminPanel() {
 
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Recent Security Events</h3>
-                    <div className="space-y-3">
-                      <Alert className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>High:</strong> Multiple failed login attempts from IP 192.168.1.100 (15 attempts in 10 minutes)
-                        </AlertDescription>
-                      </Alert>
-                      <Alert className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>Medium:</strong> Rate limit exceeded for user EpicPrincess (500+ requests in 1 minute)
-                        </AlertDescription>
-                      </Alert>
-                      <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>Info:</strong> New admin login from 0x4C6165...c5B6 at 5:17 PM
-                        </AlertDescription>
-                      </Alert>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {securityData?.events?.length === 0 || !securityData?.events ? (
+                        <div className="text-center py-8 text-slate-400">
+                          <Shield className="mx-auto mb-2" size={32} />
+                          <p>No security events found</p>
+                          <p className="text-sm">Security alerts and logs will appear here</p>
+                        </div>
+                      ) : (
+                        securityData.events.map((event: any) => {
+                          const getSeverityColor = (severity: string) => {
+                            switch (severity) {
+                              case 'high':
+                                return 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200';
+                              case 'medium':
+                                return 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200';
+                              case 'low':
+                              default:
+                                return 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200';
+                            }
+                          };
+                          
+                          const getTypeIcon = (type: string) => {
+                            switch (type) {
+                              case 'warning':
+                                return <AlertTriangle className="h-4 w-4" />;
+                              case 'success':
+                                return <Shield className="h-4 w-4" />;
+                              case 'info':
+                              default:
+                                return <Activity className="h-4 w-4" />;
+                            }
+                          };
+                          
+                          return (
+                            <Alert key={event.id} className={getSeverityColor(event.severity)}>
+                              {getTypeIcon(event.type)}
+                              <AlertDescription>
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <strong className="capitalize">{event.severity}:</strong> {event.description}
+                                    <div className="text-xs mt-1 opacity-75">
+                                      IP: {event.ip} • {new Date(event.timestamp).toLocaleString()}
+                                    </div>
+                                  </div>
+                                  <Badge variant="outline" className="ml-2 text-xs">
+                                    {event.title}
+                                  </Badge>
+                                </div>
+                              </AlertDescription>
+                            </Alert>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 </CardContent>
