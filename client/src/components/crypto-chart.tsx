@@ -89,6 +89,41 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     setChartData(data);
   };
 
+  // Helper function to format dates for x-axis labels
+  const formatDateLabel = (timeStr: string, index: number, totalPoints: number) => {
+    const date = new Date(timeStr);
+    const days = parseInt(timeframe);
+    
+    // Show fewer labels for better readability
+    const maxLabels = 6;
+    const step = Math.max(1, Math.floor(totalPoints / maxLabels));
+    
+    if (index % step !== 0 && index !== totalPoints - 1) {
+      return null; // Don't show this label
+    }
+    
+    if (days <= 1) {
+      // For 1 day or less, show time (hours)
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+    } else if (days <= 7) {
+      // For up to 7 days, show day and month
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } else {
+      // For longer periods, show month and day
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+  };
+
   const drawChart = () => {
     const canvas = canvasRef.current;
     if (!canvas || chartData.length === 0) return;
@@ -99,11 +134,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const { width, height } = canvas;
     ctx.clearRect(0, 0, width, height);
 
-    // Set up chart dimensions with extra space for price labels
+    // Set up chart dimensions with extra space for price labels and date labels
     const leftPadding = 80; // More space for price labels on the left
     const rightPadding = 80; // Reduced space for real-time price display
     const topPadding = 40;
-    const bottomPadding = 40;
+    const bottomPadding = 60; // Increased space for date labels at bottom
     const chartWidth = width - leftPadding - rightPadding;
     const chartHeight = height - topPadding - bottomPadding;
 
@@ -176,6 +211,20 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const y = topPadding + (chartHeight * i) / 5;
       ctx.fillText(`$${value.toFixed(2)}`, leftPadding - 5, y + 4);
     }
+
+    // Draw date labels at the bottom
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    
+    chartData.forEach((point, index) => {
+      const dateLabel = formatDateLabel(point.time, index, chartData.length);
+      if (dateLabel) {
+        const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
+        const y = topPadding + chartHeight + 20;
+        ctx.fillText(dateLabel, x, y);
+      }
+    });
 
     // Draw real-time price indicator at the edge of the chart
     if (chartData.length > 0) {
@@ -270,6 +319,20 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const y = topPadding + (chartHeight * i) / 5;
       ctx.fillText(`$${value.toFixed(2)}`, leftPadding - 5, y + 4);
     }
+
+    // Draw date labels at the bottom
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    
+    chartData.forEach((candle, index) => {
+      const dateLabel = formatDateLabel(candle.time, index, chartData.length);
+      if (dateLabel) {
+        const x = leftPadding + (chartWidth * (index + 0.5)) / chartData.length;
+        const y = topPadding + chartHeight + 20;
+        ctx.fillText(dateLabel, x, y);
+      }
+    });
 
     // Draw real-time price indicator for candlestick
     if (chartData.length > 0) {
