@@ -53,6 +53,10 @@ export default function AdminPanel() {
   const [userSortField, setUserSortField] = useState<"balance" | "accuracy" | "predictions" | "rewards">("balance");
   const [userSortOrder, setUserSortOrder] = useState<"asc" | "desc">("desc");
   
+  // Bulk actions state
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -100,6 +104,109 @@ export default function AdminPanel() {
         return true;
     }
   });
+
+  // Sort filtered users
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    let aValue, bValue;
+    
+    switch (userSortField) {
+      case "balance":
+        aValue = a.balance || 0;
+        bValue = b.balance || 0;
+        break;
+      case "accuracy":
+        aValue = a.totalPredictions > 0 ? (a.correctPredictions / a.totalPredictions) * 100 : 0;
+        bValue = b.totalPredictions > 0 ? (b.correctPredictions / b.totalPredictions) * 100 : 0;
+        break;
+      case "predictions":
+        aValue = a.totalPredictions || 0;
+        bValue = b.totalPredictions || 0;
+        break;
+      case "rewards":
+        aValue = a.totalRewards || 0;
+        bValue = b.totalRewards || 0;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (userSortOrder === "desc") {
+      return bValue - aValue;
+    } else {
+      return aValue - bValue;
+    }
+  });
+
+  // Handle sorting click
+  const handleUserSort = (field: "balance" | "accuracy" | "predictions" | "rewards") => {
+    if (userSortField === field) {
+      setUserSortOrder(userSortOrder === "desc" ? "asc" : "desc");
+    } else {
+      setUserSortField(field);
+      setUserSortOrder("desc");
+    }
+  };
+
+  // Bulk actions handlers
+  const handleSelectUser = (userId: number) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSelectAllUsers = () => {
+    if (selectedUsers.length === sortedUsers.length) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(sortedUsers.map(user => user.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      for (const userId of selectedUsers) {
+        await apiRequest("DELETE", `/api/admin/users/${userId}`);
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setSelectedUsers([]);
+      toast({
+        title: "Users deleted",
+        description: `${selectedUsers.length} users have been deleted.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete users",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportUsers = () => {
+    const csvContent = [
+      ["Username", "UID", "Wallet Address", "Balance", "Predictions", "Accuracy", "Rewards", "Admin"].join(","),
+      ...sortedUsers.map(user => [
+        user.username,
+        user.uid,
+        user.walletAddress || "Not set",
+        user.balance || 0,
+        user.totalPredictions || 0,
+        user.totalPredictions > 0 ? ((user.correctPredictions / user.totalPredictions) * 100).toFixed(2) + "%" : "0%",
+        user.totalRewards || 0,
+        user.isAdmin ? "Yes" : "No"
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   const { data: leaderboard = [] } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/leaderboard"],
@@ -777,7 +884,7 @@ export default function AdminPanel() {
                     <div className="flex items-center gap-4">
                       <span className="flex items-center">
                         <UserPlus className="mr-2" size={20} />
-                        User Management ({users.length})
+                        User Management ({sortedUsers.length})
                       </span>
                       {/* Filters */}
                       <Select value={userFilter} onValueChange={setUserFilter}>
@@ -791,6 +898,32 @@ export default function AdminPanel() {
                           <SelectItem value="no-wallet">No Wallet Linked</SelectItem>
                         </SelectContent>
                       </Select>
+                      
+                      {/* Bulk Actions */}
+                      {selectedUsers.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {selectedUsers.length} selected
+                          </span>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={handleBulkDelete}
+                          >
+                            Delete Selected
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Export Button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportUsers}
+                        className="ml-auto"
+                      >
+                        Export CSV
+                      </Button>
                     </div>
                     <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
                       <DialogTrigger asChild>
@@ -853,16 +986,36 @@ export default function AdminPanel() {
                           <TableHead>User</TableHead>
                           <TableHead>UID</TableHead>
                           <TableHead>Wallet Address</TableHead>
-                          <TableHead>Balance</TableHead>
-                          <TableHead>Predictions</TableHead>
-                          <TableHead>Accuracy</TableHead>
-                          <TableHead>Rewards</TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-surface-light" 
+                            onClick={() => handleUserSort("balance")}
+                          >
+                            Balance {userSortField === "balance" && (userSortOrder === "desc" ? "↓" : "↑")}
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-surface-light" 
+                            onClick={() => handleUserSort("predictions")}
+                          >
+                            Predictions {userSortField === "predictions" && (userSortOrder === "desc" ? "↓" : "↑")}
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-surface-light" 
+                            onClick={() => handleUserSort("accuracy")}
+                          >
+                            Accuracy {userSortField === "accuracy" && (userSortOrder === "desc" ? "↓" : "↑")}
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-surface-light" 
+                            onClick={() => handleUserSort("rewards")}
+                          >
+                            Rewards {userSortField === "rewards" && (userSortOrder === "desc" ? "↓" : "↑")}
+                          </TableHead>
                           <TableHead>Admin</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {users.map((user) => (
+                        {sortedUsers.map((user) => (
                           <TableRow key={user.id}>
                             <TableCell>
                               <div className="flex items-center space-x-3">
