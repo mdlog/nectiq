@@ -503,9 +503,9 @@ export default function AdminPanel() {
 
         {/* Detailed Views */}
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList className="bg-surface border border-surface-light">
+          <TabsList className="bg-surface border border-surface-light flex-wrap h-auto">
             <TabsTrigger value="users" className="data-[state=active]:bg-primary">Users</TabsTrigger>
-            <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary">Cryptocurrencies</TabsTrigger>
+            <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary">Crypto</TabsTrigger>
             <TabsTrigger value="predictions" className="data-[state=active]:bg-primary">Predictions</TabsTrigger>
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary">Leaderboard</TabsTrigger>
             <TabsTrigger value="transactions" className="data-[state=active]:bg-primary">Transactions</TabsTrigger>
