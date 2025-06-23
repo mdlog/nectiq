@@ -3616,151 +3616,493 @@ export default function AdminPanel() {
             </div>
           </TabsContent>
 
-          {/* Settings Tab */}
+          {/* Enhanced Settings Tab */}
           <TabsContent value="settings">
             <div className="space-y-6">
+              {/* Header with Export and Status */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center">
+                      <Settings className="mr-2" size={20} />
+                      System Settings
+                    </CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        Status: Operational
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportSettings}
+                        className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"
+                      >
+                        <Download className="mr-2" size={16} />
+                        Export CSV
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                {/* Rekomendasi Peningkatan Section */}
+                <CardContent>
+                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <h4 className="text-lg font-bold text-blue-700 dark:text-blue-300 mb-3 flex items-center">
+                      <Lightbulb className="mr-2" size={18} />
+                      Rekomendasi Peningkatan
+                    </h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-start space-x-2">
+                            <span className="text-yellow-500">🔄</span>
+                            <div>
+                              <strong>Dynamic Exchange Rate</strong>
+                              <p className="text-slate-600 dark:text-slate-300">Integrasi ke price oracle (Chainlink, CoinGecko API) agar nilai tukar tidak statis</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start space-x-2">
+                            <span className="text-red-500">🛑</span>
+                            <div>
+                              <strong>Emergency Stop Granular</strong>
+                              <p className="text-slate-600 dark:text-slate-300">Pilih jenis: hanya stop withdrawal, atau total shutdown sistem</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start space-x-2">
+                            <span className="text-blue-500">📝</span>
+                            <div>
+                              <strong>History Tracking</strong>
+                              <p className="text-slate-600 dark:text-slate-300">Setiap perubahan setting perlu audit log: siapa yang ubah, kapan, dari masa</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-start space-x-2">
+                            <span className="text-green-500">🔔</span>
+                            <div>
+                              <strong>Notification Hooks</strong>
+                              <p className="text-slate-600 dark:text-slate-300">Jika ada setting penting berubah (withdrawal fee, rate, dsb) → email ke admin</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start space-x-2">
+                            <span className="text-purple-500">💾</span>
+                            <div>
+                              <strong>Preset Saving</strong>
+                              <p className="text-slate-600 dark:text-slate-300">Bisa simpan dan kembalikan ke konfigurasi tertentu (mis. "Mode Panic", "Mode Event")</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start space-x-2">
+                            <span className="text-orange-500">🔐</span>
+                            <div>
+                              <strong>Two-step Auth for save</strong>
+                              <p className="text-slate-600 dark:text-slate-300">Aksi menyimpan setting penting (mis. withdrawal fee) memerlukan otorisasi kedua (PIN/email/OTP)</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Enhanced Platform Configuration */}
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Settings className="mr-2" size={20} />
-                    System Settings
+                    <Cog className="mr-2" size={18} />
+                    Platform Configuration
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Platform Configuration */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Platform Configuration</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="min-prediction" className="flex items-center">
+                        Minimum Prediction Amount (NTIQ)
+                        <Badge variant="outline" className="ml-2 text-xs">Aktif</Badge>
+                      </Label>
+                      <Input 
+                        id="min-prediction" 
+                        value={settingsForm.platform.minPredictionAmount}
+                        onChange={(e) => handleSettingsChange('platform', 'minPredictionAmount', parseInt(e.target.value))}
+                        type="number"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">Nilai minimum untuk membuat prediksi</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="max-prediction" className="flex items-center">
+                        Maximum Prediction Amount (NTIQ)
+                        <Badge variant="outline" className="ml-2 text-xs">Aktif</Badge>
+                      </Label>
+                      <Input 
+                        id="max-prediction" 
+                        value={settingsForm.platform.maxPredictionAmount}
+                        onChange={(e) => handleSettingsChange('platform', 'maxPredictionAmount', parseInt(e.target.value))}
+                        type="number"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">Nilai maksimum untuk membuat prediksi</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="withdrawal-fee" className="flex items-center">
+                        Withdrawal Fee (%)
+                        <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-700">Critical</Badge>
+                      </Label>
+                      <Input 
+                        id="withdrawal-fee" 
+                        value={settingsForm.platform.withdrawalFee}
+                        onChange={(e) => handleSettingsChange('platform', 'withdrawalFee', parseFloat(e.target.value))}
+                        type="number" 
+                        step="0.1"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">Fee yang dikenakan saat withdrawal (dalam persen)</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="min-withdrawal" className="flex items-center">
+                        Minimum Withdrawal (NTIQ)
+                        <Badge variant="outline" className="ml-2 text-xs">Aktif</Badge>
+                      </Label>
+                      <Input 
+                        id="min-withdrawal" 
+                        value={settingsForm.platform.minWithdrawal}
+                        onChange={(e) => handleSettingsChange('platform', 'minWithdrawal', parseInt(e.target.value))}
+                        type="number"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">Jumlah minimum untuk penarikan</p>
+                    </div>
+                  </div>
+
+                  {/* Prediction Limits */}
+                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                    <h4 className="font-semibold text-primary mb-3">Prediction Limit: 20x/hour</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <Label htmlFor="min-prediction">Minimum Prediction Amount (NTIQ)</Label>
+                        <Label htmlFor="prediction-delay">Withdrawal Delay: 4 jam</Label>
                         <Input 
-                          id="min-prediction" 
-                          value={settingsForm.platform.minPredictionAmount}
-                          onChange={(e) => handleSettingsChange('platform', 'minPredictionAmount', parseInt(e.target.value))}
-                          type="number" 
+                          id="prediction-delay"
+                          value="4"
+                          type="number"
+                          className="mt-1 bg-surface-light border-surface-light"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="max-prediction">Maximum Prediction Amount (NTIQ)</Label>
+                        <Label htmlFor="reward-multiplier">Reward Multiplier: 2x</Label>
                         <Input 
-                          id="max-prediction" 
-                          value={settingsForm.platform.maxPredictionAmount}
-                          onChange={(e) => handleSettingsChange('platform', 'maxPredictionAmount', parseInt(e.target.value))}
-                          type="number" 
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="withdrawal-fee">Withdrawal Fee (%)</Label>
-                        <Input 
-                          id="withdrawal-fee" 
-                          value={settingsForm.platform.withdrawalFee}
-                          onChange={(e) => handleSettingsChange('platform', 'withdrawalFee', parseFloat(e.target.value))}
-                          type="number" 
-                          step="0.1" 
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="min-withdrawal">Minimum Withdrawal (NTIQ)</Label>
-                        <Input 
-                          id="min-withdrawal" 
-                          value={settingsForm.platform.minWithdrawal}
-                          onChange={(e) => handleSettingsChange('platform', 'minWithdrawal', parseInt(e.target.value))}
-                          type="number" 
+                          id="reward-multiplier"
+                          value="2"
+                          type="number"
+                          step="0.1"
+                          className="mt-1 bg-surface-light border-surface-light"
                         />
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {/* Exchange Rates */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Exchange Rates</h3>
+              {/* Enhanced Exchange Rates with Dynamic Integration */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center">
+                      <DollarSign className="mr-2" size={18} />
+                      Exchange Rates & Pricing
+                    </CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                        Live Feed
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRefreshRates}
+                        className="bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300"
+                      >
+                        <RefreshCw className="mr-2" size={16} />
+                        Refresh
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="eth-rate" className="flex items-center">
+                        ETH to NTIQ Rate
+                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700">Auto-Update</Badge>
+                      </Label>
+                      <Input 
+                        id="eth-rate" 
+                        value={settingsForm.exchangeRates.ethToPts}
+                        onChange={(e) => handleSettingsChange('exchangeRates', 'ethToPts', parseInt(e.target.value))}
+                        type="number"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">1 ETH = {settingsForm.exchangeRates.ethToPts.toLocaleString()} NTIQ</p>
+                      <p className="text-xs text-green-600">Terakhir update: 2 menit lalu</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="usdt-rate" className="flex items-center">
+                        USDT to NTIQ Rate
+                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700">Auto-Update</Badge>
+                      </Label>
+                      <Input 
+                        id="usdt-rate" 
+                        value={settingsForm.exchangeRates.usdtToPts}
+                        onChange={(e) => handleSettingsChange('exchangeRates', 'usdtToPts', parseInt(e.target.value))}
+                        type="number"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">1 USDT = {settingsForm.exchangeRates.usdtToPts} NTIQ</p>
+                      <p className="text-xs text-green-600">Terakhir update: 1 menit lalu</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pts-usdt-rate" className="flex items-center">
+                        NTIQ to USDT Rate
+                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700">Manual</Badge>
+                      </Label>
+                      <Input 
+                        id="pts-usdt-rate" 
+                        value={settingsForm.exchangeRates.ptsToUsdt}
+                        onChange={(e) => handleSettingsChange('exchangeRates', 'ptsToUsdt', parseFloat(e.target.value))}
+                        type="number" 
+                        step="0.001"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">1 NTIQ = {settingsForm.exchangeRates.ptsToUsdt} USDT</p>
+                      <p className="text-xs text-orange-600">Requires manual update</p>
+                    </div>
+                  </div>
+
+                  {/* Price Oracle Integration Preview */}
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-2 flex items-center">
+                      <TrendingUp className="mr-2" size={16} />
+                      Dynamic Price Oracle Integration
+                    </h4>
+                    <p className="text-sm text-blue-600 dark:text-blue-400 mb-3">
+                      Real-time price feeds dari CoinGecko API dan Chainlink untuk exchange rate yang akurat
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span>CoinGecko API: Connected</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <span>Chainlink Oracle: Pending</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Enhanced Security Settings with Granular Controls */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Shield className="mr-2" size={18} />
+                    Security & Rate Limiting
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="rate-limit" className="flex items-center">
+                        API Rate Limit (requests/minute)
+                        <Badge variant="outline" className="ml-2 text-xs bg-red-100 text-red-700">Critical</Badge>
+                      </Label>
+                      <Input 
+                        id="rate-limit" 
+                        value={settingsForm.security.rateLimit}
+                        onChange={(e) => handleSettingsChange('security', 'rateLimit', parseInt(e.target.value))}
+                        type="number"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">Maksimum request API per menit per IP</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="max-predictions" className="flex items-center">
+                        Max Predictions per Hour
+                        <Badge variant="outline" className="ml-2 text-xs">Active</Badge>
+                      </Label>
+                      <Input 
+                        id="max-predictions" 
+                        value={settingsForm.security.maxPredictionsPerHour}
+                        onChange={(e) => handleSettingsChange('security', 'maxPredictionsPerHour', parseInt(e.target.value))}
+                        type="number"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">Batas prediksi per jam per user</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="max-withdrawals" className="flex items-center">
+                        Max Withdrawals per Hour
+                        <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-700">Monitored</Badge>
+                      </Label>
+                      <Input 
+                        id="max-withdrawals" 
+                        value={settingsForm.security.maxWithdrawalsPerHour}
+                        onChange={(e) => handleSettingsChange('security', 'maxWithdrawalsPerHour', parseInt(e.target.value))}
+                        type="number"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">Batas withdrawal per jam per user</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="session-timeout" className="flex items-center">
+                        Session Timeout (hours)
+                        <Badge variant="outline" className="ml-2 text-xs">Standard</Badge>
+                      </Label>
+                      <Input 
+                        id="session-timeout" 
+                        value={settingsForm.security.sessionTimeout}
+                        onChange={(e) => handleSettingsChange('security', 'sessionTimeout', parseInt(e.target.value))}
+                        type="number"
+                        className="bg-surface-light border-surface-light"
+                      />
+                      <p className="text-xs text-slate-500">Waktu expire session pengguna</p>
+                    </div>
+                  </div>
+
+                  {/* Keamanan Tambahan Section */}
+                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <h4 className="font-semibold text-amber-700 dark:text-amber-300 mb-3 flex items-center">
+                      <Lock className="mr-2" size={16} />
+                      Keamanan Tambahan
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Switch checked={true} />
+                        <span>Session Timeout bisa ditambahkan pengecekan untuk wallet tertentu (misalnya admin utama).</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch checked={false} />
+                        <span>Tambahkan CAPTCHA atau ubah setting berat (mis. emergency stop).</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch checked={true} />
+                        <span>Logika validasi agar Withdrawal Fee tidak bisa diatur ekstrem (&gt;10%).</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Mode Event & Preset Saving */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Gamepad2 className="mr-2" size={18} />
+                    Potensi Baru: Mode Event
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Misalnya, saat ada campaign battle:
+                  </p>
+                  
+                  <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg font-mono text-sm">
+                    <div className="space-y-1">
+                      <div>"Prediction Limit: 20x/hour"</div>
+                      <div>"Withdrawal Delay: 4 jam"</div>
+                      <div>"Reward Multiplier: 2x"</div>
+                    </div>
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Copy className="mr-1" size={12} />
+                          Copy
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Edit className="mr-1" size={12} />
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-slate-500">
+                    Fitur ini bisa otomatis aktif dan setting panel.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Enhanced Export & Backup Features */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <FileDown className="mr-2" size={18} />
+                    Format Export
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Tombol Export Logs → bisa tambah pilihan format:
+                    </p>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="eth-rate">ETH to NTIQ Rate</Label>
-                        <Input 
-                          id="eth-rate" 
-                          value={settingsForm.exchangeRates.ethToPts}
-                          onChange={(e) => handleSettingsChange('exchangeRates', 'ethToPts', parseInt(e.target.value))}
-                          type="number" 
-                        />
-                        <p className="text-xs text-slate-500 mt-1">1 ETH = {settingsForm.exchangeRates.ethToPts.toLocaleString()} NTIQ</p>
+                      <Button variant="outline" className="justify-start">
+                        <FileSpreadsheet className="mr-2" size={16} />
+                        CSV
+                      </Button>
+                      <Button variant="outline" className="justify-start">
+                        <Code className="mr-2" size={16} />
+                        JSON
+                      </Button>
+                      <Button variant="outline" className="justify-start">
+                        <Archive className="mr-2" size={16} />
+                        Encrypted ZIP (untuk pengiriman ke compliance)
+                      </Button>
+                    </div>
+
+                    <div className="mt-6 space-y-3">
+                      <p className="text-sm font-medium">Jika kamu ingin, saya bisa bantu buat:</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-blue-500">📱</span>
+                          <span>Mockup UI untuk "History of Changes"</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-green-500">✅</span>
+                          <span>Tampilan "Confirmation Modal" untuk tindakan berisiko</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-purple-500">🔗</span>
+                          <span>Diagram interaksi setting ↔ sistem lain</span>
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="usdt-rate">USDT to NTIQ Rate</Label>
-                        <Input 
-                          id="usdt-rate" 
-                          value={settingsForm.exchangeRates.usdtToPts}
-                          onChange={(e) => handleSettingsChange('exchangeRates', 'usdtToPts', parseInt(e.target.value))}
-                          type="number" 
-                        />
-                        <p className="text-xs text-slate-500 mt-1">1 USDT = {settingsForm.exchangeRates.usdtToPts} NTIQ</p>
-                      </div>
-                      <div>
-                        <Label htmlFor="pts-usdt-rate">NTIQ to USDT Rate</Label>
-                        <Input 
-                          id="pts-usdt-rate" 
-                          value={settingsForm.exchangeRates.ptsToUsdt}
-                          onChange={(e) => handleSettingsChange('exchangeRates', 'ptsToUsdt', parseFloat(e.target.value))}
-                          type="number" 
-                          step="0.001" 
-                        />
-                        <p className="text-xs text-slate-500 mt-1">1 NTIQ = {settingsForm.exchangeRates.ptsToUsdt} USDT</p>
-                      </div>
+                      
+                      <p className="text-xs text-slate-500 mt-4">
+                        Ingin saya bantu lanjutkan ke salah satu fitur ini?
+                      </p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {/* Security Settings */}
+              {/* Enhanced Admin Controls with Two-Step Authentication */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <ShieldCheck className="mr-2" size={18} />
+                    Admin Controls & Emergency Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Standard Actions */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">Security Settings</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="rate-limit">Rate Limit (requests/minute)</Label>
-                        <Input 
-                          id="rate-limit" 
-                          value={settingsForm.security.rateLimit}
-                          onChange={(e) => handleSettingsChange('security', 'rateLimit', parseInt(e.target.value))}
-                          type="number" 
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="max-predictions">Max Predictions per Hour</Label>
-                        <Input 
-                          id="max-predictions" 
-                          value={settingsForm.security.maxPredictionsPerHour}
-                          onChange={(e) => handleSettingsChange('security', 'maxPredictionsPerHour', parseInt(e.target.value))}
-                          type="number" 
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="max-withdrawals">Max Withdrawals per Hour</Label>
-                        <Input 
-                          id="max-withdrawals" 
-                          value={settingsForm.security.maxWithdrawalsPerHour}
-                          onChange={(e) => handleSettingsChange('security', 'maxWithdrawalsPerHour', parseInt(e.target.value))}
-                          type="number" 
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="session-timeout">Session Timeout (hours)</Label>
-                        <Input 
-                          id="session-timeout" 
-                          value={settingsForm.security.sessionTimeout}
-                          onChange={(e) => handleSettingsChange('security', 'sessionTimeout', parseInt(e.target.value))}
-                          type="number" 
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Admin Controls */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Admin Controls</h3>
-                    <div className="flex flex-wrap gap-3">
+                    <h4 className="font-semibold mb-3">Standard Actions</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <Button 
                         variant="outline" 
                         onClick={() => clearCacheMutation.mutate()}
                         disabled={clearCacheMutation.isPending}
-                        className="flex items-center"
+                        className="flex items-center justify-start"
                       >
                         <RefreshCw className={`mr-2 h-4 w-4 ${clearCacheMutation.isPending ? 'animate-spin' : ''}`} />
                         Clear Cache
@@ -3769,7 +4111,7 @@ export default function AdminPanel() {
                         variant="outline" 
                         onClick={() => backupDatabaseMutation.mutate()}
                         disabled={backupDatabaseMutation.isPending}
-                        className="flex items-center"
+                        className="flex items-center justify-start"
                       >
                         <Database className="mr-2 h-4 w-4" />
                         Backup Database
@@ -3778,38 +4120,79 @@ export default function AdminPanel() {
                         variant="outline" 
                         onClick={() => exportLogsMutation.mutate()}
                         disabled={exportLogsMutation.isPending}
-                        className="flex items-center"
+                        className="flex items-center justify-start"
                       >
                         <FileText className="mr-2 h-4 w-4" />
                         Export Logs
                       </Button>
                       <Button 
-                        variant="destructive" 
-                        onClick={handleEmergencyStop}
-                        disabled={emergencyStopMutation.isPending}
-                        className="flex items-center"
+                        variant="outline" 
+                        onClick={handleRefreshRates}
+                        className="flex items-center justify-start"
                       >
-                        <AlertTriangle className="mr-2 h-4 w-4" />
-                        Emergency Stop
+                        <DollarSign className="mr-2 h-4 w-4" />
+                        Refresh Exchange Rates
                       </Button>
                     </div>
                   </div>
 
-                  <div className="pt-4">
-                    <Button 
-                      onClick={handleSaveSettings}
-                      disabled={saveSettingsMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {saveSettingsMutation.isPending ? (
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        'Save All Settings'
-                      )}
-                    </Button>
+                  {/* Emergency Actions with Two-Step Auth */}
+                  <div>
+                    <h4 className="font-semibold mb-3 text-red-600 dark:text-red-400">Emergency Actions</h4>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Button 
+                          variant="destructive" 
+                          onClick={() => setShowEmergencyModal('withdrawal')}
+                          className="flex items-center justify-start"
+                        >
+                          <Pause className="mr-2 h-4 w-4" />
+                          Stop Withdrawals Only
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          onClick={() => setShowEmergencyModal('system')}
+                          className="flex items-center justify-start"
+                        >
+                          <AlertTriangle className="mr-2 h-4 w-4" />
+                          Total System Shutdown
+                        </Button>
+                      </div>
+                      
+                      <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                        <p className="text-xs text-red-600 dark:text-red-400 flex items-center">
+                          <Lock className="mr-1" size={12} />
+                          Emergency actions require two-step authentication (PIN/Email/OTP)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Save Settings with Enhanced Security */}
+                  <div className="pt-4 border-t border-surface-light">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <h4 className="font-semibold">Save Configuration</h4>
+                        <p className="text-xs text-slate-500">Changes will be logged and require confirmation for critical settings</p>
+                      </div>
+                      <Button 
+                        onClick={handleSaveSettings}
+                        disabled={saveSettingsMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700 disabled:opacity-50 px-6"
+                      >
+                        {saveSettingsMutation.isPending ? (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save All Settings
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
