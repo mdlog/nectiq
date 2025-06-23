@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Target, BarChart3 } from 'lucide-react';
+import { createChart, ColorType, IChartApi, ISeriesApi, CandlestickData, LineData, CandlestickSeriesOptions, LineSeriesOptions } from 'lightweight-charts';
 
 interface CryptoChartProps {
   cryptoId: string;
@@ -12,132 +13,175 @@ interface CryptoChartProps {
   onPredictClick?: (cryptoId: string) => void;
 }
 
-// TradingView widget script injection
-declare global {
-  interface Window {
-    TradingView: any;
-  }
+interface ChartData {
+  time: string;
+  value: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
 }
+
+type ChartType = 'line' | 'candlestick';
 
 export default function CryptoChart({ cryptoId, symbol, name, currentPrice, priceChange24h, onPredictClick }: CryptoChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const [interval, setInterval] = useState('1D');
+  const [timeframe, setTimeframe] = useState('7');
+  const [chartType, setChartType] = useState<ChartType>('line');
   const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Line"> | ISeriesApi<"Candlestick"> | null>(null);
 
-  // Map crypto symbols to TradingView symbols
-  const getTradingViewSymbol = (cryptoId: string, symbol: string): string => {
-    const symbolMap: { [key: string]: string } = {
-      'bitcoin': 'BTCUSD',
-      'ethereum': 'ETHUSD',
-      'binancecoin': 'BNBUSD',
-      'cardano': 'ADAUSD',
-      'solana': 'SOLUSD',
-      'dogecoin': 'DOGEUSD',
-      'ripple': 'XRPUSD',
-      'polkadot': 'DOTUSD',
-      'chainlink': 'LINKUSD',
-      'litecoin': 'LTCUSD',
-      'polygon': 'MATICUSD',
-      'avalanche-2': 'AVAXUSD',
-      'uniswap': 'UNIUSD',
-      'hyperliquid': 'HYPEUSD'
-    };
-    
-    return symbolMap[cryptoId] || `${symbol.toUpperCase()}USD`;
-  };
-
-  const loadTradingViewScript = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (window.TradingView) {
-        resolve();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/tv.js';
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load TradingView script'));
-      document.head.appendChild(script);
-    });
-  };
-
-  const initializeTradingViewWidget = async () => {
-    if (!chartContainerRef.current) return;
-
+  const fetchChartData = async (days: string) => {
+    setLoading(true);
     try {
-      await loadTradingViewScript();
-      setLoading(false);
-
-      // Clear any existing widget
-      chartContainerRef.current.innerHTML = '';
-
-      const tradingViewSymbol = getTradingViewSymbol(cryptoId, symbol);
-
-      new window.TradingView.widget({
-        autosize: true,
-        symbol: `BINANCE:${tradingViewSymbol}`,
-        interval: interval,
-        timezone: "Etc/UTC",
-        theme: "dark",
-        style: "1",
-        locale: "en",
-        toolbar_bg: "#1e293b",
-        enable_publishing: false,
-        hide_top_toolbar: false,
-        hide_legend: false,
-        save_image: false,
-        container_id: chartContainerRef.current.id,
-        backgroundColor: "#0f172a",
-        gridColor: "#334155",
-        hide_side_toolbar: true,
-        allow_symbol_change: false,
-        studies: [],
-        show_popup_button: false,
-        popup_width: "1000",
-        popup_height: "650",
-        overrides: {
-          "paneProperties.background": "#0f172a",
-          "paneProperties.vertGridProperties.color": "#334155",
-          "paneProperties.horzGridProperties.color": "#334155",
-          "symbolWatermarkProperties.transparency": 90,
-          "scalesProperties.textColor": "#94a3b8",
-          "scalesProperties.backgroundColor": "#1e293b"
-        },
-        disabled_features: [
-          "use_localstorage_for_settings",
-          "volume_force_overlay",
-          "left_toolbar",
-          "context_menus",
-          "edit_buttons_in_legend",
-          "border_around_the_chart",
-          "remove_library_container_border"
-        ],
-        enabled_features: [
-          "study_templates"
-        ]
-      });
+      if (chartType === 'candlestick') {
+        // Fetch OHLC data for candlestick charts
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${cryptoId}/ohlc?vs_currency=usd&days=${days}`
+        );
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch OHLC data');
+        }
+        
+        const data = await response.json();
+        const formattedData: ChartData[] = data.map(([timestamp, open, high, low, close]: [number, number, number, number, number]) => ({
+          time: new Date(timestamp).toISOString().split('T')[0],
+          value: close,
+          open,
+          high,
+          low,
+          close,
+        }));
+        setChartData(formattedData);
+      } else {
+        // Fetch price data for line charts
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart?vs_currency=usd&days=${days}&interval=daily`
+        );
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch price data');
+        }
+        
+        const data = await response.json();
+        const formattedData: ChartData[] = data.prices.map(([timestamp, price]: [number, number]) => ({
+          time: new Date(timestamp).toISOString().split('T')[0],
+          value: price,
+        }));
+        setChartData(formattedData);
+      }
     } catch (error) {
-      console.error('Error loading TradingView widget:', error);
+      console.error('Error fetching chart data:', error);
+    } finally {
       setLoading(false);
     }
+  };
+
+  const initializeChart = () => {
+    if (!chartContainerRef.current) return;
+
+    // Remove existing chart
+    if (chartRef.current) {
+      chartRef.current.remove();
+    }
+
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: '#0f172a' },
+        textColor: '#94a3b8',
+      },
+      grid: {
+        vertLines: {
+          color: '#334155',
+        },
+        horzLines: {
+          color: '#334155',
+        },
+      },
+      width: chartContainerRef.current.clientWidth,
+      height: 400,
+      rightPriceScale: {
+        borderColor: '#334155',
+      },
+      timeScale: {
+        borderColor: '#334155',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+    });
+
+    chartRef.current = chart;
+
+    if (chartType === 'candlestick') {
+      const candlestickSeries = chart.addCandlestickSeries({
+        upColor: '#10b981',
+        downColor: '#ef4444',
+        borderDownColor: '#ef4444',
+        borderUpColor: '#10b981',
+        wickDownColor: '#ef4444',
+        wickUpColor: '#10b981',
+      });
+
+      const candlestickData: CandlestickData[] = chartData.map(item => ({
+        time: item.time,
+        open: item.open!,
+        high: item.high!,
+        low: item.low!,
+        close: item.close!,
+      }));
+
+      candlestickSeries.setData(candlestickData);
+      seriesRef.current = candlestickSeries;
+    } else {
+      const lineSeries = chart.addLineSeries({
+        color: priceChange24h >= 0 ? '#10b981' : '#ef4444',
+        lineWidth: 2,
+      });
+
+      const lineData: LineData[] = chartData.map(item => ({
+        time: item.time,
+        value: item.value,
+      }));
+
+      lineSeries.setData(lineData);
+      seriesRef.current = lineSeries;
+    }
+
+    // Auto-resize chart
+    const resizeObserver = new ResizeObserver(() => {
+      if (chartContainerRef.current && chartRef.current) {
+        chartRef.current.applyOptions({
+          width: chartContainerRef.current.clientWidth,
+        });
+      }
+    });
+
+    resizeObserver.observe(chartContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   };
 
   useEffect(() => {
-    if (chartContainerRef.current) {
-      chartContainerRef.current.id = `tradingview-widget-${cryptoId}-${Date.now()}`;
-      initializeTradingViewWidget();
+    fetchChartData(timeframe);
+  }, [cryptoId, timeframe, chartType]);
+
+  useEffect(() => {
+    if (!loading && chartData.length > 0) {
+      initializeChart();
     }
-  }, [cryptoId, interval]);
+  }, [chartData, loading, chartType]);
 
   const timeframeOptions = [
-    { value: '1m', label: '1m' },
-    { value: '5m', label: '5m' },
-    { value: '15m', label: '15m' },
-    { value: '1h', label: '1h' },
-    { value: '4h', label: '4h' },
-    { value: '1D', label: '1D' },
-    { value: '1W', label: '1W' },
+    { value: '1', label: '1D' },
+    { value: '7', label: '7D' },
+    { value: '30', label: '30D' },
+    { value: '90', label: '3M' },
+    { value: '365', label: '1Y' },
   ];
 
   return (
