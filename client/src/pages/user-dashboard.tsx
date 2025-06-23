@@ -187,13 +187,13 @@ export default function UserDashboard() {
     },
   });
 
-  // Buy PTS mutation
-  const buyPTSMutation = useMutation({
-    mutationFn: async ({ ptsAmount, paymentToken }: { ptsAmount: number; paymentToken: string }) => {
-      const response = await fetch('/api/user/buy-pts', {
+  // Buy NTIQ mutation
+  const buyNTIQMutation = useMutation({
+    mutationFn: async ({ ntiqAmount, paymentToken }: { ntiqAmount: number; paymentToken: string }) => {
+      const response = await fetch('/api/user/buy-ntiq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ptsAmount, paymentToken }),
+        body: JSON.stringify({ ntiqAmount, paymentToken }),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -204,7 +204,7 @@ export default function UserDashboard() {
     onSuccess: (data) => {
       toast({
         title: "Purchase Successful",
-        description: `${data.ptsAmount} PTS has been added to your balance`,
+        description: `${data.ntiqAmount} NTIQ has been added to your balance`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/purchases"] });
@@ -410,8 +410,8 @@ export default function UserDashboard() {
             <TabsTrigger value="withdraw" className="data-[state=active]:bg-primary">
               Withdraw
             </TabsTrigger>
-            <TabsTrigger value="buy-pts" className="data-[state=active]:bg-primary">
-              Buy PTS
+            <TabsTrigger value="buy-ntiq" className="data-[state=active]:bg-primary">
+              Buy NTIQ
             </TabsTrigger>
             <TabsTrigger value="wallet" className="data-[state=active]:bg-primary">
               <Wallet className="mr-1" size={16} />
@@ -805,19 +805,19 @@ export default function UserDashboard() {
 
                   {/* Amount Input */}
                   <div className="space-y-2">
-                    <Label htmlFor="amount">Amount to Withdraw (PTS)</Label>
+                    <Label htmlFor="amount">Amount to Withdraw (NTIQ)</Label>
                     <Input
                       id="amount"
                       type="number"
-                      placeholder="Enter PTS amount"
+                      placeholder="Enter NTIQ amount"
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
                       min="1000"
                       max={user?.balance || 0}
                     />
                     <div className="flex justify-between text-xs text-slate-400">
-                      <span>Min: 1000 PTS</span>
-                      <span>Max: {user?.balance?.toLocaleString() || "0"} PTS</span>
+                      <span>Min: 1000 NTIQ</span>
+                      <span>Max: {user?.balance?.toLocaleString() || "0"} NTIQ</span>
                     </div>
                   </div>
 
@@ -885,15 +885,15 @@ export default function UserDashboard() {
             </div>
           </TabsContent>
 
-          {/* Buy PTS Tab */}
-          <TabsContent value="buy-pts">
+          {/* Buy NTIQ Tab */}
+          <TabsContent value="buy-ntiq">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Buy PTS Form */}
+              {/* Buy NTIQ Form */}
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Coins className="mr-2" size={20} />
-                    Buy PTS with Crypto
+                    Buy NTIQ with Crypto
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -901,15 +901,15 @@ export default function UserDashboard() {
                     {/* Current Balance */}
                     <div className="p-4 bg-surface-light rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-slate-400">Current PTS Balance</span>
+                        <span className="text-sm text-slate-400">Current NTIQ Balance</span>
                         <div className="flex items-center space-x-2">
                           <Coins className="text-warning" size={16} />
                           <span className="font-bold text-lg">{user?.balance?.toLocaleString() || "0"}</span>
-                          <span className="text-xs text-slate-400">PTS</span>
+                          <span className="text-xs text-slate-400">NTIQ</span>
                         </div>
                       </div>
                       <div className="text-xs text-slate-400">
-                        Use PTS to make predictions and earn rewards
+                        Use NTIQ to make predictions and earn rewards
                       </div>
                     </div>
 
@@ -952,19 +952,19 @@ export default function UserDashboard() {
 
                     {/* Amount Input */}
                     <div className="space-y-2">
-                      <Label htmlFor="buyAmount">Amount to Purchase (PTS)</Label>
+                      <Label htmlFor="buyAmount">Amount to Purchase (NTIQ)</Label>
                       <Input
                         id="buyAmount"
                         type="number"
-                        placeholder="Enter PTS amount"
+                        placeholder="Enter NTIQ amount"
                         value={buyAmount}
                         onChange={(e) => setBuyAmount(e.target.value)}
                         min="100"
                         max="1000000"
                       />
                       <div className="flex justify-between text-xs text-slate-400">
-                        <span>Min: 100 PTS</span>
-                        <span>Max: 1,000,000 PTS</span>
+                        <span>Min: 100 NTIQ</span>
+                        <span>Max: 1,000,000 NTIQ</span>
                       </div>
                     </div>
 
@@ -1002,7 +1002,7 @@ export default function UserDashboard() {
                         <div className="flex justify-between items-center text-sm mt-1">
                           <span>You will receive:</span>
                           <span className="font-semibold text-primary">
-                            {parseFloat(buyAmount).toLocaleString()} PTS
+                            {parseFloat(buyAmount).toLocaleString()} NTIQ
                           </span>
                         </div>
                       </div>
@@ -1013,8 +1013,8 @@ export default function UserDashboard() {
                       onClick={() => {
                         const amount = parseFloat(buyAmount);
                         if (amount >= 100 && amount <= 1000000) {
-                          buyPTSMutation.mutate({ 
-                            ptsAmount: amount, 
+                          buyNTIQMutation.mutate({ 
+                            ntiqAmount: amount, 
                             paymentToken: selectedPaymentToken 
                           });
                         }
@@ -1023,16 +1023,16 @@ export default function UserDashboard() {
                         !buyAmount ||
                         parseFloat(buyAmount) < 100 ||
                         parseFloat(buyAmount) > 1000000 ||
-                        buyPTSMutation.isPending
+                        buyNTIQMutation.isPending
                       }
                       className="w-full"
                     >
-                      {buyPTSMutation.isPending ? (
+                      {buyNTIQMutation.isPending ? (
                         <>Processing Payment...</>
                       ) : (
                         <>
                           <Coins className="mr-2" size={16} />
-                          Buy PTS with {selectedPaymentToken}
+                          Buy NTIQ with {selectedPaymentToken}
                         </>
                       )}
                     </Button>
