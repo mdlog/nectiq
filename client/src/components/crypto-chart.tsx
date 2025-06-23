@@ -87,9 +87,10 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const { width, height } = canvas;
     ctx.clearRect(0, 0, width, height);
 
-    // Set up chart dimensions
+    // Set up chart dimensions with extra space for price labels
     const padding = 40;
-    const chartWidth = width - 2 * padding;
+    const rightPadding = 120; // Extra space for real-time price display
+    const chartWidth = width - padding - rightPadding;
     const chartHeight = height - 2 * padding;
 
     if (chartType === 'candlestick') {
@@ -161,6 +162,44 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const y = padding + (chartHeight * i) / 5;
       ctx.fillText(`$${value.toFixed(2)}`, padding - 5, y + 4);
     }
+
+    // Draw real-time price indicator at the edge of the chart
+    if (chartData.length > 0) {
+      const lastPrice = chartData[chartData.length - 1].value;
+      const priceY = padding + chartHeight - ((lastPrice - minValue) / valueRange) * chartHeight;
+      const rightEdge = padding + chartWidth;
+
+      // Draw price line extending to the right edge
+      ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(rightEdge - 80, priceY);
+      ctx.lineTo(rightEdge, priceY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw price label background
+      const priceText = `$${currentPrice.toFixed(2)}`;
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'left';
+      const textWidth = ctx.measureText(priceText).width;
+      const labelPadding = 8;
+      const labelHeight = 24;
+      
+      ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      ctx.fillRect(rightEdge + 5, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+
+      // Draw price text
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(priceText, rightEdge + 5 + labelPadding, priceY + 5);
+
+      // Draw small circle at the price point
+      ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      ctx.beginPath();
+      ctx.arc(rightEdge - 80, priceY, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
   };
 
   const drawCandlestickChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, padding: number) => {
@@ -206,6 +245,55 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const bodyY = Math.min(openY, closeY);
       ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyHeight);
     });
+
+    // Draw price labels
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'right';
+    
+    for (let i = 0; i <= 5; i++) {
+      const value = maxValue - (valueRange * i) / 5;
+      const y = padding + (chartHeight * i) / 5;
+      ctx.fillText(`$${value.toFixed(2)}`, padding - 5, y + 4);
+    }
+
+    // Draw real-time price indicator for candlestick
+    if (chartData.length > 0) {
+      const lastCandle = chartData[chartData.length - 1];
+      const currentPriceY = padding + chartHeight - ((currentPrice - minValue) / valueRange) * chartHeight;
+      const rightEdge = padding + chartWidth;
+
+      // Draw price line extending to the right edge
+      ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(rightEdge - 80, currentPriceY);
+      ctx.lineTo(rightEdge, currentPriceY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw price label background
+      const priceText = `$${currentPrice.toFixed(2)}`;
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'left';
+      const textWidth = ctx.measureText(priceText).width;
+      const labelPadding = 8;
+      const labelHeight = 24;
+      
+      ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      ctx.fillRect(rightEdge + 5, currentPriceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+
+      // Draw price text
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(priceText, rightEdge + 5 + labelPadding, currentPriceY + 5);
+
+      // Draw small circle at the price point
+      ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      ctx.beginPath();
+      ctx.arc(rightEdge - 80, currentPriceY, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
   };
 
   useEffect(() => {
@@ -225,8 +313,17 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const resizeCanvas = () => {
       const container = canvas.parentElement;
       if (container) {
-        canvas.width = container.clientWidth;
-        canvas.height = 400;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = container.clientWidth * dpr;
+        canvas.height = 400 * dpr;
+        canvas.style.width = container.clientWidth + 'px';
+        canvas.style.height = '400px';
+        
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.scale(dpr, dpr);
+        }
+        
         if (!loading) {
           drawChart();
         }
