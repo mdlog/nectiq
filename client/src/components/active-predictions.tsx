@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Clock, TrendingUp, TrendingDown } from "lucide-react";
 import type { ActivePrediction } from "@/types";
+import type { User } from "@shared/schema";
 
 function formatTimeLeft(timeLeft: number): string {
   if (timeLeft <= 0) return "Expired";
@@ -45,12 +46,38 @@ function calculateAccuracy(predicted: string, current: string): number {
 }
 
 export function ActivePredictions() {
+  // Check if user is authenticated first
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/user"],
+    retry: false,
+  });
+
+  const isAuthenticated = !!user;
+
   const { data: predictions = [], isLoading } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
-    refetchInterval: 1000, // Refetch every 1 second for real-time updates
-    refetchIntervalInBackground: true,
+    refetchInterval: isAuthenticated ? 1000 : false, // Only refetch if authenticated
+    refetchIntervalInBackground: isAuthenticated,
     staleTime: 0,
+    enabled: isAuthenticated, // Only enable query if authenticated
   });
+
+  // Show authentication message if not logged in
+  if (!isAuthenticated) {
+    return (
+      <div className="bg-surface rounded-xl p-6 border border-surface-light">
+        <h3 className="text-lg font-bold mb-4 flex items-center">
+          <Clock className="text-warning mr-2" size={18} />
+          Active Predictions
+        </h3>
+        <div className="text-center py-8 text-slate-400">
+          <Clock className="mx-auto mb-2" size={32} />
+          <p>Connect your wallet to view predictions</p>
+          <p className="text-sm">Sign in to track your active predictions</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
