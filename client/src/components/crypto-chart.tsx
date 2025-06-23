@@ -116,7 +116,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     chartRef.current = chart;
 
     if (chartType === 'candlestick') {
-      const candlestickSeries = (chart as any).addCandlestickSeries({
+      const candlestickSeries = chart.addCandlestickSeries({
         upColor: '#10b981',
         downColor: '#ef4444',
         borderDownColor: '#ef4444',
@@ -136,7 +136,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       candlestickSeries.setData(candlestickData);
       seriesRef.current = candlestickSeries;
     } else {
-      const lineSeries = (chart as any).addLineSeries({
+      const lineSeries = chart.addLineSeries({
         color: priceChange24h >= 0 ? '#10b981' : '#ef4444',
         lineWidth: 2,
       });
