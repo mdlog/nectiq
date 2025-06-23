@@ -44,7 +44,7 @@ function PurchaseHistory() {
                 <Coins className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <div className="font-medium text-sm">{purchase.ptsAmount.toLocaleString()} PTS</div>
+                <div className="font-medium text-sm">{purchase.ptsAmount.toLocaleString()} NTIQ</div>
                 <div className="text-xs text-slate-500">Paid with {purchase.paymentAmount} {purchase.paymentToken}</div>
               </div>
             </div>
@@ -458,7 +458,7 @@ export default function UserDashboard() {
                               <p className={`text-sm font-medium ${isExpired ? "text-error" : "text-success"}`}>
                                 {isExpired ? "Expired" : formatTimeLeft(prediction.timeLeft)}
                               </p>
-                              <p className="text-xs text-slate-400">Stake: {prediction.stakeAmount} PTS</p>
+                              <p className="text-xs text-slate-400">Stake: {prediction.stakeAmount} NTIQ</p>
                             </div>
                           </div>
                           

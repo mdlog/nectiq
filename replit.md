@@ -114,6 +114,7 @@ Changelog:
 - June 23, 2025. Added pagination to Admin Panel predictions (10 items per page with navigation controls)
 - June 23, 2025. Added filter functionality to Admin Panel predictions (filter by asset and status with Indonesian interface)
 - June 23, 2025. Implemented comprehensive Metamask wallet UI integration with pop-up functionality and balance synchronization
+- June 23, 2025. Changed point unit from PTS to NTIQ throughout the entire application
 ```
 
 ## User Preferences

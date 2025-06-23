@@ -549,19 +549,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Buy PTS with crypto
-  app.post("/api/user/buy-pts", async (req, res) => {
+  // Buy NTIQ with crypto
+  app.post("/api/user/buy-ntiq", async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const { ptsAmount, paymentToken } = req.body;
+      const { ntiqAmount, paymentToken } = req.body;
 
       // Enhanced security validation
-      if (!ptsAmount || typeof ptsAmount !== 'number' || ptsAmount < 100 || ptsAmount > 1000000 || !Number.isInteger(ptsAmount)) {
-        return res.status(400).json({ message: "PTS amount must be an integer between 100 and 1,000,000" });
+      if (!ntiqAmount || typeof ntiqAmount !== 'number' || ntiqAmount < 100 || ntiqAmount > 1000000 || !Number.isInteger(ntiqAmount)) {
+        return res.status(400).json({ message: "NTIQ amount must be an integer between 100 and 1,000,000" });
       }
 
       // Validate payment token
@@ -575,17 +575,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found or wallet not connected" });
       }
 
-      const numAmount = ptsAmount;
+      const numAmount = ntiqAmount;
 
       // Calculate payment amount based on exchange rates
       let paymentAmount: number;
       switch (paymentToken) {
         case "ETH":
-          paymentAmount = numAmount / 300000; // 1 ETH = 300,000 PTS
+          paymentAmount = numAmount / 300000; // 1 ETH = 300,000 NTIQ
           break;
         case "USDT":
         case "USDC":
-          paymentAmount = numAmount / 100; // 1 USDT/USDC = 100 PTS
+          paymentAmount = numAmount / 100; // 1 USDT/USDC = 100 NTIQ
           break;
         default:
           return res.status(400).json({ message: "Unsupported payment token" });
@@ -594,13 +594,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create purchase record
       const purchase = await storage.createPurchase({
         userId,
-        ptsAmount: numAmount,
+        ptsAmount: numAmount, // Keep database field name for compatibility
         paymentAmount: paymentAmount.toFixed(6),
         paymentToken,
         status: "completed"
       });
 
-      // Add PTS to user balance atomically
+      // Add NTIQ to user balance atomically
       const newBalance = user.balance + numAmount;
       await storage.updateUserBalance(userId, newBalance);
 
@@ -612,7 +612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       auditLog("user_purchase", {
         userId,
-        ptsAmount: numAmount,
+        ntiqAmount: numAmount,
         paymentAmount,
         paymentToken,
         walletAddress: user.walletAddress,
@@ -623,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         message: "Purchase completed successfully",
-        ptsAmount: numAmount,
+        ntiqAmount: numAmount,
         paymentAmount: paymentAmount.toFixed(6),
         paymentToken,
         newBalance,
