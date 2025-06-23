@@ -3800,7 +3800,7 @@ export default function AdminPanel() {
                         value={settingsForm.platform.minPredictionAmount}
                         onChange={(e) => handleSettingsChange('platform', 'minPredictionAmount', parseInt(e.target.value))}
                         type="number"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">Nilai minimum untuk membuat prediksi</p>
                     </div>
@@ -3814,7 +3814,7 @@ export default function AdminPanel() {
                         value={settingsForm.platform.maxPredictionAmount}
                         onChange={(e) => handleSettingsChange('platform', 'maxPredictionAmount', parseInt(e.target.value))}
                         type="number"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">Nilai maksimum untuk membuat prediksi</p>
                     </div>
@@ -3829,7 +3829,7 @@ export default function AdminPanel() {
                         onChange={(e) => handleSettingsChange('platform', 'withdrawalFee', parseFloat(e.target.value))}
                         type="number" 
                         step="0.1"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">Fee yang dikenakan saat withdrawal (dalam persen)</p>
                     </div>
@@ -3843,7 +3843,7 @@ export default function AdminPanel() {
                         value={settingsForm.platform.minWithdrawal}
                         onChange={(e) => handleSettingsChange('platform', 'minWithdrawal', parseInt(e.target.value))}
                         type="number"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">Jumlah minimum untuk penarikan</p>
                     </div>
@@ -3851,25 +3851,25 @@ export default function AdminPanel() {
 
                   {/* Prediction Limits */}
                   <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                    <h4 className="font-semibold text-primary mb-3">Prediction Limit: 20x/hour</h4>
+                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Prediction Limit: 20x/hour</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <Label htmlFor="prediction-delay">Withdrawal Delay: 4 jam</Label>
+                        <Label htmlFor="prediction-delay" className="text-slate-700 dark:text-slate-300">Withdrawal Delay: 4 jam</Label>
                         <Input 
                           id="prediction-delay"
                           value="4"
                           type="number"
-                          className="mt-1 bg-surface-light border-surface-light"
+                          className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="reward-multiplier">Reward Multiplier: 2x</Label>
+                        <Label htmlFor="reward-multiplier" className="text-slate-700 dark:text-slate-300">Reward Multiplier: 2x</Label>
                         <Input 
                           id="reward-multiplier"
                           value="2"
                           type="number"
                           step="0.1"
-                          className="mt-1 bg-surface-light border-surface-light"
+                          className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                         />
                       </div>
                     </div>
@@ -3914,7 +3914,7 @@ export default function AdminPanel() {
                         value={settingsForm.exchangeRates.ethToPts}
                         onChange={(e) => handleSettingsChange('exchangeRates', 'ethToPts', parseInt(e.target.value))}
                         type="number"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">1 ETH = {settingsForm.exchangeRates.ethToPts.toLocaleString()} NTIQ</p>
                       <p className="text-xs text-green-600">Terakhir update: 2 menit lalu</p>
@@ -3929,7 +3929,7 @@ export default function AdminPanel() {
                         value={settingsForm.exchangeRates.usdtToPts}
                         onChange={(e) => handleSettingsChange('exchangeRates', 'usdtToPts', parseInt(e.target.value))}
                         type="number"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">1 USDT = {settingsForm.exchangeRates.usdtToPts} NTIQ</p>
                       <p className="text-xs text-green-600">Terakhir update: 1 menit lalu</p>
@@ -3945,7 +3945,7 @@ export default function AdminPanel() {
                         onChange={(e) => handleSettingsChange('exchangeRates', 'ptsToUsdt', parseFloat(e.target.value))}
                         type="number" 
                         step="0.001"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">1 NTIQ = {settingsForm.exchangeRates.ptsToUsdt} USDT</p>
                       <p className="text-xs text-orange-600">Requires manual update</p>
@@ -3995,7 +3995,7 @@ export default function AdminPanel() {
                         value={settingsForm.security.rateLimit}
                         onChange={(e) => handleSettingsChange('security', 'rateLimit', parseInt(e.target.value))}
                         type="number"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">Maksimum request API per menit per IP</p>
                     </div>
@@ -4009,7 +4009,7 @@ export default function AdminPanel() {
                         value={settingsForm.security.maxPredictionsPerHour}
                         onChange={(e) => handleSettingsChange('security', 'maxPredictionsPerHour', parseInt(e.target.value))}
                         type="number"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">Batas prediksi per jam per user</p>
                     </div>
@@ -4023,7 +4023,7 @@ export default function AdminPanel() {
                         value={settingsForm.security.maxWithdrawalsPerHour}
                         onChange={(e) => handleSettingsChange('security', 'maxWithdrawalsPerHour', parseInt(e.target.value))}
                         type="number"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">Batas withdrawal per jam per user</p>
                     </div>
@@ -4037,7 +4037,7 @@ export default function AdminPanel() {
                         value={settingsForm.security.sessionTimeout}
                         onChange={(e) => handleSettingsChange('security', 'sessionTimeout', parseInt(e.target.value))}
                         type="number"
-                        className="bg-surface-light border-surface-light"
+                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                       />
                       <p className="text-xs text-slate-500">Waktu expire session pengguna</p>
                     </div>
