@@ -507,6 +507,7 @@ export default function AdminPanel() {
             <TabsTrigger value="users" className="data-[state=active]:bg-primary">Users</TabsTrigger>
             <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary">Cryptocurrencies</TabsTrigger>
             <TabsTrigger value="predictions" className="data-[state=active]:bg-primary">Predictions</TabsTrigger>
+            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary">Leaderboard</TabsTrigger>
             <TabsTrigger value="transactions" className="data-[state=active]:bg-primary">Transactions</TabsTrigger>
             <TabsTrigger value="security" className="data-[state=active]:bg-primary">Security</TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:bg-primary">Settings</TabsTrigger>
