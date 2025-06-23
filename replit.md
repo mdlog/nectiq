@@ -112,6 +112,7 @@ Nectiq is a gamified cryptocurrency price prediction platform that allows users 
 Changelog:
 - June 23, 2025. Initial setup
 - June 23, 2025. Added pagination to Admin Panel predictions (10 items per page with navigation controls)
+- June 23, 2025. Added filter functionality to Admin Panel predictions (filter by asset and status with Indonesian interface)
 ```
 
 ## User Preferences

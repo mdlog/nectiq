@@ -1276,7 +1276,7 @@ export default function AdminPanel() {
                 </div>
                 
                 {/* Pagination Controls */}
-                {predictions.length > predictionsPerPage && (
+                {filteredPredictions.length > predictionsPerPage && (
                   <div className="flex items-center justify-between pt-6 border-t border-slate-600">
                     <div className="flex items-center space-x-2">
                       <Button
@@ -1290,8 +1290,8 @@ export default function AdminPanel() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setPredictionsPage(prev => Math.min(Math.ceil(predictions.length / predictionsPerPage), prev + 1))}
-                        disabled={predictionsPage >= Math.ceil(predictions.length / predictionsPerPage)}
+                        onClick={() => setPredictionsPage(prev => Math.min(Math.ceil(filteredPredictions.length / predictionsPerPage), prev + 1))}
+                        disabled={predictionsPage >= Math.ceil(filteredPredictions.length / predictionsPerPage)}
                       >
                         Next
                       </Button>
@@ -1299,12 +1299,12 @@ export default function AdminPanel() {
                     
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-slate-400">
-                        Showing {Math.min((predictionsPage - 1) * predictionsPerPage + 1, predictions.length)} to {Math.min(predictionsPage * predictionsPerPage, predictions.length)} of {predictions.length} predictions
+                        Menampilkan {Math.min((predictionsPage - 1) * predictionsPerPage + 1, filteredPredictions.length)} sampai {Math.min(predictionsPage * predictionsPerPage, filteredPredictions.length)} dari {filteredPredictions.length} prediksi
                       </span>
                     </div>
                     
                     <div className="flex items-center space-x-1">
-                      {Array.from({ length: Math.ceil(predictions.length / predictionsPerPage) }, (_, i) => i + 1)
+                      {Array.from({ length: Math.ceil(filteredPredictions.length / predictionsPerPage) }, (_, i) => i + 1)
                         .slice(Math.max(0, predictionsPage - 3), predictionsPage + 2)
                         .map((page) => (
                         <Button
