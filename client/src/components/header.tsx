@@ -5,6 +5,7 @@ import { useAccount, useDisconnect } from 'wagmi';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import type { User as UserType } from "@shared/schema";
+import nectiqLogo from "@/assets/nectiq-logo.png";
 
 export function Header() {
   const { data: user } = useQuery<UserType>({
@@ -85,10 +86,7 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-              <ChartLine className="text-white" size={16} />
-            </div>
-            <h1 className="text-xl font-bold">Nectiq</h1>
+            <img src={nectiqLogo} alt="Nectiq - Tactics. Timing. Triumph." className="h-10" />
           </div>
           
           <nav className="hidden md:flex space-x-8">
