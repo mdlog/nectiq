@@ -15,32 +15,63 @@ interface CryptoChartProps {
 interface ChartData {
   time: string;
   value: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
 }
+
+type ChartType = 'line' | 'area' | 'candlestick' | 'bar';
 
 export default function CryptoChart({ cryptoId, symbol, name, currentPrice, priceChange24h, onPredictClick }: CryptoChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [timeframe, setTimeframe] = useState('7');
+  const [chartType, setChartType] = useState<ChartType>('area');
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchChartData = async (days: string) => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart?vs_currency=usd&days=${days}&interval=${days === '1' ? 'hourly' : 'daily'}`
-      );
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch chart data');
-      }
-      
-      const data = await response.json();
-      const formattedData: ChartData[] = data.prices.map(([timestamp, price]: [number, number]) => ({
-        time: new Date(timestamp).toISOString().split('T')[0],
-        value: price
-      }));
+      if (chartType === 'candlestick') {
+        // Fetch OHLC data for candlestick charts
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${cryptoId}/ohlc?vs_currency=usd&days=${days}`
+        );
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch OHLC data');
+        }
+        
+        const data = await response.json();
+        const formattedData: ChartData[] = data.map(([timestamp, open, high, low, close]: [number, number, number, number, number]) => ({
+          time: new Date(timestamp).toISOString().split('T')[0],
+          value: close,
+          open,
+          high,
+          low,
+          close
+        }));
 
-      setChartData(formattedData);
+        setChartData(formattedData);
+      } else {
+        // Fetch regular price data for other chart types
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart?vs_currency=usd&days=${days}&interval=${days === '1' ? 'hourly' : 'daily'}`
+        );
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch chart data');
+        }
+        
+        const data = await response.json();
+        const formattedData: ChartData[] = data.prices.map(([timestamp, price]: [number, number]) => ({
+          time: new Date(timestamp).toISOString().split('T')[0],
+          value: price
+        }));
+
+        setChartData(formattedData);
+      }
     } catch (error) {
       console.error('Error fetching chart data:', error);
       // Generate realistic fallback data based on current price and trend
@@ -94,20 +125,51 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     if (chartData.length < 2) return;
 
     // Chart dimensions
-    const leftPadding = 80; // More space for price labels
+    const leftPadding = 80;
     const rightPadding = 20;
     const topPadding = 20;
     const bottomPadding = 40;
     const chartWidth = rect.width - leftPadding - rightPadding;
     const chartHeight = rect.height - topPadding - bottomPadding;
 
-    // Find min/max values
-    const values = chartData.map(d => d.value);
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
+    // Find min/max values for different chart types
+    let minValue, maxValue;
+    if (chartType === 'candlestick' && chartData[0]?.low !== undefined) {
+      const lows = chartData.map(d => d.low!);
+      const highs = chartData.map(d => d.high!);
+      minValue = Math.min(...lows);
+      maxValue = Math.max(...highs);
+    } else {
+      const values = chartData.map(d => d.value);
+      minValue = Math.min(...values);
+      maxValue = Math.max(...values);
+    }
     const valueRange = maxValue - minValue;
 
     // Draw grid lines
+    drawGridLines(ctx, leftPadding, rightPadding, topPadding, bottomPadding, chartWidth, chartHeight);
+
+    // Draw chart based on type
+    switch (chartType) {
+      case 'line':
+        drawLineChart(ctx, chartData, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange, priceChange24h);
+        break;
+      case 'area':
+        drawAreaChart(ctx, chartData, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange, priceChange24h);
+        break;
+      case 'candlestick':
+        drawCandlestickChart(ctx, chartData, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange);
+        break;
+      case 'bar':
+        drawBarChart(ctx, chartData, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange, priceChange24h);
+        break;
+    }
+
+    // Draw price labels
+    drawPriceLabels(ctx, leftPadding, topPadding, chartHeight, minValue, maxValue, valueRange);
+  };
+
+  const drawGridLines = (ctx: CanvasRenderingContext2D, leftPadding: number, rightPadding: number, topPadding: number, bottomPadding: number, chartWidth: number, chartHeight: number) => {
     ctx.strokeStyle = '#374151';
     ctx.lineWidth = 1;
     
@@ -128,14 +190,15 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.lineTo(x, topPadding + chartHeight);
       ctx.stroke();
     }
+  };
 
-    // Draw price line
+  const drawLineChart = (ctx: CanvasRenderingContext2D, data: ChartData[], leftPadding: number, topPadding: number, chartWidth: number, chartHeight: number, minValue: number, valueRange: number, priceChange24h: number) => {
     ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
     ctx.lineWidth = 2;
     ctx.beginPath();
 
-    chartData.forEach((point, index) => {
-      const x = leftPadding + (index / (chartData.length - 1)) * chartWidth;
+    data.forEach((point, index) => {
+      const x = leftPadding + (index / (data.length - 1)) * chartWidth;
       const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
       
       if (index === 0) {
@@ -146,6 +209,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     });
 
     ctx.stroke();
+  };
+
+  const drawAreaChart = (ctx: CanvasRenderingContext2D, data: ChartData[], leftPadding: number, topPadding: number, chartWidth: number, chartHeight: number, minValue: number, valueRange: number, priceChange24h: number) => {
+    // Draw line first
+    drawLineChart(ctx, data, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange, priceChange24h);
 
     // Draw gradient fill
     const gradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
@@ -154,8 +222,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    chartData.forEach((point, index) => {
-      const x = leftPadding + (index / (chartData.length - 1)) * chartWidth;
+    data.forEach((point, index) => {
+      const x = leftPadding + (index / (data.length - 1)) * chartWidth;
       const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
       
       if (index === 0) {
@@ -168,8 +236,60 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.lineTo(leftPadding, topPadding + chartHeight);
     ctx.closePath();
     ctx.fill();
+  };
 
-    // Draw price labels
+  const drawCandlestickChart = (ctx: CanvasRenderingContext2D, data: ChartData[], leftPadding: number, topPadding: number, chartWidth: number, chartHeight: number, minValue: number, valueRange: number) => {
+    const candleWidth = Math.max(2, chartWidth / data.length * 0.6);
+    
+    data.forEach((point, index) => {
+      if (!point.open || !point.high || !point.low || !point.close) return;
+      
+      const x = leftPadding + (index / (data.length - 1)) * chartWidth;
+      const openY = topPadding + chartHeight - ((point.open - minValue) / valueRange) * chartHeight;
+      const closeY = topPadding + chartHeight - ((point.close - minValue) / valueRange) * chartHeight;
+      const highY = topPadding + chartHeight - ((point.high - minValue) / valueRange) * chartHeight;
+      const lowY = topPadding + chartHeight - ((point.low - minValue) / valueRange) * chartHeight;
+      
+      const isGreen = point.close >= point.open;
+      
+      // Draw wick
+      ctx.strokeStyle = isGreen ? '#10b981' : '#ef4444';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, highY);
+      ctx.lineTo(x, lowY);
+      ctx.stroke();
+      
+      // Draw body
+      ctx.fillStyle = isGreen ? '#10b981' : '#ef4444';
+      ctx.strokeStyle = isGreen ? '#10b981' : '#ef4444';
+      ctx.lineWidth = 1;
+      
+      const bodyHeight = Math.abs(closeY - openY);
+      const bodyY = Math.min(openY, closeY);
+      
+      if (isGreen) {
+        ctx.fillRect(x - candleWidth/2, bodyY, candleWidth, bodyHeight);
+      } else {
+        ctx.strokeRect(x - candleWidth/2, bodyY, candleWidth, bodyHeight);
+      }
+    });
+  };
+
+  const drawBarChart = (ctx: CanvasRenderingContext2D, data: ChartData[], leftPadding: number, topPadding: number, chartWidth: number, chartHeight: number, minValue: number, valueRange: number, priceChange24h: number) => {
+    const barWidth = Math.max(2, chartWidth / data.length * 0.8);
+    
+    data.forEach((point, index) => {
+      const x = leftPadding + (index / (data.length - 1)) * chartWidth;
+      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      const barHeight = ((point.value - minValue) / valueRange) * chartHeight;
+      
+      ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      ctx.fillRect(x - barWidth/2, y, barWidth, barHeight);
+    });
+  };
+
+  const drawPriceLabels = (ctx: CanvasRenderingContext2D, leftPadding: number, topPadding: number, chartHeight: number, minValue: number, maxValue: number, valueRange: number) => {
     ctx.fillStyle = '#d1d5db';
     ctx.font = '12px Inter, system-ui, sans-serif';
     ctx.textAlign = 'right';
@@ -179,7 +299,6 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const value = maxValue - (valueRange / 5) * i;
       const y = topPadding + (chartHeight / 5) * i;
       
-      // Format price with appropriate decimals for readability
       let formattedPrice;
       if (value >= 1000) {
         formattedPrice = `$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -195,11 +314,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
   useEffect(() => {
     fetchChartData(timeframe);
-  }, [cryptoId, timeframe]);
+  }, [cryptoId, timeframe, chartType]);
 
   useEffect(() => {
     drawChart();
-  }, [chartData, priceChange24h]);
+  }, [chartData, priceChange24h, chartType]);
 
   const timeframes = [
     { label: '1D', value: '1' },
@@ -240,18 +359,43 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
             </div>
           </div>
           
-          <div className="flex space-x-1">
-            {timeframes.map((tf) => (
-              <Button
-                key={tf.value}
-                variant={timeframe === tf.value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setTimeframe(tf.value)}
-                className="text-xs px-3 py-1"
-              >
-                {tf.label}
-              </Button>
-            ))}
+          <div className="flex space-x-3">
+            {/* Chart Type Selector */}
+            <div className="flex space-x-1">
+              {[
+                { type: 'area', label: 'Area', icon: '📈' },
+                { type: 'line', label: 'Line', icon: '📊' },
+                { type: 'candlestick', label: 'Candle', icon: '🕯️' },
+                { type: 'bar', label: 'Bar', icon: '📉' }
+              ].map(({ type, label, icon }) => (
+                <Button
+                  key={type}
+                  variant={chartType === type ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setChartType(type as ChartType)}
+                  className="text-xs px-2 py-1"
+                  title={`${label} Chart`}
+                >
+                  <span className="mr-1">{icon}</span>
+                  {label}
+                </Button>
+              ))}
+            </div>
+            
+            {/* Timeframe Selector */}
+            <div className="flex space-x-1">
+              {timeframes.map((tf) => (
+                <Button
+                  key={tf.value}
+                  variant={timeframe === tf.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setTimeframe(tf.value)}
+                  className="text-xs px-3 py-1"
+                >
+                  {tf.label}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </CardHeader>
