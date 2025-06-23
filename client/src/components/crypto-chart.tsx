@@ -330,37 +330,55 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   return (
     <Card className="bg-surface border-surface-light">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div>
-              <CardTitle className="text-lg font-bold">
-                {name} ({symbol})
-              </CardTitle>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="text-2xl font-bold">
-                  ${currentPrice.toLocaleString(undefined, { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
-                  })}
-                </span>
-                <div className={`flex items-center space-x-1 ${
-                  priceChange24h >= 0 ? 'text-success' : 'text-danger'
-                }`}>
-                  {priceChange24h >= 0 ? (
-                    <TrendingUp size={16} />
-                  ) : (
-                    <TrendingDown size={16} />
-                  )}
-                  <span className="text-sm font-medium">
-                    {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
+        <div className="space-y-3">
+          {/* Title and Price Row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div>
+                <CardTitle className="text-lg font-bold">
+                  {name} ({symbol})
+                </CardTitle>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-2xl font-bold">
+                    ${currentPrice.toLocaleString(undefined, { 
+                      minimumFractionDigits: 2, 
+                      maximumFractionDigits: 2 
+                    })}
                   </span>
+                  <div className={`flex items-center space-x-1 ${
+                    priceChange24h >= 0 ? 'text-success' : 'text-danger'
+                  }`}>
+                    {priceChange24h >= 0 ? (
+                      <TrendingUp size={16} />
+                    ) : (
+                      <TrendingDown size={16} />
+                    )}
+                    <span className="text-sm font-medium">
+                      {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+            
+            {/* Timeframe Selector - Top Right */}
+            <div className="flex space-x-1">
+              {timeframes.map((tf) => (
+                <Button
+                  key={tf.value}
+                  variant={timeframe === tf.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setTimeframe(tf.value)}
+                  className="text-xs px-3 py-1 min-w-[40px]"
+                >
+                  {tf.label}
+                </Button>
+              ))}
+            </div>
           </div>
           
-          <div className="flex space-x-3">
-            {/* Chart Type Selector */}
+          {/* Chart Type Selector Row */}
+          <div className="flex justify-center">
             <div className="flex space-x-1">
               {[
                 { type: 'area', label: 'Area', icon: '📈' },
@@ -378,21 +396,6 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
                 >
                   <span className="mr-1">{icon}</span>
                   {label}
-                </Button>
-              ))}
-            </div>
-            
-            {/* Timeframe Selector */}
-            <div className="flex space-x-1">
-              {timeframes.map((tf) => (
-                <Button
-                  key={tf.value}
-                  variant={timeframe === tf.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTimeframe(tf.value)}
-                  className="text-xs px-3 py-1"
-                >
-                  {tf.label}
                 </Button>
               ))}
             </div>
