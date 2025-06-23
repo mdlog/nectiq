@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Target, BarChart3 } from 'lucide-react';
-import { createChart, ColorType, IChartApi, ISeriesApi, CandlestickData, LineData } from 'lightweight-charts';
 
 interface CryptoChartProps {
   cryptoId: string;
@@ -25,13 +24,11 @@ interface ChartData {
 type ChartType = 'line' | 'candlestick';
 
 export default function CryptoChart({ cryptoId, symbol, name, currentPrice, priceChange24h, onPredictClick }: CryptoChartProps) {
-  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [timeframe, setTimeframe] = useState('7');
   const [chartType, setChartType] = useState<ChartType>('line');
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData[]>([]);
-  const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<any>(null);
 
   const fetchChartData = async (days: string) => {
     setLoading(true);
@@ -80,90 +77,135 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     }
   };
 
-  const initializeChart = () => {
-    if (!chartContainerRef.current) return;
+  const drawChart = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || chartData.length === 0) return;
 
-    // Remove existing chart
-    if (chartRef.current) {
-      chartRef.current.remove();
-    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { type: ColorType.Solid, color: '#0f172a' },
-        textColor: '#94a3b8',
-      },
-      grid: {
-        vertLines: {
-          color: '#334155',
-        },
-        horzLines: {
-          color: '#334155',
-        },
-      },
-      width: chartContainerRef.current.clientWidth,
-      height: 400,
-      rightPriceScale: {
-        borderColor: '#334155',
-      },
-      timeScale: {
-        borderColor: '#334155',
-        timeVisible: true,
-        secondsVisible: false,
-      },
-    });
+    const { width, height } = canvas;
+    ctx.clearRect(0, 0, width, height);
 
-    chartRef.current = chart;
+    // Set up chart dimensions
+    const padding = 40;
+    const chartWidth = width - 2 * padding;
+    const chartHeight = height - 2 * padding;
 
     if (chartType === 'candlestick') {
-      const candlestickSeries = chart.addCandlestickSeries({
-        upColor: '#10b981',
-        downColor: '#ef4444',
-        borderDownColor: '#ef4444',
-        borderUpColor: '#10b981',
-        wickDownColor: '#ef4444',
-        wickUpColor: '#10b981',
-      });
-
-      const candlestickData: CandlestickData[] = chartData.map(item => ({
-        time: item.time,
-        open: item.open!,
-        high: item.high!,
-        low: item.low!,
-        close: item.close!,
-      }));
-
-      candlestickSeries.setData(candlestickData);
-      seriesRef.current = candlestickSeries;
+      drawCandlestickChart(ctx, chartWidth, chartHeight, padding);
     } else {
-      const lineSeries = chart.addLineSeries({
-        color: priceChange24h >= 0 ? '#10b981' : '#ef4444',
-        lineWidth: 2,
-      });
+      drawLineChart(ctx, chartWidth, chartHeight, padding);
+    }
+  };
 
-      const lineData: LineData[] = chartData.map(item => ({
-        time: item.time,
-        value: item.value,
-      }));
+  const drawLineChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, padding: number) => {
+    const values = chartData.map(d => d.value);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const valueRange = maxValue - minValue || 1;
 
-      lineSeries.setData(lineData);
-      seriesRef.current = lineSeries;
+    // Draw grid lines
+    ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+      const y = padding + (chartHeight * i) / 5;
+      ctx.beginPath();
+      ctx.moveTo(padding, y);
+      ctx.lineTo(padding + chartWidth, y);
+      ctx.stroke();
     }
 
-    // Auto-resize chart
-    const resizeObserver = new ResizeObserver(() => {
-      if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-        });
+    // Draw price line
+    ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    chartData.forEach((point, index) => {
+      const x = padding + (chartWidth * index) / (chartData.length - 1);
+      const y = padding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
       }
     });
 
-    resizeObserver.observe(chartContainerRef.current);
+    ctx.stroke();
 
-    return () => {
-      resizeObserver.disconnect();
-    };
+    // Draw gradient fill
+    const gradient = ctx.createLinearGradient(0, padding, 0, padding + chartHeight);
+    gradient.addColorStop(0, priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)');
+    gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.moveTo(padding, padding + chartHeight);
+    chartData.forEach((point, index) => {
+      const x = padding + (chartWidth * index) / (chartData.length - 1);
+      const y = padding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      ctx.lineTo(x, y);
+    });
+    ctx.lineTo(padding + chartWidth, padding + chartHeight);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw price labels
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'right';
+    
+    for (let i = 0; i <= 5; i++) {
+      const value = maxValue - (valueRange * i) / 5;
+      const y = padding + (chartHeight * i) / 5;
+      ctx.fillText(`$${value.toFixed(2)}`, padding - 5, y + 4);
+    }
+  };
+
+  const drawCandlestickChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, padding: number) => {
+    const values = chartData.flatMap(d => [d.high!, d.low!]);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const valueRange = maxValue - minValue || 1;
+
+    // Draw grid lines
+    ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+      const y = padding + (chartHeight * i) / 5;
+      ctx.beginPath();
+      ctx.moveTo(padding, y);
+      ctx.lineTo(padding + chartWidth, y);
+      ctx.stroke();
+    }
+
+    const candleWidth = chartWidth / chartData.length * 0.6;
+
+    chartData.forEach((candle, index) => {
+      const x = padding + (chartWidth * (index + 0.5)) / chartData.length;
+      const openY = padding + chartHeight - ((candle.open! - minValue) / valueRange) * chartHeight;
+      const closeY = padding + chartHeight - ((candle.close! - minValue) / valueRange) * chartHeight;
+      const highY = padding + chartHeight - ((candle.high! - minValue) / valueRange) * chartHeight;
+      const lowY = padding + chartHeight - ((candle.low! - minValue) / valueRange) * chartHeight;
+
+      const isGreen = candle.close! >= candle.open!;
+      const color = isGreen ? '#10b981' : '#ef4444';
+
+      // Draw wick
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, highY);
+      ctx.lineTo(x, lowY);
+      ctx.stroke();
+
+      // Draw body
+      ctx.fillStyle = color;
+      const bodyHeight = Math.abs(closeY - openY) || 1;
+      const bodyY = Math.min(openY, closeY);
+      ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyHeight);
+    });
   };
 
   useEffect(() => {
@@ -171,10 +213,30 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   }, [cryptoId, timeframe, chartType]);
 
   useEffect(() => {
-    if (!loading && chartData.length > 0) {
-      initializeChart();
+    if (!loading) {
+      drawChart();
     }
-  }, [chartData, loading, chartType]);
+  }, [chartData, loading]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const resizeCanvas = () => {
+      const container = canvas.parentElement;
+      if (container) {
+        canvas.width = container.clientWidth;
+        canvas.height = 400;
+        if (!loading) {
+          drawChart();
+        }
+      }
+    };
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    return () => window.removeEventListener('resize', resizeCanvas);
+  }, [loading]);
 
   const timeframeOptions = [
     { value: '1', label: '1D' },
@@ -272,10 +334,10 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
             </div>
           )}
           
-          <div 
-            ref={chartContainerRef}
-            className="w-full h-[500px] bg-surface-dark rounded-b-lg"
-            style={{ minHeight: '500px' }}
+          <canvas 
+            ref={canvasRef}
+            className="w-full h-[400px] bg-slate-900 rounded-b-lg"
+            style={{ minHeight: '400px' }}
           />
         </div>
       </CardContent>
