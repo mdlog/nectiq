@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { Footer } from "@/components/footer";
 
 interface LeaderboardUser {
   id: number;
@@ -303,6 +304,8 @@ export default function Leaderboard() {
           </CardContent>
         </Card>
       </div>
+      
+      <Footer />
     </div>
   );
 }
