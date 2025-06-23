@@ -15,6 +15,7 @@ import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/t
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
 import CryptoChart from "@/components/crypto-chart";
+import TradingViewChart from "@/components/tradingview-chart";
 import { LivePrices } from "@/components/live-prices";
 
 // Purchase History Component
@@ -615,28 +616,36 @@ export default function UserDashboard() {
                 )}
               </div>
               
-              {/* Interactive Chart */}
+              {/* Professional TradingView Chart */}
               <div className="space-y-4">
                 {selectedCrypto && showChart ? (
-                  <CryptoChart
+                  <TradingViewChart
                     cryptoId={selectedCrypto.id}
                     symbol={selectedCrypto.symbol}
                     name={selectedCrypto.name}
                     currentPrice={selectedCrypto.current_price}
                     priceChange24h={selectedCrypto.price_change_percentage_24h}
+                    onPredictClick={(cryptoId) => {
+                      // Find the crypto and open prediction modal
+                      const crypto = prices.find(p => p.id === cryptoId);
+                      if (crypto) {
+                        window.location.href = `/predict?crypto=${cryptoId}`;
+                      }
+                    }}
                   />
                 ) : (
                   <Card className="bg-surface border-surface-light">
                     <CardContent className="text-center py-12">
                       <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
-                      <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
+                      <h3 className="text-lg font-semibold mb-2">Professional Trading Charts</h3>
                       <p className="text-slate-400 mb-4">
-                        Click on any cryptocurrency from the Live Prices panel to view its interactive price chart
+                        Click on any cryptocurrency from the Live Prices panel to view professional TradingView charts
                       </p>
                       <div className="text-sm text-slate-500">
-                        <p>• Real-time price data from CoinGecko</p>
-                        <p>• Multiple timeframe analysis</p>
-                        <p>• Direct prediction integration</p>
+                        <p>• Real-time data from TradingView</p>
+                        <p>• Professional trading indicators (RSI, Volume)</p>
+                        <p>• Advanced candlestick charts with technical analysis</p>
+                        <p>• Industry-standard charting platform</p>
                       </div>
                     </CardContent>
                   </Card>
