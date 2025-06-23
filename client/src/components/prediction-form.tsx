@@ -3,11 +3,12 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Gem } from "lucide-react";
+import { Gem, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -176,7 +177,19 @@ export function PredictionForm({ preSelectedCrypto, onClose }: PredictionFormPro
               name="cryptocurrency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300">Select Cryptocurrency</FormLabel>
+                  <FormLabel className="text-slate-300 flex items-center">
+                    Select Cryptocurrency
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="ml-2 h-4 w-4 text-slate-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Choose from our list of supported cryptocurrencies.<br/>Click to see real-time prices and make predictions.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="bg-surface-light border-surface-light">

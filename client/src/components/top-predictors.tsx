@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Medal, Eye } from "lucide-react";
+import { Medal, Eye, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import type { LeaderboardEntry } from "@/types";
 
 function getRankIcon(rank: number): string {
@@ -102,13 +103,16 @@ export function TopPredictors() {
         })}
       </div>
       
-      <Button
-        variant="outline"
-        className="w-full mt-4 bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"
-      >
-        <Eye className="mr-2" size={16} />
-        View Full Leaderboard
-      </Button>
+      <Link href="/leaderboard">
+        <Button
+          variant="outline"
+          className="w-full mt-4 bg-primary/20 hover:bg-primary/30 text-primary border-primary/20 group transition-all duration-200 hover:scale-[1.02]"
+        >
+          <Eye className="mr-2 group-hover:mr-3 transition-all duration-200" size={16} />
+          View Full Leaderboard
+          <ExternalLink className="ml-2 group-hover:ml-3 transition-all duration-200" size={14} />
+        </Button>
+      </Link>
     </div>
   );
 }
