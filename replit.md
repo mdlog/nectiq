@@ -115,6 +115,8 @@ Changelog:
 - June 23, 2025. Added filter functionality to Admin Panel predictions (filter by asset and status with Indonesian interface)
 - June 23, 2025. Implemented comprehensive Metamask wallet UI integration with pop-up functionality and balance synchronization
 - June 23, 2025. Changed point unit from PTS to NTIQ throughout the entire application including header balance, admin panel, and user management sections
+- June 23, 2025. Enhanced User Management in Admin Panel with advanced filtering (all/admins/rich users/no wallet), column sorting (balance, predictions, accuracy, rewards), search functionality, bulk selection with checkboxes, bulk delete operations, and CSV export capabilities
+- June 23, 2025. Comprehensive Predictions improvements in Admin Panel: advanced sorting (time, stake, reward), date range filtering, accuracy visual meters, reward outcome display, enhanced status badges (Win/Loss), user profile linking, percentage difference calculations, and CSV/JSON export functionality
 ```
 
 ## User Preferences

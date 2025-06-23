@@ -1605,52 +1605,110 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {filteredPredictions
+                  {sortedPredictions
                     .slice((predictionsPage - 1) * predictionsPerPage, predictionsPage * predictionsPerPage)
-                    .map((prediction) => (
-                    <div key={prediction.id} className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">ID</p>
-                          <p className="font-semibold">#{prediction.id}</p>
+                    .map((prediction) => {
+                      const accuracyPercentage = prediction.accuracy ? parseFloat(prediction.accuracy.replace('%', '')) : null;
+                      const diff = prediction.actualPrice && prediction.predictedPrice 
+                        ? ((parseFloat(prediction.actualPrice) - parseFloat(prediction.predictedPrice)) / parseFloat(prediction.predictedPrice)) * 100
+                        : null;
+                      
+                      return (
+                        <div key={prediction.id} className="p-4 bg-surface-light rounded-lg border hover:border-primary/50 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="text-center">
+                                <p className="text-sm text-slate-400">ID</p>
+                                <p className="font-semibold">#{prediction.id}</p>
+                              </div>
+                              <div>
+                                <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
+                                <button 
+                                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                                  onClick={() => window.open(`/user-profile/${prediction.userId}`, '_blank')}
+                                >
+                                  User ID: {prediction.userId} →
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-6">
+                              <div className="text-center">
+                                <p className="text-sm text-slate-400">Predicted</p>
+                                <p className="font-semibold">${parseFloat(prediction.predictedPrice).toLocaleString()}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-slate-400">Actual</p>
+                                <p className="font-semibold">
+                                  {prediction.actualPrice ? `$${parseFloat(prediction.actualPrice).toLocaleString()}` : "Pending"}
+                                </p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-slate-400">Diff</p>
+                                {diff !== null ? (
+                                  <p className={`font-semibold text-sm ${diff >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                    {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
+                                  </p>
+                                ) : (
+                                  <p className="text-sm text-slate-400">-</p>
+                                )}
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-slate-400">Stake</p>
+                                <p className="font-semibold">{prediction.stakeAmount} NTIQ</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-slate-400">Reward</p>
+                                <p className="font-semibold text-success">
+                                  {prediction.rewardAmount ? `${prediction.rewardAmount} NTIQ` : "Pending"}
+                                </p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-slate-400">Accuracy</p>
+                                {accuracyPercentage !== null ? (
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full transition-all ${
+                                          accuracyPercentage >= 95 ? 'bg-green-500' :
+                                          accuracyPercentage >= 80 ? 'bg-yellow-500' :
+                                          'bg-red-500'
+                                        }`}
+                                        style={{ width: `${Math.min(100, accuracyPercentage)}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-xs font-medium">{prediction.accuracy}</span>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-slate-400">Pending</p>
+                                )}
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-slate-400">Status</p>
+                                <Badge 
+                                  variant={
+                                    prediction.status === "completed" && prediction.rewardAmount && prediction.rewardAmount > 0 ? "default" :
+                                    prediction.status === "completed" && (!prediction.rewardAmount || prediction.rewardAmount === 0) ? "destructive" :
+                                    prediction.status === "pending" ? "secondary" : 
+                                    "outline"
+                                  }
+                                  className="text-xs"
+                                >
+                                  {prediction.status === 'pending' ? 'Active' : 
+                                   prediction.status === 'completed' ? (prediction.rewardAmount && prediction.rewardAmount > 0 ? 'Win' : 'Loss') : 
+                                   prediction.status === 'expired' ? 'Expired' : prediction.status}
+                                </Badge>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-slate-400">Created</p>
+                                <p className="font-semibold text-xs">{formatTimeAgo(prediction.createdAt)}</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
-                          <p className="text-sm text-slate-400">User ID: {prediction.userId}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-6">
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Predicted</p>
-                          <p className="font-semibold">${parseFloat(prediction.predictedPrice).toLocaleString()}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Actual</p>
-                          <p className="font-semibold">
-                            {prediction.actualPrice ? `$${parseFloat(prediction.actualPrice).toLocaleString()}` : "Pending"}
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Stake</p>
-                          <p className="font-semibold">{prediction.stakeAmount}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Timeframe</p>
-                          <p className="font-semibold">{prediction.timeframe}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Status</p>
-                          {getStatusBadge(prediction.status)}
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-slate-400">Created</p>
-                          <p className="font-semibold text-xs">{formatTimeAgo(prediction.createdAt)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })}
                   
-                  {filteredPredictions.length === 0 && predictions.length > 0 && (
+                  {sortedPredictions.length === 0 && predictions.length > 0 && (
                     <div className="text-center py-8 text-slate-400">
                       <TrendingUp className="mx-auto mb-2" size={32} />
                       <p>Tidak ada prediksi yang cocok dengan filter</p>
