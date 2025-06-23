@@ -83,7 +83,7 @@ export default function WalletLoginPage() {
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Connect Your Wallet</h1>
             <p className="text-xl text-muted-foreground">
-              Use your crypto wallet to securely access CryptoPredikt
+              Use your crypto wallet to securely access Nectiq
             </p>
           </div>
 

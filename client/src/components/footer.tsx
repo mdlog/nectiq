@@ -13,11 +13,11 @@ export function Footer() {
               <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
                 <ChartLine className="text-white" size={16} />
               </div>
-              <h3 className="text-xl font-bold">CryptoPredikt</h3>
+              <h3 className="text-xl font-bold">Nectiq</h3>
             </div>
             <p className="text-slate-400 mb-4 max-w-md">
-              Gamified cryptocurrency price prediction platform. Make accurate predictions, 
-              earn rewards, and compete on the global leaderboard.
+              Advanced cryptocurrency price prediction platform with real-time charts, 
+              competitive rewards, and gamified trading experience.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-slate-400 hover:text-white transition-colors">

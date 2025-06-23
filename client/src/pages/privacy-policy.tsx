@@ -31,7 +31,7 @@ export default function PrivacyPolicy() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                CryptoPredikt ("we", "us", "our") is committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy describes how we collect, use, disclose, and safeguard your information when you use our cryptocurrency prediction platform.
+                Nectiq ("we", "us", "our") is committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy describes how we collect, use, disclose, and safeguard your information when you use our cryptocurrency prediction platform.
               </p>
               <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
                 <p className="font-semibold text-green-800 dark:text-green-200">Our Commitment:</p>

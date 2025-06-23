@@ -14,7 +14,7 @@ export default function TermsConditions() {
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold mb-4">Terms & Conditions</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Please read these terms and conditions carefully before using CryptoPredikt.
+              Please read these terms and conditions carefully before using Nectiq.
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               Last updated: {new Date().toLocaleDateString()}

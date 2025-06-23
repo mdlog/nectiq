@@ -88,7 +88,7 @@ export function Header() {
             <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
               <ChartLine className="text-white" size={16} />
             </div>
-            <h1 className="text-xl font-bold">CryptoPredikt</h1>
+            <h1 className="text-xl font-bold">Nectiq</h1>
           </div>
           
           <nav className="hidden md:flex space-x-8">
