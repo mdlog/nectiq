@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [showChart, setShowChart] = useState(false);
 
   const handleCryptoSelect = (crypto: CryptoPrice) => {
+    console.log('Crypto selected:', crypto);
     setSelectedCrypto(crypto);
     setShowChart(true);
   };
@@ -50,6 +51,10 @@ export default function Dashboard() {
               {/* Interactive Chart */}
               {selectedCrypto && showChart ? (
                 <div className="space-y-4">
+                  {/* Debug info */}
+                  <div className="text-xs text-green-400 p-2 bg-green-900/20 rounded">
+                    Chart loaded for: {selectedCrypto.symbol} ({selectedCrypto.name})
+                  </div>
                   <CryptoChart
                     cryptoId={selectedCrypto.id}
                     symbol={selectedCrypto.symbol}

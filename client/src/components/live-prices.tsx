@@ -75,7 +75,10 @@ export function LivePrices({ onCryptoSelect }: LivePricesProps) {
             <div 
               key={crypto.id} 
               className="crypto-card flex items-center justify-between p-3 bg-surface-light rounded-lg hover:bg-slate-700 cursor-pointer transition-colors"
-              onClick={() => onCryptoSelect?.(crypto)}
+              onClick={() => {
+                console.log('LivePrices click detected for:', crypto.symbol);
+                onCryptoSelect?.(crypto);
+              }}
             >
               <div className="flex items-center space-x-3">
                 <div className="relative w-8 h-8 flex-shrink-0">
