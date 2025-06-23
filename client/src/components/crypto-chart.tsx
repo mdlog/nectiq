@@ -33,8 +33,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   const fetchChartData = async (days: string) => {
     setLoading(true);
     try {
+      // Calculate actual days to fetch based on timeframe
+      const actualDays = getActualDaysToFetch(days);
+      
       // Use our backend endpoint to avoid CORS issues
-      const response = await fetch(`/api/crypto/chart/${cryptoId}?days=${days}&type=${chartType}`);
+      const response = await fetch(`/api/crypto/chart/${cryptoId}?days=${actualDays}&type=${chartType}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch chart data');
@@ -51,18 +54,30 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     }
   };
 
+  // Helper function to determine actual days to fetch based on timeframe
+  const getActualDaysToFetch = (timeframeDays: string): string => {
+    switch(timeframeDays) {
+      case '1': return '7';    // 1D timeframe shows 7 days of data
+      case '7': return '14';   // 7D timeframe shows 14 days of data  
+      case '30': return '60';  // 30D timeframe shows 60 days of data
+      case '90': return '180'; // 90D timeframe shows 180 days of data
+      default: return timeframeDays;
+    }
+  };
+
   const generateFallbackData = () => {
-    const daysCount = parseInt(timeframe);
+    // Use actual days to generate data based on timeframe
+    const actualDays = parseInt(getActualDaysToFetch(timeframe));
     const data: ChartData[] = [];
     const basePrice = currentPrice;
     
-    for (let i = daysCount; i >= 0; i--) {
+    for (let i = actualDays; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       
       // Generate realistic price variations (±5% daily)
       const variation = (Math.random() - 0.5) * 0.1; // ±5%
-      const dayPrice = basePrice * (1 + variation * (i / daysCount));
+      const dayPrice = basePrice * (1 + variation * (i / actualDays));
       
       if (chartType === 'candlestick') {
         const open = dayPrice * (1 + (Math.random() - 0.5) * 0.02);
@@ -92,34 +107,36 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   // Helper function to format dates for x-axis labels
   const formatDateLabel = (timeStr: string, index: number, totalPoints: number) => {
     const date = new Date(timeStr);
-    const days = parseInt(timeframe);
+    const actualDays = parseInt(getActualDaysToFetch(timeframe));
     
-    // Show fewer labels for better readability
-    const maxLabels = 6;
+    // Adjust max labels based on data range - more data needs fewer labels
+    let maxLabels = 6;
+    if (actualDays >= 60) maxLabels = 5;  // For 60+ days, show fewer labels
+    if (actualDays >= 180) maxLabels = 4; // For 180+ days, show even fewer labels
+    
     const step = Math.max(1, Math.floor(totalPoints / maxLabels));
     
     if (index % step !== 0 && index !== totalPoints - 1) {
       return null; // Don't show this label
     }
     
-    if (days <= 1) {
-      // For 1 day or less, show time (hours)
-      return date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
+    if (actualDays <= 7) {
+      // For 7 days or less, show day and month
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
       });
-    } else if (days <= 7) {
-      // For up to 7 days, show day and month
+    } else if (actualDays <= 30) {
+      // For up to 30 days, show day and month
       return date.toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric' 
       });
     } else {
-      // For longer periods, show month and day
+      // For longer periods, show month and year for better context
       return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
+        month: 'short',
+        year: '2-digit'
       });
     }
   };
