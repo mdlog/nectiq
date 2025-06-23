@@ -12,18 +12,16 @@ export interface CryptoPrice {
 
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
-const SUPPORTED_CRYPTOCURRENCIES = [
-  'bitcoin',
-  'ethereum', 
-  'binancecoin',
-  'cardano',
-  'solana'
-];
-
 export class CryptoService {
   private lastFetchTime = 0;
   private cachedRealPrices: CryptoPrice[] = [];
   private readonly CACHE_DURATION = 60000; // Cache real prices for 1 minute
+
+  // Method to clear cache when cryptocurrencies are deleted
+  clearCache() {
+    this.lastFetchTime = 0;
+    this.cachedRealPrices = [];
+  }
 
   async getCurrentPrices(): Promise<CryptoPrice[]> {
     const now = Date.now();
@@ -31,12 +29,22 @@ export class CryptoService {
     // Try to fetch real prices every minute to avoid rate limits
     if (now - this.lastFetchTime > this.CACHE_DURATION) {
       try {
+        // Get cryptocurrency list from database instead of hardcoded list
+        const supportedCryptos = await storage.getAllCryptocurrencies();
+        const cryptoIds = supportedCryptos.map(crypto => crypto.id);
+        
+        if (cryptoIds.length === 0) {
+          this.cachedRealPrices = [];
+          this.lastFetchTime = now;
+          return [];
+        }
+
         const response = await axios.get(`${COINGECKO_API_BASE}/coins/markets`, {
           params: {
-            ids: SUPPORTED_CRYPTOCURRENCIES.join(','),
+            ids: cryptoIds.join(','),
             vs_currency: 'usd',
             order: 'market_cap_desc',
-            per_page: 10,
+            per_page: 20,
             page: 1,
             sparkline: false
           }

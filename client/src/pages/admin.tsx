@@ -884,15 +884,17 @@ export default function AdminPanel() {
                                   <DialogTrigger asChild>
                                     <Button variant="outline">Cancel</Button>
                                   </DialogTrigger>
-                                  <Button 
-                                    variant="destructive"
-                                    onClick={() => {
-                                      deleteCryptoMutation.mutate(crypto.id);
-                                    }}
-                                    disabled={deleteCryptoMutation.isPending}
-                                  >
-                                    {deleteCryptoMutation.isPending ? "Deleting..." : "Delete Cryptocurrency"}
-                                  </Button>
+                                  <DialogTrigger asChild>
+                                    <Button 
+                                      variant="destructive"
+                                      onClick={() => {
+                                        deleteCryptoMutation.mutate(crypto.id);
+                                      }}
+                                      disabled={deleteCryptoMutation.isPending}
+                                    >
+                                      {deleteCryptoMutation.isPending ? "Deleting..." : "Delete Cryptocurrency"}
+                                    </Button>
+                                  </DialogTrigger>
                                 </div>
                               </div>
                             </DialogContent>

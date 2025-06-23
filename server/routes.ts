@@ -1220,6 +1220,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       await storage.deleteCryptocurrency(id);
       
+      // Clear crypto service cache to immediately update Live Prices
+      cryptoService.clearCache();
+      
       auditLog('admin_crypto_deleted', { cryptoId: id }, req);
       res.json({ message: "Cryptocurrency deleted successfully" });
     } catch (error) {
