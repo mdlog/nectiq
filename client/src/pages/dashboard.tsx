@@ -62,6 +62,7 @@ export default function Dashboard() {
                   name={selectedCrypto.name}
                   currentPrice={selectedCrypto.current_price}
                   priceChange24h={selectedCrypto.price_change_percentage_24h}
+                  onPredictClick={handlePredictClick}
                 />
               </div>
             ) : (
