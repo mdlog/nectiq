@@ -14,6 +14,8 @@ import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
+import CryptoChart from "@/components/crypto-chart";
+import { LivePrices } from "@/components/live-prices";
 
 // Purchase History Component
 function PurchaseHistory() {
@@ -111,6 +113,8 @@ export default function UserDashboard() {
   const [buyAmount, setBuyAmount] = useState("");
   const [selectedPaymentToken, setSelectedPaymentToken] = useState("ETH");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(null);
+  const [showChart, setShowChart] = useState(false);
 
   // Manual refresh function for Market Overview
   const handleManualRefresh = async () => {
