@@ -167,6 +167,9 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
     // Draw price labels
     drawPriceLabels(ctx, leftPadding, topPadding, chartHeight, minValue, maxValue, valueRange);
+    
+    // Draw real-time price label at end of chart
+    drawRealTimePriceLabel(ctx, chartData, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange, currentPrice, priceChange24h);
   };
 
   const drawGridLines = (ctx: CanvasRenderingContext2D, leftPadding: number, rightPadding: number, topPadding: number, bottomPadding: number, chartWidth: number, chartHeight: number) => {
@@ -312,13 +315,83 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     }
   };
 
+  const drawRealTimePriceLabel = (ctx: CanvasRenderingContext2D, data: ChartData[], leftPadding: number, topPadding: number, chartWidth: number, chartHeight: number, minValue: number, valueRange: number, currentPrice: number, priceChange24h: number) => {
+    if (!data.length) return;
+
+    // Calculate position for the current price
+    const currentPriceY = topPadding + chartHeight - ((currentPrice - minValue) / valueRange) * chartHeight;
+    const endX = leftPadding + chartWidth;
+    
+    // Format the current price
+    let formattedPrice;
+    if (currentPrice >= 1000) {
+      formattedPrice = `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    } else if (currentPrice >= 1) {
+      formattedPrice = `$${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    } else {
+      formattedPrice = `$${currentPrice.toFixed(4)}`;
+    }
+
+    // Draw background box for price label
+    const labelPadding = 8;
+    const labelHeight = 24;
+    ctx.font = '12px Inter, system-ui, sans-serif';
+    const textWidth = ctx.measureText(formattedPrice).width;
+    const labelWidth = textWidth + labelPadding * 2;
+    
+    // Background color based on trend
+    const bgColor = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+    const textColor = '#ffffff';
+    
+    // Draw background rectangle
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(endX - labelWidth, currentPriceY - labelHeight/2, labelWidth, labelHeight);
+    
+    // Draw border
+    ctx.strokeStyle = bgColor;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(endX - labelWidth, currentPriceY - labelHeight/2, labelWidth, labelHeight);
+    
+    // Draw horizontal line extending to the price label
+    ctx.strokeStyle = bgColor;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    ctx.moveTo(leftPadding, currentPriceY);
+    ctx.lineTo(endX - labelWidth, currentPriceY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Draw price text
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(formattedPrice, endX - labelWidth/2, currentPriceY);
+    
+    // Draw small indicator dot at the end of the chart line
+    const lastDataPoint = data[data.length - 1];
+    if (lastDataPoint) {
+      const lastX = leftPadding + chartWidth;
+      const lastY = topPadding + chartHeight - ((lastDataPoint.value - minValue) / valueRange) * chartHeight;
+      
+      ctx.fillStyle = bgColor;
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 4, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // White border around the dot
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  };
+
   useEffect(() => {
     fetchChartData(timeframe);
   }, [cryptoId, timeframe, chartType]);
 
   useEffect(() => {
     drawChart();
-  }, [chartData, priceChange24h, chartType]);
+  }, [chartData, priceChange24h, chartType, currentPrice]);
 
   const timeframes = [
     { label: '1D', value: '1' },
