@@ -319,8 +319,8 @@ export default function AdminPanel() {
       // Close dialog after successful deletion
       const dialog = document.querySelector('[data-state="open"]');
       if (dialog) {
-        const closeButton = dialog.querySelector('[data-dismiss]');
-        if (closeButton) closeButton.click();
+        const closeButton = dialog.querySelector('[data-dismiss]') as HTMLButtonElement;
+        closeButton?.click();
       }
     },
     onError: (error: any) => {

@@ -26,7 +26,9 @@ console.error = (...args) => {
     message.includes('Invalid property descriptor') ||
     message.includes('Failed to assign ethereum proxy') ||
     message.includes('Unable to redefine window.ethereum') ||
-    message.includes('Cannot both specify accessors')
+    message.includes('Cannot both specify accessors') ||
+    message.includes('E8Wallet: Received invalid network parameters') ||
+    message.includes('Cross-Origin-Opener-Policy')
   ) {
     return; // Suppress wallet extension conflicts
   }
@@ -37,7 +39,8 @@ console.warn = (...args) => {
   const message = args[0]?.toString() || '';
   if (
     message.includes('Unable to redefine window.ethereum') ||
-    message.includes('Backpack couldn\'t override')
+    message.includes('Backpack couldn\'t override') ||
+    message.includes('Lit is in dev mode')
   ) {
     return; // Suppress wallet extension warnings
   }

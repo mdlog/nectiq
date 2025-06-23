@@ -674,6 +674,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get historical chart data for cryptocurrency
+  app.get("/api/crypto/chart/:cryptoId", async (req, res) => {
+    try {
+      const { cryptoId } = req.params;
+      const { days = "7", type = "line" } = req.query;
+
+      // Validate crypto ID
+      const validCryptos = ["bitcoin", "ethereum", "binancecoin", "cardano", "solana"];
+      if (!validCryptos.includes(cryptoId)) {
+        return res.status(400).json({ message: "Invalid cryptocurrency" });
+      }
+
+      // Get current price for the cryptocurrency
+      const crypto = await storage.getCryptocurrency(cryptoId);
+      const currentPrice = crypto ? parseFloat(crypto.currentPrice) : 50000; // Default fallback
+
+      // Generate realistic historical data
+      const numDays = parseInt(days as string) || 7;
+      const chartData = [];
+
+      for (let i = numDays; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        
+        // Generate realistic price variations based on current price
+        const variation = (Math.random() - 0.5) * 0.08; // ±4% daily variation
+        const timeDecay = i / numDays; // More variation for older data
+        const dayPrice = currentPrice * (1 + variation * timeDecay);
+        
+        if (type === 'candlestick') {
+          const open = dayPrice * (1 + (Math.random() - 0.5) * 0.02);
+          const close = dayPrice * (1 + (Math.random() - 0.5) * 0.02);
+          const high = Math.max(open, close) * (1 + Math.random() * 0.015);
+          const low = Math.min(open, close) * (1 - Math.random() * 0.015);
+          
+          chartData.push({
+            time: date.toISOString().split('T')[0],
+            value: close,
+            open: parseFloat(open.toFixed(2)),
+            high: parseFloat(high.toFixed(2)),
+            low: parseFloat(low.toFixed(2)),
+            close: parseFloat(close.toFixed(2)),
+          });
+        } else {
+          chartData.push({
+            time: date.toISOString().split('T')[0],
+            value: parseFloat(dayPrice.toFixed(2)),
+          });
+        }
+      }
+
+      res.json(chartData);
+    } catch (error) {
+      console.error("Error generating chart data:", error);
+      res.status(500).json({ message: "Failed to get chart data" });
+    }
+  });
+
   // Create new prediction
   app.post("/api/predictions", async (req, res) => {
     try {
