@@ -1898,7 +1898,7 @@ export default function AdminPanel() {
                           type="number" 
                           step="0.001" 
                         />
-                        <p className="text-xs text-slate-500 mt-1">1 PTS = {settingsForm.exchangeRates.ptsToUsdt} USDT</p>
+                        <p className="text-xs text-slate-500 mt-1">1 NTIQ = {settingsForm.exchangeRates.ptsToUsdt} USDT</p>
                       </div>
                     </div>
                   </div>

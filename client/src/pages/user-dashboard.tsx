@@ -863,7 +863,7 @@ export default function UserDashboard() {
                   <div className="text-xs text-slate-400 space-y-1">
                     <p>• Withdrawals are processed instantly</p>
                     <p>• Tokens will be sent to your connected wallet</p>
-                    <p>• Minimum withdrawal: 1000 PTS (10.00 {selectedToken})</p>
+                    <p>• Minimum withdrawal: 1000 NTIQ (10.00 {selectedToken})</p>
                     <p>• No withdrawal fees applied</p>
                   </div>
                   </div>
@@ -1040,7 +1040,7 @@ export default function UserDashboard() {
                     {/* Info */}
                     <div className="text-xs text-slate-400 space-y-1">
                       <p>• Payments are processed via your connected wallet</p>
-                      <p>• PTS will be added to your balance instantly</p>
+                      <p>• NTIQ will be added to your balance instantly</p>
                       <p>• Supported tokens: ETH, USDT, USDC</p>
                       <p>• Network fees apply based on current gas prices</p>
                     </div>
@@ -1077,20 +1077,20 @@ export default function UserDashboard() {
                   }}
                 />
                 
-                {/* PTS Balance Integration */}
+                {/* NTIQ Balance Integration */}
                 <Card className="bg-surface border-surface-light">
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Coins className="mr-2" size={20} />
-                      PTS Balance Integration
+                      NTIQ Balance Integration
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
                       <div>
-                        <p className="text-sm text-slate-400">Current PTS Balance</p>
+                        <p className="text-sm text-slate-400">Current NTIQ Balance</p>
                         <p className="text-2xl font-bold text-primary">
-                          {user?.balance?.toLocaleString() || "0"} PTS
+                          {user?.balance?.toLocaleString() || "0"} NTIQ
                         </p>
                       </div>
                       <Button
@@ -1104,9 +1104,9 @@ export default function UserDashboard() {
                     </div>
                     
                     <div className="text-xs text-slate-500 space-y-1">
-                      <p>• Your PTS balance is linked to your wallet address</p>
+                      <p>• Your NTIQ balance is linked to your wallet address</p>
                       <p>• Earnings from predictions are automatically added</p>
-                      <p>• Use PTS to make predictions and earn rewards</p>
+                      <p>• Use NTIQ to make predictions and earn rewards</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1140,13 +1140,13 @@ export default function UserDashboard() {
                       variant="outline" 
                       className="w-full justify-start"
                       onClick={() => {
-                        // Navigate to buy PTS tab
-                        const tabElement = document.querySelector('[value="buy-pts"]') as HTMLElement;
+                        // Navigate to buy NTIQ tab
+                        const tabElement = document.querySelector('[value="buy-ntiq"]') as HTMLElement;
                         tabElement?.click();
                       }}
                     >
                       <Coins className="mr-2" size={16} />
-                      Buy More PTS
+                      Buy More NTIQ
                     </Button>
                     
                     <Button 

@@ -127,7 +127,7 @@ export function Achievements() {
             <div className="flex items-center space-x-3">
               <Coins className="w-8 h-8 text-green-500" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">PTS Earned</p>
+                <p className="text-sm font-medium text-muted-foreground">NTIQ Earned</p>
                 <p className="text-2xl font-bold">{totalRewards.toLocaleString()}</p>
               </div>
             </div>
