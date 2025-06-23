@@ -99,7 +99,7 @@ export function Footer() {
               © {currentYear} Nectiq. All rights reserved.
             </div>
             <div className="flex flex-wrap gap-6 text-sm text-slate-400">
-              <span>1,924 predictions made this week</span>
+              <span className="text-primary font-medium">1,924 predictions made this week</span>
               <span>•</span>
               <span>Up to 5x Rewards</span>
               <span>•</span>
