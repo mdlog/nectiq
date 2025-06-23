@@ -17,7 +17,7 @@ import type { CryptoPrice } from "@/types";
 export default function Dashboard() {
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(null);
   const [showChart, setShowChart] = useState(false);
-  const [preSelectedForPrediction, setPreSelectedForPrediction] = useState<string | null>(null);
+  const [preSelectedForPrediction, setPreSelectedForPrediction] = useState<string | undefined>(undefined);
 
   const handleCryptoSelect = (crypto: CryptoPrice) => {
     setSelectedCrypto(crypto);
@@ -60,10 +60,7 @@ export default function Dashboard() {
               {/* Interactive Chart */}
               {selectedCrypto && showChart ? (
                 <div className="space-y-4">
-                  {/* Debug info */}
-                  <div className="text-xs text-green-400 p-2 bg-green-900/20 rounded">
-                    Chart loaded for: {selectedCrypto.symbol} ({selectedCrypto.name})
-                  </div>
+
                   <CryptoChart
                     cryptoId={selectedCrypto.id}
                     symbol={selectedCrypto.symbol}
