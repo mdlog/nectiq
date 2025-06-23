@@ -1870,58 +1870,134 @@ export default function AdminPanel() {
                     <Award className="mr-2" size={20} />
                     Top Performers
                   </CardTitle>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        <RefreshCw className="mr-2" size={16} />
-                        Reset Leaderboard
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center text-red-600">
-                          <AlertTriangle className="mr-2" size={20} />
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportLeaderboard}
+                      className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"
+                    >
+                      <Download className="mr-2" size={16} />
+                      Export CSV
+                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          <RefreshCw className="mr-2" size={16} />
                           Reset Leaderboard
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
-                          <AlertDescription className="text-red-700 dark:text-red-300">
-                            <strong>Warning:</strong> This action will reset all user statistics including:
-                            <ul className="list-disc list-inside mt-2 space-y-1">
-                              <li>Total predictions count</li>
-                              <li>Correct predictions count</li>
-                              <li>Total rewards earned</li>
-                              <li>Accuracy percentages</li>
-                            </ul>
-                            This action cannot be undone.
-                          </AlertDescription>
-                        </Alert>
-                        <div className="flex justify-end space-x-2">
-                          <DialogTrigger asChild>
-                            <Button variant="outline">Cancel</Button>
-                          </DialogTrigger>
-                          <Button 
-                            variant="destructive"
-                            onClick={() => resetLeaderboardMutation.mutate()}
-                            disabled={resetLeaderboardMutation.isPending}
-                          >
-                            {resetLeaderboardMutation.isPending ? "Resetting..." : "Reset Leaderboard"}
-                          </Button>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center text-red-600">
+                            <AlertTriangle className="mr-2" size={20} />
+                            Reset Leaderboard
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">
+                            <AlertTriangle className="h-4 w-4 text-red-600" />
+                            <AlertDescription className="text-red-700 dark:text-red-300">
+                              <strong>Warning:</strong> This action will reset all user statistics including:
+                              <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li>Total predictions count</li>
+                                <li>Correct predictions count</li>
+                                <li>Total rewards earned</li>
+                                <li>Accuracy percentages</li>
+                              </ul>
+                              This action cannot be undone.
+                            </AlertDescription>
+                          </Alert>
+                          <div className="flex justify-end space-x-2">
+                            <DialogTrigger asChild>
+                              <Button variant="outline">Cancel</Button>
+                            </DialogTrigger>
+                            <Button 
+                              variant="destructive"
+                              onClick={() => resetLeaderboardMutation.mutate()}
+                              disabled={resetLeaderboardMutation.isPending}
+                            >
+                              {resetLeaderboardMutation.isPending ? "Resetting..." : "Reset Leaderboard"}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+                
+                {/* Enhanced Filters and Controls */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  {/* Time Filter */}
+                  <div className="space-y-2">
+                    <Label htmlFor="timeFilter" className="text-sm font-medium">Filter Waktu</Label>
+                    <Select value={leaderboardTimeFilter} onValueChange={(value: "weekly" | "monthly" | "all") => setLeaderboardTimeFilter(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih periode waktu" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="all">All Time</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Sorting Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="sortField" className="text-sm font-medium">Sorting</Label>
+                    <Select value={leaderboardSortField} onValueChange={(value: "accuracy" | "rewards" | "streak") => setLeaderboardSortField(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Urutkan berdasarkan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="accuracy">Accuracy</SelectItem>
+                        <SelectItem value="rewards">Rewards</SelectItem>
+                        <SelectItem value="streak">Streak</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Sort Order */}
+                  <div className="space-y-2">
+                    <Label htmlFor="sortOrder" className="text-sm font-medium">Order</Label>
+                    <Select value={leaderboardSortOrder} onValueChange={(value: "asc" | "desc") => setLeaderboardSortOrder(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih urutan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="desc">Tertinggi ke Terendah</SelectItem>
+                        <SelectItem value="asc">Terendah ke Tertinggi</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {leaderboard.map((user, index) => {
+                {/* Enhanced Leaderboard Header */}
+                <div className="grid grid-cols-8 gap-4 p-3 bg-surface-light rounded-lg mb-4 text-sm font-medium text-slate-400">
+                  <div className="col-span-1">Rank</div>
+                  <div className="col-span-2">User</div>
+                  <div className="col-span-1 text-center cursor-pointer hover:text-primary transition-colors" onClick={() => handleLeaderboardSort("accuracy")}>
+                    Accuracy {leaderboardSortField === "accuracy" && (leaderboardSortOrder === "desc" ? "↓" : "↑")}
+                  </div>
+                  <div className="col-span-1 text-center">Predictions</div>
+                  <div className="col-span-1 text-center cursor-pointer hover:text-primary transition-colors" onClick={() => handleLeaderboardSort("rewards")}>
+                    Rewards {leaderboardSortField === "rewards" && (leaderboardSortOrder === "desc" ? "↓" : "↑")}
+                  </div>
+                  <div className="col-span-1 text-center cursor-pointer hover:text-primary transition-colors" onClick={() => handleLeaderboardSort("streak")}>
+                    Streak {leaderboardSortField === "streak" && (leaderboardSortOrder === "desc" ? "↓" : "↑")}
+                  </div>
+                  <div className="col-span-1 text-center">Multiplier</div>
+                </div>
+
+                {/* Enhanced Leaderboard Content */}
+                <div className="space-y-3">
+                  {filteredAndSortedLeaderboard.map((user, index) => {
                     const rank = index + 1;
                     const getRankColor = () => {
                       switch (rank) {
@@ -1932,36 +2008,127 @@ export default function AdminPanel() {
                       }
                     };
 
+                    const getBadgeIcon = () => {
+                      if (user.streak >= 5) return "🔥"; // Fire for streak
+                      if (user.accuracy >= 90) return "⭐"; // Star for 90%+ accuracy
+                      return null;
+                    };
+
                     return (
-                      <div key={user.id} className="flex items-center space-x-4 p-4 bg-surface-light rounded-lg">
-                        <div className={`flex items-center justify-center w-10 h-10 ${getRankColor()} font-bold rounded-full`}>
-                          {rank <= 3 ? (rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉") : rank}
+                      <div key={user.id} className="grid grid-cols-8 gap-4 p-3 bg-surface-light rounded-lg hover:bg-surface-light/80 transition-colors">
+                        {/* Rank with Badge */}
+                        <div className="col-span-1 flex items-center">
+                          <div className={`flex items-center justify-center w-8 h-8 ${getRankColor()} font-bold rounded-full text-sm mr-2`}>
+                            {rank <= 3 ? (rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉") : rank}
+                          </div>
+                          {getBadgeIcon() && <span className="text-lg" title={user.streak >= 5 ? "High Streak" : "High Accuracy"}>{getBadgeIcon()}</span>}
                         </div>
-                        <div className="flex-1">
-                          <p className="font-semibold">{user.username}</p>
-                          <p className="text-sm text-slate-400">ID: {user.id}</p>
+
+                        {/* User Info with Clickable Profile */}
+                        <div className="col-span-2">
+                          <button 
+                            className="text-left hover:text-primary transition-colors"
+                            onClick={() => {
+                              // Navigate to user profile or show user details
+                              toast({
+                                title: "User Profile",
+                                description: `Viewing profile for ${user.username} (ID: ${user.uid || user.id})`,
+                              });
+                            }}
+                          >
+                            <p className="font-semibold">{user.username}</p>
+                            <p className="text-xs text-slate-400">UID: {user.uid || user.id}</p>
+                          </button>
                         </div>
-                        <div className="flex items-center space-x-6">
-                          <div className="text-center">
-                            <p className="text-sm text-slate-400">Predictions</p>
-                            <p className="font-semibold">{user.totalPredictions}</p>
+
+                        {/* Accuracy with Visual Meter and Tooltip */}
+                        <div className="col-span-1 text-center">
+                          <div className="relative">
+                            <div 
+                              className="text-sm font-semibold mb-1"
+                              title={`${user.correctPredictions} correct of ${user.totalPredictions} total predictions`}
+                            >
+                              {user.accuracy.toFixed(1)}%
+                            </div>
+                            <div className="w-full bg-slate-600 rounded-full h-2">
+                              <div 
+                                className={`h-2 rounded-full ${
+                                  user.accuracy >= 80 ? 'bg-green-500' : 
+                                  user.accuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                                }`}
+                                style={{ width: `${Math.min(user.accuracy, 100)}%` }}
+                              ></div>
+                            </div>
                           </div>
-                          <div className="text-center">
-                            <p className="text-sm text-slate-400">Correct</p>
-                            <p className="font-semibold text-success">{user.correctPredictions}</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm text-slate-400">Accuracy</p>
-                            <p className="font-semibold text-success">{user.accuracy}%</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm text-slate-400">Total Rewards</p>
-                            <p className="font-semibold text-warning">{user.totalRewards.toLocaleString()}</p>
-                          </div>
+                        </div>
+
+                        {/* Predictions Count */}
+                        <div className="col-span-1 text-center">
+                          <p className="font-semibold">{user.totalPredictions}</p>
+                          <p className="text-xs text-green-400">{user.correctPredictions} correct</p>
+                        </div>
+
+                        {/* Rewards */}
+                        <div className="col-span-1 text-center">
+                          <p className="font-semibold text-primary">{(user.totalRewards || 0).toLocaleString()}</p>
+                          <p className="text-xs text-slate-400">NTIQ</p>
+                        </div>
+
+                        {/* Streak */}
+                        <div className="col-span-1 text-center">
+                          <p className="font-semibold text-orange-400">{user.streak}</p>
+                          <p className="text-xs text-slate-400">streak</p>
+                        </div>
+
+                        {/* Average Multiplier */}
+                        <div className="col-span-1 text-center">
+                          <p className="font-semibold text-purple-400">{user.avgMultiplier.toFixed(2)}x</p>
+                          <p className="text-xs text-slate-400">avg</p>
                         </div>
                       </div>
                     );
                   })}
+                  
+                  {filteredAndSortedLeaderboard.length === 0 && (
+                    <div className="text-center py-8 text-slate-400">
+                      <Award className="mx-auto mb-2" size={32} />
+                      <p>Tidak ada data leaderboard tersedia</p>
+                      <p className="text-sm">User akan muncul di sini setelah membuat prediksi</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Seasonal Competition Feature Preview */}
+                <div className="mt-8 p-4 bg-primary/10 rounded-lg border border-primary/20">
+                  <h4 className="text-lg font-bold text-primary mb-3 flex items-center">
+                    <Trophy className="mr-2" size={18} />
+                    Fitur Lanjutan untuk Kompetisi Musiman
+                  </h4>
+                  <p className="text-sm text-slate-300 mb-4">
+                    Jika Nectiq ingin mengadakan <strong>battle musiman</strong>:
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-red-400">🎫</span>
+                        <span><strong>Entry Fee</strong> per musim</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-orange-400">🔄</span>
+                        <span><strong>Waktu Reset Otomatis</strong> (setiap Minggu atau Bulan)</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-blue-400">📊</span>
+                        <span><strong>History of Past Seasons</strong></span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-yellow-400">🏆</span>
+                        <span><strong>Leaderboard Hadiah</strong> / Juara 1-3</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

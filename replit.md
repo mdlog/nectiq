@@ -117,6 +117,7 @@ Changelog:
 - June 23, 2025. Changed point unit from PTS to NTIQ throughout the entire application including header balance, admin panel, and user management sections
 - June 23, 2025. Enhanced User Management in Admin Panel with advanced filtering (all/admins/rich users/no wallet), column sorting (balance, predictions, accuracy, rewards), search functionality, bulk selection with checkboxes, bulk delete operations, and CSV export capabilities
 - June 23, 2025. Comprehensive Predictions improvements in Admin Panel: advanced sorting (time, stake, reward), date range filtering, accuracy visual meters, reward outcome display, enhanced status badges (Win/Loss), user profile linking, percentage difference calculations, and CSV/JSON export functionality
+- June 23, 2025. Comprehensive Leaderboard "Top Performers" enhancements in Admin Panel: time filters (weekly/monthly/all time), sorting by accuracy/rewards/streak with clickable headers, badge gamification (fire for streaks, star for 90%+ accuracy), visual accuracy meters with color coding, clickable user profiles with tooltips, reward multiplier insights, CSV export functionality, and seasonal competition feature preview with entry fees and reset automation concepts
 ```
 
 ## User Preferences
