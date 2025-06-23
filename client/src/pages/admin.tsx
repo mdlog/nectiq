@@ -104,8 +104,15 @@ export default function AdminPanel() {
     mutationFn: async (cryptoId: string) => {
       const response = await fetch(`/api/admin/cryptocurrencies/${cryptoId}`, {
         method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to delete cryptocurrency");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -848,14 +855,48 @@ export default function AdminPanel() {
                               {crypto.lastUpdated ? new Date(crypto.lastUpdated).toLocaleDateString() : 'N/A'}
                             </p>
                           </div>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => deleteCryptoMutation.mutate(crypto.id)}
-                            disabled={deleteCryptoMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={deleteCryptoMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center text-red-600">
+                                  <AlertTriangle className="mr-2" size={20} />
+                                  Delete Cryptocurrency
+                                </DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">
+                                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                                  <AlertDescription className="text-red-700 dark:text-red-300">
+                                    <strong>Warning:</strong> Are you sure you want to delete <strong>{crypto.name} ({crypto.symbol})</strong>?
+                                    <br />This action cannot be undone and will remove the cryptocurrency from all price feeds and predictions.
+                                  </AlertDescription>
+                                </Alert>
+                                <div className="flex justify-end space-x-2">
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                  </DialogTrigger>
+                                  <Button 
+                                    variant="destructive"
+                                    onClick={() => {
+                                      deleteCryptoMutation.mutate(crypto.id);
+                                    }}
+                                    disabled={deleteCryptoMutation.isPending}
+                                  >
+                                    {deleteCryptoMutation.isPending ? "Deleting..." : "Delete Cryptocurrency"}
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </div>
                     ))}
