@@ -3,51 +3,42 @@ import { ChartLine, Clock, Trophy, Info } from "lucide-react";
 export function RulesSection() {
   return (
     <div className="mt-8 bg-surface rounded-xl p-6 border border-surface-light">
-      <h3 className="text-lg font-bold mb-4 flex items-center">
+      <h3 className="text-lg font-bold mb-6 flex items-center">
         <Info className="text-primary mr-2" size={18} />
         How It Works
       </h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <ChartLine className="text-primary" size={24} />
+      <div className="flex items-center justify-between max-w-2xl mx-auto">
+        <div className="flex flex-col items-center text-center">
+          <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center mb-2">
+            <ChartLine className="text-primary" size={18} />
           </div>
-          <h4 className="font-semibold mb-2">1. Make Prediction</h4>
-          <p className="text-sm text-slate-400">
-            Choose a cryptocurrency and predict its price at a specific time in the future.
-          </p>
+          <span className="text-sm font-medium text-slate-300">Predict</span>
         </div>
         
-        <div className="text-center">
-          <div className="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Clock className="text-secondary" size={24} />
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mx-4"></div>
+        
+        <div className="flex flex-col items-center text-center">
+          <div className="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center mb-2">
+            <Clock className="text-secondary" size={18} />
           </div>
-          <h4 className="font-semibold mb-2">2. Wait & Track</h4>
-          <p className="text-sm text-slate-400">
-            Monitor your prediction in real-time and see how close you are to the actual price.
-          </p>
+          <span className="text-sm font-medium text-slate-300">Track</span>
         </div>
         
-        <div className="text-center">
-          <div className="w-12 h-12 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Trophy className="text-success" size={24} />
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mx-4"></div>
+        
+        <div className="flex flex-col items-center text-center">
+          <div className="w-10 h-10 bg-success/20 rounded-full flex items-center justify-center mb-2">
+            <Trophy className="text-success" size={18} />
           </div>
-          <h4 className="font-semibold mb-2">3. Earn Rewards</h4>
-          <p className="text-sm text-slate-400">
-            The closer your prediction, the more points you earn. Top predictors get bonus rewards!
-          </p>
+          <span className="text-sm font-medium text-slate-300">Earn</span>
         </div>
       </div>
       
-      <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
-        <h5 className="font-semibold text-primary mb-2">Scoring System:</h5>
-        <ul className="text-sm text-slate-300 space-y-1">
-          <li>• Perfect prediction (±0.1%): 5x stake as reward</li>
-          <li>• Excellent prediction (±1%): 3x stake as reward</li>
-          <li>• Good prediction (±5%): 1.5x stake as reward</li>
-          <li>• Poor prediction (&gt;5%): Lose stake amount</li>
-        </ul>
+      <div className="mt-6 p-3 bg-primary/5 rounded-lg border border-primary/10">
+        <div className="text-xs text-slate-400 text-center space-y-1">
+          <div>Perfect (±0.1%): <span className="text-success">5x</span> • Excellent (±1%): <span className="text-warning">3x</span> • Good (±5%): <span className="text-blue-400">1.5x</span></div>
+        </div>
       </div>
     </div>
   );
