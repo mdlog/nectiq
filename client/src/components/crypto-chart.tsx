@@ -204,7 +204,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     }
   };
 
-  const drawCandlestickChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, padding: number) => {
+  const drawCandlestickChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, leftPadding: number, topPadding: number) => {
     const values = chartData.flatMap(d => [d.high!, d.low!]);
     const minValue = Math.min(...values);
     const maxValue = Math.max(...values);
@@ -214,21 +214,21 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
-      const y = padding + (chartHeight * i) / 5;
+      const y = topPadding + (chartHeight * i) / 5;
       ctx.beginPath();
-      ctx.moveTo(padding, y);
-      ctx.lineTo(padding + chartWidth, y);
+      ctx.moveTo(leftPadding, y);
+      ctx.lineTo(leftPadding + chartWidth, y);
       ctx.stroke();
     }
 
     const candleWidth = chartWidth / chartData.length * 0.6;
 
     chartData.forEach((candle, index) => {
-      const x = padding + (chartWidth * (index + 0.5)) / chartData.length;
-      const openY = padding + chartHeight - ((candle.open! - minValue) / valueRange) * chartHeight;
-      const closeY = padding + chartHeight - ((candle.close! - minValue) / valueRange) * chartHeight;
-      const highY = padding + chartHeight - ((candle.high! - minValue) / valueRange) * chartHeight;
-      const lowY = padding + chartHeight - ((candle.low! - minValue) / valueRange) * chartHeight;
+      const x = leftPadding + (chartWidth * (index + 0.5)) / chartData.length;
+      const openY = topPadding + chartHeight - ((candle.open! - minValue) / valueRange) * chartHeight;
+      const closeY = topPadding + chartHeight - ((candle.close! - minValue) / valueRange) * chartHeight;
+      const highY = topPadding + chartHeight - ((candle.high! - minValue) / valueRange) * chartHeight;
+      const lowY = topPadding + chartHeight - ((candle.low! - minValue) / valueRange) * chartHeight;
 
       const isGreen = candle.close! >= candle.open!;
       const color = isGreen ? '#10b981' : '#ef4444';
@@ -255,15 +255,15 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     
     for (let i = 0; i <= 5; i++) {
       const value = maxValue - (valueRange * i) / 5;
-      const y = padding + (chartHeight * i) / 5;
-      ctx.fillText(`$${value.toFixed(2)}`, padding - 5, y + 4);
+      const y = topPadding + (chartHeight * i) / 5;
+      ctx.fillText(`$${value.toFixed(2)}`, leftPadding - 5, y + 4);
     }
 
     // Draw real-time price indicator for candlestick
     if (chartData.length > 0) {
       const lastCandle = chartData[chartData.length - 1];
-      const currentPriceY = padding + chartHeight - ((currentPrice - minValue) / valueRange) * chartHeight;
-      const rightEdge = padding + chartWidth;
+      const currentPriceY = topPadding + chartHeight - ((currentPrice - minValue) / valueRange) * chartHeight;
+      const rightEdge = leftPadding + chartWidth;
 
       // Draw price line extending to the right edge
       ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
