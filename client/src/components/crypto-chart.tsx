@@ -21,12 +21,12 @@ interface ChartData {
   close?: number;
 }
 
-type ChartType = 'line' | 'area' | 'candlestick' | 'bar';
+type ChartType = 'line' | 'candlestick';
 
 export default function CryptoChart({ cryptoId, symbol, name, currentPrice, priceChange24h, onPredictClick }: CryptoChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [timeframe, setTimeframe] = useState('7');
-  const [chartType, setChartType] = useState<ChartType>('area');
+  const [chartType, setChartType] = useState<ChartType>('line');
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -154,14 +154,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       case 'line':
         drawLineChart(ctx, chartData, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange, priceChange24h);
         break;
-      case 'area':
-        drawAreaChart(ctx, chartData, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange, priceChange24h);
-        break;
       case 'candlestick':
         drawCandlestickChart(ctx, chartData, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange);
-        break;
-      case 'bar':
-        drawBarChart(ctx, chartData, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange, priceChange24h);
         break;
     }
 
@@ -214,32 +208,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.stroke();
   };
 
-  const drawAreaChart = (ctx: CanvasRenderingContext2D, data: ChartData[], leftPadding: number, topPadding: number, chartWidth: number, chartHeight: number, minValue: number, valueRange: number, priceChange24h: number) => {
-    // Draw line first
-    drawLineChart(ctx, data, leftPadding, topPadding, chartWidth, chartHeight, minValue, valueRange, priceChange24h);
 
-    // Draw gradient fill
-    const gradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
-    gradient.addColorStop(0, priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)');
-    gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
-    
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    data.forEach((point, index) => {
-      const x = leftPadding + (index / (data.length - 1)) * chartWidth;
-      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
-      
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-    ctx.lineTo(leftPadding + chartWidth, topPadding + chartHeight);
-    ctx.lineTo(leftPadding, topPadding + chartHeight);
-    ctx.closePath();
-    ctx.fill();
-  };
 
   const drawCandlestickChart = (ctx: CanvasRenderingContext2D, data: ChartData[], leftPadding: number, topPadding: number, chartWidth: number, chartHeight: number, minValue: number, valueRange: number) => {
     const candleWidth = Math.max(2, chartWidth / data.length * 0.6);
@@ -279,18 +248,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     });
   };
 
-  const drawBarChart = (ctx: CanvasRenderingContext2D, data: ChartData[], leftPadding: number, topPadding: number, chartWidth: number, chartHeight: number, minValue: number, valueRange: number, priceChange24h: number) => {
-    const barWidth = Math.max(2, chartWidth / data.length * 0.8);
-    
-    data.forEach((point, index) => {
-      const x = leftPadding + (index / (data.length - 1)) * chartWidth;
-      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
-      const barHeight = ((point.value - minValue) / valueRange) * chartHeight;
-      
-      ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
-      ctx.fillRect(x - barWidth/2, y, barWidth, barHeight);
-    });
-  };
+
 
   const drawPriceLabels = (ctx: CanvasRenderingContext2D, leftPadding: number, topPadding: number, chartHeight: number, minValue: number, maxValue: number, valueRange: number) => {
     ctx.fillStyle = '#d1d5db';
@@ -454,10 +412,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
           <div className="flex justify-center">
             <div className="flex space-x-1">
               {[
-                { type: 'area', label: 'Area', icon: '📈' },
                 { type: 'line', label: 'Line', icon: '📊' },
-                { type: 'candlestick', label: 'Candle', icon: '🕯️' },
-                { type: 'bar', label: 'Bar', icon: '📉' }
+                { type: 'candlestick', label: 'Candle', icon: '🕯️' }
               ].map(({ type, label, icon }) => (
                 <Button
                   key={type}
