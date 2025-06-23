@@ -146,6 +146,62 @@ export const userAnalytics = pgTable("user_analytics", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Security Events and Admin Logs Tables
+export const securityEvents = pgTable("security_events", {
+  id: serial("id").primaryKey(),
+  event: text("event").notNull(),
+  details: text("details").notNull(),
+  severity: varchar("severity", { length: 20 }).notNull().default("medium"), // 'low', 'medium', 'high', 'critical'
+  walletAddress: varchar("wallet_address", { length: 42 }),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
+  country: varchar("country", { length: 100 }),
+  status: varchar("status", { length: 30 }).notNull().default("investigating"), // 'investigating', 'under-review', 'verified', 'auto-blocked'
+  resolved: boolean("resolved").default(false),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: integer("resolved_by").references(() => users.id),
+});
+
+export const adminLogs = pgTable("admin_logs", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").references(() => users.id).notNull(),
+  action: text("action").notNull(),
+  targetType: varchar("target_type", { length: 50 }), // 'user', 'prediction', 'security_event', 'settings'
+  targetId: integer("target_id"),
+  details: text("details"),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const systemSettings = pgTable("system_settings", {
+  id: serial("id").primaryKey(),
+  category: varchar("category", { length: 50 }).notNull(),
+  key: varchar("key", { length: 100 }).notNull(),
+  value: text("value").notNull(),
+  dataType: varchar("data_type", { length: 20 }).notNull().default("string"), // 'string', 'number', 'boolean', 'json'
+  description: text("description"),
+  updatedBy: integer("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const transactionLogs = pgTable("transaction_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: varchar("type", { length: 30 }).notNull(), // 'purchase', 'withdrawal', 'reward', 'stake', 'refund'
+  amount: integer("amount").notNull(),
+  token: varchar("token", { length: 10 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("completed"),
+  hash: varchar("hash", { length: 66 }),
+  fromAddress: varchar("from_address", { length: 42 }),
+  toAddress: varchar("to_address", { length: 42 }),
+  networkFee: varchar("network_fee", { length: 50 }),
+  exchangeRate: numeric("exchange_rate", { precision: 18, scale: 8 }),
+  relatedId: integer("related_id"), // ID of related purchase, withdrawal, prediction, etc.
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   predictions: many(predictions),
@@ -205,6 +261,38 @@ export const referralsRelations = relations(referrals, ({ one }) => ({
 export const userAnalyticsRelations = relations(userAnalytics, ({ one }) => ({
   user: one(users, {
     fields: [userAnalytics.userId],
+    references: [users.id],
+  }),
+}));
+
+export const securityEventsRelations = relations(securityEvents, ({ one }) => ({
+  user: one(users, {
+    fields: [securityEvents.userId],
+    references: [users.id],
+  }),
+  resolvedByUser: one(users, {
+    fields: [securityEvents.resolvedBy],
+    references: [users.id],
+  }),
+}));
+
+export const adminLogsRelations = relations(adminLogs, ({ one }) => ({
+  admin: one(users, {
+    fields: [adminLogs.adminId],
+    references: [users.id],
+  }),
+}));
+
+export const systemSettingsRelations = relations(systemSettings, ({ one }) => ({
+  updatedByUser: one(users, {
+    fields: [systemSettings.updatedBy],
+    references: [users.id],
+  }),
+}));
+
+export const transactionLogsRelations = relations(transactionLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [transactionLogs.userId],
     references: [users.id],
   }),
 }));

@@ -67,6 +67,25 @@ export interface IStorage {
 
   // User management operations
   deleteUser(id: number): Promise<void>;
+
+  // Security event operations
+  createSecurityEvent(event: any): Promise<any>;
+  getSecurityEvents(filters?: any): Promise<any[]>;
+  updateSecurityEvent(id: number, updates: any): Promise<void>;
+  getSecurityStats(): Promise<any>;
+
+  // Admin log operations
+  createAdminLog(log: any): Promise<any>;
+  getAdminLogs(filters?: any): Promise<any[]>;
+
+  // Transaction log operations
+  createTransactionLog(transaction: any): Promise<any>;
+  getTransactionLogs(filters?: any): Promise<any[]>;
+  getTransactionStats(): Promise<any>;
+
+  // System settings operations
+  getSystemSettings(): Promise<any>;
+  updateSystemSetting(category: string, key: string, value: any, adminId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
