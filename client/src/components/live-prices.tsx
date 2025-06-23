@@ -107,7 +107,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-sm">${crypto.current_price.toLocaleString()}</p>
+                  <p className="font-semibold text-sm">${crypto.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   <div className="flex items-center space-x-1">
                     {isPositive ? (
                       <TrendingUp className="text-success" size={12} />

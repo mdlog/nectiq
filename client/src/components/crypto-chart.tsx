@@ -206,7 +206,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
                 <span className="text-2xl font-bold">
                   ${currentPrice.toLocaleString(undefined, { 
                     minimumFractionDigits: 2, 
-                    maximumFractionDigits: 6 
+                    maximumFractionDigits: 2 
                   })}
                 </span>
                 <div className={`flex items-center space-x-1 ${
