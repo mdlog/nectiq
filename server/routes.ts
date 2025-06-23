@@ -792,24 +792,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get top predictors (leaderboard)
+  // Get top predictors (leaderboard) with filter support
   app.get("/api/leaderboard", async (req, res) => {
     try {
-      const topPredictors = await storage.getTopPredictors(10);
+      const filter = req.query.filter as string || 'alltime';
+      const limit = parseInt(req.query.limit as string) || 50;
       
-      const leaderboard = topPredictors.map(user => ({
-        id: user.id,
-        username: user.username,
-        totalPredictions: user.totalPredictions,
-        correctPredictions: user.correctPredictions,
-        accuracy: user.totalPredictions > 0 
+      const topPredictors = await storage.getTopPredictors(limit);
+      
+      const leaderboard = topPredictors.map(user => {
+        // Calculate win rate
+        const winRate = user.totalPredictions > 0 
           ? parseFloat(((user.correctPredictions / user.totalPredictions) * 100).toFixed(1))
-          : 0,
-        totalRewards: user.totalRewards
-      }));
+          : 0;
+
+        // For now, we'll use the same data for all filters since we don't have time-based tracking yet
+        // In a real implementation, you'd calculate these based on the time period
+        const weeklyPoints = Math.floor(user.totalRewards * 0.3); // Simulated weekly points
+        const monthlyPoints = Math.floor(user.totalRewards * 0.7); // Simulated monthly points
+
+        return {
+          id: user.id,
+          username: user.username,
+          uid: user.uid,
+          totalPredictions: user.totalPredictions,
+          correctPredictions: user.correctPredictions,
+          winRate,
+          totalRewards: user.totalRewards,
+          weeklyPoints,
+          monthlyPoints,
+          // Legacy field for backward compatibility
+          accuracy: winRate
+        };
+      });
 
       res.json(leaderboard);
     } catch (error) {
+      console.error("Error fetching leaderboard:", error);
       res.status(500).json({ message: "Failed to get leaderboard" });
     }
   });
