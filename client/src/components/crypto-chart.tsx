@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Target, BarChart3 } from 'lucide-react';
-import { createChart, ColorType, IChartApi, ISeriesApi, CandlestickData, LineData, CandlestickSeriesOptions, LineSeriesOptions } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi, ISeriesApi, CandlestickData, LineData } from 'lightweight-charts';
 
 interface CryptoChartProps {
   cryptoId: string;
@@ -31,7 +31,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Line"> | ISeriesApi<"Candlestick"> | null>(null);
+  const seriesRef = useRef<any>(null);
 
   const fetchChartData = async (days: string) => {
     setLoading(true);
@@ -116,7 +116,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     chartRef.current = chart;
 
     if (chartType === 'candlestick') {
-      const candlestickSeries = chart.addCandlestickSeries({
+      const candlestickSeries = (chart as any).addCandlestickSeries({
         upColor: '#10b981',
         downColor: '#ef4444',
         borderDownColor: '#ef4444',
@@ -136,7 +136,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       candlestickSeries.setData(candlestickData);
       seriesRef.current = candlestickSeries;
     } else {
-      const lineSeries = chart.addLineSeries({
+      const lineSeries = (chart as any).addLineSeries({
         color: priceChange24h >= 0 ? '#10b981' : '#ef4444',
         lineWidth: 2,
       });
@@ -229,14 +229,34 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
             {timeframeOptions.map((option) => (
               <Button
                 key={option.value}
-                variant={interval === option.value ? "default" : "ghost"}
+                variant={timeframe === option.value ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setInterval(option.value)}
+                onClick={() => setTimeframe(option.value)}
                 className="h-8 px-3 text-xs"
               >
                 {option.label}
               </Button>
             ))}
+          </div>
+          
+          {/* Chart Type Selector */}
+          <div className="flex gap-1">
+            <Button
+              variant={chartType === 'line' ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setChartType('line')}
+              className="h-8 px-3 text-xs"
+            >
+              Line
+            </Button>
+            <Button
+              variant={chartType === 'candlestick' ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setChartType('candlestick')}
+              className="h-8 px-3 text-xs"
+            >
+              Candles
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -247,7 +267,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
             <div className="absolute inset-0 flex items-center justify-center bg-surface/80 z-10">
               <div className="flex items-center gap-2 text-slate-400">
                 <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full"></div>
-                Loading TradingView Chart...
+                Loading Chart...
               </div>
             </div>
           )}
