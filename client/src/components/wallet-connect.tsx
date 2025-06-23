@@ -1,88 +1,84 @@
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useState, useEffect } from 'react';
+import { useAccount, useConnect, useDisconnect, useBalance } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Wallet, LogOut, Copy, Check } from 'lucide-react';
-import { useState } from 'react';
+import { Wallet, LogOut, Copy, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { formatEther } from 'viem';
 
-export function WalletConnect() {
+interface WalletConnectProps {
+  onConnectionChange?: (connected: boolean, address?: string) => void;
+}
+
+export function WalletConnect({ onConnectionChange }: WalletConnectProps) {
   const { address, isConnected, chain } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
-  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isConnecting, setIsConnecting] = useState(false);
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest('POST', '/api/auth/logout');
-    },
-    onSuccess: () => {
-      // Clear all cached data
-      queryClient.clear();
-      toast({
-        title: "Disconnected",
-        description: "Wallet disconnected and logged out successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Logout error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to logout properly",
-        variant: "destructive",
-      });
+  // Get ETH balance
+  const { data: balance, refetch: refetchBalance } = useBalance({
+    address: address,
+    query: {
+      enabled: !!address,
+      refetchInterval: 10000, // Refetch every 10 seconds
     },
   });
 
-  const handleDisconnect = async () => {
+  // Notify parent component of connection changes
+  useEffect(() => {
+    onConnectionChange?.(isConnected, address);
+  }, [isConnected, address, onConnectionChange]);
+
+  // Auto-refresh balance when connected
+  useEffect(() => {
+    if (isConnected && address) {
+      const interval = setInterval(() => {
+        refetchBalance();
+      }, 15000); // Refresh every 15 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isConnected, address, refetchBalance]);
+
+  const handleConnect = async (connector: any) => {
     try {
-      // First disconnect wallet
-      disconnect();
+      setIsConnecting(true);
+      await connect({ connector });
       
-      // Clear wagmi localStorage data
-      localStorage.removeItem('wagmi.wallet');
-      localStorage.removeItem('wagmi.connected');
-      localStorage.removeItem('wagmi.store');
-      localStorage.removeItem('wagmi.cache');
-      localStorage.removeItem('walletconnect');
-      
-      // Then logout from server
-      await logoutMutation.mutateAsync();
-      
-      // Force page refresh to ensure wallet state is completely cleared
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    } catch (error) {
-      // Ensure wallet is disconnected even if server logout fails
-      disconnect();
-      
-      // Clear wagmi localStorage data even on error
-      localStorage.removeItem('wagmi.wallet');
-      localStorage.removeItem('wagmi.connected');
-      localStorage.removeItem('wagmi.store');
-      localStorage.removeItem('wagmi.cache');
-      localStorage.removeItem('walletconnect');
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      toast({
+        title: "Wallet Connected",
+        description: "Successfully connected to your wallet",
+      });
+    } catch (error: any) {
+      console.error('Connection error:', error);
+      toast({
+        title: "Connection Failed",
+        description: error.message || "Failed to connect wallet",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnecting(false);
     }
   };
 
-  const copyAddress = async () => {
+  const handleDisconnect = () => {
+    disconnect();
+    toast({
+      title: "Wallet Disconnected",
+      description: "Your wallet has been disconnected",
+    });
+  };
+
+  const copyAddress = () => {
     if (address) {
-      await navigator.clipboard.writeText(address);
-      setCopied(true);
+      navigator.clipboard.writeText(address);
       toast({
         title: "Address Copied",
         description: "Wallet address copied to clipboard",
       });
-      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -90,83 +86,158 @@ export function WalletConnect() {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  if (isConnected && address) {
+  const getNetworkName = (chainId?: number) => {
+    switch (chainId) {
+      case 1: return 'Ethereum';
+      case 137: return 'Polygon';
+      case 42161: return 'Arbitrum';
+      case 10: return 'Optimism';
+      case 8453: return 'Base';
+      default: return 'Unknown';
+    }
+  };
+
+  const getNetworkColor = (chainId?: number) => {
+    switch (chainId) {
+      case 1: return 'bg-blue-500';
+      case 137: return 'bg-purple-500';
+      case 42161: return 'bg-blue-600';
+      case 10: return 'bg-red-500';
+      case 8453: return 'bg-blue-400';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  if (!isConnected) {
     return (
-      <Card className="w-full max-w-md">
+      <Card className="bg-surface border-surface-light">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Wallet className="mr-2" size={20} />
-            Connected Wallet
+            Connect Wallet
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-            <div>
-              <p className="text-sm text-muted-foreground">Address</p>
-              <p className="font-mono text-sm">{formatAddress(address)}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={copyAddress}
-              className="h-8 w-8 p-0"
-            >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-            </Button>
+          <p className="text-sm text-slate-400">
+            Connect your wallet to start making predictions and earning rewards
+          </p>
+          
+          <div className="space-y-2">
+            {connectors.map((connector) => (
+              <Button
+                key={connector.id}
+                onClick={() => handleConnect(connector)}
+                disabled={isPending || isConnecting}
+                className="w-full justify-start"
+                variant="outline"
+              >
+                <Wallet className="mr-2" size={16} />
+                {isPending || isConnecting ? 'Connecting...' : `Connect ${connector.name}`}
+              </Button>
+            ))}
           </div>
-          
-          {chain && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Network</span>
-              <Badge variant="secondary">{chain.name}</Badge>
-            </div>
-          )}
-          
-          <Button
-            onClick={handleDisconnect}
-            variant="destructive"
-            className="w-full"
-            disabled={logoutMutation.isPending}
-          >
-            <LogOut className="mr-2" size={16} />
-            {logoutMutation.isPending ? "Disconnecting..." : "Disconnect Wallet"}
-          </Button>
+
+          <div className="text-xs text-slate-500 space-y-1">
+            <p className="flex items-center">
+              <AlertCircle className="mr-1" size={12} />
+              Make sure you have a Web3 wallet installed
+            </p>
+            <p>• Metamask, WalletConnect, and other wallets supported</p>
+            <p>• Your wallet will open for connection approval</p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="bg-surface border-surface-light">
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <Wallet className="mr-2" size={20} />
-          Connect Wallet
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center">
+            <CheckCircle className="mr-2 text-green-500" size={20} />
+            Wallet Connected
+          </div>
+          <Button
+            onClick={handleDisconnect}
+            variant="outline"
+            size="sm"
+          >
+            <LogOut className="mr-1" size={14} />
+            Disconnect
+          </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground mb-4">
-          Connect your crypto wallet to authenticate and start making predictions.
-        </p>
-        
-        {connectors.map((connector) => (
-          <Button
-            key={connector.uid}
-            onClick={() => connect({ connector })}
-            disabled={isPending}
-            variant="outline"
-            className="w-full justify-start"
+      <CardContent className="space-y-4">
+        {/* Network Info */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-400">Network:</span>
+          <Badge 
+            className={`${getNetworkColor(chain?.id)} text-white`}
           >
-            <Wallet className="mr-2" size={16} />
-            {connector.name}
-          </Button>
-        ))}
-        
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p className="text-xs text-blue-700 dark:text-blue-300">
-            <strong>New to wallets?</strong> MetaMask is a popular choice for beginners. 
-            Download it from metamask.io to get started.
+            {getNetworkName(chain?.id)}
+          </Badge>
+        </div>
+
+        {/* Address */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-400">Address:</span>
+          <div className="flex items-center space-x-2">
+            <code className="text-sm bg-surface-light px-2 py-1 rounded">
+              {formatAddress(address!)}
+            </code>
+            <Button
+              onClick={copyAddress}
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+            >
+              <Copy size={12} />
+            </Button>
+            <Button
+              onClick={() => window.open(`https://etherscan.io/address/${address}`, '_blank')}
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+            >
+              <ExternalLink size={12} />
+            </Button>
+          </div>
+        </div>
+
+        {/* Balance */}
+        {balance && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-400">Balance:</span>
+            <div className="text-right">
+              <div className="font-semibold">
+                {parseFloat(formatEther(balance.value)).toFixed(4)} {balance.symbol}
+              </div>
+              <div className="text-xs text-slate-500">
+                Auto-refreshing every 15s
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Balance Refresh Button */}
+        <Button
+          onClick={() => refetchBalance()}
+          variant="outline"
+          size="sm"
+          className="w-full"
+        >
+          Refresh Balance
+        </Button>
+
+        {/* Connection Status */}
+        <div className="text-xs text-slate-500 space-y-1">
+          <p className="flex items-center">
+            <CheckCircle className="mr-1 text-green-500" size={12} />
+            Wallet securely connected
           </p>
+          <p>• Balance updates automatically</p>
+          <p>• You can now make predictions and earn rewards</p>
         </div>
       </CardContent>
     </Card>

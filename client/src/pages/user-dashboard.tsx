@@ -16,6 +16,8 @@ import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
 import CryptoChart from "@/components/crypto-chart";
 import { LivePrices } from "@/components/live-prices";
+import { WalletConnect } from "@/components/wallet-connect";
+import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 
 // Purchase History Component
 function PurchaseHistory() {
@@ -410,6 +412,10 @@ export default function UserDashboard() {
             </TabsTrigger>
             <TabsTrigger value="buy-pts" className="data-[state=active]:bg-primary">
               Buy PTS
+            </TabsTrigger>
+            <TabsTrigger value="wallet" className="data-[state=active]:bg-primary">
+              <Wallet className="mr-1" size={16} />
+              Wallet
             </TabsTrigger>
           </TabsList>
 
@@ -1054,6 +1060,155 @@ export default function UserDashboard() {
                   <PurchaseHistory />
                 </CardContent>
               </Card>
+            </div>
+          </TabsContent>
+
+          {/* Wallet Tab */}
+          <TabsContent value="wallet">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Wallet Connection */}
+              <div className="space-y-6">
+                <WalletConnect 
+                  onConnectionChange={(connected, address) => {
+                    if (connected && address) {
+                      // Auto-authenticate with backend when wallet connects
+                      console.log('Wallet connected:', address);
+                    }
+                  }}
+                />
+                
+                {/* PTS Balance Integration */}
+                <Card className="bg-surface border-surface-light">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Coins className="mr-2" size={20} />
+                      PTS Balance Integration
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
+                      <div>
+                        <p className="text-sm text-slate-400">Current PTS Balance</p>
+                        <p className="text-2xl font-bold text-primary">
+                          {user?.balance?.toLocaleString() || "0"} PTS
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.location.reload()}
+                      >
+                        <RefreshCw className="mr-1" size={14} />
+                        Sync
+                      </Button>
+                    </div>
+                    
+                    <div className="text-xs text-slate-500 space-y-1">
+                      <p>• Your PTS balance is linked to your wallet address</p>
+                      <p>• Earnings from predictions are automatically added</p>
+                      <p>• Use PTS to make predictions and earn rewards</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Wallet Features */}
+              <div className="space-y-6">
+                {/* Quick Actions */}
+                <Card className="bg-surface border-surface-light">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Target className="mr-2" size={20} />
+                      Quick Wallet Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        // Navigate to predictions tab
+                        const tabElement = document.querySelector('[value="predictions"]') as HTMLElement;
+                        tabElement?.click();
+                      }}
+                    >
+                      <TrendingUp className="mr-2" size={16} />
+                      Make a Prediction
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        // Navigate to buy PTS tab
+                        const tabElement = document.querySelector('[value="buy-pts"]') as HTMLElement;
+                        tabElement?.click();
+                      }}
+                    >
+                      <Coins className="mr-2" size={16} />
+                      Buy More PTS
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        // Navigate to withdraw tab
+                        const tabElement = document.querySelector('[value="withdraw"]') as HTMLElement;
+                        tabElement?.click();
+                      }}
+                    >
+                      <Wallet className="mr-2" size={16} />
+                      Withdraw Earnings
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Wallet Tips */}
+                <Card className="bg-surface border-surface-light">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Star className="mr-2" size={20} />
+                      Wallet Integration Tips
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm text-slate-400 space-y-3">
+                      <div className="flex items-start space-x-2">
+                        <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                        <div>
+                          <p className="font-medium text-slate-300">Auto-Connect</p>
+                          <p className="text-xs">Your wallet will automatically connect when you visit the site</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start space-x-2">
+                        <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                        <div>
+                          <p className="font-medium text-slate-300">Balance Sync</p>
+                          <p className="text-xs">Both crypto and PTS balances update automatically</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start space-x-2">
+                        <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                        <div>
+                          <p className="font-medium text-slate-300">Secure Transactions</p>
+                          <p className="text-xs">All transactions require your wallet approval</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start space-x-2">
+                        <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                        <div>
+                          <p className="font-medium text-slate-300">Multi-Network</p>
+                          <p className="text-xs">Supports Ethereum, Polygon, Arbitrum, and more</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
