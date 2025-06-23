@@ -1849,6 +1849,291 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced Security Events API
+  app.get("/api/admin/security-events", requireAdmin, async (req, res) => {
+    auditLog("ADMIN_ACCESS_GRANTED", { 
+      clientIP: req.ip, 
+      userId: req.session.userId,
+      walletAddress: req.session.walletAddress,
+      endpoint: req.originalUrl 
+    }, req);
+    
+    try {
+      const { severity, resolved, startDate, endDate, walletAddress, ipAddress, search } = req.query;
+      
+      const filters: any = {};
+      if (severity && severity !== 'all') filters.severity = severity;
+      if (resolved !== undefined) filters.resolved = resolved === 'true';
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+      if (walletAddress) filters.walletAddress = walletAddress;
+      if (ipAddress) filters.ipAddress = ipAddress;
+      if (search) filters.search = search;
+
+      const events = await storage.getSecurityEvents(filters);
+      const stats = await storage.getSecurityStats();
+      
+      res.json({
+        stats,
+        events
+      });
+    } catch (error) {
+      console.error("Error fetching security events:", error);
+      res.status(500).json({ message: "Failed to fetch security events" });
+    }
+  });
+
+  app.put("/api/admin/security-events/:id", requireAdmin, async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const { status, resolved } = req.body;
+
+      if (!eventId || isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      const updates: any = {};
+      if (status) updates.status = status;
+      if (resolved !== undefined) {
+        updates.resolved = resolved;
+        if (resolved) {
+          updates.resolvedAt = new Date();
+          updates.resolvedBy = req.session.userId;
+        }
+      }
+
+      await storage.updateSecurityEvent(eventId, updates);
+
+      await storage.createAdminLog({
+        adminId: req.session.userId,
+        action: `Security event ${eventId} updated to ${status}`,
+        targetType: 'security_event',
+        targetId: eventId,
+        details: JSON.stringify(updates),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating security event:", error);
+      res.status(500).json({ message: "Failed to update security event" });
+    }
+  });
+
+  app.post("/api/admin/security-events/bulk", requireAdmin, async (req, res) => {
+    try {
+      const { eventIds, action } = req.body;
+
+      if (!eventIds || !Array.isArray(eventIds) || eventIds.length === 0) {
+        return res.status(400).json({ message: "Event IDs are required" });
+      }
+
+      const updates: any = {};
+      switch (action) {
+        case 'resolve':
+          updates.resolved = true;
+          updates.resolvedAt = new Date();
+          updates.resolvedBy = req.session.userId;
+          updates.status = 'verified';
+          break;
+        case 'investigate':
+          updates.status = 'investigating';
+          break;
+        case 'block':
+          updates.status = 'auto-blocked';
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid action" });
+      }
+
+      for (const eventId of eventIds) {
+        await storage.updateSecurityEvent(eventId, updates);
+      }
+
+      await storage.createAdminLog({
+        adminId: req.session.userId,
+        action: `Bulk ${action} on ${eventIds.length} security events`,
+        targetType: 'security_event',
+        targetId: null,
+        details: JSON.stringify({ eventIds, action }),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+      });
+
+      res.json({ success: true, updated: eventIds.length });
+    } catch (error) {
+      console.error("Error performing bulk action:", error);
+      res.status(500).json({ message: "Failed to perform bulk action" });
+    }
+  });
+
+  // Enhanced Transaction Logs API
+  app.get("/api/admin/transaction-stats", requireAdmin, async (req, res) => {
+    auditLog("ADMIN_ACCESS_GRANTED", { 
+      clientIP: req.ip, 
+      userId: req.session.userId,
+      walletAddress: req.session.walletAddress,
+      endpoint: req.originalUrl 
+    }, req);
+    
+    try {
+      const stats = await storage.getTransactionStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching transaction stats:", error);
+      res.status(500).json({ message: "Failed to fetch transaction stats" });
+    }
+  });
+
+  app.get("/api/admin/transaction-logs", requireAdmin, async (req, res) => {
+    try {
+      const { type, status, token, startDate, endDate, userId } = req.query;
+      
+      const filters: any = {};
+      if (type && type !== 'all') filters.type = type;
+      if (status && status !== 'all') filters.status = status;
+      if (token && token !== 'all') filters.token = token;
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+      if (userId) filters.userId = parseInt(userId as string);
+
+      const transactions = await storage.getTransactionLogs(filters);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching transaction logs:", error);
+      res.status(500).json({ message: "Failed to fetch transaction logs" });
+    }
+  });
+
+  // Enhanced System Settings API
+  app.get("/api/admin/settings", requireAdmin, async (req, res) => {
+    auditLog("ADMIN_ACCESS_GRANTED", { 
+      clientIP: req.ip, 
+      userId: req.session.userId,
+      walletAddress: req.session.walletAddress,
+      endpoint: req.originalUrl 
+    }, req);
+    
+    try {
+      const settings = await storage.getSystemSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.post("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      const { platform, security, exchangeRates } = req.body;
+      const adminId = req.session.userId;
+
+      // Update platform settings
+      if (platform) {
+        for (const [key, value] of Object.entries(platform)) {
+          await storage.updateSystemSetting('platform', key, value, adminId);
+        }
+      }
+
+      // Update security settings
+      if (security) {
+        for (const [key, value] of Object.entries(security)) {
+          await storage.updateSystemSetting('security', key, value, adminId);
+        }
+      }
+
+      // Update exchange rates
+      if (exchangeRates) {
+        for (const [key, value] of Object.entries(exchangeRates)) {
+          await storage.updateSystemSetting('exchangeRates', key, value, adminId);
+        }
+      }
+
+      await storage.createAdminLog({
+        adminId,
+        action: 'System settings updated',
+        targetType: 'settings',
+        targetId: null,
+        details: JSON.stringify({ platform, security, exchangeRates }),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+      });
+
+      res.json({ success: true, message: "Settings updated successfully" });
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
+
+  // Admin Logs API
+  app.get("/api/admin/logs", requireAdmin, async (req, res) => {
+    try {
+      const { adminId, action, startDate, endDate } = req.query;
+      
+      const filters: any = {};
+      if (adminId) filters.adminId = parseInt(adminId as string);
+      if (action) filters.action = action;
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+
+      const logs = await storage.getAdminLogs(filters);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching admin logs:", error);
+      res.status(500).json({ message: "Failed to fetch admin logs" });
+    }
+  });
+
+  // Create security event for suspicious activities
+  const createSecurityEvent = async (event: string, details: string, severity: string, req: Request, userId?: number) => {
+    try {
+      await storage.createSecurityEvent({
+        event,
+        details,
+        severity,
+        walletAddress: req.session?.walletAddress || null,
+        ipAddress: req.ip || 'unknown',
+        country: 'Unknown',
+        status: severity === 'critical' ? 'auto-blocked' : 'investigating',
+        resolved: false,
+        userId: userId || req.session?.userId || null
+      });
+    } catch (error) {
+      console.error("Error creating security event:", error);
+    }
+  };
+
+  // Enhanced middleware for security monitoring
+  app.use((req, res, next) => {
+    const ip = req.ip;
+    const userAgent = req.get('User-Agent') || '';
+    const path = req.path;
+
+    // Monitor suspicious patterns
+    if (path.includes('/admin') && !req.session?.userId) {
+      createSecurityEvent(
+        'Unauthorized admin access attempt',
+        `Attempted to access ${path} without authentication from ${ip}`,
+        'medium',
+        req
+      );
+    }
+
+    // Monitor multiple failed requests
+    if (res.statusCode >= 400 && path.includes('/api/')) {
+      createSecurityEvent(
+        'Failed API request',
+        `${res.statusCode} error on ${path} from ${ip}`,
+        'low',
+        req
+      );
+    }
+
+    next();
+  });
+
   // Start background task to check predictions every minute
   setInterval(async () => {
     try {

@@ -1,6 +1,6 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc, count, and, gte, lte, like } from "drizzle-orm";
 
 // Generate unique 9-digit UID
 function generateUID(): string {
@@ -259,6 +259,203 @@ export class DatabaseStorage implements IStorage {
     
     // Delete the user
     await db.delete(users).where(eq(users.id, id));
+  }
+
+  // Security event operations
+  async createSecurityEvent(event: any): Promise<any> {
+    const [newEvent] = await db.insert(securityEvents).values(event).returning();
+    return newEvent;
+  }
+
+  async getSecurityEvents(filters: any = {}): Promise<any[]> {
+    let query = db.select().from(securityEvents);
+    
+    if (filters.severity && filters.severity !== 'all') {
+      query = query.where(eq(securityEvents.severity, filters.severity));
+    }
+    
+    if (filters.resolved !== undefined) {
+      query = query.where(eq(securityEvents.resolved, filters.resolved));
+    }
+    
+    if (filters.startDate) {
+      query = query.where(gte(securityEvents.createdAt, new Date(filters.startDate)));
+    }
+    
+    if (filters.endDate) {
+      query = query.where(lte(securityEvents.createdAt, new Date(filters.endDate)));
+    }
+
+    const events = await query.orderBy(desc(securityEvents.createdAt));
+    return events;
+  }
+
+  async updateSecurityEvent(id: number, updates: any): Promise<void> {
+    await db.update(securityEvents).set(updates).where(eq(securityEvents.id, id));
+  }
+
+  async getSecurityStats(): Promise<any> {
+    const events = await db.select().from(securityEvents);
+    
+    return {
+      totalEvents: events.length,
+      criticalEvents: events.filter(e => e.severity === 'critical').length,
+      highEvents: events.filter(e => e.severity === 'high').length,
+      mediumEvents: events.filter(e => e.severity === 'medium').length,
+      unresolvedEvents: events.filter(e => !e.resolved).length,
+      autoBlockedIps: events.filter(e => e.status === 'auto-blocked').length
+    };
+  }
+
+  // Admin log operations
+  async createAdminLog(log: any): Promise<any> {
+    const [newLog] = await db.insert(adminLogs).values(log).returning();
+    return newLog;
+  }
+
+  async getAdminLogs(filters: any = {}): Promise<any[]> {
+    let query = db.select().from(adminLogs)
+      .leftJoin(users, eq(adminLogs.adminId, users.id));
+    
+    if (filters.adminId) {
+      query = query.where(eq(adminLogs.adminId, filters.adminId));
+    }
+    
+    if (filters.action) {
+      query = query.where(like(adminLogs.action, `%${filters.action}%`));
+    }
+
+    const logs = await query.orderBy(desc(adminLogs.createdAt));
+    return logs.map(log => ({
+      ...log.admin_logs,
+      adminUsername: log.users?.username || 'Unknown'
+    }));
+  }
+
+  // Transaction log operations
+  async createTransactionLog(transaction: any): Promise<any> {
+    const [newTransaction] = await db.insert(transactionLogs).values(transaction).returning();
+    return newTransaction;
+  }
+
+  async getTransactionLogs(filters: any = {}): Promise<any[]> {
+    let query = db.select().from(transactionLogs)
+      .leftJoin(users, eq(transactionLogs.userId, users.id));
+    
+    if (filters.type && filters.type !== 'all') {
+      query = query.where(eq(transactionLogs.type, filters.type));
+    }
+    
+    if (filters.status && filters.status !== 'all') {
+      query = query.where(eq(transactionLogs.status, filters.status));
+    }
+    
+    if (filters.token && filters.token !== 'all') {
+      query = query.where(eq(transactionLogs.token, filters.token));
+    }
+
+    const transactions = await query.orderBy(desc(transactionLogs.createdAt));
+    return transactions.map(tx => ({
+      ...tx.transaction_logs,
+      username: tx.users?.username,
+      uid: tx.users?.uid
+    }));
+  }
+
+  async getTransactionStats(): Promise<any> {
+    const transactions = await db.select().from(transactionLogs);
+    
+    const purchases = transactions.filter(t => t.type === 'purchase');
+    const withdrawals = transactions.filter(t => t.type === 'withdrawal');
+    const rewards = transactions.filter(t => t.type === 'reward');
+    
+    return {
+      totalTransactions: transactions.length,
+      totalPurchases: purchases.length,
+      totalWithdrawals: withdrawals.length,
+      totalRewards: rewards.length,
+      totalVolume: transactions.reduce((sum, t) => sum + t.amount, 0),
+      avgTransactionSize: transactions.length > 0 ? transactions.reduce((sum, t) => sum + t.amount, 0) / transactions.length : 0
+    };
+  }
+
+  // System settings operations
+  async getSystemSettings(): Promise<any> {
+    const settings = await db.select().from(systemSettings);
+    
+    const settingsObj: any = {
+      platform: {},
+      security: {},
+      exchangeRates: {}
+    };
+    
+    settings.forEach(setting => {
+      if (!settingsObj[setting.category]) {
+        settingsObj[setting.category] = {};
+      }
+      
+      let value = setting.value;
+      if (setting.dataType === 'number') {
+        value = parseFloat(setting.value);
+      } else if (setting.dataType === 'boolean') {
+        value = setting.value === 'true';
+      } else if (setting.dataType === 'json') {
+        value = JSON.parse(setting.value);
+      }
+      
+      settingsObj[setting.category][setting.key] = value;
+    });
+    
+    // Set defaults if not found
+    return {
+      platform: {
+        minPredictionAmount: settingsObj.platform.minPredictionAmount || 10,
+        maxPredictionAmount: settingsObj.platform.maxPredictionAmount || 10000,
+        withdrawalFee: settingsObj.platform.withdrawalFee || 2.5,
+        minWithdrawal: settingsObj.platform.minWithdrawal || 1000,
+        ...settingsObj.platform
+      },
+      security: {
+        rateLimit: settingsObj.security.rateLimit || 500,
+        maxPredictionsPerHour: settingsObj.security.maxPredictionsPerHour || 5,
+        maxWithdrawalsPerHour: settingsObj.security.maxWithdrawalsPerHour || 5,
+        sessionTimeout: settingsObj.security.sessionTimeout || 24,
+        ...settingsObj.security
+      },
+      exchangeRates: {
+        ethToPts: settingsObj.exchangeRates.ethToPts || 300000,
+        usdtToPts: settingsObj.exchangeRates.usdtToPts || 100,
+        ptsToUsdt: settingsObj.exchangeRates.ptsToUsdt || 0.01,
+        ...settingsObj.exchangeRates
+      }
+    };
+  }
+
+  async updateSystemSetting(category: string, key: string, value: any, adminId: number): Promise<void> {
+    const dataType = typeof value === 'number' ? 'number' : 
+                     typeof value === 'boolean' ? 'boolean' : 
+                     typeof value === 'object' ? 'json' : 'string';
+    
+    const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    
+    await db.insert(systemSettings)
+      .values({
+        category,
+        key,
+        value: stringValue,
+        dataType,
+        updatedBy: adminId,
+        updatedAt: new Date()
+      })
+      .onConflictDoUpdate({
+        target: [systemSettings.category, systemSettings.key],
+        set: {
+          value: stringValue,
+          dataType,
+          updatedBy: adminId,
+          updatedAt: new Date()
+        }
+      });
   }
 }
 
