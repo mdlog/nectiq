@@ -60,6 +60,16 @@ export default function AdminPanel() {
   // Search state
   const [userSearchTerm, setUserSearchTerm] = useState("");
   
+  // Predictions sorting state
+  const [predictionsSortField, setPredictionsSortField] = useState<"createdAt" | "stake" | "reward">("createdAt");
+  const [predictionsSortOrder, setPredictionsSortOrder] = useState<"asc" | "desc">("desc");
+  
+  // Date range filter state
+  const [dateRangeFilter, setDateRangeFilter] = useState({
+    startDate: "",
+    endDate: ""
+  });
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -78,12 +88,89 @@ export default function AdminPanel() {
     retry: false,
   });
 
-  // Filter predictions based on asset and status
+  // Filter predictions based on asset, status, and date range
   const filteredPredictions = predictions.filter(prediction => {
     const assetMatch = predictionsAssetFilter === "all" || prediction.cryptocurrency === predictionsAssetFilter;
     const statusMatch = predictionsStatusFilter === "all" || prediction.status === predictionsStatusFilter;
-    return assetMatch && statusMatch;
+    
+    // Date range filter
+    let dateMatch = true;
+    if (dateRangeFilter.startDate || dateRangeFilter.endDate) {
+      const predictionDate = new Date(prediction.createdAt);
+      if (dateRangeFilter.startDate) {
+        dateMatch = dateMatch && predictionDate >= new Date(dateRangeFilter.startDate);
+      }
+      if (dateRangeFilter.endDate) {
+        dateMatch = dateMatch && predictionDate <= new Date(dateRangeFilter.endDate);
+      }
+    }
+    
+    return assetMatch && statusMatch && dateMatch;
   });
+
+  // Sort filtered predictions
+  const sortedPredictions = [...filteredPredictions].sort((a, b) => {
+    let aValue, bValue;
+    
+    switch (predictionsSortField) {
+      case "createdAt":
+        aValue = new Date(a.createdAt).getTime();
+        bValue = new Date(b.createdAt).getTime();
+        break;
+      case "stake":
+        aValue = a.stakeAmount || 0;
+        bValue = b.stakeAmount || 0;
+        break;
+      case "reward":
+        aValue = a.rewardAmount || 0;
+        bValue = b.rewardAmount || 0;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (predictionsSortOrder === "desc") {
+      return bValue - aValue;
+    } else {
+      return aValue - bValue;
+    }
+  });
+
+  // Handle predictions sorting
+  const handlePredictionsSort = (field: "createdAt" | "stake" | "reward") => {
+    if (predictionsSortField === field) {
+      setPredictionsSortOrder(predictionsSortOrder === "desc" ? "asc" : "desc");
+    } else {
+      setPredictionsSortField(field);
+      setPredictionsSortOrder("desc");
+    }
+  };
+
+  // Export predictions data
+  const handleExportPredictions = () => {
+    const csvContent = [
+      ["User", "Cryptocurrency", "Prediction", "Actual", "Stake", "Reward", "Accuracy", "Status", "Date"].join(","),
+      ...sortedPredictions.map(prediction => [
+        `User ${prediction.userId}`,
+        prediction.cryptocurrency,
+        prediction.predictedPrice,
+        prediction.actualPrice || "Pending",
+        prediction.stakeAmount || 0,
+        prediction.rewardAmount || 0,
+        prediction.accuracy || "Pending",
+        prediction.status,
+        new Date(prediction.createdAt).toLocaleDateString("id-ID")
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `predictions_export_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -1381,65 +1468,137 @@ export default function AdminPanel() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <TrendingUp className="mr-2" size={20} />
-                    All Predictions ({filteredPredictions.length} of {predictions.length})
+                    All Predictions ({sortedPredictions.length} of {predictions.length})
                   </div>
-                  <div className="text-sm text-slate-400">
-                    Page {predictionsPage} of {Math.max(1, Math.ceil(filteredPredictions.length / predictionsPerPage))}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportPredictions}
+                      className="text-xs"
+                    >
+                      📊 Export Data
+                    </Button>
+                    <div className="text-sm text-slate-400">
+                      Page {predictionsPage} of {Math.max(1, Math.ceil(sortedPredictions.length / predictionsPerPage))}
+                    </div>
                   </div>
                 </CardTitle>
                 
-                {/* Filter Controls */}
-                <div className="flex items-center gap-4 mt-4">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="asset-filter" className="text-sm font-medium">
-                      Aset:
-                    </Label>
-                    <Select value={predictionsAssetFilter} onValueChange={setPredictionsAssetFilter}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Pilih aset" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Semua Aset</SelectItem>
-                        {uniqueAssets.map((asset) => (
-                          <SelectItem key={asset} value={asset}>
-                            {asset.toUpperCase()}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {/* Enhanced Filter Controls */}
+                <div className="space-y-4 mt-4">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="asset-filter" className="text-sm font-medium">
+                        Aset:
+                      </Label>
+                      <Select value={predictionsAssetFilter} onValueChange={setPredictionsAssetFilter}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="Pilih aset" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Aset</SelectItem>
+                          {uniqueAssets.map((asset) => (
+                            <SelectItem key={asset} value={asset}>
+                              {asset.toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="status-filter" className="text-sm font-medium">
+                        Status:
+                      </Label>
+                      <Select value={predictionsStatusFilter} onValueChange={setPredictionsStatusFilter}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="Pilih status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Status</SelectItem>
+                          {uniqueStatuses.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant={
+                                    status === "completed" ? "default" : 
+                                    status === "pending" ? "secondary" : 
+                                    "destructive"
+                                  }
+                                  className="text-xs"
+                                >
+                                  {status === 'pending' ? 'Active' : 
+                                   status === 'completed' ? 'Selesai' : 
+                                   status === 'expired' ? 'Kadaluarsa' : status}
+                                </Badge>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {/* Date Range Filter */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">Range Filter:</Label>
+                      <input
+                        type="date"
+                        value={dateRangeFilter.startDate}
+                        onChange={(e) => setDateRangeFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                        className="px-2 py-1 text-xs border border-gray-300 rounded dark:bg-gray-800 dark:border-gray-600"
+                      />
+                      <span className="text-xs text-slate-400">to</span>
+                      <input
+                        type="date"
+                        value={dateRangeFilter.endDate}
+                        onChange={(e) => setDateRangeFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                        className="px-2 py-1 text-xs border border-gray-300 rounded dark:bg-gray-800 dark:border-gray-600"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="status-filter" className="text-sm font-medium">
-                      Status:
-                    </Label>
-                    <Select value={predictionsStatusFilter} onValueChange={setPredictionsStatusFilter}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Pilih status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Semua Status</SelectItem>
-                        {uniqueStatuses.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status === 'pending' ? 'Pending' : 
-                             status === 'completed' ? 'Selesai' : 
-                             status === 'expired' ? 'Kadaluarsa' : status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {/* Sorting Controls */}
+                  <div className="flex items-center gap-4">
+                    <Label className="text-sm font-medium">Sorting:</Label>
+                    <Button
+                      variant={predictionsSortField === "createdAt" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePredictionsSort("createdAt")}
+                      className="text-xs"
+                    >
+                      Waktu {predictionsSortField === "createdAt" && (predictionsSortOrder === "desc" ? "↓" : "↑")}
+                    </Button>
+                    <Button
+                      variant={predictionsSortField === "stake" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePredictionsSort("stake")}
+                      className="text-xs"
+                    >
+                      Stake {predictionsSortField === "stake" && (predictionsSortOrder === "desc" ? "↓" : "↑")}
+                    </Button>
+                    <Button
+                      variant={predictionsSortField === "reward" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePredictionsSort("reward")}
+                      className="text-xs"
+                    >
+                      Reward {predictionsSortField === "reward" && (predictionsSortOrder === "desc" ? "↓" : "↑")}
+                    </Button>
                   </div>
                   
-                  {(predictionsAssetFilter !== "all" || predictionsStatusFilter !== "all") && (
+                  {(predictionsAssetFilter !== "all" || predictionsStatusFilter !== "all" || dateRangeFilter.startDate || dateRangeFilter.endDate) && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
                         setPredictionsAssetFilter("all");
                         setPredictionsStatusFilter("all");
+                        setDateRangeFilter({ startDate: "", endDate: "" });
                       }}
+                      className="text-xs"
                     >
-                      Reset Filter
+                      Reset Semua Filter
                     </Button>
                   )}
                 </div>
