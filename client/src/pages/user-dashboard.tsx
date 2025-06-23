@@ -277,6 +277,12 @@ export default function UserDashboard() {
 
   const accuracyLevel = getAccuracyLevel(stats?.accuracy || 0);
 
+  // Handle crypto selection from Live Prices
+  const handleCryptoSelect = (crypto: CryptoPrice) => {
+    setSelectedCrypto(crypto);
+    setShowChart(true);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
@@ -531,104 +537,140 @@ export default function UserDashboard() {
 
           {/* Market Watch Tab */}
           <TabsContent value="market">
-            <Card className="bg-surface border-surface-light">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <TrendingUp className="mr-2" size={20} />
-                    Market Overview
-                    <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                      LIVE
-                    </Badge>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleManualRefresh}
-                    disabled={isRefreshing || pricesLoading}
-                    className="flex items-center space-x-2"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    <span>Refresh</span>
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {pricesLoading && prices.length === 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <div key={i} className="p-4 bg-surface-light rounded-lg border border-slate-600 animate-pulse">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Live Prices - Interactive */}
+              <div className="space-y-4">
+                <LivePrices onCryptoSelect={handleCryptoSelect} />
+                
+                {/* Selected Crypto Info */}
+                {selectedCrypto && showChart && (
+                  <Card className="bg-surface border-surface-light">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center">
+                          <BarChart3 className="mr-2" size={20} />
+                          Selected: {selectedCrypto.name} ({selectedCrypto.symbol})
+                        </CardTitle>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setShowChart(false);
+                            setSelectedCrypto(null);
+                          }}
+                        >
+                          Close Chart
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <img 
+                            src={selectedCrypto.image} 
+                            alt={selectedCrypto.name}
+                            className="w-10 h-10 rounded-full"
+                          />
                           <div>
-                            <div className="h-4 bg-gray-300 rounded w-12 mb-1"></div>
-                            <div className="h-3 bg-gray-300 rounded w-16"></div>
+                            <p className="font-semibold">{selectedCrypto.symbol}</p>
+                            <p className="text-sm text-slate-400">{selectedCrypto.name}</p>
                           </div>
                         </div>
-                        <div className="text-center">
-                          <div className="h-6 bg-gray-300 rounded w-24 mx-auto mb-2"></div>
-                          <div className="h-4 bg-gray-300 rounded w-16 mx-auto"></div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold">
+                            ${selectedCrypto.current_price.toLocaleString(undefined, { 
+                              minimumFractionDigits: 2, 
+                              maximumFractionDigits: 6 
+                            })}
+                          </p>
+                          <p className={`text-sm ${selectedCrypto.price_change_percentage_24h >= 0 ? 'text-success' : 'text-error'}`}>
+                            {selectedCrypto.price_change_percentage_24h >= 0 ? '+' : ''}
+                            {selectedCrypto.price_change_percentage_24h.toFixed(2)}% (24h)
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {prices.map((crypto) => {
-                      const isPositive = crypto.price_change_percentage_24h >= 0;
                       
-                      return (
-                        <div key={crypto.id} className="p-4 bg-surface-light rounded-lg border border-slate-600 relative">
-                          {pricesLoading && (
-                            <div className="absolute top-2 right-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-3">
-                              <div className="relative w-8 h-8 flex-shrink-0">
-                                <img 
-                                  src={crypto.image || `https://coin-images.coingecko.com/coins/images/${crypto.id === 'bitcoin' ? '1' : crypto.id === 'ethereum' ? '279' : crypto.id === 'binancecoin' ? '825' : crypto.id === 'cardano' ? '975' : crypto.id === 'solana' ? '4128' : '1'}/large/${crypto.id}.png`} 
-                                  alt={crypto.name}
-                                  className="w-8 h-8 rounded-full object-cover"
-                                  onError={(e) => {
-                                    // Fallback to colored icon if image fails to load
-                                    const target = e.target as HTMLImageElement;
-                                    const fallback = target.nextElementSibling as HTMLElement;
-                                    if (fallback) {
-                                      target.style.display = 'none';
-                                      fallback.style.display = 'flex';
-                                    }
-                                  }}
-                                />
-                                <div className={`absolute inset-0 w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full items-center justify-center text-white text-sm font-bold hidden`}>
-                                  {getCryptoIcon(crypto.id)}
-                                </div>
-                              </div>
-                              <div>
-                                <p className="font-semibold">{crypto.symbol}</p>
-                                <p className="text-xs text-slate-400">{crypto.name}</p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-lg font-bold">${crypto.current_price.toLocaleString()}</p>
-                            <p className={`text-sm ${isPositive ? "text-success" : "text-error"}`}>
-                              {isPositive ? "+" : ""}{crypto.price_change_percentage_24h.toFixed(2)}% (24h)
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                      <div className="mt-4">
+                        <Button 
+                          className="w-full"
+                          onClick={() => window.location.href = `/predict?crypto=${selectedCrypto.id}`}
+                        >
+                          <Target className="mr-2" size={16} />
+                          Make Prediction for {selectedCrypto.symbol}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
-                <div className="mt-4 text-center">
-                  <p className="text-xs text-slate-500">
-                    Prices update automatically every 3 seconds • Last updated: {new Date().toLocaleTimeString()}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+              
+              {/* Interactive Chart */}
+              <div className="space-y-4">
+                {selectedCrypto && showChart ? (
+                  <CryptoChart
+                    cryptoId={selectedCrypto.id}
+                    symbol={selectedCrypto.symbol}
+                    name={selectedCrypto.name}
+                    currentPrice={selectedCrypto.current_price}
+                    priceChange24h={selectedCrypto.price_change_percentage_24h}
+                  />
+                ) : (
+                  <Card className="bg-surface border-surface-light">
+                    <CardContent className="text-center py-12">
+                      <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
+                      <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
+                      <p className="text-slate-400 mb-4">
+                        Click on any cryptocurrency from the Live Prices panel to view its interactive price chart
+                      </p>
+                      <div className="text-sm text-slate-500">
+                        <p>• Real-time price data from CoinGecko</p>
+                        <p>• Multiple timeframe analysis</p>
+                        <p>• Direct prediction integration</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                {/* Quick Stats */}
+                <Card className="bg-surface border-surface-light">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <TrendingUp className="mr-2" size={20} />
+                      Market Statistics
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Total Cryptocurrencies</span>
+                        <span className="font-semibold">{prices.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Gainers (24h)</span>
+                        <span className="font-semibold text-success">
+                          {prices.filter(p => p.price_change_percentage_24h > 0).length}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Losers (24h)</span>
+                        <span className="font-semibold text-error">
+                          {prices.filter(p => p.price_change_percentage_24h < 0).length}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Top Performer</span>
+                        <span className="font-semibold text-success">
+                          {prices.length > 0 ? 
+                            prices.reduce((prev, current) => 
+                              prev.price_change_percentage_24h > current.price_change_percentage_24h ? prev : current
+                            ).symbol : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Performance Tab */}
