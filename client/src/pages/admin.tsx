@@ -120,8 +120,16 @@ export default function AdminPanel() {
         title: "Success",
         description: "Cryptocurrency deleted successfully",
       });
+      // Invalidate all cryptocurrency-related caches
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cryptocurrencies"] });
       queryClient.invalidateQueries({ queryKey: ["/api/crypto/prices"] });
+      
+      // Close dialog after successful deletion
+      const dialog = document.querySelector('[data-state="open"]');
+      if (dialog) {
+        const closeButton = dialog.querySelector('[data-dismiss]');
+        if (closeButton) closeButton.click();
+      }
     },
     onError: (error: any) => {
       toast({
