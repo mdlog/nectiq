@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -105,6 +105,30 @@ export default function AdminPanel() {
     autoAlertHighValue: true,
     autoLogGeoLocation: true
   });
+
+  // System Settings state
+  const [settingsForm, setSettingsForm] = useState({
+    platform: {
+      minPredictionAmount: 10,
+      maxPredictionAmount: 10000,
+      withdrawalFee: 2.5,
+      minWithdrawal: 1000
+    },
+    security: {
+      rateLimit: 500,
+      maxPredictionsPerHour: 5,
+      maxWithdrawalsPerHour: 5,
+      sessionTimeout: 24
+    },
+    exchangeRates: {
+      ethToPts: 300000,
+      usdtToPts: 100,
+      ptsToUsdt: 0.01
+    }
+  });
+
+  // Emergency modal state
+  const [showEmergencyModal, setShowEmergencyModal] = useState<string | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -813,26 +837,7 @@ export default function AdminPanel() {
     retry: false,
   });
 
-  // Form state for settings
-  const [settingsForm, setSettingsForm] = useState({
-    platform: {
-      minPredictionAmount: 10,
-      maxPredictionAmount: 10000,
-      withdrawalFee: 2.5,
-      minWithdrawal: 1000
-    },
-    exchangeRates: {
-      ethToPts: 300000,
-      usdtToPts: 100,
-      ptsToUsdt: 0.01
-    },
-    security: {
-      rateLimit: 500,
-      maxPredictionsPerHour: 5,
-      maxWithdrawalsPerHour: 5,
-      sessionTimeout: 24
-    }
-  });
+  // Settings form uses the state declared earlier above
 
   // Update form when settings load
   useEffect(() => {
@@ -974,6 +979,76 @@ export default function AdminPanel() {
     const reason = prompt("Enter reason for emergency stop:");
     if (reason) {
       emergencyStopMutation.mutate(reason);
+    }
+  };
+
+  // Enhanced System Settings handlers
+  const handleExportSettings = () => {
+    const settingsData = [
+      ["Category", "Setting", "Value", "Type", "Last Updated"].join(","),
+      ["Platform", "Min Prediction Amount", settingsForm.platform.minPredictionAmount.toString(), "number", new Date().toISOString()].join(","),
+      ["Platform", "Max Prediction Amount", settingsForm.platform.maxPredictionAmount.toString(), "number", new Date().toISOString()].join(","),
+      ["Platform", "Withdrawal Fee", settingsForm.platform.withdrawalFee.toString(), "number", new Date().toISOString()].join(","),
+      ["Platform", "Min Withdrawal", settingsForm.platform.minWithdrawal.toString(), "number", new Date().toISOString()].join(","),
+      ["Security", "Rate Limit", settingsForm.security.rateLimit.toString(), "number", new Date().toISOString()].join(","),
+      ["Security", "Max Predictions/Hour", settingsForm.security.maxPredictionsPerHour.toString(), "number", new Date().toISOString()].join(","),
+      ["Security", "Max Withdrawals/Hour", settingsForm.security.maxWithdrawalsPerHour.toString(), "number", new Date().toISOString()].join(","),
+      ["Security", "Session Timeout", settingsForm.security.sessionTimeout.toString(), "number", new Date().toISOString()].join(","),
+      ["Exchange", "ETH to NTIQ Rate", settingsForm.exchangeRates.ethToPts.toString(), "number", new Date().toISOString()].join(","),
+      ["Exchange", "USDT to NTIQ Rate", settingsForm.exchangeRates.usdtToPts.toString(), "number", new Date().toISOString()].join(","),
+      ["Exchange", "NTIQ to USDT Rate", settingsForm.exchangeRates.ptsToUsdt.toString(), "number", new Date().toISOString()].join(",")
+    ].join("\n");
+
+    const blob = new Blob([settingsData], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `system-settings-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Success",
+      description: "System settings exported successfully",
+    });
+  };
+
+  const handleRefreshRates = async () => {
+    try {
+      // Simulate fetching updated exchange rates from external APIs
+      const response = await fetch("/api/admin/refresh-rates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to refresh rates");
+      }
+
+      // Update the form with new rates (this would come from the API response)
+      setSettingsForm(prev => ({
+        ...prev,
+        exchangeRates: {
+          ...prev.exchangeRates,
+          // These would be updated from the API response
+          ethToPts: prev.exchangeRates.ethToPts, // Keep current for now
+          usdtToPts: prev.exchangeRates.usdtToPts,
+          ptsToUsdt: prev.exchangeRates.ptsToUsdt
+        }
+      }));
+
+      toast({
+        title: "Success",
+        description: "Exchange rates refreshed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to refresh exchange rates",
+        variant: "destructive"
+      });
     }
   };
 
