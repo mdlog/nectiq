@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Medal, Award, TrendingUp, Target, Coins, Calendar, Users, Crown } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Target, Coins, Calendar, Users, Crown, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 
 interface LeaderboardUser {
   id: number;
@@ -115,6 +116,16 @@ export default function Leaderboard() {
               <Trophy className="text-primary h-8 w-8" />
               <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
             </div>
+            <Link href="/">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center space-x-2 bg-surface-light hover:bg-surface border-surface-light text-slate-300 hover:text-white transition-all duration-200"
+              >
+                <ArrowLeft size={16} />
+                <span>Back To App</span>
+              </Button>
+            </Link>
           </div>
 
           {/* Filter Buttons */}
