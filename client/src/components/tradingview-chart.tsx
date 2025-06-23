@@ -85,11 +85,18 @@ const TradingViewChart = memo(({
       },
     });
 
-    // Convert API data to chart format
-    const formattedData = chartData.map((item) => ({
-      time: (new Date(item.time).getTime() / 1000) as UTCTimestamp,
-      value: item.value,
-    }));
+    // Convert API data to chart format with proper timestamp handling
+    const formattedData = chartData.map((item) => {
+      // Handle both string dates (YYYY-MM-DD) and timestamps
+      const timestamp = typeof item.time === 'string' 
+        ? new Date(item.time).getTime() / 1000
+        : item.time;
+      
+      return {
+        time: timestamp as UTCTimestamp,
+        value: item.value,
+      };
+    });
 
     lineSeries.setData(formattedData);
     chart.timeScale().fitContent();
