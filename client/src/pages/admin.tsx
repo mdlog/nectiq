@@ -1446,9 +1446,9 @@ export default function AdminPanel() {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-slate-400">PTS Purchases</p>
+                            <p className="text-sm text-slate-400">NTIQ Purchases</p>
                             <p className="text-2xl font-bold">{transactionStats?.totalPurchases || 0}</p>
-                            <p className="text-xs text-slate-500">{(transactionStats?.totalPTSPurchased || 0).toLocaleString()} PTS</p>
+                            <p className="text-xs text-slate-500">{(transactionStats?.totalPTSPurchased || 0).toLocaleString()} NTIQ</p>
                           </div>
                           <Coins className="h-8 w-8 text-blue-500" />
                         </div>
@@ -1513,7 +1513,7 @@ export default function AdminPanel() {
                                   <div>
                                     <p className="font-medium">{purchase.username}</p>
                                     <p className="text-sm text-slate-400">
-                                      {purchase.ptsAmount.toLocaleString()} PTS • {purchase.paymentToken}
+                                      {purchase.ptsAmount.toLocaleString()} NTIQ • {purchase.paymentToken}
                                     </p>
                                   </div>
                                 </div>
@@ -1629,7 +1629,7 @@ export default function AdminPanel() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="text-sm">
-                                    <div className="font-medium">{transaction.ptsAmount.toLocaleString()} PTS</div>
+                                    <div className="font-medium">{transaction.ptsAmount.toLocaleString()} NTIQ</div>
                                     {transaction.type === 'Withdrawal' && (
                                       <div className="text-xs text-slate-500">→ {transaction.tokenAmount} {transaction.token}</div>
                                     )}
