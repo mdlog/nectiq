@@ -57,6 +57,9 @@ export default function AdminPanel() {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   
+  // Search state
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -91,18 +94,31 @@ export default function AdminPanel() {
   const uniqueAssets = Array.from(new Set(predictions.map(p => p.cryptocurrency)));
   const uniqueStatuses = Array.from(new Set(predictions.map(p => p.status)));
 
-  // Filter users based on selected criteria
+  // Filter users based on selected criteria and search term
   const filteredUsers = users.filter(user => {
+    // Filter by category
+    let categoryMatch = true;
     switch (userFilter) {
       case "admins":
-        return user.isAdmin;
+        categoryMatch = user.isAdmin;
+        break;
       case "rich":
-        return (user.balance || 0) > 1000;
+        categoryMatch = (user.balance || 0) > 1000;
+        break;
       case "no-wallet":
-        return !user.walletAddress;
+        categoryMatch = !user.walletAddress;
+        break;
       default:
-        return true;
+        categoryMatch = true;
     }
+    
+    // Filter by search term
+    const searchMatch = userSearchTerm === "" || 
+      user.username.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+      (user.walletAddress && user.walletAddress.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
+      user.uid.toLowerCase().includes(userSearchTerm.toLowerCase());
+    
+    return categoryMatch && searchMatch;
   });
 
   // Sort filtered users
@@ -956,7 +972,7 @@ export default function AdminPanel() {
                             />
                           </div>
                           <div>
-                            <Label htmlFor="balance">Initial Balance (PTS)</Label>
+                            <Label htmlFor="balance">Initial Balance (NTIQ)</Label>
                             <Input
                               id="balance"
                               type="number"
@@ -978,11 +994,32 @@ export default function AdminPanel() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {/* Search and Filter Controls */}
+                  <div className="mb-4 flex items-center gap-4">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        placeholder="Search by username, wallet address, or UID..."
+                        value={userSearchTerm}
+                        onChange={(e) => setUserSearchTerm(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  
                   {/* Users Table */}
                   <div className="rounded-md border">
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="w-12">
+                            <input
+                              type="checkbox"
+                              checked={selectedUsers.length === sortedUsers.length && sortedUsers.length > 0}
+                              onChange={handleSelectAllUsers}
+                              className="rounded"
+                            />
+                          </TableHead>
                           <TableHead>User</TableHead>
                           <TableHead>UID</TableHead>
                           <TableHead>Wallet Address</TableHead>
@@ -1017,6 +1054,14 @@ export default function AdminPanel() {
                       <TableBody>
                         {sortedUsers.map((user) => (
                           <TableRow key={user.id}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                checked={selectedUsers.includes(user.id)}
+                                onChange={() => handleSelectUser(user.id)}
+                                className="rounded"
+                              />
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center space-x-3">
                                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
