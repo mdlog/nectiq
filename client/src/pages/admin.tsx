@@ -201,7 +201,7 @@ export default function AdminPanel() {
       link.href = url;
       link.download = `nectiq_logs_${data.exportId}.json`;
       document.body.appendChild(link);
-      link.click();
+      (link as HTMLAnchorElement).click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
@@ -244,7 +244,7 @@ export default function AdminPanel() {
     setSettingsForm(prev => ({
       ...prev,
       [section]: {
-        ...(prev as any)[section],
+        ...((prev as any)[section] || {}),
         [field]: value
       }
     }));
