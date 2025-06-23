@@ -17,11 +17,20 @@ import type { CryptoPrice } from "@/types";
 export default function Dashboard() {
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(null);
   const [showChart, setShowChart] = useState(false);
+  const [preSelectedForPrediction, setPreSelectedForPrediction] = useState<string | null>(null);
 
   const handleCryptoSelect = (crypto: CryptoPrice) => {
-    console.log('Crypto selected:', crypto);
     setSelectedCrypto(crypto);
     setShowChart(true);
+  };
+
+  const handlePredictClick = (cryptoId: string) => {
+    setPreSelectedForPrediction(cryptoId);
+    // Scroll to prediction form
+    const form = document.querySelector('[data-prediction-form]');
+    if (form) {
+      form.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -80,13 +89,7 @@ export default function Dashboard() {
                         </div>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            // Scroll to prediction form
-                            const form = document.querySelector('[data-prediction-form]');
-                            if (form) {
-                              form.scrollIntoView({ behavior: 'smooth' });
-                            }
-                          }}
+                          onClick={() => handlePredictClick(selectedCrypto.id)}
                           className="flex items-center space-x-2"
                         >
                           <Target size={14} />
@@ -115,7 +118,7 @@ export default function Dashboard() {
             </div>
             
             <div data-prediction-form>
-              <PredictionForm />
+              <PredictionForm preSelectedCrypto={preSelectedForPrediction} />
             </div>
             <ActivePredictions />
           </div>

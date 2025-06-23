@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,7 +39,11 @@ const timeframeOptions = [
 
 const stakePresets = [50, 100, 250, 500];
 
-export function PredictionForm() {
+interface PredictionFormProps {
+  preSelectedCrypto?: string;
+}
+
+export function PredictionForm({ preSelectedCrypto }: PredictionFormProps) {
   const [selectedStake, setSelectedStake] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -47,12 +51,19 @@ export function PredictionForm() {
   const form = useForm<PredictionFormData>({
     resolver: zodResolver(predictionFormSchema),
     defaultValues: {
-      cryptocurrency: undefined,
+      cryptocurrency: preSelectedCrypto as any || undefined,
       timeframe: "24h",
       predictedPrice: "",
       stakeAmount: 0,
     },
   });
+
+  // Update form when preSelectedCrypto changes
+  useEffect(() => {
+    if (preSelectedCrypto) {
+      form.setValue('cryptocurrency', preSelectedCrypto as any);
+    }
+  }, [preSelectedCrypto, form]);
 
   const createPredictionMutation = useMutation({
     mutationFn: async (data: PredictionFormData) => {
