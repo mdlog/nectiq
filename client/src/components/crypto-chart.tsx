@@ -94,9 +94,12 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     if (chartData.length < 2) return;
 
     // Chart dimensions
-    const padding = 40;
-    const chartWidth = rect.width - padding * 2;
-    const chartHeight = rect.height - padding * 2;
+    const leftPadding = 80; // More space for price labels
+    const rightPadding = 20;
+    const topPadding = 20;
+    const bottomPadding = 40;
+    const chartWidth = rect.width - leftPadding - rightPadding;
+    const chartHeight = rect.height - topPadding - bottomPadding;
 
     // Find min/max values
     const values = chartData.map(d => d.value);
@@ -110,19 +113,19 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     
     // Horizontal grid lines
     for (let i = 0; i <= 5; i++) {
-      const y = padding + (chartHeight / 5) * i;
+      const y = topPadding + (chartHeight / 5) * i;
       ctx.beginPath();
-      ctx.moveTo(padding, y);
-      ctx.lineTo(padding + chartWidth, y);
+      ctx.moveTo(leftPadding, y);
+      ctx.lineTo(leftPadding + chartWidth, y);
       ctx.stroke();
     }
 
     // Vertical grid lines
     for (let i = 0; i <= 4; i++) {
-      const x = padding + (chartWidth / 4) * i;
+      const x = leftPadding + (chartWidth / 4) * i;
       ctx.beginPath();
-      ctx.moveTo(x, padding);
-      ctx.lineTo(x, padding + chartHeight);
+      ctx.moveTo(x, topPadding);
+      ctx.lineTo(x, topPadding + chartHeight);
       ctx.stroke();
     }
 
@@ -132,8 +135,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.beginPath();
 
     chartData.forEach((point, index) => {
-      const x = padding + (index / (chartData.length - 1)) * chartWidth;
-      const y = padding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      const x = leftPadding + (index / (chartData.length - 1)) * chartWidth;
+      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
       
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -145,15 +148,15 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.stroke();
 
     // Draw gradient fill
-    const gradient = ctx.createLinearGradient(0, padding, 0, padding + chartHeight);
+    const gradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
     gradient.addColorStop(0, priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)');
     gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
     
     ctx.fillStyle = gradient;
     ctx.beginPath();
     chartData.forEach((point, index) => {
-      const x = padding + (index / (chartData.length - 1)) * chartWidth;
-      const y = padding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      const x = leftPadding + (index / (chartData.length - 1)) * chartWidth;
+      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
       
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -161,20 +164,32 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
         ctx.lineTo(x, y);
       }
     });
-    ctx.lineTo(padding + chartWidth, padding + chartHeight);
-    ctx.lineTo(padding, padding + chartHeight);
+    ctx.lineTo(leftPadding + chartWidth, topPadding + chartHeight);
+    ctx.lineTo(leftPadding, topPadding + chartHeight);
     ctx.closePath();
     ctx.fill();
 
     // Draw price labels
     ctx.fillStyle = '#d1d5db';
-    ctx.font = '12px Inter';
+    ctx.font = '12px Inter, system-ui, sans-serif';
     ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
     
     for (let i = 0; i <= 5; i++) {
       const value = maxValue - (valueRange / 5) * i;
-      const y = padding + (chartHeight / 5) * i + 4;
-      ctx.fillText(`$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, padding - 10, y);
+      const y = topPadding + (chartHeight / 5) * i;
+      
+      // Format price with appropriate decimals for readability
+      let formattedPrice;
+      if (value >= 1000) {
+        formattedPrice = `$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+      } else if (value >= 1) {
+        formattedPrice = `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      } else {
+        formattedPrice = `$${value.toFixed(4)}`;
+      }
+      
+      ctx.fillText(formattedPrice, leftPadding - 15, y);
     }
   };
 
