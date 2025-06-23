@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { User, Prediction, Reward, Cryptocurrency } from "@shared/schema";
@@ -41,6 +42,10 @@ export default function AdminPanel() {
   const [predictionsPage, setPredictionsPage] = useState(1);
   const [predictionsPerPage] = useState(10);
   
+  // Filter state for predictions
+  const [predictionsAssetFilter, setPredictionsAssetFilter] = useState("all");
+  const [predictionsStatusFilter, setPredictionsStatusFilter] = useState("all");
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -58,6 +63,22 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/predictions"],
     retry: false,
   });
+
+  // Filter predictions based on asset and status
+  const filteredPredictions = predictions.filter(prediction => {
+    const assetMatch = predictionsAssetFilter === "all" || prediction.cryptocurrency === predictionsAssetFilter;
+    const statusMatch = predictionsStatusFilter === "all" || prediction.status === predictionsStatusFilter;
+    return assetMatch && statusMatch;
+  });
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setPredictionsPage(1);
+  }, [predictionsAssetFilter, predictionsStatusFilter]);
+
+  // Get unique assets and statuses for filter options
+  const uniqueAssets = Array.from(new Set(predictions.map(p => p.cryptocurrency)));
+  const uniqueStatuses = Array.from(new Set(predictions.map(p => p.status)));
 
   const { data: leaderboard = [] } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/leaderboard"],
@@ -1127,16 +1148,72 @@ export default function AdminPanel() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <TrendingUp className="mr-2" size={20} />
-                    All Predictions ({predictions.length})
+                    All Predictions ({filteredPredictions.length} of {predictions.length})
                   </div>
                   <div className="text-sm text-slate-400">
-                    Page {predictionsPage} of {Math.max(1, Math.ceil(predictions.length / predictionsPerPage))}
+                    Page {predictionsPage} of {Math.max(1, Math.ceil(filteredPredictions.length / predictionsPerPage))}
                   </div>
                 </CardTitle>
+                
+                {/* Filter Controls */}
+                <div className="flex items-center gap-4 mt-4">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="asset-filter" className="text-sm font-medium">
+                      Aset:
+                    </Label>
+                    <Select value={predictionsAssetFilter} onValueChange={setPredictionsAssetFilter}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Pilih aset" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Semua Aset</SelectItem>
+                        {uniqueAssets.map((asset) => (
+                          <SelectItem key={asset} value={asset}>
+                            {asset.toUpperCase()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="status-filter" className="text-sm font-medium">
+                      Status:
+                    </Label>
+                    <Select value={predictionsStatusFilter} onValueChange={setPredictionsStatusFilter}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Pilih status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Semua Status</SelectItem>
+                        {uniqueStatuses.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status === 'pending' ? 'Pending' : 
+                             status === 'completed' ? 'Selesai' : 
+                             status === 'expired' ? 'Kadaluarsa' : status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {(predictionsAssetFilter !== "all" || predictionsStatusFilter !== "all") && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setPredictionsAssetFilter("all");
+                        setPredictionsStatusFilter("all");
+                      }}
+                    >
+                      Reset Filter
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {predictions
+                  {filteredPredictions
                     .slice((predictionsPage - 1) * predictionsPerPage, predictionsPage * predictionsPerPage)
                     .map((prediction) => (
                     <div key={prediction.id} className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
@@ -1181,11 +1258,19 @@ export default function AdminPanel() {
                     </div>
                   ))}
                   
+                  {filteredPredictions.length === 0 && predictions.length > 0 && (
+                    <div className="text-center py-8 text-slate-400">
+                      <TrendingUp className="mx-auto mb-2" size={32} />
+                      <p>Tidak ada prediksi yang cocok dengan filter</p>
+                      <p className="text-sm">Coba ubah filter atau reset untuk melihat semua prediksi</p>
+                    </div>
+                  )}
+                  
                   {predictions.length === 0 && (
                     <div className="text-center py-8 text-slate-400">
                       <TrendingUp className="mx-auto mb-2" size={32} />
-                      <p>No predictions found</p>
-                      <p className="text-sm">Predictions will appear here when users start making them</p>
+                      <p>Belum ada prediksi</p>
+                      <p className="text-sm">Prediksi akan muncul di sini ketika pengguna mulai membuatnya</p>
                     </div>
                   )}
                 </div>
