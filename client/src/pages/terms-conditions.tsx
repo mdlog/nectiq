@@ -31,7 +31,7 @@ export default function TermsConditions() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                By accessing and using CryptoPredikt ("the Platform", "we", "us", "our"), you accept and agree to be bound by the terms and provision of this agreement.
+                By accessing and using Nectiq ("the Platform", "we", "us", "our"), you accept and agree to be bound by the terms and provision of this agreement.
               </p>
               <p>
                 If you do not agree to abide by the above, please do not use this service. These terms apply to all visitors, users, and others who access or use the service.
@@ -49,7 +49,7 @@ export default function TermsConditions() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                CryptoPredikt is a gamified cryptocurrency price prediction platform designed for entertainment and educational purposes only. The platform allows users to:
+                Nectiq is a gamified cryptocurrency price prediction platform designed for entertainment and educational purposes only. The platform allows users to:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Make predictions about cryptocurrency price movements</li>
@@ -208,7 +208,7 @@ export default function TermsConditions() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                The platform, including its design, code, content, and trademarks, is owned by CryptoPredikt and protected by intellectual property laws.
+                The platform, including its design, code, content, and trademarks, is owned by Nectiq and protected by intellectual property laws.
               </p>
               <p>
                 Users are granted a limited, non-exclusive, non-transferable license to use the platform for its intended purpose only.
@@ -223,7 +223,7 @@ export default function TermsConditions() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                To the maximum extent permitted by law, CryptoPredikt and its operators shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from:
+                To the maximum extent permitted by law, Nectiq and its operators shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from:
               </p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>Use or inability to use the platform</li>
@@ -297,7 +297,7 @@ export default function TermsConditions() {
               </p>
               <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  By using CryptoPredikt, you acknowledge that you have read, understood, and agree to be bound by these Terms & Conditions.
+                  By using Nectiq, you acknowledge that you have read, understood, and agree to be bound by these Terms & Conditions.
                 </p>
               </div>
             </CardContent>
