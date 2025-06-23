@@ -37,6 +37,10 @@ export default function AdminPanel() {
     balance: 5000,
   });
   
+  // Pagination state for predictions
+  const [predictionsPage, setPredictionsPage] = useState(1);
+  const [predictionsPerPage] = useState(10);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -1120,14 +1124,21 @@ export default function AdminPanel() {
           <TabsContent value="predictions">
             <Card className="bg-surface border-surface-light">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="mr-2" size={20} />
-                  All Predictions
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <TrendingUp className="mr-2" size={20} />
+                    All Predictions ({predictions.length})
+                  </div>
+                  <div className="text-sm text-slate-400">
+                    Page {predictionsPage} of {Math.max(1, Math.ceil(predictions.length / predictionsPerPage))}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {predictions.map((prediction) => (
+                  {predictions
+                    .slice((predictionsPage - 1) * predictionsPerPage, predictionsPage * predictionsPerPage)
+                    .map((prediction) => (
                     <div key={prediction.id} className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
@@ -1169,7 +1180,61 @@ export default function AdminPanel() {
                       </div>
                     </div>
                   ))}
+                  
+                  {predictions.length === 0 && (
+                    <div className="text-center py-8 text-slate-400">
+                      <TrendingUp className="mx-auto mb-2" size={32} />
+                      <p>No predictions found</p>
+                      <p className="text-sm">Predictions will appear here when users start making them</p>
+                    </div>
+                  )}
                 </div>
+                
+                {/* Pagination Controls */}
+                {predictions.length > predictionsPerPage && (
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-600">
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPredictionsPage(prev => Math.max(1, prev - 1))}
+                        disabled={predictionsPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPredictionsPage(prev => Math.min(Math.ceil(predictions.length / predictionsPerPage), prev + 1))}
+                        disabled={predictionsPage >= Math.ceil(predictions.length / predictionsPerPage)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-slate-400">
+                        Showing {Math.min((predictionsPage - 1) * predictionsPerPage + 1, predictions.length)} to {Math.min(predictionsPage * predictionsPerPage, predictions.length)} of {predictions.length} predictions
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: Math.ceil(predictions.length / predictionsPerPage) }, (_, i) => i + 1)
+                        .slice(Math.max(0, predictionsPage - 3), predictionsPage + 2)
+                        .map((page) => (
+                        <Button
+                          key={page}
+                          variant={page === predictionsPage ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setPredictionsPage(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
