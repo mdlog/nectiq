@@ -856,7 +856,7 @@ export default function AdminPanel() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <span className="font-semibold">{user.balance?.toLocaleString() || 0} PTS</span>
+                              <span className="font-semibold">{user.balance?.toLocaleString() || 0} NTIQ</span>
                             </TableCell>
                             <TableCell>{user.totalPredictions}</TableCell>
                             <TableCell>
@@ -897,7 +897,7 @@ export default function AdminPanel() {
                                     </DialogHeader>
                                     <div className="space-y-4">
                                       <div>
-                                        <Label htmlFor="edit-balance">Balance (PTS)</Label>
+                                        <Label htmlFor="edit-balance">Balance (NTIQ)</Label>
                                         <Input
                                           id="edit-balance"
                                           type="number"
