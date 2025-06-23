@@ -1826,7 +1826,7 @@ export default function AdminPanel() {
                     <h3 className="text-lg font-semibold mb-4">Platform Configuration</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="min-prediction">Minimum Prediction Amount (PTS)</Label>
+                        <Label htmlFor="min-prediction">Minimum Prediction Amount (NTIQ)</Label>
                         <Input 
                           id="min-prediction" 
                           value={settingsForm.platform.minPredictionAmount}
@@ -1835,7 +1835,7 @@ export default function AdminPanel() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="max-prediction">Maximum Prediction Amount (PTS)</Label>
+                        <Label htmlFor="max-prediction">Maximum Prediction Amount (NTIQ)</Label>
                         <Input 
                           id="max-prediction" 
                           value={settingsForm.platform.maxPredictionAmount}
@@ -1854,7 +1854,7 @@ export default function AdminPanel() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="min-withdrawal">Minimum Withdrawal (PTS)</Label>
+                        <Label htmlFor="min-withdrawal">Minimum Withdrawal (NTIQ)</Label>
                         <Input 
                           id="min-withdrawal" 
                           value={settingsForm.platform.minWithdrawal}
@@ -1870,27 +1870,27 @@ export default function AdminPanel() {
                     <h3 className="text-lg font-semibold mb-4">Exchange Rates</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="eth-rate">ETH to PTS Rate</Label>
+                        <Label htmlFor="eth-rate">ETH to NTIQ Rate</Label>
                         <Input 
                           id="eth-rate" 
                           value={settingsForm.exchangeRates.ethToPts}
                           onChange={(e) => handleSettingsChange('exchangeRates', 'ethToPts', parseInt(e.target.value))}
                           type="number" 
                         />
-                        <p className="text-xs text-slate-500 mt-1">1 ETH = {settingsForm.exchangeRates.ethToPts.toLocaleString()} PTS</p>
+                        <p className="text-xs text-slate-500 mt-1">1 ETH = {settingsForm.exchangeRates.ethToPts.toLocaleString()} NTIQ</p>
                       </div>
                       <div>
-                        <Label htmlFor="usdt-rate">USDT to PTS Rate</Label>
+                        <Label htmlFor="usdt-rate">USDT to NTIQ Rate</Label>
                         <Input 
                           id="usdt-rate" 
                           value={settingsForm.exchangeRates.usdtToPts}
                           onChange={(e) => handleSettingsChange('exchangeRates', 'usdtToPts', parseInt(e.target.value))}
                           type="number" 
                         />
-                        <p className="text-xs text-slate-500 mt-1">1 USDT = {settingsForm.exchangeRates.usdtToPts} PTS</p>
+                        <p className="text-xs text-slate-500 mt-1">1 USDT = {settingsForm.exchangeRates.usdtToPts} NTIQ</p>
                       </div>
                       <div>
-                        <Label htmlFor="pts-usdt-rate">PTS to USDT Rate</Label>
+                        <Label htmlFor="pts-usdt-rate">NTIQ to USDT Rate</Label>
                         <Input 
                           id="pts-usdt-rate" 
                           value={settingsForm.exchangeRates.ptsToUsdt}
