@@ -76,14 +76,16 @@ export default function AdminPanel() {
   const [leaderboardSortOrder, setLeaderboardSortOrder] = useState<"asc" | "desc">("desc");
   
   // Transaction monitoring enhancements state
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<"all" | "purchase" | "withdrawal">("all");
   const [transactionTokenFilter, setTransactionTokenFilter] = useState<"all" | "ETH" | "USDT" | "USDC">("all");
   const [transactionStatusFilter, setTransactionStatusFilter] = useState<"all" | "pending" | "completed" | "failed">("all");
+  const [transactionAmountFilter, setTransactionAmountFilter] = useState<"all" | "0-1000" | "1000-10000" | "10000-100000" | "100000+">("all");
   const [transactionDateFilter, setTransactionDateFilter] = useState({
     startDate: "",
     endDate: ""
   });
   const [transactionPage, setTransactionPage] = useState(1);
-  const [transactionsPerPage] = useState(10);
+  const [transactionsPerPage] = useState(15);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -302,6 +304,11 @@ export default function AdminPanel() {
   ];
 
   const filteredTransactions = allTransactions.filter(tx => {
+    // Type filter
+    if (transactionTypeFilter !== "all" && tx.type !== transactionTypeFilter) {
+      return false;
+    }
+    
     // Token filter
     if (transactionTokenFilter !== "all" && tx.token !== transactionTokenFilter) {
       return false;
@@ -310,6 +317,25 @@ export default function AdminPanel() {
     // Status filter
     if (transactionStatusFilter !== "all" && tx.status !== transactionStatusFilter) {
       return false;
+    }
+    
+    // Amount filter
+    if (transactionAmountFilter !== "all") {
+      const amount = tx.amount;
+      switch (transactionAmountFilter) {
+        case "0-1000":
+          if (amount < 0 || amount > 1000) return false;
+          break;
+        case "1000-10000":
+          if (amount < 1000 || amount > 10000) return false;
+          break;
+        case "10000-100000":
+          if (amount < 10000 || amount > 100000) return false;
+          break;
+        case "100000+":
+          if (amount < 100000) return false;
+          break;
+      }
     }
     
     // Date filter
@@ -371,10 +397,7 @@ export default function AdminPanel() {
   // Force complete transaction (for admin use)
   const handleForceComplete = async (transactionId: number, type: 'purchase' | 'withdrawal') => {
     try {
-      await apiRequest({
-        url: `/api/admin/force-complete/${type}/${transactionId}`,
-        method: 'POST'
-      });
+      await apiRequest("POST", `/api/admin/force-complete/${type}/${transactionId}`);
       
       toast({
         title: "Transaction Updated",
@@ -545,16 +568,9 @@ export default function AdminPanel() {
     retry: false,
   });
 
-  // Transaction monitoring queries
-  const { data: purchases = [] } = useQuery<any[]>({
-    queryKey: ["/api/admin/purchases"],
-    retry: false,
-  });
-
-  const { data: withdrawals = [] } = useQuery<any[]>({
-    queryKey: ["/api/admin/withdrawals"],
-    retry: false,
-  });
+  // Use the existing transaction data queries (already defined above as transactionPurchases and transactionWithdrawals)
+  const purchases = transactionPurchases;
+  const withdrawals = transactionWithdrawals;
 
   const { data: transactionStats } = useQuery<any>({
     queryKey: ["/api/admin/transaction-stats"],
@@ -2522,13 +2538,118 @@ export default function AdminPanel() {
                     </Card>
                   </div>
                   
-                  {/* Complete Transaction History Table */}
+                  {/* Enhanced Complete Transaction History Table */}
                   <Card className="bg-surface-light">
                     <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <FileText className="mr-2" size={18} />
-                        Complete Transaction History
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <FileText className="mr-2" size={18} />
+                          Complete Transaction History
+                        </div>
+                        <Button
+                          onClick={exportTransactionData}
+                          variant="outline"
+                          size="sm"
+                          className="bg-primary/10 hover:bg-primary/20 border-primary/30"
+                        >
+                          <Download className="mr-2" size={16} />
+                          Export CSV
+                        </Button>
                       </CardTitle>
+                      
+                      {/* Enhanced Filtering Controls */}
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 p-4 bg-surface/50 rounded-lg border border-slate-600">
+                        {/* Transaction Type Filter */}
+                        <div>
+                          <label className="text-sm font-medium text-slate-300 mb-1 block">Jenis Transaksi</label>
+                          <Select value={transactionTypeFilter} onValueChange={setTransactionTypeFilter}>
+                            <SelectTrigger className="bg-surface border-slate-600">
+                              <SelectValue placeholder="Pilih jenis" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Semua</SelectItem>
+                              <SelectItem value="purchase">Purchase</SelectItem>
+                              <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Status Filter */}
+                        <div>
+                          <label className="text-sm font-medium text-slate-300 mb-1 block">Status</label>
+                          <Select value={transactionStatusFilter} onValueChange={setTransactionStatusFilter}>
+                            <SelectTrigger className="bg-surface border-slate-600">
+                              <SelectValue placeholder="Pilih status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Semua</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="failed">Failed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Token Filter */}
+                        <div>
+                          <label className="text-sm font-medium text-slate-300 mb-1 block">Token</label>
+                          <Select value={transactionTokenFilter} onValueChange={setTransactionTokenFilter}>
+                            <SelectTrigger className="bg-surface border-slate-600">
+                              <SelectValue placeholder="Pilih token" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Semua</SelectItem>
+                              <SelectItem value="ETH">ETH</SelectItem>
+                              <SelectItem value="USDT">USDT</SelectItem>
+                              <SelectItem value="USDC">USDC</SelectItem>
+                              <SelectItem value="BTC">BTC</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Amount Range Filter */}
+                        <div>
+                          <label className="text-sm font-medium text-slate-300 mb-1 block">Jumlah NTIQ</label>
+                          <Select value={transactionAmountFilter} onValueChange={setTransactionAmountFilter}>
+                            <SelectTrigger className="bg-surface border-slate-600">
+                              <SelectValue placeholder="Pilih range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Semua</SelectItem>
+                              <SelectItem value="0-1000">0 - 1,000</SelectItem>
+                              <SelectItem value="1000-10000">1,000 - 10,000</SelectItem>
+                              <SelectItem value="10000-100000">10,000 - 100,000</SelectItem>
+                              <SelectItem value="100000+">100,000+</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Transaction Summary Stats */}
+                      <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                          <div className="text-center">
+                            <div className="text-primary font-bold text-lg">{filteredTransactions.length}</div>
+                            <div className="text-slate-400">Total Transaksi</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-blue-400 font-bold text-lg">{filteredTransactions.filter(t => t.type === 'purchase').length}</div>
+                            <div className="text-slate-400">Purchase</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-purple-400 font-bold text-lg">{filteredTransactions.filter(t => t.type === 'withdrawal').length}</div>
+                            <div className="text-slate-400">Withdrawal</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-yellow-400 font-bold text-lg">{filteredTransactions.filter(t => t.status === 'pending').length}</div>
+                            <div className="text-slate-400">Pending</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-green-400 font-bold text-lg">{filteredTransactions.filter(t => t.status === 'completed').length}</div>
+                            <div className="text-slate-400">Completed</div>
+                          </div>
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <Table>
@@ -2540,84 +2661,177 @@ export default function AdminPanel() {
                             <TableHead>Amount</TableHead>
                             <TableHead>Token</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Tx Hash</TableHead>
                             <TableHead>Date</TableHead>
+                            <TableHead>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {/* Combine purchases and withdrawals, sort by date */}
-                          {[
-                            ...purchases.map(p => ({ ...p, type: 'Purchase' })),
-                            ...withdrawals.map(w => ({ ...w, type: 'Withdrawal' }))
-                          ]
-                            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                            .slice(0, 50)
-                            .map((transaction) => (
-                              <TableRow key={`${transaction.type}-${transaction.id}`}>
-                                <TableCell>
-                                  <Badge 
-                                    variant="outline" 
-                                    className={transaction.type === 'Purchase' 
-                                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" 
-                                      : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-                                    }
-                                  >
-                                    {transaction.type}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="font-medium">{transaction.username}</TableCell>
-                                <TableCell>
-                                  <Badge variant="outline" className="font-mono text-xs">
-                                    {transaction.uid}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="text-sm">
-                                    <div className="font-medium">{transaction.ptsAmount.toLocaleString()} NTIQ</div>
-                                    {transaction.type === 'Withdrawal' && (
-                                      <div className="text-xs text-slate-500">→ {transaction.tokenAmount} {transaction.token}</div>
-                                    )}
-                                    {transaction.type === 'Purchase' && (
-                                      <div className="text-xs text-slate-500">← {transaction.paymentAmount} {transaction.paymentToken}</div>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant="secondary">
-                                    {transaction.type === 'Purchase' ? transaction.paymentToken : transaction.token}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge 
-                                    variant="outline" 
-                                    className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                  >
-                                    {transaction.status}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-sm text-slate-500">
-                                  {new Date(transaction.createdAt).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          {purchases.length === 0 && withdrawals.length === 0 && (
+                          {paginatedTransactions.map((transaction) => (
+                            <TableRow 
+                              key={`${transaction.type}-${transaction.id}`}
+                              className="hover:bg-surface/50 transition-colors cursor-pointer"
+                              title={`Status: ${transaction.status} • ${transaction.hash ? `TxID: ${transaction.hash}` : 'Internal ID: ' + transaction.id} • Chain: ${transaction.token === 'ETH' ? 'Ethereum' : 'Internal'}`}
+                            >
+                              <TableCell>
+                                <Badge 
+                                  variant="outline" 
+                                  className={transaction.type === 'purchase' 
+                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" 
+                                    : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                                  }
+                                >
+                                  {transaction.type === 'purchase' ? 'Purchase' : 'Withdrawal'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-medium">{transaction.username || `User ${transaction.userId}`}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="font-mono text-xs">
+                                  {transaction.uid || transaction.userId}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm">
+                                  <div className="font-medium">{transaction.amount.toLocaleString()} NTIQ</div>
+                                  {transaction.type === 'withdrawal' && (
+                                    <div className="text-xs text-slate-500">→ {transaction.tokenAmount || 'N/A'} {transaction.token}</div>
+                                  )}
+                                  {transaction.type === 'purchase' && (
+                                    <div className="text-xs text-slate-500">← {transaction.paymentAmount || 'N/A'} {transaction.token}</div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary" className={
+                                  transaction.token === 'ETH' ? 'bg-gray-100 text-gray-700' :
+                                  transaction.token === 'USDT' ? 'bg-green-100 text-green-700' :
+                                  transaction.token === 'USDC' ? 'bg-blue-100 text-blue-700' :
+                                  'bg-slate-100 text-slate-700'
+                                }>
+                                  {transaction.token}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  variant="outline" 
+                                  className={
+                                    transaction.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                    transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                    transaction.status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                    'bg-gray-100 text-gray-700'
+                                  }
+                                >
+                                  {transaction.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-xs font-mono">
+                                  {transaction.hash ? (
+                                    <span 
+                                      className="text-primary hover:underline cursor-pointer"
+                                      title={`Full hash: ${transaction.hash}`}
+                                    >
+                                      {transaction.hash.slice(0, 10)}...
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400">Internal</span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-sm text-slate-500">
+                                {new Date(transaction.timestamp).toLocaleDateString('id-ID', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center space-x-2">
+                                  {transaction.status === 'pending' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleForceComplete(transaction.id, transaction.type)}
+                                      className="text-xs px-2 py-1 bg-green-100 hover:bg-green-200 text-green-700"
+                                    >
+                                      Force Complete
+                                    </Button>
+                                  )}
+                                  {transaction.status === 'failed' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleForceComplete(transaction.id, transaction.type)}
+                                      className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700"
+                                    >
+                                      Rollback
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {filteredTransactions.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                              <TableCell colSpan={9} className="text-center py-8 text-slate-400">
                                 <div className="flex flex-col items-center">
                                   <FileText className="mb-2" size={32} />
-                                  <p>No transactions found</p>
-                                  <p className="text-sm">Purchase and withdrawal history will appear here</p>
+                                  <p>Tidak ada transaksi ditemukan</p>
+                                  <p className="text-sm">History transaksi purchase dan withdrawal akan muncul di sini</p>
                                 </div>
                               </TableCell>
                             </TableRow>
                           )}
                         </TableBody>
                       </Table>
+
+                      {/* Enhanced Pagination */}
+                      {filteredTransactions.length > transactionsPerPage && (
+                        <div className="flex items-center justify-between pt-6 border-t border-slate-600">
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setTransactionPage(prev => Math.max(1, prev - 1))}
+                              disabled={transactionPage === 1}
+                            >
+                              Previous
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setTransactionPage(prev => Math.min(Math.ceil(filteredTransactions.length / transactionsPerPage), prev + 1))}
+                              disabled={transactionPage >= Math.ceil(filteredTransactions.length / transactionsPerPage)}
+                            >
+                              Next
+                            </Button>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-slate-400">
+                              Menampilkan {Math.min((transactionPage - 1) * transactionsPerPage + 1, filteredTransactions.length)} sampai {Math.min(transactionPage * transactionsPerPage, filteredTransactions.length)} dari {filteredTransactions.length} transaksi
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-1">
+                            {Array.from({ length: Math.ceil(filteredTransactions.length / transactionsPerPage) }, (_, i) => i + 1)
+                              .slice(Math.max(0, transactionPage - 3), transactionPage + 2)
+                              .map((page) => (
+                              <Button
+                                key={page}
+                                variant={transactionPage === page ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setTransactionPage(page)}
+                                className="w-8 h-8 p-0"
+                              >
+                                {page}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </CardContent>
