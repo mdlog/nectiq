@@ -11,7 +11,16 @@ export function Footer() {
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
-              <img src={nectiqLogo} alt="Nectiq" className="h-8" />
+              <img 
+                src={nectiqLogo} 
+                alt="Nectiq" 
+                className="h-8 rounded-md p-1" 
+                style={{ 
+                  backgroundColor: 'var(--surface)',
+                  filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))',
+                  mixBlendMode: 'screen'
+                }}
+              />
             </div>
             <p className="text-slate-400 mb-2 font-medium">
               Tactics. Timing. Triumph.

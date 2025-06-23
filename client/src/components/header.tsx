@@ -86,7 +86,16 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
-            <img src={nectiqLogo} alt="Nectiq - Tactics. Timing. Triumph." className="h-10" />
+            <img 
+              src={nectiqLogo} 
+              alt="Nectiq - Tactics. Timing. Triumph." 
+              className="h-10 rounded-lg p-1" 
+              style={{ 
+                backgroundColor: 'var(--surface)',
+                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                mixBlendMode: 'screen'
+              }}
+            />
           </div>
           
           <nav className="hidden md:flex space-x-8">
