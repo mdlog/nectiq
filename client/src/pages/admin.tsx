@@ -69,6 +69,22 @@ export default function AdminPanel() {
     retry: false,
   });
 
+  // Transaction monitoring queries
+  const { data: purchases = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/purchases"],
+    retry: false,
+  });
+
+  const { data: withdrawals = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/withdrawals"],
+    retry: false,
+  });
+
+  const { data: transactionStats } = useQuery<any>({
+    queryKey: ["/api/admin/transaction-stats"],
+    retry: false,
+  });
+
   const addCryptoMutation = useMutation({
     mutationFn: async (cryptoId: string) => {
       const response = await fetch("/api/admin/cryptocurrencies", {
@@ -1105,7 +1121,8 @@ export default function AdminPanel() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-slate-400">PTS Purchases</p>
-                            <p className="text-2xl font-bold">247</p>
+                            <p className="text-2xl font-bold">{transactionStats?.totalPurchases || 0}</p>
+                            <p className="text-xs text-slate-500">{(transactionStats?.totalPTSPurchased || 0).toLocaleString()} PTS</p>
                           </div>
                           <Coins className="h-8 w-8 text-blue-500" />
                         </div>
@@ -1116,7 +1133,8 @@ export default function AdminPanel() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-slate-400">Withdrawals</p>
-                            <p className="text-2xl font-bold">89</p>
+                            <p className="text-2xl font-bold">{transactionStats?.totalWithdrawals || 0}</p>
+                            <p className="text-xs text-slate-500">{(transactionStats?.totalPTSWithdrawn || 0).toLocaleString()} PTS</p>
                           </div>
                           <TrendingUp className="h-8 w-8 text-green-500" />
                         </div>
@@ -1127,44 +1145,212 @@ export default function AdminPanel() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-slate-400">Total Volume</p>
-                            <p className="text-2xl font-bold">$125K</p>
+                            <p className="text-2xl font-bold">
+                              {transactionStats ? `${transactionStats.totalVolumeETH} ETH` : '0 ETH'}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {transactionStats ? `${transactionStats.totalVolumeUSDT} USDT` : '0 USDT'}
+                            </p>
                           </div>
                           <BarChart3 className="h-8 w-8 text-purple-500" />
                         </div>
                       </CardContent>
                     </Card>
                   </div>
+
+                  {/* Recent Transactions Overview */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Recent Purchases */}
+                    <Card className="bg-surface-light">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center">
+                          <Coins className="mr-2" size={18} />
+                          Recent Purchases
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {purchases.length === 0 ? (
+                            <div className="text-center py-4 text-slate-400">
+                              <Coins className="mx-auto mb-2" size={24} />
+                              <p className="text-sm">No purchases yet</p>
+                            </div>
+                          ) : (
+                            purchases.slice(0, 5).map((purchase) => (
+                              <div key={purchase.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <span className="text-white text-sm font-semibold">
+                                      {purchase.username?.[0]?.toUpperCase() || 'U'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{purchase.username}</p>
+                                    <p className="text-sm text-slate-400">
+                                      {purchase.ptsAmount.toLocaleString()} PTS • {purchase.paymentToken}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                    {purchase.status}
+                                  </Badge>
+                                  <p className="text-xs text-slate-400 mt-1">
+                                    {new Date(purchase.createdAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Recent Withdrawals */}
+                    <Card className="bg-surface-light">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center">
+                          <DollarSign className="mr-2" size={18} />
+                          Recent Withdrawals
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {withdrawals.length === 0 ? (
+                            <div className="text-center py-4 text-slate-400">
+                              <DollarSign className="mx-auto mb-2" size={24} />
+                              <p className="text-sm">No withdrawals yet</p>
+                            </div>
+                          ) : (
+                            withdrawals.slice(0, 5).map((withdrawal) => (
+                              <div key={withdrawal.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                                    <span className="text-white text-sm font-semibold">
+                                      {withdrawal.username?.[0]?.toUpperCase() || 'U'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{withdrawal.username}</p>
+                                    <p className="text-sm text-slate-400">
+                                      {withdrawal.ptsAmount.toLocaleString()} PTS → {withdrawal.tokenAmount} {withdrawal.token}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                    {withdrawal.status}
+                                  </Badge>
+                                  <p className="text-xs text-slate-400 mt-1">
+                                    {new Date(withdrawal.createdAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                   
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Token</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-blue-100 text-blue-700">
-                            Purchase
-                          </Badge>
-                        </TableCell>
-                        <TableCell>EpicPrincess</TableCell>
-                        <TableCell>100 PTS</TableCell>
-                        <TableCell>ETH</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-green-100 text-green-700">
-                            Completed
-                          </Badge>
-                        </TableCell>
-                        <TableCell>2 hours ago</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
+                  {/* Complete Transaction History Table */}
+                  <Card className="bg-surface-light">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <FileText className="mr-2" size={18} />
+                        Complete Transaction History
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Type</TableHead>
+                            <TableHead>User</TableHead>
+                            <TableHead>UID</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Token</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {/* Combine purchases and withdrawals, sort by date */}
+                          {[
+                            ...purchases.map(p => ({ ...p, type: 'Purchase' })),
+                            ...withdrawals.map(w => ({ ...w, type: 'Withdrawal' }))
+                          ]
+                            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                            .slice(0, 50)
+                            .map((transaction) => (
+                              <TableRow key={`${transaction.type}-${transaction.id}`}>
+                                <TableCell>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={transaction.type === 'Purchase' 
+                                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" 
+                                      : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                                    }
+                                  >
+                                    {transaction.type}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="font-medium">{transaction.username}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className="font-mono text-xs">
+                                    {transaction.uid}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm">
+                                    <div className="font-medium">{transaction.ptsAmount.toLocaleString()} PTS</div>
+                                    {transaction.type === 'Withdrawal' && (
+                                      <div className="text-xs text-slate-500">→ {transaction.tokenAmount} {transaction.token}</div>
+                                    )}
+                                    {transaction.type === 'Purchase' && (
+                                      <div className="text-xs text-slate-500">← {transaction.paymentAmount} {transaction.paymentToken}</div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="secondary">
+                                    {transaction.type === 'Purchase' ? transaction.paymentToken : transaction.token}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge 
+                                    variant="outline" 
+                                    className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                  >
+                                    {transaction.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-sm text-slate-500">
+                                  {new Date(transaction.createdAt).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          {purchases.length === 0 && withdrawals.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                                <div className="flex flex-col items-center">
+                                  <FileText className="mb-2" size={32} />
+                                  <p>No transactions found</p>
+                                  <p className="text-sm">Purchase and withdrawal history will appear here</p>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
                 </CardContent>
               </Card>
             </div>

@@ -914,6 +914,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get all purchases (transaction monitoring)
+  app.get("/api/admin/purchases", requireAdmin, async (req, res) => {
+    try {
+      // Get all users to map userId to username
+      const users = await storage.getTopPredictors(1000);
+      const userMap = new Map(users.map(user => [user.id, user]));
+      
+      // Get recent purchases for all users
+      const allPurchases = [];
+      for (const user of users) {
+        const userPurchases = await storage.getUserPurchases(user.id, 50);
+        const enrichedPurchases = userPurchases.map(purchase => ({
+          ...purchase,
+          username: user.username,
+          uid: user.uid,
+          walletAddress: user.walletAddress
+        }));
+        allPurchases.push(...enrichedPurchases);
+      }
+      
+      // Sort by creation date (newest first)
+      allPurchases.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      res.json(allPurchases.slice(0, 100)); // Return latest 100 purchases
+    } catch (error) {
+      console.error("Error fetching admin purchases:", error);
+      res.status(500).json({ message: "Failed to get purchases" });
+    }
+  });
+
+  // Admin: Get all withdrawals (transaction monitoring)
+  app.get("/api/admin/withdrawals", requireAdmin, async (req, res) => {
+    try {
+      // Get all users to map userId to username
+      const users = await storage.getTopPredictors(1000);
+      const userMap = new Map(users.map(user => [user.id, user]));
+      
+      // Get recent withdrawals for all users
+      const allWithdrawals = [];
+      for (const user of users) {
+        const userWithdrawals = await storage.getUserWithdrawals(user.id, 50);
+        const enrichedWithdrawals = userWithdrawals.map(withdrawal => ({
+          ...withdrawal,
+          username: user.username,
+          uid: user.uid,
+          walletAddress: user.walletAddress
+        }));
+        allWithdrawals.push(...enrichedWithdrawals);
+      }
+      
+      // Sort by creation date (newest first)
+      allWithdrawals.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      res.json(allWithdrawals.slice(0, 100)); // Return latest 100 withdrawals
+    } catch (error) {
+      console.error("Error fetching admin withdrawals:", error);
+      res.status(500).json({ message: "Failed to get withdrawals" });
+    }
+  });
+
+  // Admin: Get transaction stats
+  app.get("/api/admin/transaction-stats", requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getTopPredictors(1000);
+      
+      let totalPurchases = 0;
+      let totalWithdrawals = 0;
+      let totalPTSPurchased = 0;
+      let totalPTSWithdrawn = 0;
+      let totalVolumeETH = 0;
+      let totalVolumeUSDT = 0;
+      let totalVolumeUSDC = 0;
+      
+      for (const user of users) {
+        const purchases = await storage.getUserPurchases(user.id, 1000);
+        const withdrawals = await storage.getUserWithdrawals(user.id, 1000);
+        
+        totalPurchases += purchases.length;
+        totalWithdrawals += withdrawals.length;
+        
+        purchases.forEach(purchase => {
+          totalPTSPurchased += purchase.ptsAmount;
+          if (purchase.paymentToken === 'ETH') {
+            totalVolumeETH += parseFloat(purchase.paymentAmount);
+          } else if (purchase.paymentToken === 'USDT') {
+            totalVolumeUSDT += parseFloat(purchase.paymentAmount);
+          } else if (purchase.paymentToken === 'USDC') {
+            totalVolumeUSDC += parseFloat(purchase.paymentAmount);
+          }
+        });
+        
+        withdrawals.forEach(withdrawal => {
+          totalPTSWithdrawn += withdrawal.ptsAmount;
+        });
+      }
+      
+      res.json({
+        totalPurchases,
+        totalWithdrawals,
+        totalPTSPurchased,
+        totalPTSWithdrawn,
+        totalVolumeETH: totalVolumeETH.toFixed(4),
+        totalVolumeUSDT: totalVolumeUSDT.toFixed(2),
+        totalVolumeUSDC: totalVolumeUSDC.toFixed(2)
+      });
+    } catch (error) {
+      console.error("Error fetching transaction stats:", error);
+      res.status(500).json({ message: "Failed to get transaction stats" });
+    }
+  });
+
   // Admin: Create new user
   app.post("/api/admin/users", requireAdmin, async (req, res) => {
     try {
