@@ -75,6 +75,16 @@ export default function AdminPanel() {
   const [leaderboardSortField, setLeaderboardSortField] = useState<"accuracy" | "rewards" | "streak">("accuracy");
   const [leaderboardSortOrder, setLeaderboardSortOrder] = useState<"asc" | "desc">("desc");
   
+  // Transaction monitoring enhancements state
+  const [transactionTokenFilter, setTransactionTokenFilter] = useState<"all" | "ETH" | "USDT" | "USDC">("all");
+  const [transactionStatusFilter, setTransactionStatusFilter] = useState<"all" | "pending" | "completed" | "failed">("all");
+  const [transactionDateFilter, setTransactionDateFilter] = useState({
+    startDate: "",
+    endDate: ""
+  });
+  const [transactionPage, setTransactionPage] = useState(1);
+  const [transactionsPerPage] = useState(10);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -90,6 +100,16 @@ export default function AdminPanel() {
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
     queryKey: ["/api/admin/predictions"],
+    retry: false,
+  });
+
+  const { data: transactionPurchases = [] } = useQuery({
+    queryKey: ["/api/admin/purchases"],
+    retry: false,
+  });
+
+  const { data: transactionWithdrawals = [] } = useQuery({
+    queryKey: ["/api/admin/withdrawals"], 
     retry: false,
   });
 
@@ -257,6 +277,119 @@ export default function AdminPanel() {
     a.download = `leaderboard_export_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  // Enhanced transaction filtering and processing
+  const allTransactions = [
+    ...(Array.isArray(transactionPurchases) ? transactionPurchases.map((p: any) => ({
+      ...p,
+      type: 'purchase' as const,
+      token: p.paymentToken || 'ETH',
+      status: p.status || 'completed',
+      amount: p.ptsAmount,
+      hash: p.txHash || null,
+      timestamp: p.createdAt
+    })) : []),
+    ...(Array.isArray(transactionWithdrawals) ? transactionWithdrawals.map((w: any) => ({
+      ...w,
+      type: 'withdrawal' as const,
+      token: w.paymentToken || 'ETH',
+      status: w.status || 'pending',
+      amount: w.ptsAmount,
+      hash: w.txHash || null,
+      timestamp: w.createdAt
+    })) : [])
+  ];
+
+  const filteredTransactions = allTransactions.filter(tx => {
+    // Token filter
+    if (transactionTokenFilter !== "all" && tx.token !== transactionTokenFilter) {
+      return false;
+    }
+    
+    // Status filter
+    if (transactionStatusFilter !== "all" && tx.status !== transactionStatusFilter) {
+      return false;
+    }
+    
+    // Date filter
+    if (transactionDateFilter.startDate) {
+      const txDate = new Date(tx.timestamp);
+      const startDate = new Date(transactionDateFilter.startDate);
+      if (txDate < startDate) return false;
+    }
+    
+    if (transactionDateFilter.endDate) {
+      const txDate = new Date(tx.timestamp);
+      const endDate = new Date(transactionDateFilter.endDate);
+      if (txDate > endDate) return false;
+    }
+    
+    return true;
+  }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  const paginatedTransactions = filteredTransactions.slice(
+    (transactionPage - 1) * transactionsPerPage,
+    transactionPage * transactionsPerPage
+  );
+
+  // Calculate additional statistics
+  const uniqueWallets = new Set(allTransactions.map(tx => tx.walletAddress || tx.userId)).size;
+  const avgPurchaseAmount = Array.isArray(transactionPurchases) && transactionPurchases.length > 0 
+    ? transactionPurchases.reduce((sum: number, p: any) => sum + (p.ptsAmount || 0), 0) / transactionPurchases.length 
+    : 0;
+  const failedTransactions = allTransactions.filter(tx => tx.status === 'failed').length;
+  const ntiqTurnoverRate = Array.isArray(transactionPurchases) && Array.isArray(transactionWithdrawals) && transactionPurchases.length > 0 && transactionWithdrawals.length > 0 
+    ? (transactionWithdrawals.reduce((sum: number, w: any) => sum + (w.ptsAmount || 0), 0) / transactionPurchases.reduce((sum: number, p: any) => sum + (p.ptsAmount || 0), 0)) * 100
+    : 0;
+
+  // Export transactions data
+  const handleExportTransactions = () => {
+    const csvContent = [
+      ["Type", "User", "Token", "Amount", "Status", "Hash", "Date", "Payment Address"].join(","),
+      ...filteredTransactions.map(tx => [
+        tx.type,
+        tx.username || `User ${tx.userId}`,
+        tx.token,
+        tx.amount,
+        tx.status,
+        tx.hash || "Internal",
+        new Date(tx.timestamp).toLocaleDateString("id-ID"),
+        tx.walletAddress || tx.paymentAddress || "N/A"
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions_export_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Force complete transaction (for admin use)
+  const handleForceComplete = async (transactionId: number, type: 'purchase' | 'withdrawal') => {
+    try {
+      await apiRequest({
+        url: `/api/admin/force-complete/${type}/${transactionId}`,
+        method: 'POST'
+      });
+      
+      toast({
+        title: "Transaction Updated",
+        description: `${type} has been marked as completed`,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/purchases"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/withdrawals"] });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update transaction status",
+        variant: "destructive"
+      });
+    }
   };
 
   // Reset pagination when filters change
@@ -2134,18 +2267,87 @@ export default function AdminPanel() {
             </Card>
           </TabsContent>
 
-          {/* Transactions Tab */}
+          {/* Enhanced Transactions Tab */}
           <TabsContent value="transactions">
             <div className="space-y-6">
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <DollarSign className="mr-2" size={20} />
-                    Transaction Monitoring
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center">
+                      <DollarSign className="mr-2" size={20} />
+                      Transaction Monitoring
+                    </CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportTransactions}
+                      className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"
+                    >
+                      <Download className="mr-2" size={16} />
+                      Export CSV
+                    </Button>
+                  </div>
+                  
+                  {/* Enhanced Filters and Controls */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                    {/* Token Filter */}
+                    <div className="space-y-2">
+                      <Label htmlFor="tokenFilter" className="text-sm font-medium">Filter per Token</Label>
+                      <Select value={transactionTokenFilter} onValueChange={(value: "all" | "ETH" | "USDT" | "USDC") => setTransactionTokenFilter(value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih token" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Tokens</SelectItem>
+                          <SelectItem value="ETH">ETH</SelectItem>
+                          <SelectItem value="USDT">USDT</SelectItem>
+                          <SelectItem value="USDC">USDC</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="space-y-2">
+                      <Label htmlFor="statusFilter" className="text-sm font-medium">Filter per Status</Label>
+                      <Select value={transactionStatusFilter} onValueChange={(value: "all" | "pending" | "completed" | "failed") => setTransactionStatusFilter(value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="failed">Failed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Date Range Start */}
+                    <div className="space-y-2">
+                      <Label htmlFor="startDate" className="text-sm font-medium">Tanggal Mulai</Label>
+                      <Input
+                        type="date"
+                        value={transactionDateFilter.startDate}
+                        onChange={(e) => setTransactionDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                        className="bg-surface-light border-surface-light"
+                      />
+                    </div>
+
+                    {/* Date Range End */}
+                    <div className="space-y-2">
+                      <Label htmlFor="endDate" className="text-sm font-medium">Tanggal Selesai</Label>
+                      <Input
+                        type="date"
+                        value={transactionDateFilter.endDate}
+                        onChange={(e) => setTransactionDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                        className="bg-surface-light border-surface-light"
+                      />
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  {/* Enhanced Statistics Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <Card className="bg-surface-light">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -2164,7 +2366,7 @@ export default function AdminPanel() {
                           <div>
                             <p className="text-sm text-slate-400">Withdrawals</p>
                             <p className="text-2xl font-bold">{transactionStats?.totalWithdrawals || 0}</p>
-                            <p className="text-xs text-slate-500">{(transactionStats?.totalPTSWithdrawn || 0).toLocaleString()} PTS</p>
+                            <p className="text-xs text-slate-500">{(transactionStats?.totalPTSWithdrawn || 0).toLocaleString()} NTIQ</p>
                           </div>
                           <TrendingUp className="h-8 w-8 text-green-500" />
                         </div>
@@ -2186,6 +2388,43 @@ export default function AdminPanel() {
                         </div>
                       </CardContent>
                     </Card>
+                    <Card className="bg-surface-light">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-slate-400">Failed Transactions</p>
+                            <p className="text-2xl font-bold text-red-400">{failedTransactions}</p>
+                            <p className="text-xs text-slate-500">Need Review</p>
+                          </div>
+                          <AlertTriangle className="h-8 w-8 text-red-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Additional Statistics Section */}
+                  <div className="mb-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
+                    <h4 className="text-lg font-bold text-primary mb-3 flex items-center">
+                      🧠 Statistik Tambahan di Atas
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-orange-400">🔄</span>
+                        <span><strong>NTIQ Turnover Rate:</strong> {ntiqTurnoverRate.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-blue-400">👥</span>
+                        <span><strong>Unique Wallets:</strong> {uniqueWallets}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-yellow-400">💰</span>
+                        <span><strong>Avg Purchase:</strong> {avgPurchaseAmount.toFixed(0)} NTIQ</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-red-400">⚠️</span>
+                        <span><strong>Failed Tx:</strong> {failedTransactions} ({((failedTransactions / Math.max(allTransactions.length, 1)) * 100).toFixed(1)}%)</span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Recent Transactions Overview */}
