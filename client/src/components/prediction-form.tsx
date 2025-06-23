@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
 const predictionFormSchema = z.object({
-  cryptocurrency: z.enum(["bitcoin", "ethereum", "binancecoin", "cardano", "solana"]),
+  cryptocurrency: z.enum(["bitcoin", "ethereum", "binancecoin", "cardano", "solana", "dogecoin"]),
   timeframe: z.enum(["1h", "6h", "24h", "7d"]),
   predictedPrice: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
     message: "Please enter a valid price",
@@ -28,6 +28,7 @@ const cryptoOptions = [
   { value: "binancecoin", label: "Binance Coin (BNB)" },
   { value: "cardano", label: "Cardano (ADA)" },
   { value: "solana", label: "Solana (SOL)" },
+  { value: "dogecoin", label: "Dogecoin (DOGE)" },
 ];
 
 const timeframeOptions = [
