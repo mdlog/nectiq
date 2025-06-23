@@ -101,7 +101,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
     // Set up chart dimensions with extra space for price labels
     const leftPadding = 80; // More space for price labels on the left
-    const rightPadding = 120; // Extra space for real-time price display
+    const rightPadding = 80; // Reduced space for real-time price display
     const topPadding = 40;
     const bottomPadding = 40;
     const chartWidth = width - leftPadding - rightPadding;
@@ -188,30 +188,30 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.moveTo(rightEdge - 80, priceY);
+      ctx.moveTo(rightEdge - 40, priceY);
       ctx.lineTo(rightEdge, priceY);
       ctx.stroke();
       ctx.setLineDash([]);
 
       // Draw price label background
       const priceText = `$${currentPrice.toFixed(2)}`;
-      ctx.font = 'bold 14px sans-serif';
+      ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'left';
       const textWidth = ctx.measureText(priceText).width;
-      const labelPadding = 8;
-      const labelHeight = 24;
+      const labelPadding = 6;
+      const labelHeight = 20;
       
       ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
       ctx.fillRect(rightEdge + 5, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
 
       // Draw price text
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(priceText, rightEdge + 5 + labelPadding, priceY + 5);
+      ctx.fillText(priceText, rightEdge + 5 + labelPadding, priceY + 4);
 
       // Draw small circle at the price point
       ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
       ctx.beginPath();
-      ctx.arc(rightEdge - 80, priceY, 4, 0, Math.PI * 2);
+      ctx.arc(rightEdge - 40, priceY, 3, 0, Math.PI * 2);
       ctx.fill();
     }
   };
@@ -318,7 +318,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     if (!loading) {
       drawChart();
     }
-  }, [chartData, loading]);
+  }, [chartData, loading, currentPrice, priceChange24h]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
