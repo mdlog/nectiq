@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Target, BarChart3 } from 'lucide-react';
 import { createChart, ColorType, IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
+import { useQuery } from '@tanstack/react-query';
 
 interface TradingViewChartProps {
   cryptoId: string;
@@ -23,45 +24,27 @@ const TradingViewChart = memo(({
 }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const seriesRef = useRef<ISeriesApi<'Line'> | null>(null);
 
-  // Generate sample candlestick data based on current price
-  const generateCandlestickData = (basePrice: number) => {
-    const data = [];
-    const now = new Date();
-    const days = 30;
-    
-    for (let i = days; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const time = (date.getTime() / 1000) as UTCTimestamp;
-      
-      // Generate realistic price variations
-      const variation = (Math.random() - 0.5) * 0.1;
-      const dayPrice = basePrice * (1 + variation * (i / days));
-      const dailyVolatility = dayPrice * 0.02;
-      
-      const open = dayPrice + (Math.random() - 0.5) * dailyVolatility;
-      const close = dayPrice + (Math.random() - 0.5) * dailyVolatility;
-      const high = Math.max(open, close) + Math.random() * dailyVolatility * 0.5;
-      const low = Math.min(open, close) - Math.random() * dailyVolatility * 0.5;
-      
-      data.push({
-        time,
-        open: Number(open.toFixed(6)),
-        high: Number(high.toFixed(6)),
-        low: Number(low.toFixed(6)),
-        close: Number(close.toFixed(6))
-      });
-    }
-    
-    return data;
-  };
+  // Fetch real chart data from API
+  const { data: chartData = [], isLoading } = useQuery<Array<{ time: string; value: number }>>({
+    queryKey: [`/api/crypto/chart/${cryptoId}`],
+    refetchInterval: 30000,
+  });
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !chartData || chartData.length === 0) return;
+
+    // Clear previous chart
+    if (chartRef.current) {
+      chartRef.current.remove();
+      chartRef.current = null;
+    }
 
     // Create chart
     const chart = createChart(containerRef.current, {
+      width: containerRef.current.clientWidth,
+      height: 500,
       layout: {
         background: { type: ColorType.Solid, color: '#1a1b23' },
         textColor: '#d1d5db',
@@ -91,42 +74,28 @@ const TradingViewChart = memo(({
       },
     });
 
-    // Create candlestick series
-    const candlestickSeries = chart.addCandlestickSeries({
-      upColor: '#22c55e',
-      downColor: '#ef4444',
-      borderDownColor: '#ef4444',
-      borderUpColor: '#22c55e',
-      wickDownColor: '#ef4444',
-      wickUpColor: '#22c55e',
-    });
-
-    // Generate and set data
-    const data = generateCandlestickData(currentPrice);
-    candlestickSeries.setData(data);
-
-    // Add volume series
-    const volumeSeries = chart.addHistogramSeries({
-      color: '#26a69a',
+    // Create line series
+    const lineSeries = chart.addLineSeries({
+      color: '#2962ff',
+      lineWidth: 2,
       priceFormat: {
-        type: 'volume',
+        type: 'price',
+        precision: 6,
+        minMove: 0.000001,
       },
-      priceScaleId: '',
     });
 
-    // Generate volume data
-    const volumeData = data.map(candle => ({
-      time: candle.time,
-      value: Math.floor(Math.random() * 1000000) + 100000,
-      color: candle.close >= candle.open ? '#22c55e' : '#ef4444'
+    // Convert API data to chart format
+    const formattedData = chartData.map((item) => ({
+      time: (new Date(item.time).getTime() / 1000) as UTCTimestamp,
+      value: item.value,
     }));
-    volumeSeries.setData(volumeData);
 
-    // Fit content
+    lineSeries.setData(formattedData);
     chart.timeScale().fitContent();
 
     chartRef.current = chart;
-    seriesRef.current = candlestickSeries;
+    seriesRef.current = lineSeries;
 
     // Handle resize
     const handleResize = () => {
@@ -146,7 +115,7 @@ const TradingViewChart = memo(({
         chartRef.current = null;
       }
     };
-  }, [cryptoId, currentPrice, symbol]);
+  }, [chartData, cryptoId, symbol]);
 
   const isPositive = priceChange24h >= 0;
 
@@ -182,12 +151,31 @@ const TradingViewChart = memo(({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* TradingView Chart Container */}
-          <div 
-            ref={containerRef}
-            className="w-full h-[500px] bg-[#1a1b23] rounded-lg overflow-hidden"
-            style={{ minHeight: '500px' }}
-          />
+          {/* Professional Chart Container */}
+          <div className="relative">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[500px] bg-[#1a1b23] rounded-lg">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-slate-400">Loading chart data...</p>
+                </div>
+              </div>
+            ) : chartData && chartData.length > 0 ? (
+              <div 
+                ref={containerRef}
+                className="w-full h-[500px] bg-[#1a1b23] rounded-lg overflow-hidden"
+                style={{ minHeight: '500px' }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-[500px] bg-[#1a1b23] rounded-lg">
+                <div className="text-center">
+                  <BarChart3 className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+                  <p className="text-slate-400">No chart data available</p>
+                  <p className="text-sm text-slate-500">Chart data will appear once available</p>
+                </div>
+              </div>
+            )}
+          </div>
           
           {/* Chart Info */}
           <div className="flex items-center justify-between text-sm text-slate-400 pt-4 border-t border-slate-600">
