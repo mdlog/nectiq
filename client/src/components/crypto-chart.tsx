@@ -88,19 +88,21 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.clearRect(0, 0, width, height);
 
     // Set up chart dimensions with extra space for price labels
-    const padding = 40;
+    const leftPadding = 80; // More space for price labels on the left
     const rightPadding = 120; // Extra space for real-time price display
-    const chartWidth = width - padding - rightPadding;
-    const chartHeight = height - 2 * padding;
+    const topPadding = 40;
+    const bottomPadding = 40;
+    const chartWidth = width - leftPadding - rightPadding;
+    const chartHeight = height - topPadding - bottomPadding;
 
     if (chartType === 'candlestick') {
-      drawCandlestickChart(ctx, chartWidth, chartHeight, padding);
+      drawCandlestickChart(ctx, chartWidth, chartHeight, leftPadding, topPadding);
     } else {
-      drawLineChart(ctx, chartWidth, chartHeight, padding);
+      drawLineChart(ctx, chartWidth, chartHeight, leftPadding, topPadding);
     }
   };
 
-  const drawLineChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, padding: number) => {
+  const drawLineChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, leftPadding: number, topPadding: number) => {
     const values = chartData.map(d => d.value);
     const minValue = Math.min(...values);
     const maxValue = Math.max(...values);
@@ -110,10 +112,10 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
-      const y = padding + (chartHeight * i) / 5;
+      const y = topPadding + (chartHeight * i) / 5;
       ctx.beginPath();
-      ctx.moveTo(padding, y);
-      ctx.lineTo(padding + chartWidth, y);
+      ctx.moveTo(leftPadding, y);
+      ctx.lineTo(leftPadding + chartWidth, y);
       ctx.stroke();
     }
 
@@ -123,8 +125,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.beginPath();
 
     chartData.forEach((point, index) => {
-      const x = padding + (chartWidth * index) / (chartData.length - 1);
-      const y = padding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
+      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
       
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -136,19 +138,19 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.stroke();
 
     // Draw gradient fill
-    const gradient = ctx.createLinearGradient(0, padding, 0, padding + chartHeight);
+    const gradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
     gradient.addColorStop(0, priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)');
     gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
     
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.moveTo(padding, padding + chartHeight);
+    ctx.moveTo(leftPadding, topPadding + chartHeight);
     chartData.forEach((point, index) => {
-      const x = padding + (chartWidth * index) / (chartData.length - 1);
-      const y = padding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
+      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
       ctx.lineTo(x, y);
     });
-    ctx.lineTo(padding + chartWidth, padding + chartHeight);
+    ctx.lineTo(leftPadding + chartWidth, topPadding + chartHeight);
     ctx.closePath();
     ctx.fill();
 
@@ -159,15 +161,15 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     
     for (let i = 0; i <= 5; i++) {
       const value = maxValue - (valueRange * i) / 5;
-      const y = padding + (chartHeight * i) / 5;
-      ctx.fillText(`$${value.toFixed(2)}`, padding - 5, y + 4);
+      const y = topPadding + (chartHeight * i) / 5;
+      ctx.fillText(`$${value.toFixed(2)}`, leftPadding - 5, y + 4);
     }
 
     // Draw real-time price indicator at the edge of the chart
     if (chartData.length > 0) {
       const lastPrice = chartData[chartData.length - 1].value;
-      const priceY = padding + chartHeight - ((lastPrice - minValue) / valueRange) * chartHeight;
-      const rightEdge = padding + chartWidth;
+      const priceY = topPadding + chartHeight - ((lastPrice - minValue) / valueRange) * chartHeight;
+      const rightEdge = leftPadding + chartWidth;
 
       // Draw price line extending to the right edge
       ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
