@@ -142,6 +142,17 @@ export default function UserDashboard() {
     refetchInterval: 3000, // Real-time updates every 3 seconds
   });
 
+  // Auto-select Bitcoin as default when prices are loaded
+  useEffect(() => {
+    if (prices.length > 0 && !selectedCrypto) {
+      const bitcoin = prices.find(crypto => crypto.id === 'bitcoin');
+      if (bitcoin) {
+        setSelectedCrypto(bitcoin);
+        setShowChart(true);
+      }
+    }
+  }, [prices, selectedCrypto]);
+
   // Withdraw mutation
   const withdrawMutation = useMutation({
     mutationFn: async ({ amount, token }: { amount: number; token: string }) => {

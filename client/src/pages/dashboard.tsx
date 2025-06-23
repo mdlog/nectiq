@@ -29,6 +29,17 @@ export default function Dashboard() {
     staleTime: 0,
   });
 
+  // Auto-select Bitcoin as default when prices are loaded
+  useEffect(() => {
+    if (livePrices.length > 0 && !selectedCryptoId) {
+      const bitcoin = livePrices.find(crypto => crypto.id === 'bitcoin');
+      if (bitcoin) {
+        setSelectedCryptoId('bitcoin');
+        setShowChart(true);
+      }
+    }
+  }, [livePrices, selectedCryptoId]);
+
   // Find the currently selected crypto from live prices
   const selectedCrypto = selectedCryptoId 
     ? livePrices.find(crypto => crypto.id === selectedCryptoId) 
