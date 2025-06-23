@@ -76,12 +76,10 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           return (
             <div 
               key={crypto.id} 
-              className="crypto-card p-3 bg-surface-light rounded-lg transition-colors space-y-3"
+              className="crypto-card p-3 bg-surface-light rounded-lg transition-colors cursor-pointer hover:bg-slate-700"
+              onClick={() => onCryptoSelect?.(crypto)}
             >
-              <div 
-                className="flex items-center justify-between cursor-pointer hover:bg-slate-700 p-2 rounded"
-                onClick={() => onCryptoSelect?.(crypto)}
-              >
+              <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="relative w-8 h-8 flex-shrink-0">
                     <img 
@@ -120,19 +118,6 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                   </div>
                 </div>
               </div>
-              
-              {/* Predict Button */}
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPredictClick?.(crypto.id);
-                }}
-                className="w-full bg-primary hover:bg-primary/80 text-primary-foreground"
-              >
-                <Target size={14} className="mr-2" />
-                Predict {crypto.symbol}
-              </Button>
             </div>
           );
         })}
