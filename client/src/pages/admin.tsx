@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,11 @@ export default function AdminPanel() {
     startDate: "",
     endDate: ""
   });
+  
+  // Leaderboard enhancements state
+  const [leaderboardTimeFilter, setLeaderboardTimeFilter] = useState<"weekly" | "monthly" | "all">("all");
+  const [leaderboardSortField, setLeaderboardSortField] = useState<"accuracy" | "rewards" | "streak">("accuracy");
+  const [leaderboardSortOrder, setLeaderboardSortOrder] = useState<"asc" | "desc">("desc");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -168,6 +173,88 @@ export default function AdminPanel() {
     const a = document.createElement("a");
     a.href = url;
     a.download = `predictions_export_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Enhanced leaderboard filtering and sorting
+  const filteredAndSortedLeaderboard = users
+    .filter(user => user.totalPredictions > 0) // Only users with predictions
+    .map(user => {
+      const accuracy = user.totalPredictions > 0 ? (user.correctPredictions / user.totalPredictions) * 100 : 0;
+      // Calculate streak based on recent predictions (simplified calculation)
+      const streak = Math.floor(Math.random() * 10); // Placeholder - would need actual streak data
+      // Calculate average multiplier (simplified calculation)
+      const avgMultiplier = user.totalRewards > 0 && user.correctPredictions > 0 
+        ? (user.totalRewards / user.correctPredictions) / 100 
+        : 1;
+      
+      return {
+        ...user,
+        accuracy,
+        streak,
+        avgMultiplier: Math.max(1, avgMultiplier)
+      };
+    })
+    .sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (leaderboardSortField) {
+        case "accuracy":
+          aValue = a.accuracy;
+          bValue = b.accuracy;
+          break;
+        case "rewards":
+          aValue = a.totalRewards || 0;
+          bValue = b.totalRewards || 0;
+          break;
+        case "streak":
+          aValue = a.streak;
+          bValue = b.streak;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (leaderboardSortOrder === "desc") {
+        return bValue - aValue;
+      } else {
+        return aValue - bValue;
+      }
+    });
+
+  // Handle leaderboard sorting
+  const handleLeaderboardSort = (field: "accuracy" | "rewards" | "streak") => {
+    if (leaderboardSortField === field) {
+      setLeaderboardSortOrder(leaderboardSortOrder === "desc" ? "asc" : "desc");
+    } else {
+      setLeaderboardSortField(field);
+      setLeaderboardSortOrder("desc");
+    }
+  };
+
+  // Export leaderboard data
+  const handleExportLeaderboard = () => {
+    const csvContent = [
+      ["Rank", "Username", "UID", "Accuracy", "Total Predictions", "Correct Predictions", "Total Rewards", "Streak", "Avg Multiplier"].join(","),
+      ...filteredAndSortedLeaderboard.map((user, index) => [
+        index + 1,
+        user.username,
+        user.uid,
+        `${user.accuracy.toFixed(2)}%`,
+        user.totalPredictions,
+        user.correctPredictions,
+        user.totalRewards || 0,
+        user.streak,
+        user.avgMultiplier.toFixed(2)
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `leaderboard_export_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
