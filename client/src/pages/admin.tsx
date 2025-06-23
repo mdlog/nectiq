@@ -46,6 +46,13 @@ export default function AdminPanel() {
   const [predictionsAssetFilter, setPredictionsAssetFilter] = useState("all");
   const [predictionsStatusFilter, setPredictionsStatusFilter] = useState("all");
   
+  // Filter state for users
+  const [userFilter, setUserFilter] = useState("all");
+  
+  // Sorting state for users
+  const [userSortField, setUserSortField] = useState<"balance" | "accuracy" | "predictions" | "rewards">("balance");
+  const [userSortOrder, setUserSortOrder] = useState<"asc" | "desc">("desc");
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -79,6 +86,20 @@ export default function AdminPanel() {
   // Get unique assets and statuses for filter options
   const uniqueAssets = Array.from(new Set(predictions.map(p => p.cryptocurrency)));
   const uniqueStatuses = Array.from(new Set(predictions.map(p => p.status)));
+
+  // Filter users based on selected criteria
+  const filteredUsers = users.filter(user => {
+    switch (userFilter) {
+      case "admins":
+        return user.isAdmin;
+      case "rich":
+        return (user.balance || 0) > 1000;
+      case "no-wallet":
+        return !user.walletAddress;
+      default:
+        return true;
+    }
+  });
 
   const { data: leaderboard = [] } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/leaderboard"],
@@ -753,10 +774,24 @@ export default function AdminPanel() {
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span className="flex items-center">
-                      <UserPlus className="mr-2" size={20} />
-                      User Management
-                    </span>
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center">
+                        <UserPlus className="mr-2" size={20} />
+                        User Management ({users.length})
+                      </span>
+                      {/* Filters */}
+                      <Select value={userFilter} onValueChange={setUserFilter}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="Filter users" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Users</SelectItem>
+                          <SelectItem value="admins">Only Admins</SelectItem>
+                          <SelectItem value="rich">Balance &gt; 1000 NTIQ</SelectItem>
+                          <SelectItem value="no-wallet">No Wallet Linked</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
                       <DialogTrigger asChild>
                         <Button className="bg-blue-600 hover:bg-blue-700">
