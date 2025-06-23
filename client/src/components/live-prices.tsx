@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, ChartLine } from "lucide-react";
+import { TrendingUp, TrendingDown, ChartLine, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { CryptoPrice } from "@/types";
 
 function getCryptoIcon(id: string): string {
@@ -29,7 +30,7 @@ interface LivePricesProps {
   onPredictClick?: (cryptoId: string) => void;
 }
 
-export function LivePrices({ onCryptoSelect }: LivePricesProps) {
+export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) {
   const { data: prices = [], isLoading } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 1000, // Refetch every 1 second for real-time updates
@@ -75,47 +76,63 @@ export function LivePrices({ onCryptoSelect }: LivePricesProps) {
           return (
             <div 
               key={crypto.id} 
-              className="crypto-card flex items-center justify-between p-3 bg-surface-light rounded-lg hover:bg-slate-700 cursor-pointer transition-colors"
-              onClick={() => onCryptoSelect?.(crypto)}
+              className="crypto-card p-3 bg-surface-light rounded-lg transition-colors space-y-3"
             >
-              <div className="flex items-center space-x-3">
-                <div className="relative w-8 h-8 flex-shrink-0">
-                  <img 
-                    src={crypto.image || `https://coin-images.coingecko.com/coins/images/${crypto.id === 'bitcoin' ? '1' : crypto.id === 'ethereum' ? '279' : crypto.id === 'binancecoin' ? '825' : crypto.id === 'cardano' ? '975' : crypto.id === 'solana' ? '4128' : '1'}/large/${crypto.id}.png`} 
-                    alt={crypto.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                    onError={(e) => {
-                      // Fallback to colored icon if image fails to load
-                      const target = e.target as HTMLImageElement;
-                      const fallback = target.nextElementSibling as HTMLElement;
-                      if (fallback) {
-                        target.style.display = 'none';
-                        fallback.style.display = 'flex';
-                      }
-                    }}
-                  />
-                  <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-sm font-bold`}>
-                    {getCryptoIcon(crypto.id)}
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-slate-700 p-2 rounded"
+                onClick={() => onCryptoSelect?.(crypto)}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="relative w-8 h-8 flex-shrink-0">
+                    <img 
+                      src={crypto.image || `https://coin-images.coingecko.com/coins/images/${crypto.id === 'bitcoin' ? '1' : crypto.id === 'ethereum' ? '279' : crypto.id === 'binancecoin' ? '825' : crypto.id === 'cardano' ? '975' : crypto.id === 'solana' ? '4128' : '1'}/large/${crypto.id}.png`} 
+                      alt={crypto.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) {
+                          target.style.display = 'none';
+                          fallback.style.display = 'flex';
+                        }
+                      }}
+                    />
+                    <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-sm font-bold`}>
+                      {getCryptoIcon(crypto.id)}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{crypto.symbol}</p>
+                    <p className="text-xs text-slate-400">{crypto.name}</p>
                   </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-sm">{crypto.symbol}</p>
-                  <p className="text-xs text-slate-400">{crypto.name}</p>
+                <div className="text-right">
+                  <p className="font-semibold text-sm">${crypto.current_price.toLocaleString()}</p>
+                  <div className="flex items-center space-x-1">
+                    {isPositive ? (
+                      <TrendingUp className="text-success" size={12} />
+                    ) : (
+                      <TrendingDown className="text-error" size={12} />
+                    )}
+                    <p className={`text-xs ${isPositive ? "text-success" : "text-error"}`}>
+                      {isPositive ? "+" : ""}{crypto.price_change_percentage_24h.toFixed(2)}%
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="font-semibold text-sm">${crypto.current_price.toLocaleString()}</p>
-                <div className="flex items-center space-x-1">
-                  {isPositive ? (
-                    <TrendingUp className="text-success" size={12} />
-                  ) : (
-                    <TrendingDown className="text-error" size={12} />
-                  )}
-                  <p className={`text-xs ${isPositive ? "text-success" : "text-error"}`}>
-                    {isPositive ? "+" : ""}{crypto.price_change_percentage_24h.toFixed(2)}%
-                  </p>
-                </div>
-              </div>
+              
+              {/* Predict Button */}
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPredictClick?.(crypto.id);
+                }}
+                className="w-full bg-primary hover:bg-primary/80 text-primary-foreground"
+              >
+                <Target size={14} className="mr-2" />
+                Predict {crypto.symbol}
+              </Button>
             </div>
           );
         })}

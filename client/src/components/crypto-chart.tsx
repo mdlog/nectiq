@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target } from 'lucide-react';
 
 interface CryptoChartProps {
   cryptoId: string;
@@ -9,6 +9,7 @@ interface CryptoChartProps {
   name: string;
   currentPrice: number;
   priceChange24h: number;
+  onPredictClick?: (cryptoId: string) => void;
 }
 
 interface ChartData {
@@ -16,7 +17,7 @@ interface ChartData {
   value: number;
 }
 
-export default function CryptoChart({ cryptoId, symbol, name, currentPrice, priceChange24h }: CryptoChartProps) {
+export default function CryptoChart({ cryptoId, symbol, name, currentPrice, priceChange24h, onPredictClick }: CryptoChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [timeframe, setTimeframe] = useState('7');
   const [chartData, setChartData] = useState<ChartData[]>([]);
@@ -252,6 +253,17 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
             className="w-full h-[300px] rounded-lg"
             style={{ background: 'transparent' }}
           />
+        </div>
+        
+        {/* Predict Button */}
+        <div className="mt-4 flex justify-center">
+          <Button
+            onClick={() => onPredictClick?.(cryptoId)}
+            className="bg-primary hover:bg-primary/80 text-primary-foreground px-6"
+          >
+            <Target size={16} className="mr-2" />
+            Predict {symbol}
+          </Button>
         </div>
       </CardContent>
     </Card>

@@ -47,6 +47,7 @@ export default function Dashboard() {
           <div className="lg:col-span-1">
             <LivePrices 
               onCryptoSelect={handleCryptoSelect}
+              onPredictClick={handlePredictClick}
             />
           </div>
 
