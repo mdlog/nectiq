@@ -8,20 +8,34 @@ import { TopPredictors } from "@/components/top-predictors";
 import { RecentRewards } from "@/components/recent-rewards";
 import { RulesSection } from "@/components/rules-section";
 import CryptoChart from "@/components/crypto-chart";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Target } from "lucide-react";
 import type { CryptoPrice } from "@/types";
 
 export default function Dashboard() {
-  const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(null);
+  const [selectedCryptoId, setSelectedCryptoId] = useState<string | null>(null);
   const [showChart, setShowChart] = useState(false);
   const [showPredictionForm, setShowPredictionForm] = useState(false);
   const [preSelectedForPrediction, setPreSelectedForPrediction] = useState<string | undefined>(undefined);
 
+  // Fetch live prices for real-time updates
+  const { data: livePrices = [] } = useQuery<CryptoPrice[]>({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+  });
+
+  // Find the currently selected crypto from live prices
+  const selectedCrypto = selectedCryptoId 
+    ? livePrices.find(crypto => crypto.id === selectedCryptoId) 
+    : null;
+
   const handleCryptoSelect = (crypto: CryptoPrice) => {
-    setSelectedCrypto(crypto);
+    setSelectedCryptoId(crypto.id);
     setShowChart(true);
   };
 
