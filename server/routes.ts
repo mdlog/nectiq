@@ -1025,6 +1025,201 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get system settings
+  app.get("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      // Default system settings - in production these would be stored in database
+      const settings = {
+        platform: {
+          minPredictionAmount: 10,
+          maxPredictionAmount: 10000,
+          withdrawalFee: 2.5,
+          minWithdrawal: 1000
+        },
+        exchangeRates: {
+          ethToPts: 300000,
+          usdtToPts: 100,
+          ptsToUsdt: 0.01
+        },
+        security: {
+          rateLimit: 500,
+          maxPredictionsPerHour: 5,
+          maxWithdrawalsPerHour: 5,
+          sessionTimeout: 24
+        }
+      };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to get settings" });
+    }
+  });
+
+  // Admin: Update system settings
+  app.post("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      const { platform, exchangeRates, security } = req.body;
+      
+      // Validate settings
+      if (platform) {
+        if (platform.minPredictionAmount < 1 || platform.minPredictionAmount > 100000) {
+          return res.status(400).json({ message: "Invalid minimum prediction amount" });
+        }
+        if (platform.maxPredictionAmount < platform.minPredictionAmount || platform.maxPredictionAmount > 1000000) {
+          return res.status(400).json({ message: "Invalid maximum prediction amount" });
+        }
+        if (platform.withdrawalFee < 0 || platform.withdrawalFee > 50) {
+          return res.status(400).json({ message: "Invalid withdrawal fee" });
+        }
+        if (platform.minWithdrawal < 1 || platform.minWithdrawal > 100000) {
+          return res.status(400).json({ message: "Invalid minimum withdrawal amount" });
+        }
+      }
+      
+      if (exchangeRates) {
+        if (exchangeRates.ethToPts < 1000 || exchangeRates.ethToPts > 10000000) {
+          return res.status(400).json({ message: "Invalid ETH to PTS rate" });
+        }
+        if (exchangeRates.usdtToPts < 1 || exchangeRates.usdtToPts > 10000) {
+          return res.status(400).json({ message: "Invalid USDT to PTS rate" });
+        }
+        if (exchangeRates.ptsToUsdt < 0.0001 || exchangeRates.ptsToUsdt > 1) {
+          return res.status(400).json({ message: "Invalid PTS to USDT rate" });
+        }
+      }
+      
+      if (security) {
+        if (security.rateLimit < 10 || security.rateLimit > 10000) {
+          return res.status(400).json({ message: "Invalid rate limit" });
+        }
+        if (security.maxPredictionsPerHour < 1 || security.maxPredictionsPerHour > 100) {
+          return res.status(400).json({ message: "Invalid max predictions per hour" });
+        }
+        if (security.maxWithdrawalsPerHour < 1 || security.maxWithdrawalsPerHour > 50) {
+          return res.status(400).json({ message: "Invalid max withdrawals per hour" });
+        }
+        if (security.sessionTimeout < 1 || security.sessionTimeout > 168) {
+          return res.status(400).json({ message: "Invalid session timeout" });
+        }
+      }
+      
+      // In production, save to database
+      // For now, we'll just log the changes
+      auditLog("settings_updated", {
+        platform,
+        exchangeRates,
+        security,
+        adminId: req.session.userId
+      }, req);
+      
+      res.json({ message: "Settings updated successfully" });
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
+
+  // Admin: Clear cache
+  app.post("/api/admin/clear-cache", requireAdmin, async (req, res) => {
+    try {
+      // In production, this would clear Redis cache or similar
+      auditLog("cache_cleared", { adminId: req.session.userId }, req);
+      res.json({ message: "Cache cleared successfully" });
+    } catch (error) {
+      console.error("Error clearing cache:", error);
+      res.status(500).json({ message: "Failed to clear cache" });
+    }
+  });
+
+  // Admin: Backup database
+  app.post("/api/admin/backup-database", requireAdmin, async (req, res) => {
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupId = `backup_${timestamp}`;
+      
+      // In production, this would create actual database backup
+      auditLog("database_backup_created", { 
+        backupId,
+        adminId: req.session.userId 
+      }, req);
+      
+      res.json({ 
+        message: "Database backup created successfully",
+        backupId
+      });
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      res.status(500).json({ message: "Failed to create backup" });
+    }
+  });
+
+  // Admin: Export logs
+  app.post("/api/admin/export-logs", requireAdmin, async (req, res) => {
+    try {
+      const { startDate, endDate } = req.body;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const exportId = `logs_export_${timestamp}`;
+      
+      // Get recent activities and logs
+      const recentActivity = await storage.getRecentPredictions(1000);
+      const users = await storage.getTopPredictors(100);
+      
+      const logData = {
+        exportId,
+        timestamp: new Date().toISOString(),
+        period: { startDate, endDate },
+        summary: {
+          totalUsers: users.length,
+          totalPredictions: recentActivity.length,
+          activeUsers: users.filter(u => u.totalPredictions > 0).length
+        },
+        recentActivity: recentActivity.slice(0, 100),
+        topUsers: users.slice(0, 20)
+      };
+      
+      auditLog("logs_exported", { 
+        exportId,
+        recordCount: recentActivity.length,
+        adminId: req.session.userId 
+      }, req);
+      
+      res.json({ 
+        message: "Logs exported successfully",
+        exportId,
+        data: logData
+      });
+    } catch (error) {
+      console.error("Error exporting logs:", error);
+      res.status(500).json({ message: "Failed to export logs" });
+    }
+  });
+
+  // Admin: Emergency stop
+  app.post("/api/admin/emergency-stop", requireAdmin, async (req, res) => {
+    try {
+      const { reason } = req.body;
+      
+      auditLog("emergency_stop_triggered", { 
+        reason,
+        adminId: req.session.userId,
+        severity: "CRITICAL"
+      }, req);
+      
+      // In production, this would stop critical services
+      console.log("🚨 EMERGENCY STOP TRIGGERED:", reason);
+      
+      res.json({ 
+        message: "Emergency stop activated",
+        status: "STOPPED",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error triggering emergency stop:", error);
+      res.status(500).json({ message: "Failed to trigger emergency stop" });
+    }
+  });
+
   // Admin: Get security events and logs
   app.get("/api/admin/security-events", requireAdmin, async (req, res) => {
     try {

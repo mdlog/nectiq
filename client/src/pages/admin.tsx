@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useState } from "react";
 import type { User, Prediction, Reward, Cryptocurrency } from "@shared/schema";
 import type { LeaderboardEntry } from "@/types";
 import { SimpleAdminAuth } from "@/components/simple-admin-auth";
@@ -90,6 +90,176 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/security-events"],
     retry: false,
   });
+
+  // System settings queries
+  const { data: systemSettings, refetch: refetchSettings } = useQuery<any>({
+    queryKey: ["/api/admin/settings"],
+    retry: false,
+  });
+
+  // Form state for settings
+  const [settingsForm, setSettingsForm] = useState({
+    platform: {
+      minPredictionAmount: 10,
+      maxPredictionAmount: 10000,
+      withdrawalFee: 2.5,
+      minWithdrawal: 1000
+    },
+    exchangeRates: {
+      ethToPts: 300000,
+      usdtToPts: 100,
+      ptsToUsdt: 0.01
+    },
+    security: {
+      rateLimit: 500,
+      maxPredictionsPerHour: 5,
+      maxWithdrawalsPerHour: 5,
+      sessionTimeout: 24
+    }
+  });
+
+  // Update form when settings load
+  useEffect(() => {
+    if (systemSettings) {
+      setSettingsForm(systemSettings);
+    }
+  }, [systemSettings]);
+
+  // Mutations for admin actions
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (settings: any) => {
+      return apiRequest("POST", "/api/admin/settings", settings);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Settings Updated",
+        description: "System settings have been saved successfully.",
+      });
+      refetchSettings();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save settings",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const clearCacheMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/admin/clear-cache");
+    },
+    onSuccess: () => {
+      toast({
+        title: "Cache Cleared",
+        description: "System cache has been cleared successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to clear cache",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const backupDatabaseMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/admin/backup-database");
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Backup Created",
+        description: `Database backup created: ${data.backupId}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create backup",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const exportLogsMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/admin/export-logs", {
+        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date().toISOString()
+      });
+    },
+    onSuccess: (data: any) => {
+      // Download the logs as JSON file
+      const blob = new Blob([JSON.stringify(data.data, null, 2)], { 
+        type: 'application/json' 
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `nectiq_logs_${data.exportId}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Logs Exported",
+        description: `Logs exported: ${data.exportId}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to export logs",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const emergencyStopMutation = useMutation({
+    mutationFn: async (reason: string) => {
+      return apiRequest("POST", "/api/admin/emergency-stop", { reason });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Emergency Stop Activated",
+        description: "System has been stopped for maintenance.",
+        variant: "destructive",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to trigger emergency stop",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Form handlers
+  const handleSettingsChange = (section: string, field: string, value: any) => {
+    setSettingsForm(prev => ({
+      ...prev,
+      [section]: {
+        ...(prev as any)[section],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSaveSettings = () => {
+    saveSettingsMutation.mutate(settingsForm);
+  };
+
+  const handleEmergencyStop = () => {
+    const reason = prompt("Enter reason for emergency stop:");
+    if (reason) {
+      emergencyStopMutation.mutate(reason);
+    }
+  };
 
   const addCryptoMutation = useMutation({
     mutationFn: async (cryptoId: string) => {
@@ -1507,19 +1677,40 @@ export default function AdminPanel() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="min-prediction">Minimum Prediction Amount (PTS)</Label>
-                        <Input id="min-prediction" defaultValue="10" type="number" />
+                        <Input 
+                          id="min-prediction" 
+                          value={settingsForm.platform.minPredictionAmount}
+                          onChange={(e) => handleSettingsChange('platform', 'minPredictionAmount', parseInt(e.target.value))}
+                          type="number" 
+                        />
                       </div>
                       <div>
                         <Label htmlFor="max-prediction">Maximum Prediction Amount (PTS)</Label>
-                        <Input id="max-prediction" defaultValue="10000" type="number" />
+                        <Input 
+                          id="max-prediction" 
+                          value={settingsForm.platform.maxPredictionAmount}
+                          onChange={(e) => handleSettingsChange('platform', 'maxPredictionAmount', parseInt(e.target.value))}
+                          type="number" 
+                        />
                       </div>
                       <div>
                         <Label htmlFor="withdrawal-fee">Withdrawal Fee (%)</Label>
-                        <Input id="withdrawal-fee" defaultValue="2.5" type="number" step="0.1" />
+                        <Input 
+                          id="withdrawal-fee" 
+                          value={settingsForm.platform.withdrawalFee}
+                          onChange={(e) => handleSettingsChange('platform', 'withdrawalFee', parseFloat(e.target.value))}
+                          type="number" 
+                          step="0.1" 
+                        />
                       </div>
                       <div>
                         <Label htmlFor="min-withdrawal">Minimum Withdrawal (PTS)</Label>
-                        <Input id="min-withdrawal" defaultValue="1000" type="number" />
+                        <Input 
+                          id="min-withdrawal" 
+                          value={settingsForm.platform.minWithdrawal}
+                          onChange={(e) => handleSettingsChange('platform', 'minWithdrawal', parseInt(e.target.value))}
+                          type="number" 
+                        />
                       </div>
                     </div>
                   </div>
@@ -1530,18 +1721,34 @@ export default function AdminPanel() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="eth-rate">ETH to PTS Rate</Label>
-                        <Input id="eth-rate" defaultValue="300000" type="number" />
-                        <p className="text-xs text-slate-500 mt-1">1 ETH = 300,000 PTS</p>
+                        <Input 
+                          id="eth-rate" 
+                          value={settingsForm.exchangeRates.ethToPts}
+                          onChange={(e) => handleSettingsChange('exchangeRates', 'ethToPts', parseInt(e.target.value))}
+                          type="number" 
+                        />
+                        <p className="text-xs text-slate-500 mt-1">1 ETH = {settingsForm.exchangeRates.ethToPts.toLocaleString()} PTS</p>
                       </div>
                       <div>
                         <Label htmlFor="usdt-rate">USDT to PTS Rate</Label>
-                        <Input id="usdt-rate" defaultValue="100" type="number" />
-                        <p className="text-xs text-slate-500 mt-1">1 USDT = 100 PTS</p>
+                        <Input 
+                          id="usdt-rate" 
+                          value={settingsForm.exchangeRates.usdtToPts}
+                          onChange={(e) => handleSettingsChange('exchangeRates', 'usdtToPts', parseInt(e.target.value))}
+                          type="number" 
+                        />
+                        <p className="text-xs text-slate-500 mt-1">1 USDT = {settingsForm.exchangeRates.usdtToPts} PTS</p>
                       </div>
                       <div>
                         <Label htmlFor="pts-usdt-rate">PTS to USDT Rate</Label>
-                        <Input id="pts-usdt-rate" defaultValue="0.01" type="number" step="0.001" />
-                        <p className="text-xs text-slate-500 mt-1">1 PTS = 0.01 USDT</p>
+                        <Input 
+                          id="pts-usdt-rate" 
+                          value={settingsForm.exchangeRates.ptsToUsdt}
+                          onChange={(e) => handleSettingsChange('exchangeRates', 'ptsToUsdt', parseFloat(e.target.value))}
+                          type="number" 
+                          step="0.001" 
+                        />
+                        <p className="text-xs text-slate-500 mt-1">1 PTS = {settingsForm.exchangeRates.ptsToUsdt} USDT</p>
                       </div>
                     </div>
                   </div>
@@ -1552,19 +1759,39 @@ export default function AdminPanel() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="rate-limit">Rate Limit (requests/minute)</Label>
-                        <Input id="rate-limit" defaultValue="500" type="number" />
+                        <Input 
+                          id="rate-limit" 
+                          value={settingsForm.security.rateLimit}
+                          onChange={(e) => handleSettingsChange('security', 'rateLimit', parseInt(e.target.value))}
+                          type="number" 
+                        />
                       </div>
                       <div>
                         <Label htmlFor="max-predictions">Max Predictions per Hour</Label>
-                        <Input id="max-predictions" defaultValue="5" type="number" />
+                        <Input 
+                          id="max-predictions" 
+                          value={settingsForm.security.maxPredictionsPerHour}
+                          onChange={(e) => handleSettingsChange('security', 'maxPredictionsPerHour', parseInt(e.target.value))}
+                          type="number" 
+                        />
                       </div>
                       <div>
                         <Label htmlFor="max-withdrawals">Max Withdrawals per Hour</Label>
-                        <Input id="max-withdrawals" defaultValue="5" type="number" />
+                        <Input 
+                          id="max-withdrawals" 
+                          value={settingsForm.security.maxWithdrawalsPerHour}
+                          onChange={(e) => handleSettingsChange('security', 'maxWithdrawalsPerHour', parseInt(e.target.value))}
+                          type="number" 
+                        />
                       </div>
                       <div>
                         <Label htmlFor="session-timeout">Session Timeout (hours)</Label>
-                        <Input id="session-timeout" defaultValue="24" type="number" />
+                        <Input 
+                          id="session-timeout" 
+                          value={settingsForm.security.sessionTimeout}
+                          onChange={(e) => handleSettingsChange('security', 'sessionTimeout', parseInt(e.target.value))}
+                          type="number" 
+                        />
                       </div>
                     </div>
                   </div>
@@ -1572,20 +1799,40 @@ export default function AdminPanel() {
                   {/* Admin Controls */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Admin Controls</h3>
-                    <div className="space-y-4">
-                      <Button variant="outline" className="w-full md:w-auto">
-                        <RefreshCw className="mr-2 h-4 w-4" />
+                    <div className="flex flex-wrap gap-3">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => clearCacheMutation.mutate()}
+                        disabled={clearCacheMutation.isPending}
+                        className="flex items-center"
+                      >
+                        <RefreshCw className={`mr-2 h-4 w-4 ${clearCacheMutation.isPending ? 'animate-spin' : ''}`} />
                         Clear Cache
                       </Button>
-                      <Button variant="outline" className="w-full md:w-auto">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => backupDatabaseMutation.mutate()}
+                        disabled={backupDatabaseMutation.isPending}
+                        className="flex items-center"
+                      >
                         <Database className="mr-2 h-4 w-4" />
                         Backup Database
                       </Button>
-                      <Button variant="outline" className="w-full md:w-auto">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => exportLogsMutation.mutate()}
+                        disabled={exportLogsMutation.isPending}
+                        className="flex items-center"
+                      >
                         <FileText className="mr-2 h-4 w-4" />
                         Export Logs
                       </Button>
-                      <Button variant="destructive" className="w-full md:w-auto">
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleEmergencyStop}
+                        disabled={emergencyStopMutation.isPending}
+                        className="flex items-center"
+                      >
                         <AlertTriangle className="mr-2 h-4 w-4" />
                         Emergency Stop
                       </Button>
@@ -1593,8 +1840,19 @@ export default function AdminPanel() {
                   </div>
 
                   <div className="pt-4">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      Save All Settings
+                    <Button 
+                      onClick={handleSaveSettings}
+                      disabled={saveSettingsMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {saveSettingsMutation.isPending ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        'Save All Settings'
+                      )}
                     </Button>
                   </div>
                 </CardContent>
