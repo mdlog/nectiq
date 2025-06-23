@@ -42,82 +42,42 @@ export default function Dashboard() {
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <HeroStats />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            {/* Interactive Chart Section */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              {/* Live Prices - Interactive Selection */}
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <BarChart3 className="mr-2" size={20} />
-                    Select Cryptocurrency for Chart
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <LivePrices onCryptoSelect={handleCryptoSelect} />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Sidebar - Live Prices */}
+          <div className="lg:col-span-1">
+            <LivePrices 
+              onCryptoSelect={handleCryptoSelect}
+            />
+          </div>
+
+          {/* Main Content - Center */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Chart Section */}
+            {selectedCrypto && showChart ? (
+              <div className="space-y-4">
+                <CryptoChart
+                  cryptoId={selectedCrypto.id}
+                  symbol={selectedCrypto.symbol}
+                  name={selectedCrypto.name}
+                  currentPrice={selectedCrypto.current_price}
+                  priceChange24h={selectedCrypto.price_change_percentage_24h}
+                />
+              </div>
+            ) : (
+              <Card className="bg-surface-light border-border-subtle">
+                <CardContent className="p-8 text-center">
+                  <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-300 mb-2">
+                    Select a Cryptocurrency
+                  </h3>
+                  <p className="text-gray-500">
+                    Choose a cryptocurrency from Live Prices to view its interactive chart and start making predictions.
+                  </p>
                 </CardContent>
               </Card>
-
-              {/* Interactive Chart */}
-              {selectedCrypto && showChart ? (
-                <div className="space-y-4">
-
-                  <CryptoChart
-                    cryptoId={selectedCrypto.id}
-                    symbol={selectedCrypto.symbol}
-                    name={selectedCrypto.name}
-                    currentPrice={selectedCrypto.current_price}
-                    priceChange24h={selectedCrypto.price_change_percentage_24h}
-                  />
-                  
-                  {/* Quick Action */}
-                  <Card className="bg-surface border-surface-light">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <img 
-                            src={selectedCrypto.image} 
-                            alt={selectedCrypto.name}
-                            className="w-8 h-8 rounded-full"
-                          />
-                          <div>
-                            <p className="font-semibold">{selectedCrypto.symbol}</p>
-                            <p className="text-sm text-slate-400">${selectedCrypto.current_price.toLocaleString()}</p>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handlePredictClick(selectedCrypto.id)}
-                          className="flex items-center space-x-2"
-                        >
-                          <Target size={14} />
-                          <span>Predict {selectedCrypto.symbol}</span>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                <Card className="bg-surface border-surface-light">
-                  <CardContent className="text-center py-12">
-                    <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
-                    <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
-                    <p className="text-slate-400 mb-4">
-                      Click on any cryptocurrency to view its interactive price chart
-                    </p>
-                    <div className="text-sm text-slate-500">
-                      <p>• Real-time price data analysis</p>
-                      <p>• Multiple timeframe views</p>
-                      <p>• Seamless prediction workflow</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+            )}
             
+            {/* Prediction Form */}
             {showPredictionForm && (
               <div data-prediction-form>
                 <PredictionForm 
@@ -126,10 +86,13 @@ export default function Dashboard() {
                 />
               </div>
             )}
+
+            {/* Active Predictions */}
             <ActivePredictions />
           </div>
           
-          <div className="space-y-6">
+          {/* Right Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
             <TopPredictors />
             <RecentRewards />
           </div>

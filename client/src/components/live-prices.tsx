@@ -26,6 +26,7 @@ function getCryptoColor(id: string): string {
 
 interface LivePricesProps {
   onCryptoSelect?: (crypto: CryptoPrice) => void;
+  onPredictClick?: (cryptoId: string) => void;
 }
 
 export function LivePrices({ onCryptoSelect }: LivePricesProps) {
