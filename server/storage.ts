@@ -55,6 +55,7 @@ export interface IStorage {
 
   // Leaderboard operations
   getTopPredictors(limit?: number): Promise<User[]>;
+  resetLeaderboard(): Promise<void>;
 
   // Withdrawal operations
   createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
@@ -192,6 +193,15 @@ export class DatabaseStorage implements IStorage {
 
   async getTopPredictors(limit: number = 10): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.totalRewards)).limit(limit);
+  }
+
+  async resetLeaderboard(): Promise<void> {
+    // Reset all user statistics to zero
+    await db.update(users).set({
+      totalPredictions: 0,
+      correctPredictions: 0,
+      totalRewards: 0,
+    });
   }
 
   async createWithdrawal(insertWithdrawal: InsertWithdrawal): Promise<Withdrawal> {
@@ -426,6 +436,15 @@ export class MemStorage implements IStorage {
         return accuracyB - accuracyA;
       })
       .slice(0, limit);
+  }
+
+  async resetLeaderboard(): Promise<void> {
+    // Reset all user statistics to zero
+    for (const user of this.users.values()) {
+      user.totalPredictions = 0;
+      user.correctPredictions = 0;
+      user.totalRewards = 0;
+    }
   }
 
   async deleteCryptocurrency(id: string): Promise<void> {

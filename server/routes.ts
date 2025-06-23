@@ -1228,6 +1228,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reset leaderboard statistics
+  app.post("/api/admin/leaderboard/reset", requireAdmin, async (req, res) => {
+    try {
+      await storage.resetLeaderboard();
+      
+      auditLog('admin_leaderboard_reset', { 
+        resetBy: (req as any).session?.userId,
+        timestamp: new Date().toISOString()
+      }, req);
+      
+      res.json({ message: "Leaderboard has been reset successfully" });
+    } catch (error) {
+      console.error("Error resetting leaderboard:", error);
+      res.status(500).json({ message: "Failed to reset leaderboard" });
+    }
+  });
+
   // Check admin status for current user
   app.get("/api/admin/check", async (req, res) => {
     try {

@@ -205,6 +205,32 @@ export default function AdminPanel() {
     },
   });
 
+  const resetLeaderboardMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/admin/leaderboard/reset", {
+        method: "POST",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "Leaderboard has been reset successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset leaderboard",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAddCrypto = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCryptoId.trim()) {
@@ -908,10 +934,59 @@ export default function AdminPanel() {
           <TabsContent value="leaderboard">
             <Card className="bg-surface border-surface-light">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Award className="mr-2" size={20} />
-                  Top Performers
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center">
+                    <Award className="mr-2" size={20} />
+                    Top Performers
+                  </CardTitle>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        <RefreshCw className="mr-2" size={16} />
+                        Reset Leaderboard
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center text-red-600">
+                          <AlertTriangle className="mr-2" size={20} />
+                          Reset Leaderboard
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <AlertDescription className="text-red-700 dark:text-red-300">
+                            <strong>Warning:</strong> This action will reset all user statistics including:
+                            <ul className="list-disc list-inside mt-2 space-y-1">
+                              <li>Total predictions count</li>
+                              <li>Correct predictions count</li>
+                              <li>Total rewards earned</li>
+                              <li>Accuracy percentages</li>
+                            </ul>
+                            This action cannot be undone.
+                          </AlertDescription>
+                        </Alert>
+                        <div className="flex justify-end space-x-2">
+                          <DialogTrigger asChild>
+                            <Button variant="outline">Cancel</Button>
+                          </DialogTrigger>
+                          <Button 
+                            variant="destructive"
+                            onClick={() => resetLeaderboardMutation.mutate()}
+                            disabled={resetLeaderboardMutation.isPending}
+                          >
+                            {resetLeaderboardMutation.isPending ? "Resetting..." : "Reset Leaderboard"}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
