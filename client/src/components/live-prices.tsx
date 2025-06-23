@@ -24,7 +24,11 @@ function getCryptoColor(id: string): string {
   return colors[id] || "bg-gray-500";
 }
 
-export function LivePrices() {
+interface LivePricesProps {
+  onCryptoSelect?: (crypto: CryptoPrice) => void;
+}
+
+export function LivePrices({ onCryptoSelect }: LivePricesProps) {
   const { data: prices = [], isLoading } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 1000, // Refetch every 1 second for real-time updates
@@ -68,7 +72,11 @@ export function LivePrices() {
           const isPositive = crypto.price_change_percentage_24h >= 0;
           
           return (
-            <div key={crypto.id} className="crypto-card flex items-center justify-between p-3 bg-surface-light rounded-lg hover:bg-slate-700">
+            <div 
+              key={crypto.id} 
+              className="crypto-card flex items-center justify-between p-3 bg-surface-light rounded-lg hover:bg-slate-700 cursor-pointer transition-colors"
+              onClick={() => onCryptoSelect?.(crypto)}
+            >
               <div className="flex items-center space-x-3">
                 <div className="relative w-8 h-8 flex-shrink-0">
                   <img 
