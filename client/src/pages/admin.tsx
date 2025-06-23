@@ -394,6 +394,32 @@ export default function AdminPanel() {
     window.URL.revokeObjectURL(url);
   };
 
+  // Export transaction data as CSV
+  const exportTransactionData = () => {
+    const headers = ['Type', 'User', 'UID', 'Amount', 'Token', 'Status', 'Hash', 'Date'];
+    const csvData = [
+      headers.join(','),
+      ...filteredTransactions.map(tx => [
+        tx.type,
+        tx.username || `User ${tx.userId}`,
+        tx.uid || tx.userId,
+        tx.amount,
+        tx.token,
+        tx.status,
+        tx.hash || 'Internal',
+        new Date(tx.timestamp).toISOString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transaction-history-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   // Force complete transaction (for admin use)
   const handleForceComplete = async (transactionId: number, type: 'purchase' | 'withdrawal') => {
     try {
@@ -2455,13 +2481,13 @@ export default function AdminPanel() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                          {purchases.length === 0 ? (
+                          {!Array.isArray(purchases) || purchases.length === 0 ? (
                             <div className="text-center py-4 text-slate-400">
                               <Coins className="mx-auto mb-2" size={24} />
                               <p className="text-sm">No purchases yet</p>
                             </div>
                           ) : (
-                            purchases.slice(0, 5).map((purchase) => (
+                            purchases.slice(0, 5).map((purchase: any) => (
                               <div key={purchase.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
                                 <div className="flex items-center space-x-3">
                                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -2501,13 +2527,13 @@ export default function AdminPanel() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                          {withdrawals.length === 0 ? (
+                          {!Array.isArray(withdrawals) || withdrawals.length === 0 ? (
                             <div className="text-center py-4 text-slate-400">
                               <DollarSign className="mx-auto mb-2" size={24} />
                               <p className="text-sm">No withdrawals yet</p>
                             </div>
                           ) : (
-                            withdrawals.slice(0, 5).map((withdrawal) => (
+                            withdrawals.slice(0, 5).map((withdrawal: any) => (
                               <div key={withdrawal.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
                                 <div className="flex items-center space-x-3">
                                   <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
@@ -2562,7 +2588,7 @@ export default function AdminPanel() {
                         {/* Transaction Type Filter */}
                         <div>
                           <label className="text-sm font-medium text-slate-300 mb-1 block">Jenis Transaksi</label>
-                          <Select value={transactionTypeFilter} onValueChange={setTransactionTypeFilter}>
+                          <Select value={transactionTypeFilter} onValueChange={(value) => setTransactionTypeFilter(value as "all" | "purchase" | "withdrawal")}>
                             <SelectTrigger className="bg-surface border-slate-600">
                               <SelectValue placeholder="Pilih jenis" />
                             </SelectTrigger>
@@ -2577,7 +2603,7 @@ export default function AdminPanel() {
                         {/* Status Filter */}
                         <div>
                           <label className="text-sm font-medium text-slate-300 mb-1 block">Status</label>
-                          <Select value={transactionStatusFilter} onValueChange={setTransactionStatusFilter}>
+                          <Select value={transactionStatusFilter} onValueChange={(value) => setTransactionStatusFilter(value as "all" | "pending" | "completed" | "failed")}>
                             <SelectTrigger className="bg-surface border-slate-600">
                               <SelectValue placeholder="Pilih status" />
                             </SelectTrigger>
@@ -2593,7 +2619,7 @@ export default function AdminPanel() {
                         {/* Token Filter */}
                         <div>
                           <label className="text-sm font-medium text-slate-300 mb-1 block">Token</label>
-                          <Select value={transactionTokenFilter} onValueChange={setTransactionTokenFilter}>
+                          <Select value={transactionTokenFilter} onValueChange={(value) => setTransactionTokenFilter(value as "all" | "ETH" | "USDT" | "USDC")}>
                             <SelectTrigger className="bg-surface border-slate-600">
                               <SelectValue placeholder="Pilih token" />
                             </SelectTrigger>
@@ -2610,7 +2636,7 @@ export default function AdminPanel() {
                         {/* Amount Range Filter */}
                         <div>
                           <label className="text-sm font-medium text-slate-300 mb-1 block">Jumlah NTIQ</label>
-                          <Select value={transactionAmountFilter} onValueChange={setTransactionAmountFilter}>
+                          <Select value={transactionAmountFilter} onValueChange={(value) => setTransactionAmountFilter(value as "all" | "0-1000" | "1000-10000" | "10000-100000" | "100000+")}>
                             <SelectTrigger className="bg-surface border-slate-600">
                               <SelectValue placeholder="Pilih range" />
                             </SelectTrigger>
