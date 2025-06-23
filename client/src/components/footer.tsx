@@ -1,4 +1,5 @@
 import { ChartLine, Github, Twitter, Mail, Shield, FileText, HelpCircle } from "lucide-react";
+import nectiqLogo from "@/assets/nectiq-logo.png";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -10,11 +11,11 @@ export function Footer() {
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-                <ChartLine className="text-white" size={16} />
-              </div>
-              <h3 className="text-xl font-bold">Nectiq</h3>
+              <img src={nectiqLogo} alt="Nectiq" className="h-8" />
             </div>
+            <p className="text-slate-400 mb-2 font-medium">
+              Tactics. Timing. Triumph.
+            </p>
             <p className="text-slate-400 mb-4 max-w-md">
               Advanced cryptocurrency price prediction platform with real-time charts, 
               competitive rewards, and gamified trading experience.
@@ -95,7 +96,7 @@ export function Footer() {
         <div className="border-t border-surface-light mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-slate-400 text-sm mb-4 md:mb-0">
-              © {currentYear} CryptoPredikt. All rights reserved.
+              © {currentYear} Nectiq. All rights reserved.
             </div>
             <div className="flex flex-wrap gap-6 text-sm text-slate-400">
               <span>Tiered Scoring System</span>
