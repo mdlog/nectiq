@@ -47,6 +47,10 @@ export class CryptoService {
             per_page: 20,
             page: 1,
             sparkline: false
+          },
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'Nectiq-Crypto-App/1.0'
           }
         });
 
@@ -137,6 +141,10 @@ export class CryptoService {
         params: {
           ids: coinId,
           vs_currencies: 'usd'
+        },
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'Nectiq-Crypto-App/1.0'
         }
       });
 
