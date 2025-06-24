@@ -1509,6 +1509,7 @@ export default function AdminPanel() {
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary">Leaderboard</TabsTrigger>
             <TabsTrigger value="transactions" className="data-[state=active]:bg-primary">Transactions</TabsTrigger>
             <TabsTrigger value="security" className="data-[state=active]:bg-primary">Security</TabsTrigger>
+            <TabsTrigger value="banners" className="data-[state=active]:bg-primary">📢 Banners</TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:bg-primary">Settings</TabsTrigger>
             <TabsTrigger value="activity" className="data-[state=active]:bg-primary">Activity</TabsTrigger>
           </TabsList>
@@ -3693,7 +3694,16 @@ export default function AdminPanel() {
           </TabsContent>
 
           {/* Banner Management Tab */}
-          <TabsContent value="banners">
+          <TabsContent value="banners" className="space-y-6">
+            <Card className="bg-surface border-surface-light">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Megaphone className="mr-2 text-purple-400" size={20} />
+                  Banner & Advertisement Management
+                </CardTitle>
+                <p className="text-slate-400">Kelola banner promo dan iklan untuk platform Nectiq</p>
+              </CardHeader>
+            </Card>
             <BannerManagement />
           </TabsContent>
 
