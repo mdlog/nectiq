@@ -4052,15 +4052,15 @@ export default function AdminPanel() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
                         <Switch checked={true} />
-                        <span>Session Timeout bisa ditambahkan pengecekan untuk wallet tertentu (misalnya admin utama).</span>
+                        <span className="text-slate-700 dark:text-slate-300">Session Timeout bisa ditambahkan pengecekan untuk wallet tertentu (misalnya admin utama).</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Switch checked={false} />
-                        <span>Tambahkan CAPTCHA atau ubah setting berat (mis. emergency stop).</span>
+                        <span className="text-slate-700 dark:text-slate-300">Tambahkan CAPTCHA atau ubah setting berat (mis. emergency stop).</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Switch checked={true} />
-                        <span>Logika validasi agar Withdrawal Fee tidak bisa diatur ekstrem (&gt;10%).</span>
+                        <span className="text-slate-700 dark:text-slate-300">Logika validasi agar Withdrawal Fee tidak bisa diatur ekstrem (&gt;10%).</span>
                       </div>
                     </div>
                   </div>
@@ -4081,18 +4081,18 @@ export default function AdminPanel() {
                   </p>
                   
                   <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg font-mono text-sm">
-                    <div className="space-y-1">
+                    <div className="space-y-1 text-slate-800 dark:text-slate-200">
                       <div>"Prediction Limit: 20x/hour"</div>
                       <div>"Withdrawal Delay: 4 jam"</div>
                       <div>"Reward Multiplier: 2x"</div>
                     </div>
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600">
                           <Copy className="mr-1" size={12} />
                           Copy
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600">
                           <Edit className="mr-1" size={12} />
                           Edit
                         </Button>
@@ -4100,7 +4100,7 @@ export default function AdminPanel() {
                     </div>
                   </div>
                   
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     Fitur ini bisa otomatis aktif dan setting panel.
                   </p>
                 </CardContent>
