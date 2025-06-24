@@ -202,6 +202,22 @@ export const transactionLogs = pgTable("transaction_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const banners = pgTable("banners", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url").notNull(),
+  linkUrl: text("link_url"),
+  isActive: boolean("is_active").notNull().default(true),
+  position: varchar("position", { length: 20 }).notNull().default("below_live_prices"),
+  priority: integer("priority").notNull().default(0),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdBy: integer("created_by").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   predictions: many(predictions),
@@ -431,3 +447,20 @@ export const insertUserAnalyticsSchema = createInsertSchema(userAnalytics).omit(
 
 export type UserAnalytics = typeof userAnalytics.$inferSelect;
 export type InsertUserAnalytics = z.infer<typeof insertUserAnalyticsSchema>;
+
+// Transaction Log types
+export const insertTransactionLogSchema = createInsertSchema(transactionLogs).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type InsertTransactionLog = z.infer<typeof insertTransactionLogSchema>;
+export type TransactionLog = typeof transactionLogs.$inferSelect;
+
+// Banner types
+export const insertBannerSchema = createInsertSchema(banners).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertBanner = z.infer<typeof insertBannerSchema>;
+export type Banner = typeof banners.$inferSelect;

@@ -3692,6 +3692,11 @@ export default function AdminPanel() {
             </div>
           </TabsContent>
 
+          {/* Banner Management Tab */}
+          <TabsContent value="banners">
+            <BannerManagement />
+          </TabsContent>
+
           {/* Enhanced Settings Tab */}
           <TabsContent value="settings">
             <div className="space-y-6">
