@@ -97,11 +97,33 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
       setSelectedStake(null);
       queryClient.invalidateQueries({ queryKey: ["/api/predictions/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     },
     onError: (error: any) => {
+      console.error("Error creating prediction:", error);
+      
+      // Handle authentication error specifically
+      if (error.message?.includes('401') || error.message?.includes('Authentication required')) {
+        toast({
+          title: "Authentication Required",
+          description: "Please connect your wallet or login to make predictions.",
+          variant: "destructive",
+        });
+        
+        // Close the modal if authentication fails
+        if (onSuccess) {
+          onSuccess();
+        }
+        return;
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to submit prediction",
+        description: error.message || "Failed to submit prediction. Please try again.",
         variant: "destructive",
       });
     },
