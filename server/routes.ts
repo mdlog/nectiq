@@ -1,5 +1,8 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import express from "express";
+import path from "path";
+import fs from "fs";
 import { storage } from "./storage";
 import { cryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
@@ -1267,6 +1270,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Image upload route for banners
+  app.post('/api/admin/upload-banner-image', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const multer = (await import('multer')).default;
+      
+      // Ensure uploads directory exists
+      const uploadsDir = path.join(process.cwd(), 'server', 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Configure multer for file upload
+      const multerStorage = multer.diskStorage({
+        destination: (req: any, file: any, cb: any) => {
+          cb(null, uploadsDir);
+        },
+        filename: (req: any, file: any, cb: any) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+          cb(null, 'banner-' + uniqueSuffix + path.extname(file.originalname));
+        }
+      });
+      
+      const upload = multer({
+        storage: multerStorage,
+        limits: {
+          fileSize: 5 * 1024 * 1024 // 5MB limit
+        },
+        fileFilter: (req: any, file: any, cb: any) => {
+          if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+          } else {
+            cb(new Error('Only image files are allowed'), false);
+          }
+        }
+      });
+      
+      // Handle upload
+      upload.single('image')(req, res, (err: any) => {
+        if (err) {
+          console.error('Upload error:', err);
+          return res.status(400).json({ message: err.message || 'Upload failed' });
+        }
+        
+        if (!req.file) {
+          return res.status(400).json({ message: 'No file uploaded' });
+        }
+        
+        // Return the file URL
+        const imageUrl = `/uploads/${req.file.filename}`;
+        res.json({ imageUrl });
+      });
+      
+    } catch (error) {
+      console.error('Error uploading banner image:', error);
+      res.status(500).json({ message: 'Failed to upload image' });
+    }
+  });
+
   app.get("/api/admin/banners", requireAdmin, async (req, res) => {
     try {
       const banners = await storage.getAllBanners();
@@ -2208,6 +2269,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error in prediction processing background task:", error);
     }
   }, 60000); // Check every minute
+
+  // Static file serving for uploads
+  app.use('/uploads', express.static(path.join(process.cwd(), 'server', 'uploads')));
 
   const httpServer = createServer(app);
   return httpServer;
