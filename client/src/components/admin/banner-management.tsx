@@ -230,11 +230,15 @@ export function BannerManagement() {
       return;
     }
 
+    // Ensure proper date formatting
     const submitData = {
       ...formData,
-      startDate: formData.startDate || null,
-      endDate: formData.endDate || null
+      startDate: formData.startDate && formData.startDate !== "" ? formData.startDate : null,
+      endDate: formData.endDate && formData.endDate !== "" ? formData.endDate : null,
+      priority: parseInt(formData.priority.toString()) || 0
     };
+
+    console.log("Submitting banner data:", submitData);
 
     if (editingBanner) {
       updateBannerMutation.mutate({ id: editingBanner.id, data: submitData });
