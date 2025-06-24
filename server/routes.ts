@@ -1255,6 +1255,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Banner management endpoints
+  app.get("/api/banners", async (req, res) => {
+    try {
+      const { position } = req.query;
+      const banners = await storage.getActiveBanners(position as string);
+      res.json(banners);
+    } catch (error) {
+      console.error("Error fetching banners:", error);
+      res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
+  app.get("/api/admin/banners", requireAdmin, async (req, res) => {
+    try {
+      const banners = await storage.getAllBanners();
+      res.json(banners);
+    } catch (error) {
+      console.error("Error fetching banners:", error);
+      res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
+  app.post("/api/admin/banners", requireAdmin, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const bannerData = {
+        ...req.body,
+        createdBy: userId
+      };
+
+      const banner = await storage.createBanner(bannerData);
+      res.json(banner);
+    } catch (error) {
+      console.error("Error creating banner:", error);
+      res.status(500).json({ message: "Failed to create banner" });
+    }
+  });
+
+  app.put("/api/admin/banners/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.updateBanner(parseInt(id), req.body);
+      res.json({ message: "Banner updated successfully" });
+    } catch (error) {
+      console.error("Error updating banner:", error);
+      res.status(500).json({ message: "Failed to update banner" });
+    }
+  });
+
+  app.delete("/api/admin/banners/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteBanner(parseInt(id));
+      res.json({ message: "Banner deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting banner:", error);
+      res.status(500).json({ message: "Failed to delete banner" });
+    }
+  });
+
   // Admin: Emergency stop
   app.post("/api/admin/emergency-stop", requireAdmin, async (req, res) => {
     try {

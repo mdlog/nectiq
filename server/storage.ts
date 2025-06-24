@@ -1,6 +1,6 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, and, gte, lte, like } from "drizzle-orm";
+import { eq, desc, count, and, gte, lte, like, or, isNull } from "drizzle-orm";
 
 // Generate unique 9-digit UID
 function generateUID(): string {
@@ -463,6 +463,71 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date()
         }
       });
+  }
+
+  async createBanner(bannerData: any): Promise<any> {
+    const [banner] = await db
+      .insert(banners)
+      .values(bannerData)
+      .returning();
+    return banner;
+  }
+
+  async getAllBanners(): Promise<any[]> {
+    return await db
+      .select()
+      .from(banners)
+      .orderBy(desc(banners.priority), desc(banners.createdAt));
+  }
+
+  async getActiveBanners(position?: string): Promise<any[]> {
+    const now = new Date();
+    let query = db
+      .select()
+      .from(banners)
+      .where(
+        and(
+          eq(banners.isActive, true),
+          or(
+            isNull(banners.startDate),
+            lte(banners.startDate, now)
+          ),
+          or(
+            isNull(banners.endDate),
+            gte(banners.endDate, now)
+          )
+        )
+      );
+
+    if (position) {
+      query = query.where(and(
+        eq(banners.isActive, true),
+        eq(banners.position, position),
+        or(
+          isNull(banners.startDate),
+          lte(banners.startDate, now)
+        ),
+        or(
+          isNull(banners.endDate),
+          gte(banners.endDate, now)
+        )
+      ));
+    }
+
+    return await query.orderBy(desc(banners.priority));
+  }
+
+  async updateBanner(id: number, bannerData: any): Promise<void> {
+    await db
+      .update(banners)
+      .set({ ...bannerData, updatedAt: new Date() })
+      .where(eq(banners.id, id));
+  }
+
+  async deleteBanner(id: number): Promise<void> {
+    await db
+      .delete(banners)
+      .where(eq(banners.id, id));
   }
 }
 

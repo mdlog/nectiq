@@ -124,6 +124,7 @@ Changelog:
 - June 24, 2025. Fixed missing cryptocurrency logos in Active Predictions section by implementing CoinGecko image URLs with proper fallback system, added support for all cryptocurrencies (chainlink, polkadot, litecoin, matic-network, hyperliquid), and updated stake display to show NTIQ instead of PTS
 - June 24, 2025. Fixed database configuration for Ubuntu localhost setup by switching from Neon serverless to standard PostgreSQL, added comprehensive Ubuntu setup guide with network troubleshooting for CoinGecko API connection issues
 - June 24, 2025. Resolved ECONNREFUSED 127.0.0.1:1443 error in Ubuntu localhost by fixing axios proxy configuration, adding automated ubuntu-fix.sh script, improving error handling for network issues, and ensuring fallback data system works when CoinGecko API is unreachable
+- June 24, 2025. Implemented comprehensive banner/advertisement management system: added banners table to database schema, created banner management interface in Admin Panel with upload/edit/delete capabilities, added banner display section below Live Prices with dismiss functionality, priority-based ordering, and scheduled banner display with start/end date support
 ```
 
 ## User Preferences
