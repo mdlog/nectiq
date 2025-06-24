@@ -1345,11 +1345,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
+      // Process and validate date fields
+      const processDate = (dateString: string | null | undefined): Date | null => {
+        if (!dateString || dateString === "" || dateString === "null") {
+          return null;
+        }
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? null : date;
+      };
+
       const bannerData = {
-        ...req.body,
+        title: req.body.title,
+        description: req.body.description || null,
+        imageUrl: req.body.imageUrl,
+        linkUrl: req.body.linkUrl || null,
+        isActive: req.body.isActive === true || req.body.isActive === "true",
+        position: req.body.position || "below_live_prices",
+        priority: parseInt(req.body.priority) || 0,
+        startDate: processDate(req.body.startDate),
+        endDate: processDate(req.body.endDate),
         createdBy: userId
       };
 
+      console.log("Creating banner with processed data:", bannerData);
       const banner = await storage.createBanner(bannerData);
       res.json(banner);
     } catch (error) {
@@ -1360,8 +1378,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/banners/:id", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
-      await storage.updateBanner(parseInt(id), req.body);
+      const bannerId = parseInt(req.params.id);
+      
+      // Process and validate date fields
+      const processDate = (dateString: string | null | undefined): Date | null => {
+        if (!dateString || dateString === "" || dateString === "null") {
+          return null;
+        }
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? null : date;
+      };
+
+      const bannerData = {
+        title: req.body.title,
+        description: req.body.description || null,
+        imageUrl: req.body.imageUrl,
+        linkUrl: req.body.linkUrl || null,
+        isActive: req.body.isActive === true || req.body.isActive === "true",
+        position: req.body.position || "below_live_prices",
+        priority: parseInt(req.body.priority) || 0,
+        startDate: processDate(req.body.startDate),
+        endDate: processDate(req.body.endDate),
+      };
+
+      console.log("Updating banner with processed data:", bannerData);
+      await storage.updateBanner(bannerId, bannerData);
       res.json({ message: "Banner updated successfully" });
     } catch (error) {
       console.error("Error updating banner:", error);
