@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 // Simple ERC20 Token without external dependencies
 contract SimpleNTIQ {
