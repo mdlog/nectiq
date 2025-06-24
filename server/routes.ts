@@ -680,8 +680,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { cryptoId } = req.params;
       const { days = "7", type = "line" } = req.query;
 
-      // Validate crypto ID
-      const validCryptos = ["bitcoin", "ethereum", "binancecoin", "cardano", "solana"];
+      // Validate crypto ID dynamically from database
+      const availableCryptos = await storage.getAllCryptocurrencies();
+      const validCryptos = availableCryptos.map(crypto => crypto.id);
       if (!validCryptos.includes(cryptoId)) {
         return res.status(400).json({ message: "Invalid cryptocurrency" });
       }
@@ -747,8 +748,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "All fields are required" });
       }
 
-      // Validate cryptocurrency
-      const validCryptos = ["bitcoin", "ethereum", "binancecoin", "cardano", "solana"];
+      // Validate cryptocurrency dynamically from database
+      const availableCryptos = await storage.getAllCryptocurrencies();
+      const validCryptos = availableCryptos.map(crypto => crypto.id);
       if (!validCryptos.includes(cryptocurrency)) {
         return res.status(400).json({ message: "Invalid cryptocurrency" });
       }
@@ -759,10 +761,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid predicted price range" });
       }
 
-      // Validate stake amount (must be integer between 10-10000)
+      // Validate stake amount (must be integer between 1-10000)
       const numStakeAmount = Number(stakeAmount);
-      if (isNaN(numStakeAmount) || !Number.isInteger(numStakeAmount) || numStakeAmount < 10 || numStakeAmount > 10000) {
-        return res.status(400).json({ message: "Stake amount must be between 10-10000 PTS" });
+      if (isNaN(numStakeAmount) || !Number.isInteger(numStakeAmount) || numStakeAmount < 1 || numStakeAmount > 10000) {
+        return res.status(400).json({ message: "Stake amount must be between 1-10000 NTIQ" });
       }
 
       // Validate timeframe
