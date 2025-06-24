@@ -1503,15 +1503,42 @@ export default function AdminPanel() {
         {/* Detailed Views */}
         <Tabs defaultValue="users" className="space-y-4">
           <TabsList className="bg-surface border border-surface-light flex-wrap h-auto">
-            <TabsTrigger value="users" className="data-[state=active]:bg-primary">Users</TabsTrigger>
-            <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary">Crypto</TabsTrigger>
-            <TabsTrigger value="predictions" className="data-[state=active]:bg-primary">Predictions</TabsTrigger>
-            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary">Leaderboard</TabsTrigger>
-            <TabsTrigger value="transactions" className="data-[state=active]:bg-primary">Transactions</TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-primary">Security</TabsTrigger>
-            <TabsTrigger value="banners" className="data-[state=active]:bg-primary">📢 Banners</TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-primary">Settings</TabsTrigger>
-            <TabsTrigger value="activity" className="data-[state=active]:bg-primary">Activity</TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Coins className="h-4 w-4" />
+              Crypto
+            </TabsTrigger>
+            <TabsTrigger value="predictions" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Predictions
+            </TabsTrigger>
+            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Leaderboard
+            </TabsTrigger>
+            <TabsTrigger value="transactions" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Transactions
+            </TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="banners" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Megaphone className="h-4 w-4" />
+              Banners
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Activity
+            </TabsTrigger>
           </TabsList>
 
           {/* Users Tab - Full CRUD Management */}
