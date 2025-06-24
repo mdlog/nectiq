@@ -16,9 +16,10 @@ interface Banner {
 interface BannerSectionProps {
   position?: string;
   className?: string;
+  userRole?: 'admin' | 'user';
 }
 
-export function BannerSection({ position = "below_live_prices", className = "" }: BannerSectionProps) {
+export function BannerSection({ position = "below_live_prices", className = "", userRole = "user" }: BannerSectionProps) {
   const [dismissedBanners, setDismissedBanners] = useState<number[]>([]);
 
   const { data: banners = [] } = useQuery<Banner[]>({
@@ -52,16 +53,18 @@ export function BannerSection({ position = "below_live_prices", className = "" }
           }`}
           onClick={() => handleBannerClick(banner)}
         >
-          {/* Dismiss Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDismiss(banner.id);
-            }}
-            className="absolute top-2 right-2 z-10 p-1 rounded-full bg-black/20 hover:bg-black/40 text-white/70 hover:text-white transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          {/* Dismiss Button - Only for Admin */}
+          {userRole === 'admin' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDismiss(banner.id);
+              }}
+              className="absolute top-2 right-2 z-10 p-1 rounded-full bg-black/20 hover:bg-black/40 text-white/70 hover:text-white transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
 
           <div className="p-4">
             <div className="flex items-center gap-4">

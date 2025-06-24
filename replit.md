@@ -127,6 +127,7 @@ Changelog:
 - June 24, 2025. Implemented comprehensive banner/advertisement management system: added banners table to database schema, created banner management interface in Admin Panel with upload/edit/delete capabilities, added banner display section below Live Prices with dismiss functionality, priority-based ordering, and scheduled banner display with start/end date support
 - June 24, 2025. Enhanced banner upload system: changed from URL input to direct image upload with file validation (max 5MB, image types only), drag & drop interface, preview functionality, and server-side file handling with multer
 - June 24, 2025. Fixed banner date format validation errors and simplified banner display to show only images without titles for cleaner visual presentation
+- June 24, 2025. Made banner dismiss button (X) visible only to admin users, regular users cannot close banners for better advertisement retention
 ```
 
 ## User Preferences
