@@ -89,7 +89,7 @@ export function Header() {
             <img 
               src={nectiqLogo} 
               alt="Nectiq - Tactics. Timing. Triumph." 
-              className="h-10 rounded-lg p-1" 
+              className="h-12 rounded-lg p-1" 
               style={{ 
                 backgroundColor: 'var(--surface)',
                 filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',

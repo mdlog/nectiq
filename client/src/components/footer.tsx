@@ -14,7 +14,7 @@ export function Footer() {
               <img 
                 src={nectiqLogo} 
                 alt="Nectiq" 
-                className="h-8 rounded-md p-1" 
+                className="h-10 rounded-md p-1" 
                 style={{ 
                   backgroundColor: 'var(--surface)',
                   filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))',
