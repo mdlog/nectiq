@@ -1,4 +1,16 @@
 import axios from 'axios';
+
+// Configure axios defaults for better Ubuntu localhost compatibility
+axios.defaults.timeout = 10000;
+axios.defaults.headers.common['User-Agent'] = 'Nectiq-Crypto-App/1.0';
+
+// Disable proxy for localhost development
+if (process.env.NODE_ENV === 'development') {
+  delete process.env.https_proxy;
+  delete process.env.http_proxy;
+  delete process.env.HTTPS_PROXY;
+  delete process.env.HTTP_PROXY;
+}
 import { storage } from '../storage';
 
 export interface CryptoPrice {
@@ -48,9 +60,17 @@ export class CryptoService {
             page: 1,
             sparkline: false
           },
-          timeout: 10000,
+          timeout: 15000,
           headers: {
-            'User-Agent': 'Nectiq-Crypto-App/1.0'
+            'User-Agent': 'Nectiq-Crypto-App/1.0',
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip, deflate'
+          },
+          // Disable proxy for Ubuntu localhost
+          proxy: false,
+          // Add retry configuration
+          validateStatus: function (status) {
+            return status >= 200 && status < 300;
           }
         });
 
@@ -68,6 +88,9 @@ export class CryptoService {
       } catch (error: any) {
         if (error.response?.status === 429) {
           console.log('⏳ CoinGecko rate limit reached, using cached data');
+        } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+          console.log('🌐 Network connection issue, using fallback data');
+          console.log('Error details:', error.code, error.address, error.port);
         } else {
           console.error('❌ Error fetching crypto prices:', error.message);
         }
