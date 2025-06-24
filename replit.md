@@ -134,6 +134,7 @@ Changelog:
 - June 24, 2025. Fixed prediction form modal implementation: removed inline form to ensure only pop-up modal appears, added authentication checks before opening form, improved error handling for 401 authentication errors
 - June 24, 2025. Fixed FormData cloning error in banner upload system by restructuring file upload mutation to avoid structuredClone issues with browser extensions
 - June 24, 2025. Implemented comprehensive Anti-Multi Wallet Abuse system: device fingerprinting, IP tracking, browser detection, similarity scoring, automatic abuse detection, admin management interface with review and action capabilities
+- June 24, 2025. Created comprehensive smart contract system: PredictionBattle contract with staking mechanism, NTIQ ERC-20 token, PriceOracle for CoinGecko integration, automatic accuracy calculation and reward distribution, configured for Holesky and Sepolia testnet deployment
 ```
 
 ## User Preferences
