@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ExternalLink, Image, Calendar } from "lucide-react";
+import { Plus, Edit, Trash2, ExternalLink, Image, Calendar, Upload, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Banner {
@@ -41,12 +41,43 @@ export function BannerManagement() {
     startDate: "",
     endDate: ""
   });
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: banners = [], isLoading } = useQuery<Banner[]>({
     queryKey: ["/api/admin/banners"],
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('/api/admin/upload-banner-image', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setFormData(prev => ({ ...prev, imageUrl: data.imageUrl }));
+      toast({ title: "Success", description: "Gambar berhasil diupload" });
+      setIsUploading(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Gagal upload gambar", variant: "destructive" });
+      setIsUploading(false);
+    },
   });
 
   const createBannerMutation = useMutation({
@@ -123,6 +154,54 @@ export function BannerManagement() {
       startDate: "",
       endDate: ""
     });
+    setUploadedFile(null);
+    setPreviewUrl("");
+    setIsUploading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({ title: "Error", description: "Pilih file gambar yang valid", variant: "destructive" });
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ title: "Error", description: "Ukuran gambar maksimal 5MB", variant: "destructive" });
+        return;
+      }
+      
+      setUploadedFile(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadImage = () => {
+    if (uploadedFile) {
+      setIsUploading(true);
+      uploadImageMutation.mutate(uploadedFile);
+    }
+  };
+
+  const clearUploadedImage = () => {
+    setUploadedFile(null);
+    setPreviewUrl("");
+    setFormData(prev => ({ ...prev, imageUrl: "" }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleEdit = (banner: Banner) => {
@@ -141,8 +220,13 @@ export function BannerManagement() {
   };
 
   const handleSubmit = () => {
-    if (!formData.title || !formData.imageUrl) {
-      toast({ title: "Error", description: "Title dan Image URL wajib diisi", variant: "destructive" });
+    if (!formData.title) {
+      toast({ title: "Error", description: "Judul banner wajib diisi", variant: "destructive" });
+      return;
+    }
+
+    if (!formData.imageUrl) {
+      toast({ title: "Error", description: "Silakan upload gambar terlebih dahulu", variant: "destructive" });
       return;
     }
 
@@ -231,13 +315,72 @@ export function BannerManagement() {
               </div>
 
               <div>
-                <Label htmlFor="imageUrl">Image URL *</Label>
-                <Input
-                  id="imageUrl"
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                  placeholder="https://example.com/banner.jpg"
-                />
+                <Label htmlFor="image">Upload Gambar Banner *</Label>
+                <div className="space-y-4">
+                  {/* File Upload Area */}
+                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="banner-upload"
+                    />
+                    
+                    {!previewUrl ? (
+                      <div className="space-y-2">
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                        <div>
+                          <label
+                            htmlFor="banner-upload"
+                            className="cursor-pointer text-blue-400 hover:text-blue-300"
+                          >
+                            Klik untuk upload gambar
+                          </label>
+                          <p className="text-sm text-gray-500">atau drag & drop file di sini</p>
+                        </div>
+                        <p className="text-xs text-gray-600">PNG, JPG, JPEG, GIF (Max: 5MB)</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="relative inline-block">
+                          <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="max-w-full max-h-40 rounded-lg"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute -top-2 -right-2"
+                            onClick={clearUploadedImage}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {uploadedFile && !formData.imageUrl && (
+                          <Button
+                            type="button"
+                            onClick={handleUploadImage}
+                            disabled={isUploading}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            {isUploading ? "Uploading..." : "Upload Gambar"}
+                          </Button>
+                        )}
+                        
+                        {formData.imageUrl && (
+                          <div className="text-sm text-green-400">
+                            ✓ Gambar berhasil diupload
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div>
