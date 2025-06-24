@@ -43,9 +43,10 @@ const stakePresets = [50, 100, 250, 500];
 interface PredictionFormProps {
   preSelectedCrypto?: string;
   onClose?: () => void;
+  onSuccess?: () => void;
 }
 
-export function PredictionForm({ preSelectedCrypto, onClose }: PredictionFormProps) {
+export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: PredictionFormProps) {
   const [selectedStake, setSelectedStake] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -151,23 +152,8 @@ export function PredictionForm({ preSelectedCrypto, onClose }: PredictionFormPro
   }
 
   return (
-    <div className="bg-surface rounded-xl p-6 border border-surface-light">
-      <h2 className="text-xl font-bold mb-6 flex items-center justify-between">
-        <div className="flex items-center">
-          <Gem className="text-primary mr-3" size={20} />
-          Make New Prediction
-        </div>
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="text-gray-400 hover:text-white h-8 w-8 p-0"
-          >
-            ×
-          </Button>
-        )}
-      </h2>
+    <div>
+      {/* Remove the header since modal already has it */}
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
