@@ -120,6 +120,8 @@ Changelog:
 - June 23, 2025. Comprehensive Leaderboard "Top Performers" enhancements in Admin Panel: time filters (weekly/monthly/all time), sorting by accuracy/rewards/streak with clickable headers, badge gamification (fire for streaks, star for 90%+ accuracy), visual accuracy meters with color coding, clickable user profiles with tooltips, reward multiplier insights, CSV export functionality, and seasonal competition feature preview with entry fees and reset automation concepts
 - June 23, 2025. Comprehensive Security Dashboard improvements: enhanced statistics with severity levels (critical/high/medium), auto-actions settings for IP blocking and alerts, advanced filtering by severity/wallet/IP/date, comprehensive security events table with bulk operations, export functionality, and visual enhancements with Indonesian language interface
 - June 24, 2025. Fixed color contrast issues in System Settings section of Admin Panel: resolved white text on white background problems in input fields, security settings, exchange rates, prediction limits, "Keamanan Tambahan" section, and "Potensi Baru: Mode Event" section for improved readability
+- June 24, 2025. Fixed prediction submission error "Invalid cryptocurrency" by implementing dynamic validation from database instead of hardcoded list, reduced minimum stake from 10 to 1 NTIQ, and updated error messages to use NTIQ instead of PTS
+- June 24, 2025. Fixed missing cryptocurrency logos in Active Predictions section by implementing CoinGecko image URLs with proper fallback system, added support for all cryptocurrencies (chainlink, polkadot, litecoin, matic-network, hyperliquid), and updated stake display to show NTIQ instead of PTS
 ```
 
 ## User Preferences

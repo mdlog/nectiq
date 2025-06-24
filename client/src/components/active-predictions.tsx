@@ -23,8 +23,13 @@ function getCryptoIcon(crypto: string): string {
     binancecoin: "BNB",
     cardano: "ADA",
     solana: "SOL",
+    chainlink: "LINK",
+    polkadot: "DOT",
+    litecoin: "LTC",
+    "matic-network": "MATIC",
+    hyperliquid: "HYPE",
   };
-  return icons[crypto] || crypto.toUpperCase();
+  return icons[crypto] || crypto.toUpperCase().slice(0, 4);
 }
 
 function getCryptoColor(crypto: string): string {
@@ -34,8 +39,31 @@ function getCryptoColor(crypto: string): string {
     binancecoin: "bg-yellow-500",
     cardano: "bg-blue-600",
     solana: "bg-purple-500",
+    chainlink: "bg-blue-400",
+    polkadot: "bg-pink-500",
+    litecoin: "bg-gray-500",
+    "matic-network": "bg-purple-600",
+    hyperliquid: "bg-green-500",
   };
   return colors[crypto] || "bg-gray-500";
+}
+
+function getCryptoImageUrl(cryptoId: string): string {
+  const imageMapping: Record<string, string> = {
+    bitcoin: "1",
+    ethereum: "279", 
+    binancecoin: "825",
+    cardano: "975",
+    solana: "4128",
+    chainlink: "877",
+    polkadot: "12171",
+    litecoin: "2",
+    "matic-network": "4713",
+    hyperliquid: "31061",
+  };
+  
+  const imageId = imageMapping[cryptoId] || "1";
+  return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${cryptoId}.png`;
 }
 
 function calculateAccuracy(predicted: string, current: string): number {
@@ -130,8 +158,23 @@ export function ActivePredictions() {
             <div key={prediction.id} className="bg-surface-light rounded-lg p-4 border border-slate-600">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 ${getCryptoColor(prediction.cryptocurrency)} rounded-full flex items-center justify-center text-white text-sm font-bold`}>
-                    {getCryptoIcon(prediction.cryptocurrency)}
+                  <div className="relative w-8 h-8 flex-shrink-0">
+                    <img 
+                      src={getCryptoImageUrl(prediction.cryptocurrency)}
+                      alt={prediction.cryptocurrency}
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) {
+                          target.style.display = 'none';
+                          fallback.style.display = 'flex';
+                        }
+                      }}
+                    />
+                    <div className={`w-8 h-8 ${getCryptoColor(prediction.cryptocurrency)} rounded-full hidden items-center justify-center text-white text-sm font-bold`}>
+                      {getCryptoIcon(prediction.cryptocurrency)}
+                    </div>
                   </div>
                   <div>
                     <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
@@ -158,7 +201,7 @@ export function ActivePredictions() {
                     {prediction.timeframe} Prediction
                   </span>
                   <span className="text-xs text-slate-400">
-                    Stake: {prediction.stakeAmount} PTS
+                    Stake: {prediction.stakeAmount} NTIQ
                   </span>
                 </div>
                 <div className="flex items-center space-x-1">
