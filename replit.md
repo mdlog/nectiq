@@ -130,6 +130,7 @@ Changelog:
 - June 24, 2025. Made banner dismiss button (X) visible only to admin users, regular users cannot close banners for better advertisement retention
 - June 24, 2025. Added icons to all Admin Panel menu tabs: Target icon for Predictions, Trophy icon for Top Performers, reorganized tab layout to include Banner tab with Megaphone icon
 - June 24, 2025. Increased Nectiq logo size by 20% in header (h-10 to h-12) and footer (h-8 to h-10) for better visibility and brand presence
+- June 24, 2025. Enhanced prediction form modal with improved styling: added backdrop blur, enhanced shadow effects, better close button styling, and improved visual hierarchy for pop-up form experience
 ```
 
 ## User Preferences
