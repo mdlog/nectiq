@@ -86,6 +86,13 @@ export interface IStorage {
   // System settings operations
   getSystemSettings(): Promise<any>;
   updateSystemSetting(category: string, key: string, value: any, adminId: number): Promise<void>;
+
+  // Banner operations
+  createBanner(banner: any): Promise<any>;
+  getAllBanners(): Promise<any[]>;
+  getActiveBanners(position?: string): Promise<any[]>;
+  updateBanner(id: number, banner: any): Promise<void>;
+  deleteBanner(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {

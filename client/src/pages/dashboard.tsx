@@ -6,6 +6,7 @@ import { ActivePredictions } from "@/components/active-predictions";
 import { LivePrices } from "@/components/live-prices";
 import { TopPredictors } from "@/components/top-predictors";
 import { RecentRewards } from "@/components/recent-rewards";
+import { BannerSection } from "@/components/banner-section";
 import { RulesSection } from "@/components/rules-section";
 import CryptoChart from "@/components/crypto-chart";
 import { useState, useEffect } from "react";
@@ -69,11 +70,14 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar - Live Prices */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
             <LivePrices 
               onCryptoSelect={handleCryptoSelect}
               onPredictClick={handlePredictClick}
             />
+            
+            {/* Banner Section - Below Live Prices */}
+            <BannerSection position="below_live_prices" />
           </div>
 
           {/* Main Content - Center */}
