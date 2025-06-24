@@ -65,36 +65,19 @@ export function BannerSection({ position = "below_live_prices", className = "" }
 
           <div className="p-4">
             <div className="flex items-center gap-4">
-              {/* Banner Image */}
+              {/* Banner Image Only */}
               {banner.imageUrl && (
-                <div className="flex-shrink-0">
+                <div className="w-full">
                   <img
                     src={banner.imageUrl}
-                    alt={banner.title}
-                    className="w-16 h-16 object-cover rounded-lg border border-purple-500/20"
+                    alt="Banner"
+                    className="w-full h-auto object-cover rounded-lg"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
                 </div>
               )}
-
-              {/* Banner Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-white truncate">
-                    {banner.title}
-                  </h3>
-                  {banner.linkUrl && (
-                    <ExternalLink className="h-4 w-4 text-purple-400 flex-shrink-0" />
-                  )}
-                </div>
-                {banner.description && (
-                  <p className="text-sm text-gray-300 mt-1 line-clamp-2">
-                    {banner.description}
-                  </p>
-                )}
-              </div>
             </div>
           </div>
 

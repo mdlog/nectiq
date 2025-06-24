@@ -126,6 +126,7 @@ Changelog:
 - June 24, 2025. Resolved ECONNREFUSED 127.0.0.1:1443 error in Ubuntu localhost by fixing axios proxy configuration, adding automated ubuntu-fix.sh script, improving error handling for network issues, and ensuring fallback data system works when CoinGecko API is unreachable
 - June 24, 2025. Implemented comprehensive banner/advertisement management system: added banners table to database schema, created banner management interface in Admin Panel with upload/edit/delete capabilities, added banner display section below Live Prices with dismiss functionality, priority-based ordering, and scheduled banner display with start/end date support
 - June 24, 2025. Enhanced banner upload system: changed from URL input to direct image upload with file validation (max 5MB, image types only), drag & drop interface, preview functionality, and server-side file handling with multer
+- June 24, 2025. Fixed banner date format validation errors and simplified banner display to show only images without titles for cleaner visual presentation
 ```
 
 ## User Preferences
