@@ -66,6 +66,7 @@ export default function AdminPanel() {
   // Debug effect to track selectedUsers changes
   useEffect(() => {
     console.log("selectedUsers changed:", selectedUsers);
+    console.log("Bulk actions should show:", selectedUsers.length > 0);
   }, [selectedUsers]);
   
   // Search state
@@ -1659,9 +1660,9 @@ export default function AdminPanel() {
                       
                       {/* Bulk Actions */}
                       {selectedUsers.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            {selectedUsers.length} selected
+                        <div className="flex items-center gap-2 bg-red-50 p-2 rounded border border-red-200">
+                          <span className="text-sm font-medium text-red-700">
+                            {selectedUsers.length} user(s) selected
                           </span>
                           <Button
                             variant="destructive"
@@ -1669,14 +1670,24 @@ export default function AdminPanel() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log("Delete Selected clicked with users:", selectedUsers);
+                              console.log("🚨 DELETE BUTTON CLICKED!");
+                              console.log("Selected users:", selectedUsers);
+                              console.log("Button event:", e);
+                              alert(`About to delete ${selectedUsers.length} users. Check console for details.`);
                               handleBulkDelete();
                             }}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            className="bg-red-600 hover:bg-red-700 text-white font-medium"
                           >
                             <Trash2 className="mr-1" size={14} />
                             Delete Selected
                           </Button>
+                        </div>
+                      )}
+                      
+                      {/* Debug info */}
+                      {process.env.NODE_ENV === 'development' && (
+                        <div className="text-xs text-gray-500 mt-2">
+                          Selected: [{selectedUsers.join(', ')}] | Show bulk: {selectedUsers.length > 0 ? 'YES' : 'NO'}
                         </div>
                       )}
                       
@@ -1815,17 +1826,17 @@ export default function AdminPanel() {
                               <Checkbox
                                 checked={selectedUsers.includes(user.id)}
                                 onCheckedChange={(checked: boolean) => {
-                                  console.log(`User ${user.id} checkbox changed:`, checked);
+                                  console.log(`✅ User ${user.id} (${user.username}) checkbox changed:`, checked);
                                   if (checked) {
                                     setSelectedUsers(prev => {
                                       const newSelection = [...prev, user.id];
-                                      console.log("New selection:", newSelection);
+                                      console.log("✅ Adding to selection:", newSelection);
                                       return newSelection;
                                     });
                                   } else {
                                     setSelectedUsers(prev => {
                                       const newSelection = prev.filter(id => id !== user.id);
-                                      console.log("New selection:", newSelection);
+                                      console.log("❌ Removing from selection:", newSelection);
                                       return newSelection;
                                     });
                                   }
