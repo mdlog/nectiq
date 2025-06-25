@@ -13,7 +13,7 @@ interface WalletSecurityCheck {
 }
 
 export class WalletSecurityService {
-  // Generate device fingerprint untuk deteksi multi-wallet
+  // Generate device fingerprint for monitoring
   static generateDeviceFingerprint(req: Request, clientData?: any): string {
     const components = [
       req.ip || req.connection.remoteAddress || '',
@@ -30,7 +30,7 @@ export class WalletSecurityService {
       .substring(0, 16);
   }
 
-  // Validasi wallet login dengan deteksi multi-wallet abuse
+  // Simplified wallet login validation - always allow but monitor
   static async validateWalletLogin(walletAddress: string, req: Request): Promise<WalletSecurityCheck> {
     try {
       const deviceFingerprint = this.generateDeviceFingerprint(req);

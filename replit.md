@@ -174,6 +174,7 @@ Changelog:
 - June 26, 2025. Completed comprehensive database cleanup: deleted all users including Admin ID 5, removed all related data (predictions, rewards, security events, admin logs, etc.), handled foreign key constraints properly, database now has 0 users and is ready for fresh start
 - June 26, 2025. Updated User Management display in Admin Panel: changed user information from showing "ID: {user.id}" to "UID: {user.uid}" for better user identification consistency with UID column display
 - June 26, 2025. Implemented comprehensive Anti-Multi Wallet Abuse Security System: device fingerprinting with IP tracking, browser detection, hardware analysis; automatic abuse detection with confidence scoring (90%+ blocks login, 70-89% flags for review); integrated into wallet login flow with WalletSecurityService; database tables for wallet fingerprints and abuse detections; admin API endpoints for reviewing and managing detected abuse cases; comprehensive security documentation in SECURITY_GUIDE.md with implementation details, monitoring strategies, and user appeal processes
+- June 26, 2025. Fixed wallet authentication blocking issue: modified security system to be non-blocking for legitimate users while maintaining monitoring capabilities; resolved "Authentication failed" error that prevented users from logging in with their wallets; security system now records activity for monitoring without blocking authentication; users can successfully connect wallets and access the platform
 ```
 
 ## User Preferences
