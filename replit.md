@@ -156,6 +156,7 @@ Changelog:
 - June 26, 2025. Enhanced Leaderboard with search functionality: search by username with real-time filtering, pagination works with search results, search result count display, improved UI with search icon and placeholder text, empty state messages for both no data and no search results
 - June 26, 2025. Implemented comprehensive real-time transaction tracking system using WebSocket: live updates for buy NTIQ transactions, withdrawal transactions, and new predictions in Admin Panel without page reload, real-time status indicators (LIVE/OFFLINE), toast notifications for new activities, automatic data refresh via query invalidation, WebSocket connection management with auto-reconnect functionality
 - June 26, 2025. Fixed Delete Selected button functionality in Admin Panel Users management: resolved non-responsive button issue through comprehensive debugging, enhanced confirmation dialog with user names and clear warnings, improved error handling for bulk deletion operations, added extensive console logging for troubleshooting
+- June 26, 2025. Fixed admin wallet authentication toast notification showing "Welcome undefined": corrected username handling for admin users, added fallback username generation, updated database to ensure admin users have proper usernames
 ```
 
 ## User Preferences

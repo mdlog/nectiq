@@ -69,9 +69,10 @@ export function SimpleAdminAuth({ onAuthSuccess }: SimpleAdminAuthProps) {
 
       if (response.ok && result.success) {
         if (result.user?.isAdmin) {
+          const adminName = result.user.username || `Admin_${walletAddress.slice(-6)}`;
           toast({
-            title: "Access Granted",
-            description: `Welcome Admin ${result.user.username}`,
+            title: "Authentication Successful",
+            description: `Welcome ${adminName}! You are now logged in.`,
           });
           onAuthSuccess();
         } else {

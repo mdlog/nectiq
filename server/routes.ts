@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true, 
         user: {
           id: user.id,
-          username: user.username,
+          username: user.username || `Admin_${finalAddress.slice(-6)}`,
           walletAddress: user.walletAddress,
           balance: user.balance,
           isAdmin: user.isAdmin
