@@ -21,6 +21,7 @@ interface LeaderboardUser {
   points: number;
   weeklyPoints?: number;
   monthlyPoints?: number;
+  profilePhoto?: string | null;
 }
 
 type FilterType = 'weekly' | 'monthly' | 'alltime';
@@ -284,6 +285,21 @@ export default function Leaderboard() {
                         {/* Rank */}
                         <div className="flex items-center justify-center w-10 h-10">
                           {getRankIcon(actualRank)}
+                        </div>
+
+                        {/* Profile Photo */}
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/20">
+                          {user.profilePhoto ? (
+                            <img
+                              src={user.profilePhoto}
+                              alt={`${user.username}'s profile`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                              {user.username.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                         </div>
 
                         {/* User Info */}
