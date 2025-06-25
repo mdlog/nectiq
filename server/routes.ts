@@ -195,22 +195,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing wallet address" });
       }
 
-      // Import WalletSecurityService
-      const { WalletSecurityService } = await import('./walletSecurity');
-      
-      // Perform security check before login
-      const securityCheck = await WalletSecurityService.validateWalletLogin(finalAddress, req);
-      
-      if (!securityCheck.success) {
-        console.log('Security check failed:', securityCheck.message);
-        return res.status(403).json({ 
-          message: securityCheck.message,
-          securityBlock: true 
-        });
-      }
+      // Import WalletSecurityService for monitoring (non-blocking)
+      try {
+        const { WalletSecurityService } = await import('./walletSecurity');
+        
+        // Perform security check for monitoring only - don't block login
+        const securityCheck = await WalletSecurityService.validateWalletLogin(finalAddress, req);
+        
+        if (!securityCheck.success) {
+          console.log('Security warning (non-blocking):', securityCheck.message);
+        }
 
-      if (securityCheck.requiresReview) {
-        console.log('Security warning:', securityCheck.message);
+        if (securityCheck.requiresReview) {
+          console.log('Security note:', securityCheck.message);
+        }
+      } catch (securityError) {
+        console.log('Security service unavailable, proceeding with login:', securityError);
       }
 
       // Check if user exists, if not create one
