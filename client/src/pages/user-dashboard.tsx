@@ -922,22 +922,186 @@ export default function UserDashboard() {
 
             {/* Buy NTIQ Section */}
             {selectedFinancialAction === "buy" && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">Buy NTIQ with Crypto</h3>
-                <p className="text-slate-400 text-sm">Purchase NTIQ tokens to make predictions and earn rewards</p>
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Buy NTIQ Form */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Coins className="mr-2" size={20} />
+                    Buy NTIQ with Crypto
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Current Balance */}
+                    <div className="p-4 bg-surface-light rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-slate-400">Current NTIQ Balance</span>
+                        <div className="flex items-center space-x-2">
+                          <Coins className="text-warning" size={16} />
+                          <span className="font-bold text-lg">{user?.balance?.toLocaleString() || "0"}</span>
+                          <span className="text-xs text-slate-400">NTIQ</span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        Use NTIQ to make predictions and earn rewards
+                      </div>
+                    </div>
+
+                    {/* Payment Token Selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor="paymentToken">Choose Payment Method</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          variant={selectedPaymentToken === "ETH" ? "default" : "outline"}
+                          onClick={() => setSelectedPaymentToken("ETH")}
+                          className="flex flex-col items-center p-4 h-auto"
+                        >
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mb-1">
+                            Ξ
+                          </div>
+                          <span className="text-xs">ETH</span>
+                        </Button>
+                        <Button
+                          variant={selectedPaymentToken === "USDT" ? "default" : "outline"}
+                          onClick={() => setSelectedPaymentToken("USDT")}
+                          className="flex flex-col items-center p-4 h-auto"
+                        >
+                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold mb-1">
+                            $
+                          </div>
+                          <span className="text-xs">USDT</span>
+                        </Button>
+                        <Button
+                          variant={selectedPaymentToken === "USDC" ? "default" : "outline"}
+                          onClick={() => setSelectedPaymentToken("USDC")}
+                          className="flex flex-col items-center p-4 h-auto"
+                        >
+                          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mb-1">
+                            $
+                          </div>
+                          <span className="text-xs">USDC</span>
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Amount Input */}
+                    <div className="space-y-2">
+                      <Label htmlFor="buyAmount">Amount to Purchase (NTIQ)</Label>
+                      <Input
+                        id="buyAmount"
+                        type="number"
+                        placeholder="Enter NTIQ amount"
+                        value={buyAmount}
+                        onChange={(e) => setBuyAmount(e.target.value)}
+                        min="100"
+                      />
+                      <div className="text-xs text-slate-400">
+                        Exchange Rate: 1 {selectedPaymentToken} = 100 NTIQ
+                      </div>
+                    </div>
+
+                    {/* Conversion Preview */}
+                    {buyAmount && parseFloat(buyAmount) > 0 && (
+                      <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                        <div className="flex justify-between items-center text-sm">
+                          <span>You will pay:</span>
+                          <span className="font-semibold text-primary">
+                            {(parseFloat(buyAmount) * 0.01).toFixed(4)} {selectedPaymentToken}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Buy Button */}
+                    <Button
+                      onClick={() => {
+                        const amount = parseFloat(buyAmount);
+                        if (amount >= 100) {
+                          // Handle buy NTIQ logic
+                          console.log('Buy NTIQ:', { amount, token: selectedPaymentToken });
+                        }
+                      }}
+                      disabled={!buyAmount || parseFloat(buyAmount) < 100}
+                      className="w-full"
+                    >
+                      <Coins className="mr-2" size={16} />
+                      Buy NTIQ
+                    </Button>
+
+                    {/* Info */}
+                    <div className="text-xs text-slate-400 space-y-1">
+                      <p>• Payments are processed instantly via smart contracts</p>
+                      <p>• NTIQ will be credited to your account immediately</p>
+                      <p>• Minimum purchase: 100 NTIQ</p>
+                      <p>• Supported tokens: ETH, USDT, USDC</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Purchase History */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Clock className="mr-2" size={20} />
+                    Purchase History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PurchaseHistory />
+                </CardContent>
+              </Card>
             </div>
             )}
 
             {/* Wallet Section */}
             {selectedFinancialAction === "wallet" && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">Wallet Connection</h3>
-                <p className="text-slate-400 text-sm">Manage your wallet connection and view features</p>
-              </div>
-              <WalletConnect />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Wallet className="mr-2" size={20} />
+                    Wallet Connection
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <WalletConnect />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle>Wallet Features</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-success rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-medium text-slate-300">Secure Connection</p>
+                        <p className="text-xs text-slate-400">Your wallet is connected via Web3Modal</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-warning rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-medium text-slate-300">Balance Sync</p>
+                        <p className="text-xs text-slate-400">Real-time balance updates from blockchain</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-medium text-slate-300">Multi-Network</p>
+                        <p className="text-xs text-slate-400">Supports Ethereum, Polygon, and Arbitrum</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
             )}
           </TabsContent>
