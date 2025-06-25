@@ -21,6 +21,7 @@ import type { LeaderboardEntry } from "@/types";
 import { SimpleAdminAuth } from "@/components/simple-admin-auth";
 import { BannerManagement } from "@/components/admin/banner-management";
 import { UserStatistics } from "@/components/admin/user-statistics";
+import { useAdminWebSocket } from "@/hooks/useAdminWebSocket";
 
 interface AdminStats {
   totalUsers: number;
@@ -136,6 +137,9 @@ export default function AdminPanel() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Real-time WebSocket connection for transaction updates
+  const { isConnected: wsConnected, lastTransaction } = useAdminWebSocket();
 
   const { data: stats, error: statsError, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
@@ -2669,16 +2673,29 @@ export default function AdminPanel() {
                     <CardTitle className="flex items-center">
                       <DollarSign className="mr-2" size={20} />
                       Transaction Monitoring
+                      <div className={`ml-3 flex items-center px-2 py-1 rounded-full text-xs ${
+                        wsConnected ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full mr-1 ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        {wsConnected ? 'LIVE' : 'OFFLINE'}
+                      </div>
                     </CardTitle>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleExportTransactions}
-                      className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"
-                    >
-                      <Download className="mr-2" size={16} />
-                      Export CSV
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {lastTransaction && (
+                        <div className="text-xs text-slate-500 mr-2">
+                          Last: {lastTransaction.user.username} - {lastTransaction.type}
+                        </div>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportTransactions}
+                        className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"
+                      >
+                        <Download className="mr-2" size={16} />
+                        Export CSV
+                      </Button>
+                    </div>
                   </div>
                   
                   {/* Enhanced Filters and Controls */}

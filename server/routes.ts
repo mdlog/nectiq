@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import express from "express";
 import path from "path";
 import fs from "fs";
@@ -13,6 +14,19 @@ import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
 import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } from "./routes/userStats";
+
+// Real-time transaction tracking with WebSocket
+let wss: WebSocketServer;
+const adminClients = new Set<WebSocket>();
+
+function broadcastToAdmins(data: any) {
+  const message = JSON.stringify(data);
+  adminClients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
 
 // Security audit logging
 const auditLog = (event: string, details: any, req: Request) => {
@@ -495,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tokenAmount = numAmount * 0.01;
 
       // Create withdrawal record
-      await storage.createWithdrawal({
+      const withdrawal = await storage.createWithdrawal({
         userId,
         ptsAmount: numAmount,
         tokenAmount: tokenAmount.toFixed(2),
@@ -507,6 +521,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Deduct PTS from user balance atomically
       const newBalance = user.balance - numAmount;
       await storage.updateUserBalance(userId, newBalance);
+
+      // Real-time notification to admin panel
+      broadcastToAdmins({
+        type: 'transaction_update',
+        data: {
+          type: 'withdrawal',
+          user: {
+            id: userId,
+            username: user.username,
+            uid: user.uid,
+            walletAddress: user.walletAddress
+          },
+          amount: numAmount,
+          token,
+          tokenAmount: tokenAmount.toFixed(2),
+          status: 'completed',
+          timestamp: new Date().toISOString()
+        }
+      });
 
       // In a real implementation, here you would:
       // 1. Call blockchain API to send USDT/USDC to user's wallet
@@ -2415,6 +2448,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     return [headers, ...rows].join("\n");
   }
+
+  // Setup WebSocket server for real-time admin notifications
+  wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  wss.on('connection', (ws, req) => {
+    console.log('WebSocket connection established');
+    
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // Register admin clients for real-time updates
+        if (data.type === 'admin_register') {
+          adminClients.add(ws);
+          console.log('Admin client registered for real-time updates');
+          ws.send(JSON.stringify({ type: 'registered', message: 'Successfully registered for admin updates' }));
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+    
+    ws.on('close', () => {
+      adminClients.delete(ws);
+      console.log('Admin client disconnected');
+    });
+    
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      adminClients.delete(ws);
+    });
+  });
 
   return httpServer;
 }
