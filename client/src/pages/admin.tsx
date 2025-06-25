@@ -19,6 +19,7 @@ import type { User, Prediction, Reward, Cryptocurrency } from "@shared/schema";
 import type { LeaderboardEntry } from "@/types";
 import { SimpleAdminAuth } from "@/components/simple-admin-auth";
 import { BannerManagement } from "@/components/admin/banner-management";
+import { UserStatistics } from "@/components/admin/user-statistics";
 
 interface AdminStats {
   totalUsers: number;
@@ -1501,8 +1502,12 @@ export default function AdminPanel() {
         </div>
 
         {/* Detailed Views */}
-        <Tabs defaultValue="users" className="space-y-4">
+        <Tabs defaultValue="statistics" className="space-y-4">
           <TabsList className="bg-surface border border-surface-light flex-wrap h-auto">
+            <TabsTrigger value="statistics" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Statistik
+            </TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-primary flex items-center gap-2">
               <Users className="h-4 w-4" />
               Users
