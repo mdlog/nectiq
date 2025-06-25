@@ -127,8 +127,8 @@ export function Achievements() {
             <div className="flex items-center space-x-3">
               <Coins className="w-8 h-8 text-green-500" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">NTIQ Earned</p>
-                <p className="text-2xl font-bold">{totalRewards.toLocaleString()}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Rewards</p>
+                <p className="text-2xl font-bold">{totalRewards.toLocaleString()} NTIQ</p>
               </div>
             </div>
           </CardContent>
@@ -149,7 +149,7 @@ export function Achievements() {
                       <span className="text-lg">{userAchievement.achievement.icon}</span>
                     </div>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      +{userAchievement.achievement.reward} PTS
+                      +{userAchievement.achievement.reward} NTIQ
                     </Badge>
                   </div>
                   <CardTitle className="text-lg">{userAchievement.achievement.name}</CardTitle>
@@ -185,7 +185,7 @@ export function Achievements() {
                       <span className="text-lg">{userAchievement.achievement.icon}</span>
                     </div>
                     <Badge variant="outline">
-                      +{userAchievement.achievement.reward} PTS
+                      +{userAchievement.achievement.reward} NTIQ
                     </Badge>
                   </div>
                   <CardTitle className="text-lg">{userAchievement.achievement.name}</CardTitle>
@@ -230,7 +230,7 @@ export function Achievements() {
                       <span className="text-lg grayscale">{achievement.icon}</span>
                     </div>
                     <Badge variant="outline">
-                      +{achievement.reward} PTS
+                      +{achievement.reward} NTIQ
                     </Badge>
                   </div>
                   <CardTitle className="text-lg">{achievement.name}</CardTitle>
