@@ -12,8 +12,8 @@ import {
   DollarSign, CreditCard, Wallet, TrendingUp, TrendingDown, 
   UserCircle, Upload, RefreshCw
 } from "lucide-react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/header";
+import { Footer } from "@/components/footer";
 import { Achievements } from "@/components/achievements";
 
 // Define types for data structures
@@ -883,7 +883,40 @@ export default function UserDashboard() {
             </TabsList>
 
             <TabsContent value="profile">
-              <UserProfile />
+              <div className="space-y-6">
+                <Card className="bg-surface border-surface-light">
+                  <CardContent className="p-6">
+                    <div className="flex items-center space-x-4 mb-6">
+                      <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                        <UserCircle className="text-white" size={32} />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-white">User Profile</h2>
+                        <p className="text-slate-400">Active Member</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-surface-light rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-primary">1000</div>
+                        <div className="text-sm text-slate-400">NTIQ Balance</div>
+                      </div>
+                      <div className="bg-surface-light rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-green-400">5</div>
+                        <div className="text-sm text-slate-400">Total Predictions</div>
+                      </div>
+                      <div className="bg-surface-light rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-blue-400">80%</div>
+                        <div className="text-sm text-slate-400">Accuracy Rate</div>
+                      </div>
+                      <div className="bg-surface-light rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-purple-400">250</div>
+                        <div className="text-sm text-slate-400">Total Rewards</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
             
             <TabsContent value="predictions">
