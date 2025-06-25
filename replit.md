@@ -166,6 +166,7 @@ Changelog:
 - June 26, 2025. Fixed profile photo display in Leaderboard: added profilePhoto field to database query, updated API response to include profile photo URLs, fixed database records for users with uploaded photos
 - June 26, 2025. Updated How to Play page Reward System section: renamed to "How It Works" with 3-step process visualization (Choose & Predict, Wait & Track, Earn Rewards), maintained detailed accuracy multipliers and calculation formulas for consistency with user workflow understanding
 - June 26, 2025. Redesigned How It Works section to match user's design reference: created compact card layout with integrated reward multipliers display (Perfect ±0.1% 5x, Great ±1% 3x, Good ±5% 1.5x), simplified layout with horizontal reward indicators, updated stake range to 1-500 NTIQ
+- June 26, 2025. Added comprehensive Calculation Formula section to How to Play page: detailed accuracy calculation formula with mathematical examples (|Predicted Price - Actual Price| / Actual Price × 100%), final reward calculation breakdown with timeframe and accuracy multipliers, maximum reward scenarios, and practical examples for perfect and great predictions
 ```
 
 ## User Preferences

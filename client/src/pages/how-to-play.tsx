@@ -292,6 +292,98 @@ export default function HowToPlay() {
           </Card>
         </section>
 
+        {/* Calculation Formula */}
+        <section>
+          <Card className="bg-surface border-surface-light">
+            <CardHeader>
+              <CardTitle className="flex items-center text-center justify-center">
+                <Zap className="mr-2 h-6 w-6 text-blue-500" />
+                Calculation Formula
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Accuracy Calculation */}
+              <div className="bg-surface-light p-6 rounded-lg">
+                <h4 className="font-semibold text-lg mb-4 text-center">How Accuracy is Calculated</h4>
+                <div className="space-y-4">
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                    <div className="text-center mb-3">
+                      <div className="text-sm text-muted-foreground mb-2">Accuracy Formula:</div>
+                      <div className="font-mono text-lg">
+                        |Predicted Price - Actual Price| / Actual Price × 100%
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                      <h5 className="font-semibold text-green-500 mb-2">Example: Perfect Prediction</h5>
+                      <div className="text-sm space-y-1">
+                        <div>Predicted: $50,000</div>
+                        <div>Actual: $50,050</div>
+                        <div className="font-mono">|50,000 - 50,050| / 50,050 × 100% = 0.1%</div>
+                        <div className="text-green-500 font-bold">Result: 5x Multiplier</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                      <h5 className="font-semibold text-yellow-500 mb-2">Example: Great Prediction</h5>
+                      <div className="text-sm space-y-1">
+                        <div>Predicted: $50,000</div>
+                        <div>Actual: $50,500</div>
+                        <div className="font-mono">|50,000 - 50,500| / 50,500 × 100% = 0.99%</div>
+                        <div className="text-yellow-500 font-bold">Result: 3x Multiplier</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Final Reward Calculation */}
+              <div className="bg-surface-light p-6 rounded-lg">
+                <h4 className="font-semibold text-lg mb-4 text-center">Final Reward Calculation</h4>
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                  <div className="text-center mb-4">
+                    <div className="text-sm text-muted-foreground mb-2">Final Reward Formula:</div>
+                    <div className="font-mono text-xl">
+                      Stake × Timeframe Multiplier × Accuracy Multiplier
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-3 gap-4 text-sm">
+                    <div className="text-center">
+                      <div className="text-muted-foreground">Timeframe Multipliers:</div>
+                      <div className="space-y-1 mt-2">
+                        <div>1 Hour: 1.5x</div>
+                        <div>6 Hours: 2x</div>
+                        <div>24 Hours: 3x</div>
+                        <div>7 Days: 5x</div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-muted-foreground">Accuracy Multipliers:</div>
+                      <div className="space-y-1 mt-2">
+                        <div>±0.1%: 5x</div>
+                        <div>±1%: 3x</div>
+                        <div>±5%: 1.5x</div>
+                        <div>&gt;5%: 0x</div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-muted-foreground">Maximum Possible:</div>
+                      <div className="space-y-1 mt-2">
+                        <div className="text-green-500 font-bold">500 NTIQ × 5x × 5x</div>
+                        <div className="text-green-500 font-bold">= 12,500 NTIQ</div>
+                        <div className="text-xs text-muted-foreground">(7-day perfect prediction)</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* Tips & Strategies */}
         <section>
           <h2 className="text-3xl font-bold mb-6 text-center">Tips & Strategies</h2>
