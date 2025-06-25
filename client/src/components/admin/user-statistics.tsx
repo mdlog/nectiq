@@ -289,7 +289,7 @@ export function UserStatistics() {
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Rich Users (>1000 NTIQ)</span>
+                  <span className="text-sm">Rich Users (&gt;1000 NTIQ)</span>
                   <Badge variant="outline">{formatNumber(stats.userSegments.richUsers)}</Badge>
                 </div>
               </CardContent>

@@ -1546,6 +1546,11 @@ export default function AdminPanel() {
             </TabsTrigger>
           </TabsList>
 
+          {/* Statistics Tab - User Analytics Dashboard */}
+          <TabsContent value="statistics" className="space-y-6">
+            <UserStatistics />
+          </TabsContent>
+
           {/* Users Tab - Full CRUD Management */}
           <TabsContent value="users">
             <div className="space-y-6">
