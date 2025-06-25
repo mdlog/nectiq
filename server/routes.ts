@@ -858,14 +858,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: "buy",
         amount,
+        token: "NTIQ",
         status: "completed",
         description: `Purchased ${amount} NTIQ tokens`
       });
 
+      console.log(`User ${userId} successfully purchased ${amount} NTIQ. New balance: ${newBalance}`);
+
       res.json({ 
         success: true, 
         message: `Successfully purchased ${amount} NTIQ`,
-        newBalance 
+        newBalance,
+        previousBalance: user.balance,
+        purchasedAmount: amount
       });
     } catch (error) {
       console.error("Error processing buy NTIQ:", error);
@@ -909,14 +914,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: "withdraw",
         amount,
+        token: "NTIQ",
         status: "completed",
         description: `Withdrawn ${actualAmount} NTIQ (${fee} NTIQ fee)`
       });
+
+      console.log(`User ${userId} successfully withdrew ${amount} NTIQ. New balance: ${newBalance}`);
 
       res.json({ 
         success: true, 
         message: `Successfully withdrawn ${actualAmount} NTIQ`,
         newBalance,
+        previousBalance: user.balance,
+        withdrawnAmount: amount,
+        actualAmount,
         fee
       });
     } catch (error) {
