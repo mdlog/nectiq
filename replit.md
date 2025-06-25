@@ -140,6 +140,8 @@ Changelog:
 - June 24, 2025. Prepared complete deployment system for Holesky and Sepolia testnets: deployment scripts, testing scripts, comprehensive documentation, and frontend integration guides ready for testnet deployment
 - June 24, 2025. Implemented One-Click Social Media Sharing feature: achievement cards with Twitter/Facebook sharing, custom message editing, social preview, achievement gallery with filters, and automatic share buttons for high-accuracy predictions
 - June 25, 2025. Added comprehensive User Statistics to Admin Panel: total users, new users by time period, active/dormant segmentation, prediction statistics, financial metrics, growth charts with registrations and retention data, top performers, and real-time refresh capabilities
+- June 25, 2025. Simplified Settings menu in Admin Panel with clean English interface: organized into essential categories (Prediction Limits, Financial Settings, Security & Rate Limits, Exchange Rates), removed cluttered Indonesian text and complex configurations, added proper placeholders for guidance
+- June 25, 2025. Fixed prediction form to display "NTIQ" instead of "PTS" for stake amount: updated button labels (50 NTIQ, 100 NTIQ, etc.), input placeholder, and validation messages for consistent currency branding throughout the application
 ```
 
 ## User Preferences

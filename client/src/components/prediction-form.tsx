@@ -21,7 +21,7 @@ const createPredictionFormSchema = (availableCryptos: string[]) => z.object({
   predictedPrice: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
     message: "Please enter a valid price",
   }),
-  stakeAmount: z.number().min(1, "Minimum stake is 1 point"),
+  stakeAmount: z.number().min(1, "Minimum stake is 1 NTIQ"),
 });
 
 type PredictionFormData = {
@@ -292,14 +292,14 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
                         }`}
                         onClick={() => handleStakePreset(amount)}
                       >
-                        {amount} PTS
+                        {amount} NTIQ
                       </Button>
                     ))}
                   </div>
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Custom amount"
+                      placeholder="Custom amount (NTIQ)"
                       className="bg-surface-light border-surface-light"
                       {...field}
                       onChange={(e) => {
