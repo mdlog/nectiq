@@ -143,6 +143,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id));
   }
 
+  async updateProfilePhoto(id: number, profilePhoto: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ profilePhoto })
+      .where(eq(users.id, id));
+  }
+
   async createPrediction(predictionData: any): Promise<Prediction> {
     const [prediction] = await db
       .insert(predictions)

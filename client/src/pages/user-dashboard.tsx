@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -1225,6 +1225,44 @@ function UserProfile() {
     },
   });
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: "Only JPEG, PNG, and GIF files are allowed.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "File size must be less than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedFile(file);
+    }
+  };
+
+  const handlePhotoUpload = () => {
+    if (selectedFile) {
+      uploadPhotoMutation.mutate(selectedFile);
+    }
+  };
+
+  const handlePhotoCancel = () => {
+    setSelectedFile(null);
+  };
+
   const handleUsernameEdit = () => {
     setNewUsername(user?.username || "");
     setIsEditingUsername(true);
@@ -1280,14 +1318,80 @@ function UserProfile() {
       <Card className="bg-surface border-surface-light">
         <CardContent className="p-6">
           <div className="flex items-center space-x-4 mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-              <UserCircle className="text-white" size={32} />
+            <div className="relative">
+              {user?.profilePhoto ? (
+                <img
+                  src={user.profilePhoto}
+                  alt="Profile"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-primary"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                  <UserCircle className="text-white" size={32} />
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="photo-upload"
+              />
+              <label
+                htmlFor="photo-upload"
+                className="absolute -bottom-1 -right-1 bg-primary hover:bg-primary/80 text-white rounded-full p-1 cursor-pointer transition-colors"
+              >
+                <Upload size={12} />
+              </label>
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">{user.username}</h2>
               <p className="text-slate-400">Active Member</p>
             </div>
           </div>
+
+          {/* Photo upload preview and controls */}
+          {selectedFile && (
+            <div className="mb-4 p-4 bg-surface-light rounded-lg border border-primary/20">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-full overflow-hidden">
+                  <img
+                    src={URL.createObjectURL(selectedFile)}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-medium">{selectedFile.name}</p>
+                  <p className="text-slate-400 text-sm">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    size="sm"
+                    onClick={handlePhotoUpload}
+                    disabled={uploadPhotoMutation.isPending}
+                    className="h-8 px-3"
+                  >
+                    {uploadPhotoMutation.isPending ? (
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                    ) : (
+                      "Upload"
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handlePhotoCancel}
+                    className="h-8 px-3"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
