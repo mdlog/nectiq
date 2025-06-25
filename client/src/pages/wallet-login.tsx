@@ -11,6 +11,105 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 
+// Wallet logo components as SVG
+const WalletLogos = {
+  MetaMask: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M22.56 5.443l-4.234-3.164c-.235-.176-.555-.176-.79 0L13.302 5.443c-.47.353-.47 1.029 0 1.382l4.234 3.164c.235.176.555.176.79 0l4.234-3.164c.47-.353.47-1.029 0-1.382z" fill="#E17726"/>
+      <path d="M9.698 5.443L5.464 2.279c-.235-.176-.555-.176-.79 0L.44 5.443c-.47.353-.47 1.029 0 1.382l4.234 3.164c.235.176.555.176.79 0l4.234-3.164c.47-.353.47-1.029 0-1.382z" fill="#E27625"/>
+      <path d="M22.56 18.557l-4.234 3.164c-.235.176-.555.176-.79 0l-4.234-3.164c-.47-.353-.47-1.029 0-1.382l4.234-3.164c.235-.176.555.176.79 0l4.234 3.164c.47.353.47 1.029 0 1.382z" fill="#D5BFB2"/>
+    </svg>
+  ),
+  WalletConnect: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M5.5 8c3.038-2.968 7.962-2.968 11 0l.5.485c.153.15.153.39 0 .54l-1.714 1.67c-.076.075-.2.075-.276 0L14.5 10.2c-2.12-2.07-5.56-2.07-7.68 0l-.59.575c-.076.075-.2.075-.276 0L4.24 9.105c-.153-.15-.153-.39 0-.54L5.5 8z" fill="#3B99FC"/>
+      <path d="M20.5 11.32l1.527 1.49c.153.15.153.39 0 .54l-6.87 6.7c-.153.15-.4.15-.553 0l-4.876-4.76c-.038-.037-.1-.037-.138 0l-4.876 4.76c-.153.15-.4.15-.553 0l-6.87-6.7c-.153-.15-.153-.39 0-.54l1.527-1.49c.153-.15.4-.15.553 0l4.876 4.76c.038.037.1.037.138 0l4.876-4.76c.153-.15.4-.15.553 0l4.876 4.76c.038.037.1.037.138 0l4.876-4.76c.153-.15.4-.15.553 0z" fill="#3B99FC"/>
+    </svg>
+  ),
+  "Coinbase Wallet": () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="12" fill="#0052FF"/>
+      <rect x="7" y="7" width="10" height="10" rx="2" fill="white"/>
+      <rect x="9" y="11" width="6" height="2" rx="1" fill="#0052FF"/>
+      <rect x="11" y="9" width="2" height="6" rx="1" fill="#0052FF"/>
+    </svg>
+  ),
+  Phantom: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="12" fill="#AB9FF2"/>
+      <path d="M8 8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 1.105-.448 2.105-1.171 2.829L12 14l-2.829-3.171C8.448 10.105 8 9.105 8 8z" fill="white"/>
+      <circle cx="10.5" cy="9.5" r="1" fill="#AB9FF2"/>
+      <circle cx="13.5" cy="9.5" r="1" fill="#AB9FF2"/>
+    </svg>
+  ),
+  "Rabby Wallet": () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="12" fill="#7084FF"/>
+      <path d="M8 7c0-.55.45-1 1-1h6c.55 0 1 .45 1 1v3c0 2.76-2.24 5-5 5h-1c-.55 0-1-.45-1-1V7z" fill="white"/>
+      <circle cx="10" cy="9" r="1" fill="#7084FF"/>
+      <circle cx="14" cy="9" r="1" fill="#7084FF"/>
+      <path d="M9 12h6c.55 0 1 .45 1 1s-.45 1-1 1H9c-.55 0-1-.45-1-1s.45-1 1-1z" fill="#7084FF"/>
+    </svg>
+  ),
+  "OKX Wallet": () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="4" fill="black"/>
+      <rect x="4" y="4" width="6" height="6" rx="1" fill="white"/>
+      <rect x="14" y="4" width="6" height="6" rx="1" fill="white"/>
+      <rect x="4" y="14" width="6" height="6" rx="1" fill="white"/>
+      <rect x="14" y="14" width="6" height="6" rx="1" fill="white"/>
+    </svg>
+  ),
+  Keplr: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="12" fill="#1B1E36"/>
+      <path d="M6 8l6 4 6-4v8l-6 4-6-4V8z" fill="#FF6B35"/>
+      <path d="M12 6L6 10l6 4 6-4-6-4z" fill="#FFA500"/>
+    </svg>
+  ),
+  SubWallet: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="12" fill="#004BFF"/>
+      <circle cx="12" cy="12" r="8" stroke="white" strokeWidth="2" fill="none"/>
+      <circle cx="12" cy="12" r="4" fill="white"/>
+    </svg>
+  ),
+  "Leap Wallet": () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="12" fill="#CF447B"/>
+      <path d="M8 16V8l8 4-8 4z" fill="white"/>
+    </svg>
+  ),
+  Backpack: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#E33E3F"/>
+      <rect x="6" y="6" width="12" height="12" rx="2" stroke="white" strokeWidth="2" fill="none"/>
+      <rect x="8" y="10" width="8" height="6" rx="1" fill="white"/>
+    </svg>
+  ),
+  Nightly: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="12" fill="#1a1a2e"/>
+      <path d="M6 18l6-12 6 12H6z" fill="#eee"/>
+      <circle cx="12" cy="8" r="2" fill="#1a1a2e"/>
+    </svg>
+  ),
+  Injected: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="12" fill="#6366f1"/>
+      <path d="M8 8h8v8H8V8z" stroke="white" strokeWidth="2" fill="none"/>
+      <circle cx="12" cy="12" r="2" fill="white"/>
+    </svg>
+  ),
+  "Web3Modal Auth": () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="12" fill="#3B99FC"/>
+      <rect x="6" y="6" width="12" height="12" rx="3" stroke="white" strokeWidth="2" fill="none"/>
+      <circle cx="12" cy="12" r="3" fill="white"/>
+    </svg>
+  )
+};
+
 export default function WalletLoginPage() {
   const { address, isConnected, chain } = useAccount();
   const { connect, connectors, isPending } = useConnect();
@@ -158,25 +257,32 @@ export default function WalletLoginPage() {
                   </p>
                   
                   <div className="grid gap-3">
-                    {connectors.map((connector) => (
-                      <Button
-                        key={connector.uid}
-                        onClick={() => connect({ connector })}
-                        disabled={isPending}
-                        variant="outline"
-                        className="justify-start h-12"
-                      >
-                        <Wallet className="mr-3" size={20} />
-                        <div className="text-left">
-                          <div className="font-medium">{connector.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {connector.name === 'MetaMask' && 'Most popular wallet'}
-                            {connector.name === 'WalletConnect' && 'Connect any wallet'}
-                            {connector.name === 'Coinbase Wallet' && 'Coinbase users'}
+                    {connectors.map((connector) => {
+                      // Get the appropriate logo component
+                      const LogoComponent = WalletLogos[connector.name as keyof typeof WalletLogos] || WalletLogos.Injected;
+                      
+                      return (
+                        <Button
+                          key={connector.uid}
+                          onClick={() => connect({ connector })}
+                          disabled={isPending}
+                          variant="outline"
+                          className="justify-start h-12"
+                        >
+                          <div className="mr-3 flex-shrink-0">
+                            <LogoComponent />
                           </div>
-                        </div>
-                      </Button>
-                    ))}
+                          <div className="text-left">
+                            <div className="font-medium">{connector.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {connector.name === 'MetaMask' && 'Most popular wallet'}
+                              {connector.name === 'WalletConnect' && 'Connect any wallet'}
+                              {connector.name === 'Coinbase Wallet' && 'Coinbase users'}
+                            </div>
+                          </div>
+                        </Button>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
