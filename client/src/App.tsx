@@ -80,14 +80,7 @@ function Router() {
       <Route path="/dashboard" component={UserDashboard} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/admin" component={AdminPanel} />
-      <Route path="/how-to-play" component={() => (
-        <div className="min-h-screen p-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6">How to Play</h1>
-            <p className="text-lg">Comprehensive guide coming soon...</p>
-          </div>
-        </div>
-      )} />
+      <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/terms-conditions" component={TermsConditions} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/wallet-login" component={WalletLoginPage} />
