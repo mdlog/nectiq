@@ -13,7 +13,7 @@ interface WalletSecurityCheck {
 }
 
 export class WalletSecurityService {
-  // Generate device fingerprint for monitoring
+  // Generate device fingerprint untuk deteksi multi-wallet
   static generateDeviceFingerprint(req: Request, clientData?: any): string {
     const components = [
       req.ip || req.connection.remoteAddress || '',
@@ -30,7 +30,7 @@ export class WalletSecurityService {
       .substring(0, 16);
   }
 
-  // Simplified wallet login validation - always allow but monitor
+  // Validasi wallet login dengan deteksi multi-wallet abuse
   static async validateWalletLogin(walletAddress: string, req: Request): Promise<WalletSecurityCheck> {
     try {
       const deviceFingerprint = this.generateDeviceFingerprint(req);
@@ -64,56 +64,45 @@ export class WalletSecurityService {
         w.deviceFingerprint === deviceFingerprint
       );
 
-      if (suspiciousWallets.length > 2) {
-        // Only block if more than 2 different wallets detected (more lenient)
+      if (suspiciousWallets.length > 0) {
+        // Blok login jika terdeteksi multi-wallet abuse
         await this.recordAbuseDetection(
           walletAddress, 
           suspiciousWallets.map(w => w.walletAddress), 
-          85, 
-          'Multiple wallets detected from same device fingerprint',
+          95, 
+          'Device fingerprint sama dengan wallet berbeda terdeteksi',
           req
         );
 
         return {
           success: false,
-          message: 'Too many wallets detected from this device. Please contact support if this is an error.',
-          confidence: 85,
+          message: 'Login diblokir: Terdeteksi penggunaan beberapa wallet dari perangkat yang sama. Hubungi support jika ini adalah kesalahan.',
+          confidence: 95,
           requiresReview: true,
           suspiciousWallets: suspiciousWallets.map(w => w.walletAddress)
         };
-      } else if (suspiciousWallets.length > 0) {
-        // Just record for monitoring but allow login
-        await this.recordAbuseDetection(
-          walletAddress,
-          suspiciousWallets.map(w => w.walletAddress),
-          60,
-          'Potential multi-wallet usage detected',
-          req
-        );
       }
 
-      // Record this wallet login for future tracking
-      await this.recordWalletFingerprint(walletAddress, req);
-
-      // Check for multiple different wallets from same IP (monitoring only)
+      // Cek jika ada wallet berbeda dari IP yang sama (warning)
       const differentWallets = recentWallets.filter(w => w.walletAddress !== walletAddress);
       
-      if (differentWallets.length >= 5) {
-        // Only flag if 5+ different wallets (very lenient)
+      if (differentWallets.length >= 2) {
         await this.recordAbuseDetection(
           walletAddress,
           differentWallets.map(w => w.walletAddress),
-          40,
-          'Multiple wallets detected from same IP - monitoring only',
+          70,
+          'Beberapa wallet berbeda terdeteksi dari IP yang sama',
           req
         );
 
+        // Izinkan login tapi tandai untuk review
+        await this.recordWalletFingerprint(walletAddress, req);
         return {
           success: true,
-          message: 'Login successful - monitoring active',
-          confidence: 40,
-          requiresReview: false,
-          suspiciousWallets: []
+          message: 'Login berhasil tapi ditandai untuk review keamanan',
+          confidence: 70,
+          requiresReview: true,
+          suspiciousWallets: differentWallets.map(w => w.walletAddress)
         };
       }
 
