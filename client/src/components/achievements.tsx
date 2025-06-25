@@ -191,13 +191,13 @@ export function Achievements() {
                   <CardTitle className="text-lg">{userAchievement.achievement.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-black dark:text-white mb-3">
+                  <p className="text-sm text-slate-800 dark:text-slate-200 mb-3">
                     {userAchievement.achievement.description}
                   </p>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span>Progress</span>
-                      <span className="font-medium">
+                      <span className="text-slate-700 dark:text-slate-300">Progress</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
                         {userAchievement.progress} / {userAchievement.achievement.target}
                       </span>
                     </div>
@@ -206,9 +206,12 @@ export function Achievements() {
                       className="h-2"
                     />
                   </div>
-                  <Badge variant="outline" className="text-xs mt-2">
-                    {getAchievementTypeLabel(userAchievement.achievement.type)}
-                  </Badge>
+                  <div className="flex items-center justify-between mt-2">
+                    <Badge variant="outline" className="text-xs">
+                      {getAchievementTypeLabel(userAchievement.achievement.type)}
+                    </Badge>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">Target: {userAchievement.achievement.target}</span>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -219,7 +222,7 @@ export function Achievements() {
       {/* Available Achievements */}
       {notStartedAchievements.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-gray-600">📋 Available Achievements</h3>
+          <h3 className="text-lg font-semibold mb-4 text-slate-700 dark:text-slate-300">📋 Available Achievements</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {notStartedAchievements.map((achievement) => (
               <Card key={achievement.id} className="border-gray-200 opacity-75">
@@ -233,17 +236,17 @@ export function Achievements() {
                       +{achievement.reward} NTIQ
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg text-black dark:text-white">{achievement.name}</CardTitle>
+                  <CardTitle className="text-lg text-slate-800 dark:text-slate-200">{achievement.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-black dark:text-white mb-3">
+                  <p className="text-sm text-slate-800 dark:text-slate-200 mb-3">
                     {achievement.description}
                   </p>
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className="text-xs">
                       {getAchievementTypeLabel(achievement.type)}
                     </Badge>
-                    <span className="text-xs text-gray-500">Target: {achievement.target}</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">Target: {achievement.target}</span>
                   </div>
                 </CardContent>
               </Card>
