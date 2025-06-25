@@ -653,16 +653,53 @@ export default function AdminPanel() {
   };
 
   const handleBulkDelete = async () => {
+    if (selectedUsers.length === 0) {
+      toast({
+        title: "Warning",
+        description: "No users selected for deletion",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Confirm bulk deletion
+    const confirmed = confirm(`Are you sure you want to delete ${selectedUsers.length} users? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    let successCount = 0;
+    let errorCount = 0;
+    const errors: string[] = [];
+
     try {
       for (const userId of selectedUsers) {
-        await apiRequest("DELETE", `/api/admin/users/${userId}`);
+        try {
+          await apiRequest("DELETE", `/api/admin/users/${userId}`);
+          successCount++;
+        } catch (error: any) {
+          errorCount++;
+          const errorMsg = error?.response?.data?.message || "Unknown error";
+          errors.push(`User ${userId}: ${errorMsg}`);
+        }
       }
+
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setSelectedUsers([]);
-      toast({
-        title: "Users deleted",
-        description: `${selectedUsers.length} users have been deleted.`,
-      });
+
+      if (successCount > 0) {
+        toast({
+          title: "Users deleted",
+          description: `${successCount} users have been deleted successfully.${errorCount > 0 ? ` ${errorCount} failed.` : ''}`,
+        });
+      }
+
+      if (errorCount > 0) {
+        toast({
+          title: "Some deletions failed",
+          description: `${errorCount} users could not be deleted. Check console for details.`,
+          variant: "destructive",
+        });
+        console.error("Deletion errors:", errors);
+      }
     } catch (error) {
       toast({
         title: "Error",

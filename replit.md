@@ -148,6 +148,7 @@ Changelog:
 - June 25, 2025. Enhanced header navigation menu: converted anchor tags to buttons with client-side routing for Home, My Dashboard, Leaderboard, How to Play, and Admin links ensuring smooth transitions without page reloads when navigating between main sections
 - June 25, 2025. Fixed admin panel authentication error: removed undefined isAuthenticated variable reference that was causing runtime error, admin panel now loads properly for authorized wallet addresses
 - June 25, 2025. Database cleanup: removed duplicate user entry (ID 5) with same wallet address as admin user (ID 6), keeping the user with more activity data (11 predictions vs 2 predictions)
+- June 25, 2025. Fixed bulk user deletion functionality in Admin Panel: enhanced error handling with individual deletion tracking, added confirmation dialog, improved success/failure reporting, and removed admin user deletion restriction for proper bulk operations
 ```
 
 ## User Preferences

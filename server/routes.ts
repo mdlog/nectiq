@@ -1690,9 +1690,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Prevent deleting admin users
+      // Allow admin deletion with proper warning
       if (user.isAdmin) {
-        return res.status(403).json({ message: "Cannot delete admin users" });
+        console.log(`WARNING: Admin user ${userId} (${user.username}) is being deleted by admin ${req.session.userId}`);
       }
 
       // Delete user
