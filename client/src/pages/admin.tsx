@@ -677,22 +677,26 @@ export default function AdminPanel() {
     try {
       for (const userId of selectedUsers) {
         try {
-          await apiRequest("DELETE", `/api/admin/users/${userId}`);
+          await apiRequest(`/api/admin/users/${userId}`, {
+            method: "DELETE"
+          });
           successCount++;
         } catch (error: any) {
           errorCount++;
-          const errorMsg = error?.response?.data?.message || "Unknown error";
+          const errorMsg = error?.message || error?.response?.data?.message || "Unknown error";
           errors.push(`User ${userId}: ${errorMsg}`);
+          console.error(`Error deleting user ${userId}:`, error);
         }
       }
 
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       setSelectedUsers([]);
 
       if (successCount > 0) {
         toast({
-          title: "Users deleted",
-          description: `${successCount} users have been deleted successfully.${errorCount > 0 ? ` ${errorCount} failed.` : ''}`,
+          title: "Bulk Delete Complete",
+          description: `${successCount} users deleted successfully${errorCount > 0 ? `. ${errorCount} failed.` : ''}`,
         });
       }
 
@@ -705,9 +709,10 @@ export default function AdminPanel() {
         console.error("Deletion errors:", errors);
       }
     } catch (error) {
+      console.error("Bulk delete error:", error);
       toast({
         title: "Error",
-        description: "Failed to delete users",
+        description: "Failed to complete bulk delete operation",
         variant: "destructive",
       });
     }
@@ -1635,7 +1640,9 @@ export default function AdminPanel() {
                             variant="destructive"
                             size="sm"
                             onClick={handleBulkDelete}
+                            className="bg-red-600 hover:bg-red-700 text-white"
                           >
+                            <Trash2 className="mr-1" size={14} />
                             Delete Selected
                           </Button>
                         </div>
@@ -1723,11 +1730,16 @@ export default function AdminPanel() {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-12">
-                            <input
-                              type="checkbox"
+                            <Checkbox
                               checked={selectedUsers.length === sortedUsers.length && sortedUsers.length > 0}
-                              onChange={handleSelectAllUsers}
-                              className="rounded"
+                              indeterminate={selectedUsers.length > 0 && selectedUsers.length < sortedUsers.length}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedUsers(sortedUsers.map(u => u.id));
+                                } else {
+                                  setSelectedUsers([]);
+                                }
+                              }}
                             />
                           </TableHead>
                           <TableHead>User</TableHead>
@@ -1765,11 +1777,15 @@ export default function AdminPanel() {
                         {sortedUsers.map((user) => (
                           <TableRow key={user.id}>
                             <TableCell>
-                              <input
-                                type="checkbox"
+                              <Checkbox
                                 checked={selectedUsers.includes(user.id)}
-                                onChange={() => handleSelectUser(user.id)}
-                                className="rounded"
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedUsers(prev => [...prev, user.id]);
+                                  } else {
+                                    setSelectedUsers(prev => prev.filter(id => id !== user.id));
+                                  }
+                                }}
                               />
                             </TableCell>
                             <TableCell>
