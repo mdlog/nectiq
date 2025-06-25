@@ -150,6 +150,7 @@ Changelog:
 - June 25, 2025. Database cleanup: removed duplicate user entry (ID 5) with same wallet address as admin user (ID 6), keeping the user with more activity data (11 predictions vs 2 predictions)
 - June 25, 2025. Fixed bulk user deletion functionality in Admin Panel: enhanced error handling with individual deletion tracking, added confirmation dialog, improved success/failure reporting, and removed admin user deletion restriction for proper bulk operations
 - June 25, 2025. Updated achievement card text colors: changed achievement descriptions from gray (text-muted-foreground) to black for better readability in light mode and white for dark mode
+- June 25, 2025. Simplified User Dashboard menu: consolidated "Withdraw", "Buy NTIQ", and "Wallet" tabs into a single "Financial" tab with internal navigation for cleaner interface and better user experience
 ```
 
 ## User Preferences
