@@ -1170,6 +1170,7 @@ function UserProfile() {
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [walletCopied, setWalletCopied] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -1177,6 +1178,27 @@ function UserProfile() {
     queryKey: ["/api/user"],
     retry: false,
   });
+
+  // Copy wallet address function
+  const copyWalletAddress = async () => {
+    if (user?.walletAddress) {
+      try {
+        await navigator.clipboard.writeText(user.walletAddress);
+        setWalletCopied(true);
+        toast({
+          title: "Alamat Wallet Disalin",
+          description: "Alamat wallet berhasil disalin ke clipboard",
+        });
+        setTimeout(() => setWalletCopied(false), 2000);
+      } catch (error) {
+        toast({
+          title: "Gagal Menyalin",
+          description: "Tidak dapat menyalin alamat wallet",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   // Update username mutation
   const updateUsernameMutation = useMutation({
