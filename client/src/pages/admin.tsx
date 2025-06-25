@@ -723,9 +723,12 @@ export default function AdminPanel() {
   // Force complete transaction (for admin use)
   const handleForceComplete = async (transactionId: number, type: 'purchase' | 'withdrawal') => {
     try {
-      await apiRequest(`/api/admin/force-complete/${type}/${transactionId}`, {
+      const response = await fetch(`/api/admin/force-complete/${type}/${transactionId}`, {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
       });
+      if (!response.ok) throw new Error(await response.text());
       
       toast({
         title: "Transaction Updated",
@@ -1108,10 +1111,14 @@ export default function AdminPanel() {
   // Mutations for admin actions
   const saveSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
-      return apiRequest("/api/admin/settings", {
+      const response = await fetch("/api/admin/settings", {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
       });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -1131,7 +1138,9 @@ export default function AdminPanel() {
 
   const clearCacheMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("POST", "/api/admin/clear-cache");
+      return apiRequest("/api/admin/clear-cache", {
+        method: "POST",
+      });
     },
     onSuccess: () => {
       toast({
@@ -1150,7 +1159,9 @@ export default function AdminPanel() {
 
   const backupDatabaseMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("POST", "/api/admin/backup-database");
+      return apiRequest("/api/admin/backup-database", {
+        method: "POST",
+      });
     },
     onSuccess: (data: any) => {
       toast({
@@ -1169,9 +1180,12 @@ export default function AdminPanel() {
 
   const exportLogsMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("POST", "/api/admin/export-logs", {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        endDate: new Date().toISOString()
+      return apiRequest("/api/admin/export-logs", {
+        method: "POST",
+        body: JSON.stringify({
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          endDate: new Date().toISOString()
+        }),
       });
     },
     onSuccess: (data: any) => {
@@ -1204,7 +1218,10 @@ export default function AdminPanel() {
 
   const emergencyStopMutation = useMutation({
     mutationFn: async (reason: string) => {
-      return apiRequest("POST", "/api/admin/emergency-stop", { reason });
+      return apiRequest("/api/admin/emergency-stop", {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      });
     },
     onSuccess: () => {
       toast({
