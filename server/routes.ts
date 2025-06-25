@@ -218,15 +218,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user.username = adminUsername;
       }
 
+      // Final response with updated user data
+      const responseUser = {
+        id: user.id,
+        username: user.username || `Admin_${finalAddress.slice(-6)}`,
+        walletAddress: user.walletAddress,
+        balance: user.balance,
+        isAdmin: user.isAdmin
+      };
+      
+      console.log("Sending login response with user:", responseUser);
+      
       res.json({ 
         success: true, 
-        user: {
-          id: user.id,
-          username: user.username || `Admin_${finalAddress.slice(-6)}`,
-          walletAddress: user.walletAddress,
-          balance: user.balance,
-          isAdmin: user.isAdmin
-        }
+        user: responseUser
       });
     } catch (error) {
       console.error("Error during wallet login:", error);
