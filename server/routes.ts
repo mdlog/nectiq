@@ -211,6 +211,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Session created - userId: ${user.id}, isAdmin: ${user.isAdmin}`);
       
+      // Ensure admin has proper username
+      if (user.isAdmin && !user.username) {
+        const adminUsername = `Admin_${finalAddress.slice(-6)}`;
+        await storage.updateUser(user.id, { username: adminUsername });
+        user.username = adminUsername;
+      }
+
       res.json({ 
         success: true, 
         user: {
