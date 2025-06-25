@@ -3,7 +3,7 @@ import { ChartLine, Clock, Trophy, Info } from "lucide-react";
 export function RulesSection() {
   return (
     <div className="mt-8 bg-surface rounded-xl p-6 border border-surface-light">
-      <h3 className="text-lg font-bold mb-6 flex items-center">
+      <h3 className="text-lg font-bold mb-6 flex items-center justify-center text-center">
         <Info className="text-primary mr-2" size={18} />
         How It Works
       </h3>
