@@ -57,13 +57,13 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   }
 
   return (
-    <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light zoom-stable">
-      <h3 className="text-lg font-bold mb-4 flex items-center flex-wrap gap-2">
+    <div className="bg-surface rounded-xl p-6 border border-surface-light">
+      <h3 className="text-lg font-bold mb-4 flex items-center">
         <ChartLine className="text-success mr-2" size={18} />
-        <span>Live Prices</span>
+        Live Prices
         <div className="ml-auto flex items-center text-xs text-green-400">
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-1"></div>
-          <span className="whitespace-nowrap">REAL-TIME</span>
+          REAL-TIME
         </div>
       </h3>
       
@@ -76,7 +76,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           return (
             <div 
               key={crypto.id} 
-              className="crypto-card p-3 bg-surface-light rounded-lg transition-colors cursor-pointer hover:bg-slate-700 zoom-stable"
+              className="crypto-card p-3 bg-surface-light rounded-lg transition-colors cursor-pointer hover:bg-slate-700"
               onClick={() => onCryptoSelect?.(crypto)}
             >
               <div className="flex items-center justify-between">

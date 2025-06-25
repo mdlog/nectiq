@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard } from "lucide-react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
@@ -194,12 +193,21 @@ export default function UserDashboard() {
   // Buy NTIQ mutation
   const buyNTIQMutation = useMutation({
     mutationFn: async ({ ntiqAmount, paymentToken }: { ntiqAmount: number; paymentToken: string }) => {
-      return await apiRequest("POST", "/api/user/buy-ntiq", { ntiqAmount, paymentToken });
+      const response = await fetch('/api/user/buy-ntiq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ntiqAmount, paymentToken }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Purchase failed');
+      }
+      return response.json();
     },
     onSuccess: (data) => {
       toast({
         title: "Purchase Successful",
-        description: `${data.ntiqAmount || parseInt(buyAmount)} NTIQ has been added to your balance`,
+        description: `${data.ntiqAmount} NTIQ has been added to your balance`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/purchases"] });
@@ -296,7 +304,7 @@ export default function UserDashboard() {
       {/* Header */}
       <div className="bg-surface border-b border-surface-light">
         <div className="container max-w-6xl mx-auto px-4">
-          <div className="flex justify-between items-center h-20 py-4">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
                 <Star className="text-white" size={16} />
@@ -983,15 +991,13 @@ export default function UserDashboard() {
                       <Input
                         id="buyAmount"
                         type="number"
-                        placeholder="Enter NTIQ amount (whole numbers only)"
+                        placeholder="Enter NTIQ amount"
                         value={buyAmount}
                         onChange={(e) => setBuyAmount(e.target.value)}
                         min="100"
-                        max="1000000"
-                        step="1"
                       />
                       <div className="text-xs text-slate-400">
-                        Exchange Rate: 1 {selectedPaymentToken} = {selectedPaymentToken === 'ETH' ? '300,000' : '100'} NTIQ
+                        Exchange Rate: 1 {selectedPaymentToken} = 100 NTIQ
                       </div>
                     </div>
 
@@ -1001,10 +1007,7 @@ export default function UserDashboard() {
                         <div className="flex justify-between items-center text-sm">
                           <span>You will pay:</span>
                           <span className="font-semibold text-primary">
-                            {selectedPaymentToken === 'ETH' 
-                              ? (parseInt(buyAmount) / 300000).toFixed(6)
-                              : (parseInt(buyAmount) / 100).toFixed(2)
-                            } {selectedPaymentToken}
+                            {(parseFloat(buyAmount) * 0.01).toFixed(4)} {selectedPaymentToken}
                           </span>
                         </div>
                       </div>
@@ -1013,19 +1016,17 @@ export default function UserDashboard() {
                     {/* Buy Button */}
                     <Button
                       onClick={() => {
-                        const amount = parseInt(buyAmount);
-                        if (amount >= 100 && Number.isInteger(amount)) {
-                          buyNTIQMutation.mutate({
-                            ntiqAmount: amount,
-                            paymentToken: selectedPaymentToken
-                          });
+                        const amount = parseFloat(buyAmount);
+                        if (amount >= 100) {
+                          // Handle buy NTIQ logic
+                          console.log('Buy NTIQ:', { amount, token: selectedPaymentToken });
                         }
                       }}
-                      disabled={!buyAmount || parseInt(buyAmount) < 100 || !Number.isInteger(parseInt(buyAmount)) || buyNTIQMutation.isPending}
+                      disabled={!buyAmount || parseFloat(buyAmount) < 100}
                       className="w-full"
                     >
                       <Coins className="mr-2" size={16} />
-                      {buyNTIQMutation.isPending ? "Processing..." : "Buy NTIQ"}
+                      Buy NTIQ
                     </Button>
 
                     {/* Info */}
