@@ -2500,50 +2500,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Admin: Clear all users from database
-  app.post("/api/admin/clear-all-users", requireAdmin, async (req, res) => {
-    try {
-      // Log the dangerous operation
-      console.log(`CRITICAL: Admin ${req.session.userId} is clearing ALL users from database`);
-      
-      await storage.clearAllUsers();
-      
-      await storage.createAdminLog({
-        adminId: req.session.userId,
-        action: "CLEARED ALL USERS - Database reset",
-        targetType: 'system',
-        targetId: null,
-        details: JSON.stringify({ 
-          operation: 'clear_all_users',
-          timestamp: new Date().toISOString(),
-          warning: 'All user data permanently removed'
-        }),
-        ipAddress: req.ip || 'unknown',
-        userAgent: req.get('User-Agent') || 'unknown'
-      });
-
-      // Real-time notification to admin panel
-      broadcastToAdmins({
-        type: 'database_cleared',
-        data: {
-          operation: 'all_users_cleared',
-          adminUser: {
-            id: req.session.userId,
-            username: req.session.username || 'Admin'
-          },
-          timestamp: new Date().toISOString()
-        }
-      });
-
-      res.json({ 
-        success: true, 
-        message: "All users and related data have been permanently removed from database" 
-      });
-    } catch (error) {
-      console.error("Error clearing all users:", error);
-      res.status(500).json({ message: "Failed to clear database" });
-    }
-  });
-
   return httpServer;
 }

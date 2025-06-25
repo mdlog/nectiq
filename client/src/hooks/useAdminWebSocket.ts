@@ -114,23 +114,6 @@ export function useAdminWebSocket() {
             // Invalidate user queries to refresh data
             queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
             queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-          } else if (message.type === 'database_cleared' && message.data) {
-            const operation = message.data;
-            
-            // Show toast notification for database clear
-            toast({
-              title: `Database Cleared`,
-              description: `${operation.adminUser.username} cleared all users from database`,
-              duration: 10000,
-              variant: 'destructive'
-            });
-
-            // Invalidate all queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/admin/predictions"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/admin/purchases"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/admin/withdrawals"] });
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);

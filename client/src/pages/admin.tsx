@@ -34,6 +34,7 @@ interface AdminStats {
 
 export default function AdminPanel() {
   const [newCryptoId, setNewCryptoId] = useState("");
+  // Remove authentication state as server handles admin access
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({
@@ -1639,18 +1640,6 @@ export default function AdminPanel() {
                           </Button>
                         </div>
                       )}
-                      
-                      {/* Clear All Users - Dangerous Operation */}
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleClearAllUsers}
-                        disabled={clearAllUsersMutation.isPending}
-                        className="bg-red-600 hover:bg-red-700 border-red-600"
-                      >
-                        <Trash2 className="mr-2" size={16} />
-                        {clearAllUsersMutation.isPending ? "Clearing..." : "Clear ALL Users"}
-                      </Button>
                       
                       {/* Export Button */}
                       <Button

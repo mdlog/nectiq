@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -16,35 +16,12 @@ declare global {
 }
 
 interface SimpleAdminAuthProps {
-  onAuthSuccess?: () => void;
-  children: React.ReactNode;
+  onAuthSuccess: () => void;
 }
 
-export function SimpleAdminAuth({ onAuthSuccess, children }: SimpleAdminAuthProps) {
+export function SimpleAdminAuth({ onAuthSuccess }: SimpleAdminAuthProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
-
-  // Check if user is already authenticated
-  const checkAuth = async () => {
-    try {
-      const response = await fetch("/api/user");
-      if (response.ok) {
-        const user = await response.json();
-        if (user.isAdmin) {
-          setIsAuthenticated(true);
-          return;
-        }
-      }
-    } catch (error) {
-      // Not authenticated
-    }
-  };
-
-  // Check auth on component mount
-  React.useEffect(() => {
-    checkAuth();
-  }, []);
 
   const handleWalletConnect = async () => {
     setIsLoading(true);
@@ -90,12 +67,11 @@ export function SimpleAdminAuth({ onAuthSuccess, children }: SimpleAdminAuthProp
 
       const result = await response.json() as { success: boolean; message: string };
       if (result.success) {
-        setIsAuthenticated(true);
         toast({
           title: "Access Granted",
           description: "Admin authentication successful",
         });
-        if (onAuthSuccess) onAuthSuccess();
+        onAuthSuccess();
       } else {
         toast({
           title: "Access Denied",
@@ -122,12 +98,6 @@ export function SimpleAdminAuth({ onAuthSuccess, children }: SimpleAdminAuthProp
     }
   };
 
-  // If authenticated, show children (admin panel)
-  if (isAuthenticated) {
-    return <>{children}</>;
-  }
-
-  // Otherwise show authentication modal
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-gray-800 border-gray-700">

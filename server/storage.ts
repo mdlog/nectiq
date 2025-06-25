@@ -279,42 +279,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(users).where(eq(users.id, id));
   }
 
-  // Clear all users from database
-  async clearAllUsers(): Promise<void> {
-    console.log("Starting complete database user cleanup...");
-    
-    try {
-      // Delete banners first since they have NOT NULL constraint on created_by
-      await db.delete(banners);
-      
-      // Delete all data that references users table in correct order
-      const deletions = [
-        'DELETE FROM user_achievements',
-        'DELETE FROM user_daily_challenges', 
-        'DELETE FROM referrals',
-        'DELETE FROM user_analytics',
-        'DELETE FROM rewards',
-        'DELETE FROM predictions',
-        'DELETE FROM purchases',
-        'DELETE FROM withdrawals',
-        'DELETE FROM transaction_logs',
-        'DELETE FROM security_events',
-        'DELETE FROM admin_logs',
-        'UPDATE system_settings SET updated_by = NULL',
-        'DELETE FROM users'
-      ];
-      
-      for (const sql of deletions) {
-        await db.execute(sql);
-      }
-      
-      console.log("Database cleared: All users and related data removed");
-    } catch (error) {
-      console.error("Error clearing database:", error);
-      throw error;
-    }
-  }
-
   // Security event operations
   async createSecurityEvent(event: any): Promise<any> {
     const [newEvent] = await db.insert(securityEvents).values(event).returning();

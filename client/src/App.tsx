@@ -8,7 +8,7 @@ import { createWeb3Modal } from '@web3modal/wagmi';
 import { config, projectId } from './lib/web3Config';
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
-import AdminPanelSimple from "@/pages/admin-simple";
+import AdminPanel from "@/pages/admin";
 import Leaderboard from "@/pages/leaderboard";
 import NotFound from "@/pages/not-found";
 import HowToPlay from "@/pages/how-to-play";
@@ -69,7 +69,7 @@ function ProtectedAdmin() {
     return <NotFound />;
   }
   
-  return <AdminPanelSimple />;
+  return <AdminPanel />;
 }
 
 function Router() {
