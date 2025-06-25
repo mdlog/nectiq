@@ -121,12 +121,36 @@ export default function UserDashboard() {
   const [showChart, setShowChart] = useState(false);
   const [selectedFinancialAction, setSelectedFinancialAction] = useState("withdraw");
   const [, setLocation] = useLocation();
+  const [walletCopied, setWalletCopied] = useState(false);
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [editedUsername, setEditedUsername] = useState("");
 
   // Manual refresh function for Market Overview
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refetchPrices();
     setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  // Copy wallet address function
+  const copyWalletAddress = async () => {
+    if (user?.walletAddress) {
+      try {
+        await navigator.clipboard.writeText(user.walletAddress);
+        setWalletCopied(true);
+        toast({
+          title: "Alamat Wallet Disalin",
+          description: "Alamat wallet berhasil disalin ke clipboard",
+        });
+        setTimeout(() => setWalletCopied(false), 2000);
+      } catch (error) {
+        toast({
+          title: "Gagal Menyalin",
+          description: "Tidak dapat menyalin alamat wallet",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const { data: stats } = useQuery<UserStats>({
@@ -1478,9 +1502,22 @@ function UserProfile() {
           </div>
           <div className="flex justify-between items-center py-3 border-b border-surface-light">
             <span className="text-slate-300">Wallet Address</span>
-            <span className="text-white font-mono text-sm">
-              {user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 'Not connected'}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="text-white font-mono text-sm">
+                {user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 'Not connected'}
+              </span>
+              {user.walletAddress && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={copyWalletAddress}
+                  className="h-6 w-6 p-0 text-slate-400 hover:text-white"
+                  title="Salin alamat wallet"
+                >
+                  {walletCopied ? <Check size={12} /> : <Copy size={12} />}
+                </Button>
+              )}
+            </div>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-surface-light">
             <span className="text-slate-300">Account Type</span>
