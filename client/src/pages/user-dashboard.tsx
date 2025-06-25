@@ -1143,10 +1143,87 @@ export default function UserDashboard() {
 
 // User Profile Component
 function UserProfile() {
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: user } = useQuery<User>({
     queryKey: ["/api/user"],
     retry: false,
   });
+
+  // Update username mutation
+  const updateUsernameMutation = useMutation({
+    mutationFn: async (username: string) => {
+      const response = await fetch('/api/user/update-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update username');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Username Updated",
+        description: "Your username has been successfully updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      setIsEditingUsername(false);
+      setNewUsername("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update username",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleUsernameEdit = () => {
+    setNewUsername(user?.username || "");
+    setIsEditingUsername(true);
+  };
+
+  const handleUsernameCancel = () => {
+    setIsEditingUsername(false);
+    setNewUsername("");
+  };
+
+  const handleUsernameSubmit = () => {
+    if (!newUsername.trim()) {
+      toast({
+        title: "Invalid Username",
+        description: "Username cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newUsername.length < 3) {
+      toast({
+        title: "Invalid Username",
+        description: "Username must be at least 3 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newUsername === user?.username) {
+      setIsEditingUsername(false);
+      return;
+    }
+
+    updateUsernameMutation.mutate(newUsername.trim());
+  };
 
   if (!user) {
     return (
@@ -1186,7 +1263,7 @@ function UserProfile() {
               <div className="text-sm text-slate-400">Total Predictions</div>
             </div>
             <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-blue-400">{user.accuracy ? `${user.accuracy.toFixed(1)}%` : '0%'}</div>
+              <div className="text-2xl font-bold text-blue-400">{user.correctPredictions && user.totalPredictions ? `${((user.correctPredictions / user.totalPredictions) * 100).toFixed(1)}%` : '0%'}</div>
               <div className="text-sm text-slate-400">Accuracy Rate</div>
             </div>
             <div className="bg-surface-light rounded-lg p-4 text-center">
@@ -1205,7 +1282,58 @@ function UserProfile() {
         <CardContent className="space-y-4">
           <div className="flex justify-between items-center py-3 border-b border-surface-light">
             <span className="text-slate-300">Username</span>
-            <span className="text-white font-medium">{user.username}</span>
+            <div className="flex items-center space-x-2">
+              {isEditingUsername ? (
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    className="w-40 h-8 text-sm bg-surface-light border-surface-light"
+                    placeholder="Enter new username"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleUsernameSubmit();
+                      } else if (e.key === 'Escape') {
+                        handleUsernameCancel();
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleUsernameSubmit}
+                    disabled={updateUsernameMutation.isPending}
+                    className="h-8 px-2"
+                  >
+                    {updateUsernameMutation.isPending ? (
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleUsernameCancel}
+                    className="h-8 px-2"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <span className="text-white font-medium">{user.username}</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleUsernameEdit}
+                    className="h-6 w-6 p-0 text-slate-400 hover:text-white"
+                  >
+                    <RefreshCw size={12} />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-surface-light">
             <span className="text-slate-300">Wallet Address</span>

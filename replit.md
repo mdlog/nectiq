@@ -162,6 +162,7 @@ Changelog:
 - June 26, 2025. Added custom wallet logos to wallet connect interface: created SVG logo components for MetaMask, WalletConnect, Coinbase, Phantom, Rabby, OKX, Keplr, SubWallet, Leap, Backpack, Nightly, Injected, and Web3Modal wallets with proper branding colors and designs
 - June 26, 2025. Fixed prediction submission error "Cannot read properties of undefined (reading 'ok')": enhanced error handling in prediction form, improved API response parsing in queryClient.ts, added proper null checks and fallback error messages for better user experience
 - June 26, 2025. Added Profile menu to My Dashboard: comprehensive user profile section with account information, quick stats (balance, predictions, accuracy, rewards), recent activity summary with navigation shortcuts, profile header with user avatar, and account details display
+- June 26, 2025. Added username editing feature to Profile menu: inline edit functionality with input field, save/cancel buttons, username validation (3-20 characters, alphanumeric + underscore/hyphen), duplicate username checking, API endpoint for username updates, and real-time UI updates
 ```
 
 ## User Preferences

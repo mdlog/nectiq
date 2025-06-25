@@ -33,6 +33,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserBalance(id: number, balance: number): Promise<void>;
   updateUserStats(id: number, totalPredictions: number, correctPredictions: number, totalRewards: number): Promise<void>;
+  updateUsername(id: number, username: string): Promise<void>;
 
   // Prediction operations
   createPrediction(prediction: any): Promise<Prediction>;
@@ -131,6 +132,13 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(users)
       .set({ totalPredictions, correctPredictions, totalRewards })
+      .where(eq(users.id, id));
+  }
+
+  async updateUsername(id: number, username: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ username })
       .where(eq(users.id, id));
   }
 
