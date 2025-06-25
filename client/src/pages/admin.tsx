@@ -2078,7 +2078,7 @@ export default function AdminPanel() {
                                 </div>
                                 <div>
                                   <p className="font-medium">{user.username}</p>
-                                  <p className="text-sm text-gray-500">ID: {user.id}</p>
+                                  <p className="text-sm text-gray-500">UID: {user.uid}</p>
                                 </div>
                               </div>
                             </TableCell>

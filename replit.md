@@ -172,6 +172,7 @@ Changelog:
 - June 26, 2025. Fixed text color contrast in "Completed Achievements" section: updated title colors to text-gray-900 dark:text-gray-100 for proper visibility against grey background
 - June 26, 2025. Relocated Predict button from above price chart to below chart: moved from chart header to full-width button below chart area, enhanced with larger size and clearer "Make Prediction for [SYMBOL]" text for improved user experience and accessibility
 - June 26, 2025. Completed comprehensive database cleanup: deleted all users including Admin ID 5, removed all related data (predictions, rewards, security events, admin logs, etc.), handled foreign key constraints properly, database now has 0 users and is ready for fresh start
+- June 26, 2025. Updated User Management display in Admin Panel: changed user information from showing "ID: {user.id}" to "UID: {user.uid}" for better user identification consistency with UID column display
 ```
 
 ## User Preferences
