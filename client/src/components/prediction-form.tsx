@@ -83,12 +83,26 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
 
   const createPredictionMutation = useMutation({
     mutationFn: async (data: PredictionFormData) => {
-      return await apiRequest("POST", "/api/predictions", {
-        ...data,
-        predictedPrice: data.predictedPrice,
+      const response = await apiRequest("/api/predictions", {
+        method: "POST",
+        body: JSON.stringify({
+          ...data,
+          predictedPrice: parseFloat(data.predictedPrice),
+        }),
       });
+      
+      // Parse response if it's JSON
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        return await response.json();
+      }
+      
+      // For non-JSON responses, return success indicator
+      return { success: true };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Prediction success response:', data);
+      
       toast({
         title: "Prediction submitted!",
         description: "Your prediction has been recorded successfully.",
