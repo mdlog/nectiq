@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -42,9 +42,9 @@ export function SimpleAdminAuth({ onAuthSuccess, children }: SimpleAdminAuthProp
   };
 
   // Check auth on component mount
-  useState(() => {
+  React.useEffect(() => {
     checkAuth();
-  });
+  }, []);
 
   const handleWalletConnect = async () => {
     setIsLoading(true);
@@ -90,11 +90,12 @@ export function SimpleAdminAuth({ onAuthSuccess, children }: SimpleAdminAuthProp
 
       const result = await response.json() as { success: boolean; message: string };
       if (result.success) {
+        setIsAuthenticated(true);
         toast({
           title: "Access Granted",
           description: "Admin authentication successful",
         });
-        onAuthSuccess();
+        if (onAuthSuccess) onAuthSuccess();
       } else {
         toast({
           title: "Access Denied",
@@ -121,6 +122,12 @@ export function SimpleAdminAuth({ onAuthSuccess, children }: SimpleAdminAuthProp
     }
   };
 
+  // If authenticated, show children (admin panel)
+  if (isAuthenticated) {
+    return <>{children}</>;
+  }
+
+  // Otherwise show authentication modal
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-gray-800 border-gray-700">
