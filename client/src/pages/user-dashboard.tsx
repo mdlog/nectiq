@@ -386,9 +386,68 @@ function PerformanceAnalytics() {
 }
 
 function FinancialSection() {
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/user"],
+  });
+
   const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/user/transactions"],
   });
+
+  const [activeFinancialTab, setActiveFinancialTab] = useState("overview");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [buyAmount, setBuyAmount] = useState("");
+  const queryClient = useQueryClient();
+
+  const withdrawMutation = useMutation({
+    mutationFn: async (amount: number) => {
+      const response = await apiRequest('/api/transactions/withdraw', {
+        method: 'POST',
+        body: JSON.stringify({ amount }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to process withdrawal');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/transactions"] });
+      setWithdrawAmount("");
+    },
+  });
+
+  const buyNTIQMutation = useMutation({
+    mutationFn: async (amount: number) => {
+      const response = await apiRequest('/api/transactions/buy-ntiq', {
+        method: 'POST',
+        body: JSON.stringify({ amount }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to process purchase');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/transactions"] });
+      setBuyAmount("");
+    },
+  });
+
+  const handleWithdraw = () => {
+    const amount = parseFloat(withdrawAmount);
+    if (amount > 0 && amount <= (user?.balance || 0)) {
+      withdrawMutation.mutate(amount);
+    }
+  };
+
+  const handleBuyNTIQ = () => {
+    const amount = parseFloat(buyAmount);
+    if (amount > 0) {
+      buyNTIQMutation.mutate(amount);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -405,50 +464,262 @@ function FinancialSection() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Button className="h-16 bg-primary hover:bg-primary/80">
-          <CreditCard className="mr-2" size={20} />
-          Buy NTIQ
-        </Button>
-        <Button variant="outline" className="h-16 bg-surface-light border-surface-light hover:bg-primary/10">
-          <DollarSign className="mr-2" size={20} />
-          Withdraw
-        </Button>
-        <Button variant="outline" className="h-16 bg-surface-light border-surface-light hover:bg-primary/10">
-          <Wallet className="mr-2" size={20} />
-          Wallet Info
-        </Button>
-      </div>
-
+      {/* Financial Navigation */}
       <Card className="bg-surface border-surface-light">
-        <CardHeader>
-          <CardTitle className="text-white">Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {transactions.length === 0 ? (
-            <p className="text-slate-400 text-center py-8">No transactions yet</p>
-          ) : (
-            transactions.map((transaction) => (
-              <div key={transaction.id} className="flex justify-between items-center py-3 border-b border-surface-light last:border-0">
-                <div>
-                  <p className="text-white font-medium">{transaction.type}</p>
-                  <p className="text-slate-400 text-sm">
-                    {new Date(transaction.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-white font-medium">
-                    {transaction.type === 'deposit' ? '+' : '-'}{transaction.amount} NTIQ
-                  </p>
-                  <Badge variant={transaction.status === 'completed' ? 'default' : 'secondary'}>
-                    {transaction.status}
-                  </Badge>
-                </div>
-              </div>
-            ))
-          )}
+        <CardContent className="p-4">
+          <div className="grid grid-cols-4 gap-2">
+            <Button
+              variant={activeFinancialTab === "overview" ? "default" : "outline"}
+              onClick={() => setActiveFinancialTab("overview")}
+              className="flex items-center space-x-2"
+            >
+              <Wallet size={16} />
+              <span>Overview</span>
+            </Button>
+            <Button
+              variant={activeFinancialTab === "buy" ? "default" : "outline"}
+              onClick={() => setActiveFinancialTab("buy")}
+              className="flex items-center space-x-2"
+            >
+              <CreditCard size={16} />
+              <span>Buy NTIQ</span>
+            </Button>
+            <Button
+              variant={activeFinancialTab === "withdraw" ? "default" : "outline"}
+              onClick={() => setActiveFinancialTab("withdraw")}
+              className="flex items-center space-x-2"
+            >
+              <DollarSign size={16} />
+              <span>Withdraw</span>
+            </Button>
+            <Button
+              variant={activeFinancialTab === "history" ? "default" : "outline"}
+              onClick={() => setActiveFinancialTab("history")}
+              className="flex items-center space-x-2"
+            >
+              <History size={16} />
+              <span>History</span>
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Overview Tab */}
+      {activeFinancialTab === "overview" && (
+        <Card className="bg-surface border-surface-light">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Wallet size={20} />
+              <span>Financial Overview</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-surface-light rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-primary">{user?.balance?.toLocaleString() || "0"}</div>
+                <div className="text-sm text-slate-400">Current Balance</div>
+              </div>
+              <div className="bg-surface-light rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-green-400">{user?.totalRewards?.toLocaleString() || "0"}</div>
+                <div className="text-sm text-slate-400">Total Earned</div>
+              </div>
+              <div className="bg-surface-light rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-blue-400">{user?.totalPredictions || "0"}</div>
+                <div className="text-sm text-slate-400">Total Predictions</div>
+              </div>
+            </div>
+
+            <div className="bg-surface-light rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Wallet Information</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Wallet Address:</span>
+                  <span className="text-white font-mono text-sm">
+                    {user?.walletAddress ? `${user.walletAddress.slice(0, 10)}...${user.walletAddress.slice(-10)}` : 'Not connected'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Account Status:</span>
+                  <span className="text-green-400">Active</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Member Since:</span>
+                  <span className="text-white">January 2025</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Buy NTIQ Tab */}
+      {activeFinancialTab === "buy" && (
+        <Card className="bg-surface border-surface-light">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <CreditCard size={20} />
+              <span>Buy NTIQ</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-surface-light rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Purchase NTIQ Tokens</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-slate-300 text-sm">Amount (NTIQ)</label>
+                  <Input
+                    type="number"
+                    value={buyAmount}
+                    onChange={(e) => setBuyAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    className="bg-surface border-surface-light text-white"
+                  />
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  <Button variant="outline" onClick={() => setBuyAmount("100")}>100</Button>
+                  <Button variant="outline" onClick={() => setBuyAmount("500")}>500</Button>
+                  <Button variant="outline" onClick={() => setBuyAmount("1000")}>1K</Button>
+                  <Button variant="outline" onClick={() => setBuyAmount("5000")}>5K</Button>
+                </div>
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-300">Exchange Rate:</span>
+                    <span className="text-white">1 USD = 100 NTIQ</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-300">Total Cost:</span>
+                    <span className="text-primary font-bold">
+                      ${buyAmount ? (parseFloat(buyAmount) / 100).toFixed(2) : "0.00"} USD
+                    </span>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleBuyNTIQ}
+                  disabled={!buyAmount || buyNTIQMutation.isPending}
+                  className="w-full bg-primary hover:bg-primary/80"
+                >
+                  {buyNTIQMutation.isPending ? "Processing..." : "Buy NTIQ"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Withdraw Tab */}
+      {activeFinancialTab === "withdraw" && (
+        <Card className="bg-surface border-surface-light">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <DollarSign size={20} />
+              <span>Withdraw Funds</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-surface-light rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Withdraw NTIQ</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-slate-300 text-sm">Amount (NTIQ)</label>
+                  <Input
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    max={user?.balance || 0}
+                    className="bg-surface border-surface-light text-white"
+                  />
+                  <div className="text-xs text-slate-400 mt-1">
+                    Available: {user?.balance?.toLocaleString() || "0"} NTIQ
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  <Button variant="outline" onClick={() => setWithdrawAmount("100")}>100</Button>
+                  <Button variant="outline" onClick={() => setWithdrawAmount("500")}>500</Button>
+                  <Button variant="outline" onClick={() => setWithdrawAmount("1000")}>1K</Button>
+                  <Button variant="outline" onClick={() => setWithdrawAmount(user?.balance?.toString() || "0")}>Max</Button>
+                </div>
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-300">Withdrawal Fee:</span>
+                    <span className="text-yellow-400">2%</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-300">You'll Receive:</span>
+                    <span className="text-white font-bold">
+                      {withdrawAmount ? (parseFloat(withdrawAmount) * 0.98).toFixed(0) : "0"} NTIQ
+                    </span>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleWithdraw}
+                  disabled={!withdrawAmount || withdrawMutation.isPending || parseFloat(withdrawAmount) > (user?.balance || 0)}
+                  variant="outline"
+                  className="w-full border-red-500/50 hover:bg-red-500/10"
+                >
+                  {withdrawMutation.isPending ? "Processing..." : "Withdraw NTIQ"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Transaction History Tab */}
+      {activeFinancialTab === "history" && (
+        <Card className="bg-surface border-surface-light">
+          <CardHeader>
+            <CardTitle className="text-white">Transaction History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {transactions.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  <Wallet className="mx-auto mb-2" size={32} />
+                  <p>No transactions yet</p>
+                </div>
+              ) : (
+                transactions.slice(0, 10).map((transaction) => (
+                  <div key={transaction.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-full ${
+                        transaction.type === 'buy' ? 'bg-green-500/20 text-green-400' : 
+                        transaction.type === 'withdraw' ? 'bg-red-500/20 text-red-400' : 
+                        'bg-blue-500/20 text-blue-400'
+                      }`}>
+                        {transaction.type === 'buy' ? <TrendingUp size={16} /> : 
+                         transaction.type === 'withdraw' ? <TrendingDown size={16} /> : 
+                         <DollarSign size={16} />}
+                      </div>
+                      <div>
+                        <div className="text-white font-medium">
+                          {transaction.type === 'buy' ? 'Buy NTIQ' : 
+                           transaction.type === 'withdraw' ? 'Withdraw' : 
+                           'Reward'}
+                        </div>
+                        <div className="text-slate-400 text-sm">
+                          {new Date(transaction.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`font-bold ${
+                        transaction.type === 'buy' || transaction.type === 'reward' ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {transaction.type === 'withdraw' ? '-' : '+'}
+                        {transaction.amount.toLocaleString()} NTIQ
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        {transaction.status === 'completed' ? 'Completed' : transaction.status}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -883,40 +1154,7 @@ export default function UserDashboard() {
             </TabsList>
 
             <TabsContent value="profile">
-              <div className="space-y-6">
-                <Card className="bg-surface border-surface-light">
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-4 mb-6">
-                      <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                        <UserCircle className="text-white" size={32} />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-white">User Profile</h2>
-                        <p className="text-slate-400">Active Member</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-surface-light rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-primary">1000</div>
-                        <div className="text-sm text-slate-400">NTIQ Balance</div>
-                      </div>
-                      <div className="bg-surface-light rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-green-400">5</div>
-                        <div className="text-sm text-slate-400">Total Predictions</div>
-                      </div>
-                      <div className="bg-surface-light rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-blue-400">80%</div>
-                        <div className="text-sm text-slate-400">Accuracy Rate</div>
-                      </div>
-                      <div className="bg-surface-light rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-purple-400">250</div>
-                        <div className="text-sm text-slate-400">Total Rewards</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <UserProfile />
             </TabsContent>
             
             <TabsContent value="predictions">
