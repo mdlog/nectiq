@@ -67,10 +67,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <main className="container-responsive py-8">
+        <div className="responsive-grid">
           {/* Left Sidebar - Live Prices */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="space-y-6">
             <LivePrices 
               onCryptoSelect={handleCryptoSelect}
               onPredictClick={handlePredictClick}
@@ -81,7 +81,7 @@ export default function Dashboard() {
           </div>
 
           {/* Main Content - Center */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6">
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
               <div className="space-y-4">
