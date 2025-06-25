@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Medal, Award, TrendingUp, Target, Coins, Calendar, Users, Crown, ArrowLeft } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Target, Coins, Calendar, Users, Crown, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -159,7 +159,7 @@ export default function Leaderboard() {
             <Button
               variant={filter === 'weekly' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setFilter('weekly')}
+              onClick={() => handleFilterChange('weekly')}
               className="flex items-center space-x-2"
             >
               <Calendar size={16} />
@@ -168,7 +168,7 @@ export default function Leaderboard() {
             <Button
               variant={filter === 'monthly' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setFilter('monthly')}
+              onClick={() => handleFilterChange('monthly')}
               className="flex items-center space-x-2"
             >
               <Calendar size={16} />
@@ -177,7 +177,7 @@ export default function Leaderboard() {
             <Button
               variant={filter === 'alltime' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setFilter('alltime')}
+              onClick={() => handleFilterChange('alltime')}
               className="flex items-center space-x-2"
             >
               <Trophy size={16} />
@@ -232,18 +232,20 @@ export default function Leaderboard() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="space-y-1">
-              {filteredData.map((user, index) => (
+              {paginatedData.map((user, index) => {
+                const actualRank = (currentPage - 1) * itemsPerPage + index + 1;
+                return (
                 <div
                   key={user.id}
                   className={`p-4 border-b border-surface-light last:border-b-0 hover:bg-surface-light/50 transition-colors ${
-                    index < 3 ? 'bg-gradient-to-r from-primary/5 to-transparent' : ''
+                    actualRank <= 3 ? 'bg-gradient-to-r from-primary/5 to-transparent' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       {/* Rank */}
                       <div className="flex items-center justify-center w-10 h-10">
-                        {getRankIcon(user.rank)}
+                        {getRankIcon(actualRank)}
                       </div>
 
                       {/* User Info */}
@@ -253,9 +255,9 @@ export default function Leaderboard() {
                           <Badge variant="outline" className="text-xs">
                             #{user.uid}
                           </Badge>
-                          {index < 3 && (
-                            <Badge className={getRankBadgeColor(user.rank)}>
-                              #{user.rank}
+                          {actualRank <= 3 && (
+                            <Badge className={getRankBadgeColor(actualRank)}>
+                              #{actualRank}
                             </Badge>
                           )}
                         </div>
@@ -278,6 +280,7 @@ export default function Leaderboard() {
                     {/* Points */}
                     <div className="text-right">
                       <div className="flex items-center space-x-2 mb-1">
+
                         <Coins className="text-primary" size={16} />
                         <span className="text-xl font-bold text-white">
                           {formatPoints(user.points)}
@@ -312,10 +315,79 @@ export default function Leaderboard() {
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
 
-            {filteredData.length === 0 && (
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between p-4 border-t border-surface-light">
+                <div className="text-sm text-slate-400">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalUsers)} of {totalUsers} users
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  {/* Previous Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center space-x-2 bg-surface hover:bg-surface-light border-surface-light"
+                  >
+                    <ChevronLeft size={16} />
+                    <span>Previous</span>
+                  </Button>
+
+                  {/* Page Numbers */}
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                      // Show first page, last page, current page, and pages around current
+                      const showPage = pageNum === 1 || 
+                                       pageNum === totalPages || 
+                                       Math.abs(pageNum - currentPage) <= 1;
+                      
+                      if (!showPage && pageNum !== 2 && pageNum !== totalPages - 1) {
+                        // Show ellipsis for gaps
+                        if (pageNum === 2 && currentPage > 4) {
+                          return <span key={pageNum} className="px-2 text-slate-400">...</span>;
+                        }
+                        if (pageNum === totalPages - 1 && currentPage < totalPages - 3) {
+                          return <span key={pageNum} className="px-2 text-slate-400">...</span>;
+                        }
+                        return null;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-10 h-10 p-0 bg-surface hover:bg-surface-light border-surface-light"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Next Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center space-x-2 bg-surface hover:bg-surface-light border-surface-light"
+                  >
+                    <span>Next</span>
+                    <ChevronRight size={16} />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {paginatedData.length === 0 && (
               <div className="text-center py-12">
                 <Trophy className="mx-auto h-12 w-12 text-slate-600 mb-4" />
                 <h3 className="text-lg font-medium text-slate-400 mb-2">No Data Available</h3>
