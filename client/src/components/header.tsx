@@ -21,14 +21,24 @@ export function Header() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('POST', '/api/auth/logout');
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+      return response.json();
     },
     onSuccess: () => {
       // Clear all cached data
       queryClient.clear();
-      // Invalidate specific queries
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      // Remove specific queries
+      queryClient.removeQueries({ queryKey: ['/api/user'] });
+      queryClient.removeQueries({ queryKey: ['/api/predictions/active'] });
+      queryClient.removeQueries({ queryKey: ['/api/rewards/recent'] });
     },
     onError: (error) => {
       console.error("Logout error:", error);
@@ -37,7 +47,10 @@ export function Header() {
 
   const handleDisconnect = async () => {
     try {
-      // First disconnect wallet
+      // First logout from server
+      await logoutMutation.mutateAsync();
+      
+      // Then disconnect wallet
       disconnect();
       
       // Clear wagmi localStorage data
@@ -47,9 +60,6 @@ export function Header() {
       localStorage.removeItem('wagmi.cache');
       localStorage.removeItem('walletconnect');
       
-      // Then logout from server
-      await logoutMutation.mutateAsync();
-      
       toast({
         title: "Disconnected",
         description: "Wallet disconnected successfully",
@@ -58,7 +68,7 @@ export function Header() {
       // Force page refresh to ensure wallet state is completely cleared
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, 500);
       
     } catch (error) {
       console.error("Disconnect error:", error);
@@ -72,6 +82,9 @@ export function Header() {
       localStorage.removeItem('wagmi.cache');
       localStorage.removeItem('walletconnect');
       
+      // Clear React Query cache
+      queryClient.clear();
+      
       toast({
         title: "Disconnected", 
         description: "Wallet disconnected successfully",
@@ -79,7 +92,7 @@ export function Header() {
       
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, 500);
     }
   };
 
