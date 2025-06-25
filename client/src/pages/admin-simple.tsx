@@ -146,7 +146,7 @@ export default function AdminPanelSimple() {
   };
 
   return (
-    <SimpleAdminAuth>
+    <SimpleAdminAuth onAuthSuccess={() => {}}>
       <div className="min-h-screen bg-background text-foreground">
         {/* Header */}
         <div className="bg-surface border-b border-surface-light">

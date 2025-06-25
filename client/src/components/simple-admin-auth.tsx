@@ -16,12 +16,35 @@ declare global {
 }
 
 interface SimpleAdminAuthProps {
-  onAuthSuccess: () => void;
+  onAuthSuccess?: () => void;
+  children: React.ReactNode;
 }
 
-export function SimpleAdminAuth({ onAuthSuccess }: SimpleAdminAuthProps) {
+export function SimpleAdminAuth({ onAuthSuccess, children }: SimpleAdminAuthProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
+
+  // Check if user is already authenticated
+  const checkAuth = async () => {
+    try {
+      const response = await fetch("/api/user");
+      if (response.ok) {
+        const user = await response.json();
+        if (user.isAdmin) {
+          setIsAuthenticated(true);
+          return;
+        }
+      }
+    } catch (error) {
+      // Not authenticated
+    }
+  };
+
+  // Check auth on component mount
+  useState(() => {
+    checkAuth();
+  });
 
   const handleWalletConnect = async () => {
     setIsLoading(true);
