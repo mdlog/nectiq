@@ -103,7 +103,7 @@ export function Achievements() {
             <div className="flex items-center space-x-3">
               <Trophy className="w-8 h-8 text-yellow-500" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                <p className="text-sm font-medium text-black dark:text-white">Completed</p>
                 <p className="text-2xl font-bold">{completedAchievements.length}</p>
               </div>
             </div>
@@ -115,7 +115,7 @@ export function Achievements() {
             <div className="flex items-center space-x-3">
               <Target className="w-8 h-8 text-blue-500" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">In Progress</p>
+                <p className="text-sm font-medium text-black dark:text-white">In Progress</p>
                 <p className="text-2xl font-bold">{inProgressAchievements.length}</p>
               </div>
             </div>
@@ -127,7 +127,7 @@ export function Achievements() {
             <div className="flex items-center space-x-3">
               <Coins className="w-8 h-8 text-green-500" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Rewards</p>
+                <p className="text-sm font-medium text-black dark:text-white">Total Rewards</p>
                 <p className="text-2xl font-bold">{totalRewards.toLocaleString()} NTIQ</p>
               </div>
             </div>
@@ -155,7 +155,7 @@ export function Achievements() {
                   <CardTitle className="text-lg">{userAchievement.achievement.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">
+                  <p className="text-sm text-black dark:text-white mb-3">
                     {userAchievement.achievement.description}
                   </p>
                   <div className="flex items-center justify-between">
@@ -191,7 +191,7 @@ export function Achievements() {
                   <CardTitle className="text-lg">{userAchievement.achievement.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">
+                  <p className="text-sm text-black dark:text-white mb-3">
                     {userAchievement.achievement.description}
                   </p>
                   <div className="space-y-2">
@@ -236,7 +236,7 @@ export function Achievements() {
                   <CardTitle className="text-lg">{achievement.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3">
+                  <p className="text-sm text-black dark:text-white mb-3">
                     {achievement.description}
                   </p>
                   <div className="flex items-center justify-between">

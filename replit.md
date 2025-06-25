@@ -149,6 +149,7 @@ Changelog:
 - June 25, 2025. Fixed admin panel authentication error: removed undefined isAuthenticated variable reference that was causing runtime error, admin panel now loads properly for authorized wallet addresses
 - June 25, 2025. Database cleanup: removed duplicate user entry (ID 5) with same wallet address as admin user (ID 6), keeping the user with more activity data (11 predictions vs 2 predictions)
 - June 25, 2025. Fixed bulk user deletion functionality in Admin Panel: enhanced error handling with individual deletion tracking, added confirmation dialog, improved success/failure reporting, and removed admin user deletion restriction for proper bulk operations
+- June 25, 2025. Updated achievement card text colors: changed achievement descriptions from gray (text-muted-foreground) to black for better readability in light mode and white for dark mode
 ```
 
 ## User Preferences
