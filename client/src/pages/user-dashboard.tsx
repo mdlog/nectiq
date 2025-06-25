@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -422,6 +422,11 @@ export default function UserDashboard() {
               Financial
             </TabsTrigger>
           </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile">
+            <UserProfile />
+          </TabsContent>
 
           {/* Active Predictions Tab */}
           <TabsContent value="predictions">
