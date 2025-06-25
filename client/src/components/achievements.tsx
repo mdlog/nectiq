@@ -141,7 +141,7 @@ export function Achievements() {
           <h3 className="text-lg font-semibold mb-4 text-green-600">🏆 Completed Achievements</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {completedAchievements.map((userAchievement) => (
-              <Card key={userAchievement.id} className="border-green-200 bg-green-50 dark:bg-green-900/20">
+              <Card key={userAchievement.id} className="border-green-200 bg-gray-100 dark:bg-gray-800">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">

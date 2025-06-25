@@ -168,6 +168,7 @@ Changelog:
 - June 26, 2025. Redesigned How It Works section to match user's design reference: created compact card layout with integrated reward multipliers display (Perfect ±0.1% 5x, Great ±1% 3x, Good ±5% 1.5x), simplified layout with horizontal reward indicators, updated stake range to 1-500 NTIQ
 - June 26, 2025. Added comprehensive Calculation Formula section to How to Play page: detailed accuracy calculation formula with mathematical examples (|Predicted Price - Actual Price| / Actual Price × 100%), final reward calculation breakdown with timeframe and accuracy multipliers, maximum reward scenarios, and practical examples for perfect and great predictions
 - June 26, 2025. Fixed Achievements menu text readability issues: changed all text colors from black to white (text-white dark:text-white) with font-semibold for all descriptions, progress indicators, targets, and labels to ensure maximum contrast and perfect readability against backgrounds
+- June 26, 2025. Changed "Completed Achievements" card background from white/green to grey (bg-gray-100 dark:bg-gray-800) for better visual distinction and improved design consistency
 ```
 
 ## User Preferences
