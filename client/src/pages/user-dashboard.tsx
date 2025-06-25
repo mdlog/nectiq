@@ -918,6 +918,28 @@ export default function UserDashboard() {
                 </CardContent>
               </Card>
             </div>
+            )}
+
+            {/* Buy NTIQ Section */}
+            {selectedFinancialAction === "buy" && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold mb-2">Buy NTIQ with Crypto</h3>
+                <p className="text-slate-400 text-sm">Purchase NTIQ tokens to make predictions and earn rewards</p>
+              </div>
+            </div>
+            )}
+
+            {/* Wallet Section */}
+            {selectedFinancialAction === "wallet" && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold mb-2">Wallet Connection</h3>
+                <p className="text-slate-400 text-sm">Manage your wallet connection and view features</p>
+              </div>
+              <WalletConnect />
+            </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
