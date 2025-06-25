@@ -1506,7 +1506,7 @@ export default function AdminPanel() {
           <TabsList className="bg-surface border border-surface-light flex-wrap h-auto">
             <TabsTrigger value="statistics" className="data-[state=active]:bg-primary flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Statistik
+              Statistics
             </TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-primary flex items-center gap-2">
               <Users className="h-4 w-4" />

@@ -251,20 +251,20 @@ export function UserStatistics() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <PieChart className="h-5 w-5" />
-                  Segmentasi Berdasarkan Aktivitas
+                  Activity-Based Segmentation
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Pengguna Aktif</span>
+                  <span className="text-sm">Active Users</span>
                   <Badge variant="default">{formatNumber(stats.userSegments.activeUsers)}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Pengguna Tidak Aktif</span>
+                  <span className="text-sm">Inactive Users</span>
                   <Badge variant="secondary">{formatNumber(stats.userSegments.dormantUsers)}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Pengguna Baru</span>
+                  <span className="text-sm">New Users</span>
                   <Badge variant="outline">{formatNumber(stats.userSegments.newUsers)}</Badge>
                 </div>
               </CardContent>
@@ -274,16 +274,16 @@ export function UserStatistics() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wallet className="h-5 w-5" />
-                  Segmentasi Berdasarkan Wallet
+                  Wallet-Based Segmentation
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Terhubung Wallet</span>
+                  <span className="text-sm">Connected Wallet</span>
                   <Badge variant="default">{formatNumber(stats.userSegments.walletUsers)}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Tanpa Wallet</span>
+                  <span className="text-sm">No Wallet</span>
                   <Badge variant="secondary">
                     {formatNumber(stats.overview.totalUsers - stats.userSegments.walletUsers)}
                   </Badge>
@@ -299,22 +299,22 @@ export function UserStatistics() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5" />
-                  Segmentasi Berdasarkan Role
+                  Role-Based Segmentation
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Admin</span>
+                  <span className="text-sm">Admins</span>
                   <Badge variant="default">{formatNumber(stats.userSegments.adminUsers)}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Pengguna Biasa</span>
+                  <span className="text-sm">Regular Users</span>
                   <Badge variant="secondary">
                     {formatNumber(stats.overview.totalUsers - stats.userSegments.adminUsers)}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Tingkat Admin</span>
+                  <span className="text-sm">Admin Rate</span>
                   <Badge variant="outline">
                     {formatPercentage((stats.userSegments.adminUsers / stats.overview.totalUsers) * 100)}
                   </Badge>
@@ -428,7 +428,7 @@ export function UserStatistics() {
         <TabsContent value="top-users">
           <Card>
             <CardHeader>
-              <CardTitle>Top Pengguna Berdasarkan Akurasi</CardTitle>
+              <CardTitle>Top Users by Accuracy</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -441,7 +441,7 @@ export function UserStatistics() {
                       <div>
                         <p className="font-medium">{user.username}</p>
                         <p className="text-sm text-muted-foreground">
-                          {formatNumber(user.totalPredictions)} prediksi
+                          {formatNumber(user.totalPredictions)} predictions
                         </p>
                       </div>
                     </div>
