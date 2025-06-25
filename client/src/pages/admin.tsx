@@ -34,7 +34,6 @@ interface AdminStats {
 
 export default function AdminPanel() {
   const [newCryptoId, setNewCryptoId] = useState("");
-  // Remove authentication state as server handles admin access
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({
