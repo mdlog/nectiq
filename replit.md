@@ -167,6 +167,7 @@ Changelog:
 - June 26, 2025. Updated How to Play page Reward System section: renamed to "How It Works" with 3-step process visualization (Choose & Predict, Wait & Track, Earn Rewards), maintained detailed accuracy multipliers and calculation formulas for consistency with user workflow understanding
 - June 26, 2025. Redesigned How It Works section to match user's design reference: created compact card layout with integrated reward multipliers display (Perfect ±0.1% 5x, Great ±1% 3x, Good ±5% 1.5x), simplified layout with horizontal reward indicators, updated stake range to 1-500 NTIQ
 - June 26, 2025. Added comprehensive Calculation Formula section to How to Play page: detailed accuracy calculation formula with mathematical examples (|Predicted Price - Actual Price| / Actual Price × 100%), final reward calculation breakdown with timeframe and accuracy multipliers, maximum reward scenarios, and practical examples for perfect and great predictions
+- June 26, 2025. Fixed Achievements menu text readability issues: changed all text colors to maximum contrast (text-black dark:text-white) with font-semibold for all descriptions, progress indicators, targets, and labels to ensure perfect readability against white/dark backgrounds
 ```
 
 ## User Preferences
