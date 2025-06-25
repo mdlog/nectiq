@@ -43,7 +43,7 @@ export async function getUserStatistics(req: Request, res: Response) {
       .select({ count: sql<number>`COUNT(DISTINCT ${predictions.userId})` })
       .from(predictions);
     if (timeRange !== 'all') {
-      activeUsersQuery.where(gte(predictions.submissionTime, startDate));
+      activeUsersQuery.where(gte(predictions.createdAt, startDate));
     }
     const activeUsersResult = await activeUsersQuery;
     const activeUsers = activeUsersResult[0]?.count || 0;
@@ -72,28 +72,22 @@ export async function getUserStatistics(req: Request, res: Response) {
     // Total Predictions in time range
     const totalPredictionsQuery = db.select({ count: count() }).from(predictions);
     if (timeRange !== 'all') {
-      totalPredictionsQuery.where(gte(predictions.submissionTime, startDate));
+      totalPredictionsQuery.where(gte(predictions.createdAt, startDate));
     }
     const totalPredictionsResult = await totalPredictionsQuery;
     const totalPredictions = totalPredictionsResult[0]?.count || 0;
 
-    // Successful Predictions (resolved and claimed)
+    // Successful Predictions (completed status)
     const successfulPredictionsQuery = db.select({ count: count() }).from(predictions);
     if (timeRange !== 'all') {
       successfulPredictionsQuery.where(
         and(
-          gte(predictions.submissionTime, startDate),
-          eq(predictions.resolved, true),
-          eq(predictions.claimed, true)
+          gte(predictions.createdAt, startDate),
+          eq(predictions.status, 'completed')
         )
       );
     } else {
-      successfulPredictionsQuery.where(
-        and(
-          eq(predictions.resolved, true),
-          eq(predictions.claimed, true)
-        )
-      );
+      successfulPredictionsQuery.where(eq(predictions.status, 'completed'));
     }
     const successfulPredictionsResult = await successfulPredictionsQuery;
     const successfulPredictions = successfulPredictionsResult[0]?.count || 0;
@@ -112,32 +106,18 @@ export async function getUserStatistics(req: Request, res: Response) {
       .from(users);
     const avgBalance = avgBalanceResult[0]?.avg || 0;
 
-    // Top Performing Users (by accuracy)
-    const topUsersQuery = db
+    // Top Performing Users - using existing user totals
+    const topUsers = await db
       .select({
-        userId: predictions.userId,
+        userId: users.id,
         username: users.username,
-        totalPredictions: count(),
-        avgAccuracy: sql<number>`AVG(${predictions.accuracyScore})`,
-        totalRewards: sql<number>`SUM(${predictions.rewardAmount})`,
+        totalPredictions: users.totalPredictions,
+        avgAccuracy: sql<number>`CASE WHEN ${users.totalPredictions} > 0 THEN (${users.correctPredictions}::float / ${users.totalPredictions}::float) * 100 ELSE 0 END`,
+        totalRewards: users.totalRewards,
       })
-      .from(predictions)
-      .innerJoin(users, eq(predictions.userId, users.id));
-    
-    if (timeRange !== 'all') {
-      topUsersQuery.where(
-        and(
-          gte(predictions.submissionTime, startDate),
-          eq(predictions.resolved, true)
-        )
-      );
-    } else {
-      topUsersQuery.where(eq(predictions.resolved, true));
-    }
-    
-    const topUsers = await topUsersQuery
-      .groupBy(predictions.userId, users.username)
-      .orderBy(desc(sql`AVG(${predictions.accuracyScore})`))
+      .from(users)
+      .where(sql`${users.totalPredictions} > 0`)
+      .orderBy(desc(users.totalRewards))
       .limit(10);
 
     // User Registration Trend (daily for last 30 days)
@@ -154,13 +134,13 @@ export async function getUserStatistics(req: Request, res: Response) {
     // Activity Trend (predictions per day for last 30 days)
     const activityTrend = await db
       .select({
-        date: sql<string>`DATE(${predictions.submissionTime})`,
+        date: sql<string>`DATE(${predictions.createdAt})`,
         count: count(),
       })
       .from(predictions)
-      .where(gte(predictions.submissionTime, new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)))
-      .groupBy(sql`DATE(${predictions.submissionTime})`)
-      .orderBy(sql`DATE(${predictions.submissionTime})`);
+      .where(gte(predictions.createdAt, new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)))
+      .groupBy(sql`DATE(${predictions.createdAt})`)
+      .orderBy(sql`DATE(${predictions.createdAt})`);
 
     // User Segments
     const userSegments = {
