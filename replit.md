@@ -174,6 +174,8 @@ Changelog:
 - June 26, 2025. Completed comprehensive database cleanup: deleted all users including Admin ID 5, removed all related data (predictions, rewards, security events, admin logs, etc.), handled foreign key constraints properly, database now has 0 users and is ready for fresh start
 - June 26, 2025. Updated User Management display in Admin Panel: changed user information from showing "ID: {user.id}" to "UID: {user.uid}" for better user identification consistency with UID column display
 - June 26, 2025. Implemented comprehensive Anti-Multi Wallet Abuse Security System: device fingerprinting with IP tracking, browser detection, hardware analysis; automatic abuse detection with confidence scoring (90%+ blocks login, 70-89% flags for review); integrated into wallet login flow with WalletSecurityService; database tables for wallet fingerprints and abuse detections; admin API endpoints for reviewing and managing detected abuse cases; comprehensive security documentation in SECURITY_GUIDE.md with implementation details, monitoring strategies, and user appeal processes
+- June 26, 2025. Fixed Dashboard authentication issues: adjusted anti-abuse system thresholds to prevent legitimate users from being blocked (increased IP threshold from 2 to 5 wallets, reduced confidence scores), modified device fingerprint detection to allow login while logging suspicious activity for review, resolved wallet login blocking that was preventing Dashboard access
+- June 26, 2025. Enhanced Profile menu with copy wallet address functionality: added copy button next to wallet address with Indonesian toast notifications, visual feedback with icon changes (copy to checkmark), auto-reset after 2 seconds, error handling for clipboard failures
 ```
 
 ## User Preferences
