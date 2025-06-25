@@ -721,6 +721,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newBalance = user.balance + numAmount;
       await storage.updateUserBalance(userId, newBalance);
 
+      // Real-time notification to admin panel
+      broadcastToAdmins({
+        type: 'transaction_update',
+        data: {
+          type: 'purchase',
+          user: {
+            id: userId,
+            username: user.username,
+            uid: user.uid,
+            walletAddress: user.walletAddress
+          },
+          amount: numAmount,
+          paymentAmount: paymentAmount.toFixed(6),
+          paymentToken,
+          status: 'completed',
+          timestamp: new Date().toISOString()
+        }
+      });
+
       // In a real implementation, here you would:
       // 1. Interact with Web3 wallet to receive payment
       // 2. Verify transaction on blockchain

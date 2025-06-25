@@ -1490,6 +1490,12 @@ export default function AdminPanel() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
+              <div className="flex items-center mt-1">
+                <div className={`w-2 h-2 rounded-full mr-2 ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="text-xs text-slate-500">
+                  {wsConnected ? 'Real-time ON' : 'Real-time OFF'}
+                </span>
+              </div>
             </CardContent>
           </Card>
 

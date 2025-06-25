@@ -86,6 +86,20 @@ export function useAdminWebSocket() {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/withdrawals"] });
             queryClient.invalidateQueries({ queryKey: ["/api/admin/transaction-stats"] });
             queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+          } else if (message.type === 'prediction_update' && message.data) {
+            const prediction = message.data;
+            
+            // Show toast notification for new predictions
+            toast({
+              title: `New Prediction`,
+              description: `${prediction.user.username}: ${prediction.prediction.cryptocurrency} - ${prediction.prediction.stakeAmount} NTIQ`,
+              duration: 5000,
+            });
+
+            // Invalidate prediction queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/predictions"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/activity"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
