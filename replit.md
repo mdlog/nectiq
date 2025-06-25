@@ -144,6 +144,7 @@ Changelog:
 - June 25, 2025. Fixed prediction form to display "NTIQ" instead of "PTS" for stake amount: updated button labels (50 NTIQ, 100 NTIQ, etc.), input placeholder, and validation messages for consistent currency branding throughout the application
 - June 25, 2025. Added icons to all user dashboard menu tabs: Clock for My Predictions, Award for Achievements, Calendar for Daily Challenges, History for Reward History, Eye for Market Watch, Activity for Performance, DollarSign for Withdraw, CreditCard for Buy NTIQ, and Wallet - improving visual consistency with admin panel design
 - June 25, 2025. Fixed "PTS" to "NTIQ" currency references in Achievements component: updated total rewards display, completed achievement badges, in-progress achievement badges, and not-started achievement badges for consistent NTIQ branding throughout the achievements system
+- June 25, 2025. Implemented smooth client-side navigation throughout the application: replaced all window.location.href calls with Wouter's useLocation hook for seamless navigation between pages without full page reloads, including header navigation, admin panel, user dashboard, and predict buttons
 ```
 
 ## User Preferences

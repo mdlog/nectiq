@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard } from "lucide-react";
+import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -117,6 +118,7 @@ export default function UserDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(null);
   const [showChart, setShowChart] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Manual refresh function for Market Overview
   const handleManualRefresh = async () => {
@@ -318,7 +320,7 @@ export default function UserDashboard() {
               <Button 
                 variant="outline" 
                 className="bg-surface-light border-surface-light" 
-                onClick={() => window.location.href = '/'}
+                onClick={() => setLocation('/')}
               >
                 <ArrowLeft className="mr-2" size={16} />
                 Back to App
@@ -618,7 +620,7 @@ export default function UserDashboard() {
                       <div className="mt-4">
                         <Button 
                           className="w-full"
-                          onClick={() => window.location.href = `/predict?crypto=${selectedCrypto.id}`}
+                          onClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
                         >
                           <Target className="mr-2" size={16} />
                           Make Prediction for {selectedCrypto.symbol}
@@ -780,11 +782,11 @@ export default function UserDashboard() {
                       <div className="flex items-center space-x-2">
                         <Coins className="text-warning" size={16} />
                         <span className="font-bold text-lg">{user?.balance?.toLocaleString() || "0"}</span>
-                        <span className="text-xs text-slate-400">PTS</span>
+                        <span className="text-xs text-slate-400">NTIQ</span>
                       </div>
                     </div>
                     <div className="text-xs text-slate-400">
-                      Exchange Rate: 1 PTS = 0.01 USDT/USDC
+                      Exchange Rate: 1 NTIQ = 0.01 USDT/USDC
                     </div>
                   </div>
 
@@ -1104,7 +1106,7 @@ export default function UserDashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.location.reload()}
+                        onClick={() => handleRefresh()}
                       >
                         <RefreshCw className="mr-1" size={14} />
                         Sync

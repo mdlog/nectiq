@@ -98,6 +98,7 @@ export default function AdminPanel() {
     startDate: "",
     endDate: ""
   });
+  const [, setLocation] = useLocation();
   const [securityPage, setSecurityPage] = useState(1);
   const [securityEventsPerPage] = useState(20);
   const [securitySearchQuery, setSecuritySearchQuery] = useState("");
@@ -1379,7 +1380,7 @@ export default function AdminPanel() {
                 </div>
                 
                 <Button 
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => setLocation('/')}
                   variant="outline"
                   className="w-full"
                 >

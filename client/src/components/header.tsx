@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAccount, useDisconnect } from 'wagmi';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 import type { User as UserType } from "@shared/schema";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 
@@ -16,6 +17,7 @@ export function Header() {
   const { disconnect } = useDisconnect();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -142,7 +144,7 @@ export function Header() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => window.location.href = '/wallet-login'}
+                  onClick={() => setLocation('/wallet-login')}
                   className="flex items-center space-x-2"
                 >
                   <Wallet size={16} />
