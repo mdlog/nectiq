@@ -11,7 +11,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { 
   Clock, Award, Calendar, History, Eye, Activity, 
   DollarSign, CreditCard, Wallet, TrendingUp, TrendingDown, 
-  UserCircle, Upload, RefreshCw
+  UserCircle, Upload, RefreshCw, Target, Plus, Settings, 
+  Bell, X, Check, Edit2
 } from "lucide-react";
 import Header from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -216,28 +217,127 @@ function DailyChallenges() {
   }
 
   return (
-    <div className="space-y-4">
-      {challenges.map((challenge) => (
-        <Card key={challenge.id} className="bg-surface border-surface-light">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-white mb-1">{challenge.title}</h3>
-                <p className="text-slate-400">{challenge.description}</p>
+    <div className="space-y-6">
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center space-x-2">
+            <Calendar size={20} />
+            <span>Today's Challenges</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-surface-light rounded-lg p-4 border border-primary/20">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="text-white font-medium mb-1">Morning Predictor</h3>
+                <p className="text-slate-300 text-sm">Make 3 predictions before 12:00 PM today</p>
               </div>
-              <Badge variant="secondary">{challenge.reward} NTIQ</Badge>
+              <Badge variant="secondary" className="ml-3">Active</Badge>
+            </div>
+            <div className="mb-3">
+              <div className="flex justify-between text-sm text-slate-400 mb-1">
+                <span>Progress</span>
+                <span>1/3</span>
+              </div>
+              <div className="w-full bg-surface rounded-full h-2">
+                <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: '33%' }}></div>
+              </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-300">
-                Ends: {new Date(challenge.endDate).toLocaleDateString()}
-              </span>
-              <Button size="sm" disabled={challenge.status === 'completed'}>
-                {challenge.status === 'completed' ? 'Completed' : 'Start Challenge'}
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Award className="text-primary" size={16} />
+                <span className="text-primary font-bold">+50 NTIQ</span>
+              </div>
+              <span className="text-slate-400 text-sm">Ends: Today</span>
             </div>
-          </CardContent>
-        </Card>
-      ))}
+          </div>
+
+          <div className="bg-surface-light rounded-lg p-4 border border-primary/20">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="text-white font-medium mb-1">Accuracy Master</h3>
+                <p className="text-slate-300 text-sm">Achieve 80% accuracy on your next 5 predictions</p>
+              </div>
+              <Badge variant="secondary" className="ml-3">Active</Badge>
+            </div>
+            <div className="mb-3">
+              <div className="flex justify-between text-sm text-slate-400 mb-1">
+                <span>Progress</span>
+                <span>2/5</span>
+              </div>
+              <div className="w-full bg-surface rounded-full h-2">
+                <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: '40%' }}></div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <Award className="text-primary" size={16} />
+                <span className="text-primary font-bold">+100 NTIQ</span>
+              </div>
+              <span className="text-slate-400 text-sm">Ends: Tomorrow</span>
+            </div>
+          </div>
+
+          <div className="bg-surface-light rounded-lg p-4 border border-primary/20">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="text-white font-medium mb-1">High Roller</h3>
+                <p className="text-slate-300 text-sm">Stake more than 200 NTIQ in a single prediction</p>
+              </div>
+              <Badge variant="secondary" className="ml-3">Active</Badge>
+            </div>
+            <div className="mb-3">
+              <div className="flex justify-between text-sm text-slate-400 mb-1">
+                <span>Progress</span>
+                <span>0/1</span>
+              </div>
+              <div className="w-full bg-surface rounded-full h-2">
+                <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: '0%' }}></div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <Award className="text-primary" size={16} />
+                <span className="text-primary font-bold">+75 NTIQ</span>
+              </div>
+              <span className="text-slate-400 text-sm">Ends: Today</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-white">Weekly Challenges</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-surface-light rounded-lg p-4 border border-secondary/20">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <h3 className="text-white font-medium mb-1">Consistency Champion</h3>
+                <p className="text-slate-300 text-sm">Make at least 1 prediction every day this week</p>
+              </div>
+              <Badge variant="secondary">4/7 days</Badge>
+            </div>
+            <div className="mb-3">
+              <div className="flex justify-between text-sm text-slate-400 mb-1">
+                <span>Days Complete</span>
+                <span>4/7</span>
+              </div>
+              <div className="w-full bg-surface rounded-full h-2">
+                <div className="bg-secondary h-2 rounded-full" style={{ width: '57%' }}></div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <Award className="text-secondary" size={16} />
+                <span className="text-secondary font-bold">+500 NTIQ</span>
+              </div>
+              <span className="text-slate-400 text-sm">3 days left</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -260,32 +360,166 @@ function RewardHistoryComponent() {
     );
   }
 
+  const mockRewards = [
+    {
+      id: 1,
+      type: "prediction",
+      amount: 150,
+      cryptocurrency: "Bitcoin",
+      accuracy: 92.5,
+      earnedAt: "2025-06-25T14:30:00Z",
+      multiplier: "3x"
+    },
+    {
+      id: 2,
+      type: "achievement",
+      amount: 100,
+      description: "Accuracy Master - 5 consecutive 80%+ predictions",
+      earnedAt: "2025-06-24T18:45:00Z"
+    },
+    {
+      id: 3,
+      type: "prediction",
+      amount: 75,
+      cryptocurrency: "Ethereum",
+      accuracy: 78.2,
+      earnedAt: "2025-06-24T10:15:00Z",
+      multiplier: "1.5x"
+    },
+    {
+      id: 4,
+      type: "daily_challenge",
+      amount: 50,
+      description: "Morning Predictor - Complete 3 predictions before noon",
+      earnedAt: "2025-06-23T11:30:00Z"
+    },
+    {
+      id: 5,
+      type: "prediction",
+      amount: 250,
+      cryptocurrency: "Solana",
+      accuracy: 99.1,
+      earnedAt: "2025-06-22T16:20:00Z",
+      multiplier: "5x"
+    }
+  ];
+
   return (
-    <div className="space-y-4">
-      {rewards.map((reward) => (
-        <Card key={reward.id} className="bg-surface border-surface-light">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-white font-medium">+{reward.amount} NTIQ</p>
-                <p className="text-slate-400 text-sm">
-                  {reward.type} - {reward.cryptocurrency || 'General'}
-                </p>
+    <div className="space-y-6">
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center space-x-2">
+            <History size={20} />
+            <span>Recent Rewards</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {mockRewards.map((reward) => (
+            <div key={reward.id} className="bg-surface-light rounded-lg p-4 border border-primary/20">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-1">
+                    {reward.type === 'prediction' && <Target className="text-primary" size={16} />}
+                    {reward.type === 'achievement' && <Award className="text-secondary" size={16} />}
+                    {reward.type === 'daily_challenge' && <Calendar className="text-orange-500" size={16} />}
+                    <h3 className="text-white font-medium">
+                      {reward.type === 'prediction' && `${reward.cryptocurrency} Prediction`}
+                      {reward.type === 'achievement' && 'Achievement Unlocked'}
+                      {reward.type === 'daily_challenge' && 'Daily Challenge'}
+                    </h3>
+                  </div>
+                  
+                  {reward.type === 'prediction' && (
+                    <div className="flex items-center space-x-4 text-sm text-slate-300">
+                      <span>Accuracy: {reward.accuracy}%</span>
+                      <Badge variant="secondary" className="text-xs">{reward.multiplier}</Badge>
+                    </div>
+                  )}
+                  
+                  {(reward.type === 'achievement' || reward.type === 'daily_challenge') && (
+                    <p className="text-slate-300 text-sm">{reward.description}</p>
+                  )}
+                  
+                  <p className="text-slate-400 text-xs mt-1">
+                    {new Date(reward.earnedAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                
+                <div className="text-right">
+                  <div className="flex items-center space-x-1">
+                    <Award className="text-primary" size={16} />
+                    <span className="text-primary font-bold text-lg">+{reward.amount}</span>
+                    <span className="text-primary font-medium">NTIQ</span>
+                  </div>
+                </div>
               </div>
-              <span className="text-slate-300 text-sm">
-                {new Date(reward.earnedAt).toLocaleDateString()}
-              </span>
             </div>
-          </CardContent>
-        </Card>
-      ))}
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-white">Reward Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-surface-light rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-1">
+                <Target className="text-primary" size={16} />
+                <span className="text-slate-300 text-sm">Predictions</span>
+              </div>
+              <p className="text-white font-bold text-lg">505 NTIQ</p>
+              <p className="text-slate-400 text-xs">Last 30 days</p>
+            </div>
+            
+            <div className="bg-surface-light rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-1">
+                <Award className="text-secondary" size={16} />
+                <span className="text-slate-300 text-sm">Achievements</span>
+              </div>
+              <p className="text-white font-bold text-lg">300 NTIQ</p>
+              <p className="text-slate-400 text-xs">Last 30 days</p>
+            </div>
+            
+            <div className="bg-surface-light rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-1">
+                <Calendar className="text-orange-500" size={16} />
+                <span className="text-slate-300 text-sm">Challenges</span>
+              </div>
+              <p className="text-white font-bold text-lg">150 NTIQ</p>
+              <p className="text-slate-400 text-xs">Last 30 days</p>
+            </div>
+            
+            <div className="bg-surface-light rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-1">
+                <DollarSign className="text-green-500" size={16} />
+                <span className="text-slate-300 text-sm">Total</span>
+              </div>
+              <p className="text-white font-bold text-lg">955 NTIQ</p>
+              <p className="text-slate-400 text-xs">Last 30 days</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
 function MarketWatchComponent() {
+  const [showAddAlert, setShowAddAlert] = useState(false);
   const { data: watchlist = [], isLoading } = useQuery<MarketWatch[]>({
     queryKey: ["/api/user/market-watch"],
+  });
+
+  const { data: cryptoPrices = [] } = useQuery({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 5000,
   });
 
   if (isLoading) {
@@ -301,28 +535,182 @@ function MarketWatchComponent() {
     );
   }
 
+  const mockWatchlist = [
+    {
+      id: 1,
+      cryptocurrency: "Bitcoin",
+      symbol: "BTC",
+      targetPrice: 105000,
+      currentPrice: 102547.83,
+      alertType: "above",
+      isActive: true,
+      createdAt: "2025-06-24T10:30:00Z",
+      priceChange24h: 2.3
+    },
+    {
+      id: 2,
+      cryptocurrency: "Ethereum",
+      symbol: "ETH",
+      targetPrice: 3800,
+      currentPrice: 3845.67,
+      alertType: "below",
+      isActive: true,
+      createdAt: "2025-06-23T14:20:00Z",
+      priceChange24h: -1.2
+    },
+    {
+      id: 3,
+      cryptocurrency: "Solana",
+      symbol: "SOL",
+      targetPrice: 220,
+      currentPrice: 218.45,
+      alertType: "above",
+      isActive: false,
+      createdAt: "2025-06-22T09:15:00Z",
+      priceChange24h: 0.8
+    }
+  ];
+
+  const calculateProgress = (current: number, target: number, type: string) => {
+    if (type === "above") {
+      return Math.min((current / target) * 100, 100);
+    } else {
+      return Math.min(((target / current) * 100), 100);
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      {watchlist.map((item) => (
-        <Card key={item.id} className="bg-surface border-surface-light">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-white">
-                  {item.cryptocurrency.toUpperCase()}
-                </h3>
-                <p className="text-slate-400">Target: ${item.targetPrice}</p>
+    <div className="space-y-6">
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Eye size={20} />
+              <span>Price Alerts</span>
+            </CardTitle>
+            <Button 
+              onClick={() => setShowAddAlert(true)}
+              size="sm"
+              className="bg-primary hover:bg-primary/80"
+            >
+              <Plus size={16} className="mr-1" />
+              Add Alert
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {mockWatchlist.map((item) => {
+            const progress = calculateProgress(item.currentPrice, item.targetPrice, item.alertType);
+            const isTriggered = (item.alertType === "above" && item.currentPrice >= item.targetPrice) || 
+                              (item.alertType === "below" && item.currentPrice <= item.targetPrice);
+            
+            return (
+              <div key={item.id} className={`bg-surface-light rounded-lg p-4 border ${isTriggered ? 'border-green-500' : 'border-primary/20'}`}>
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="text-white font-medium">{item.cryptocurrency}</h3>
+                      <Badge variant="secondary" className="text-xs">{item.symbol}</Badge>
+                      {isTriggered && <Badge className="bg-green-500 text-white text-xs">Triggered!</Badge>}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-slate-400">Current Price</p>
+                        <p className="text-white font-medium">${item.currentPrice.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-400">Target Price</p>
+                        <p className="text-white font-medium">${item.targetPrice.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3">
+                      <div className="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Alert: When price goes {item.alertType} target</span>
+                        <span>{progress.toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-surface rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${isTriggered ? 'bg-green-500' : 'bg-primary'}`}
+                          style={{ width: `${Math.min(progress, 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="ml-4 text-right">
+                    <Badge variant={item.isActive ? "default" : "secondary"} className="mb-2">
+                      {item.isActive ? "Active" : "Paused"}
+                    </Badge>
+                    <div className="flex space-x-1">
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        <Settings size={14} />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-400">
+                        <X size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-surface">
+                  <span>Created: {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <span className={`flex items-center space-x-1 ${item.priceChange24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {item.priceChange24h >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    <span>{item.priceChange24h >= 0 ? '+' : ''}{item.priceChange24h}% (24h)</span>
+                  </span>
+                </div>
               </div>
-              <Badge variant={item.isActive ? "default" : "secondary"}>
-                {item.isActive ? "Active" : "Inactive"}
-              </Badge>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-white">Alert Statistics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-surface-light rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-1">
+                <Eye className="text-primary" size={16} />
+                <span className="text-slate-300 text-sm">Active Alerts</span>
+              </div>
+              <p className="text-white font-bold text-lg">2</p>
+              <p className="text-slate-400 text-xs">Currently monitoring</p>
             </div>
-            <p className="text-slate-300 text-sm">
-              Alert Type: {item.alertType} • Created: {new Date(item.createdAt).toLocaleDateString()}
-            </p>
-          </CardContent>
-        </Card>
-      ))}
+            
+            <div className="bg-surface-light rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-1">
+                <Bell className="text-green-500" size={16} />
+                <span className="text-slate-300 text-sm">Triggered</span>
+              </div>
+              <p className="text-white font-bold text-lg">1</p>
+              <p className="text-slate-400 text-xs">This week</p>
+            </div>
+            
+            <div className="bg-surface-light rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-1">
+                <TrendingUp className="text-secondary" size={16} />
+                <span className="text-slate-300 text-sm">Above Target</span>
+              </div>
+              <p className="text-white font-bold text-lg">1</p>
+              <p className="text-slate-400 text-xs">Price alerts</p>
+            </div>
+            
+            <div className="bg-surface-light rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-1">
+                <TrendingDown className="text-orange-500" size={16} />
+                <span className="text-slate-300 text-sm">Below Target</span>
+              </div>
+              <p className="text-white font-bold text-lg">1</p>
+              <p className="text-slate-400 text-xs">Price alerts</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
