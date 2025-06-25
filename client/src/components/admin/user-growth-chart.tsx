@@ -88,18 +88,18 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          Grafik Pertumbuhan Pengguna
+          User Growth Chart
         </h3>
         <Select value={selectedDays.toString()} onValueChange={(value) => setSelectedDays(parseInt(value))}>
           <SelectTrigger className="w-32">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="7">7 Hari</SelectItem>
-            <SelectItem value="14">14 Hari</SelectItem>
-            <SelectItem value="30">30 Hari</SelectItem>
-            <SelectItem value="60">60 Hari</SelectItem>
-            <SelectItem value="90">90 Hari</SelectItem>
+            <SelectItem value="7">7 Days</SelectItem>
+            <SelectItem value="14">14 Days</SelectItem>
+            <SelectItem value="30">30 Days</SelectItem>
+            <SelectItem value="60">60 Days</SelectItem>
+            <SelectItem value="90">90 Days</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -110,7 +110,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Users className="h-4 w-4" />
-              Registrasi Harian
+              Daily Registrations
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -125,10 +125,10 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
                   />
                   <YAxis fontSize={12} />
                   <Tooltip 
-                    labelFormatter={(label) => `Tanggal: ${label}`}
+                    labelFormatter={(label) => `Date: ${label}`}
                     formatter={(value, name) => [
                       value,
-                      name === 'registrations' ? 'Registrasi' : 'Kumulatif'
+                      name === 'registrations' ? 'Registrations' : 'Cumulative'
                     ]}
                   />
                   <Area
@@ -149,7 +149,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Activity className="h-4 w-4" />
-              Pengguna Aktif Harian
+              Daily Active Users
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -164,8 +164,8 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
                   />
                   <YAxis fontSize={12} />
                   <Tooltip 
-                    labelFormatter={(label) => `Tanggal: ${label}`}
-                    formatter={(value) => [value, 'Pengguna Aktif']}
+                    labelFormatter={(label) => `Date: ${label}`}
+                    formatter={(value) => [value, 'Active Users']}
                   />
                   <Line
                     type="monotone"

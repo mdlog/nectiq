@@ -215,7 +215,7 @@ export function UserStatistics() {
                 <p className="text-sm font-medium text-muted-foreground">Active Users</p>
                 <p className="text-2xl font-bold">{formatNumber(stats.overview.activeUsers)}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatPercentage((stats.overview.activeUsers / stats.overview.totalUsers) * 100)} dari total
+                  {formatPercentage((stats.overview.activeUsers / stats.overview.totalUsers) * 100)} of total
                 </p>
               </div>
             </div>
@@ -238,11 +238,11 @@ export function UserStatistics() {
       {/* Detailed Statistics */}
       <Tabs defaultValue="segments" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="segments">Segmentasi Pengguna</TabsTrigger>
-          <TabsTrigger value="predictions">Statistik Prediksi</TabsTrigger>
-          <TabsTrigger value="financial">Statistik Keuangan</TabsTrigger>
+          <TabsTrigger value="segments">User Segments</TabsTrigger>
+          <TabsTrigger value="predictions">Prediction Stats</TabsTrigger>
+          <TabsTrigger value="financial">Financial Stats</TabsTrigger>
           <TabsTrigger value="growth">Growth Chart</TabsTrigger>
-          <TabsTrigger value="top-users">Top Pengguna</TabsTrigger>
+          <TabsTrigger value="top-users">Top Users</TabsTrigger>
         </TabsList>
 
         <TabsContent value="segments">
