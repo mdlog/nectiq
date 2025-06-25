@@ -829,110 +829,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Buy NTIQ transactions endpoint
-  app.post("/api/transactions/buy-ntiq", async (req, res) => {
+  // Buy NTIQ with crypto
+  app.post("/api/user/buy-ntiq", async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const { amount } = req.body;
+      const { ntiqAmount, paymentToken } = req.body;
 
-      // Validate amount
-      if (!amount || typeof amount !== 'number' || amount < 1 || amount > 1000000) {
-        return res.status(400).json({ message: "Amount must be between 1 and 1,000,000 NTIQ" });
+      // Enhanced security validation
+      if (!ntiqAmount || typeof ntiqAmount !== 'number' || ntiqAmount < 100 || ntiqAmount > 1000000 || !Number.isInteger(ntiqAmount)) {
+        return res.status(400).json({ message: "NTIQ amount must be an integer between 100 and 1,000,000" });
+      }
+
+      // Validate payment token
+      const validTokens = ["ETH", "USDT", "USDC"];
+      if (!paymentToken || !validTokens.includes(paymentToken)) {
+        return res.status(400).json({ message: "Invalid payment token" });
       }
 
       const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      if (!user || !user.walletAddress) {
+        return res.status(404).json({ message: "User not found or wallet not connected" });
       }
 
-      // Add NTIQ to user balance
-      const newBalance = user.balance + amount;
+      const numAmount = ntiqAmount;
+
+      // Calculate payment amount based on exchange rates
+      let paymentAmount: number;
+      switch (paymentToken) {
+        case "ETH":
+          paymentAmount = numAmount / 300000; // 1 ETH = 300,000 NTIQ
+          break;
+        case "USDT":
+        case "USDC":
+          paymentAmount = numAmount / 100; // 1 USDT/USDC = 100 NTIQ
+          break;
+        default:
+          return res.status(400).json({ message: "Unsupported payment token" });
+      }
+
+      // Create purchase record
+      const purchase = await storage.createPurchase({
+        userId,
+        ptsAmount: numAmount, // Keep database field name for compatibility
+        paymentAmount: paymentAmount.toFixed(6),
+        paymentToken,
+        status: "completed"
+      });
+
+      // Add NTIQ to user balance atomically
+      const newBalance = user.balance + numAmount;
       await storage.updateUserBalance(userId, newBalance);
 
-      // Create transaction record
-      await storage.createTransactionLog({
-        userId,
-        type: "buy",
-        amount,
-        token: "NTIQ",
-        status: "completed",
-        description: `Purchased ${amount} NTIQ tokens`
+      // Real-time notification to admin panel
+      broadcastToAdmins({
+        type: 'transaction_update',
+        data: {
+          type: 'purchase',
+          user: {
+            id: userId,
+            username: user.username,
+            uid: user.uid,
+            walletAddress: user.walletAddress
+          },
+          amount: numAmount,
+          paymentAmount: paymentAmount.toFixed(6),
+          paymentToken,
+          status: 'completed',
+          timestamp: new Date().toISOString()
+        }
       });
 
-      console.log(`User ${userId} successfully purchased ${amount} NTIQ. New balance: ${newBalance}`);
+      // In a real implementation, here you would:
+      // 1. Interact with Web3 wallet to receive payment
+      // 2. Verify transaction on blockchain
+      // 3. Handle payment confirmation
+      // 4. Process refunds if payment fails
 
-      res.json({ 
-        success: true, 
-        message: `Successfully purchased ${amount} NTIQ`,
+      auditLog("user_purchase", {
+        userId,
+        ntiqAmount: numAmount,
+        paymentAmount,
+        paymentToken,
+        walletAddress: user.walletAddress,
         newBalance,
-        previousBalance: user.balance,
-        purchasedAmount: amount
+        purchaseId: purchase.id
+      }, req);
+
+      res.json({
+        success: true,
+        message: "Purchase completed successfully",
+        ntiqAmount: numAmount,
+        paymentAmount: paymentAmount.toFixed(6),
+        paymentToken,
+        newBalance,
+        purchaseId: purchase.id
       });
     } catch (error) {
-      console.error("Error processing buy NTIQ:", error);
+      console.error("Purchase error:", error);
       res.status(500).json({ message: "Failed to process purchase" });
-    }
-  });
-
-  // Withdraw NTIQ transactions endpoint
-  app.post("/api/transactions/withdraw", async (req, res) => {
-    try {
-      const userId = (req as any).session?.userId;
-      if (!userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const { amount } = req.body;
-
-      if (!amount || typeof amount !== 'number' || amount <= 0) {
-        return res.status(400).json({ message: "Invalid withdrawal amount" });
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      if (user.balance < amount) {
-        return res.status(400).json({ message: "Insufficient balance" });
-      }
-
-      // Calculate withdrawal fee (2%)
-      const fee = Math.floor(amount * 0.02);
-      const actualAmount = amount - fee;
-
-      // Deduct NTIQ from user balance
-      const newBalance = user.balance - amount;
-      await storage.updateUserBalance(userId, newBalance);
-
-      // Create transaction record
-      await storage.createTransactionLog({
-        userId,
-        type: "withdraw",
-        amount,
-        token: "NTIQ",
-        status: "completed",
-        description: `Withdrawn ${actualAmount} NTIQ (${fee} NTIQ fee)`
-      });
-
-      console.log(`User ${userId} successfully withdrew ${amount} NTIQ. New balance: ${newBalance}`);
-
-      res.json({ 
-        success: true, 
-        message: `Successfully withdrawn ${actualAmount} NTIQ`,
-        newBalance,
-        previousBalance: user.balance,
-        withdrawnAmount: amount,
-        actualAmount,
-        fee
-      });
-    } catch (error) {
-      console.error("Error processing withdrawal:", error);
-      res.status(500).json({ message: "Failed to process withdrawal" });
     }
   });
 
