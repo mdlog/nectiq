@@ -678,9 +678,7 @@ export default function AdminPanel() {
     try {
       for (const userId of selectedUsers) {
         try {
-          await apiRequest(`/api/admin/users/${userId}`, {
-            method: "DELETE"
-          });
+          await apiRequest(`/api/admin/users/${userId}`, "DELETE");
           successCount++;
         } catch (error: any) {
           errorCount++;
@@ -1733,8 +1731,7 @@ export default function AdminPanel() {
                           <TableHead className="w-12">
                             <Checkbox
                               checked={selectedUsers.length === sortedUsers.length && sortedUsers.length > 0}
-                              indeterminate={selectedUsers.length > 0 && selectedUsers.length < sortedUsers.length}
-                              onCheckedChange={(checked) => {
+                              onCheckedChange={(checked: boolean) => {
                                 if (checked) {
                                   setSelectedUsers(sortedUsers.map(u => u.id));
                                 } else {
@@ -1780,7 +1777,7 @@ export default function AdminPanel() {
                             <TableCell>
                               <Checkbox
                                 checked={selectedUsers.includes(user.id)}
-                                onCheckedChange={(checked) => {
+                                onCheckedChange={(checked: boolean) => {
                                   if (checked) {
                                     setSelectedUsers(prev => [...prev, user.id]);
                                   } else {
