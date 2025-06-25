@@ -243,6 +243,42 @@ export const events = pgTable("events", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Anti-Multi Wallet Abuse Tables
+export const walletFingerprints = pgTable("wallet_fingerprints", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 100 }).notNull(),
+  userId: integer("user_id").references(() => users.id),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
+  userAgent: text("user_agent").notNull(),
+  browserFingerprint: varchar("browser_fingerprint", { length: 64 }),
+  deviceFingerprint: varchar("device_fingerprint", { length: 64 }),
+  screenResolution: varchar("screen_resolution", { length: 20 }),
+  timezone: varchar("timezone", { length: 50 }),
+  language: varchar("language", { length: 10 }),
+  platform: varchar("platform", { length: 50 }),
+  colorDepth: varchar("color_depth", { length: 10 }),
+  pixelRatio: varchar("pixel_ratio", { length: 10 }),
+  hardwareConcurrency: varchar("hardware_concurrency", { length: 10 }),
+  maxTouchPoints: varchar("max_touch_points", { length: 10 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const abuseDetections = pgTable("abuse_detections", {
+  id: serial("id").primaryKey(),
+  primaryWalletAddress: varchar("primary_wallet_address", { length: 100 }).notNull(),
+  suspiciousWalletAddresses: text("suspicious_wallet_addresses").notNull(), // JSON array of wallet addresses
+  similarityScore: numeric("similarity_score", { precision: 5, scale: 2 }).notNull(),
+  detectionReason: text("detection_reason").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // "pending", "reviewed", "confirmed", "false_positive"
+  action: varchar("action", { length: 20 }).notNull().default("warn"), // "allow", "warn", "block"
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
+  userAgent: text("user_agent").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   predictions: many(predictions),

@@ -16,23 +16,281 @@ interface DeviceFingerprint {
 }
 
 export class AntiAbuseSystem {
-  // Generate browser fingerprint from request headers and client data
+  // Enhanced browser fingerprint with more security components
   static generateBrowserFingerprint(req: Request, clientData?: any): string {
     const components = [
       req.headers['user-agent'] || '',
       req.headers['accept-language'] || '',
       req.headers['accept-encoding'] || '',
       req.headers['accept'] || '',
+      req.headers['sec-ch-ua'] || '',
+      req.headers['sec-ch-ua-platform'] || '',
       clientData?.screenResolution || '',
       clientData?.timezone || '',
       clientData?.platform || '',
-      clientData?.language || ''
+      clientData?.language || '',
+      clientData?.colorDepth || '',
+      clientData?.pixelRatio || '',
+      clientData?.hardwareConcurrency || '',
+      clientData?.maxTouchPoints || ''
     ];
     
     return crypto.createHash('sha256')
       .update(components.join('|'))
       .digest('hex')
       .substring(0, 16);
+  }
+
+  // Enhanced strict mode detection for preventing multi-wallet abuse
+  static async detectStrictMultiWallet(walletAddress: string, req: Request, clientData?: any): Promise<{
+    isAbuse: boolean;
+    confidence: number;
+    reason: string;
+    suspiciousWallets: string[];
+    action: 'allow' | 'warn' | 'block';
+  }> {
+    const currentFingerprint = {
+      ipAddress: this.extractIPFingerprint(req),
+      userAgent: req.headers['user-agent'] || '',
+      browserFingerprint: this.generateBrowserFingerprint(req, clientData),
+      deviceFingerprint: this.generateDeviceFingerprint(req, clientData),
+      screenResolution: clientData?.screenResolution || '',
+      timezone: clientData?.timezone || '',
+      language: clientData?.language || '',
+      platform: clientData?.platform || ''
+    };
+
+    // Get all wallet fingerprints from same IP in last 24 hours
+    const recentWallets = await db.select()
+      .from(walletFingerprints)
+      .where(
+        and(
+          eq(walletFingerprints.ipAddress, currentFingerprint.ipAddress),
+          sql`${walletFingerprints.createdAt} > NOW() - INTERVAL '24 hours'`
+        )
+      );
+
+    if (recentWallets.length === 0) {
+      return {
+        isAbuse: false,
+        confidence: 0,
+        reason: 'New device/IP combination',
+        suspiciousWallets: [],
+        action: 'allow'
+      };
+    }
+
+    // Check for exact matches (same device, different wallet)
+    const exactMatches = recentWallets.filter(wallet => 
+      wallet.walletAddress !== walletAddress &&
+      (
+        wallet.deviceFingerprint === currentFingerprint.deviceFingerprint ||
+        (wallet.browserFingerprint === currentFingerprint.browserFingerprint &&
+         wallet.screenResolution === currentFingerprint.screenResolution)
+      )
+    );
+
+    if (exactMatches.length > 0) {
+      return {
+        isAbuse: true,
+        confidence: 95,
+        reason: 'Identical device fingerprint detected with different wallet',
+        suspiciousWallets: exactMatches.map(w => w.walletAddress),
+        action: 'block'
+      };
+    }
+
+    // Check for high similarity (likely same person, different browser/device)
+    let maxSimilarity = 0;
+    const suspiciousWallets: string[] = [];
+    
+    for (const wallet of recentWallets) {
+      if (wallet.walletAddress === walletAddress) continue;
+      
+      const similarity = this.calculateAdvancedSimilarity(currentFingerprint, {
+        ipAddress: wallet.ipAddress,
+        userAgent: wallet.userAgent,
+        browserFingerprint: wallet.browserFingerprint || '',
+        deviceFingerprint: wallet.deviceFingerprint || '',
+        screenResolution: wallet.screenResolution || '',
+        timezone: wallet.timezone || '',
+        language: wallet.language || '',
+        platform: wallet.platform || ''
+      });
+
+      if (similarity > maxSimilarity) {
+        maxSimilarity = similarity;
+      }
+
+      if (similarity > 0.7) {
+        suspiciousWallets.push(wallet.walletAddress);
+      }
+    }
+
+    // Determine action based on similarity and pattern
+    let action: 'allow' | 'warn' | 'block' = 'allow';
+    let isAbuse = false;
+
+    if (maxSimilarity >= 0.9) {
+      action = 'block';
+      isAbuse = true;
+    } else if (maxSimilarity >= 0.7 || suspiciousWallets.length >= 2) {
+      action = 'warn';
+      isAbuse = true;
+    }
+
+    return {
+      isAbuse,
+      confidence: Math.round(maxSimilarity * 100),
+      reason: maxSimilarity >= 0.9 
+        ? 'Very high similarity with existing wallet from same device'
+        : maxSimilarity >= 0.7 
+        ? 'High similarity pattern detected - possible multi-wallet abuse'
+        : 'Low risk detected',
+      suspiciousWallets,
+      action
+    };
+  }
+
+  // Advanced similarity calculation with weighted factors
+  static calculateAdvancedSimilarity(fp1: DeviceFingerprint, fp2: DeviceFingerprint): number {
+    let score = 0;
+    let totalWeight = 0;
+
+    // IP Address (highest weight - same IP is very suspicious)
+    if (fp1.ipAddress === fp2.ipAddress) {
+      score += 0.4;
+    }
+    totalWeight += 0.4;
+
+    // Device Fingerprint (very high weight)
+    if (fp1.deviceFingerprint === fp2.deviceFingerprint) {
+      score += 0.3;
+    }
+    totalWeight += 0.3;
+
+    // Browser Fingerprint (high weight)
+    if (fp1.browserFingerprint === fp2.browserFingerprint) {
+      score += 0.15;
+    }
+    totalWeight += 0.15;
+
+    // Screen Resolution (medium weight)
+    if (fp1.screenResolution === fp2.screenResolution && fp1.screenResolution) {
+      score += 0.1;
+    }
+    totalWeight += 0.1;
+
+    // Timezone (low weight but important)
+    if (fp1.timezone === fp2.timezone && fp1.timezone) {
+      score += 0.03;
+    }
+    totalWeight += 0.03;
+
+    // Language (low weight)
+    if (fp1.language === fp2.language && fp1.language) {
+      score += 0.02;
+    }
+    totalWeight += 0.02;
+
+    return totalWeight > 0 ? score / totalWeight : 0;
+  }
+
+  // Automated action based on detection results
+  static async executeAntiAbuseAction(
+    walletAddress: string, 
+    detection: {
+      isAbuse: boolean;
+      confidence: number;
+      reason: string;
+      suspiciousWallets: string[];
+      action: 'allow' | 'warn' | 'block';
+    },
+    req: Request
+  ): Promise<{
+    allowed: boolean;
+    message: string;
+    requiresManualReview: boolean;
+  }> {
+    if (detection.action === 'allow') {
+      return {
+        allowed: true,
+        message: 'Login allowed',
+        requiresManualReview: false
+      };
+    }
+
+    // Log security event
+    await this.createAbuseDetection(
+      walletAddress,
+      detection.suspiciousWallets,
+      detection.confidence,
+      detection.reason,
+      req
+    );
+
+    if (detection.action === 'block') {
+      // Immediate block for high confidence abuse
+      return {
+        allowed: false,
+        message: 'Login blocked: Multiple wallet abuse detected from same device. Please contact support if this is a mistake.',
+        requiresManualReview: true
+      };
+    }
+
+    if (detection.action === 'warn') {
+      // Allow but flag for review
+      return {
+        allowed: true,
+        message: 'Login allowed but flagged for security review',
+        requiresManualReview: true
+      };
+    }
+
+    return {
+      allowed: true,
+      message: 'Login allowed',
+      requiresManualReview: false
+    };
+  }
+
+  // Enhanced wallet validation on login
+  static async validateWalletLogin(walletAddress: string, req: Request, clientData?: any): Promise<{
+    success: boolean;
+    message: string;
+    requiresManualReview: boolean;
+    securityScore: number;
+  }> {
+    try {
+      // Perform strict multi-wallet detection
+      const detection = await this.detectStrictMultiWallet(walletAddress, req, clientData);
+      
+      // Execute appropriate action
+      const actionResult = await this.executeAntiAbuseAction(walletAddress, detection, req);
+      
+      // Record wallet fingerprint for future checks
+      await this.recordWalletFingerprint(
+        walletAddress,
+        0, // userId will be set later after successful login
+        req,
+        clientData
+      );
+
+      return {
+        success: actionResult.allowed,
+        message: actionResult.message,
+        requiresManualReview: actionResult.requiresManualReview,
+        securityScore: detection.confidence
+      };
+    } catch (error) {
+      console.error('Wallet validation error:', error);
+      return {
+        success: true, // Allow login on system error but flag for review
+        message: 'Security check completed with warnings',
+        requiresManualReview: true,
+        securityScore: 0
+      };
+    }
   }
 
   // Generate device fingerprint (more stable than browser fingerprint)
