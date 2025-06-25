@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import express from "express";
+import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
@@ -14,6 +15,14 @@ import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
 import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } from "./routes/userStats";
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+});
 
 // Real-time transaction tracking with WebSocket
 let wss: WebSocketServer;
@@ -459,6 +468,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(user);
     } catch (error) {
       res.status(500).json({ message: "Failed to get user" });
+    }
+  });
+
+  // Update username endpoint
+  app.post('/api/user/update-username', async (req: Request, res: Response) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { username } = req.body;
+      
+      // Validate username
+      if (!username || typeof username !== 'string') {
+        return res.status(400).json({ message: "Username is required" });
+      }
+
+      const trimmedUsername = username.trim();
+      
+      if (trimmedUsername.length < 3) {
+        return res.status(400).json({ message: "Username must be at least 3 characters long" });
+      }
+
+      if (trimmedUsername.length > 20) {
+        return res.status(400).json({ message: "Username must be less than 20 characters long" });
+      }
+
+      // Check if username contains only valid characters (letters, numbers, underscore, hyphen)
+      const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+      if (!usernameRegex.test(trimmedUsername)) {
+        return res.status(400).json({ message: "Username can only contain letters, numbers, underscore, and hyphen" });
+      }
+
+      // Check if username is already taken by another user
+      const existingUser = await storage.getUserByUsername(trimmedUsername);
+      if (existingUser && existingUser.id !== session.userId) {
+        return res.status(400).json({ message: "Username is already taken" });
+      }
+
+      // Update username in database
+      await storage.updateUsername(session.userId, trimmedUsername);
+
+      // Get updated user data
+      const updatedUser = await storage.getUser(session.userId);
+      
+      auditLog("USERNAME_UPDATED", {
+        userId: session.userId,
+        oldUsername: existingUser?.username,
+        newUsername: trimmedUsername
+      }, req);
+      
+      res.json({ 
+        success: true, 
+        message: "Username updated successfully",
+        user: updatedUser 
+      });
+    } catch (error) {
+      console.error('Error updating username:', error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Upload profile photo endpoint
+  app.post('/api/user/upload-profile-photo', upload.single('profilePhoto'), async (req: Request, res: Response) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and GIF are allowed" });
+      }
+
+      // Validate file size (max 5MB)
+      if (req.file.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ message: "File too large. Maximum size is 5MB" });
+      }
+
+      // Generate unique filename
+      const fileExtension = path.extname(req.file.originalname);
+      const fileName = `profile_${session.userId}_${Date.now()}${fileExtension}`;
+      const filePath = `/uploads/${fileName}`;
+
+      // Save file
+      const uploadDir = path.join(process.cwd(), 'server', 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const fullPath = path.join(uploadDir, fileName);
+      fs.writeFileSync(fullPath, req.file.buffer);
+
+      // Update user profile photo in database
+      await storage.updateProfilePhoto(session.userId, filePath);
+
+      // Get updated user data
+      const updatedUser = await storage.getUser(session.userId);
+      
+      auditLog("PROFILE_PHOTO_UPDATED", {
+        userId: session.userId,
+        fileName,
+        fileSize: req.file.size
+      }, req);
+      
+      res.json({ 
+        success: true, 
+        message: "Profile photo updated successfully",
+        profilePhoto: filePath,
+        user: updatedUser 
+      });
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 

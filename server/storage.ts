@@ -34,6 +34,7 @@ export interface IStorage {
   updateUserBalance(id: number, balance: number): Promise<void>;
   updateUserStats(id: number, totalPredictions: number, correctPredictions: number, totalRewards: number): Promise<void>;
   updateUsername(id: number, username: string): Promise<void>;
+  updateProfilePhoto(id: number, profilePhoto: string): Promise<void>;
 
   // Prediction operations
   createPrediction(prediction: any): Promise<Prediction>;

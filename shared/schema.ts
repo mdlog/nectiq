@@ -15,6 +15,7 @@ export const users = pgTable("users", {
   totalPredictions: integer("total_predictions").notNull().default(0),
   correctPredictions: integer("correct_predictions").notNull().default(0),
   totalRewards: integer("total_rewards").notNull().default(0),
+  profilePhoto: text("profile_photo"),
 });
 
 export const predictions = pgTable("predictions", {
