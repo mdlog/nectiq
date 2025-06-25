@@ -170,6 +170,7 @@ Changelog:
 - June 26, 2025. Fixed Achievements menu text readability issues: changed all text colors from black to white (text-white dark:text-white) with font-semibold for all descriptions, progress indicators, targets, and labels to ensure maximum contrast and perfect readability against backgrounds
 - June 26, 2025. Changed "Completed Achievements" card background from white/green to grey (bg-gray-100 dark:bg-gray-800) for better visual distinction and improved design consistency
 - June 26, 2025. Fixed text color contrast in "Completed Achievements" section: updated title colors to text-gray-900 dark:text-gray-100 for proper visibility against grey background
+- June 26, 2025. Added Header and Footer components to My Dashboard page: consistent layout with Leaderboard page, maintains navigation structure and design consistency across all main pages
 ```
 
 ## User Preferences

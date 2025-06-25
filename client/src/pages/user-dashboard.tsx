@@ -301,8 +301,11 @@ export default function UserDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
+    <>
+      <Header />
+      <div className="min-h-screen bg-background text-foreground">
+      
+      {/* Dashboard Header */}
       <div className="bg-surface border-b border-surface-light">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
@@ -1515,6 +1518,8 @@ function UserProfile() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+      <Footer />
+    </>
   );
 }
