@@ -195,6 +195,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing wallet address" });
       }
 
+      // Import WalletSecurityService
+      const { WalletSecurityService } = await import('./walletSecurity');
+      
+      // Perform security check before login
+      const securityCheck = await WalletSecurityService.validateWalletLogin(finalAddress, req);
+      
+      if (!securityCheck.success) {
+        console.log('Security check failed:', securityCheck.message);
+        return res.status(403).json({ 
+          message: securityCheck.message,
+          securityBlock: true 
+        });
+      }
+
+      if (securityCheck.requiresReview) {
+        console.log('Security warning:', securityCheck.message);
+      }
+
       // Check if user exists, if not create one
       let user = await storage.getUserByWalletAddress(finalAddress);
       if (!user) {
@@ -2491,6 +2509,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating security event:", error);
       res.status(500).json({ message: "Failed to update security event" });
+    }
+  });
+
+  // Anti-Multi Wallet Abuse Detection API
+  app.get("/api/admin/abuse-detections", requireAdmin, async (req, res) => {
+    try {
+      const { WalletSecurityService } = await import('./walletSecurity');
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const detections = await WalletSecurityService.getAbuseDetections(limit);
+      res.json(detections);
+    } catch (error) {
+      console.error("Error fetching abuse detections:", error);
+      res.status(500).json({ message: "Failed to fetch abuse detections" });
+    }
+  });
+
+  app.put("/api/admin/abuse-detections/:id", requireAdmin, async (req, res) => {
+    try {
+      const detectionId = parseInt(req.params.id);
+      const { status, reviewNotes } = req.body;
+
+      if (!detectionId || isNaN(detectionId)) {
+        return res.status(400).json({ message: "Invalid detection ID" });
+      }
+
+      const { WalletSecurityService } = await import('./walletSecurity');
+      await WalletSecurityService.updateAbuseDetection(
+        detectionId,
+        status,
+        reviewNotes,
+        req.session.userId || 0
+      );
+
+      await storage.createAdminLog({
+        adminId: req.session.userId || 0,
+        action: `Abuse detection ${detectionId} reviewed as ${status}`,
+        targetType: 'abuse_detection',
+        targetId: detectionId,
+        details: JSON.stringify({ status, reviewNotes }),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating abuse detection:", error);
+      res.status(500).json({ message: "Failed to update abuse detection" });
     }
   });
 

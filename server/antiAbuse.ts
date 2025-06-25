@@ -107,7 +107,7 @@ export class AntiAbuseSystem {
     for (const wallet of recentWallets) {
       if (wallet.walletAddress === walletAddress) continue;
       
-      const similarity = this.calculateAdvancedSimilarity(currentFingerprint, {
+      const similarity = AntiAbuseSystem.calculateAdvancedSimilarity(currentFingerprint, {
         ipAddress: wallet.ipAddress,
         userAgent: wallet.userAgent,
         browserFingerprint: wallet.browserFingerprint || '',
