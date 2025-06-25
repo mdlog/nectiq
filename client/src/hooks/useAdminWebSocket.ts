@@ -100,6 +100,20 @@ export function useAdminWebSocket() {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/predictions"] });
             queryClient.invalidateQueries({ queryKey: ["/api/admin/activity"] });
             queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+          } else if (message.type === 'user_deleted' && message.data) {
+            const deletion = message.data;
+            
+            // Show toast notification for user deletion
+            toast({
+              title: `User Deleted`,
+              description: `${deletion.adminUser.username} deleted user: ${deletion.deletedUser.username}`,
+              duration: 5000,
+              variant: 'destructive'
+            });
+
+            // Invalidate user queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
