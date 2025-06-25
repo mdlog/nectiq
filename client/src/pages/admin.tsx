@@ -1653,18 +1653,6 @@ export default function AdminPanel() {
                         {clearAllUsersMutation.isPending ? "Clearing..." : "Clear ALL Users"}
                       </Button>
                       
-                      {/* Clear All Users - Dangerous Operation */}
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleClearAllUsers}
-                        disabled={clearAllUsersMutation.isPending}
-                        className="bg-red-600 hover:bg-red-700 border-red-600"
-                      >
-                        <Trash2 className="mr-2" size={16} />
-                        {clearAllUsersMutation.isPending ? "Clearing..." : "Clear ALL Users"}
-                      </Button>
-                      
                       {/* Export Button */}
                       <Button
                         variant="outline"

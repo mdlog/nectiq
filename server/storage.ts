@@ -283,19 +283,36 @@ export class DatabaseStorage implements IStorage {
   async clearAllUsers(): Promise<void> {
     console.log("Starting complete database user cleanup...");
     
-    // Delete all user-related data in order to handle foreign key constraints
-    await db.delete(rewards);
-    await db.delete(predictions);
-    await db.delete(purchases);
-    await db.delete(withdrawals);
-    await db.delete(transactionLogs);
-    await db.delete(adminLogs);
-    await db.delete(securityEvents);
-    
-    // Finally delete all users
-    await db.delete(users);
-    
-    console.log("Database cleared: All users and related data removed");
+    try {
+      // Delete banners first since they have NOT NULL constraint on created_by
+      await db.delete(banners);
+      
+      // Delete all data that references users table in correct order
+      const deletions = [
+        'DELETE FROM user_achievements',
+        'DELETE FROM user_daily_challenges', 
+        'DELETE FROM referrals',
+        'DELETE FROM user_analytics',
+        'DELETE FROM rewards',
+        'DELETE FROM predictions',
+        'DELETE FROM purchases',
+        'DELETE FROM withdrawals',
+        'DELETE FROM transaction_logs',
+        'DELETE FROM security_events',
+        'DELETE FROM admin_logs',
+        'UPDATE system_settings SET updated_by = NULL',
+        'DELETE FROM users'
+      ];
+      
+      for (const sql of deletions) {
+        await db.execute(sql);
+      }
+      
+      console.log("Database cleared: All users and related data removed");
+    } catch (error) {
+      console.error("Error clearing database:", error);
+      throw error;
+    }
   }
 
   // Security event operations
