@@ -678,7 +678,17 @@ export default function AdminPanel() {
     try {
       for (const userId of selectedUsers) {
         try {
-          await apiRequest(`/api/admin/users/${userId}`, "DELETE");
+          const response = await fetch(`/api/admin/users/${userId}`, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "Failed to delete user");
+          }
           successCount++;
         } catch (error: any) {
           errorCount++;
@@ -1232,18 +1242,27 @@ export default function AdminPanel() {
     mutationFn: async (userId: number) => {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to delete user");
+      }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       toast({
         title: "Success",
-        description: "User deleted successfully",
+        description: data.message || "User deleted successfully",
       });
     },
     onError: (error: any) => {
+      console.error("Delete user error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to delete user",
