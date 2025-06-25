@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard } from "lucide-react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
@@ -1018,15 +1019,19 @@ export default function UserDashboard() {
                       onClick={() => {
                         const amount = parseFloat(buyAmount);
                         if (amount >= 100) {
-                          // Handle buy NTIQ logic
-                          console.log('Buy NTIQ:', { amount, token: selectedPaymentToken });
+                          const paymentAmount = amount * 0.01; // Exchange rate: 1 token = 100 NTIQ
+                          buyNTIQMutation.mutate({
+                            amount,
+                            paymentToken: selectedPaymentToken,
+                            paymentAmount
+                          });
                         }
                       }}
-                      disabled={!buyAmount || parseFloat(buyAmount) < 100}
+                      disabled={!buyAmount || parseFloat(buyAmount) < 100 || buyNTIQMutation.isPending}
                       className="w-full"
                     >
                       <Coins className="mr-2" size={16} />
-                      Buy NTIQ
+                      {buyNTIQMutation.isPending ? "Processing..." : "Buy NTIQ"}
                     </Button>
 
                     {/* Info */}
