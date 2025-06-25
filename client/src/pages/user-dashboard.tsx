@@ -118,6 +118,7 @@ export default function UserDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(null);
   const [showChart, setShowChart] = useState(false);
+  const [selectedFinancialAction, setSelectedFinancialAction] = useState("withdraw");
   const [, setLocation] = useLocation();
 
   // Manual refresh function for Market Overview
@@ -415,17 +416,9 @@ export default function UserDashboard() {
               <Activity className="mr-1" size={16} />
               Performance
             </TabsTrigger>
-            <TabsTrigger value="withdraw" className="data-[state=active]:bg-primary">
-              <DollarSign className="mr-1" size={16} />
-              Withdraw
-            </TabsTrigger>
-            <TabsTrigger value="buy-ntiq" className="data-[state=active]:bg-primary">
-              <CreditCard className="mr-1" size={16} />
-              Buy NTIQ
-            </TabsTrigger>
-            <TabsTrigger value="wallet" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="financial" className="data-[state=active]:bg-primary">
               <Wallet className="mr-1" size={16} />
-              Wallet
+              Financial
             </TabsTrigger>
           </TabsList>
 
@@ -762,15 +755,47 @@ export default function UserDashboard() {
             </div>
           </TabsContent>
 
-          {/* Withdraw Tab */}
-          <TabsContent value="withdraw">
+          {/* Financial Tab - Combined Withdraw, Buy NTIQ, and Wallet */}
+          <TabsContent value="financial">
+            {/* Financial Actions Navigation */}
+            <div className="mb-6">
+              <div className="flex space-x-4 bg-surface border border-surface-light rounded-lg p-2">
+                <Button
+                  variant={selectedFinancialAction === "withdraw" ? "default" : "ghost"}
+                  onClick={() => setSelectedFinancialAction("withdraw")}
+                  className="flex-1"
+                >
+                  <DollarSign className="mr-2" size={16} />
+                  Withdraw
+                </Button>
+                <Button
+                  variant={selectedFinancialAction === "buy" ? "default" : "ghost"}
+                  onClick={() => setSelectedFinancialAction("buy")}
+                  className="flex-1"
+                >
+                  <CreditCard className="mr-2" size={16} />
+                  Buy NTIQ
+                </Button>
+                <Button
+                  variant={selectedFinancialAction === "wallet" ? "default" : "ghost"}
+                  onClick={() => setSelectedFinancialAction("wallet")}
+                  className="flex-1"
+                >
+                  <Wallet className="mr-2" size={16} />
+                  Wallet
+                </Button>
+              </div>
+            </div>
+
+            {/* Withdraw Section */}
+            {selectedFinancialAction === "withdraw" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Withdrawal Form */}
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Wallet className="mr-2" size={20} />
-                    Withdraw PTS to Crypto
+                    Withdraw NTIQ to Crypto
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -895,8 +920,8 @@ export default function UserDashboard() {
             </div>
           </TabsContent>
 
-          {/* Buy NTIQ Tab */}
-          <TabsContent value="buy-ntiq">
+          {/* DEPRECATED - Buy NTIQ now integrated into Financial tab */}
+          <TabsContent value="buy-ntiq-DEPRECATED" className="hidden">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Buy NTIQ Form */}
               <Card className="bg-surface border-surface-light">
