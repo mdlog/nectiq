@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import { 
   Wallet, 
   TrendingUp, 
@@ -51,6 +53,8 @@ export default function HowToPlay() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
+      
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-primary/20 via-background to-background border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-16">
@@ -453,6 +457,8 @@ export default function HowToPlay() {
         </section>
 
       </div>
+      
+      <Footer />
     </div>
   );
 }
