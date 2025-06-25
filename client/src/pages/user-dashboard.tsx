@@ -194,21 +194,12 @@ export default function UserDashboard() {
   // Buy NTIQ mutation
   const buyNTIQMutation = useMutation({
     mutationFn: async ({ ntiqAmount, paymentToken }: { ntiqAmount: number; paymentToken: string }) => {
-      const response = await fetch('/api/user/buy-ntiq', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ntiqAmount, paymentToken }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Purchase failed');
-      }
-      return response.json();
+      return await apiRequest("POST", "/api/user/buy-ntiq", { ntiqAmount, paymentToken });
     },
     onSuccess: (data) => {
       toast({
         title: "Purchase Successful",
-        description: `${data.ntiqAmount} NTIQ has been added to your balance`,
+        description: `${data.ntiqAmount || parseInt(buyAmount)} NTIQ has been added to your balance`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/purchases"] });
@@ -992,13 +983,15 @@ export default function UserDashboard() {
                       <Input
                         id="buyAmount"
                         type="number"
-                        placeholder="Enter NTIQ amount"
+                        placeholder="Enter NTIQ amount (whole numbers only)"
                         value={buyAmount}
                         onChange={(e) => setBuyAmount(e.target.value)}
                         min="100"
+                        max="1000000"
+                        step="1"
                       />
                       <div className="text-xs text-slate-400">
-                        Exchange Rate: 1 {selectedPaymentToken} = 100 NTIQ
+                        Exchange Rate: 1 {selectedPaymentToken} = {selectedPaymentToken === 'ETH' ? '300,000' : '100'} NTIQ
                       </div>
                     </div>
 
@@ -1008,7 +1001,10 @@ export default function UserDashboard() {
                         <div className="flex justify-between items-center text-sm">
                           <span>You will pay:</span>
                           <span className="font-semibold text-primary">
-                            {(parseFloat(buyAmount) * 0.01).toFixed(4)} {selectedPaymentToken}
+                            {selectedPaymentToken === 'ETH' 
+                              ? (parseInt(buyAmount) / 300000).toFixed(6)
+                              : (parseInt(buyAmount) / 100).toFixed(2)
+                            } {selectedPaymentToken}
                           </span>
                         </div>
                       </div>
@@ -1017,17 +1013,15 @@ export default function UserDashboard() {
                     {/* Buy Button */}
                     <Button
                       onClick={() => {
-                        const amount = parseFloat(buyAmount);
-                        if (amount >= 100) {
-                          const paymentAmount = amount * 0.01; // Exchange rate: 1 token = 100 NTIQ
+                        const amount = parseInt(buyAmount);
+                        if (amount >= 100 && Number.isInteger(amount)) {
                           buyNTIQMutation.mutate({
-                            amount,
-                            paymentToken: selectedPaymentToken,
-                            paymentAmount
+                            ntiqAmount: amount,
+                            paymentToken: selectedPaymentToken
                           });
                         }
                       }}
-                      disabled={!buyAmount || parseFloat(buyAmount) < 100 || buyNTIQMutation.isPending}
+                      disabled={!buyAmount || parseInt(buyAmount) < 100 || !Number.isInteger(parseInt(buyAmount)) || buyNTIQMutation.isPending}
                       className="w-full"
                     >
                       <Coins className="mr-2" size={16} />
