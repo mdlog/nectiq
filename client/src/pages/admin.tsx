@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink } from "lucide-react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1159,9 +1159,13 @@ export default function AdminPanel() {
 
   const backupDatabaseMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("/api/admin/backup-database", {
+      const response = await fetch("/api/admin/backup-database", {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
       });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
     },
     onSuccess: (data: any) => {
       toast({
@@ -1180,13 +1184,17 @@ export default function AdminPanel() {
 
   const exportLogsMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("/api/admin/export-logs", {
+      const response = await fetch("/api/admin/export-logs", {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
           endDate: new Date().toISOString()
         }),
       });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
     },
     onSuccess: (data: any) => {
       // Download the logs as JSON file
@@ -1218,10 +1226,14 @@ export default function AdminPanel() {
 
   const emergencyStopMutation = useMutation({
     mutationFn: async (reason: string) => {
-      return apiRequest("/api/admin/emergency-stop", {
+      const response = await fetch("/api/admin/emergency-stop", {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason }),
       });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
     },
     onSuccess: () => {
       toast({
