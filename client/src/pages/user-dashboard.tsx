@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -390,27 +390,35 @@ export default function UserDashboard() {
         <Tabs defaultValue="predictions" className="space-y-4">
           <TabsList className="bg-surface border border-surface-light">
             <TabsTrigger value="predictions" className="data-[state=active]:bg-primary">
+              <Clock className="mr-1" size={16} />
               My Predictions
             </TabsTrigger>
             <TabsTrigger value="achievements" className="data-[state=active]:bg-primary">
+              <Award className="mr-1" size={16} />
               Achievements
             </TabsTrigger>
             <TabsTrigger value="challenges" className="data-[state=active]:bg-primary">
+              <Calendar className="mr-1" size={16} />
               Daily Challenges
             </TabsTrigger>
             <TabsTrigger value="rewards" className="data-[state=active]:bg-primary">
+              <History className="mr-1" size={16} />
               Reward History
             </TabsTrigger>
             <TabsTrigger value="market" className="data-[state=active]:bg-primary">
+              <Eye className="mr-1" size={16} />
               Market Watch
             </TabsTrigger>
             <TabsTrigger value="performance" className="data-[state=active]:bg-primary">
+              <Activity className="mr-1" size={16} />
               Performance
             </TabsTrigger>
             <TabsTrigger value="withdraw" className="data-[state=active]:bg-primary">
+              <DollarSign className="mr-1" size={16} />
               Withdraw
             </TabsTrigger>
             <TabsTrigger value="buy-ntiq" className="data-[state=active]:bg-primary">
+              <CreditCard className="mr-1" size={16} />
               Buy NTIQ
             </TabsTrigger>
             <TabsTrigger value="wallet" className="data-[state=active]:bg-primary">

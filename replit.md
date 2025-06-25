@@ -142,6 +142,7 @@ Changelog:
 - June 25, 2025. Added comprehensive User Statistics to Admin Panel: total users, new users by time period, active/dormant segmentation, prediction statistics, financial metrics, growth charts with registrations and retention data, top performers, and real-time refresh capabilities
 - June 25, 2025. Simplified Settings menu in Admin Panel with clean English interface: organized into essential categories (Prediction Limits, Financial Settings, Security & Rate Limits, Exchange Rates), removed cluttered Indonesian text and complex configurations, added proper placeholders for guidance
 - June 25, 2025. Fixed prediction form to display "NTIQ" instead of "PTS" for stake amount: updated button labels (50 NTIQ, 100 NTIQ, etc.), input placeholder, and validation messages for consistent currency branding throughout the application
+- June 25, 2025. Added icons to all user dashboard menu tabs: Clock for My Predictions, Award for Achievements, Calendar for Daily Challenges, History for Reward History, Eye for Market Watch, Activity for Performance, DollarSign for Withdraw, CreditCard for Buy NTIQ, and Wallet - improving visual consistency with admin panel design
 ```
 
 ## User Preferences
