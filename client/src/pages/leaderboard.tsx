@@ -25,6 +25,14 @@ type FilterType = 'weekly' | 'monthly' | 'alltime';
 
 export default function Leaderboard() {
   const [filter, setFilter] = useState<FilterType>('alltime');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset to page 1 when filter changes
+  const handleFilterChange = (newFilter: FilterType) => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+  };
   
   const { data: leaderboardData, isLoading } = useQuery<LeaderboardUser[]>({
     queryKey: ['/api/leaderboard', filter],
@@ -69,6 +77,18 @@ export default function Leaderboard() {
     })).sort((a, b) => b.points - a.points);
   };
 
+  const getPaginatedData = () => {
+    const allData = getFilterData();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return allData.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    const allData = getFilterData();
+    return Math.ceil(allData.length / itemsPerPage);
+  };
+
   const formatPoints = (points: number) => {
     if (points >= 1000000) return `${(points / 1000000).toFixed(1)}M`;
     if (points >= 1000) return `${(points / 1000).toFixed(1)}K`;
@@ -101,6 +121,8 @@ export default function Leaderboard() {
   }
 
   const filteredData = getFilterData();
+  const paginatedData = getPaginatedData();
+  const totalPages = getTotalPages();
   const totalUsers = filteredData.length;
   const totalPredictions = filteredData.reduce((sum, user) => sum + user.totalPredictions, 0);
   const averageWinRate = filteredData.length > 0 
@@ -116,6 +138,9 @@ export default function Leaderboard() {
             <div className="flex items-center space-x-3">
               <Trophy className="text-primary h-8 w-8" />
               <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
+              <Badge variant="secondary" className="bg-primary/20 text-primary">
+                {totalUsers} Users
+              </Badge>
             </div>
             <Link href="/">
               <Button
