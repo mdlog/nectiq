@@ -84,8 +84,8 @@ export default function Leaderboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-background">
+        <div className="container max-w-6xl mx-auto px-4 py-8">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-surface rounded"></div>
             <div className="h-32 bg-surface rounded"></div>
@@ -108,8 +108,8 @@ export default function Leaderboard() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">

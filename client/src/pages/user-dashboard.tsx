@@ -303,7 +303,7 @@ export default function UserDashboard() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <div className="bg-surface border-b border-surface-light">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
@@ -331,7 +331,7 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="container max-w-6xl mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-2">Welcome back, {user?.username || "User"}!</h2>
