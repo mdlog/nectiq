@@ -108,6 +108,27 @@ export default function AdminPanel() {
     endDate: ""
   });
   const [, setLocation] = useLocation();
+
+  // Events Management State
+  const [eventsFilter, setEventsFilter] = useState("all");
+  const [eventsSearchQuery, setEventsSearchQuery] = useState("");
+  const [eventFormData, setEventFormData] = useState({
+    title: "",
+    description: "",
+    imageUrl: "",
+    eventType: "announcement",
+    organizer: "",
+    organizerLogo: "",
+    startDate: "",
+    endDate: "",
+    location: "",
+    linkUrl: "",
+    isActive: true,
+    isFeatured: false,
+    priority: 0
+  });
+  const [showEventDialog, setShowEventDialog] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any>(null);
   const [securityPage, setSecurityPage] = useState(1);
   const [securityEventsPerPage] = useState(20);
   const [securitySearchQuery, setSecuritySearchQuery] = useState("");
@@ -3894,6 +3915,11 @@ export default function AdminPanel() {
               </CardHeader>
             </Card>
             <BannerManagement />
+          </TabsContent>
+
+          {/* Events Management Tab */}
+          <TabsContent value="events" className="space-y-6">
+            <EventsManagement />
           </TabsContent>
 
           {/* Enhanced Settings Tab */}
