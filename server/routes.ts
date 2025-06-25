@@ -12,6 +12,7 @@ import { insertPredictionSchema, insertCryptocurrencySchema } from "@shared/sche
 import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
+import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } from "./routes/userStats";
 
 // Security audit logging
 const auditLog = (event: string, details: any, req: Request) => {
@@ -976,6 +977,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get users" });
     }
   });
+
+  // User Statistics routes (Admin only)
+  app.get('/api/admin/user-statistics', requireAdmin, getUserStatistics);
+  app.get('/api/admin/user-growth', requireAdmin, getUserGrowthMetrics);
+  app.get('/api/admin/user-engagement', requireAdmin, getUserEngagementMetrics);
 
   // Admin: Get all purchases (transaction monitoring)
   app.get("/api/admin/purchases", requireAdmin, async (req, res) => {
