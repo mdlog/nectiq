@@ -139,6 +139,7 @@ Changelog:
 - June 24, 2025. Created simplified smart contracts without external dependencies: SimpleNTIQ token, SimplePriceOracle, SimplePredictionBattle - all functions tested and working perfectly with automatic accuracy calculation and reward distribution
 - June 24, 2025. Prepared complete deployment system for Holesky and Sepolia testnets: deployment scripts, testing scripts, comprehensive documentation, and frontend integration guides ready for testnet deployment
 - June 24, 2025. Implemented One-Click Social Media Sharing feature: achievement cards with Twitter/Facebook sharing, custom message editing, social preview, achievement gallery with filters, and automatic share buttons for high-accuracy predictions
+- June 25, 2025. Added comprehensive User Statistics to Admin Panel: total users, new users by time period, active/dormant segmentation, prediction statistics, financial metrics, growth charts with registrations and retention data, top performers, and real-time refresh capabilities
 ```
 
 ## User Preferences
