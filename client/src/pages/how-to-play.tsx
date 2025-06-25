@@ -227,112 +227,69 @@ export default function HowToPlay() {
 
         {/* How It Works */}
         <section>
-          <h2 className="text-3xl font-bold mb-6 text-center">How It Works</h2>
-          
-          {/* Simple 3-Step Process */}
-          <div className="flex items-center justify-between max-w-4xl mx-auto mb-8">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
-                <TrendingUp className="text-primary" size={24} />
-              </div>
-              <h4 className="font-semibold text-lg mb-2">Choose & Predict</h4>
-              <p className="text-sm text-muted-foreground">Pick crypto + target price</p>
-            </div>
-            
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mx-8"></div>
-            
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mb-4">
-                <Clock className="text-secondary" size={24} />
-              </div>
-              <h4 className="font-semibold text-lg mb-2">Wait & Track</h4>
-              <p className="text-sm text-muted-foreground">1 hour to 7 days</p>
-            </div>
-            
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mx-8"></div>
-            
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
-                <Award className="text-green-500" size={24} />
-              </div>
-              <h4 className="font-semibold text-lg mb-2">Earn Rewards</h4>
-              <p className="text-sm text-muted-foreground">Get NTIQ based on accuracy</p>
-            </div>
-          </div>
-
-          {/* Detailed Reward System */}
-          <div className="grid lg:grid-cols-2 gap-8 mt-12">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Star className="mr-2 h-5 w-5 text-yellow-500" />
-                  Accuracy Multipliers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {accuracyRewards.map((reward, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 ${reward.color} rounded-full`}></div>
-                        <div>
-                          <div className="font-medium">{reward.range}</div>
-                          <div className="text-xs text-muted-foreground">{reward.reward}</div>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="font-bold">
-                        {reward.multiplier}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Zap className="mr-2 h-5 w-5 text-blue-500" />
-                  Calculation Formula
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-surface-light p-4 rounded-lg">
-                  <div className="text-center">
-                    <div className="text-sm text-muted-foreground mb-2">Final Reward =</div>
-                    <div className="font-mono text-lg">
-                      Stake × Timeframe × Accuracy
-                    </div>
+          <Card className="bg-surface border-surface-light">
+            <CardContent className="p-8">
+              <h2 className="text-2xl font-bold mb-8 text-center flex items-center justify-center">
+                <Info className="mr-2 h-6 w-6 text-primary" />
+                How It Works
+              </h2>
+              
+              {/* Simple 3-Step Process */}
+              <div className="flex items-center justify-between max-w-4xl mx-auto mb-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
+                    <TrendingUp className="text-primary" size={24} />
                   </div>
+                  <h4 className="font-semibold text-lg mb-2">Choose & Predict</h4>
+                  <p className="text-sm text-muted-foreground">Pick crypto + target price</p>
                 </div>
                 
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Minimum Stake:</span>
-                    <span className="font-medium">1 NTIQ</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mx-8"></div>
+                
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mb-4">
+                    <Clock className="text-secondary" size={24} />
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Maximum Stake:</span>
-                    <span className="font-medium">500 NTIQ</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Maximum Multiplier:</span>
-                    <span className="font-medium text-green-500">25x (7d × 5x accuracy)</span>
-                  </div>
+                  <h4 className="font-semibold text-lg mb-2">Wait & Track</h4>
+                  <p className="text-sm text-muted-foreground">5min to 24 hours</p>
                 </div>
+                
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent mx-8"></div>
+                
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                    <Award className="text-green-500" size={24} />
+                  </div>
+                  <h4 className="font-semibold text-lg mb-2">Earn Rewards</h4>
+                  <p className="text-sm text-muted-foreground">Up to 5x multiplier</p>
+                </div>
+              </div>
 
-                <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                  <div className="text-sm">
-                    <strong>Example:</strong> 100 NTIQ stake on 24h prediction with ±0.1% accuracy = 
-                    <span className="text-green-500 font-bold"> 1,500 NTIQ reward</span>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      (100 × 3x timeframe × 5x accuracy = 1,500)
-                    </div>
+              {/* Compact Reward System */}
+              <div className="bg-gradient-to-r from-primary/5 to-green-500/5 rounded-lg border border-primary/10 p-6">
+                <div className="flex justify-between items-center text-sm mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span className="text-white">Perfect ±0.1%</span>
+                    <span className="text-green-500 font-bold text-lg">5x</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <span className="text-white">Great ±1%</span>
+                    <span className="text-yellow-500 font-bold text-lg">3x</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                    <span className="text-white">Good ±5%</span>
+                    <span className="text-blue-400 font-bold text-lg">1.5x</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Connect wallet • Stake 1-500 NTIQ • Withdraw to USDT/USDC
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Tips & Strategies */}

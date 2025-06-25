@@ -165,6 +165,7 @@ Changelog:
 - June 26, 2025. Added username editing feature to Profile menu: inline edit functionality with input field, save/cancel buttons, username validation (3-20 characters, alphanumeric + underscore/hyphen), duplicate username checking, API endpoint for username updates, and real-time UI updates
 - June 26, 2025. Fixed profile photo display in Leaderboard: added profilePhoto field to database query, updated API response to include profile photo URLs, fixed database records for users with uploaded photos
 - June 26, 2025. Updated How to Play page Reward System section: renamed to "How It Works" with 3-step process visualization (Choose & Predict, Wait & Track, Earn Rewards), maintained detailed accuracy multipliers and calculation formulas for consistency with user workflow understanding
+- June 26, 2025. Redesigned How It Works section to match user's design reference: created compact card layout with integrated reward multipliers display (Perfect ±0.1% 5x, Great ±1% 3x, Good ±5% 1.5x), simplified layout with horizontal reward indicators, updated stake range to 1-500 NTIQ
 ```
 
 ## User Preferences
