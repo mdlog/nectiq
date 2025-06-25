@@ -1633,6 +1633,10 @@ export default function AdminPanel() {
               <Megaphone className="h-4 w-4" />
               Banners
             </TabsTrigger>
+            <TabsTrigger value="events" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Events
+            </TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:bg-primary flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Settings

@@ -1571,6 +1571,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Event management endpoints
+  app.get("/api/events", async (req, res) => {
+    try {
+      const { type, featured } = req.query;
+      let events;
+      
+      if (featured === "true") {
+        events = await storage.getFeaturedEvents();
+      } else if (type) {
+        events = await storage.getEventsByType(type as string);
+      } else {
+        events = await storage.getActiveEvents();
+      }
+      
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.get("/api/admin/events", requireAdmin, async (req, res) => {
+    try {
+      const events = await storage.getAllEvents();
+      auditLog("admin_events_viewed", { count: events.length }, req);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching all events:", error);
+      res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.post("/api/admin/events", requireAdmin, async (req, res) => {
+    try {
+      const eventData = {
+        ...req.body,
+        createdBy: req.session.userId!,
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate)
+      };
+
+      const event = await storage.createEvent(eventData);
+      
+      auditLog("event_created", { 
+        eventId: event.id, 
+        title: event.title,
+        eventType: event.eventType,
+        adminId: req.session.userId 
+      }, req);
+
+      // Broadcast to admin clients
+      broadcastToAdmins({
+        type: "new_event",
+        event: event
+      });
+
+      res.json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ message: "Failed to create event" });
+    }
+  });
+
+  app.put("/api/admin/events/:id", requireAdmin, async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const updateData = {
+        ...req.body,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
+      };
+
+      await storage.updateEvent(eventId, updateData);
+      
+      auditLog("event_updated", { 
+        eventId,
+        adminId: req.session.userId 
+      }, req);
+
+      res.json({ message: "Event updated successfully" });
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ message: "Failed to update event" });
+    }
+  });
+
+  app.delete("/api/admin/events/:id", requireAdmin, async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      
+      await storage.deleteEvent(eventId);
+      
+      auditLog("event_deleted", { 
+        eventId,
+        adminId: req.session.userId 
+      }, req);
+
+      res.json({ message: "Event deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
   // Image upload route for banners
   app.post('/api/admin/upload-banner-image', requireAdmin, async (req: Request, res: Response) => {
     try {

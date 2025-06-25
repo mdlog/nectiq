@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull } from "drizzle-orm";
 
@@ -95,6 +95,16 @@ export interface IStorage {
   getActiveBanners(position?: string): Promise<any[]>;
   updateBanner(id: number, banner: any): Promise<void>;
   deleteBanner(id: number): Promise<void>;
+
+  // Event operations
+  createEvent(event: InsertEvent): Promise<Event>;
+  getAllEvents(): Promise<Event[]>;
+  getActiveEvents(): Promise<Event[]>;
+  getFeaturedEvents(): Promise<Event[]>;
+  getEventsByType(eventType: string): Promise<Event[]>;
+  updateEvent(id: number, event: Partial<InsertEvent>): Promise<void>;
+  deleteEvent(id: number): Promise<void>;
+  getEvent(id: number): Promise<Event | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -555,6 +565,68 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(banners)
       .where(eq(banners.id, id));
+  }
+
+  // Event operations
+  async createEvent(eventData: InsertEvent): Promise<Event> {
+    const [event] = await db
+      .insert(events)
+      .values(eventData)
+      .returning();
+    return event;
+  }
+
+  async getAllEvents(): Promise<Event[]> {
+    return await db.select().from(events).orderBy(desc(events.createdAt));
+  }
+
+  async getActiveEvents(): Promise<Event[]> {
+    const now = new Date();
+    return await db
+      .select()
+      .from(events)
+      .where(
+        and(
+          eq(events.isActive, true),
+          lte(events.startDate, now),
+          gte(events.endDate, now)
+        )
+      )
+      .orderBy(desc(events.isFeatured), desc(events.startDate));
+  }
+
+  async getFeaturedEvents(): Promise<Event[]> {
+    return await db
+      .select()
+      .from(events)
+      .where(and(eq(events.isActive, true), eq(events.isFeatured, true)))
+      .orderBy(desc(events.startDate));
+  }
+
+  async getEventsByType(eventType: string): Promise<Event[]> {
+    return await db
+      .select()
+      .from(events)
+      .where(and(eq(events.isActive, true), eq(events.eventType, eventType)))
+      .orderBy(desc(events.startDate));
+  }
+
+  async updateEvent(id: number, eventData: Partial<InsertEvent>): Promise<void> {
+    await db
+      .update(events)
+      .set({ ...eventData, updatedAt: new Date() })
+      .where(eq(events.id, id));
+  }
+
+  async deleteEvent(id: number): Promise<void> {
+    await db
+      .delete(events)
+      .where(eq(events.id, id));
+  }
+
+  async getEvent(id: number): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event || undefined;
   }
 }
 
