@@ -63,6 +63,11 @@ export default function AdminPanel() {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   
+  // Debug effect to track selectedUsers changes
+  useEffect(() => {
+    console.log("selectedUsers changed:", selectedUsers);
+  }, [selectedUsers]);
+  
   // Search state
   const [userSearchTerm, setUserSearchTerm] = useState("");
   
@@ -658,7 +663,10 @@ export default function AdminPanel() {
   };
 
   const handleBulkDelete = async () => {
+    console.log("handleBulkDelete called with selectedUsers:", selectedUsers);
+    
     if (selectedUsers.length === 0) {
+      console.log("No users selected");
       toast({
         title: "Warning",
         description: "No users selected for deletion",
@@ -669,6 +677,7 @@ export default function AdminPanel() {
 
     // Confirm bulk deletion
     const confirmed = confirm(`Are you sure you want to delete ${selectedUsers.length} users? This action cannot be undone.`);
+    console.log("User confirmed deletion:", confirmed);
     if (!confirmed) return;
 
     let successCount = 0;
@@ -1657,7 +1666,12 @@ export default function AdminPanel() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={handleBulkDelete}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log("Delete Selected clicked with users:", selectedUsers);
+                              handleBulkDelete();
+                            }}
                             className="bg-red-600 hover:bg-red-700 text-white"
                           >
                             <Trash2 className="mr-1" size={14} />
@@ -1751,9 +1765,13 @@ export default function AdminPanel() {
                             <Checkbox
                               checked={selectedUsers.length === sortedUsers.length && sortedUsers.length > 0}
                               onCheckedChange={(checked: boolean) => {
+                                console.log("Select all checkbox changed:", checked);
                                 if (checked) {
-                                  setSelectedUsers(sortedUsers.map(u => u.id));
+                                  const allIds = sortedUsers.map(u => u.id);
+                                  console.log("Selecting all users:", allIds);
+                                  setSelectedUsers(allIds);
                                 } else {
+                                  console.log("Deselecting all users");
                                   setSelectedUsers([]);
                                 }
                               }}
@@ -1797,10 +1815,19 @@ export default function AdminPanel() {
                               <Checkbox
                                 checked={selectedUsers.includes(user.id)}
                                 onCheckedChange={(checked: boolean) => {
+                                  console.log(`User ${user.id} checkbox changed:`, checked);
                                   if (checked) {
-                                    setSelectedUsers(prev => [...prev, user.id]);
+                                    setSelectedUsers(prev => {
+                                      const newSelection = [...prev, user.id];
+                                      console.log("New selection:", newSelection);
+                                      return newSelection;
+                                    });
                                   } else {
-                                    setSelectedUsers(prev => prev.filter(id => id !== user.id));
+                                    setSelectedUsers(prev => {
+                                      const newSelection = prev.filter(id => id !== user.id);
+                                      console.log("New selection:", newSelection);
+                                      return newSelection;
+                                    });
                                   }
                                 }}
                               />
