@@ -36,7 +36,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
   });
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', { 
+    return new Date(dateString).toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric' 
     });
@@ -48,7 +48,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Grafik Pertumbuhan Pengguna
+            User Growth Chart
           </CardTitle>
         </CardHeader>
         <CardContent>

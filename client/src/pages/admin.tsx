@@ -2759,7 +2759,7 @@ export default function AdminPanel() {
                   {/* Additional Statistics Section */}
                   <div className="mb-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
                     <h4 className="text-lg font-bold text-primary mb-3 flex items-center">
-                      🧠 Statistik Tambahan di Atas
+                      🧠 Additional Statistics Above
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                       <div className="flex items-center space-x-2">

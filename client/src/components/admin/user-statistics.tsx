@@ -129,9 +129,9 @@ export function UserStatistics() {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p>Gagal memuat statistik pengguna</p>
+          <p>Failed to load user statistics</p>
           <Button onClick={() => refetch()} className="mt-4">
-            Coba Lagi
+            Try Again
           </Button>
         </CardContent>
       </Card>
@@ -143,9 +143,9 @@ export function UserStatistics() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Statistik Pengguna</h2>
+          <h2 className="text-2xl font-bold">User Statistics</h2>
           <p className="text-sm text-muted-foreground">
-            Terakhir diperbarui: {new Date(stats.overview.lastUpdated).toLocaleString('id-ID')}
+            Last updated: {new Date(stats.overview.lastUpdated).toLocaleString('en-US')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -154,10 +154,10 @@ export function UserStatistics() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="24h">24 Jam</SelectItem>
-              <SelectItem value="7d">7 Hari</SelectItem>
-              <SelectItem value="30d">30 Hari</SelectItem>
-              <SelectItem value="all">Semua</SelectItem>
+              <SelectItem value="24h">24 Hours</SelectItem>
+              <SelectItem value="7d">7 Days</SelectItem>
+              <SelectItem value="30d">30 Days</SelectItem>
+              <SelectItem value="all">All Time</SelectItem>
             </SelectContent>
           </Select>
           <Button
@@ -182,7 +182,7 @@ export function UserStatistics() {
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Total Pengguna</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Users</p>
                 <p className="text-2xl font-bold">{formatNumber(stats.overview.totalUsers)}</p>
               </div>
             </div>
@@ -194,7 +194,7 @@ export function UserStatistics() {
             <div className="flex items-center">
               <UserPlus className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Pengguna Baru</p>
+                <p className="text-sm font-medium text-muted-foreground">New Users</p>
                 <div className="flex items-center gap-2">
                   <p className="text-2xl font-bold">{formatNumber(stats.overview.newUsers)}</p>
                   {getGrowthIcon(stats.growthMetrics.newUsersGrowth)}
@@ -212,7 +212,7 @@ export function UserStatistics() {
             <div className="flex items-center">
               <Activity className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Pengguna Aktif</p>
+                <p className="text-sm font-medium text-muted-foreground">Active Users</p>
                 <p className="text-2xl font-bold">{formatNumber(stats.overview.activeUsers)}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatPercentage((stats.overview.activeUsers / stats.overview.totalUsers) * 100)} dari total
@@ -241,7 +241,7 @@ export function UserStatistics() {
           <TabsTrigger value="segments">Segmentasi Pengguna</TabsTrigger>
           <TabsTrigger value="predictions">Statistik Prediksi</TabsTrigger>
           <TabsTrigger value="financial">Statistik Keuangan</TabsTrigger>
-          <TabsTrigger value="growth">Grafik Pertumbuhan</TabsTrigger>
+          <TabsTrigger value="growth">Growth Chart</TabsTrigger>
           <TabsTrigger value="top-users">Top Pengguna</TabsTrigger>
         </TabsList>
 
