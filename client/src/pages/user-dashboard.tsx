@@ -314,7 +314,7 @@ export default function UserDashboard() {
               <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
                 <Coins className="text-warning" size={16} />
                 <span className="font-semibold">{user?.balance?.toLocaleString() || "0"}</span>
-                <span className="text-xs text-slate-400">PTS</span>
+                <span className="text-xs text-slate-400">NTIQ</span>
               </div>
               {getRankBadge(stats?.rank)}
               <Button 

@@ -145,6 +145,7 @@ Changelog:
 - June 25, 2025. Added icons to all user dashboard menu tabs: Clock for My Predictions, Award for Achievements, Calendar for Daily Challenges, History for Reward History, Eye for Market Watch, Activity for Performance, DollarSign for Withdraw, CreditCard for Buy NTIQ, and Wallet - improving visual consistency with admin panel design
 - June 25, 2025. Fixed "PTS" to "NTIQ" currency references in Achievements component: updated total rewards display, completed achievement badges, in-progress achievement badges, and not-started achievement badges for consistent NTIQ branding throughout the achievements system
 - June 25, 2025. Implemented smooth client-side navigation throughout the application: replaced all window.location.href calls with Wouter's useLocation hook for seamless navigation between pages without full page reloads, including header navigation, admin panel, user dashboard, and predict buttons
+- June 25, 2025. Enhanced header navigation menu: converted anchor tags to buttons with client-side routing for Home, My Dashboard, Leaderboard, How to Play, and Admin links ensuring smooth transitions without page reloads when navigating between main sections
 ```
 
 ## User Preferences

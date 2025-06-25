@@ -101,12 +101,12 @@ export function Header() {
           </div>
           
           <nav className="hidden md:flex space-x-8">
-            <a href="/" className="text-slate-300 hover:text-white transition-colors">Home</a>
-            <a href="/dashboard" className="text-slate-300 hover:text-white transition-colors">My Dashboard</a>
-            <a href="/leaderboard" className="text-slate-300 hover:text-white transition-colors">Leaderboard</a>
-            <a href="/how-to-play" className="text-slate-300 hover:text-white transition-colors">How to Play</a>
+            <button onClick={() => setLocation('/')} className="text-slate-300 hover:text-white transition-colors">Home</button>
+            <button onClick={() => setLocation('/dashboard')} className="text-slate-300 hover:text-white transition-colors">My Dashboard</button>
+            <button onClick={() => setLocation('/leaderboard')} className="text-slate-300 hover:text-white transition-colors">Leaderboard</button>
+            <button onClick={() => setLocation('/how-to-play')} className="text-slate-300 hover:text-white transition-colors">How to Play</button>
             {address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
-              <a href="/admin" className="text-primary hover:text-primary/80 transition-colors font-semibold">Admin</a>
+              <button onClick={() => setLocation('/admin')} className="text-primary hover:text-primary/80 transition-colors font-semibold">Admin</button>
             )}
           </nav>
 

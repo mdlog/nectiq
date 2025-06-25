@@ -1430,7 +1430,7 @@ export default function AdminPanel() {
               </div>
               <h1 className="text-xl font-bold">Admin Panel - CryptoPredikt</h1>
             </div>
-            <Button variant="outline" className="bg-surface-light border-surface-light" onClick={() => window.location.href = '/'}>
+            <Button variant="outline" className="bg-surface-light border-surface-light" onClick={() => setLocation('/')}>
               <Eye className="mr-2" size={16} />
               Back to App
             </Button>
