@@ -43,29 +43,29 @@ export default function HowToPlay() {
                   <div className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-3">
                     1
                   </div>
-                  <h3 className="font-semibold mb-2">Choose Crypto</h3>
-                  <p className="text-sm text-muted-foreground">Select from Bitcoin, Ethereum, BNB, Cardano, or Solana</p>
+                  <h3 className="font-semibold mb-2 text-black dark:text-white">Choose Crypto</h3>
+                  <p className="text-sm text-black dark:text-muted-foreground">Select from Bitcoin, Ethereum, BNB, Cardano, or Solana</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
                   <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-3">
                     2
                   </div>
-                  <h3 className="font-semibold mb-2">Predict Price</h3>
-                  <p className="text-sm text-muted-foreground">Enter your predicted price for the selected timeframe</p>
+                  <h3 className="font-semibold mb-2 text-black dark:text-white">Predict Price</h3>
+                  <p className="text-sm text-black dark:text-muted-foreground">Enter your predicted price for the selected timeframe</p>
                 </div>
                 <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
                   <div className="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center mx-auto mb-3">
                     3
                   </div>
-                  <h3 className="font-semibold mb-2">Set Stake</h3>
-                  <p className="text-sm text-muted-foreground">Choose your stake amount (10-1000 points)</p>
+                  <h3 className="font-semibold mb-2 text-black dark:text-white">Set Stake</h3>
+                  <p className="text-sm text-black dark:text-muted-foreground">Choose your stake amount (10-1000 points)</p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
                   <div className="w-12 h-12 bg-purple-500 text-white rounded-full flex items-center justify-center mx-auto mb-3">
                     4
                   </div>
-                  <h3 className="font-semibold mb-2">Earn Rewards</h3>
-                  <p className="text-sm text-muted-foreground">Get rewards based on your prediction accuracy</p>
+                  <h3 className="font-semibold mb-2 text-black dark:text-white">Earn Rewards</h3>
+                  <p className="text-sm text-black dark:text-muted-foreground">Get rewards based on your prediction accuracy</p>
                 </div>
               </div>
             </CardContent>
