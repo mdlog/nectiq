@@ -279,6 +279,25 @@ export class DatabaseStorage implements IStorage {
     await db.delete(users).where(eq(users.id, id));
   }
 
+  // Clear all users from database
+  async clearAllUsers(): Promise<void> {
+    console.log("Starting complete database user cleanup...");
+    
+    // Delete all user-related data in order to handle foreign key constraints
+    await db.delete(rewards);
+    await db.delete(predictions);
+    await db.delete(purchases);
+    await db.delete(withdrawals);
+    await db.delete(transactionLogs);
+    await db.delete(adminLogs);
+    await db.delete(securityEvents);
+    
+    // Finally delete all users
+    await db.delete(users);
+    
+    console.log("Database cleared: All users and related data removed");
+  }
+
   // Security event operations
   async createSecurityEvent(event: any): Promise<any> {
     const [newEvent] = await db.insert(securityEvents).values(event).returning();
