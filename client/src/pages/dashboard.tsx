@@ -67,7 +67,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       
-      <main className="container-responsive py-8">
+      <main className="container-responsive py-12">
         <div className="responsive-grid">
           {/* Left Sidebar - Live Prices */}
           <div className="space-y-6">

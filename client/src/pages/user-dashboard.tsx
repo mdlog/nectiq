@@ -296,7 +296,7 @@ export default function UserDashboard() {
       {/* Header */}
       <div className="bg-surface border-b border-surface-light">
         <div className="container max-w-6xl mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20 py-4">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
                 <Star className="text-white" size={16} />
