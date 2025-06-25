@@ -158,6 +158,7 @@ Changelog:
 - June 26, 2025. Fixed Delete Selected button functionality in Admin Panel Users management: resolved non-responsive button issue through comprehensive debugging, enhanced confirmation dialog with user names and clear warnings, improved error handling for bulk deletion operations, added extensive console logging for troubleshooting
 - June 26, 2025. Fixed admin wallet authentication toast notification showing "Welcome undefined": corrected username handling for admin users, added fallback username generation, updated database to ensure admin users have proper usernames
 - June 26, 2025. Created comprehensive How to Play page: complete guide with quick start steps, supported cryptocurrencies showcase, prediction timeframes explanation, detailed reward system with accuracy multipliers and calculation formulas, tips & strategies section, important notes, and call-to-action sections for better user onboarding and fixed routing to display the new content
+- June 26, 2025. Added header and footer components to How to Play, Leaderboard, and My Dashboard pages for consistent layout and navigation across all main pages
 ```
 
 ## User Preferences
