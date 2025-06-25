@@ -72,22 +72,6 @@ export default function Leaderboard() {
     }
   };
 
-  const getWinRateColor = (winRate: number) => {
-    if (winRate >= 70) return "text-green-400";
-    if (winRate >= 50) return "text-yellow-400";
-    return "text-red-400";
-  };
-
-  const formatPoints = (points: number) => {
-    if (points >= 1000000) {
-      return `${(points / 1000000).toFixed(1)}M`;
-    }
-    if (points >= 1000) {
-      return `${(points / 1000).toFixed(1)}K`;
-    }
-    return points.toLocaleString();
-  };
-
   const getFilterData = () => {
     if (!leaderboardData) return [];
     
@@ -125,12 +109,32 @@ export default function Leaderboard() {
     return Math.ceil(allData.length / itemsPerPage);
   };
 
+  const formatPoints = (points: number) => {
+    if (points >= 1000000) return `${(points / 1000000).toFixed(1)}M`;
+    if (points >= 1000) return `${(points / 1000).toFixed(1)}K`;
+    return points.toLocaleString();
+  };
+
+  const getWinRateColor = (winRate: number) => {
+    if (winRate >= 80) return "text-green-400";
+    if (winRate >= 60) return "text-yellow-400";
+    if (winRate >= 40) return "text-orange-400";
+    return "text-red-400";
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Trophy className="mx-auto h-12 w-12 text-primary mb-4 animate-pulse" />
-          <p className="text-slate-400">Loading leaderboard...</p>
+      <div className="min-h-screen bg-background">
+        <div className="container max-w-6xl mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-surface rounded"></div>
+            <div className="h-32 bg-surface rounded"></div>
+            <div className="space-y-3">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="h-16 bg-surface rounded"></div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -185,33 +189,33 @@ export default function Leaderboard() {
             
             {/* Filter Buttons */}
             <div className="flex space-x-2">
-              <Button
-                variant={filter === 'weekly' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleFilterChange('weekly')}
-                className="flex items-center space-x-2"
-              >
-                <Calendar size={16} />
-                <span>Weekly</span>
-              </Button>
-              <Button
-                variant={filter === 'monthly' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleFilterChange('monthly')}
-                className="flex items-center space-x-2"
-              >
-                <Calendar size={16} />
-                <span>Monthly</span>
-              </Button>
-              <Button
-                variant={filter === 'alltime' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleFilterChange('alltime')}
-                className="flex items-center space-x-2"
-              >
-                <Trophy size={16} />
-                <span>All Time</span>
-              </Button>
+            <Button
+              variant={filter === 'weekly' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleFilterChange('weekly')}
+              className="flex items-center space-x-2"
+            >
+              <Calendar size={16} />
+              <span>Weekly</span>
+            </Button>
+            <Button
+              variant={filter === 'monthly' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleFilterChange('monthly')}
+              className="flex items-center space-x-2"
+            >
+              <Calendar size={16} />
+              <span>Monthly</span>
+            </Button>
+            <Button
+              variant={filter === 'alltime' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleFilterChange('alltime')}
+              className="flex items-center space-x-2"
+            >
+              <Trophy size={16} />
+              <span>All Time</span>
+            </Button>
             </div>
           </div>
 
@@ -270,86 +274,86 @@ export default function Leaderboard() {
               {paginatedData.map((user, index) => {
                 const actualRank = (currentPage - 1) * itemsPerPage + index + 1;
                 return (
-                  <div
-                    key={user.id}
-                    className={`p-4 border-b border-surface-light last:border-b-0 hover:bg-surface-light/50 transition-colors ${
-                      actualRank <= 3 ? 'bg-gradient-to-r from-primary/5 to-transparent' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        {/* Rank */}
-                        <div className="flex items-center justify-center w-10 h-10">
-                          {getRankIcon(actualRank)}
-                        </div>
-
-                        {/* User Info */}
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="font-semibold text-white">{user.username}</h3>
-                            <Badge variant="outline" className="text-xs">
-                              #{user.uid}
-                            </Badge>
-                            {actualRank <= 3 && (
-                              <Badge className={getRankBadgeColor(actualRank)}>
-                                #{actualRank}
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center space-x-4 text-sm text-slate-400">
-                            <div className="flex items-center space-x-1">
-                              <Target size={12} />
-                              <span>{user.totalPredictions} predictions</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <TrendingUp size={12} />
-                              <span className={getWinRateColor(user.winRate)}>
-                                {user.winRate.toFixed(1)}% win rate
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                <div
+                  key={user.id}
+                  className={`p-4 border-b border-surface-light last:border-b-0 hover:bg-surface-light/50 transition-colors ${
+                    actualRank <= 3 ? 'bg-gradient-to-r from-primary/5 to-transparent' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      {/* Rank */}
+                      <div className="flex items-center justify-center w-10 h-10">
+                        {getRankIcon(actualRank)}
                       </div>
 
-                      {/* Points */}
-                      <div className="text-right">
+                      {/* User Info */}
+                      <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
-                          <Coins className="text-primary" size={16} />
-                          <span className="text-xl font-bold text-white">
-                            {user.points.toLocaleString()} NTIQ
-                          </span>
+                          <h3 className="font-semibold text-white">{user.username}</h3>
+                          <Badge variant="outline" className="text-xs">
+                            #{user.uid}
+                          </Badge>
+                          {actualRank <= 3 && (
+                            <Badge className={getRankBadgeColor(actualRank)}>
+                              #{actualRank}
+                            </Badge>
+                          )}
                         </div>
-                        <p className="text-xs text-slate-400">
-                          {filter === 'weekly' ? 'Weekly Points' : 
-                           filter === 'monthly' ? 'Monthly Points' : 
-                           'Total Rewards'}
-                        </p>
+                        
+                        <div className="flex items-center space-x-4 text-sm text-slate-400">
+                          <div className="flex items-center space-x-1">
+                            <Target size={12} />
+                            <span>{user.totalPredictions} predictions</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <TrendingUp size={12} />
+                            <span className={getWinRateColor(user.winRate)}>
+                              {user.winRate.toFixed(1)}% win rate
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Additional Stats for Top 3 */}
-                    {actualRank <= 3 && (
-                      <div className="mt-3 pt-3 border-t border-surface-light/50">
-                        <div className="grid grid-cols-3 gap-4 text-xs">
-                          <div className="text-center">
-                            <p className="text-slate-400">Correct</p>
-                            <p className="font-semibold text-success">{user.correctPredictions}</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-slate-400">Total Rewards</p>
-                            <p className="font-semibold text-primary">{formatPoints(user.totalRewards)}</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-slate-400">Accuracy</p>
-                            <p className={`font-semibold ${getWinRateColor(user.winRate)}`}>
-                              {user.winRate.toFixed(1)}%
-                            </p>
-                          </div>
+                    {/* Points */}
+                    <div className="text-right">
+                      <div className="flex items-center space-x-2 mb-1">
+
+                        <Coins className="text-primary" size={16} />
+                        <span className="text-xl font-bold text-white">
+                          {formatPoints(user.points)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        {filter === 'weekly' ? 'Weekly' : 
+                         filter === 'monthly' ? 'Monthly' : 'Total'} Points
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Additional Stats for Top 3 */}
+                  {index < 3 && (
+                    <div className="mt-3 pt-3 border-t border-surface-light/50">
+                      <div className="grid grid-cols-3 gap-4 text-xs">
+                        <div className="text-center">
+                          <p className="text-slate-400">Correct</p>
+                          <p className="font-semibold text-success">{user.correctPredictions}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-slate-400">Total Rewards</p>
+                          <p className="font-semibold text-primary">{formatPoints(user.totalRewards)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-slate-400">Accuracy</p>
+                          <p className={`font-semibold ${getWinRateColor(user.winRate)}`}>
+                            {user.winRate.toFixed(1)}%
+                          </p>
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                </div>
                 );
               })}
             </div>

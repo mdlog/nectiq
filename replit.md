@@ -153,6 +153,7 @@ Changelog:
 - June 25, 2025. Simplified User Dashboard menu: consolidated "Withdraw", "Buy NTIQ", and "Wallet" tabs into a single "Financial" tab with internal navigation for cleaner interface and better user experience
 - June 25, 2025. Implemented comprehensive backup and recovery system: automated database backups with pg_dump, file upload backups, configuration exports, backup manifests with checksums, CLI backup tools (npm run backup:create/list/restore), admin panel integration, and complete backup/recovery documentation
 - June 25, 2025. Added pagination to Leaderboard page: 10 users per page with Previous/Next navigation, page numbers with ellipsis for large datasets, smart pagination showing first/last/current pages, pagination info display, automatic reset to page 1 when filters change, and proper rank calculation across pages
+- June 26, 2025. Enhanced Leaderboard with search functionality: search by username with real-time filtering, pagination works with search results, search result count display, improved UI with search icon and placeholder text, empty state messages for both no data and no search results
 ```
 
 ## User Preferences
