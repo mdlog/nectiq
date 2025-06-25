@@ -462,16 +462,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
           </CardTitle>
           
           <div className="flex items-center gap-2">
-            {onPredictClick && (
-              <Button
-                onClick={() => onPredictClick(cryptoId)}
-                size="sm"
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Target size={16} className="mr-1" />
-                Predict
-              </Button>
-            )}
+            {/* Tombol Predict dipindahkan ke bawah chart */}
           </div>
         </div>
         
@@ -527,10 +518,24 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
           
           <canvas 
             ref={canvasRef}
-            className="w-full h-[400px] bg-slate-900 rounded-b-lg"
+            className="w-full h-[400px] bg-slate-900 rounded-lg"
             style={{ minHeight: '400px' }}
           />
         </div>
+
+        {/* Predict Button - Full Width Below Chart */}
+        {onPredictClick && (
+          <div className="mt-4">
+            <Button
+              onClick={() => onPredictClick(cryptoId)}
+              className="w-full bg-primary hover:bg-primary/90 text-white py-3 text-lg font-semibold"
+              size="lg"
+            >
+              <Target size={20} className="mr-2" />
+              Make Prediction for {symbol.toUpperCase()}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
