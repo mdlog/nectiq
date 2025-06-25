@@ -1145,6 +1145,7 @@ export default function UserDashboard() {
 function UserProfile() {
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -1183,6 +1184,42 @@ function UserProfile() {
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update username",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Upload profile photo mutation
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('profilePhoto', file);
+      
+      const response = await fetch('/api/user/upload-profile-photo', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to upload photo');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profile Photo Updated",
+        description: "Your profile photo has been successfully updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      setSelectedFile(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload profile photo",
         variant: "destructive",
       });
     },
