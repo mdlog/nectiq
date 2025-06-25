@@ -59,9 +59,67 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    min-width: 320px;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  /* Responsive container fixes */
+  .responsive-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  
+  @media (min-width: 1024px) {
+    .responsive-grid {
+      grid-template-columns: 1fr 2fr 1fr;
+    }
+  }
+  
+  /* Fix for zoom out issues */
+  .zoom-stable {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  
+  .crypto-card {
+    transition: transform 0.2s ease-in-out;
+    min-width: 0;
+    flex-shrink: 0;
+  }
+  
+  .crypto-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Prevent layout breaks at small zoom levels */
+  .container-responsive {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .container-responsive {
+      padding: 0 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .container-responsive {
+      padding: 0 2rem;
+    }
   }
 }
 
