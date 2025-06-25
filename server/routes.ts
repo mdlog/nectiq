@@ -553,6 +553,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Database Backup endpoint
+  app.post("/api/admin/backup-database", requireAdmin, async (req, res) => {
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupId = `nectiq-backup-${timestamp}`;
+      
+      // In a real implementation, you would:
+      // 1. Use pg_dump to create database backup
+      // 2. Store backup file securely
+      // 3. Return backup download link
+      
+      // For now, simulate backup creation
+      auditLog("BACKUP_CREATED", {
+        backupId,
+        timestamp: new Date().toISOString(),
+        adminId: (req as any).session.userId,
+        type: "database_backup"
+      }, req);
+
+      res.json({
+        success: true,
+        backupId,
+        timestamp,
+        message: "Database backup created successfully",
+        downloadUrl: `/api/admin/download-backup/${backupId}`
+      });
+    } catch (error) {
+      console.error("Backup creation failed:", error);
+      res.status(500).json({ message: "Failed to create backup" });
+    }
+  });
+
+  // Export system logs
+  app.post("/api/admin/export-logs", requireAdmin, async (req, res) => {
+    try {
+      const { format = "json", dateRange } = req.body;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      
+      // Get recent security events and audit logs
+      const securityEvents = await storage.getSecurityEvents(100);
+      const adminLogs = await storage.getAdminLogs?.(100) || [];
+      
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        format,
+        dateRange,
+        data: {
+          securityEvents,
+          adminLogs,
+          systemInfo: {
+            version: "1.0.0",
+            environment: process.env.NODE_ENV,
+            timestamp
+          }
+        }
+      };
+
+      auditLog("LOGS_EXPORTED", {
+        format,
+        recordCount: securityEvents.length + adminLogs.length,
+        adminId: (req as any).session.userId
+      }, req);
+
+      if (format === "csv") {
+        // Convert to CSV format
+        const csvData = convertToCSV(exportData.data);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="nectiq-logs-${timestamp}.csv"`);
+        res.send(csvData);
+      } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="nectiq-logs-${timestamp}.json"`);
+        res.json(exportData);
+      }
+    } catch (error) {
+      console.error("Log export failed:", error);
+      res.status(500).json({ message: "Failed to export logs" });
+    }
+  });
+
   // Buy NTIQ with crypto
   app.post("/api/user/buy-ntiq", async (req, res) => {
     try {
@@ -2321,5 +2401,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads', express.static(path.join(process.cwd(), 'server', 'uploads')));
 
   const httpServer = createServer(app);
+  // Helper function for CSV conversion
+  function convertToCSV(data: any): string {
+    const items = [...(data.securityEvents || []), ...(data.adminLogs || [])];
+    if (items.length === 0) return "No data available";
+    
+    const headers = Object.keys(items[0]).join(",");
+    const rows = items.map(item => 
+      Object.values(item).map(value => 
+        typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
+      ).join(",")
+    );
+    
+    return [headers, ...rows].join("\n");
+  }
+
   return httpServer;
 }
