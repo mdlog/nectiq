@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Clock, Award, Calendar, History, Eye, Activity, 
   DollarSign, CreditCard, Wallet, TrendingUp, TrendingDown, 
@@ -401,8 +402,12 @@ function FinancialSection() {
 
   const withdrawMutation = useMutation({
     mutationFn: async (amount: number) => {
-      const response = await apiRequest('/api/transactions/withdraw', {
+      const response = await fetch('/api/transactions/withdraw', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify({ amount }),
       });
       if (!response.ok) {
@@ -419,8 +424,12 @@ function FinancialSection() {
 
   const buyNTIQMutation = useMutation({
     mutationFn: async (amount: number) => {
-      const response = await apiRequest('/api/transactions/buy-ntiq', {
+      const response = await fetch('/api/transactions/buy-ntiq', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify({ amount }),
       });
       if (!response.ok) {
