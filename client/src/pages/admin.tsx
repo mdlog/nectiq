@@ -194,6 +194,152 @@ export default function AdminPanel() {
     retry: false,
   });
 
+  const { data: events = [] } = useQuery({
+    queryKey: ["/api/admin/events"],
+    retry: false,
+  });
+
+  // Event mutations
+  const createEventMutation = useMutation({
+    mutationFn: async (eventData: any) => {
+      const response = await fetch("/api/admin/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(eventData),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Event created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      setShowEventDialog(false);
+      resetEventForm();
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateEventMutation = useMutation({
+    mutationFn: async ({ id, ...eventData }: any) => {
+      const response = await fetch(`/api/admin/events/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(eventData),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Event updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      setShowEventDialog(false);
+      resetEventForm();
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: async (eventId: number) => {
+      const response = await fetch(`/api/admin/events/${eventId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Event deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Event helper functions
+  const resetEventForm = () => {
+    setEventFormData({
+      title: "",
+      description: "",
+      imageUrl: "",
+      eventType: "announcement",
+      organizer: "",
+      organizerLogo: "",
+      startDate: "",
+      endDate: "",
+      location: "",
+      linkUrl: "",
+      isActive: true,
+      isFeatured: false,
+      priority: 0
+    });
+    setEditingEvent(null);
+  };
+
+  const handleEditEvent = (event: any) => {
+    setEventFormData({
+      title: event.title,
+      description: event.description || "",
+      imageUrl: event.imageUrl || "",
+      eventType: event.eventType,
+      organizer: event.organizer || "",
+      organizerLogo: event.organizerLogo || "",
+      startDate: event.startDate ? new Date(event.startDate).toISOString().split('T')[0] : "",
+      endDate: event.endDate ? new Date(event.endDate).toISOString().split('T')[0] : "",
+      location: event.location || "",
+      linkUrl: event.linkUrl || "",
+      isActive: event.isActive,
+      isFeatured: event.isFeatured,
+      priority: event.priority || 0
+    });
+    setEditingEvent(event);
+    setShowEventDialog(true);
+  };
+
+  const handleSubmitEvent = () => {
+    if (!eventFormData.title.trim()) {
+      toast({ title: "Error", description: "Event title is required", variant: "destructive" });
+      return;
+    }
+
+    const processDate = (dateString: string) => {
+      if (!dateString) return null;
+      return new Date(dateString).toISOString();
+    };
+
+    const submitData = {
+      ...eventFormData,
+      startDate: processDate(eventFormData.startDate),
+      endDate: processDate(eventFormData.endDate),
+      priority: parseInt(eventFormData.priority.toString()) || 0,
+    };
+
+    if (editingEvent) {
+      updateEventMutation.mutate({ id: editingEvent.id, ...submitData });
+    } else {
+      createEventMutation.mutate(submitData);
+    }
+  };
+
+  // Filter events
+  const filteredEvents = events.filter((event: any) => {
+    const typeMatch = eventsFilter === "all" || event.eventType === eventsFilter;
+    const searchMatch = eventsSearchQuery === "" || 
+      event.title.toLowerCase().includes(eventsSearchQuery.toLowerCase()) ||
+      event.organizer?.toLowerCase().includes(eventsSearchQuery.toLowerCase()) ||
+      event.description?.toLowerCase().includes(eventsSearchQuery.toLowerCase());
+    return typeMatch && searchMatch;
+  });
+
   // Filter predictions based on asset, status, and date range
   const filteredPredictions = predictions.filter(prediction => {
     const assetMatch = predictionsAssetFilter === "all" || prediction.cryptocurrency === predictionsAssetFilter;
@@ -3919,7 +4065,321 @@ export default function AdminPanel() {
 
           {/* Events Management Tab */}
           <TabsContent value="events" className="space-y-6">
-            <EventsManagement />
+            <Card className="bg-surface border-surface-light">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center">
+                    <Calendar className="mr-2 text-blue-400" size={20} />
+                    Event Management
+                  </CardTitle>
+                  <Dialog open={showEventDialog} onOpenChange={setShowEventDialog}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => { resetEventForm(); setShowEventDialog(true); }} className="bg-blue-600 hover:bg-blue-700">
+                        <Plus className="mr-2" size={16} />
+                        Create Event
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingEvent ? "Edit Event" : "Create New Event"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="title">Event Title *</Label>
+                            <Input
+                              id="title"
+                              value={eventFormData.title}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, title: e.target.value }))}
+                              placeholder="Enter event title"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="eventType">Event Type</Label>
+                            <Select value={eventFormData.eventType} onValueChange={(value) => setEventFormData(prev => ({ ...prev, eventType: value }))}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="announcement">📢 Announcement</SelectItem>
+                                <SelectItem value="update">🔄 Platform Update</SelectItem>
+                                <SelectItem value="promotion">🎉 Promotion</SelectItem>
+                                <SelectItem value="partnership">🤝 Partnership</SelectItem>
+                                <SelectItem value="community">👥 Community Event</SelectItem>
+                                <SelectItem value="technical">🔧 Technical Update</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="organizer">Organizer</Label>
+                            <Input
+                              id="organizer"
+                              value={eventFormData.organizer}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, organizer: e.target.value }))}
+                              placeholder="Event organizer"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="organizerLogo">Organizer Logo URL</Label>
+                            <Input
+                              id="organizerLogo"
+                              value={eventFormData.organizerLogo}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, organizerLogo: e.target.value }))}
+                              placeholder="https://example.com/logo.png"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="imageUrl">Event Image URL</Label>
+                            <Input
+                              id="imageUrl"
+                              value={eventFormData.imageUrl}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                              placeholder="https://example.com/event-image.jpg"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="linkUrl">Link URL</Label>
+                            <Input
+                              id="linkUrl"
+                              value={eventFormData.linkUrl}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, linkUrl: e.target.value }))}
+                              placeholder="https://example.com/more-info"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="description">Description</Label>
+                            <textarea
+                              id="description"
+                              className="w-full p-2 border rounded-md h-24 bg-background text-foreground"
+                              value={eventFormData.description}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="Event description..."
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="location">Location</Label>
+                            <Input
+                              id="location"
+                              value={eventFormData.location}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, location: e.target.value }))}
+                              placeholder="Online / City, Country"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="startDate">Start Date</Label>
+                            <Input
+                              id="startDate"
+                              type="date"
+                              value={eventFormData.startDate}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="endDate">End Date</Label>
+                            <Input
+                              id="endDate"
+                              type="date"
+                              value={eventFormData.endDate}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="priority">Priority (0-10)</Label>
+                            <Input
+                              id="priority"
+                              type="number"
+                              min="0"
+                              max="10"
+                              value={eventFormData.priority}
+                              onChange={(e) => setEventFormData(prev => ({ ...prev, priority: parseInt(e.target.value) || 0 }))}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="isActive"
+                                checked={eventFormData.isActive}
+                                onCheckedChange={(checked) => setEventFormData(prev => ({ ...prev, isActive: !!checked }))}
+                              />
+                              <Label htmlFor="isActive">Active</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="isFeatured"
+                                checked={eventFormData.isFeatured}
+                                onCheckedChange={(checked) => setEventFormData(prev => ({ ...prev, isFeatured: !!checked }))}
+                              />
+                              <Label htmlFor="isFeatured">Featured</Label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end space-x-2 mt-6">
+                        <Button variant="outline" onClick={() => setShowEventDialog(false)}>
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleSubmitEvent}
+                          disabled={createEventMutation.isPending || updateEventMutation.isPending}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          {createEventMutation.isPending || updateEventMutation.isPending ? "Saving..." : (editingEvent ? "Update Event" : "Create Event")}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <p className="text-slate-400">Manage platform events, announcements, and updates</p>
+              </CardHeader>
+            </Card>
+
+            {/* Event Filters and Search */}
+            <Card className="bg-surface border-surface-light">
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Search events by title, organizer, or description..."
+                      value={eventsSearchQuery}
+                      onChange={(e) => setEventsSearchQuery(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <Select value={eventsFilter} onValueChange={setEventsFilter}>
+                    <SelectTrigger className="w-full md:w-48">
+                      <SelectValue placeholder="Filter by type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="announcement">📢 Announcements</SelectItem>
+                      <SelectItem value="update">🔄 Updates</SelectItem>
+                      <SelectItem value="promotion">🎉 Promotions</SelectItem>
+                      <SelectItem value="partnership">🤝 Partnerships</SelectItem>
+                      <SelectItem value="community">👥 Community</SelectItem>
+                      <SelectItem value="technical">🔧 Technical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Events List */}
+            <Card className="bg-surface border-surface-light">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Events ({filteredEvents.length})</span>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="outline" className="bg-green-100 text-green-700">
+                      {filteredEvents.filter((e: any) => e.isActive).length} Active
+                    </Badge>
+                    <Badge variant="outline" className="bg-blue-100 text-blue-700">
+                      {filteredEvents.filter((e: any) => e.isFeatured).length} Featured
+                    </Badge>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {filteredEvents.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                    <p className="text-slate-400">No events found</p>
+                    <p className="text-sm text-slate-500 mt-1">Create your first event to get started</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredEvents.map((event: any) => (
+                      <div key={event.id} className="border border-slate-700 rounded-lg p-4 bg-slate-800/50">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <h3 className="text-lg font-semibold text-white">{event.title}</h3>
+                              <Badge variant="outline" className={`text-xs ${
+                                event.eventType === 'announcement' ? 'bg-blue-100 text-blue-700' :
+                                event.eventType === 'update' ? 'bg-green-100 text-green-700' :
+                                event.eventType === 'promotion' ? 'bg-purple-100 text-purple-700' :
+                                event.eventType === 'partnership' ? 'bg-orange-100 text-orange-700' :
+                                event.eventType === 'community' ? 'bg-pink-100 text-pink-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {event.eventType}
+                              </Badge>
+                              {event.isFeatured && (
+                                <Badge variant="outline" className="bg-yellow-100 text-yellow-700">
+                                  <Star className="w-3 h-3 mr-1" />
+                                  Featured
+                                </Badge>
+                              )}
+                              <Badge variant={event.isActive ? "default" : "secondary"}>
+                                {event.isActive ? "Active" : "Inactive"}
+                              </Badge>
+                            </div>
+                            <p className="text-slate-300 text-sm mb-2">{event.description}</p>
+                            <div className="flex items-center space-x-4 text-xs text-slate-400">
+                              {event.organizer && (
+                                <div className="flex items-center space-x-1">
+                                  <span>👤</span>
+                                  <span>{event.organizer}</span>
+                                </div>
+                              )}
+                              {event.location && (
+                                <div className="flex items-center space-x-1">
+                                  <MapPin className="w-3 h-3" />
+                                  <span>{event.location}</span>
+                                </div>
+                              )}
+                              {event.startDate && (
+                                <div className="flex items-center space-x-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{new Date(event.startDate).toLocaleDateString()}</span>
+                                </div>
+                              )}
+                              {event.linkUrl && (
+                                <div className="flex items-center space-x-1">
+                                  <ExternalLink className="w-3 h-3" />
+                                  <a href={event.linkUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                                    Link
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-4">
+                            {event.imageUrl && (
+                              <div className="w-16 h-16 bg-slate-700 rounded-lg overflow-hidden">
+                                <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <div className="flex flex-col space-y-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditEvent(event)}
+                                className="bg-blue-600/10 hover:bg-blue-600/20 text-blue-400"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => deleteEventMutation.mutate(event.id)}
+                                disabled={deleteEventMutation.isPending}
+                                className="bg-red-600/10 hover:bg-red-600/20 text-red-400"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Enhanced Settings Tab */}
