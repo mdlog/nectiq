@@ -391,8 +391,12 @@ export default function UserDashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="predictions" className="space-y-4">
+        <Tabs defaultValue="profile" className="space-y-4">
           <TabsList className="bg-surface border border-surface-light">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-primary">
+              <UserCircle className="mr-1" size={16} />
+              Profile
+            </TabsTrigger>
             <TabsTrigger value="predictions" className="data-[state=active]:bg-primary">
               <Clock className="mr-1" size={16} />
               My Predictions
@@ -1133,6 +1137,115 @@ export default function UserDashboard() {
       </main>
       
       <Footer />
+    </div>
+  );
+}
+
+// User Profile Component
+function UserProfile() {
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/user"],
+    retry: false,
+  });
+
+  if (!user) {
+    return (
+      <div className="bg-surface rounded-xl p-6 border border-surface-light">
+        <h3 className="text-lg font-bold mb-4">Profile</h3>
+        <div className="text-center py-8 text-slate-400">
+          <UserCircle className="mx-auto mb-2" size={32} />
+          <p>Please connect your wallet to view profile</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Profile Header */}
+      <Card className="bg-surface border-surface-light">
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+              <UserCircle className="text-white" size={32} />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">{user.username}</h2>
+              <p className="text-slate-400">Active Member</p>
+            </div>
+          </div>
+          
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-surface-light rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-primary">{user.balance}</div>
+              <div className="text-sm text-slate-400">NTIQ Balance</div>
+            </div>
+            <div className="bg-surface-light rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-green-400">{user.totalPredictions || 0}</div>
+              <div className="text-sm text-slate-400">Total Predictions</div>
+            </div>
+            <div className="bg-surface-light rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-blue-400">{user.accuracy ? `${user.accuracy.toFixed(1)}%` : '0%'}</div>
+              <div className="text-sm text-slate-400">Accuracy Rate</div>
+            </div>
+            <div className="bg-surface-light rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-purple-400">{user.totalRewards || 0}</div>
+              <div className="text-sm text-slate-400">Total Rewards</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Account Information */}
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-white">Account Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex justify-between items-center py-3 border-b border-surface-light">
+            <span className="text-slate-300">Username</span>
+            <span className="text-white font-medium">{user.username}</span>
+          </div>
+          <div className="flex justify-between items-center py-3 border-b border-surface-light">
+            <span className="text-slate-300">Wallet Address</span>
+            <span className="text-white font-mono text-sm">
+              {user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 'Not connected'}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-3 border-b border-surface-light">
+            <span className="text-slate-300">Account Type</span>
+            <span className="text-white font-medium">{user.isAdmin ? 'Administrator' : 'Standard User'}</span>
+          </div>
+          <div className="flex justify-between items-center py-3">
+            <span className="text-slate-300">Member Status</span>
+            <span className="text-green-400 font-medium">Active</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-white">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
+              <Clock className="mr-2" size={16} />
+              View Predictions
+            </Button>
+            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
+              <Award className="mr-2" size={16} />
+              Check Achievements
+            </Button>
+            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
+              <History className="mr-2" size={16} />
+              Reward History
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
