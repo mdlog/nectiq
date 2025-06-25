@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Link } from "wouter";
+import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { Link } from "wouter";
 
 interface LeaderboardUser {
   id: number;
@@ -147,6 +148,8 @@ export default function Leaderboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
+      
       <div className="container max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
