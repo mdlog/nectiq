@@ -1253,9 +1253,9 @@ export default function AdminPanel() {
                          (predictionsError as any)?.message?.includes("401") ||
                          (activityError as any)?.message?.includes("401");
 
-  // Show simplified authentication if not authenticated
-  if (!isAuthenticated && isUnauthorized) {
-    return <SimpleAdminAuth onAuthSuccess={() => setIsAuthenticated(true)} />;
+  // Show simplified authentication if unauthorized
+  if (isUnauthorized) {
+    return <SimpleAdminAuth onAuthSuccess={() => window.location.reload()} />;
   }
 
   if (isUnauthorized) {
