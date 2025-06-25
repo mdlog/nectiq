@@ -152,7 +152,7 @@ export function Achievements() {
                       +{userAchievement.achievement.reward} NTIQ
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg">{userAchievement.achievement.name}</CardTitle>
+                  <CardTitle className="text-lg text-gray-900 dark:text-gray-100">{userAchievement.achievement.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-900 dark:text-gray-100 mb-3 font-medium">

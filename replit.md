@@ -169,6 +169,7 @@ Changelog:
 - June 26, 2025. Added comprehensive Calculation Formula section to How to Play page: detailed accuracy calculation formula with mathematical examples (|Predicted Price - Actual Price| / Actual Price × 100%), final reward calculation breakdown with timeframe and accuracy multipliers, maximum reward scenarios, and practical examples for perfect and great predictions
 - June 26, 2025. Fixed Achievements menu text readability issues: changed all text colors from black to white (text-white dark:text-white) with font-semibold for all descriptions, progress indicators, targets, and labels to ensure maximum contrast and perfect readability against backgrounds
 - June 26, 2025. Changed "Completed Achievements" card background from white/green to grey (bg-gray-100 dark:bg-gray-800) for better visual distinction and improved design consistency
+- June 26, 2025. Fixed text color contrast in "Completed Achievements" section: updated title colors to text-gray-900 dark:text-gray-100 for proper visibility against grey background
 ```
 
 ## User Preferences
