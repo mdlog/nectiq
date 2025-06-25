@@ -31,17 +31,21 @@ export async function getUserStatistics(req: Request, res: Response) {
     const totalUsers = totalUsersResult[0]?.count || 0;
 
     // New Users in time range
-    const newUsersResult = await db
-      .select({ count: count() })
-      .from(users)
-      .where(gte(users.createdAt, startDate));
+    const newUsersQuery = db.select({ count: count() }).from(users);
+    if (timeRange !== 'all') {
+      newUsersQuery.where(gte(users.createdAt, startDate));
+    }
+    const newUsersResult = await newUsersQuery;
     const newUsers = newUsersResult[0]?.count || 0;
 
     // Active Users (users who made predictions in time range)
-    const activeUsersResult = await db
+    const activeUsersQuery = db
       .select({ count: sql<number>`COUNT(DISTINCT ${predictions.userId})` })
-      .from(predictions)
-      .where(gte(predictions.submissionTime, startDate));
+      .from(predictions);
+    if (timeRange !== 'all') {
+      activeUsersQuery.where(gte(predictions.submissionTime, startDate));
+    }
+    const activeUsersResult = await activeUsersQuery;
     const activeUsers = activeUsersResult[0]?.count || 0;
 
     // Admin Users
@@ -66,30 +70,40 @@ export async function getUserStatistics(req: Request, res: Response) {
     const richUsers = richUsersResult[0]?.count || 0;
 
     // Total Predictions in time range
-    const totalPredictionsResult = await db
-      .select({ count: count() })
-      .from(predictions)
-      .where(gte(predictions.submissionTime, startDate));
+    const totalPredictionsQuery = db.select({ count: count() }).from(predictions);
+    if (timeRange !== 'all') {
+      totalPredictionsQuery.where(gte(predictions.submissionTime, startDate));
+    }
+    const totalPredictionsResult = await totalPredictionsQuery;
     const totalPredictions = totalPredictionsResult[0]?.count || 0;
 
     // Successful Predictions (resolved and claimed)
-    const successfulPredictionsResult = await db
-      .select({ count: count() })
-      .from(predictions)
-      .where(
+    const successfulPredictionsQuery = db.select({ count: count() }).from(predictions);
+    if (timeRange !== 'all') {
+      successfulPredictionsQuery.where(
         and(
           gte(predictions.submissionTime, startDate),
           eq(predictions.resolved, true),
           eq(predictions.claimed, true)
         )
       );
+    } else {
+      successfulPredictionsQuery.where(
+        and(
+          eq(predictions.resolved, true),
+          eq(predictions.claimed, true)
+        )
+      );
+    }
+    const successfulPredictionsResult = await successfulPredictionsQuery;
     const successfulPredictions = successfulPredictionsResult[0]?.count || 0;
 
     // Total Rewards Paid
-    const totalRewardsResult = await db
-      .select({ total: sql<number>`SUM(${rewards.amount})` })
-      .from(rewards)
-      .where(gte(rewards.createdAt, startDate));
+    const totalRewardsQuery = db.select({ total: sql<number>`SUM(${rewards.amount})` }).from(rewards);
+    if (timeRange !== 'all') {
+      totalRewardsQuery.where(gte(rewards.createdAt, startDate));
+    }
+    const totalRewardsResult = await totalRewardsQuery;
     const totalRewards = totalRewardsResult[0]?.total || 0;
 
     // Average User Balance
@@ -99,7 +113,7 @@ export async function getUserStatistics(req: Request, res: Response) {
     const avgBalance = avgBalanceResult[0]?.avg || 0;
 
     // Top Performing Users (by accuracy)
-    const topUsers = await db
+    const topUsersQuery = db
       .select({
         userId: predictions.userId,
         username: users.username,
@@ -108,13 +122,20 @@ export async function getUserStatistics(req: Request, res: Response) {
         totalRewards: sql<number>`SUM(${predictions.rewardAmount})`,
       })
       .from(predictions)
-      .innerJoin(users, eq(predictions.userId, users.id))
-      .where(
+      .innerJoin(users, eq(predictions.userId, users.id));
+    
+    if (timeRange !== 'all') {
+      topUsersQuery.where(
         and(
           gte(predictions.submissionTime, startDate),
           eq(predictions.resolved, true)
         )
-      )
+      );
+    } else {
+      topUsersQuery.where(eq(predictions.resolved, true));
+    }
+    
+    const topUsers = await topUsersQuery
       .groupBy(predictions.userId, users.username)
       .orderBy(desc(sql`AVG(${predictions.accuracyScore})`))
       .limit(10);
@@ -169,16 +190,19 @@ export async function getUserStatistics(req: Request, res: Response) {
     // Growth Metrics
     const previousPeriodStart = new Date(startDate.getTime() - (now.getTime() - startDate.getTime()));
     
-    const previousNewUsersResult = await db
-      .select({ count: count() })
-      .from(users)
-      .where(
-        and(
-          gte(users.createdAt, previousPeriodStart),
-          lte(users.createdAt, startDate)
-        )
-      );
-    const previousNewUsers = previousNewUsersResult[0]?.count || 0;
+    let previousNewUsers = 0;
+    if (timeRange !== 'all') {
+      const previousNewUsersResult = await db
+        .select({ count: count() })
+        .from(users)
+        .where(
+          and(
+            gte(users.createdAt, previousPeriodStart),
+            lte(users.createdAt, startDate)
+          )
+        );
+      previousNewUsers = previousNewUsersResult[0]?.count || 0;
+    }
     
     const newUsersGrowth = previousNewUsers > 0 
       ? ((newUsers - previousNewUsers) / previousNewUsers) * 100 
