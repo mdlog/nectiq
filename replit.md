@@ -163,6 +163,8 @@ Changelog:
 - June 26, 2025. Fixed prediction submission error "Cannot read properties of undefined (reading 'ok')": enhanced error handling in prediction form, improved API response parsing in queryClient.ts, added proper null checks and fallback error messages for better user experience
 - June 26, 2025. Added Profile menu to My Dashboard: comprehensive user profile section with account information, quick stats (balance, predictions, accuracy, rewards), recent activity summary with navigation shortcuts, profile header with user avatar, and account details display
 - June 26, 2025. Added username editing feature to Profile menu: inline edit functionality with input field, save/cancel buttons, username validation (3-20 characters, alphanumeric + underscore/hyphen), duplicate username checking, API endpoint for username updates, and real-time UI updates
+- June 26, 2025. Fixed profile photo display in Leaderboard: added profilePhoto field to database query, updated API response to include profile photo URLs, fixed database records for users with uploaded photos
+- June 26, 2025. Updated How to Play page Reward System section: renamed to "How It Works" with 3-step process visualization (Choose & Predict, Wait & Track, Earn Rewards), maintained detailed accuracy multipliers and calculation formulas for consistency with user workflow understanding
 ```
 
 ## User Preferences
