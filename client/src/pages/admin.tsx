@@ -171,32 +171,38 @@ export default function AdminPanel() {
 
   const { data: stats, error: statsError, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
-    retry: false,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: users = [], error: usersError } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
-    retry: false,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
     queryKey: ["/api/admin/predictions"],
-    retry: false,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: transactionPurchases = [] } = useQuery({
     queryKey: ["/api/admin/purchases"],
-    retry: false,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: transactionWithdrawals = [] } = useQuery({
     queryKey: ["/api/admin/withdrawals"], 
-    retry: false,
+    retry: 2,
+    retryDelay: 1000,
   });
 
-  const { data: events = [] } = useQuery({
+  const { data: events = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/events"],
-    retry: false,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   // Event mutations
@@ -331,14 +337,14 @@ export default function AdminPanel() {
   };
 
   // Filter events
-  const filteredEvents = events.filter((event: any) => {
+  const filteredEvents = Array.isArray(events) ? events.filter((event: any) => {
     const typeMatch = eventsFilter === "all" || event.eventType === eventsFilter;
     const searchMatch = eventsSearchQuery === "" || 
-      event.title.toLowerCase().includes(eventsSearchQuery.toLowerCase()) ||
+      event.title?.toLowerCase().includes(eventsSearchQuery.toLowerCase()) ||
       event.organizer?.toLowerCase().includes(eventsSearchQuery.toLowerCase()) ||
       event.description?.toLowerCase().includes(eventsSearchQuery.toLowerCase());
     return typeMatch && searchMatch;
-  });
+  }) : [];
 
   // Filter predictions based on asset, status, and date range
   const filteredPredictions = predictions.filter(prediction => {
@@ -717,7 +723,9 @@ export default function AdminPanel() {
   // Force complete transaction (for admin use)
   const handleForceComplete = async (transactionId: number, type: 'purchase' | 'withdrawal') => {
     try {
-      await apiRequest("POST", `/api/admin/force-complete/${type}/${transactionId}`);
+      await apiRequest(`/api/admin/force-complete/${type}/${transactionId}`, {
+        method: "POST",
+      });
       
       toast({
         title: "Transaction Updated",
@@ -1100,7 +1108,10 @@ export default function AdminPanel() {
   // Mutations for admin actions
   const saveSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
-      return apiRequest("POST", "/api/admin/settings", settings);
+      return apiRequest("/api/admin/settings", {
+        method: "POST",
+        body: JSON.stringify(settings),
+      });
     },
     onSuccess: () => {
       toast({
