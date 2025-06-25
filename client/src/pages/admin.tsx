@@ -676,10 +676,25 @@ export default function AdminPanel() {
       return;
     }
 
-    // Confirm bulk deletion
-    const confirmed = confirm(`Are you sure you want to delete ${selectedUsers.length} users? This action cannot be undone.`);
+    // Confirm bulk deletion with more detailed dialog
+    const usernames = sortedUsers
+      .filter(u => selectedUsers.includes(u.id))
+      .map(u => u.username)
+      .join(', ');
+    
+    const confirmed = confirm(
+      `BULK DELETE CONFIRMATION\n\n` +
+      `You are about to permanently delete ${selectedUsers.length} user(s):\n` +
+      `${usernames}\n\n` +
+      `This action CANNOT be undone!\n\n` +
+      `Click OK to proceed or Cancel to abort.`
+    );
+    
     console.log("User confirmed deletion:", confirmed);
-    if (!confirmed) return;
+    if (!confirmed) {
+      console.log("User cancelled bulk deletion");
+      return;
+    }
 
     let successCount = 0;
     let errorCount = 0;
@@ -714,15 +729,15 @@ export default function AdminPanel() {
 
       if (successCount > 0) {
         toast({
-          title: "Bulk Delete Complete",
-          description: `${successCount} users deleted successfully${errorCount > 0 ? `. ${errorCount} failed.` : ''}`,
+          title: "Success",
+          description: `${successCount} user(s) deleted successfully${errorCount > 0 ? `. ${errorCount} failed.` : ''}`,
         });
       }
 
       if (errorCount > 0) {
         toast({
-          title: "Some deletions failed",
-          description: `${errorCount} users could not be deleted. Check console for details.`,
+          title: "Partial Failure",
+          description: `${errorCount} users could not be deleted due to foreign key constraints or other issues.`,
           variant: "destructive",
         });
         console.error("Deletion errors:", errors);
@@ -1673,7 +1688,7 @@ export default function AdminPanel() {
                               console.log("🚨 DELETE BUTTON CLICKED!");
                               console.log("Selected users:", selectedUsers);
                               console.log("Button event:", e);
-                              alert(`About to delete ${selectedUsers.length} users. Check console for details.`);
+                              console.log("Delete button clicked - proceeding to handleBulkDelete");
                               handleBulkDelete();
                             }}
                             className="bg-red-600 hover:bg-red-700 text-white font-medium"
