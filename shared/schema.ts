@@ -219,6 +219,30 @@ export const banners = pgTable("banners", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  shortDescription: text("short_description"),
+  imageUrl: text("image_url"),
+  eventType: varchar("event_type", { length: 30 }).notNull().default("nectiq"), // "nectiq", "partner", "community"
+  status: varchar("status", { length: 20 }).notNull().default("upcoming"), // "upcoming", "ongoing", "completed", "cancelled"
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  registrationUrl: text("registration_url"),
+  externalUrl: text("external_url"),
+  prizePool: text("prize_pool"),
+  participantCount: integer("participant_count").default(0),
+  maxParticipants: integer("max_participants"),
+  requirements: text("requirements"),
+  tags: text("tags"),
+  isActive: boolean("is_active").notNull().default(true),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   predictions: many(predictions),
@@ -347,6 +371,13 @@ export const purchasesRelations = relations(purchases, ({ one }) => ({
   }),
 }));
 
+export const eventsRelations = relations(events, ({ one }) => ({
+  creator: one(users, {
+    fields: [events.createdBy],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -465,3 +496,12 @@ export const insertBannerSchema = createInsertSchema(banners).omit({
 });
 export type InsertBanner = z.infer<typeof insertBannerSchema>;
 export type Banner = typeof banners.$inferSelect;
+
+// Event types
+export const insertEventSchema = createInsertSchema(events).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type Event = typeof events.$inferSelect;
