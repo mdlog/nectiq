@@ -995,9 +995,10 @@ export default function UserDashboard() {
                         value={buyAmount}
                         onChange={(e) => setBuyAmount(e.target.value)}
                         min="100"
+                        step="1"
                       />
                       <div className="text-xs text-slate-400">
-                        Exchange Rate: 1 {selectedPaymentToken} = 100 NTIQ
+                        Exchange Rate: {selectedPaymentToken === "ETH" ? "1 ETH = 300,000 NTIQ" : `1 ${selectedPaymentToken} = 100 NTIQ`}
                       </div>
                     </div>
 
@@ -1007,7 +1008,10 @@ export default function UserDashboard() {
                         <div className="flex justify-between items-center text-sm">
                           <span>You will pay:</span>
                           <span className="font-semibold text-primary">
-                            {(parseFloat(buyAmount) * 0.01).toFixed(4)} {selectedPaymentToken}
+                            {selectedPaymentToken === "ETH" 
+                              ? (parseFloat(buyAmount) / 300000).toFixed(6)
+                              : (parseFloat(buyAmount) / 100).toFixed(2)
+                            } {selectedPaymentToken}
                           </span>
                         </div>
                       </div>
@@ -1017,24 +1021,38 @@ export default function UserDashboard() {
                     <Button
                       onClick={() => {
                         const amount = parseFloat(buyAmount);
-                        if (amount >= 100) {
-                          // Handle buy NTIQ logic
-                          console.log('Buy NTIQ:', { amount, token: selectedPaymentToken });
+                        if (amount >= 100 && Number.isInteger(amount)) {
+                          buyNTIQMutation.mutate({ 
+                            ntiqAmount: amount, 
+                            paymentToken: selectedPaymentToken 
+                          });
                         }
                       }}
-                      disabled={!buyAmount || parseFloat(buyAmount) < 100}
+                      disabled={
+                        !buyAmount || 
+                        parseFloat(buyAmount) < 100 || 
+                        !Number.isInteger(parseFloat(buyAmount)) ||
+                        buyNTIQMutation.isPending
+                      }
                       className="w-full"
                     >
-                      <Coins className="mr-2" size={16} />
-                      Buy NTIQ
+                      {buyNTIQMutation.isPending ? (
+                        <>Processing...</>
+                      ) : (
+                        <>
+                          <Coins className="mr-2" size={16} />
+                          Buy NTIQ
+                        </>
+                      )}
                     </Button>
 
                     {/* Info */}
                     <div className="text-xs text-slate-400 space-y-1">
                       <p>• Payments are processed instantly via smart contracts</p>
                       <p>• NTIQ will be credited to your account immediately</p>
-                      <p>• Minimum purchase: 100 NTIQ</p>
+                      <p>• Minimum purchase: 100 NTIQ (whole numbers only)</p>
                       <p>• Supported tokens: ETH, USDT, USDC</p>
+                      <p>• Exchange rates: 1 ETH = 300,000 NTIQ | 1 USDT/USDC = 100 NTIQ</p>
                     </div>
                   </div>
                 </CardContent>
