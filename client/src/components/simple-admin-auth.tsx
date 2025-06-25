@@ -49,33 +49,42 @@ export function SimpleAdminAuth({ onAuthSuccess }: SimpleAdminAuthProps) {
         return;
       }
 
-      // Create message to sign
-      const message = `Admin Authentication Request\nTimestamp: ${Date.now()}\nAddress: ${walletAddress}`;
-      
-      // Request signature from wallet
-      const signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [message, walletAddress],
+      console.log("Connected wallet:", walletAddress);
+
+      // Send authentication to server (simplified - no signature verification)
+      const response = await fetch("/api/auth/wallet-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress,
+          address: walletAddress,
+        }),
+        credentials: "include",
       });
 
-      // Send signed authentication to server
-      const response = await apiRequest("POST", "/api/admin/wallet-auth", {
-        walletAddress,
-        message,
-        signature,
-      });
+      const result = await response.json();
+      console.log("Backend response:", result);
 
-      const result = await response.json() as { success: boolean; message: string };
-      if (result.success) {
-        toast({
-          title: "Access Granted",
-          description: "Admin authentication successful",
-        });
-        onAuthSuccess();
+      if (response.ok && result.success) {
+        if (result.user?.isAdmin) {
+          toast({
+            title: "Access Granted",
+            description: `Welcome Admin ${result.user.username}`,
+          });
+          onAuthSuccess();
+        } else {
+          toast({
+            title: "Access Denied", 
+            description: "This wallet is not authorized for admin access",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
-          title: "Access Denied",
-          description: "This wallet is not authorized for admin access",
+          title: "Authentication Failed",
+          description: result.message || "Failed to authenticate",
           variant: "destructive",
         });
       }

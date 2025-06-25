@@ -176,30 +176,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/wallet-login", async (req, res) => {
     try {
-      const { address, signature, message } = req.body;
+      const { address, walletAddress, signature, message } = req.body;
+      const finalAddress = address || walletAddress;
       
-      if (!address || !signature || !message) {
-        return res.status(400).json({ message: "Missing required fields" });
+      console.log('Wallet login request:', { address: finalAddress, hasSignature: !!signature, hasMessage: !!message });
+      
+      if (!finalAddress) {
+        console.log('Missing wallet address');
+        return res.status(400).json({ message: "Missing wallet address" });
       }
 
       // Check if user exists, if not create one
-      let user = await storage.getUserByWalletAddress(address);
+      let user = await storage.getUserByWalletAddress(finalAddress);
       if (!user) {
+        // Check if this is admin wallet
+        const ADMIN_WALLET = "0x4C6165286739696849Fb3e77A16b0639D762c5B6";
+        const isAdmin = finalAddress.toLowerCase() === ADMIN_WALLET.toLowerCase();
+        
         // Auto-register new wallet address with random username
-        const username = generateRandomUsername();
+        const username = isAdmin ? `Admin_${finalAddress.slice(-6)}` : generateRandomUsername();
         user = await storage.createUser({
           username: username,
-          walletAddress: address,
+          walletAddress: finalAddress,
           authMethod: "wallet",
-          isAdmin: false
+          isAdmin: isAdmin
         });
         
-        console.log(`🎉 User baru terdaftar otomatis: ${username} dengan wallet ${address.slice(0, 6)}...${address.slice(-4)}`);
+        console.log(`Auto-registered new user: ${username} with wallet ${finalAddress.slice(0, 6)}...${finalAddress.slice(-4)}, isAdmin: ${isAdmin}`);
       }
 
       // Set session
       req.session.userId = user.id;
-      res.json(user);
+      req.session.isAdmin = user.isAdmin;
+      
+      console.log(`Session created - userId: ${user.id}, isAdmin: ${user.isAdmin}`);
+      
+      res.json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          username: user.username,
+          walletAddress: user.walletAddress,
+          balance: user.balance,
+          isAdmin: user.isAdmin
+        }
+      });
     } catch (error) {
       console.error("Error during wallet login:", error);
       res.status(500).json({ message: "Failed to authenticate with wallet" });
