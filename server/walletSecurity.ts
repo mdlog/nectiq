@@ -64,20 +64,22 @@ export class WalletSecurityService {
         w.deviceFingerprint === deviceFingerprint
       );
 
+      // Temporarily allow login but log for review if suspicious activity detected
       if (suspiciousWallets.length > 0) {
-        // Blok login jika terdeteksi multi-wallet abuse
         await this.recordAbuseDetection(
           walletAddress, 
           suspiciousWallets.map(w => w.walletAddress), 
-          95, 
-          'Device fingerprint sama dengan wallet berbeda terdeteksi',
+          85, 
+          'Device fingerprint sama dengan wallet berbeda terdeteksi - diizinkan untuk review',
           req
         );
 
+        // Allow login but mark for review
+        await this.recordWalletFingerprint(walletAddress, req);
         return {
-          success: false,
-          message: 'Login diblokir: Terdeteksi penggunaan beberapa wallet dari perangkat yang sama. Hubungi support jika ini adalah kesalahan.',
-          confidence: 95,
+          success: true,
+          message: 'Login berhasil - aktivitas ditandai untuk review keamanan',
+          confidence: 85,
           requiresReview: true,
           suspiciousWallets: suspiciousWallets.map(w => w.walletAddress)
         };
@@ -86,12 +88,12 @@ export class WalletSecurityService {
       // Cek jika ada wallet berbeda dari IP yang sama (warning)
       const differentWallets = recentWallets.filter(w => w.walletAddress !== walletAddress);
       
-      if (differentWallets.length >= 2) {
+      if (differentWallets.length >= 5) { // Increased threshold from 2 to 5
         await this.recordAbuseDetection(
           walletAddress,
           differentWallets.map(w => w.walletAddress),
-          70,
-          'Beberapa wallet berbeda terdeteksi dari IP yang sama',
+          60, // Reduced confidence from 70 to 60
+          'Beberapa wallet berbeda terdeteksi dari IP yang sama - threshold tinggi',
           req
         );
 
