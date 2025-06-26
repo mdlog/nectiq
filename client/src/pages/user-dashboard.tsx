@@ -21,6 +21,32 @@ import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 
+// Dynamic function to get crypto image from live API data
+function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
+  // First try to get image from real-time crypto data
+  const cryptoData = cryptoPrices?.find(crypto => crypto.id === cryptoId);
+  if (cryptoData?.image) {
+    return cryptoData.image;
+  }
+  
+  // Fallback: Try common CoinGecko image patterns for new cryptocurrencies
+  const commonIds: Record<string, string> = {
+    'bitcoin': '1',
+    'ethereum': '279',
+    'tron': '1094',
+    'binancecoin': '825',
+    'cardano': '975',
+    'solana': '4128',
+    'chainlink': '877',
+    'polkadot': '12171',
+    'litecoin': '2',
+    'matic-network': '4713'
+  };
+  
+  const imageId = commonIds[cryptoId] || '1';
+  return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${cryptoId}.png`;
+}
+
 // Purchase History Component
 function PurchaseHistory() {
   const { data: purchases = [] } = useQuery<any[]>({
@@ -170,6 +196,13 @@ export default function UserDashboard() {
   const { data: prices = [], isLoading: pricesLoading, refetch: refetchPrices } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 3000, // Real-time updates every 3 seconds
+  });
+
+  // Get real-time crypto prices for dynamic logo display in predictions
+  const { data: cryptoPrices = [] } = useQuery<any[]>({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 1000,
+    staleTime: 0,
   });
 
   // Auto-select Bitcoin as default when prices are loaded
@@ -483,8 +516,23 @@ export default function UserDashboard() {
                         <div key={prediction.id} className="p-4 bg-surface-light rounded-lg border border-slate-600">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-3">
-                              <div className={`w-10 h-10 ${getCryptoColor(prediction.cryptocurrency)} rounded-full flex items-center justify-center text-white font-bold`}>
-                                {getCryptoIcon(prediction.cryptocurrency)}
+                              <div className="relative w-10 h-10 flex-shrink-0">
+                                <img 
+                                  src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || [])}
+                                  alt={prediction.cryptocurrency}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) {
+                                      target.style.display = 'none';
+                                      fallback.style.display = 'flex';
+                                    }
+                                  }}
+                                />
+                                <div className={`w-10 h-10 ${getCryptoColor(prediction.cryptocurrency)} rounded-full hidden items-center justify-center text-white font-bold`}>
+                                  {getCryptoIcon(prediction.cryptocurrency)}
+                                </div>
                               </div>
                               <div>
                                 <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
