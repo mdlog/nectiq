@@ -2,6 +2,23 @@ import { useQuery } from "@tanstack/react-query";
 import { Gift, Check } from "lucide-react";
 import type { RecentReward } from "@/types";
 
+function getCryptoImageUrl(cryptoId: string): string {
+  const imageMap: Record<string, string> = {
+    bitcoin: "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png",
+    ethereum: "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png",
+    binancecoin: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+    cardano: "https://coin-images.coingecko.com/coins/images/975/large/cardano.png",
+    solana: "https://coin-images.coingecko.com/coins/images/4128/large/solana.png",
+    chainlink: "https://coin-images.coingecko.com/coins/images/877/large/chainlink-new-logo.png",
+    polkadot: "https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png",
+    litecoin: "https://coin-images.coingecko.com/coins/images/2/large/litecoin.png",
+    "matic-network": "https://coin-images.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+    hyperliquid: "https://coin-images.coingecko.com/coins/images/44077/large/hyperliquid.jpeg"
+  };
+  
+  return imageMap[cryptoId] || `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`;
+}
+
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -70,8 +87,22 @@ export function RecentRewards() {
         {rewards.map((reward) => (
           <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-success rounded-full flex items-center justify-center">
-                <Check className="text-white" size={16} />
+              <div className="relative w-8 h-8 flex-shrink-0">
+                <img 
+                  src={getCryptoImageUrl(reward.cryptocurrency)} 
+                  alt={reward.cryptocurrency}
+                  className="w-8 h-8 rounded-full"
+                  onError={(e) => {
+                    // Fallback to success checkmark if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLDivElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <div className="w-8 h-8 bg-success rounded-full flex items-center justify-center" style={{ display: 'none' }}>
+                  <Check className="text-white" size={16} />
+                </div>
               </div>
               <div>
                 <p className="font-semibold text-sm">
@@ -84,7 +115,7 @@ export function RecentRewards() {
             </div>
             <div className="text-right">
               <p className="text-sm font-semibold text-success">
-                +{reward.amount} PTS
+                +{reward.amount} NTIQ
               </p>
               <p className="text-xs text-slate-400">
                 {parseFloat(reward.accuracy).toFixed(1)}% accuracy
