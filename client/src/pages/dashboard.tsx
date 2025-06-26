@@ -132,6 +132,11 @@ export default function Dashboard() {
           <LivePredictionFeed />
         </div>
         
+        {/* Prediction Battles */}
+        <div className="mt-8">
+          <PredictionBattles />
+        </div>
+        
         <RulesSection />
       </main>
       
