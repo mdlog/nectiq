@@ -295,6 +295,54 @@ export const abuseDetections = pgTable("abuse_detections", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Prediction Battles System
+export const predictionBattles = pgTable("prediction_battles", {
+  id: serial("id").primaryKey(),
+  challengerId: integer("challenger_id").references(() => users.id).notNull(),
+  challengedId: integer("challenged_id").references(() => users.id),
+  battleType: varchar("battle_type", { length: 20 }).notNull().default("head_to_head"), // 'head_to_head', 'tournament', 'public_challenge'
+  cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(),
+  timeframe: varchar("timeframe", { length: 10 }).notNull(), // 1h, 6h, 24h, 7d
+  stakeAmount: integer("stake_amount").notNull(),
+  challengerPrediction: numeric("challenger_prediction", { precision: 18, scale: 8 }),
+  challengedPrediction: numeric("challenged_prediction", { precision: 18, scale: 8 }),
+  actualPrice: numeric("actual_price", { precision: 18, scale: 8 }),
+  winnerId: integer("winner_id").references(() => users.id),
+  winnerReward: integer("winner_reward").default(0),
+  status: varchar("status", { length: 20 }).notNull().default("open"), // 'open', 'accepted', 'active', 'completed', 'cancelled'
+  targetTime: timestamp("target_time").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  acceptedAt: timestamp("accepted_at"),
+  completedAt: timestamp("completed_at"),
+  spectatorCount: integer("spectator_count").default(0),
+  isPublic: boolean("is_public").default(true),
+});
+
+export const battleSpectators = pgTable("battle_spectators", {
+  id: serial("id").primaryKey(),
+  battleId: integer("battle_id").references(() => predictionBattles.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  leftAt: timestamp("left_at"),
+});
+
+export const battleComments = pgTable("battle_comments", {
+  id: serial("id").primaryKey(),
+  battleId: integer("battle_id").references(() => predictionBattles.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  message: text("message").notNull(),
+  replyToId: integer("reply_to_id").references(() => battleComments.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const battleReactions = pgTable("battle_reactions", {
+  id: serial("id").primaryKey(),
+  battleId: integer("battle_id").references(() => predictionBattles.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  reactionType: varchar("reaction_type", { length: 20 }).notNull(), // 'like', 'fire', 'rocket', 'thinking', 'clap'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   predictions: many(predictions),
@@ -452,6 +500,65 @@ export const predictionCommentsRelations = relations(predictionComments, ({ one 
   }),
 }));
 
+// Battle Relations
+export const predictionBattlesRelations = relations(predictionBattles, ({ one, many }) => ({
+  challenger: one(users, {
+    fields: [predictionBattles.challengerId],
+    references: [users.id],
+    relationName: "challenger",
+  }),
+  challenged: one(users, {
+    fields: [predictionBattles.challengedId],
+    references: [users.id],
+    relationName: "challenged",
+  }),
+  winner: one(users, {
+    fields: [predictionBattles.winnerId],
+    references: [users.id],
+    relationName: "winner",
+  }),
+  spectators: many(battleSpectators),
+  comments: many(battleComments),
+  reactions: many(battleReactions),
+}));
+
+export const battleSpectatorsRelations = relations(battleSpectators, ({ one }) => ({
+  battle: one(predictionBattles, {
+    fields: [battleSpectators.battleId],
+    references: [predictionBattles.id],
+  }),
+  user: one(users, {
+    fields: [battleSpectators.userId],
+    references: [users.id],
+  }),
+}));
+
+export const battleCommentsRelations = relations(battleComments, ({ one }) => ({
+  battle: one(predictionBattles, {
+    fields: [battleComments.battleId],
+    references: [predictionBattles.id],
+  }),
+  user: one(users, {
+    fields: [battleComments.userId],
+    references: [users.id],
+  }),
+  replyTo: one(battleComments, {
+    fields: [battleComments.replyToId],
+    references: [battleComments.id],
+  }),
+}));
+
+export const battleReactionsRelations = relations(battleReactions, ({ one }) => ({
+  battle: one(predictionBattles, {
+    fields: [battleReactions.battleId],
+    references: [predictionBattles.id],
+  }),
+  user: one(users, {
+    fields: [battleReactions.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -595,3 +702,43 @@ export const insertEventSchema = createInsertSchema(events).omit({
 });
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
+
+// Battle types
+export const insertPredictionBattleSchema = createInsertSchema(predictionBattles).omit({
+  id: true,
+  createdAt: true,
+  acceptedAt: true,
+  completedAt: true,
+  spectatorCount: true,
+  winnerId: true,
+  winnerReward: true,
+  actualPrice: true,
+}).extend({
+  timeframe: z.enum(["1h", "6h", "24h", "7d"]),
+  battleType: z.enum(["head_to_head", "tournament", "public_challenge"]),
+});
+
+export const insertBattleSpectatorSchema = createInsertSchema(battleSpectators).omit({
+  id: true,
+  joinedAt: true,
+  leftAt: true,
+});
+
+export const insertBattleCommentSchema = createInsertSchema(battleComments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBattleReactionSchema = createInsertSchema(battleReactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type PredictionBattle = typeof predictionBattles.$inferSelect;
+export type InsertPredictionBattle = z.infer<typeof insertPredictionBattleSchema>;
+export type BattleSpectator = typeof battleSpectators.$inferSelect;
+export type InsertBattleSpectator = z.infer<typeof insertBattleSpectatorSchema>;
+export type BattleComment = typeof battleComments.$inferSelect;
+export type InsertBattleComment = z.infer<typeof insertBattleCommentSchema>;
+export type BattleReaction = typeof battleReactions.$inferSelect;
+export type InsertBattleReaction = z.infer<typeof insertBattleReactionSchema>;
