@@ -1305,9 +1305,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get current price for the cryptocurrency
-      const cryptoService = await import('./services/cryptoService');
-      const prices = await cryptoService.getCryptoPrices();
-      const cryptoPrice = prices.find(p => p.id === cryptocurrency);
+      const { cryptoService } = await import('./services/cryptoService');
+      const prices = await cryptoService.getCurrentPrices();
+      const cryptoPrice = prices.find((p: any) => p.id === cryptocurrency);
       
       if (!cryptoPrice) {
         return res.status(400).json({ message: 'Invalid cryptocurrency' });
