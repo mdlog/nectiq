@@ -219,6 +219,22 @@ export const banners = pgTable("banners", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const predictionReactions = pgTable("prediction_reactions", {
+  id: serial("id").primaryKey(),
+  predictionId: integer("prediction_id").notNull().references(() => predictions.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  type: varchar("type", { length: 20 }).notNull(), // like, fire, rocket, thinking
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const predictionComments = pgTable("prediction_comments", {
+  id: serial("id").primaryKey(),
+  predictionId: integer("prediction_id").notNull().references(() => predictions.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -414,6 +430,28 @@ export const eventsRelations = relations(events, ({ one }) => ({
   }),
 }));
 
+export const predictionReactionsRelations = relations(predictionReactions, ({ one }) => ({
+  prediction: one(predictions, {
+    fields: [predictionReactions.predictionId],
+    references: [predictions.id],
+  }),
+  user: one(users, {
+    fields: [predictionReactions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const predictionCommentsRelations = relations(predictionComments, ({ one }) => ({
+  prediction: one(predictions, {
+    fields: [predictionComments.predictionId],
+    references: [predictions.id],
+  }),
+  user: one(users, {
+    fields: [predictionComments.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -473,6 +511,22 @@ export const insertPurchaseSchema = createInsertSchema(purchases).omit({
 
 export type Purchase = typeof purchases.$inferSelect;
 export type InsertPurchase = z.infer<typeof insertPurchaseSchema>;
+
+export const insertPredictionReactionSchema = createInsertSchema(predictionReactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPredictionCommentSchema = createInsertSchema(predictionComments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type PredictionReaction = typeof predictionReactions.$inferSelect;
+export type InsertPredictionReaction = z.infer<typeof insertPredictionReactionSchema>;
+
+export type PredictionComment = typeof predictionComments.$inferSelect;
+export type InsertPredictionComment = z.infer<typeof insertPredictionCommentSchema>;
 
 // Achievement types
 export const insertAchievementSchema = createInsertSchema(achievements);
