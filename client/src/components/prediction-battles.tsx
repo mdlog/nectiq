@@ -438,9 +438,9 @@ export function PredictionBattles() {
             </Card>
           ))}
         </div>
-      ) : liveBattles.length > 0 ? (
+      ) : (liveBattles as Battle[]).length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {liveBattles.map((battle: Battle) => (
+          {(liveBattles as Battle[]).map((battle: Battle) => (
             <BattleCard key={battle.id} battle={battle} />
           ))}
         </div>

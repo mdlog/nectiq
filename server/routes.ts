@@ -1351,31 +1351,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/battles/live', async (req, res) => {
     try {
-      // Simulate live battles data
-      const battles = [
-        {
-          id: 1,
-          challengerId: 37,
-          challengedId: 43,
-          cryptocurrency: 'bitcoin',
-          timeframe: '24h',
-          stakeAmount: 100,
-          challengerPrediction: 95000,
-          challengedPrediction: 96000,
-          status: 'active',
-          targetTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          spectatorCount: 5,
-          challenger: {
-            username: 'Admin_62c5B6',
-            profilePhoto: null
-          },
-          challenged: {
-            username: 'User_43',
-            profilePhoto: null
-          }
-        }
-      ];
+      // Fetch real battles from database
+      const battles = await storage.getLiveBattles();
       
       // Get current crypto prices
       const cryptoPrices = await cryptoService.getCurrentPrices();
