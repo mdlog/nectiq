@@ -1304,35 +1304,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: 'Invalid timeframe' });
       }
 
-      // Create battle data
-      const battleData = {
+      // Get current price for the cryptocurrency
+      const cryptoService = await import('./services/cryptoService');
+      const prices = await cryptoService.getCryptoPrices();
+      const cryptoPrice = prices.find(p => p.id === cryptocurrency);
+      
+      if (!cryptoPrice) {
+        return res.status(400).json({ message: 'Invalid cryptocurrency' });
+      }
+
+      // Create battle in database
+      const battle = await storage.createBattle({
         challengerId: userId,
         challengedId: challengedId || null,
-        battleType,
         cryptocurrency,
         timeframe,
         stakeAmount,
         challengerPrediction,
-        targetTime,
-        isPublic
-      };
-
-      // For now, simulate battle creation response
-      const battle = {
-        id: Date.now(), // Temporary ID
-        ...battleData,
+        currentPrice: cryptoPrice.current_price,
         status: 'open',
-        createdAt: new Date(),
-        spectatorCount: 0,
-        challenger: {
-          username: user.username,
-          profilePhoto: user.profilePhoto
-        }
-      };
+        targetTime,
+        battleType,
+        isPublic
+      });
+
+      // Deduct stake amount from user balance
+      await storage.updateUser(userId, { 
+        balance: user.balance - stakeAmount 
+      });
 
       res.json({ 
         message: 'Battle created successfully', 
-        battle
+        battle: {
+          ...battle,
+          challenger: {
+            username: user.username,
+            profilePhoto: user.profilePhoto
+          }
+        }
       });
     } catch (error) {
       console.error('Error creating battle:', error);
