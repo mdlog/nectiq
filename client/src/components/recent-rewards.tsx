@@ -2,21 +2,32 @@ import { useQuery } from "@tanstack/react-query";
 import { Gift, Check } from "lucide-react";
 import type { RecentReward } from "@/types";
 
-function getCryptoImageUrl(cryptoId: string): string {
-  const imageMap: Record<string, string> = {
-    bitcoin: "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png",
-    ethereum: "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png",
-    binancecoin: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
-    cardano: "https://coin-images.coingecko.com/coins/images/975/large/cardano.png",
-    solana: "https://coin-images.coingecko.com/coins/images/4128/large/solana.png",
-    chainlink: "https://coin-images.coingecko.com/coins/images/877/large/chainlink-new-logo.png",
-    polkadot: "https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png",
-    litecoin: "https://coin-images.coingecko.com/coins/images/2/large/litecoin.png",
-    "matic-network": "https://coin-images.coingecko.com/coins/images/4713/large/matic-token-icon.png",
-    hyperliquid: "https://coin-images.coingecko.com/coins/images/44077/large/hyperliquid.jpeg"
+// Dynamic function to get crypto image from live API data
+function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
+  // First try to get image from real-time crypto data
+  const cryptoData = cryptoPrices?.find(crypto => crypto.id === cryptoId);
+  if (cryptoData?.image) {
+    return cryptoData.image;
+  }
+  
+  // Fallback: Try common CoinGecko image patterns for new cryptocurrencies
+  const commonIds: Record<string, string> = {
+    'bitcoin': '1',
+    'ethereum': '279',
+    'tron': '1094',
+    'binancecoin': '825',
+    'cardano': '975',
+    'solana': '4128',
+    'chainlink': '877',
+    'polkadot': '12171',
+    'litecoin': '2',
+    'matic-network': '4713',
+    'hyperliquid': '44077',
+    'sahara-ai': '66681'
   };
   
-  return imageMap[cryptoId] || `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`;
+  const imageId = commonIds[cryptoId] || '1';
+  return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${cryptoId}.png`;
 }
 
 function formatTimeAgo(dateString: string): string {
@@ -40,6 +51,13 @@ export function RecentRewards() {
   const { data: rewards = [], isLoading } = useQuery<RecentReward[]>({
     queryKey: ["/api/rewards/recent"],
     refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  // Get real-time crypto prices for dynamic logo display
+  const { data: cryptoPrices = [] } = useQuery<any[]>({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 1000,
+    staleTime: 0,
   });
 
   if (isLoading) {
@@ -89,9 +107,9 @@ export function RecentRewards() {
             <div className="flex items-center space-x-3">
               <div className="relative w-8 h-8 flex-shrink-0">
                 <img 
-                  src={getCryptoImageUrl(reward.cryptocurrency)} 
+                  src={getCryptoImageUrl(reward.cryptocurrency, cryptoPrices || [])} 
                   alt={reward.cryptocurrency}
-                  className="w-8 h-8 rounded-full"
+                  className="w-8 h-8 rounded-full object-cover"
                   onError={(e) => {
                     // Fallback to success checkmark if image fails to load
                     const target = e.target as HTMLImageElement;

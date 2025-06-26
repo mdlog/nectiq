@@ -181,6 +181,7 @@ Changelog:
 - June 26, 2025. Implemented dynamic cryptocurrency logo system for Active Predictions: replaced static URL mapping with real-time data from CoinGecko API, automatically supports new cryptocurrencies added through Admin Panel (like TRON/TRX), uses live crypto price data for image URLs with intelligent fallback system, ensures cryptocurrency logos display consistently without manual code updates
 - June 26, 2025. Added pagination and search functionality to Active Predictions: implemented 3 predictions per page display, search by cryptocurrency name with real-time filtering, pagination controls with Previous/Next buttons and page numbers, search result count display, empty state handling for no search results, automatic page reset when search query changes
 - June 26, 2025. Fixed cryptocurrency logos missing in My Dashboard > Predictions menu: implemented dynamic logo system using real-time CoinGecko API data matching Active Predictions component, added getCryptoImageUrl function with intelligent fallback system, supports all cryptocurrencies automatically including newly added ones through Admin Panel
+- June 26, 2025. Fixed TRON logo not displaying in Recent Rewards component: implemented dynamic cryptocurrency logo system using real-time CoinGecko API data, replaced static image mapping with live crypto price data integration, added proper fallback system for all cryptocurrencies including TRON, ensures consistent logo display across all platform sections
 ```
 
 ## User Preferences
