@@ -16,6 +16,24 @@ function formatTimeLeft(timeLeft: number): string {
   return `${minutes}m ${seconds}s left`;
 }
 
+function getCryptoImageUrl(cryptoId: string): string {
+  const imageMap: Record<string, string> = {
+    bitcoin: "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png",
+    ethereum: "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png",
+    binancecoin: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+    cardano: "https://coin-images.coingecko.com/coins/images/975/large/cardano.png",
+    solana: "https://coin-images.coingecko.com/coins/images/4128/large/solana.png",
+    chainlink: "https://coin-images.coingecko.com/coins/images/877/large/chainlink-new-logo.png",
+    polkadot: "https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png",
+    litecoin: "https://coin-images.coingecko.com/coins/images/2/large/litecoin.png",
+    "matic-network": "https://coin-images.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+    hyperliquid: "https://coin-images.coingecko.com/coins/images/44077/large/hyperliquid.jpeg",
+    "sahara-ai": "https://coin-images.coingecko.com/coins/images/44077/large/sahara-ai.png"
+  };
+  
+  return imageMap[cryptoId] || `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`;
+}
+
 function getCryptoIcon(crypto: string): string {
   const icons: Record<string, string> = {
     bitcoin: "₿",
@@ -48,23 +66,7 @@ function getCryptoColor(crypto: string): string {
   return colors[crypto] || "bg-gray-500";
 }
 
-function getCryptoImageUrl(cryptoId: string): string {
-  const imageMapping: Record<string, string> = {
-    bitcoin: "1",
-    ethereum: "279", 
-    binancecoin: "825",
-    cardano: "975",
-    solana: "4128",
-    chainlink: "877",
-    polkadot: "12171",
-    litecoin: "2",
-    "matic-network": "4713",
-    hyperliquid: "31061",
-  };
-  
-  const imageId = imageMapping[cryptoId] || "1";
-  return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${cryptoId}.png`;
-}
+
 
 function calculateAccuracy(predicted: string, current: string): number {
   const predictedNum = parseFloat(predicted);
