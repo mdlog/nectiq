@@ -1,6 +1,6 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, and, gte, lte, like, or, isNull } from "drizzle-orm";
+import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql } from "drizzle-orm";
 
 // Generate unique 9-digit UID
 function generateUID(): string {

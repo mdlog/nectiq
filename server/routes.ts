@@ -1259,6 +1259,331 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Battle System API Endpoints
+  app.post('/api/battles/create', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+      const { challengedId, cryptocurrency, timeframe, stakeAmount, challengerPrediction, battleType = 'head_to_head', isPublic = true } = req.body;
+      const userId = (req as any).session.userId;
+
+      // Validate inputs
+      if (!cryptocurrency || !timeframe || !stakeAmount || !challengerPrediction) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      if (stakeAmount < 1 || stakeAmount > 500) {
+        return res.status(400).json({ message: 'Stake amount must be between 1 and 500 NTIQ' });
+      }
+
+      // Check user balance
+      const user = await storage.getUser(userId);
+      if (!user || user.balance < stakeAmount) {
+        return res.status(400).json({ message: 'Insufficient balance' });
+      }
+
+      // Calculate target time
+      const now = new Date();
+      const targetTime = new Date(now);
+      switch (timeframe) {
+        case '1h':
+          targetTime.setHours(now.getHours() + 1);
+          break;
+        case '6h':
+          targetTime.setHours(now.getHours() + 6);
+          break;
+        case '24h':
+          targetTime.setHours(now.getHours() + 24);
+          break;
+        case '7d':
+          targetTime.setDate(now.getDate() + 7);
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid timeframe' });
+      }
+
+      // Create battle data
+      const battleData = {
+        challengerId: userId,
+        challengedId: challengedId || null,
+        battleType,
+        cryptocurrency,
+        timeframe,
+        stakeAmount,
+        challengerPrediction,
+        targetTime,
+        isPublic
+      };
+
+      // For now, simulate battle creation response
+      const battle = {
+        id: Date.now(), // Temporary ID
+        ...battleData,
+        status: 'open',
+        createdAt: new Date(),
+        spectatorCount: 0,
+        challenger: {
+          username: user.username,
+          profilePhoto: user.profilePhoto
+        }
+      };
+
+      res.json({ 
+        message: 'Battle created successfully', 
+        battle
+      });
+    } catch (error) {
+      console.error('Error creating battle:', error);
+      res.status(500).json({ message: 'Failed to create battle' });
+    }
+  });
+
+  app.get('/api/battles/live', async (req, res) => {
+    try {
+      // Simulate live battles data
+      const battles = [
+        {
+          id: 1,
+          challengerId: 37,
+          challengedId: 43,
+          cryptocurrency: 'bitcoin',
+          timeframe: '24h',
+          stakeAmount: 100,
+          challengerPrediction: 95000,
+          challengedPrediction: 96000,
+          status: 'active',
+          targetTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          spectatorCount: 5,
+          challenger: {
+            username: 'Admin_62c5B6',
+            profilePhoto: null
+          },
+          challenged: {
+            username: 'User_43',
+            profilePhoto: null
+          }
+        }
+      ];
+      
+      // Get current crypto prices
+      const cryptoPrices = await cryptoService.getCurrentPrices();
+      const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
+
+      const battlesWithPrices = battles.map((battle: any) => ({
+        ...battle,
+        currentPrice: priceMap.get(battle.cryptocurrency) || 0,
+        timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+      }));
+
+      res.json(battlesWithPrices);
+    } catch (error) {
+      console.error('Error fetching live battles:', error);
+      res.status(500).json({ message: 'Failed to fetch live battles' });
+    }
+  });
+
+  app.get('/api/battles/:id', async (req, res) => {
+    try {
+      const battleId = parseInt(req.params.id);
+      
+      // Simulate battle data
+      const battle = {
+        id: battleId,
+        challengerId: 37,
+        challengedId: 43,
+        battleType: 'head_to_head',
+        cryptocurrency: 'bitcoin',
+        timeframe: '24h',
+        stakeAmount: 100,
+        challengerPrediction: 95000,
+        challengedPrediction: 96000,
+        status: 'active',
+        targetTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        spectatorCount: 5,
+        isPublic: true
+      };
+
+      // Get current price
+      const cryptoPrices = await cryptoService.getCurrentPrices();
+      const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
+      
+      const battleWithPrice = {
+        ...battle,
+        currentPrice: priceMap.get(battle.cryptocurrency) || 0,
+        timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+      };
+
+      res.json(battleWithPrice);
+    } catch (error) {
+      console.error('Error fetching battle:', error);
+      res.status(500).json({ message: 'Failed to fetch battle' });
+    }
+  });
+
+  app.post('/api/battles/:id/spectate', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+      const battleId = parseInt(req.params.id);
+      res.json({ message: 'Added as spectator', battleId });
+    } catch (error) {
+      console.error('Error adding spectator:', error);
+      res.status(500).json({ message: 'Failed to add spectator' });
+    }
+  });
+
+  app.get('/api/battles/:id/spectators', async (req, res) => {
+    try {
+      const battleId = parseInt(req.params.id);
+      
+      // Simulate spectators data
+      const spectators = [
+        {
+          id: 1,
+          userId: 44,
+          username: 'Spectator1',
+          profilePhoto: null,
+          joinedAt: new Date(Date.now() - 30 * 60 * 1000)
+        },
+        {
+          id: 2,
+          userId: 45,
+          username: 'Spectator2',
+          profilePhoto: null,
+          joinedAt: new Date(Date.now() - 15 * 60 * 1000)
+        }
+      ];
+
+      res.json(spectators);
+    } catch (error) {
+      console.error('Error fetching spectators:', error);
+      res.status(500).json({ message: 'Failed to fetch spectators' });
+    }
+  });
+
+  app.post('/api/battles/:id/comment', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+      const battleId = parseInt(req.params.id);
+      const { message } = req.body;
+      const userId = (req as any).session.userId;
+
+      if (!message || message.trim().length === 0) {
+        return res.status(400).json({ message: 'Comment message required' });
+      }
+
+      if (message.length > 500) {
+        return res.status(400).json({ message: 'Comment too long (max 500 characters)' });
+      }
+
+      const user = await storage.getUser(userId);
+      const comment = {
+        id: Date.now(),
+        battleId,
+        userId,
+        username: user?.username || 'Unknown',
+        profilePhoto: user?.profilePhoto || null,
+        message: message.trim(),
+        createdAt: new Date()
+      };
+
+      res.json(comment);
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      res.status(500).json({ message: 'Failed to add comment' });
+    }
+  });
+
+  app.get('/api/battles/:id/comments', async (req, res) => {
+    try {
+      const battleId = parseInt(req.params.id);
+      
+      // Simulate comments data
+      const comments = [
+        {
+          id: 1,
+          battleId,
+          userId: 44,
+          username: 'Spectator1',
+          profilePhoto: null,
+          message: 'This is going to be close!',
+          createdAt: new Date(Date.now() - 10 * 60 * 1000)
+        },
+        {
+          id: 2,
+          battleId,
+          userId: 45,
+          username: 'Spectator2',
+          profilePhoto: null,
+          message: 'I think Bitcoin will go higher',
+          createdAt: new Date(Date.now() - 5 * 60 * 1000)
+        }
+      ];
+
+      res.json(comments);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      res.status(500).json({ message: 'Failed to fetch comments' });
+    }
+  });
+
+  app.post('/api/battles/:id/react', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+      const battleId = parseInt(req.params.id);
+      const { reactionType } = req.body;
+      const userId = (req as any).session.userId;
+
+      if (!['like', 'fire', 'rocket', 'thinking', 'clap'].includes(reactionType)) {
+        return res.status(400).json({ message: 'Invalid reaction type' });
+      }
+
+      const reaction = {
+        id: Date.now(),
+        battleId,
+        userId,
+        reactionType,
+        createdAt: new Date()
+      };
+
+      res.json(reaction);
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      res.status(500).json({ message: 'Failed to add reaction' });
+    }
+  });
+
+  app.get('/api/battles/:id/reactions', async (req, res) => {
+    try {
+      const battleId = parseInt(req.params.id);
+      
+      // Simulate reactions data
+      const reactions = [
+        { reactionType: 'fire', count: 3 },
+        { reactionType: 'rocket', count: 2 },
+        { reactionType: 'like', count: 5 },
+        { reactionType: 'thinking', count: 1 }
+      ];
+
+      res.json(reactions);
+    } catch (error) {
+      console.error('Error fetching reactions:', error);
+      res.status(500).json({ message: 'Failed to fetch reactions' });
+    }
+  });
+
   // Add reaction to prediction
   app.post('/api/predictions/react', async (req, res) => {
     if (!(req as any).session?.userId) {
