@@ -28,7 +28,7 @@ function getCryptoImageUrl(cryptoId: string): string {
     litecoin: "https://coin-images.coingecko.com/coins/images/2/large/litecoin.png",
     "matic-network": "https://coin-images.coingecko.com/coins/images/4713/large/matic-token-icon.png",
     hyperliquid: "https://coin-images.coingecko.com/coins/images/44077/large/hyperliquid.jpeg",
-    "sahara-ai": "https://coin-images.coingecko.com/coins/images/44077/large/sahara-ai.png"
+    "sahara-ai": "https://coin-images.coingecko.com/coins/images/66681/large/Token_Logo_3x.png"
   };
   
   return imageMap[cryptoId] || `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`;
