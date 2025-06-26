@@ -62,6 +62,12 @@ export function PredictionBattles() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Check if user is authenticated
+  const { data: user } = useQuery({
+    queryKey: ['/api/user'],
+    retry: false
+  });
+
   // Fetch live battles
   const { data: liveBattles = [], isLoading } = useQuery({
     queryKey: ['/api/battles/live'],
@@ -70,7 +76,7 @@ export function PredictionBattles() {
 
   // Fetch cryptocurrencies for create form
   const { data: cryptos = [] } = useQuery({
-    queryKey: ['/api/crypto/list']
+    queryKey: ['/api/crypto/prices']
   });
 
   // Create battle mutation
@@ -171,10 +177,29 @@ export function PredictionBattles() {
   };
 
   const handleCreateBattle = () => {
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: 'Login Required',
+        description: 'Please connect your wallet to create prediction battles',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!createForm.cryptocurrency || !createForm.timeframe || !createForm.challengerPrediction) {
       toast({
         title: 'Error',
         description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (createForm.challengerPrediction <= 0) {
+      toast({
+        title: 'Error',
+        description: 'Prediction price must be greater than 0',
         variant: 'destructive',
       });
       return;
@@ -304,9 +329,22 @@ export function PredictionBattles() {
         
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
           <DialogTrigger asChild>
-            <Button>
+            <Button 
+              onClick={() => {
+                if (!user) {
+                  toast({
+                    title: 'Login Required',
+                    description: 'Please connect your wallet to create prediction battles',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+                setShowCreateModal(true);
+              }}
+              disabled={!user}
+            >
               <Trophy className="w-4 h-4 mr-2" />
-              Create Battle
+              {user ? 'Create Battle' : 'Login to Create Battle'}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
