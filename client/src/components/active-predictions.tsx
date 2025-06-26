@@ -24,9 +24,23 @@ function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
     return cryptoData.image;
   }
   
-  // Fallback: Use CoinGecko API pattern for unknown cryptocurrencies
-  // This ensures new cryptocurrencies will still attempt to load their logos
-  return `https://api.coingecko.com/api/v3/coins/${cryptoId}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`;
+  // Fallback: Try common CoinGecko image patterns for new cryptocurrencies
+  // This will automatically work for most cryptocurrencies added to the platform
+  const commonIds: Record<string, string> = {
+    'bitcoin': '1',
+    'ethereum': '279',
+    'tron': '1094',
+    'binancecoin': '825',
+    'cardano': '975',
+    'solana': '4128',
+    'chainlink': '877',
+    'polkadot': '12171',
+    'litecoin': '2',
+    'matic-network': '4713'
+  };
+  
+  const imageId = commonIds[cryptoId] || '1';
+  return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${cryptoId}.png`;
 }
 
 function getCryptoIcon(crypto: string): string {
@@ -164,7 +178,7 @@ export function ActivePredictions() {
                 <div className="flex items-center space-x-3">
                   <div className="relative w-8 h-8 flex-shrink-0">
                     <img 
-                      src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices)}
+                      src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || [])}
                       alt={prediction.cryptocurrency}
                       className="w-8 h-8 rounded-full object-cover"
                       onError={(e) => {

@@ -178,6 +178,7 @@ Changelog:
 - June 26, 2025. Enhanced Profile menu with copy wallet address functionality: added copy button next to wallet address with Indonesian toast notifications, visual feedback with icon changes (copy to checkmark), auto-reset after 2 seconds, error handling for clipboard failures
 - June 26, 2025. Added cryptocurrency logos to Recent Rewards and Active Predictions sections: implemented CoinGecko image URLs matching Live Prices section, added fallback to icons if images fail to load, updated currency display to NTIQ, supports all cryptocurrencies including Bitcoin, Ethereum, BNB, Cardano, Solana, Chainlink, Polkadot, Litecoin, Polygon, Hyperliquid, and Sahara AI
 - June 26, 2025. Fixed Sahara AI logo display issue in Active Predictions: corrected CoinGecko image ID from 44077 to 66681 to match the actual Sahara AI token image URL, logo now displays consistently across Live Prices, Recent Rewards, and Active Predictions sections
+- June 26, 2025. Implemented dynamic cryptocurrency logo system for Active Predictions: replaced static URL mapping with real-time data from CoinGecko API, automatically supports new cryptocurrencies added through Admin Panel (like TRON/TRX), uses live crypto price data for image URLs with intelligent fallback system, ensures cryptocurrency logos display consistently without manual code updates
 ```
 
 ## User Preferences
