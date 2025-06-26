@@ -1179,12 +1179,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 50);
 
       // Get current crypto prices
-      const cryptoPrices = await getCryptoPrices();
-      const priceMap = new Map(cryptoPrices.map(p => [p.id, p.current_price]));
+      const cryptoPrices = await cryptoService.getCurrentPrices();
+      const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
 
       // Format predictions with current prices
       const formattedPredictions = await Promise.all(
-        recentPredictions.map(async (prediction) => {
+        recentPredictions.map(async (prediction: any) => {
           const user = await storage.getUser(prediction.userId);
           return {
             id: prediction.id,
@@ -1224,7 +1224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Group by cryptocurrency and calculate stats
       const cryptoStats = new Map();
-      recentPredictions.forEach(prediction => {
+      recentPredictions.forEach((prediction: any) => {
         const crypto = prediction.cryptocurrency;
         if (!cryptoStats.has(crypto)) {
           cryptoStats.set(crypto, {
@@ -1243,13 +1243,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate averages and sort by popularity
       const trending = Array.from(cryptoStats.values())
-        .map(stats => ({
+        .map((stats: any) => ({
           cryptocurrency: stats.cryptocurrency,
           predictionCount: stats.predictionCount,
           totalStake: stats.totalStake,
-          averagePrice: stats.prices.reduce((a, b) => a + b, 0) / stats.prices.length
+          averagePrice: stats.prices.reduce((a: number, b: number) => a + b, 0) / stats.prices.length
         }))
-        .sort((a, b) => b.predictionCount - a.predictionCount)
+        .sort((a: any, b: any) => b.predictionCount - a.predictionCount)
         .slice(0, 10);
 
       res.json(trending);

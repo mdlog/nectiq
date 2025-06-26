@@ -126,6 +126,11 @@ export default function Dashboard() {
           </div>
         </div>
         
+        {/* Live Prediction Feed */}
+        <div className="mt-8">
+          <LivePredictionFeed />
+        </div>
+        
         <RulesSection />
       </main>
       
