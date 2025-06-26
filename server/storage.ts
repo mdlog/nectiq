@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql } from "drizzle-orm";
 
@@ -106,6 +106,15 @@ export interface IStorage {
   updateEvent(id: number, event: Partial<InsertEvent>): Promise<void>;
   deleteEvent(id: number): Promise<void>;
   getEvent(id: number): Promise<Event | undefined>;
+
+  // Battle operations
+  createBattle(battle: any): Promise<any>;
+  getLiveBattles(): Promise<any[]>;
+  getBattle(id: number): Promise<any>;
+  updateBattle(id: number, updates: any): Promise<void>;
+  createBattleComment(comment: any): Promise<any>;
+  getBattleComments(battleId: number): Promise<any[]>;
+  updateUser(id: number, updates: any): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -632,6 +641,78 @@ export class DatabaseStorage implements IStorage {
   async getEvent(id: number): Promise<Event | undefined> {
     const [event] = await db.select().from(events).where(eq(events.id, id));
     return event || undefined;
+  }
+
+  // Battle operations
+  async createBattle(battleData: any): Promise<any> {
+    const [battle] = await db
+      .insert(predictionBattles)
+      .values(battleData)
+      .returning();
+    return battle;
+  }
+
+  async getLiveBattles(): Promise<any[]> {
+    return await db
+      .select({
+        id: predictionBattles.id,
+        challengerId: predictionBattles.challengerId,
+        challengedId: predictionBattles.challengedId,
+        cryptocurrency: predictionBattles.cryptocurrency,
+        timeframe: predictionBattles.timeframe,
+        stakeAmount: predictionBattles.stakeAmount,
+        challengerPrediction: predictionBattles.challengerPrediction,
+        challengedPrediction: predictionBattles.challengedPrediction,
+        status: predictionBattles.status,
+        targetTime: predictionBattles.targetTime,
+        createdAt: predictionBattles.createdAt,
+        spectatorCount: predictionBattles.spectatorCount,
+        battleType: predictionBattles.battleType,
+        isPublic: predictionBattles.isPublic,
+        challenger: {
+          username: users.username,
+          profilePhoto: users.profilePhoto
+        }
+      })
+      .from(predictionBattles)
+      .leftJoin(users, eq(predictionBattles.challengerId, users.id))
+      .where(eq(predictionBattles.status, 'open'))
+      .orderBy(desc(predictionBattles.createdAt));
+  }
+
+  async getBattle(id: number): Promise<any> {
+    const [battle] = await db.select().from(predictionBattles).where(eq(predictionBattles.id, id));
+    return battle || undefined;
+  }
+
+  async updateBattle(id: number, updates: any): Promise<void> {
+    await db
+      .update(predictionBattles)
+      .set(updates)
+      .where(eq(predictionBattles.id, id));
+  }
+
+  async createBattleComment(commentData: any): Promise<any> {
+    const [comment] = await db
+      .insert(battleComments)
+      .values(commentData)
+      .returning();
+    return comment;
+  }
+
+  async getBattleComments(battleId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(battleComments)
+      .where(eq(battleComments.battleId, battleId))
+      .orderBy(desc(battleComments.createdAt));
+  }
+
+  async updateUser(id: number, updates: any): Promise<void> {
+    await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id));
   }
 }
 
