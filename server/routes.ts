@@ -1169,6 +1169,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get live prediction feed (all recent predictions)
+  app.get('/api/predictions/live-feed', async (req, res) => {
+    try {
+      const allPredictions = await storage.getAllPredictions();
+      const recentPredictions = allPredictions
+        .filter(p => p.status === "pending")
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 50);
+
+      // Get current crypto prices
+      const cryptoPrices = await getCryptoPrices();
+      const priceMap = new Map(cryptoPrices.map(p => [p.id, p.current_price]));
+
+      // Format predictions with current prices
+      const formattedPredictions = await Promise.all(
+        recentPredictions.map(async (prediction) => {
+          const user = await storage.getUser(prediction.userId);
+          return {
+            id: prediction.id,
+            userId: prediction.userId,
+            username: user?.username || 'Unknown',
+            cryptocurrency: prediction.cryptocurrency,
+            predictedPrice: Number(prediction.predictedPrice),
+            currentPrice: priceMap.get(prediction.cryptocurrency) || 0,
+            stake: prediction.stakeAmount,
+            timeframe: prediction.timeframe,
+            createdAt: prediction.createdAt,
+            reactions: [], // Will be populated when reactions table is ready
+            comments: [], // Will be populated when comments table is ready
+            _count: {
+              reactions: 0,
+              comments: 0
+            }
+          };
+        })
+      );
+
+      res.json(formattedPredictions);
+    } catch (error) {
+      console.error('Error fetching live prediction feed:', error);
+      res.status(500).json({ message: 'Failed to fetch live prediction feed' });
+    }
+  });
+
+  // Get trending cryptocurrencies by prediction volume
+  app.get('/api/predictions/trending', async (req, res) => {
+    try {
+      const allPredictions = await storage.getAllPredictions();
+      const recentPredictions = allPredictions.filter(p => 
+        p.status === "pending" && 
+        new Date(p.createdAt).getTime() > Date.now() - 24 * 60 * 60 * 1000 // Last 24 hours
+      );
+
+      // Group by cryptocurrency and calculate stats
+      const cryptoStats = new Map();
+      recentPredictions.forEach(prediction => {
+        const crypto = prediction.cryptocurrency;
+        if (!cryptoStats.has(crypto)) {
+          cryptoStats.set(crypto, {
+            cryptocurrency: crypto,
+            predictionCount: 0,
+            totalStake: 0,
+            prices: []
+          });
+        }
+        
+        const stats = cryptoStats.get(crypto);
+        stats.predictionCount++;
+        stats.totalStake += prediction.stakeAmount;
+        stats.prices.push(Number(prediction.predictedPrice));
+      });
+
+      // Calculate averages and sort by popularity
+      const trending = Array.from(cryptoStats.values())
+        .map(stats => ({
+          cryptocurrency: stats.cryptocurrency,
+          predictionCount: stats.predictionCount,
+          totalStake: stats.totalStake,
+          averagePrice: stats.prices.reduce((a, b) => a + b, 0) / stats.prices.length
+        }))
+        .sort((a, b) => b.predictionCount - a.predictionCount)
+        .slice(0, 10);
+
+      res.json(trending);
+    } catch (error) {
+      console.error('Error fetching trending cryptocurrencies:', error);
+      res.status(500).json({ message: 'Failed to fetch trending data' });
+    }
+  });
+
+  // Add reaction to prediction
+  app.post('/api/predictions/react', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+      const { predictionId, type } = req.body;
+
+      if (!predictionId || !type) {
+        return res.status(400).json({ message: 'Prediction ID and reaction type are required' });
+      }
+
+      // Validate reaction type
+      const validTypes = ['like', 'fire', 'rocket', 'thinking'];
+      if (!validTypes.includes(type)) {
+        return res.status(400).json({ message: 'Invalid reaction type' });
+      }
+
+      // For now, just return success (will implement when reaction table is ready)
+      res.json({ message: 'Reaction added successfully' });
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      res.status(500).json({ message: 'Failed to add reaction' });
+    }
+  });
+
+  // Add comment to prediction
+  app.post('/api/predictions/comment', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+      const { predictionId, content } = req.body;
+
+      if (!predictionId || !content?.trim()) {
+        return res.status(400).json({ message: 'Prediction ID and comment content are required' });
+      }
+
+      if (content.length > 500) {
+        return res.status(400).json({ message: 'Comment is too long (max 500 characters)' });
+      }
+
+      // For now, just return success (will implement when comment table is ready)
+      res.json({ message: 'Comment added successfully' });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      res.status(500).json({ message: 'Failed to add comment' });
+    }
+  });
+
   // Get top predictors (leaderboard) with filter support
   app.get("/api/leaderboard", async (req, res) => {
     try {

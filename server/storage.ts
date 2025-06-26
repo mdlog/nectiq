@@ -40,6 +40,7 @@ export interface IStorage {
   createPrediction(prediction: any): Promise<Prediction>;
   getPrediction(id: number): Promise<Prediction | undefined>;
   getUserPredictions(userId: number): Promise<Prediction[]>;
+  getAllPredictions(): Promise<Prediction[]>;
   getActivePredictions(): Promise<Prediction[]>;
   updatePredictionResult(id: number, actualPrice: string, accuracy: string, rewardAmount: number, status: string): Promise<void>;
   getRecentPredictions(limit?: number): Promise<Prediction[]>;
@@ -175,6 +176,10 @@ export class DatabaseStorage implements IStorage {
 
   async getUserPredictions(userId: number): Promise<Prediction[]> {
     return await db.select().from(predictions).where(eq(predictions.userId, userId)).orderBy(desc(predictions.createdAt));
+  }
+
+  async getAllPredictions(): Promise<Prediction[]> {
+    return await db.select().from(predictions).orderBy(desc(predictions.createdAt));
   }
 
   async getActivePredictions(): Promise<Prediction[]> {

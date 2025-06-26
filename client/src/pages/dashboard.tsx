@@ -6,6 +6,7 @@ import { ActivePredictions } from "@/components/active-predictions";
 import { LivePrices } from "@/components/live-prices";
 import { TopPredictors } from "@/components/top-predictors";
 import { RecentRewards } from "@/components/recent-rewards";
+import { LivePredictionFeed } from "@/components/live-prediction-feed";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
 import { RulesSection } from "@/components/rules-section";
