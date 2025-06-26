@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Clock, TrendingUp, TrendingDown } from "lucide-react";
+import { Clock, TrendingUp, TrendingDown, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import type { ActivePrediction } from "@/types";
 import type { User } from "@shared/schema";
 
@@ -11,7 +12,7 @@ function formatTimeLeft(timeLeft: number): string {
   const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
   
   if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s left`;
+    return `${hours}h ${minutes}m left`;
   }
   return `${minutes}m ${seconds}s left`;
 }
@@ -75,8 +76,6 @@ function getCryptoColor(crypto: string): string {
   return colors[crypto] || "bg-gray-500";
 }
 
-
-
 function calculateAccuracy(predicted: string, current: string): number {
   const predictedNum = parseFloat(predicted);
   const currentNum = parseFloat(current);
@@ -85,6 +84,11 @@ function calculateAccuracy(predicted: string, current: string): number {
 }
 
 export function ActivePredictions() {
+  // State for pagination and search
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const itemsPerPage = 3;
+
   // Check if user is authenticated first
   const { data: user } = useQuery<User>({
     queryKey: ["/api/user"],
@@ -107,6 +111,28 @@ export function ActivePredictions() {
     staleTime: 0,
     enabled: isAuthenticated, // Only enable query if authenticated
   });
+
+  // Filter predictions based on search query
+  const filteredPredictions = predictions.filter(prediction =>
+    prediction.cryptocurrency.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Calculate pagination
+  const totalItems = filteredPredictions.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPredictions = filteredPredictions.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to page 1 when search query changes
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
+  // Navigation functions
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
 
   // Show authentication message if not logged in
   if (!isAuthenticated) {
@@ -164,80 +190,183 @@ export function ActivePredictions() {
       <h3 className="text-lg font-bold mb-4 flex items-center">
         <Clock className="text-warning mr-2" size={18} />
         Active Predictions
+        {totalItems > 0 && (
+          <span className="ml-auto text-sm text-slate-400">
+            {totalItems} predictions
+          </span>
+        )}
       </h3>
+
+      {/* Search Bar */}
+      {predictions.length > 0 && (
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Search cryptocurrency..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-surface-light border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-primary"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Results Info */}
+      {searchQuery && (
+        <div className="mb-4 text-sm text-slate-400">
+          {filteredPredictions.length > 0 
+            ? `Found ${filteredPredictions.length} prediction${filteredPredictions.length !== 1 ? 's' : ''} for "${searchQuery}"`
+            : `No predictions found for "${searchQuery}"`
+          }
+        </div>
+      )}
+
+      {/* No Results */}
+      {filteredPredictions.length === 0 && searchQuery && (
+        <div className="text-center py-8 text-slate-400">
+          <Search className="mx-auto mb-2" size={32} />
+          <p>No predictions found</p>
+          <p className="text-sm">Try searching for a different cryptocurrency</p>
+        </div>
+      )}
       
-      <div className="space-y-4">
-        {predictions.map((prediction) => {
-          const accuracy = calculateAccuracy(prediction.predictedPrice, prediction.currentPrice);
-          const isPositive = accuracy >= 0;
-          const isExpired = prediction.timeLeft <= 0;
-          
-          return (
-            <div key={prediction.id} className="bg-surface-light rounded-lg p-4 border border-slate-600">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-3">
-                  <div className="relative w-8 h-8 flex-shrink-0">
-                    <img 
-                      src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || [])}
-                      alt={prediction.cryptocurrency}
-                      className="w-8 h-8 rounded-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        const fallback = target.nextElementSibling as HTMLElement;
-                        if (fallback) {
-                          target.style.display = 'none';
-                          fallback.style.display = 'flex';
-                        }
-                      }}
-                    />
-                    <div className={`w-8 h-8 ${getCryptoColor(prediction.cryptocurrency)} rounded-full hidden items-center justify-center text-white text-sm font-bold`}>
-                      {getCryptoIcon(prediction.cryptocurrency)}
+      {/* Predictions List */}
+      {paginatedPredictions.length > 0 && (
+        <div className="space-y-4">
+          {paginatedPredictions.map((prediction) => {
+            const accuracy = calculateAccuracy(prediction.predictedPrice, prediction.currentPrice);
+            const isPositive = accuracy >= 0;
+            const isExpired = prediction.timeLeft <= 0;
+            
+            return (
+              <div key={prediction.id} className="bg-surface-light rounded-lg p-4 border border-slate-600">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-3">
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      <img 
+                        src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || [])}
+                        alt={prediction.cryptocurrency}
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) {
+                            target.style.display = 'none';
+                            fallback.style.display = 'flex';
+                          }
+                        }}
+                      />
+                      <div className={`w-8 h-8 ${getCryptoColor(prediction.cryptocurrency)} rounded-full hidden items-center justify-center text-white text-sm font-bold`}>
+                        {getCryptoIcon(prediction.cryptocurrency)}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
+                      <p className="text-xs text-slate-400">
+                        {isExpired ? "Expired" : formatTimeLeft(prediction.timeLeft)}
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-300">
+                      Predicted: $
+                      <span className="font-semibold text-white">
+                        {parseFloat(prediction.predictedPrice).toLocaleString()}
+                      </span>
+                    </p>
                     <p className="text-xs text-slate-400">
-                      {isExpired ? "Expired" : formatTimeLeft(prediction.timeLeft)}
+                      Current: $
+                      <span className="font-semibold text-slate-300">
+                        {parseFloat(prediction.currentPrice).toLocaleString()}
+                      </span>
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-slate-300">
-                    Predicted: <span className="font-semibold">${parseFloat(prediction.predictedPrice).toLocaleString()}</span>
-                  </p>
-                  <p className="text-sm text-slate-300">
-                    Current: <span className={`font-semibold ${isPositive ? "text-warning" : "text-error"}`}>
-                      ${parseFloat(prediction.currentPrice).toLocaleString()}
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+                      {prediction.timeframe} Prediction
                     </span>
-                  </p>
+                    <span className="text-xs text-slate-400">
+                      Stake: {prediction.stakeAmount} NTIQ
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className={`w-2 h-2 rounded-full ${isPositive ? "bg-success pulse-green" : "bg-error"}`}></div>
+                    {isPositive ? (
+                      <TrendingUp className="text-success" size={12} />
+                    ) : (
+                      <TrendingDown className="text-error" size={12} />
+                    )}
+                    <span className={`text-xs font-medium ${isPositive ? "text-success" : "text-error"}`}>
+                      {isPositive ? "+" : ""}{accuracy.toFixed(2)}% accuracy
+                    </span>
+                  </div>
                 </div>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
-                    {prediction.timeframe} Prediction
-                  </span>
-                  <span className="text-xs text-slate-400">
-                    Stake: {prediction.stakeAmount} NTIQ
-                  </span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className={`w-2 h-2 rounded-full ${isPositive ? "bg-success pulse-green" : "bg-error"}`}></div>
-                  {isPositive ? (
-                    <TrendingUp className="text-success" size={12} />
-                  ) : (
-                    <TrendingDown className="text-error" size={12} />
-                  )}
-                  <span className={`text-xs font-medium ${isPositive ? "text-success" : "text-error"}`}>
-                    {isPositive ? "+" : ""}{accuracy.toFixed(2)}% accuracy
-                  </span>
-                </div>
-              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="text-sm text-slate-400">
+            Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, totalItems)} of {totalItems} predictions
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {/* Previous Button */}
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`flex items-center px-3 py-1 rounded text-sm ${
+                currentPage === 1
+                  ? 'text-slate-500 cursor-not-allowed'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700'
+              }`}
+            >
+              <ChevronLeft size={16} />
+              Previous
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => goToPage(page)}
+                  className={`px-3 py-1 rounded text-sm ${
+                    page === currentPage
+                      ? 'bg-primary text-white'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
             </div>
-          );
-        })}
-      </div>
+
+            {/* Next Button */}
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`flex items-center px-3 py-1 rounded text-sm ${
+                currentPage === totalPages
+                  ? 'text-slate-500 cursor-not-allowed'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700'
+              }`}
+            >
+              Next
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
