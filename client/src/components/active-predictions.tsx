@@ -16,22 +16,17 @@ function formatTimeLeft(timeLeft: number): string {
   return `${minutes}m ${seconds}s left`;
 }
 
-function getCryptoImageUrl(cryptoId: string): string {
-  const imageMap: Record<string, string> = {
-    bitcoin: "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png",
-    ethereum: "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png",
-    binancecoin: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
-    cardano: "https://coin-images.coingecko.com/coins/images/975/large/cardano.png",
-    solana: "https://coin-images.coingecko.com/coins/images/4128/large/solana.png",
-    chainlink: "https://coin-images.coingecko.com/coins/images/877/large/chainlink-new-logo.png",
-    polkadot: "https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png",
-    litecoin: "https://coin-images.coingecko.com/coins/images/2/large/litecoin.png",
-    "matic-network": "https://coin-images.coingecko.com/coins/images/4713/large/matic-token-icon.png",
-    hyperliquid: "https://coin-images.coingecko.com/coins/images/44077/large/hyperliquid.jpeg",
-    "sahara-ai": "https://coin-images.coingecko.com/coins/images/66681/large/Token_Logo_3x.png"
-  };
+// Dynamic function to get crypto image from live API data
+function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
+  // First try to get image from real-time crypto data
+  const cryptoData = cryptoPrices?.find(crypto => crypto.id === cryptoId);
+  if (cryptoData?.image) {
+    return cryptoData.image;
+  }
   
-  return imageMap[cryptoId] || `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`;
+  // Fallback: Use CoinGecko API pattern for unknown cryptocurrencies
+  // This ensures new cryptocurrencies will still attempt to load their logos
+  return `https://api.coingecko.com/api/v3/coins/${cryptoId}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`;
 }
 
 function getCryptoIcon(crypto: string): string {
@@ -83,6 +78,13 @@ export function ActivePredictions() {
   });
 
   const isAuthenticated = !!user;
+
+  // Get real-time crypto prices for dynamic logo display
+  const { data: cryptoPrices = [] } = useQuery<any[]>({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 1000,
+    staleTime: 0,
+  });
 
   const { data: predictions = [], isLoading } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
@@ -162,7 +164,7 @@ export function ActivePredictions() {
                 <div className="flex items-center space-x-3">
                   <div className="relative w-8 h-8 flex-shrink-0">
                     <img 
-                      src={getCryptoImageUrl(prediction.cryptocurrency)}
+                      src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices)}
                       alt={prediction.cryptocurrency}
                       className="w-8 h-8 rounded-full object-cover"
                       onError={(e) => {
