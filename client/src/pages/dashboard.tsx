@@ -6,7 +6,7 @@ import { ActivePredictions } from "@/components/active-predictions";
 import { LivePrices } from "@/components/live-prices";
 import { TopPredictors } from "@/components/top-predictors";
 import { RecentRewards } from "@/components/recent-rewards";
-import { LivePredictionFeed } from "@/components/live-prediction-feed";
+
 import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
@@ -125,11 +125,6 @@ export default function Dashboard() {
             <TopPredictors />
             <RecentRewards />
           </div>
-        </div>
-        
-        {/* Live Prediction Feed */}
-        <div className="mt-8">
-          <LivePredictionFeed />
         </div>
         
         {/* Prediction Battles */}

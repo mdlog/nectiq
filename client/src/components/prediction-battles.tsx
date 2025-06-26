@@ -69,7 +69,7 @@ export function PredictionBattles() {
   });
 
   // Fetch live battles
-  const { data: liveBattles = [], isLoading } = useQuery({
+  const { data: liveBattles = [], isLoading } = useQuery<Battle[]>({
     queryKey: ['/api/battles/live'],
     refetchInterval: 5000 // Update every 5 seconds
   });
@@ -98,7 +98,13 @@ export function PredictionBattles() {
         challengerPrediction: 0,
         isPublic: true
       });
+      // Force refresh the battles list with multiple strategies
       queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
+      queryClient.refetchQueries({ queryKey: ['/api/battles/live'] });
+      // Also refresh after a short delay to ensure database consistency
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
+      }, 500);
     },
     onError: (error: any) => {
       toast({
