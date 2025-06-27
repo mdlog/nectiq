@@ -688,8 +688,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   private async getCurrentCryptoPrice(cryptoId: string): Promise<number> {
-    const [crypto] = await db.select().from(cryptocurrencies).where(eq(cryptocurrencies.id, cryptoId));
-    return crypto ? parseFloat(crypto.currentPrice) : 0;
+    try {
+      // Import crypto service untuk mendapatkan harga real-time
+      const { cryptoService } = await import('../services/cryptoService');
+      const prices = await cryptoService.getCurrentPrices();
+      const crypto = prices.find(p => p.id === cryptoId);
+      return crypto ? crypto.current_price : 0;
+    } catch (error) {
+      console.error(`Error fetching price for ${cryptoId}:`, error);
+      // Fallback ke database jika API gagal
+      try {
+        const [crypto] = await db.select().from(cryptocurrencies).where(eq(cryptocurrencies.id, cryptoId));
+        return crypto ? parseFloat(crypto.currentPrice) : 0;
+      } catch (dbError) {
+        console.error(`Database fallback failed for ${cryptoId}:`, dbError);
+        return 0;
+      }
+    }
   }
 
   // Method to resolve expired battles
