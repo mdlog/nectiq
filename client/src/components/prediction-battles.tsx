@@ -838,6 +838,13 @@ export function PredictionBattles() {
                 </div>
               </TabsContent>
               
+              <TabsContent value="probability" className="space-y-4">
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4 text-center">Analisis Probabilitas Menang</h3>
+                  <WinProbabilityChart battle={selectedBattle} />
+                </div>
+              </TabsContent>
+              
               <TabsContent value="chat" className="space-y-4">
                 <div className="h-48 border rounded-lg p-4 overflow-y-auto space-y-2">
                   {/* Sample comments - replace with real data */}
