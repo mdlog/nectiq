@@ -339,7 +339,7 @@ export const battleComments = pgTable("battle_comments", {
   battleId: integer("battle_id").references(() => predictionBattles.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
   message: text("message").notNull(),
-  replyToId: integer("reply_to_id").references(() => battleComments.id),
+  replyToId: integer("reply_to_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -765,7 +765,7 @@ export class DatabaseStorage implements IStorage {
         else if (winnerAccuracy <= 5) multiplier = 1.5;
         else multiplier = 1;
 
-        winnerReward = parseFloat(battle.stakeAmount) * 2 * multiplier; // Double stake + multiplier
+        winnerReward = parseFloat(battle.stakeAmount || '0') * 2 * multiplier; // Double stake + multiplier
 
         // Update winner's balance
         const [winner] = await db.select().from(users).where(eq(users.id, winnerId));
@@ -780,21 +780,24 @@ export class DatabaseStorage implements IStorage {
         }
       } else {
         // It's a tie - refund both players
+        const stakeAmount = parseFloat(battle.stakeAmount || '0');
         const [challenger] = await db.select().from(users).where(eq(users.id, battle.challengerId));
-        const [challenged] = await db.select().from(users).where(eq(users.id, battle.challengedId));
         
         if (challenger) {
           await db
             .update(users)
-            .set({ balance: challenger.balance + parseFloat(battle.stakeAmount) })
+            .set({ balance: challenger.balance + stakeAmount })
             .where(eq(users.id, battle.challengerId));
         }
         
-        if (challenged) {
-          await db
-            .update(users)
-            .set({ balance: challenged.balance + parseFloat(battle.stakeAmount) })
-            .where(eq(users.id, battle.challengedId));
+        if (battle.challengedId) {
+          const [challenged] = await db.select().from(users).where(eq(users.id, battle.challengedId));
+          if (challenged) {
+            await db
+              .update(users)
+              .set({ balance: challenged.balance + stakeAmount })
+              .where(eq(users.id, battle.challengedId));
+          }
         }
       }
 
@@ -803,11 +806,8 @@ export class DatabaseStorage implements IStorage {
         .update(predictionBattles)
         .set({
           status: 'completed',
-          winnerId,
-          winnerReward: winnerReward.toString(),
-          actualPrice: currentPrice.toString(),
-          challengerAccuracy: challengerAccuracy.toString(),
-          challengedAccuracy: challengedAccuracy.toString()
+          winnerId: winnerId || null,
+          actualPrice: currentPrice.toString()
         })
         .where(eq(predictionBattles.id, battleId));
 
@@ -1121,26 +1121,21 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getCurrentCryptoPrice(cryptocurrency: string): Promise<number> {
-    try {
-      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptocurrency}&vs_currencies=usd`);
-      const data = await response.json();
-      return data[cryptocurrency]?.usd || 50000; // fallback price jika error
-    } catch (error) {
-      console.error('Error fetching crypto price:', error);
-      return 50000; // fallback price
-    }
-  }
+
 
   async logTransaction(transaction: any): Promise<void> {
     try {
       await db.insert(transactionLogs).values({
-        userId: transaction.userId,
-        type: transaction.type,
-        amount: transaction.amount,
-        description: transaction.description,
-        relatedId: transaction.relatedId,
-        createdAt: new Date()
+        amount: transaction.amount || 0,
+        token: transaction.token || 'NTIQ',
+        type: transaction.type || 'battle',
+        description: transaction.description || '',
+        status: transaction.status || 'completed',
+        fromAddress: transaction.fromAddress || null,
+        toAddress: transaction.toAddress || null,
+        txHash: transaction.txHash || null,
+        networkFee: transaction.networkFee || null,
+        relatedId: transaction.relatedId || null
       });
     } catch (error) {
       console.error('Error logging transaction:', error);
