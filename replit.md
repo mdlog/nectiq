@@ -190,6 +190,7 @@ Changelog:
 - June 26, 2025. Enhanced Create Battle form with dynamic cryptocurrency selection: replaced hardcoded cryptocurrency list with live data from /api/crypto/prices endpoint, supports all cryptocurrencies available in the system automatically, displays proper names and symbols dynamically
 - June 27, 2025. Fixed text color contrast issue in Prediction Battles: improved visibility of price text above challenger and opponent by changing from default white text to dark blue (text-blue-900) for challenger and dark red (text-red-900) for opponent, ensuring proper contrast against light backgrounds with dark mode support
 - June 27, 2025. Improved price formatting in Prediction Battles: formatted challenger and opponent prediction prices to display maximum 2 decimal places using toLocaleString with minimumFractionDigits and maximumFractionDigits parameters for cleaner price display
+- June 27, 2025. Fixed numeric conversion in battles API: added parseFloat conversion for challengerPrediction and challengedPrediction data from database to ensure proper number formatting, resolving issue where large numeric strings were displayed without proper decimal formatting
 ```
 
 ## User Preferences

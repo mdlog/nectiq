@@ -1360,6 +1360,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const battlesWithPrices = battles.map((battle: any) => ({
         ...battle,
+        challengerPrediction: battle.challengerPrediction ? parseFloat(battle.challengerPrediction) : 0,
+        challengedPrediction: battle.challengedPrediction ? parseFloat(battle.challengedPrediction) : null,
         currentPrice: priceMap.get(battle.cryptocurrency) || 0,
         timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
       }));
