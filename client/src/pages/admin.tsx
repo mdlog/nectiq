@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords } from "lucide-react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1858,7 +1858,7 @@ export default function AdminPanel() {
               Predictions
             </TabsTrigger>
             <TabsTrigger value="battles" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Gamepad2 className="h-4 w-4" />
+              <Swords className="h-4 w-4" />
               Battles
             </TabsTrigger>
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary flex items-center gap-2">
@@ -5086,7 +5086,7 @@ export default function AdminPanel() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Battles</CardTitle>
-                  <Sword className="h-4 w-4 text-muted-foreground" />
+                  <Swords className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{battleStats.totalBattles || 0}</div>
@@ -5198,7 +5198,7 @@ export default function AdminPanel() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Sword className="h-5 w-5" />
+                  <Swords className="h-5 w-5" />
                   Battle Management
                   {wsConnected && (
                     <Badge variant="secondary" className="ml-auto">
@@ -5330,7 +5330,7 @@ export default function AdminPanel() {
                           <TableRow>
                             <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                               <div className="flex flex-col items-center">
-                                <Sword className="mb-2 h-8 w-8" />
+                                <Swords className="mb-2 h-8 w-8" />
                                 <p>No battles found</p>
                                 <p className="text-sm">Battles will appear here when users create them</p>
                               </div>
