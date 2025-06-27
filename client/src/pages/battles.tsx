@@ -551,10 +551,10 @@ export default function BattlesPage() {
                               }}
                             />
                             <div>
-                              <h3 className="font-semibold text-gray-900 dark:text-white">
+                              <h3 className="font-semibold text-white">
                                 {getCryptoDisplayInfo(battle.cryptocurrency).name} ({getCryptoDisplayInfo(battle.cryptocurrency).symbol})
                               </h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                              <p className="text-sm text-gray-300">
                                 Stake: {battle.stakeAmount} NTIQ
                               </p>
                             </div>
@@ -712,10 +712,10 @@ export default function BattlesPage() {
                               }}
                             />
                             <div>
-                              <h3 className="font-semibold text-gray-900 dark:text-white">
+                              <h3 className="font-semibold text-white">
                                 {getCryptoDisplayInfo(battle.cryptocurrency).name} ({getCryptoDisplayInfo(battle.cryptocurrency).symbol})
                               </h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                              <p className="text-sm text-gray-300">
                                 Stake: {battle.stakeAmount} NTIQ
                               </p>
                             </div>
