@@ -13,7 +13,7 @@ interface WalletSecurityCheck {
 }
 
 export class WalletSecurityService {
-  // Generate device fingerprint untuk deteksi multi-wallet
+  // Generate device fingerprint for multi-wallet detection
   static generateDeviceFingerprint(req: Request, clientData?: any): string {
     const components = [
       req.ip || req.connection.remoteAddress || '',
@@ -30,13 +30,13 @@ export class WalletSecurityService {
       .substring(0, 16);
   }
 
-  // Validasi wallet login dengan deteksi multi-wallet abuse
+  // Validate wallet login with multi-wallet abuse detection
   static async validateWalletLogin(walletAddress: string, req: Request): Promise<WalletSecurityCheck> {
     try {
       const deviceFingerprint = this.generateDeviceFingerprint(req);
       const clientIP = req.ip || req.connection.remoteAddress || '';
       
-      // Cek fingerprint wallet yang ada dalam 24 jam terakhir dari IP yang sama
+      // Check wallet fingerprints from the same IP in the last 24 hours
       const recentWallets = await db.select()
         .from(walletFingerprints)
         .where(
@@ -46,7 +46,7 @@ export class WalletSecurityService {
           )
         );
 
-      // Jika tidak ada wallet sebelumnya dari IP ini, izinkan
+      // If no previous wallets from this IP, allow login
       if (recentWallets.length === 0) {
         await this.recordWalletFingerprint(walletAddress, req);
         return {
@@ -58,7 +58,7 @@ export class WalletSecurityService {
         };
       }
 
-      // Cek apakah ada wallet berbeda dengan device fingerprint yang sama
+      // Check if there are different wallets with the same device fingerprint
       const suspiciousWallets = recentWallets.filter(w => 
         w.walletAddress !== walletAddress && 
         w.deviceFingerprint === deviceFingerprint
@@ -85,7 +85,7 @@ export class WalletSecurityService {
         };
       }
 
-      // Cek jika ada wallet berbeda dari IP yang sama (warning)
+      // Check if there are different wallets from the same IP (warning)
       const differentWallets = recentWallets.filter(w => w.walletAddress !== walletAddress);
       
       if (differentWallets.length >= 5) { // Increased threshold from 2 to 5
