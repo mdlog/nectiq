@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Swords, Eye, MessageCircle, Flame, Rocket, ThumbsUp, Brain, Trophy, Clock, Users, DollarSign, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
+import { CountdownTimer } from '@/components/countdown-timer';
 
 interface Battle {
   id: number;
@@ -393,18 +394,7 @@ export function PredictionBattles() {
     }
   });
 
-  // Format time remaining
-  const formatTimeLeft = (timeLeft: number) => {
-    if (timeLeft <= 0) return 'Ended';
-    
-    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-    
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    if (minutes > 0) return `${minutes}m ${seconds}s`;
-    return `${seconds}s`;
-  };
+
 
   // Get crypto logo URL dynamically from live price data
   const getCryptoImageUrl = (cryptoId: string) => {
@@ -867,7 +857,7 @@ export function PredictionBattles() {
                     maximumFractionDigits: 2 
                   })}</div>
                   <div className="text-sm text-muted-foreground">
-                    {formatTimeLeft(selectedBattle.timeLeft)} remaining
+                    <CountdownTimer targetTime={selectedBattle.targetTime} /> remaining
                   </div>
                 </div>
 
