@@ -599,10 +599,14 @@ export default function BattlesPage() {
                                   {battle.challengerUsername}
                                 </p>
                                 <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                                  ${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 6
-                                  })}
+                                  {user && user.id === battle.challengerId ? (
+                                    `$${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 6
+                                    })}`
+                                  ) : (
+                                    "🔒 Hidden"
+                                  )}
                                 </p>
                               </div>
                             </div>
@@ -757,10 +761,14 @@ export default function BattlesPage() {
                                   {battle.challengerUsername}
                                 </p>
                                 <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                                  ${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 6
-                                  })}
+                                  {user && user.id === battle.challengerId ? (
+                                    `$${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 6
+                                    })}`
+                                  ) : (
+                                    "🔒 Hidden"
+                                  )}
                                 </p>
                               </div>
                             </div>
