@@ -3444,7 +3444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get current price for the cryptocurrency
-      const currentPrice = await getCurrentPrice(cryptocurrency);
+      const currentPrice = await storage.getCurrentCryptoPrice(cryptocurrency);
       if (!currentPrice) {
         return res.status(400).json({ message: 'Unable to fetch current price for cryptocurrency' });
       }
@@ -3455,7 +3455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cryptocurrency,
         challengerPrediction: challengerPrediction ? parseFloat(challengerPrediction) : null,
         challengedPrediction: challengedPrediction ? parseFloat(challengedPrediction) : null,
-        stake: stake || 50,
+        stakeAmount: stake || 50,
         targetTime: new Date(targetTime),
         status: status || 'open',
         priceAtCreation: currentPrice,

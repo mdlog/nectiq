@@ -111,12 +111,16 @@ export interface IStorage {
   createBattle(battle: any): Promise<any>;
   getLiveBattles(): Promise<any[]>;
   getBattle(id: number): Promise<any>;
+  getBattleById(id: number): Promise<any>;
   updateBattle(id: number, updates: any): Promise<void>;
+  deleteBattle(id: number): Promise<void>;
   createBattleComment(comment: any): Promise<any>;
   getBattleComments(battleId: number): Promise<any[]>;
   getAllBattles(filters?: any): Promise<any[]>;
+  getAdminBattles(filters: any, dateFilters: any, pagination: any): Promise<any[]>;
   getBattleStats(): Promise<any>;
   getUserBattles(userId: number): Promise<any[]>;
+  addToUserBalance(userId: number, amount: number): Promise<void>;
   updateUser(id: number, updates: any): Promise<void>;
 }
 
@@ -687,7 +691,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  private async getCurrentCryptoPrice(cryptoId: string): Promise<number> {
+  async getCurrentCryptoPrice(cryptoId: string): Promise<number> {
     try {
       // Gunakan axios untuk mengambil data dari CoinGecko API secara langsung
       const axios = await import('axios');
@@ -986,6 +990,104 @@ export class DatabaseStorage implements IStorage {
     );
 
     return battlesWithUsers;
+  }
+
+  async getBattleById(id: number): Promise<any> {
+    const [battle] = await db
+      .select()
+      .from(predictionBattles)
+      .where(eq(predictionBattles.id, id));
+    return battle;
+  }
+
+  async deleteBattle(id: number): Promise<void> {
+    await db
+      .delete(predictionBattles)
+      .where(eq(predictionBattles.id, id));
+  }
+
+  async getAdminBattles(filters: any, dateFilters: any, pagination: any): Promise<any[]> {
+    let query = db
+      .select({
+        id: predictionBattles.id,
+        challengerId: predictionBattles.challengerId,
+        challengedId: predictionBattles.challengedId,
+        cryptocurrency: predictionBattles.cryptocurrency,
+        challengerPrediction: predictionBattles.challengerPrediction,
+        challengedPrediction: predictionBattles.challengedPrediction,
+        stakeAmount: predictionBattles.stakeAmount,
+        targetTime: predictionBattles.targetTime,
+        status: predictionBattles.status,
+        winnerId: predictionBattles.winnerId,
+        createdAt: predictionBattles.createdAt,
+        challengerUsername: users.username,
+        challengerUid: users.uid,
+      })
+      .from(predictionBattles)
+      .leftJoin(users, eq(predictionBattles.challengerId, users.id));
+
+    // Apply filters
+    const conditions = [];
+    if (filters.status) {
+      conditions.push(eq(predictionBattles.status, filters.status));
+    }
+    if (filters.cryptocurrency) {
+      conditions.push(eq(predictionBattles.cryptocurrency, filters.cryptocurrency));
+    }
+    if (dateFilters.startDate) {
+      conditions.push(gte(predictionBattles.createdAt, new Date(dateFilters.startDate)));
+    }
+    if (dateFilters.endDate) {
+      conditions.push(lte(predictionBattles.createdAt, new Date(dateFilters.endDate)));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const battles = await query
+      .orderBy(desc(predictionBattles.createdAt))
+      .limit(pagination.limit)
+      .offset((pagination.page - 1) * pagination.limit);
+
+    // Get challenged user information
+    const battlesWithUsers = await Promise.all(
+      battles.map(async (battle) => {
+        let challengedUsername = null;
+        let challengedUid = null;
+
+        if (battle.challengedId) {
+          const [challengedUser] = await db
+            .select({ username: users.username, uid: users.uid })
+            .from(users)
+            .where(eq(users.id, battle.challengedId));
+          
+          if (challengedUser) {
+            challengedUsername = challengedUser.username;
+            challengedUid = challengedUser.uid;
+          }
+        }
+
+        return {
+          ...battle,
+          challengedUsername,
+          challengedUid,
+          duration: Math.round((new Date(battle.targetTime).getTime() - new Date(battle.createdAt).getTime()) / (1000 * 60)),
+          timeRemaining: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+        };
+      })
+    );
+
+    return battlesWithUsers;
+  }
+
+  async addToUserBalance(userId: number, amount: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        balance: sql`${users.balance} + ${amount}`
+      })
+      .where(eq(users.id, userId));
   }
 
   async getUserBattles(userId: number): Promise<any[]> {
