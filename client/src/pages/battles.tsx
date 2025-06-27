@@ -184,8 +184,8 @@ export default function BattlesPage() {
             </h1>
           </div>
           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Tantang user lain dalam prediksi harga cryptocurrency dan menangkan rewards!
-            Buat battle atau bergabung dengan battle yang sudah ada.
+            Challenge other users in cryptocurrency price predictions and win rewards!
+            Create a battle or join existing battles.
           </p>
         </div>
 
@@ -208,7 +208,7 @@ export default function BattlesPage() {
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.activeBattles}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Aktif</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Active</div>
               </CardContent>
             </Card>
             
@@ -218,7 +218,7 @@ export default function BattlesPage() {
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.openBattles}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Menunggu</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Open</div>
               </CardContent>
             </Card>
             
@@ -241,7 +241,7 @@ export default function BattlesPage() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Cari battle berdasarkan crypto atau username..."
+                  placeholder="Search battles by crypto or username..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -253,10 +253,10 @@ export default function BattlesPage() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="open">Terbuka</SelectItem>
-                  <SelectItem value="active">Aktif</SelectItem>
-                  <SelectItem value="completed">Selesai</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -265,7 +265,7 @@ export default function BattlesPage() {
                   <SelectValue placeholder="Crypto" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Crypto</SelectItem>
+                  <SelectItem value="all">All Crypto</SelectItem>
                   {cryptos.map((crypto: any) => (
                     <SelectItem key={crypto.id} value={crypto.id}>
                       {crypto.symbol.toUpperCase()}
@@ -281,8 +281,8 @@ export default function BattlesPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="live">Live Battles</TabsTrigger>
-            <TabsTrigger value="create">Buat Battle</TabsTrigger>
-            <TabsTrigger value="history">Riwayat</TabsTrigger>
+            <TabsTrigger value="create">Create Battle</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           
           <TabsContent value="live" className="mt-6">
@@ -290,7 +290,7 @@ export default function BattlesPage() {
               {battlesLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-gray-600 dark:text-gray-400 mt-4">Memuat battles...</p>
+                  <p className="text-gray-600 dark:text-gray-400 mt-4">Loading battles...</p>
                 </div>
               ) : filteredBattles.length === 0 ? (
                 <Card>
