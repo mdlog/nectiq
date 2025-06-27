@@ -1153,7 +1153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enrichedPredictions = await Promise.all(
         activePredictions.map(async (prediction) => {
           const crypto = await storage.getCryptocurrency(prediction.cryptocurrency);
-          const timeLeft = new Date(prediction.targetTime).getTime() - Date.now();
+          const timeLeft = Math.floor((new Date(prediction.targetTime).getTime() - Date.now()) / 1000);
           
           return {
             ...prediction,
@@ -1363,7 +1363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         challengerPrediction: battle.challengerPrediction ? parseFloat(battle.challengerPrediction) : 0,
         challengedPrediction: battle.challengedPrediction ? parseFloat(battle.challengedPrediction) : null,
         currentPrice: priceMap.get(battle.cryptocurrency) || 0,
-        timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+        timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
       }));
 
       res.json(battlesWithPrices);
@@ -1423,7 +1423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const battleWithPrice = {
         ...battle,
         currentPrice: priceMap.get(battle.cryptocurrency) || 0,
-        timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+        timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
       };
 
       res.json(battleWithPrice);

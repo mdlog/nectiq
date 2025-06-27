@@ -911,7 +911,7 @@ export class DatabaseStorage implements IStorage {
           },
           challenged,
           currentPrice,
-          timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+          timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
         };
       })
     );
