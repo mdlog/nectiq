@@ -309,7 +309,7 @@ export function PredictionBattles() {
             <div className="font-semibold text-blue-700 dark:text-blue-300">
               {battle.challenger.username}
             </div>
-            <div className="text-lg font-bold text-blue-900 dark:text-blue-100">${battle.challengerPrediction.toLocaleString()}</div>
+            <div className="text-lg font-bold text-blue-900 dark:text-blue-100">${battle.challengerPrediction.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div className="text-xs text-muted-foreground">Challenger</div>
           </div>
           
@@ -318,7 +318,7 @@ export function PredictionBattles() {
               {battle.challenged?.username || 'Open'}
             </div>
             <div className="text-lg font-bold text-red-900 dark:text-red-100">
-              {battle.challengedPrediction ? `$${battle.challengedPrediction.toLocaleString()}` : '---'}
+              {battle.challengedPrediction ? `$${battle.challengedPrediction.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '---'}
             </div>
             <div className="text-xs text-muted-foreground">Opponent</div>
           </div>
