@@ -720,8 +720,10 @@ export function PredictionBattles() {
                 <Input
                   type="number"
                   placeholder="Masukkan prediksi harga..."
+                  min="0"
+                  step="0.01"
                   value={joinPrediction || ''}
-                  onChange={(e) => setJoinPrediction(Number(e.target.value))}
+                  onChange={(e) => setJoinPrediction(parseFloat(e.target.value) || 0)}
                   className="w-full"
                 />
                 <div className="text-xs text-muted-foreground">
