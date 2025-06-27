@@ -170,7 +170,7 @@ export default function BattlesPage() {
       const response = await apiRequest(`/api/battles/${selectedBattle.id}/join`, {
         method: 'POST',
         body: JSON.stringify({
-          prediction: parseFloat(predictionPrice)
+          challengedPrediction: parseFloat(predictionPrice)
         })
       });
 
