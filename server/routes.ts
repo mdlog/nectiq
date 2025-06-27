@@ -3492,7 +3492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (updateData.targetTime) processedData.targetTime = new Date(updateData.targetTime);
       if (updateData.challengerPrediction) processedData.challengerPrediction = parseFloat(updateData.challengerPrediction);
       if (updateData.challengedPrediction) processedData.challengedPrediction = parseFloat(updateData.challengedPrediction);
-      if (updateData.stake) processedData.stake = parseInt(updateData.stake);
+      if (updateData.stakeAmount) processedData.stakeAmount = parseInt(updateData.stakeAmount);
       
       processedData.updatedAt = new Date();
 
