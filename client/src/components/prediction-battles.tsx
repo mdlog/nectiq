@@ -263,7 +263,7 @@ export function PredictionBattles() {
     }
 
     // Check if user has enough balance
-    if (user.balance < joiningBattle.stakeAmount) {
+    if ((user as any)?.balance < joiningBattle.stakeAmount) {
       toast({
         title: 'Saldo Tidak Cukup',
         description: `Anda memerlukan ${joiningBattle.stakeAmount} NTIQ untuk bergabung battle ini`,
@@ -361,7 +361,7 @@ export function PredictionBattles() {
         {/* Action buttons */}
         <div className="flex gap-2">
           {/* Show Join button if battle is open and user is not the challenger */}
-          {battle.status === 'open' && !battle.challengedId && user && user.id !== battle.challengerId ? (
+          {battle.status === 'open' && !battle.challengedId && user && (user as any).id !== battle.challengerId ? (
             <Button 
               size="sm" 
               onClick={() => setJoiningBattle(battle)}
@@ -444,11 +444,11 @@ export function PredictionBattles() {
                     <SelectValue placeholder="Select cryptocurrency" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="bitcoin">Bitcoin (BTC)</SelectItem>
-                    <SelectItem value="ethereum">Ethereum (ETH)</SelectItem>
-                    <SelectItem value="binancecoin">BNB (BNB)</SelectItem>
-                    <SelectItem value="cardano">Cardano (ADA)</SelectItem>
-                    <SelectItem value="solana">Solana (SOL)</SelectItem>
+                    {Array.isArray(cryptos) && (cryptos as any[]).map((crypto: any) => (
+                      <SelectItem key={crypto.id} value={crypto.id}>
+                        {crypto.name} ({crypto.symbol.toUpperCase()})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
