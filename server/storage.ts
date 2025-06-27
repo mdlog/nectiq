@@ -645,11 +645,48 @@ export class DatabaseStorage implements IStorage {
 
   // Battle operations
   async createBattle(battleData: any): Promise<any> {
+    // Calculate join deadline and fairness parameters
+    const now = new Date();
+    const targetTime = new Date(battleData.targetTime);
+    const timeframeMinutes = this.getTimeframeInMinutes(battleData.timeframe);
+    
+    // Join deadline adalah 80% dari total waktu battle
+    const joinDeadlineMinutes = Math.floor(timeframeMinutes * 0.8);
+    const joinDeadline = new Date(now.getTime() + joinDeadlineMinutes * 60 * 1000);
+    
+    // Get current price untuk fairness calculation
+    const currentPrice = await this.getCurrentCryptoPrice(battleData.cryptocurrency);
+    
+    const enhancedBattleData = {
+      ...battleData,
+      joinDeadline,
+      minimumJoinTime: 300, // 5 menit minimum
+      priceAtCreation: currentPrice,
+      priceMovementPenalty: true,
+      fairnessMultiplier: "1.00",
+      joinTimeBonus: "1.00"
+    };
+
     const [battle] = await db
       .insert(predictionBattles)
-      .values(battleData)
+      .values(enhancedBattleData)
       .returning();
     return battle;
+  }
+
+  private getTimeframeInMinutes(timeframe: string): number {
+    switch(timeframe) {
+      case '1h': return 60;
+      case '6h': return 360;
+      case '24h': return 1440;
+      case '7d': return 10080;
+      default: return 60;
+    }
+  }
+
+  private async getCurrentCryptoPrice(cryptoId: string): Promise<number> {
+    const [crypto] = await db.select().from(cryptocurrencies).where(eq(cryptocurrencies.id, cryptoId));
+    return crypto ? parseFloat(crypto.currentPrice) : 0;
   }
 
   async getLiveBattles(): Promise<any[]> {
@@ -683,6 +720,76 @@ export class DatabaseStorage implements IStorage {
   async getBattle(id: number): Promise<any> {
     const [battle] = await db.select().from(predictionBattles).where(eq(predictionBattles.id, id));
     return battle || undefined;
+  }
+
+  async joinBattle(battleId: number, userId: number, prediction: number): Promise<any> {
+    const battle = await this.getBattle(battleId);
+    if (!battle) {
+      throw new Error('Battle tidak ditemukan');
+    }
+
+    const now = new Date();
+    const joinDeadline = new Date(battle.joinDeadline);
+    const createdAt = new Date(battle.createdAt);
+    const minimumJoinTime = battle.minimumJoinTime || 300; // 5 menit default
+
+    // Check 1: Apakah masih dalam batas waktu join
+    if (now > joinDeadline) {
+      throw new Error('Waktu untuk bergabung telah berakhir. Anda hanya dapat bergabung dalam 80% dari durasi battle.');
+    }
+
+    // Check 2: Apakah sudah melewati minimum join time
+    const timeSinceCreation = (now.getTime() - createdAt.getTime()) / 1000; // dalam detik
+    if (timeSinceCreation < minimumJoinTime) {
+      const remainingTime = Math.ceil((minimumJoinTime - timeSinceCreation) / 60);
+      throw new Error(`Anda harus menunggu ${remainingTime} menit lagi sebelum dapat bergabung untuk mencegah strategi unfair.`);
+    }
+
+    // Calculate fairness multipliers
+    const currentPrice = await this.getCurrentCryptoPrice(battle.cryptocurrency);
+    const priceAtCreation = parseFloat(battle.priceAtCreation);
+    const priceMovement = Math.abs((currentPrice - priceAtCreation) / priceAtCreation * 100);
+
+    // Price movement penalty: jika harga bergerak > 2%, ada penalti
+    let fairnessMultiplier = 1.0;
+    if (battle.priceMovementPenalty && priceMovement > 2) {
+      fairnessMultiplier = Math.max(0.5, 1 - (priceMovement - 2) * 0.1); // Reduce multiplier berdasarkan movement
+    }
+
+    // Join time bonus: bergabung lebih awal mendapat bonus
+    const totalBattleTime = (joinDeadline.getTime() - createdAt.getTime()) / 1000;
+    const joinTimePercentage = timeSinceCreation / totalBattleTime;
+    let joinTimeBonus = 1.0;
+    
+    if (joinTimePercentage < 0.3) {
+      joinTimeBonus = 1.2; // 20% bonus untuk join dalam 30% pertama
+    } else if (joinTimePercentage < 0.5) {
+      joinTimeBonus = 1.1; // 10% bonus untuk join dalam 50% pertama
+    }
+
+    // Update battle dengan challenged user dan fairness calculations
+    const [updatedBattle] = await db
+      .update(predictionBattles)
+      .set({
+        challengedId: userId,
+        challengedPrediction: prediction.toString(),
+        status: 'active',
+        acceptedAt: now,
+        fairnessMultiplier: fairnessMultiplier.toFixed(2),
+        joinTimeBonus: joinTimeBonus.toFixed(2)
+      })
+      .where(eq(predictionBattles.id, battleId))
+      .returning();
+
+    return {
+      ...updatedBattle,
+      joinFairness: {
+        priceMovement: priceMovement.toFixed(2),
+        fairnessMultiplier: fairnessMultiplier.toFixed(2),
+        joinTimeBonus: joinTimeBonus.toFixed(2),
+        joinTimePercentage: (joinTimePercentage * 100).toFixed(1)
+      }
+    };
   }
 
   async updateBattle(id: number, updates: any): Promise<void> {

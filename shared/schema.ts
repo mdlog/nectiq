@@ -316,6 +316,14 @@ export const predictionBattles = pgTable("prediction_battles", {
   completedAt: timestamp("completed_at"),
   spectatorCount: integer("spectator_count").default(0),
   isPublic: boolean("is_public").default(true),
+  
+  // Anti-Late Joining Mechanisms
+  joinDeadline: timestamp("join_deadline").notNull(), // Deadline untuk bergabung (misal: 80% dari total waktu)
+  minimumJoinTime: integer("minimum_join_time").notNull().default(300), // Minimum 5 menit untuk bergabung
+  priceAtCreation: numeric("price_at_creation", { precision: 18, scale: 8 }).notNull(), // Harga saat battle dibuat
+  priceMovementPenalty: boolean("price_movement_penalty").default(true), // Apakah ada penalti movement
+  fairnessMultiplier: numeric("fairness_multiplier", { precision: 5, scale: 2 }).default("1.00"), // Multiplier keadilan
+  joinTimeBonus: numeric("join_time_bonus", { precision: 5, scale: 2 }).default("1.00"), // Bonus untuk join lebih awal
 });
 
 export const battleSpectators = pgTable("battle_spectators", {
