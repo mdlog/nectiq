@@ -104,11 +104,11 @@ export default function BattlesPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'open':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Terbuka</Badge>;
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Open</Badge>;
       case 'active':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Aktif</Badge>;
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>;
       case 'completed':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Selesai</Badge>;
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Completed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -124,7 +124,7 @@ export default function BattlesPage() {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Silakan login terlebih dahulu untuk bergabung dengan battle.",
+        description: "Please log in first to join the battle.",
         variant: "destructive"
       });
       return;
@@ -149,7 +149,7 @@ export default function BattlesPage() {
       if (response.ok) {
         toast({
           title: "Battle Joined!",
-          description: `Berhasil bergabung dengan battle ${selectedBattle.cryptocurrency}!`
+          description: `Successfully joined the ${selectedBattle.cryptocurrency} battle!`
         });
         setJoinDialogOpen(false);
         queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
@@ -157,7 +157,7 @@ export default function BattlesPage() {
         const error = await response.json();
         toast({
           title: "Error",
-          description: error.message || "Gagal bergabung dengan battle",
+          description: error.message || "Failed to join battle",
           variant: "destructive"
         });
       }
@@ -298,18 +298,18 @@ export default function BattlesPage() {
                     <Swords className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                       {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all' 
-                        ? 'Tidak ada battle yang sesuai filter' 
-                        : 'Belum ada battle tersedia'}
+                        ? 'No battles match the current filters' 
+                        : 'No battles available yet'}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
                       {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all'
-                        ? 'Coba ubah filter pencarian Anda'
-                        : 'Buat battle pertama atau tunggu user lain membuat battle'}
+                        ? 'Try changing your search filters'
+                        : 'Create the first battle or wait for other users to create battles'}
                     </p>
                     {(!searchQuery && statusFilter === 'all' && cryptoFilter === 'all') && (
                       <Button onClick={() => setActiveTab('create')}>
                         <Plus className="h-4 w-4 mr-2" />
-                        Buat Battle Baru
+                        Create New Battle
                       </Button>
                     )}
                   </CardContent>
