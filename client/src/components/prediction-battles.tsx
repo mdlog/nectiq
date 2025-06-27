@@ -852,7 +852,10 @@ export function PredictionBattles() {
                       {selectedBattle.challenged?.username || 'Open'}
                     </div>
                     <div className="text-2xl font-bold">
-                      {selectedBattle.challengedPrediction ? `$${selectedBattle.challengedPrediction.toLocaleString()}` : '---'}
+                      {selectedBattle.challengedPrediction ? `$${selectedBattle.challengedPrediction.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 2 
+                      })}` : '---'}
                     </div>
                   </div>
                 </div>
