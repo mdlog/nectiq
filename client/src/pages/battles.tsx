@@ -176,10 +176,14 @@ export default function BattlesPage() {
       queryKey: ['/api/battles/history'],
     });
 
+    const { data: cryptoPrices } = useQuery({
+      queryKey: ['/api/crypto/prices'],
+    });
+
     const getCryptoImageUrl = (cryptoId: string) => {
-      const cryptoPrices = cryptosQuery.data as any[];
-      if (cryptoPrices) {
-        const cryptoData = cryptoPrices.find((crypto: any) => crypto.id === cryptoId);
+      const cryptoPricesData = cryptoPrices as any[];
+      if (cryptoPricesData) {
+        const cryptoData = cryptoPricesData.find((crypto: any) => crypto.id === cryptoId);
         if (cryptoData?.image) return cryptoData.image;
       }
       
