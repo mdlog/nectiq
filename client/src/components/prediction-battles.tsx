@@ -533,7 +533,13 @@ export function PredictionBattles() {
             <div className="font-semibold text-blue-700 dark:text-blue-300">
               {battle.challenger.username}
             </div>
-            <div className="text-lg font-bold text-blue-900 dark:text-blue-100">${battle.challengerPrediction.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-lg font-bold text-blue-900 dark:text-blue-100">
+              {battle.status === 'open' && !battle.challengedId ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400">🔒 Hidden</div>
+              ) : (
+                `$${battle.challengerPrediction.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              )}
+            </div>
             <div className="text-xs text-muted-foreground">Challenger</div>
           </div>
           
@@ -829,10 +835,16 @@ export function PredictionBattles() {
                     <div className="font-semibold text-blue-700 dark:text-blue-300">
                       {selectedBattle.challenger.username}
                     </div>
-                    <div className="text-2xl font-bold">${selectedBattle.challengerPrediction.toLocaleString('en-US', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-              })}</div>
+                    <div className="text-2xl font-bold">
+                      {selectedBattle.status === 'open' && !selectedBattle.challengedId ? (
+                        <div className="text-lg text-gray-500 dark:text-gray-400">🔒 Hidden</div>
+                      ) : (
+                        `$${selectedBattle.challengerPrediction.toLocaleString('en-US', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        })}`
+                      )}
+                    </div>
                   </div>
                   
                   <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
@@ -883,7 +895,17 @@ export function PredictionBattles() {
               <TabsContent value="probability" className="space-y-4">
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
                   <h3 className="text-lg font-semibold mb-4 text-center">Win Probability Analysis</h3>
-                  <WinProbabilityChart battle={selectedBattle} />
+                  {selectedBattle.status !== 'open' || selectedBattle.challengedId ? (
+                    <WinProbabilityChart battle={selectedBattle} />
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="text-4xl mb-4">🔒</div>
+                      <div className="text-lg font-semibold mb-2">Probability Analysis Locked</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Probability analysis will be available after someone joins the battle
+                      </div>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               
@@ -962,7 +984,7 @@ export function PredictionBattles() {
                   </div>
                   <div>
                     <div className="text-muted-foreground">Opponent Prediction</div>
-                    <div className="font-semibold">${joiningBattle.challengerPrediction.toLocaleString()}</div>
+                    <div className="font-semibold text-gray-500 dark:text-gray-400">🔒 Hidden</div>
                   </div>
                 </div>
               </div>
