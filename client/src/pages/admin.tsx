@@ -4840,18 +4840,18 @@ export default function AdminPanel() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Gamepad2 className="mr-2" size={18} />
-                    Potensi Baru: Mode Event
+                    New Feature: Event Mode
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    Misalnya, saat ada campaign battle:
+                    For example, during a battle campaign:
                   </p>
                   
                   <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg font-mono text-sm">
                     <div className="space-y-1 text-slate-800 dark:text-slate-200">
                       <div>"Prediction Limit: 20x/hour"</div>
-                      <div>"Withdrawal Delay: 4 jam"</div>
+                      <div>"Withdrawal Delay: 4 hours"</div>
                       <div>"Reward Multiplier: 2x"</div>
                     </div>
                     <div className="flex items-center justify-between mt-3">
@@ -4869,7 +4869,7 @@ export default function AdminPanel() {
                   </div>
                   
                   <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Fitur ini bisa otomatis aktif dan setting panel.
+                    This feature can automatically activate and configure the panel.
                   </p>
                 </CardContent>
               </Card>
@@ -4885,7 +4885,7 @@ export default function AdminPanel() {
                 <CardContent>
                   <div className="space-y-4">
                     <p className="text-sm text-slate-600 dark:text-slate-300">
-                      Tombol Export Logs → bisa tambah pilihan format:
+                      Export Logs Button → can add format options:
                     </p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -4899,7 +4899,7 @@ export default function AdminPanel() {
                       </Button>
                       <Button variant="outline" className="justify-start">
                         <Archive className="mr-2" size={16} />
-                        Encrypted ZIP (untuk pengiriman ke compliance)
+                        Encrypted ZIP (for compliance submission)
                       </Button>
                     </div>
 
