@@ -170,6 +170,173 @@ export default function BattlesPage() {
     }
   };
 
+  // Battle History Section Component
+  const BattleHistorySection = () => {
+    const { data: battleHistory, isLoading: isLoadingHistory } = useQuery({
+      queryKey: ['/api/battles/history'],
+    });
+
+    const getCryptoImageUrl = (cryptoId: string) => {
+      const cryptoPrices = cryptosQuery.data as any[];
+      if (cryptoPrices) {
+        const cryptoData = cryptoPrices.find((crypto: any) => crypto.id === cryptoId);
+        if (cryptoData?.image) return cryptoData.image;
+      }
+      
+      const imageMapping: { [key: string]: string } = {
+        bitcoin: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+        ethereum: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+        binancecoin: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+        cardano: 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
+        solana: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
+        stellar: 'https://assets.coingecko.com/coins/images/100/small/Stellar_symbol_black_RGB.png',
+        tron: 'https://assets.coingecko.com/coins/images/1094/small/tron-logo.png',
+        sui: 'https://assets.coingecko.com/coins/images/26375/small/sui_asset.jpeg'
+      };
+      
+      return imageMapping[cryptoId] || 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png';
+    };
+
+    if (isLoadingHistory) {
+      return (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading battle history...</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    const completedBattles = battleHistory as any[] || [];
+
+    if (completedBattles.length === 0) {
+      return (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No Battle History
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              No completed battles found. Start participating in battles to see your history here.
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+            Battle History ({completedBattles.length} completed)
+          </h3>
+        </div>
+        
+        <div className="grid gap-6">
+          {completedBattles.map((battle: any) => (
+            <Card key={battle.id} className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <img 
+                      src={getCryptoImageUrl(battle.cryptocurrency)} 
+                      alt={battle.cryptocurrency}
+                      className="w-8 h-8 rounded-full"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png';
+                      }}
+                    />
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">
+                        {battle.cryptocurrency.toUpperCase()}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(battle.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100">
+                      Completed
+                    </Badge>
+                    {battle.winner && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                        <Award className="w-3 h-3 mr-1" />
+                        Winner: {battle.winner.username}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Challenger */}
+                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">Challenger</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{battle.challenger.username}</p>
+                    <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                      ${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 6
+                      })}
+                    </p>
+                  </div>
+
+                  {/* Actual Price */}
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Final Price</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                      ${battle.actualPrice ? parseFloat(battle.actualPrice).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 6
+                      }) : 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {new Date(battle.targetTime).toLocaleTimeString()}
+                    </p>
+                  </div>
+
+                  {/* Opponent */}
+                  <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">Opponent</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{battle.challengedUsername || 'N/A'}</p>
+                    <p className="text-lg font-bold text-red-900 dark:text-red-100">
+                      {battle.challengedPrediction ? `$${parseFloat(battle.challengedPrediction).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 6
+                      })}` : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <DollarSign className="w-4 h-4 mr-1" />
+                      Stake: {battle.stakeAmount} NTIQ
+                    </div>
+                    {battle.winnerReward && (
+                      <div className="flex items-center text-sm text-green-600 dark:text-green-400">
+                        <Award className="w-4 h-4 mr-1" />
+                        Reward: {battle.winnerReward} NTIQ
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Duration: {battle.timeframe}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <Header />
@@ -453,17 +620,7 @@ export default function BattlesPage() {
           </TabsContent>
           
           <TabsContent value="history" className="mt-6">
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Battle History
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Battle history feature coming soon. You will be able to view all battles you have participated in here.
-                </p>
-              </CardContent>
-            </Card>
+            <BattleHistorySection />
           </TabsContent>
         </Tabs>
       </main>

@@ -935,7 +935,7 @@ export class DatabaseStorage implements IStorage {
         targetTime: predictionBattles.targetTime,
         actualPrice: predictionBattles.actualPrice,
         winnerId: predictionBattles.winnerId,
-        rewardAmount: predictionBattles.rewardAmount,
+        winnerReward: predictionBattles.winnerReward,
         createdAt: predictionBattles.createdAt,
         challengerUsername: users.username,
         challengerPhoto: users.profilePhoto
