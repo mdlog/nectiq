@@ -1824,6 +1824,10 @@ export default function AdminPanel() {
               <Target className="h-4 w-4" />
               Predictions
             </TabsTrigger>
+            <TabsTrigger value="battles" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Gamepad2 className="h-4 w-4" />
+              Battles
+            </TabsTrigger>
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary flex items-center gap-2">
               <Trophy className="h-4 w-4" />
               Leaderboard

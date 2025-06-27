@@ -3173,6 +3173,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Battles Data API
+  app.get("/api/admin/battles", requireAdmin, async (req, res) => {
+    auditLog("ADMIN_ACCESS_GRANTED", { 
+      clientIP: req.ip, 
+      userId: req.session.userId,
+      walletAddress: req.session.walletAddress,
+      endpoint: req.originalUrl 
+    }, req);
+    
+    try {
+      const { status, cryptocurrency, dateRange } = req.query;
+      
+      const filters: any = {};
+      if (status && status !== 'all') filters.status = status;
+      if (cryptocurrency && cryptocurrency !== 'all') filters.cryptocurrency = cryptocurrency;
+      if (dateRange) {
+        const [startDate, endDate] = (dateRange as string).split(',');
+        if (startDate) filters.startDate = startDate;
+        if (endDate) filters.endDate = endDate;
+      }
+
+      const battles = await storage.getAllBattles(filters);
+      res.json(battles);
+    } catch (error) {
+      console.error("Error fetching battles:", error);
+      res.status(500).json({ message: "Failed to fetch battles data" });
+    }
+  });
+
+  // Admin Battles Statistics API
+  app.get("/api/admin/battles/stats", requireAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getBattleStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching battle stats:", error);
+      res.status(500).json({ message: "Failed to fetch battle statistics" });
+    }
+  });
+
   // Enhanced System Settings API
   app.get("/api/admin/settings", requireAdmin, async (req, res) => {
     auditLog("ADMIN_ACCESS_GRANTED", { 

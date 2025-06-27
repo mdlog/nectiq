@@ -114,6 +114,8 @@ export interface IStorage {
   updateBattle(id: number, updates: any): Promise<void>;
   createBattleComment(comment: any): Promise<any>;
   getBattleComments(battleId: number): Promise<any[]>;
+  getAllBattles(filters?: any): Promise<any[]>;
+  getBattleStats(): Promise<any>;
   updateUser(id: number, updates: any): Promise<void>;
 }
 
@@ -761,6 +763,104 @@ export class DatabaseStorage implements IStorage {
   async getBattle(id: number): Promise<any> {
     const [battle] = await db.select().from(predictionBattles).where(eq(predictionBattles.id, id));
     return battle || undefined;
+  }
+
+  async getAllBattles(filters: any = {}): Promise<any[]> {
+    let query = db
+      .select({
+        id: predictionBattles.id,
+        challengerId: predictionBattles.challengerId,
+        challengedId: predictionBattles.challengedId,
+        cryptocurrency: predictionBattles.cryptocurrency,
+        timeframe: predictionBattles.timeframe,
+        stakeAmount: predictionBattles.stakeAmount,
+        challengerPrediction: predictionBattles.challengerPrediction,
+        challengedPrediction: predictionBattles.challengedPrediction,
+        status: predictionBattles.status,
+        targetTime: predictionBattles.targetTime,
+        createdAt: predictionBattles.createdAt,
+        spectatorCount: predictionBattles.spectatorCount,
+        battleType: predictionBattles.battleType,
+        isPublic: predictionBattles.isPublic,
+        challengerUsername: users.username
+      })
+      .from(predictionBattles)
+      .leftJoin(users, eq(predictionBattles.challengerId, users.id));
+
+    // Apply filters
+    const conditions = [];
+    if (filters.status && filters.status !== 'all') {
+      conditions.push(eq(predictionBattles.status, filters.status));
+    }
+    if (filters.cryptocurrency && filters.cryptocurrency !== 'all') {
+      conditions.push(eq(predictionBattles.cryptocurrency, filters.cryptocurrency));
+    }
+    if (filters.startDate) {
+      conditions.push(gte(predictionBattles.createdAt, new Date(filters.startDate)));
+    }
+    if (filters.endDate) {
+      conditions.push(lte(predictionBattles.createdAt, new Date(filters.endDate)));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const battles = await query.orderBy(desc(predictionBattles.createdAt));
+
+    // Get challenged user info for battles that have challengedId
+    const battlesWithUsers = await Promise.all(
+      battles.map(async (battle) => {
+        let challengedUsername = null;
+        if (battle.challengedId) {
+          const [challengedUser] = await db
+            .select({ username: users.username })
+            .from(users)
+            .where(eq(users.id, battle.challengedId));
+          
+          if (challengedUser) {
+            challengedUsername = challengedUser.username;
+          }
+        }
+
+        return {
+          ...battle,
+          challengedUsername,
+          timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+        };
+      })
+    );
+
+    return battlesWithUsers;
+  }
+
+  async getBattleStats(): Promise<any> {
+    const battles = await db.select().from(predictionBattles);
+    
+    const totalBattles = battles.length;
+    const activeBattles = battles.filter(b => b.status === 'active').length;
+    const completedBattles = battles.filter(b => b.status === 'completed').length;
+    const openBattles = battles.filter(b => b.status === 'open').length;
+
+    const totalStaked = battles.reduce((sum, battle) => sum + (parseFloat(battle.stakeAmount?.toString() || '0') * 2), 0);
+    
+    // Calculate average battle duration
+    const completedBattlesWithDuration = battles.filter(b => b.status === 'completed' && b.targetTime && b.createdAt);
+    const avgDuration = completedBattlesWithDuration.length > 0 
+      ? completedBattlesWithDuration.reduce((sum, battle) => {
+          const duration = new Date(battle.targetTime).getTime() - new Date(battle.createdAt).getTime();
+          return sum + duration;
+        }, 0) / completedBattlesWithDuration.length
+      : 0;
+
+    return {
+      totalBattles,
+      activeBattles,
+      completedBattles,
+      openBattles,
+      totalStaked,
+      avgDurationHours: Math.round(avgDuration / (1000 * 60 * 60) * 10) / 10
+    };
   }
 
   async joinBattle(battleId: number, userId: number, prediction: number): Promise<any> {
