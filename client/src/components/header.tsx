@@ -18,8 +18,11 @@ export function Header() {
   const { disconnect } = useDisconnect();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Check if current page is leaderboard
+  const isLeaderboardPage = location === '/leaderboard';
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -99,7 +102,11 @@ export function Header() {
   };
 
   return (
-    <header className="bg-surface border-b border-surface-light">
+    <header className={`border-b transition-all duration-300 ${
+      isLeaderboardPage 
+        ? "bg-gradient-to-r from-yellow-600 via-yellow-500 to-amber-500 border-yellow-400" 
+        : "bg-surface border-surface-light"
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
@@ -116,13 +123,67 @@ export function Header() {
           </div>
           
           <nav className="hidden md:flex space-x-8">
-            <button onClick={() => setLocation('/')} className="text-slate-300 hover:text-white transition-colors">Home</button>
-            <button onClick={() => setLocation('/dashboard')} className="text-slate-300 hover:text-white transition-colors">My Dashboard</button>
-            <button onClick={() => setLocation('/battles')} className="text-slate-300 hover:text-white transition-colors">Battles</button>
-            <button onClick={() => setLocation('/leaderboard')} className="text-slate-300 hover:text-white transition-colors">Leaderboard</button>
-            <button onClick={() => setLocation('/how-to-play')} className="text-slate-300 hover:text-white transition-colors">How to Play</button>
+            <button 
+              onClick={() => setLocation('/')} 
+              className={`transition-colors ${
+                isLeaderboardPage 
+                  ? (location === '/' ? "text-white font-semibold" : "text-yellow-100 hover:text-white") 
+                  : (location === '/' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+              }`}
+            >
+              Home
+            </button>
+            <button 
+              onClick={() => setLocation('/dashboard')} 
+              className={`transition-colors ${
+                isLeaderboardPage 
+                  ? (location === '/dashboard' ? "text-white font-semibold" : "text-yellow-100 hover:text-white") 
+                  : (location === '/dashboard' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+              }`}
+            >
+              My Dashboard
+            </button>
+            <button 
+              onClick={() => setLocation('/battles')} 
+              className={`transition-colors ${
+                isLeaderboardPage 
+                  ? (location === '/battles' ? "text-white font-semibold" : "text-yellow-100 hover:text-white") 
+                  : (location === '/battles' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+              }`}
+            >
+              Battles
+            </button>
+            <button 
+              onClick={() => setLocation('/leaderboard')} 
+              className={`transition-colors ${
+                isLeaderboardPage 
+                  ? "text-white font-bold text-shadow" 
+                  : (location === '/leaderboard' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+              }`}
+            >
+              🏆 Leaderboard
+            </button>
+            <button 
+              onClick={() => setLocation('/how-to-play')} 
+              className={`transition-colors ${
+                isLeaderboardPage 
+                  ? (location === '/how-to-play' ? "text-white font-semibold" : "text-yellow-100 hover:text-white") 
+                  : (location === '/how-to-play' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+              }`}
+            >
+              How to Play
+            </button>
             {address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
-              <button onClick={() => setLocation('/admin')} className="text-primary hover:text-primary/80 transition-colors font-semibold">Admin</button>
+              <button 
+                onClick={() => setLocation('/admin')} 
+                className={`transition-colors font-semibold ${
+                  isLeaderboardPage 
+                    ? "text-yellow-200 hover:text-white" 
+                    : "text-primary hover:text-primary/80"
+                }`}
+              >
+                Admin
+              </button>
             )}
           </nav>
 
@@ -189,7 +250,11 @@ export function Header() {
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-surface border-t border-surface-light">
+          <div className={`md:hidden border-t transition-all duration-300 ${
+            isLeaderboardPage 
+              ? "bg-gradient-to-r from-yellow-600 via-yellow-500 to-amber-500 border-yellow-400" 
+              : "bg-surface border-surface-light"
+          }`}>
             <div className="px-4 py-3 space-y-3">
               {/* Mobile Balance Display */}
               <div className="flex items-center justify-between">
@@ -228,7 +293,11 @@ export function Header() {
                     setLocation('/');
                     setIsMobileMenuOpen(false);
                   }} 
-                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    isLeaderboardPage 
+                      ? (location === '/' ? "text-white font-semibold bg-yellow-600/20" : "text-yellow-100 hover:text-white hover:bg-yellow-600/20") 
+                      : (location === '/' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                  }`}
                 >
                   Home
                 </button>
@@ -237,7 +306,11 @@ export function Header() {
                     setLocation('/dashboard');
                     setIsMobileMenuOpen(false);
                   }} 
-                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    isLeaderboardPage 
+                      ? (location === '/dashboard' ? "text-white font-semibold bg-yellow-600/20" : "text-yellow-100 hover:text-white hover:bg-yellow-600/20") 
+                      : (location === '/dashboard' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                  }`}
                 >
                   My Dashboard
                 </button>
@@ -246,7 +319,11 @@ export function Header() {
                     setLocation('/battles');
                     setIsMobileMenuOpen(false);
                   }} 
-                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    isLeaderboardPage 
+                      ? (location === '/battles' ? "text-white font-semibold bg-yellow-600/20" : "text-yellow-100 hover:text-white hover:bg-yellow-600/20") 
+                      : (location === '/battles' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                  }`}
                 >
                   Battles
                 </button>
@@ -255,16 +332,24 @@ export function Header() {
                     setLocation('/leaderboard');
                     setIsMobileMenuOpen(false);
                   }} 
-                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    isLeaderboardPage 
+                      ? "text-white font-bold bg-yellow-600/30" 
+                      : (location === '/leaderboard' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                  }`}
                 >
-                  Leaderboard
+                  🏆 Leaderboard
                 </button>
                 <button 
                   onClick={() => {
                     setLocation('/how-to-play');
                     setIsMobileMenuOpen(false);
                   }} 
-                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    isLeaderboardPage 
+                      ? (location === '/how-to-play' ? "text-white font-semibold bg-yellow-600/20" : "text-yellow-100 hover:text-white hover:bg-yellow-600/20") 
+                      : (location === '/how-to-play' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                  }`}
                 >
                   How to Play
                 </button>
@@ -274,7 +359,11 @@ export function Header() {
                       setLocation('/admin');
                       setIsMobileMenuOpen(false);
                     }} 
-                    className="block w-full text-left px-3 py-2 text-primary hover:text-primary/80 hover:bg-surface-light rounded-lg transition-colors font-semibold"
+                    className={`block w-full text-left px-3 py-2 rounded-lg transition-colors font-semibold ${
+                      isLeaderboardPage 
+                        ? "text-yellow-200 hover:text-white hover:bg-yellow-600/20" 
+                        : "text-primary hover:text-primary/80 hover:bg-surface-light"
+                    }`}
                   >
                     Admin
                   </button>
