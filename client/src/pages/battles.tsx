@@ -668,7 +668,7 @@ export default function BattlesPage() {
             </div>
           </TabsContent>
           
-          <TabsContent value="create" className="mt-6">
+          <TabsContent value="active" className="mt-6">
             <div className="space-y-4">
               {battlesLoading ? (
                 <div className="text-center py-8">
@@ -807,6 +807,10 @@ export default function BattlesPage() {
                 </div>
               )}
             </div>
+          </TabsContent>
+          
+          <TabsContent value="create" className="mt-6">
+            <PredictionBattles />
           </TabsContent>
           
           <TabsContent value="history" className="mt-6">
