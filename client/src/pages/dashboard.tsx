@@ -127,10 +127,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {/* Prediction Battles */}
-        <div className="mt-8">
-          <PredictionBattles />
-        </div>
+
         
         <RulesSection />
       </main>
