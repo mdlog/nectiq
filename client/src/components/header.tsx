@@ -118,6 +118,7 @@ export function Header() {
           <nav className="hidden md:flex space-x-8">
             <button onClick={() => setLocation('/')} className="text-slate-300 hover:text-white transition-colors">Home</button>
             <button onClick={() => setLocation('/dashboard')} className="text-slate-300 hover:text-white transition-colors">My Dashboard</button>
+            <button onClick={() => setLocation('/battles')} className="text-slate-300 hover:text-white transition-colors">Battles</button>
             <button onClick={() => setLocation('/leaderboard')} className="text-slate-300 hover:text-white transition-colors">Leaderboard</button>
             <button onClick={() => setLocation('/how-to-play')} className="text-slate-300 hover:text-white transition-colors">How to Play</button>
             {address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
@@ -239,6 +240,15 @@ export function Header() {
                   className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
                 >
                   My Dashboard
+                </button>
+                <button 
+                  onClick={() => {
+                    setLocation('/battles');
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                >
+                  Battles
                 </button>
                 <button 
                   onClick={() => {
