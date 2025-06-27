@@ -411,7 +411,7 @@ export function Header() {
                 >
                   How to Play
                 </button>
-                {address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
+                {user?.isAdmin && (
                   <button 
                     onClick={() => {
                       setLocation('/admin');
