@@ -1373,6 +1373,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get battle history (completed battles)
+  app.get('/api/battles/history', async (req, res) => {
+    try {
+      const completedBattles = await storage.getBattleHistory();
+      res.json(completedBattles);
+    } catch (error) {
+      console.error('Error fetching battle history:', error);
+      res.status(500).json({ message: 'Failed to fetch battle history' });
+    }
+  });
+
   app.get('/api/battles/stats', async (req, res) => {
     try {
       const stats = await storage.getBattleStats();

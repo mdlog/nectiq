@@ -112,6 +112,7 @@ export interface IStorage {
   getLiveBattles(): Promise<any[]>;
   getBattle(id: number): Promise<any>;
   getBattleById(id: number): Promise<any>;
+  getBattleHistory(): Promise<any[]>;
   updateBattle(id: number, updates: any): Promise<void>;
   deleteBattle(id: number): Promise<void>;
   createBattleComment(comment: any): Promise<any>;
@@ -916,6 +917,88 @@ export class DatabaseStorage implements IStorage {
     );
 
     return battlesWithChallenged;
+  }
+
+  async getBattleHistory(): Promise<any[]> {
+    // Get completed battles with user info
+    const battles = await db
+      .select({
+        id: predictionBattles.id,
+        challengerId: predictionBattles.challengerId,
+        challengedId: predictionBattles.challengedId,
+        cryptocurrency: predictionBattles.cryptocurrency,
+        timeframe: predictionBattles.timeframe,
+        stakeAmount: predictionBattles.stakeAmount,
+        challengerPrediction: predictionBattles.challengerPrediction,
+        challengedPrediction: predictionBattles.challengedPrediction,
+        status: predictionBattles.status,
+        targetTime: predictionBattles.targetTime,
+        actualPrice: predictionBattles.actualPrice,
+        winnerId: predictionBattles.winnerId,
+        rewardAmount: predictionBattles.rewardAmount,
+        createdAt: predictionBattles.createdAt,
+        challengerUsername: users.username,
+        challengerPhoto: users.profilePhoto
+      })
+      .from(predictionBattles)
+      .leftJoin(users, eq(predictionBattles.challengerId, users.id))
+      .where(eq(predictionBattles.status, 'completed'))
+      .orderBy(desc(predictionBattles.createdAt))
+      .limit(50); // Limit to 50 most recent battles
+
+    // Get challenged user and winner info
+    const battlesWithDetails = await Promise.all(
+      battles.map(async (battle) => {
+        let challenged = null;
+        let winner = null;
+
+        if (battle.challengedId) {
+          const [challengedUser] = await db
+            .select({
+              username: users.username,
+              profilePhoto: users.profilePhoto
+            })
+            .from(users)
+            .where(eq(users.id, battle.challengedId));
+          
+          if (challengedUser) {
+            challenged = {
+              username: challengedUser.username,
+              profilePhoto: challengedUser.profilePhoto
+            };
+          }
+        }
+
+        if (battle.winnerId) {
+          const [winnerUser] = await db
+            .select({
+              username: users.username,
+              profilePhoto: users.profilePhoto
+            })
+            .from(users)
+            .where(eq(users.id, battle.winnerId));
+          
+          if (winnerUser) {
+            winner = {
+              username: winnerUser.username,
+              profilePhoto: winnerUser.profilePhoto
+            };
+          }
+        }
+        
+        return {
+          ...battle,
+          challenger: {
+            username: battle.challengerUsername,
+            profilePhoto: battle.challengerPhoto
+          },
+          challenged,
+          winner
+        };
+      })
+    );
+
+    return battlesWithDetails;
   }
 
   async getBattle(id: number): Promise<any> {
