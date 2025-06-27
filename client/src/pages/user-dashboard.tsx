@@ -1209,10 +1209,275 @@ export default function UserDashboard() {
             </div>
             )}
           </TabsContent>
+
+          {/* Battles Tab */}
+          <TabsContent value="battles">
+            <BattlesSection />
+          </TabsContent>
         </Tabs>
       </main>
       
       <Footer />
+    </div>
+  );
+}
+
+// Battles Section Component
+function BattlesSection() {
+  const { data: battleData, isLoading: battlesLoading } = useQuery({
+    queryKey: ["/api/user/battles"],
+    retry: false,
+  });
+
+  const { data: cryptoPrices } = useQuery<CryptoPrice[]>({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 30000,
+  });
+
+  if (battlesLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <RefreshCw className="animate-spin mr-2" size={20} />
+        <span>Loading battle data...</span>
+      </div>
+    );
+  }
+
+  const battles = battleData?.battles || [];
+  const stats = battleData?.stats || {
+    totalBattles: 0,
+    wonBattles: 0,
+    lostBattles: 0,
+    activeBattles: 0,
+    pendingBattles: 0,
+    totalBattleRewards: 0
+  };
+
+  const winRate = stats.totalBattles > 0 ? ((stats.wonBattles / stats.totalBattles) * 100).toFixed(1) : "0";
+
+  return (
+    <div className="space-y-6">
+      {/* Battle Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="bg-surface border-surface-light">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Total Battles</CardTitle>
+            <Swords className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalBattles}</div>
+            <div className="text-xs text-slate-400 mt-1">All time battles participated</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface border-surface-light">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Battles Won</CardTitle>
+            <Trophy className="h-4 w-4 text-success" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-success">{stats.wonBattles}</div>
+            <div className="text-xs text-slate-400 mt-1">Win Rate: {winRate}%</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface border-surface-light">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Battle Rewards</CardTitle>
+            <Coins className="h-4 w-4 text-warning" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-warning">{stats.totalBattleRewards.toLocaleString()}</div>
+            <div className="text-xs text-slate-400 mt-1">NTIQ earned from battles</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface border-surface-light">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Active Battles</CardTitle>
+            <Activity className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{stats.activeBattles}</div>
+            <div className="text-xs text-slate-400 mt-1">Currently ongoing</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface border-surface-light">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Pending Battles</CardTitle>
+            <Clock className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-500">{stats.pendingBattles}</div>
+            <div className="text-xs text-slate-400 mt-1">Waiting for opponent</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface border-surface-light">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Battles Lost</CardTitle>
+            <Target className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-500">{stats.lostBattles}</div>
+            <div className="text-xs text-slate-400 mt-1">Learn and improve</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Battle History */}
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <History className="mr-2" size={20} />
+            Battle History ({battles.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {battles.length === 0 ? (
+            <div className="text-center py-8">
+              <Swords className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+              <p className="text-slate-400">No battles found</p>
+              <p className="text-sm text-slate-500 mt-2">Start your first battle to see it here</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {battles.map((battle: any) => (
+                <div key={battle.id} className="border border-surface-light rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      {/* Cryptocurrency Logo */}
+                      <img
+                        src={getCryptoImageUrl(battle.cryptocurrency, cryptoPrices || [])}
+                        alt={battle.cryptocurrency}
+                        className="w-8 h-8 rounded-full"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <div>
+                        <div className="font-semibold text-slate-200">
+                          {battle.cryptocurrency?.toUpperCase()} Battle
+                        </div>
+                        <div className="text-xs text-slate-400">
+                          {battle.isUserChallenger ? 'You challenged' : 'You were challenged by'} {' '}
+                          {battle.isUserChallenger ? battle.challengedUsername || 'Open' : battle.challengerUsername}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Battle Status */}
+                    <div className="flex items-center space-x-2">
+                      <Badge 
+                        variant={
+                          battle.status === 'completed' ? 'default' : 
+                          battle.status === 'active' ? 'secondary' : 
+                          'outline'
+                        }
+                        className={
+                          battle.status === 'completed' ? 'bg-success text-white' :
+                          battle.status === 'active' ? 'bg-primary text-white' :
+                          'bg-orange-500 text-white'
+                        }
+                      >
+                        {battle.status === 'completed' ? 'Completed' :
+                         battle.status === 'active' ? 'Active' : 'Pending'}
+                      </Badge>
+
+                      {/* Win/Loss Indicator */}
+                      {battle.status === 'completed' && battle.winnerId && (
+                        <Badge 
+                          variant={battle.winnerId === battle.challengerId && battle.isUserChallenger || 
+                                  battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'default' : 'destructive'}
+                          className={
+                            battle.winnerId === battle.challengerId && battle.isUserChallenger || 
+                            battle.winnerId === battle.challengedId && !battle.isUserChallenger
+                              ? 'bg-success text-white' : 'bg-red-500 text-white'
+                          }
+                        >
+                          {battle.winnerId === battle.challengerId && battle.isUserChallenger || 
+                           battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'Won' : 'Lost'}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Battle Details */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-slate-400">Stake Amount</div>
+                      <div className="font-semibold text-warning">
+                        {parseFloat(battle.stakeAmount || '0').toLocaleString()} NTIQ
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-slate-400">Target Time</div>
+                      <div className="font-semibold">
+                        {new Date(battle.targetTime).toLocaleDateString()}
+                      </div>
+                    </div>
+
+                    {battle.status === 'active' && (
+                      <div>
+                        <div className="text-slate-400">Time Left</div>
+                        <div className="font-semibold text-primary">
+                          {Math.floor(battle.timeLeft / (1000 * 60 * 60))}h {Math.floor((battle.timeLeft % (1000 * 60 * 60)) / (1000 * 60))}m
+                        </div>
+                      </div>
+                    )}
+
+                    {battle.winnerReward && battle.status === 'completed' && (
+                      <div>
+                        <div className="text-slate-400">Reward</div>
+                        <div className="font-semibold text-success">
+                          +{parseFloat(battle.winnerReward).toLocaleString()} NTIQ
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Predictions Display */}
+                  {(battle.challengerPrediction || battle.challengedPrediction) && (
+                    <div className="mt-3 pt-3 border-t border-surface-light">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {battle.challengerPrediction && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">
+                              {battle.isUserChallenger ? 'Your' : battle.challengerUsername + "'s"} Prediction:
+                            </span>
+                            <span className="font-semibold">
+                              ${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 6
+                              })}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {battle.challengedPrediction && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">
+                              {!battle.isUserChallenger ? 'Your' : battle.challengedUsername + "'s"} Prediction:
+                            </span>
+                            <span className="font-semibold">
+                              ${parseFloat(battle.challengedPrediction).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 6
+                              })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
