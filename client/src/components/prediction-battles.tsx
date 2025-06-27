@@ -394,8 +394,6 @@ export function PredictionBattles() {
     }
   });
 
-
-
   // Get crypto logo URL dynamically from live price data
   const getCryptoImageUrl = (cryptoId: string) => {
     if (cryptoPricesData && Array.isArray(cryptoPricesData) && cryptoPricesData.length > 0) {
@@ -518,7 +516,7 @@ export function PredictionBattles() {
               <CardTitle className="text-lg capitalize">{battle.cryptocurrency}</CardTitle>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="w-4 h-4" />
-                {battle.timeframe} • {formatTimeLeft(battle.timeLeft)}
+                {battle.timeframe} • <CountdownTimer targetTime={battle.targetTime} />
               </div>
             </div>
           </div>
