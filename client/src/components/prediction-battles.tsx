@@ -271,10 +271,10 @@ export function PredictionBattles() {
     refetchInterval: 5000 // Update every 5 seconds
   });
 
-  // Fetch crypto prices for logo URLs
+  // Fetch crypto prices for logo URLs and real-time prices
   const { data: cryptoPricesData } = useQuery({
     queryKey: ['/api/crypto/prices'],
-    refetchInterval: 30000 // Update every 30 seconds
+    refetchInterval: 1000 // Update every 1 second for real-time prices
   });
 
   // Fetch cryptocurrencies for create form
@@ -434,6 +434,17 @@ export function PredictionBattles() {
     return cryptoMap[cryptoId] || `https://assets.coingecko.com/coins/images/1/small/bitcoin.png`;
   };
 
+  // Get real-time crypto price from live data
+  const getRealTimePrice = (cryptoId: string) => {
+    if (cryptoPricesData && Array.isArray(cryptoPricesData) && cryptoPricesData.length > 0) {
+      const crypto = (cryptoPricesData as any[]).find((c: any) => c.id === cryptoId);
+      if (crypto && crypto.current_price) {
+        return crypto.current_price;
+      }
+    }
+    return null;
+  };
+
   const handleCreateBattle = () => {
     // Check if user is authenticated
     if (!user) {
@@ -553,11 +564,25 @@ export function PredictionBattles() {
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Current Price</span>
-            <span className="font-semibold">${battle.currentPrice.toLocaleString()}</span>
+            <span className="font-semibold">
+              ${(() => {
+                const realTimePrice = getRealTimePrice(battle.cryptocurrency);
+                const currentPrice = realTimePrice || battle.currentPrice;
+                return currentPrice.toLocaleString('en-US', { 
+                  minimumFractionDigits: 2, 
+                  maximumFractionDigits: 6 
+                });
+              })()}
+            </span>
           </div>
           
           {battle.challengerPrediction && battle.challengedPrediction && (() => {
-            const probability = calculateWinProbability(battle);
+            // Use real-time price for probability calculation
+            const realTimePrice = getRealTimePrice(battle.cryptocurrency);
+            const currentPrice = realTimePrice || battle.currentPrice;
+            const battleWithRealTimePrice = { ...battle, currentPrice };
+            const probability = calculateWinProbability(battleWithRealTimePrice);
+            
             return (
               <div className="space-y-1">
                 {/* Percentage Labels Above Bar */}
