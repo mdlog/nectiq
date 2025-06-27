@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChartLine, Coins, User, Wallet, LogOut } from "lucide-react";
+import { ChartLine, Coins, User, Wallet, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAccount, useDisconnect } from 'wagmi';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
+import { useState } from 'react';
 import type { User as UserType } from "@shared/schema";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 
@@ -18,6 +19,7 @@ export function Header() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -123,16 +125,28 @@ export function Header() {
             )}
           </nav>
 
-          <div className="flex items-center space-x-4">
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-slate-300 hover:text-white"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </Button>
+          </div>
+
+          <div className="hidden md:flex items-center space-x-4">
             <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
               <Coins className="text-warning" size={16} />
-              <span className="font-semibold">{user?.balance?.toLocaleString() || "0"}</span>
+              <span className="font-semibold text-sm md:text-base">{user?.balance?.toLocaleString() || "0"}</span>
               <span className="text-xs text-slate-400">NTIQ</span>
             </div>
             
             {isConnected && address ? (
               <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-3 py-1 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="hidden sm:flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-3 py-1 rounded-lg border border-green-200 dark:border-green-800">
                   <Wallet className="text-green-600 dark:text-green-400" size={16} />
                   <span className="text-xs font-mono text-green-700 dark:text-green-300">
                     {address.slice(0, 6)}...{address.slice(-4)}
@@ -161,7 +175,8 @@ export function Header() {
                   className="flex items-center space-x-2"
                 >
                   <Wallet size={16} />
-                  <span>Connect Wallet</span>
+                  <span className="hidden sm:inline">Connect Wallet</span>
+                  <span className="sm:hidden">Connect</span>
                 </Button>
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                   <User className="text-white" size={16} />
@@ -170,6 +185,110 @@ export function Header() {
             )}
           </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-surface border-t border-surface-light">
+            <div className="px-4 py-3 space-y-3">
+              {/* Mobile Balance Display */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
+                  <Coins className="text-warning" size={16} />
+                  <span className="font-semibold">{user?.balance?.toLocaleString() || "0"}</span>
+                  <span className="text-xs text-slate-400">NTIQ</span>
+                </div>
+                
+                {isConnected && address && (
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded-lg border border-green-200 dark:border-green-800">
+                      <Wallet className="text-green-600 dark:text-green-400" size={14} />
+                      <span className="text-xs font-mono text-green-700 dark:text-green-300">
+                        {address.slice(0, 4)}...{address.slice(-3)}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDisconnect}
+                      disabled={logoutMutation.isPending}
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 p-1"
+                      title="Disconnect wallet"
+                    >
+                      <LogOut size={14} />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Navigation */}
+              <nav className="space-y-2">
+                <button 
+                  onClick={() => {
+                    setLocation('/');
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                >
+                  Home
+                </button>
+                <button 
+                  onClick={() => {
+                    setLocation('/dashboard');
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                >
+                  My Dashboard
+                </button>
+                <button 
+                  onClick={() => {
+                    setLocation('/leaderboard');
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                >
+                  Leaderboard
+                </button>
+                <button 
+                  onClick={() => {
+                    setLocation('/how-to-play');
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className="block w-full text-left px-3 py-2 text-slate-300 hover:text-white hover:bg-surface-light rounded-lg transition-colors"
+                >
+                  How to Play
+                </button>
+                {address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
+                  <button 
+                    onClick={() => {
+                      setLocation('/admin');
+                      setIsMobileMenuOpen(false);
+                    }} 
+                    className="block w-full text-left px-3 py-2 text-primary hover:text-primary/80 hover:bg-surface-light rounded-lg transition-colors font-semibold"
+                  >
+                    Admin
+                  </button>
+                )}
+              </nav>
+
+              {/* Mobile Connect Wallet Button (if not connected) */}
+              {!isConnected && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setLocation('/wallet-login');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center space-x-2"
+                >
+                  <Wallet size={16} />
+                  <span>Connect Wallet</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
