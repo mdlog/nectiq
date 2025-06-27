@@ -1241,7 +1241,7 @@ export class DatabaseStorage implements IStorage {
   async joinBattle(battleId: number, userId: number, prediction: number): Promise<any> {
     const battle = await this.getBattle(battleId);
     if (!battle) {
-      throw new Error('Battle tidak ditemukan');
+      throw new Error('Battle not found');
     }
 
     const now = new Date();
@@ -1254,22 +1254,22 @@ export class DatabaseStorage implements IStorage {
       new Date(battle.joinDeadline) : 
       new Date(createdAt.getTime() + (battleDuration * 0.8));
     
-    const minimumJoinTime = battle.minimumJoinTime || 30; // 30 detik default untuk user experience yang lebih baik
+    const minimumJoinTime = battle.minimumJoinTime || 30; // 30 seconds default for better user experience
 
-    // Check 1: Apakah masih dalam batas waktu join
+    // Check 1: Is it still within join time limit
     if (now > joinDeadline) {
-      throw new Error('Waktu untuk bergabung telah berakhir. Anda hanya dapat bergabung dalam 80% dari durasi battle.');
+      throw new Error('Time to join has ended. You can only join within 80% of the battle duration.');
     }
 
-    // Check 2: Apakah sudah melewati minimum join time
-    const timeSinceCreation = (now.getTime() - createdAt.getTime()) / 1000; // dalam detik
+    // Check 2: Has minimum join time passed
+    const timeSinceCreation = (now.getTime() - createdAt.getTime()) / 1000; // in seconds
     if (timeSinceCreation < minimumJoinTime) {
       const remainingTime = Math.ceil((minimumJoinTime - timeSinceCreation));
       if (remainingTime > 60) {
         const remainingMinutes = Math.ceil(remainingTime / 60);
-        throw new Error(`Anda harus menunggu ${remainingMinutes} menit lagi sebelum dapat bergabung untuk mencegah strategi unfair.`);
+        throw new Error(`You must wait ${remainingMinutes} more minutes before joining to prevent unfair strategies.`);
       } else {
-        throw new Error(`Anda harus menunggu ${remainingTime} detik lagi sebelum dapat bergabung untuk mencegah strategi unfair.`);
+        throw new Error(`You must wait ${remainingTime} more seconds before joining to prevent unfair strategies.`);
       }
     }
 
@@ -1278,24 +1278,24 @@ export class DatabaseStorage implements IStorage {
     const priceAtCreation = battle.priceAtCreation ? parseFloat(battle.priceAtCreation.toString()) : currentPrice;
     const priceMovement = Math.abs((currentPrice - priceAtCreation) / priceAtCreation * 100);
 
-    // Price movement penalty: jika harga bergerak > 2%, ada penalti
+    // Price movement penalty: if price moves > 2%, there's a penalty
     let fairnessMultiplier = 1.0;
     if (battle.priceMovementPenalty && priceMovement > 2) {
-      fairnessMultiplier = Math.max(0.5, 1 - (priceMovement - 2) * 0.1); // Reduce multiplier berdasarkan movement
+      fairnessMultiplier = Math.max(0.5, 1 - (priceMovement - 2) * 0.1); // Reduce multiplier based on movement
     }
 
-    // Join time bonus: bergabung lebih awal mendapat bonus
+    // Join time bonus: joining earlier gets a bonus
     const totalBattleTime = (joinDeadline.getTime() - createdAt.getTime()) / 1000;
     const joinTimePercentage = timeSinceCreation / totalBattleTime;
     let joinTimeBonus = 1.0;
     
     if (joinTimePercentage < 0.3) {
-      joinTimeBonus = 1.2; // 20% bonus untuk join dalam 30% pertama
+      joinTimeBonus = 1.2; // 20% bonus for joining in first 30%
     } else if (joinTimePercentage < 0.5) {
-      joinTimeBonus = 1.1; // 10% bonus untuk join dalam 50% pertama
+      joinTimeBonus = 1.1; // 10% bonus for joining in first 50%
     }
 
-    // Update battle dengan challenged user dan fairness calculations
+    // Update battle with challenged user and fairness calculations
     const [updatedBattle] = await db
       .update(predictionBattles)
       .set({
