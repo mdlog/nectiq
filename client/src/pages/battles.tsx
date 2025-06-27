@@ -400,24 +400,24 @@ export default function BattlesPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Swords className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <Swords className="h-10 w-10 text-blue-600" />
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
               Prediction Battles
             </h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
             Challenge other users in cryptocurrency price predictions and win rewards!
-            Create a battle or join existing battles.
+            Create a battle or join existing battles to compete in real-time.
           </p>
         </div>
 
         {/* Battle Statistics */}
         {!statsLoading && stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             <Card>
               <CardContent className="p-4 text-center">
                 <Trophy className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
@@ -512,7 +512,7 @@ export default function BattlesPage() {
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="live" className="mt-6">
+          <TabsContent value="live" className="mt-8">
             <div className="space-y-4">
               {battlesLoading ? (
                 <div className="text-center py-8">
@@ -669,7 +669,7 @@ export default function BattlesPage() {
             </div>
           </TabsContent>
           
-          <TabsContent value="active" className="mt-6">
+          <TabsContent value="active" className="mt-8">
             <div className="space-y-4">
               {battlesLoading ? (
                 <div className="text-center py-8">
@@ -810,7 +810,7 @@ export default function BattlesPage() {
             </div>
           </TabsContent>
           
-          <TabsContent value="create" className="mt-6">
+          <TabsContent value="create" className="mt-8">
             <PredictionBattles />
           </TabsContent>
           
