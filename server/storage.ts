@@ -920,85 +920,70 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBattleHistory(): Promise<any[]> {
-    // Get completed battles with user info
-    const battles = await db
-      .select({
-        id: predictionBattles.id,
-        challengerId: predictionBattles.challengerId,
-        challengedId: predictionBattles.challengedId,
-        cryptocurrency: predictionBattles.cryptocurrency,
-        timeframe: predictionBattles.timeframe,
-        stakeAmount: predictionBattles.stakeAmount,
-        challengerPrediction: predictionBattles.challengerPrediction,
-        challengedPrediction: predictionBattles.challengedPrediction,
-        status: predictionBattles.status,
-        targetTime: predictionBattles.targetTime,
-        actualPrice: predictionBattles.actualPrice,
-        winnerId: predictionBattles.winnerId,
-        winnerReward: predictionBattles.winnerReward,
-        createdAt: predictionBattles.createdAt,
-        challengerUsername: users.username,
-        challengerPhoto: users.profilePhoto
-      })
-      .from(predictionBattles)
-      .leftJoin(users, eq(predictionBattles.challengerId, users.id))
-      .where(eq(predictionBattles.status, 'completed'))
-      .orderBy(desc(predictionBattles.createdAt))
-      .limit(50); // Limit to 50 most recent battles
+    try {
+      // Get completed battles without complex joins first
+      const battles = await db
+        .select()
+        .from(predictionBattles)
+        .where(eq(predictionBattles.status, 'completed'))
+        .orderBy(desc(predictionBattles.createdAt))
+        .limit(50);
 
-    // Get challenged user and winner info
-    const battlesWithDetails = await Promise.all(
-      battles.map(async (battle) => {
-        let challenged = null;
-        let winner = null;
+      // Get user details for each battle
+      const battlesWithDetails = await Promise.all(
+        battles.map(async (battle) => {
+          let challenger = null;
+          let challenged = null;
+          let winner = null;
 
-        if (battle.challengedId) {
-          const [challengedUser] = await db
-            .select({
-              username: users.username,
-              profilePhoto: users.profilePhoto
-            })
-            .from(users)
-            .where(eq(users.id, battle.challengedId));
-          
-          if (challengedUser) {
-            challenged = {
-              username: challengedUser.username,
-              profilePhoto: challengedUser.profilePhoto
-            };
+          // Get challenger info
+          if (battle.challengerId) {
+            const challengerUser = await this.getUser(battle.challengerId);
+            if (challengerUser) {
+              challenger = {
+                username: challengerUser.username,
+                profilePhoto: challengerUser.profilePhoto
+              };
+            }
           }
-        }
 
-        if (battle.winnerId) {
-          const [winnerUser] = await db
-            .select({
-              username: users.username,
-              profilePhoto: users.profilePhoto
-            })
-            .from(users)
-            .where(eq(users.id, battle.winnerId));
-          
-          if (winnerUser) {
-            winner = {
-              username: winnerUser.username,
-              profilePhoto: winnerUser.profilePhoto
-            };
+          // Get challenged user info
+          if (battle.challengedId) {
+            const challengedUser = await this.getUser(battle.challengedId);
+            if (challengedUser) {
+              challenged = {
+                username: challengedUser.username,
+                profilePhoto: challengedUser.profilePhoto
+              };
+            }
           }
-        }
-        
-        return {
-          ...battle,
-          challenger: {
-            username: battle.challengerUsername,
-            profilePhoto: battle.challengerPhoto
-          },
-          challenged,
-          winner
-        };
-      })
-    );
 
-    return battlesWithDetails;
+          // Get winner info
+          if (battle.winnerId) {
+            const winnerUser = await this.getUser(battle.winnerId);
+            if (winnerUser) {
+              winner = {
+                username: winnerUser.username,
+                profilePhoto: winnerUser.profilePhoto
+              };
+            }
+          }
+          
+          return {
+            ...battle,
+            challenger,
+            challenged,
+            challengedUsername: challenged?.username || null,
+            winner
+          };
+        })
+      );
+
+      return battlesWithDetails;
+    } catch (error) {
+      console.error('Error fetching battle history:', error);
+      return [];
+    }
   }
 
   async getBattle(id: number): Promise<any> {
