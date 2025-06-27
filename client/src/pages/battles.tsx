@@ -13,7 +13,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { PredictionBattles } from '@/components/prediction-battles';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
-import { Swords, Plus, Search, Filter, Trophy, Clock, Users, DollarSign } from 'lucide-react';
+import { Swords, Plus, Search, Filter, Trophy, Clock, Users, DollarSign, Award } from 'lucide-react';
 
 interface Battle {
   id: number;
