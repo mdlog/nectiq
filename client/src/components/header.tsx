@@ -233,11 +233,7 @@ export function Header() {
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div className={`md:hidden border-t transition-all duration-300 ${
-            isLeaderboardPage 
-              ? "bg-gradient-to-r from-yellow-600 via-yellow-500 to-amber-500 border-yellow-400" 
-              : "bg-surface border-surface-light"
-          }`}>
+          <div className="md:hidden border-t transition-all duration-300 bg-surface border-surface-light">
             <div className="px-4 py-3 space-y-3">
               {/* Mobile Balance Display */}
               <div className="flex items-center justify-between">
@@ -288,9 +284,7 @@ export function Header() {
                     setIsMobileMenuOpen(false);
                   }} 
                   className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    isLeaderboardPage 
-                      ? (location === '/dashboard' ? "text-white font-semibold bg-yellow-600/20" : "text-yellow-100 hover:text-white hover:bg-yellow-600/20") 
-                      : (location === '/dashboard' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                    location === '/dashboard' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
                   }`}
                 >
                   My Dashboard
@@ -301,9 +295,7 @@ export function Header() {
                     setIsMobileMenuOpen(false);
                   }} 
                   className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    isLeaderboardPage 
-                      ? (location === '/battles' ? "text-white font-semibold bg-yellow-600/20" : "text-yellow-100 hover:text-white hover:bg-yellow-600/20") 
-                      : (location === '/battles' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                    location === '/battles' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
                   }`}
                 >
                   Battles
@@ -314,9 +306,7 @@ export function Header() {
                     setIsMobileMenuOpen(false);
                   }} 
                   className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    isLeaderboardPage 
-                      ? "text-white font-bold bg-yellow-600/30" 
-                      : (location === '/leaderboard' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                    location === '/leaderboard' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
                   }`}
                 >
                   🏆 Leaderboard
@@ -327,9 +317,7 @@ export function Header() {
                     setIsMobileMenuOpen(false);
                   }} 
                   className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    isLeaderboardPage 
-                      ? (location === '/how-to-play' ? "text-white font-semibold bg-yellow-600/20" : "text-yellow-100 hover:text-white hover:bg-yellow-600/20") 
-                      : (location === '/how-to-play' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                    location === '/how-to-play' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
                   }`}
                 >
                   How to Play
@@ -341,9 +329,7 @@ export function Header() {
                       setIsMobileMenuOpen(false);
                     }} 
                     className={`block w-full text-left px-3 py-2 rounded-lg transition-colors font-semibold ${
-                      isLeaderboardPage 
-                        ? "text-yellow-200 hover:text-white hover:bg-yellow-600/20" 
-                        : "text-primary hover:text-primary/80 hover:bg-surface-light"
+                      location === '/admin' ? "text-white font-bold bg-surface-light" : "text-primary hover:text-primary/80 hover:bg-surface-light"
                     }`}
                   >
                     Admin
