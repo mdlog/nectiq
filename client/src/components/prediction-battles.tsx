@@ -830,7 +830,7 @@ export function PredictionBattles() {
             <Tabs defaultValue="overview" className="space-y-4">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="probability">Probabilitas</TabsTrigger>
+                <TabsTrigger value="probability">Probability</TabsTrigger>
                 <TabsTrigger value="chat">Chat</TabsTrigger>
                 <TabsTrigger value="spectators">Spectators</TabsTrigger>
               </TabsList>
@@ -894,7 +894,7 @@ export function PredictionBattles() {
               
               <TabsContent value="probability" className="space-y-4">
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-4 text-center">Analisis Probabilitas Menang</h3>
+                  <h3 className="text-lg font-semibold mb-4 text-center">Win Probability Analysis</h3>
                   <WinProbabilityChart battle={selectedBattle} />
                 </div>
               </TabsContent>
@@ -950,7 +950,7 @@ export function PredictionBattles() {
         <Dialog open={!!joiningBattle} onOpenChange={() => setJoiningBattle(null)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Bergabung Battle Prediksi</DialogTitle>
+              <DialogTitle>Join Prediction Battle</DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4">
@@ -969,21 +969,21 @@ export function PredictionBattles() {
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-muted-foreground">Taruhan</div>
+                    <div className="text-muted-foreground">Stake</div>
                     <div className="font-semibold">{joiningBattle.stakeAmount} NTIQ</div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Prediksi Lawan</div>
+                    <div className="text-muted-foreground">Opponent Prediction</div>
                     <div className="font-semibold">${joiningBattle.challengerPrediction.toLocaleString()}</div>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Prediksi Harga Anda (USD)</label>
+                <label className="text-sm font-medium">Your Price Prediction (USD)</label>
                 <Input
                   type="number"
-                  placeholder="Masukkan prediksi harga..."
+                  placeholder="Enter your price prediction..."
                   min="0"
                   step="0.01"
                   value={joinPrediction === 0 ? '0' : (joinPrediction || '')}
@@ -1001,7 +1001,7 @@ export function PredictionBattles() {
                   className="w-full"
                 />
                 <div className="text-xs text-muted-foreground">
-                  Siapa yang lebih akurat akan memenangkan {joiningBattle.stakeAmount * 2} NTIQ
+                  The more accurate prediction wins {joiningBattle.stakeAmount * 2} NTIQ
                 </div>
               </div>
 
