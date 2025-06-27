@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Swords, Eye, MessageCircle, Flame, Rocket, ThumbsUp, Brain, Trophy, Clock, Users, DollarSign } from 'lucide-react';
+import { Swords, Eye, MessageCircle, Flame, Rocket, ThumbsUp, Brain, Trophy, Clock, Users, DollarSign, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Battle {
@@ -39,6 +39,14 @@ interface Battle {
   timeLeft: number;
 }
 
+interface WinProbability {
+  challengerWinChance: number;
+  challengedWinChance: number;
+  challengerAccuracy: number;
+  challengedAccuracy: number;
+  confidenceLevel: 'low' | 'medium' | 'high';
+}
+
 interface CreateBattleForm {
   cryptocurrency: string;
   timeframe: string;
@@ -46,6 +54,195 @@ interface CreateBattleForm {
   challengerPrediction: number;
   isPublic: boolean;
 }
+
+// Fungsi untuk menghitung probabilitas menang berdasarkan akurasi prediksi
+const calculateWinProbability = (battle: Battle): WinProbability => {
+  if (!battle.challengedPrediction || !battle.currentPrice) {
+    return {
+      challengerWinChance: 50,
+      challengedWinChance: 50,
+      challengerAccuracy: 0,
+      challengedAccuracy: 0,
+      confidenceLevel: 'low'
+    };
+  }
+
+  // Hitung akurasi masing-masing pemain terhadap harga saat ini
+  const challengerAccuracy = Math.abs(battle.challengerPrediction - battle.currentPrice) / battle.currentPrice * 100;
+  const challengedAccuracy = Math.abs(battle.challengedPrediction - battle.currentPrice) / battle.currentPrice * 100;
+
+  // Hitung probabilitas berdasarkan perbandingan akurasi
+  let challengerWinChance: number;
+  let challengedWinChance: number;
+  
+  if (challengerAccuracy === challengedAccuracy) {
+    challengerWinChance = 50;
+    challengedWinChance = 50;
+  } else {
+    // Semakin kecil error, semakin besar peluang menang
+    const totalError = challengerAccuracy + challengedAccuracy;
+    challengedWinChance = (challengerAccuracy / totalError) * 100;
+    challengerWinChance = (challengedAccuracy / totalError) * 100;
+  }
+
+  // Tentukan confidence level berdasarkan selisih akurasi
+  const accuracyDiff = Math.abs(challengerAccuracy - challengedAccuracy);
+  let confidenceLevel: 'low' | 'medium' | 'high';
+  
+  if (accuracyDiff < 0.5) confidenceLevel = 'low';
+  else if (accuracyDiff < 2) confidenceLevel = 'medium';
+  else confidenceLevel = 'high';
+
+  return {
+    challengerWinChance: Math.round(challengerWinChance),
+    challengedWinChance: Math.round(challengedWinChance),
+    challengerAccuracy,
+    challengedAccuracy,
+    confidenceLevel
+  };
+};
+
+// Komponen grafik probabilitas menang-kalah
+const WinProbabilityChart = ({ battle }: { battle: Battle }) => {
+  const probability = calculateWinProbability(battle);
+  
+  if (!battle.challengedPrediction) {
+    return (
+      <Card className="bg-gray-50 dark:bg-gray-800">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <BarChart3 className="mr-2" size={16} />
+            <span className="text-sm">Menunggu opponent bergabung untuk analisis probabilitas</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const getConfidenceColor = (level: string) => {
+    switch (level) {
+      case 'high': return 'text-green-600 dark:text-green-400';
+      case 'medium': return 'text-yellow-600 dark:text-yellow-400';
+      default: return 'text-red-600 dark:text-red-400';
+    }
+  };
+
+  const getConfidenceText = (level: string) => {
+    switch (level) {
+      case 'high': return 'Tinggi';
+      case 'medium': return 'Sedang';
+      default: return 'Rendah';
+    }
+  };
+
+  return (
+    <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center text-sm font-semibold">
+          <BarChart3 className="mr-2" size={16} />
+          Analisis Probabilitas Menang
+          <Badge 
+            variant="outline" 
+            className={`ml-auto ${getConfidenceColor(probability.confidenceLevel)}`}
+          >
+            Akurasi: {getConfidenceText(probability.confidenceLevel)}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Progress bars probabilitas */}
+        <div className="space-y-3">
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                {battle.challenger.username}
+              </span>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                  {probability.challengerWinChance}%
+                </span>
+                {probability.challengerWinChance > probability.challengedWinChance && (
+                  <TrendingUp size={14} className="text-green-500" />
+                )}
+              </div>
+            </div>
+            <Progress 
+              value={probability.challengerWinChance} 
+              className="h-3 bg-gray-200 dark:bg-gray-700"
+            />
+            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+              Error: {probability.challengerAccuracy.toFixed(2)}% vs harga saat ini
+            </div>
+          </div>
+          
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                {battle.challenged?.username || 'Opponent'}
+              </span>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-bold text-purple-700 dark:text-purple-300">
+                  {probability.challengedWinChance}%
+                </span>
+                {probability.challengedWinChance > probability.challengerWinChance && (
+                  <TrendingUp size={14} className="text-green-500" />
+                )}
+              </div>
+            </div>
+            <Progress 
+              value={probability.challengedWinChance} 
+              className="h-3 bg-gray-200 dark:bg-gray-700"
+            />
+            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+              Error: {probability.challengedAccuracy.toFixed(2)}% vs harga saat ini
+            </div>
+          </div>
+        </div>
+
+        {/* Informasi tambahan */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-3 space-y-2">
+          <div className="flex justify-between text-xs">
+            <span className="text-gray-600 dark:text-gray-400">Harga Saat Ini:</span>
+            <span className="font-semibold">${battle.currentPrice.toLocaleString(undefined, { 
+              minimumFractionDigits: 2, 
+              maximumFractionDigits: 6 
+            })}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-gray-600 dark:text-gray-400">Prediksi Challenger:</span>
+            <span className="text-blue-600 dark:text-blue-400 font-semibold">
+              ${battle.challengerPrediction.toLocaleString(undefined, { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 6 
+              })}
+            </span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-gray-600 dark:text-gray-400">Prediksi Opponent:</span>
+            <span className="text-purple-600 dark:text-purple-400 font-semibold">
+              ${battle.challengedPrediction.toLocaleString(undefined, { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 6 
+              })}
+            </span>
+          </div>
+        </div>
+
+        {/* Insight prediksi */}
+        <div className="text-center">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            *Probabilitas dihitung berdasarkan akurasi prediksi vs harga real-time
+          </div>
+          {probability.confidenceLevel === 'low' && (
+            <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+              ⚠️ Prediksi sangat dekat - hasil sulit diprediksi
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 export function PredictionBattles() {
   const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
@@ -421,6 +618,11 @@ export function PredictionBattles() {
             Chat
           </Button>
         </div>
+
+        {/* Grafik Probabilitas Menang-Kalah */}
+        <div className="mt-4">
+          <WinProbabilityChart battle={battle} />
+        </div>
       </CardContent>
     </Card>
   );
@@ -583,6 +785,7 @@ export function PredictionBattles() {
             <Tabs defaultValue="overview" className="space-y-4">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="probability">Probabilitas</TabsTrigger>
                 <TabsTrigger value="chat">Chat</TabsTrigger>
                 <TabsTrigger value="spectators">Spectators</TabsTrigger>
               </TabsList>
