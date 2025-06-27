@@ -376,10 +376,10 @@ export default function BattlesPage() {
                       <DollarSign className="w-4 h-4 mr-1" />
                       Stake: {battle.stakeAmount} NTIQ
                     </div>
-                    {battle.winnerReward && (
+                    {(battle.winnerReward || battle.winner) && (
                       <div className="flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
                         <Award className="w-4 h-4 mr-1" />
-                        Reward: {battle.winnerReward} NTIQ
+                        Reward: {battle.winnerReward || (battle.stakeAmount * 2)} NTIQ
                       </div>
                     )}
                   </div>
