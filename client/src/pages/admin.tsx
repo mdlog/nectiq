@@ -148,6 +148,23 @@ export default function AdminPanel() {
   });
   const [battlesPage, setBattlesPage] = useState(1);
   const [battlesPerPage] = useState(10);
+  const [battlesSearchQuery, setBattlesSearchQuery] = useState("");
+  const [selectedBattles, setSelectedBattles] = useState<number[]>([]);
+  const [showCreateBattleDialog, setShowCreateBattleDialog] = useState(false);
+  const [showEditBattleDialog, setShowEditBattleDialog] = useState(false);
+  const [editingBattle, setEditingBattle] = useState<any>(null);
+  const [createBattleForm, setCreateBattleForm] = useState({
+    challengerId: "",
+    challengedId: "",
+    cryptocurrency: "",
+    challengerPrediction: "",
+    challengedPrediction: "",
+    stake: 50,
+    targetTime: "",
+    status: "open"
+  });
+  const [battlesSortField, setBattlesSortField] = useState<"createdAt" | "stake" | "targetTime">("createdAt");
+  const [battlesSortOrder, setBattlesSortOrder] = useState<"asc" | "desc">("desc");
 
   // System Settings state
   const [settingsForm, setSettingsForm] = useState({
@@ -236,6 +253,98 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/battles/stats"],
     retry: 2,
     retryDelay: 1000,
+  });
+
+  // Battle mutations
+  const createBattleMutation = useMutation({
+    mutationFn: async (battleData: any) => {
+      const response = await fetch("/api/admin/battles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(battleData),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Battle created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/battles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
+      setShowCreateBattleDialog(false);
+      resetCreateBattleForm();
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateBattleMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await fetch(`/api/admin/battles/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Battle updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/battles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
+      setShowEditBattleDialog(false);
+      setEditingBattle(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteBattleMutation = useMutation({
+    mutationFn: async (battleId: number) => {
+      const response = await fetch(`/api/admin/battles/${battleId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Battle deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/battles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const bulkDeleteBattlesMutation = useMutation({
+    mutationFn: async (battleIds: number[]) => {
+      const response = await fetch("/api/admin/battles/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ battleIds }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: (data) => {
+      const { deleted, failed } = data;
+      toast({ 
+        title: "Bulk Delete Complete", 
+        description: `${deleted} battles deleted${failed > 0 ? `, ${failed} failed` : ''}` 
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/battles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
+      setSelectedBattles([]);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
   });
 
   // Event mutations
@@ -855,6 +964,157 @@ export default function AdminPanel() {
       setUserSortField(field);
       setUserSortOrder("desc");
     }
+  };
+
+  // Battle management helper functions
+  const resetCreateBattleForm = () => {
+    setCreateBattleForm({
+      challengerId: "",
+      challengedId: "",
+      cryptocurrency: "",
+      challengerPrediction: "",
+      challengedPrediction: "",
+      stake: 50,
+      targetTime: "",
+      status: "open"
+    });
+  };
+
+  const handleCreateBattle = async () => {
+    if (!createBattleForm.challengerId || !createBattleForm.cryptocurrency || !createBattleForm.targetTime) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    createBattleMutation.mutate(createBattleForm);
+  };
+
+  const handleEditBattle = (battle: any) => {
+    setEditingBattle(battle);
+    setShowEditBattleDialog(true);
+  };
+
+  const handleUpdateBattle = async () => {
+    if (!editingBattle) return;
+    
+    updateBattleMutation.mutate({
+      id: editingBattle.id,
+      data: editingBattle
+    });
+  };
+
+  const handleDeleteBattle = async (battleId: number) => {
+    if (confirm("Are you sure you want to delete this battle?")) {
+      deleteBattleMutation.mutate(battleId);
+    }
+  };
+
+  const handleBulkDeleteBattles = async () => {
+    if (selectedBattles.length === 0) {
+      toast({
+        title: "Warning",
+        description: "No battles selected for deletion",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (confirm(`Are you sure you want to delete ${selectedBattles.length} selected battles?`)) {
+      bulkDeleteBattlesMutation.mutate(selectedBattles);
+    }
+  };
+
+  const handleSelectBattle = (battleId: number) => {
+    setSelectedBattles(prev => 
+      prev.includes(battleId) 
+        ? prev.filter(id => id !== battleId)
+        : [...prev, battleId]
+    );
+  };
+
+  const handleSelectAllBattles = () => {
+    if (selectedBattles.length === filteredBattles.length) {
+      setSelectedBattles([]);
+    } else {
+      setSelectedBattles(filteredBattles.map(battle => battle.id));
+    }
+  };
+
+  // Filter and sort battles
+  const filteredBattles = battles.filter(battle => {
+    const statusMatch = battlesStatusFilter === "all" || battle.status === battlesStatusFilter;
+    const cryptoMatch = battlesCryptoFilter === "all" || battle.cryptocurrency === battlesCryptoFilter;
+    const searchMatch = battlesSearchQuery === "" || 
+      battle.challengerUsername?.toLowerCase().includes(battlesSearchQuery.toLowerCase()) ||
+      battle.challengedUsername?.toLowerCase().includes(battlesSearchQuery.toLowerCase()) ||
+      battle.cryptocurrency.toLowerCase().includes(battlesSearchQuery.toLowerCase());
+    
+    return statusMatch && cryptoMatch && searchMatch;
+  });
+
+  const sortedBattles = [...filteredBattles].sort((a, b) => {
+    let aValue, bValue;
+    
+    switch (battlesSortField) {
+      case "createdAt":
+        aValue = new Date(a.createdAt).getTime();
+        bValue = new Date(b.createdAt).getTime();
+        break;
+      case "stake":
+        aValue = a.stake || 0;
+        bValue = b.stake || 0;
+        break;
+      case "targetTime":
+        aValue = new Date(a.targetTime).getTime();
+        bValue = new Date(b.targetTime).getTime();
+        break;
+      default:
+        return 0;
+    }
+    
+    if (battlesSortOrder === "desc") {
+      return bValue - aValue;
+    } else {
+      return aValue - bValue;
+    }
+  });
+
+  const handleBattleSort = (field: "createdAt" | "stake" | "targetTime") => {
+    if (battlesSortField === field) {
+      setBattlesSortOrder(battlesSortOrder === "desc" ? "asc" : "desc");
+    } else {
+      setBattlesSortField(field);
+      setBattlesSortOrder("desc");
+    }
+  };
+
+  // Export battles to CSV
+  const exportBattlesToCSV = () => {
+    const csvData = [
+      ['ID', 'Challenger', 'Challenged', 'Cryptocurrency', 'Stake', 'Status', 'Created', 'Target Time'].join(','),
+      ...sortedBattles.map(battle => [
+        battle.id,
+        battle.challengerUsername || 'N/A',
+        battle.challengedUsername || 'N/A',
+        battle.cryptocurrency,
+        battle.stake,
+        battle.status,
+        new Date(battle.createdAt).toLocaleDateString(),
+        new Date(battle.targetTime).toLocaleDateString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `battles-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   // Bulk actions handlers
@@ -5128,16 +5388,57 @@ export default function AdminPanel() {
               </Card>
             </div>
 
-            {/* Battles Filters */}
+            {/* Battles Management Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
-                  Battle Filters
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Swords className="h-5 w-5" />
+                    Battles Management
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => setShowCreateBattleDialog(true)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Battle
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={exportBattlesToCSV}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Export CSV
+                    </Button>
+                    {selectedBattles.length > 0 && (
+                      <Button
+                        variant="destructive"
+                        onClick={handleBulkDeleteBattles}
+                        disabled={bulkDeleteBattlesMutation.isPending}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Selected ({selectedBattles.length})
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search and Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label>Search Battles</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by users or crypto..."
+                        value={battlesSearchQuery}
+                        onChange={(e) => setBattlesSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>Status Filter</Label>
                     <Select value={battlesStatusFilter} onValueChange={setBattlesStatusFilter}>
@@ -5191,6 +5492,9 @@ export default function AdminPanel() {
                     </div>
                   </div>
                 </div>
+              </CardHeader>
+              <CardContent>
+                {/* Battle management content will be added here */}
               </CardContent>
             </Card>
 

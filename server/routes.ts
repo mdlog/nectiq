@@ -3391,6 +3391,249 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // Admin Battle Management Endpoints
+  
+  // Get battles with filtering and pagination for admin
+  app.get('/api/admin/battles', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { status, cryptocurrency, dateRange, page = 1, limit = 10 } = req.query;
+      
+      let filters: any = {};
+      if (status && status !== 'all') filters.status = status;
+      if (cryptocurrency && cryptocurrency !== 'all') filters.cryptocurrency = cryptocurrency;
+      
+      // Parse date range if provided
+      let dateFilters: any = {};
+      if (dateRange && typeof dateRange === 'string') {
+        const [startDate, endDate] = dateRange.split(',');
+        if (startDate) dateFilters.startDate = startDate;
+        if (endDate) dateFilters.endDate = endDate;
+      }
+      
+      const battles = await storage.getAdminBattles(filters, dateFilters, {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string)
+      });
+      
+      res.json(battles);
+    } catch (error) {
+      console.error('Error fetching admin battles:', error);
+      res.status(500).json({ message: 'Failed to fetch battles' });
+    }
+  });
+
+  // Get battle statistics for admin dashboard
+  app.get('/api/admin/battles/stats', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const stats = await storage.getBattleStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching battle stats:', error);
+      res.status(500).json({ message: 'Failed to fetch battle statistics' });
+    }
+  });
+
+  // Create battle (admin only)
+  app.post('/api/admin/battles', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { challengerId, challengedId, cryptocurrency, challengerPrediction, challengedPrediction, stake, targetTime, status } = req.body;
+      
+      // Validate required fields
+      if (!challengerId || !cryptocurrency || !targetTime) {
+        return res.status(400).json({ message: 'Missing required fields: challengerId, cryptocurrency, targetTime' });
+      }
+
+      // Get current price for the cryptocurrency
+      const currentPrice = await getCurrentPrice(cryptocurrency);
+      if (!currentPrice) {
+        return res.status(400).json({ message: 'Unable to fetch current price for cryptocurrency' });
+      }
+
+      const battleData = {
+        challengerId: parseInt(challengerId),
+        challengedId: challengedId ? parseInt(challengedId) : null,
+        cryptocurrency,
+        challengerPrediction: challengerPrediction ? parseFloat(challengerPrediction) : null,
+        challengedPrediction: challengedPrediction ? parseFloat(challengedPrediction) : null,
+        stake: stake || 50,
+        targetTime: new Date(targetTime),
+        status: status || 'open',
+        priceAtCreation: currentPrice,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const battle = await storage.createBattle(battleData);
+      
+      // Audit log
+      auditLog('battle_created', { battleId: battle.id, ...battleData }, req);
+      
+      res.json(battle);
+    } catch (error) {
+      console.error('Error creating battle:', error);
+      res.status(500).json({ message: 'Failed to create battle' });
+    }
+  });
+
+  // Update battle (admin only)
+  app.put('/api/admin/battles/:id', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const battleId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      // Validate battle exists
+      const existingBattle = await storage.getBattleById(battleId);
+      if (!existingBattle) {
+        return res.status(404).json({ message: 'Battle not found' });
+      }
+
+      // Process update data
+      const processedData: any = { ...updateData };
+      if (updateData.targetTime) processedData.targetTime = new Date(updateData.targetTime);
+      if (updateData.challengerPrediction) processedData.challengerPrediction = parseFloat(updateData.challengerPrediction);
+      if (updateData.challengedPrediction) processedData.challengedPrediction = parseFloat(updateData.challengedPrediction);
+      if (updateData.stake) processedData.stake = parseInt(updateData.stake);
+      
+      processedData.updatedAt = new Date();
+
+      const updatedBattle = await storage.updateBattle(battleId, processedData);
+      
+      // Audit log
+      auditLog('battle_updated', { battleId, changes: updateData }, req);
+      
+      res.json(updatedBattle);
+    } catch (error) {
+      console.error('Error updating battle:', error);
+      res.status(500).json({ message: 'Failed to update battle' });
+    }
+  });
+
+  // Delete battle (admin only)
+  app.delete('/api/admin/battles/:id', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const battleId = parseInt(req.params.id);
+      
+      // Validate battle exists
+      const existingBattle = await storage.getBattleById(battleId);
+      if (!existingBattle) {
+        return res.status(404).json({ message: 'Battle not found' });
+      }
+
+      // Check if battle can be deleted (shouldn't delete active battles with stakes)
+      if (existingBattle.status === 'active' && existingBattle.challengedId) {
+        return res.status(400).json({ message: 'Cannot delete active battle with participants' });
+      }
+
+      await storage.deleteBattle(battleId);
+      
+      // Audit log
+      auditLog('battle_deleted', { battleId, battle: existingBattle }, req);
+      
+      res.json({ message: 'Battle deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting battle:', error);
+      res.status(500).json({ message: 'Failed to delete battle' });
+    }
+  });
+
+  // Bulk delete battles (admin only)
+  app.post('/api/admin/battles/bulk-delete', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { battleIds } = req.body;
+      
+      if (!Array.isArray(battleIds) || battleIds.length === 0) {
+        return res.status(400).json({ message: 'Invalid battle IDs provided' });
+      }
+
+      let deleted = 0;
+      let failed = 0;
+      const failedIds: number[] = [];
+
+      for (const battleId of battleIds) {
+        try {
+          const existingBattle = await storage.getBattleById(parseInt(battleId));
+          if (!existingBattle) {
+            failed++;
+            failedIds.push(battleId);
+            continue;
+          }
+
+          // Check if battle can be deleted
+          if (existingBattle.status === 'active' && existingBattle.challengedId) {
+            failed++;
+            failedIds.push(battleId);
+            continue;
+          }
+
+          await storage.deleteBattle(parseInt(battleId));
+          deleted++;
+        } catch (error) {
+          console.error(`Error deleting battle ${battleId}:`, error);
+          failed++;
+          failedIds.push(battleId);
+        }
+      }
+      
+      // Audit log
+      auditLog('battles_bulk_deleted', { 
+        requested: battleIds.length, 
+        deleted, 
+        failed, 
+        failedIds 
+      }, req);
+      
+      res.json({ 
+        message: `Bulk delete completed: ${deleted} deleted, ${failed} failed`,
+        deleted,
+        failed,
+        failedIds
+      });
+    } catch (error) {
+      console.error('Error in bulk delete battles:', error);
+      res.status(500).json({ message: 'Failed to bulk delete battles' });
+    }
+  });
+
+  // Cancel battle (admin only)
+  app.post('/api/admin/battles/:id/cancel', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const battleId = parseInt(req.params.id);
+      const { reason } = req.body;
+      
+      const existingBattle = await storage.getBattleById(battleId);
+      if (!existingBattle) {
+        return res.status(404).json({ message: 'Battle not found' });
+      }
+
+      if (existingBattle.status === 'completed' || existingBattle.status === 'cancelled') {
+        return res.status(400).json({ message: 'Cannot cancel completed or already cancelled battle' });
+      }
+
+      // Update battle status to cancelled
+      const updatedBattle = await storage.updateBattle(battleId, {
+        status: 'cancelled',
+        cancelReason: reason || 'Cancelled by admin',
+        updatedAt: new Date()
+      });
+
+      // Refund stakes if battle was active
+      if (existingBattle.status === 'active' && existingBattle.challengerId && existingBattle.challengedId) {
+        await storage.addToUserBalance(existingBattle.challengerId, existingBattle.stake);
+        await storage.addToUserBalance(existingBattle.challengedId, existingBattle.stake);
+      } else if (existingBattle.status === 'open' && existingBattle.challengerId) {
+        await storage.addToUserBalance(existingBattle.challengerId, existingBattle.stake);
+      }
+      
+      // Audit log
+      auditLog('battle_cancelled', { battleId, reason }, req);
+      
+      res.json(updatedBattle);
+    } catch (error) {
+      console.error('Error cancelling battle:', error);
+      res.status(500).json({ message: 'Failed to cancel battle' });
+    }
+  });
+
   // Start background task to check predictions every minute
   setInterval(async () => {
     try {
