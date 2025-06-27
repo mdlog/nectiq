@@ -1451,15 +1451,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (battle.status !== 'open') {
-        return res.status(400).json({ message: 'Battle sudah tidak terbuka untuk bergabung' });
+        return res.status(400).json({ message: 'Battle is no longer open for joining' });
       }
 
       if (battle.challengerId === userId) {
-        return res.status(400).json({ message: 'Anda tidak bisa bergabung battle sendiri' });
+        return res.status(400).json({ message: 'You cannot join your own battle' });
       }
 
       if (battle.challengedId) {
-        return res.status(400).json({ message: 'Battle sudah memiliki peserta kedua' });
+        return res.status(400).json({ message: 'Battle already has a second participant' });
       }
 
       // Check user balance
@@ -1485,7 +1485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json({ 
-        message: 'Berhasil bergabung battle!',
+        message: 'Successfully joined battle!',
         battle: joinResult,
         fairnessInfo: joinResult.joinFairness
       });
@@ -1497,7 +1497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: error.message });
       }
       
-      res.status(500).json({ message: 'Gagal bergabung battle' });
+      res.status(500).json({ message: 'Failed to join battle' });
     }
   });
 

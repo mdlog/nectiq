@@ -375,7 +375,7 @@ export function PredictionBattles() {
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Gagal bergabung battle',
+        description: error.message || 'Failed to join battle',
         variant: 'destructive',
       });
     }
@@ -1011,14 +1011,14 @@ export function PredictionBattles() {
                   onClick={() => setJoiningBattle(null)}
                   className="flex-1"
                 >
-                  Batal
+                  Cancel
                 </Button>
                 <Button
                   onClick={handleJoinBattle}
                   disabled={joinBattleMutation.isPending || !joinPrediction}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
-                  {joinBattleMutation.isPending ? 'Bergabung...' : 'Bergabung Battle'}
+                  {joinBattleMutation.isPending ? 'Joining...' : 'Join Battle'}
                 </Button>
               </div>
             </div>
