@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -477,6 +477,10 @@ export default function UserDashboard() {
             <TabsTrigger value="performance" className="data-[state=active]:bg-primary">
               <Activity className="mr-1" size={16} />
               Performance
+            </TabsTrigger>
+            <TabsTrigger value="battles" className="data-[state=active]:bg-primary">
+              <Swords className="mr-1" size={16} />
+              Battles
             </TabsTrigger>
             <TabsTrigger value="financial" className="data-[state=active]:bg-primary">
               <Wallet className="mr-1" size={16} />

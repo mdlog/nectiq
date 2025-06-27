@@ -116,6 +116,7 @@ export interface IStorage {
   getBattleComments(battleId: number): Promise<any[]>;
   getAllBattles(filters?: any): Promise<any[]>;
   getBattleStats(): Promise<any>;
+  getUserBattles(userId: number): Promise<any[]>;
   updateUser(id: number, updates: any): Promise<void>;
 }
 
@@ -827,6 +828,57 @@ export class DatabaseStorage implements IStorage {
           ...battle,
           challengedUsername,
           timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+        };
+      })
+    );
+
+    return battlesWithUsers;
+  }
+
+  async getUserBattles(userId: number): Promise<any[]> {
+    const battles = await db
+      .select()
+      .from(predictionBattles)
+      .where(or(
+        eq(predictionBattles.challengerId, userId),
+        eq(predictionBattles.challengedId, userId)
+      ))
+      .orderBy(desc(predictionBattles.createdAt));
+
+    // Get user information for battles
+    const battlesWithUsers = await Promise.all(
+      battles.map(async (battle) => {
+        let challengerUsername = null;
+        let challengedUsername = null;
+
+        // Get challenger info
+        const [challenger] = await db
+          .select({ username: users.username })
+          .from(users)
+          .where(eq(users.id, battle.challengerId));
+        
+        if (challenger) {
+          challengerUsername = challenger.username;
+        }
+
+        // Get challenged user info
+        if (battle.challengedId) {
+          const [challenged] = await db
+            .select({ username: users.username })
+            .from(users)
+            .where(eq(users.id, battle.challengedId));
+          
+          if (challenged) {
+            challengedUsername = challenged.username;
+          }
+        }
+
+        return {
+          ...battle,
+          challengerUsername,
+          challengedUsername,
+          timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now()),
+          isUserChallenger: battle.challengerId === userId
         };
       })
     );

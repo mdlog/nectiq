@@ -1697,6 +1697,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user battle information for My Dashboard
+  app.get('/api/user/battles', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    try {
+      const userId = (req as any).session.userId;
+      
+      // Get user's battles
+      const userBattles = await storage.getUserBattles(userId);
+      
+      // Calculate battle statistics
+      const battleStats = {
+        totalBattles: userBattles.length,
+        wonBattles: userBattles.filter(b => b.winnerId === userId).length,
+        lostBattles: userBattles.filter(b => b.winnerId && b.winnerId !== userId).length,
+        activeBattles: userBattles.filter(b => b.status === 'active').length,
+        pendingBattles: userBattles.filter(b => b.status === 'open' && b.challengerId === userId).length,
+        totalBattleRewards: userBattles
+          .filter(b => b.winnerId === userId)
+          .reduce((sum, b) => sum + (b.winnerReward || 0), 0)
+      };
+
+      res.json({
+        battles: userBattles,
+        stats: battleStats
+      });
+    } catch (error) {
+      console.error('Error fetching user battles:', error);
+      res.status(500).json({ message: 'Failed to fetch battle data' });
+    }
+  });
+
   // Get top predictors (leaderboard) with filter support
   app.get("/api/leaderboard", async (req, res) => {
     try {
