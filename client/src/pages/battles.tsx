@@ -164,7 +164,7 @@ export default function BattlesPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Terjadi kesalahan saat bergabung dengan battle",
+        description: "An error occurred while joining the battle",
         variant: "destructive"
       });
     }
@@ -472,7 +472,7 @@ export default function BattlesPage() {
       <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Bergabung dengan Battle</DialogTitle>
+            <DialogTitle>Join Battle</DialogTitle>
           </DialogHeader>
           
           {selectedBattle && (
@@ -493,11 +493,11 @@ export default function BattlesPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="prediction">Prediksi Harga Anda ($)</Label>
+                <Label htmlFor="prediction">Your Price Prediction ($)</Label>
                 <Input
                   id="prediction"
                   type="number"
-                  placeholder="Masukkan prediksi harga..."
+                  placeholder="Enter your price prediction..."
                   value={predictionPrice}
                   onChange={(e) => setPredictionPrice(e.target.value)}
                   min="0"
@@ -511,14 +511,14 @@ export default function BattlesPage() {
                   className="flex-1"
                   onClick={() => setJoinDialogOpen(false)}
                 >
-                  Batal
+                  Cancel
                 </Button>
                 <Button 
                   className="flex-1 bg-purple-600 hover:bg-purple-700"
                   onClick={submitJoinBattle}
                   disabled={!predictionPrice || parseFloat(predictionPrice) <= 0}
                 >
-                  Bergabung
+                  Join Battle
                 </Button>
               </div>
             </div>
