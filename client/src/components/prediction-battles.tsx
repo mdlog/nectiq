@@ -549,26 +549,53 @@ export function PredictionBattles() {
           </div>
         </div>
 
-        {/* Current price and progress */}
+        {/* Current price and probability bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Current Price</span>
             <span className="font-semibold">${battle.currentPrice.toLocaleString()}</span>
           </div>
           
-          {battle.challengerPrediction && battle.challengedPrediction && (
-            <div className="space-y-1">
-              <Progress 
-                value={((battle.currentPrice - Math.min(battle.challengerPrediction, battle.challengedPrediction)) / 
-                       (Math.max(battle.challengerPrediction, battle.challengedPrediction) - Math.min(battle.challengerPrediction, battle.challengedPrediction))) * 100}
-                className="h-2"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>${Math.min(battle.challengerPrediction, battle.challengedPrediction).toLocaleString()}</span>
-                <span>${Math.max(battle.challengerPrediction, battle.challengedPrediction).toLocaleString()}</span>
+          {battle.challengerPrediction && battle.challengedPrediction && (() => {
+            const probability = calculateWinProbability(battle);
+            return (
+              <div className="space-y-1">
+                {/* Percentage Labels Above Bar */}
+                <div className="flex justify-between items-center text-xs">
+                  <div className="text-center">
+                    <div className="font-bold text-blue-700 dark:text-blue-300">
+                      {probability.challengerWinChance}%
+                    </div>
+                    <div className="text-blue-600 dark:text-blue-400">
+                      {battle.challenger.username}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-purple-700 dark:text-purple-300">
+                      {probability.challengedWinChance}%
+                    </div>
+                    <div className="text-purple-600 dark:text-purple-400">
+                      {battle.challenged?.username || 'Opponent'}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Combined Probability Bar */}
+                <div className="relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+                  <div 
+                    className="bg-blue-500 h-full transition-all duration-500 absolute left-0 rounded-l-full"
+                    style={{ width: `${probability.challengerWinChance}%` }}
+                  />
+                  <div 
+                    className="bg-purple-500 h-full transition-all duration-500 absolute right-0 rounded-r-full"
+                    style={{ width: `${probability.challengedWinChance}%` }}
+                  />
+                  {/* Center divider line */}
+                  <div className="absolute left-1/2 transform -translate-x-0.5 top-0 bottom-0 w-0.5 bg-white/70" />
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Battle info */}
@@ -615,11 +642,6 @@ export function PredictionBattles() {
             <MessageCircle className="w-4 h-4 mr-1" />
             Chat
           </Button>
-        </div>
-
-        {/* Grafik Probabilitas Menang-Kalah */}
-        <div className="mt-4">
-          <WinProbabilityChart battle={battle} />
         </div>
       </CardContent>
     </Card>
