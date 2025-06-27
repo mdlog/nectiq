@@ -1010,8 +1010,11 @@ export function PredictionBattles() {
                   }}
                   className="w-full"
                 />
-                <div className="text-xs text-muted-foreground">
-                  The more accurate prediction wins {joiningBattle.stakeAmount * 2} NTIQ
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div>The more accurate prediction wins {joiningBattle.stakeAmount * 2} NTIQ</div>
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded text-yellow-700 dark:text-yellow-300">
+                    🔒 Note: Your opponent's prediction is hidden until you join the battle
+                  </div>
                 </div>
               </div>
 
