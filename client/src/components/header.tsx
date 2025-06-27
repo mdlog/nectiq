@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChartLine, Coins, User, Wallet, LogOut, Menu, X, ChevronDown } from "lucide-react";
+import { ChartLine, Coins, User, Wallet, LogOut, Menu, X, ChevronDown, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useAccount, useDisconnect } from 'wagmi';
@@ -21,7 +21,29 @@ export function Header() {
   const queryClient = useQueryClient();
   const [location, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+  const [copiedItem, setCopiedItem] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, itemType: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedItem(itemType);
+      toast({
+        title: "Copied successfully",
+        description: `${itemType} copied to clipboard`,
+      });
+      
+      // Reset icon after 2 seconds
+      setTimeout(() => {
+        setCopiedItem(null);
+      }, 2000);
+    } catch (err) {
+      toast({
+        title: "Copy failed",
+        description: "Could not copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
 
 
   const logoutMutation = useMutation({
@@ -228,18 +250,46 @@ export function Header() {
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="flex flex-col items-start space-y-1 p-3">
-                      <div className="flex items-center space-x-2 w-full">
-                        <User className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium">Username:</span>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium">Username:</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(user?.username || '', 'Username')}
+                          className="h-6 w-6 p-0"
+                        >
+                          {copiedItem === 'Username' ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
                       </div>
                       <span className="text-sm text-gray-600 dark:text-gray-400 ml-6">
                         {user?.username || 'Loading...'}
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="flex flex-col items-start space-y-1 p-3">
-                      <div className="flex items-center space-x-2 w-full">
-                        <ChartLine className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium">UID:</span>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center space-x-2">
+                          <ChartLine className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium">UID:</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(user?.uid || '', 'UID')}
+                          className="h-6 w-6 p-0"
+                        >
+                          {copiedItem === 'UID' ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
                       </div>
                       <span className="text-sm text-gray-600 dark:text-gray-400 ml-6 font-mono">
                         {user?.uid || 'Loading...'}
