@@ -690,7 +690,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLiveBattles(): Promise<any[]> {
-    return await db
+    // Get battles with challenger and challenged user info
+    const battles = await db
       .select({
         id: predictionBattles.id,
         challengerId: predictionBattles.challengerId,
@@ -706,15 +707,55 @@ export class DatabaseStorage implements IStorage {
         spectatorCount: predictionBattles.spectatorCount,
         battleType: predictionBattles.battleType,
         isPublic: predictionBattles.isPublic,
-        challenger: {
-          username: users.username,
-          profilePhoto: users.profilePhoto
-        }
+        challengerUsername: users.username,
+        challengerPhoto: users.profilePhoto
       })
       .from(predictionBattles)
       .leftJoin(users, eq(predictionBattles.challengerId, users.id))
-      .where(eq(predictionBattles.status, 'open'))
+      .where(or(
+        eq(predictionBattles.status, 'open'),
+        eq(predictionBattles.status, 'active')
+      ))
       .orderBy(desc(predictionBattles.createdAt));
+
+    // Get challenged user info for battles that have challengedId
+    const battlesWithChallenged = await Promise.all(
+      battles.map(async (battle) => {
+        let challenged = null;
+        if (battle.challengedId) {
+          const [challengedUser] = await db
+            .select({
+              username: users.username,
+              profilePhoto: users.profilePhoto
+            })
+            .from(users)
+            .where(eq(users.id, battle.challengedId));
+          
+          if (challengedUser) {
+            challenged = {
+              username: challengedUser.username,
+              profilePhoto: challengedUser.profilePhoto
+            };
+          }
+        }
+
+        // Get current crypto price
+        const currentPrice = await this.getCurrentCryptoPrice(battle.cryptocurrency);
+        
+        return {
+          ...battle,
+          challenger: {
+            username: battle.challengerUsername,
+            profilePhoto: battle.challengerPhoto
+          },
+          challenged,
+          currentPrice,
+          timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+        };
+      })
+    );
+
+    return battlesWithChallenged;
   }
 
   async getBattle(id: number): Promise<any> {
