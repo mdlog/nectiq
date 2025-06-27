@@ -561,7 +561,7 @@ export default function BattlesPage() {
                           </div>
                           <div className="text-right">
                             {getStatusBadge(battle.status)}
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <p className="text-sm text-gray-300 mt-1">
                               <CountdownTimer targetTime={battle.targetTime} />
                             </p>
                           </div>
@@ -722,7 +722,7 @@ export default function BattlesPage() {
                           </div>
                           
                           <div className="text-right">
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                            <div className="text-sm text-gray-300">
                               Time left: <CountdownTimer targetTime={battle.targetTime} />
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-500">
