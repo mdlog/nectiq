@@ -1254,7 +1254,7 @@ export class DatabaseStorage implements IStorage {
       new Date(battle.joinDeadline) : 
       new Date(createdAt.getTime() + (battleDuration * 0.8));
     
-    const minimumJoinTime = battle.minimumJoinTime || 30; // 30 seconds default for better user experience
+    const minimumJoinTime = battle.minimumJoinTime || 5; // 5 seconds for testing purposes
 
     // Check 1: Is it still within join time limit
     if (now > joinDeadline) {
