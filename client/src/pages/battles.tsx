@@ -84,6 +84,12 @@ export default function BattlesPage() {
     return matchesSearch && matchesStatus && matchesCrypto;
   });
 
+  // Filter battles for Open Battles tab (status = 'open')
+  const openBattles = filteredBattles.filter((battle: Battle) => battle.status === 'open');
+  
+  // Filter battles for Active Battles tab (status = 'active')
+  const activeBattles = filteredBattles.filter((battle: Battle) => battle.status === 'active');
+
   const getCryptoImageUrl = (cryptoId: string) => {
     const crypto = cryptos.find((c: any) => c.id === cryptoId);
     return crypto?.image || `https://assets.coingecko.com/coins/images/1/large/${cryptoId}.png`;
@@ -498,8 +504,9 @@ export default function BattlesPage() {
 
         {/* Battles Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="live">Live Battles</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="live">Open Battles</TabsTrigger>
+            <TabsTrigger value="active">Active Battles</TabsTrigger>
             <TabsTrigger value="create">Create Battle</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
@@ -509,33 +516,27 @@ export default function BattlesPage() {
               {battlesLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-gray-600 dark:text-gray-400 mt-4">Loading battles...</p>
+                  <p className="text-gray-600 dark:text-gray-400 mt-4">Loading open battles...</p>
                 </div>
-              ) : filteredBattles.length === 0 ? (
+              ) : openBattles.length === 0 ? (
                 <Card>
                   <CardContent className="p-8 text-center">
                     <Swords className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                       {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all' 
-                        ? 'No battles match the current filters' 
-                        : 'No battles available yet'}
+                        ? 'No open battles match the current filters' 
+                        : 'No open battles available yet'}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
                       {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all'
                         ? 'Try changing your search filters'
-                        : 'Create the first battle or wait for other users to create battles'}
+                        : 'Open battles are waiting for opponents to join. Check back later or create a new battle.'}
                     </p>
-                    {(!searchQuery && statusFilter === 'all' && cryptoFilter === 'all') && (
-                      <Button onClick={() => setActiveTab('create')}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create New Battle
-                      </Button>
-                    )}
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid gap-4">
-                  {filteredBattles.map((battle: Battle) => (
+                  {openBattles.map((battle: Battle) => (
                     <Card key={battle.id} className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-4">
@@ -668,7 +669,144 @@ export default function BattlesPage() {
           </TabsContent>
           
           <TabsContent value="create" className="mt-6">
-            <PredictionBattles />
+            <div className="space-y-4">
+              {battlesLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 dark:text-gray-400 mt-4">Loading active battles...</p>
+                </div>
+              ) : activeBattles.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Swords className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all' 
+                        ? 'No active battles match the current filters' 
+                        : 'No active battles at the moment'}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all'
+                        ? 'Try changing your search filters'
+                        : 'Active battles appear here when two players are competing. Check back later or join an open battle.'}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {activeBattles.map((battle: Battle) => (
+                    <Card key={battle.id} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={getCryptoImageUrl(battle.cryptocurrency)}
+                              alt={battle.cryptocurrency}
+                              className="w-8 h-8 rounded-full"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `https://assets.coingecko.com/coins/images/1/large/${battle.cryptocurrency}.png`;
+                              }}
+                            />
+                            <div>
+                              <h3 className="font-semibold text-gray-900 dark:text-white">
+                                {getCryptoDisplayInfo(battle.cryptocurrency).name} ({getCryptoDisplayInfo(battle.cryptocurrency).symbol})
+                              </h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Stake: {battle.stakeAmount} NTIQ
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Time left: {battle.timeLeft > 0 ? `${Math.floor(battle.timeLeft / 3600)}h ${Math.floor((battle.timeLeft % 3600) / 60)}m` : 'Expired'}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-500">
+                              Status: <span className="font-medium text-orange-600">Active</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4">
+                          {/* Mobile: Current Price Above Participants */}
+                          <div className="md:hidden bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-4">
+                            <div className="text-center">
+                              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Current Price
+                              </h4>
+                              <p className="text-lg font-bold text-gray-900 dark:text-white">
+                                {battle.currentPrice ? 
+                                  `$${battle.currentPrice.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 6
+                                  })}` : 
+                                  'Loading...'
+                                }
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {/* Challenger */}
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                              <div className="text-center">
+                                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                                  Challenger
+                                </h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                  {battle.challengerUsername}
+                                </p>
+                                <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                                  ${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 6
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Current Price - Desktop Only */}
+                            <div className="hidden md:block bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                              <div className="text-center">
+                                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                  Current Price
+                                </h4>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                                  {battle.currentPrice ? 
+                                    `$${battle.currentPrice.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 6
+                                    })}` : 
+                                    'Loading...'
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Opponent */}
+                            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                              <div className="text-center">
+                                <h4 className="font-medium text-purple-900 dark:text-purple-100 mb-2">
+                                  Opponent
+                                </h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                  {battle.challengedUsername}
+                                </p>
+                                <p className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                                  ${parseFloat(battle.challengedPrediction || '0').toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 6
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
           
           <TabsContent value="history" className="mt-6">
