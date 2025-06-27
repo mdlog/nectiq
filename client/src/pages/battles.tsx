@@ -308,10 +308,10 @@ export default function BattlesPage() {
                       }}
                     />
                     <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white">
-                        {battle.cryptocurrency.toUpperCase()}
+                      <h4 className="font-semibold text-white">
+                        {getCryptoDisplayInfo(battle.cryptocurrency).name}
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-gray-300">
                         {new Date(battle.createdAt).toLocaleDateString()}
                       </p>
                     </div>
