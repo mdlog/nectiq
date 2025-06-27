@@ -51,6 +51,8 @@ export function PredictionBattles() {
   const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
   const [newComment, setNewComment] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [joiningBattle, setJoiningBattle] = useState<Battle | null>(null);
+  const [joinPrediction, setJoinPrediction] = useState<number>(0);
   const [createForm, setCreateForm] = useState<CreateBattleForm>({
     cryptocurrency: '',
     timeframe: '',
@@ -142,6 +144,31 @@ export function PredictionBattles() {
     }
   });
 
+  // Join battle mutation
+  const joinBattleMutation = useMutation({
+    mutationFn: ({ battleId, prediction }: { battleId: number; prediction: number }) => 
+      apiRequest(`/api/battles/${battleId}/join`, {
+        method: 'POST',
+        body: JSON.stringify({ challengedPrediction: prediction })
+      }),
+    onSuccess: () => {
+      toast({
+        title: 'Bergabung Battle Berhasil!',
+        description: 'Anda telah bergabung dalam battle prediksi ini.',
+      });
+      setJoiningBattle(null);
+      setJoinPrediction(0);
+      queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Gagal bergabung battle',
+        variant: 'destructive',
+      });
+    }
+  });
+
   // React to battle mutation
   const reactionMutation = useMutation({
     mutationFn: ({ battleId, reactionType }: { battleId: number; reactionType: string }) => 
@@ -212,6 +239,43 @@ export function PredictionBattles() {
     }
 
     createBattleMutation.mutate(createForm);
+  };
+
+  const handleJoinBattle = () => {
+    if (!user) {
+      toast({
+        title: 'Login Required',
+        description: 'Silakan hubungkan wallet untuk bergabung battle',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!joiningBattle) return;
+
+    if (joinPrediction <= 0) {
+      toast({
+        title: 'Error',
+        description: 'Masukkan prediksi harga yang valid',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check if user has enough balance
+    if (user.balance < joiningBattle.stakeAmount) {
+      toast({
+        title: 'Saldo Tidak Cukup',
+        description: `Anda memerlukan ${joiningBattle.stakeAmount} NTIQ untuk bergabung battle ini`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    joinBattleMutation.mutate({
+      battleId: joiningBattle.id,
+      prediction: joinPrediction
+    });
   };
 
   const BattleCard = ({ battle }: { battle: Battle }) => (
@@ -296,15 +360,27 @@ export function PredictionBattles() {
 
         {/* Action buttons */}
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => spectatorMutation.mutate(battle.id)}
-            className="flex-1"
-          >
-            <Eye className="w-4 h-4 mr-1" />
-            Watch
-          </Button>
+          {/* Show Join button if battle is open and user is not the challenger */}
+          {battle.status === 'open' && !battle.challengedId && user && user.id !== battle.challengerId ? (
+            <Button 
+              size="sm" 
+              onClick={() => setJoiningBattle(battle)}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Swords className="w-4 h-4 mr-1" />
+              Join Battle
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => spectatorMutation.mutate(battle.id)}
+              className="flex-1"
+            >
+              <Eye className="w-4 h-4 mr-1" />
+              Watch
+            </Button>
+          )}
           <Button 
             variant="outline" 
             size="sm" 
@@ -571,6 +647,75 @@ export function PredictionBattles() {
                 </div>
               </TabsContent>
             </Tabs>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Join Battle Dialog */}
+      {joiningBattle && (
+        <Dialog open={!!joiningBattle} onOpenChange={() => setJoiningBattle(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Bergabung Battle Prediksi</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="flex items-center gap-3 mb-3">
+                  <img 
+                    src={getCryptoImageUrl(joiningBattle.cryptocurrency)} 
+                    alt={joiningBattle.cryptocurrency}
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <div>
+                    <div className="font-semibold capitalize">{joiningBattle.cryptocurrency}</div>
+                    <div className="text-sm text-muted-foreground">{joiningBattle.timeframe}</div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="text-muted-foreground">Taruhan</div>
+                    <div className="font-semibold">{joiningBattle.stakeAmount} NTIQ</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Prediksi Lawan</div>
+                    <div className="font-semibold">${joiningBattle.challengerPrediction.toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Prediksi Harga Anda (USD)</label>
+                <Input
+                  type="number"
+                  placeholder="Masukkan prediksi harga..."
+                  value={joinPrediction || ''}
+                  onChange={(e) => setJoinPrediction(Number(e.target.value))}
+                  className="w-full"
+                />
+                <div className="text-xs text-muted-foreground">
+                  Siapa yang lebih akurat akan memenangkan {joiningBattle.stakeAmount * 2} NTIQ
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setJoiningBattle(null)}
+                  className="flex-1"
+                >
+                  Batal
+                </Button>
+                <Button
+                  onClick={handleJoinBattle}
+                  disabled={joinBattleMutation.isPending || !joinPrediction}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  {joinBattleMutation.isPending ? 'Bergabung...' : 'Bergabung Battle'}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       )}
