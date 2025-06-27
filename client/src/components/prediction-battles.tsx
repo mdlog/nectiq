@@ -150,51 +150,49 @@ const WinProbabilityChart = ({ battle }: { battle: Battle }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Progress bars probabilitas */}
+        {/* Single Combined Probability Bar */}
         <div className="space-y-3">
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+          {/* Percentage Labels Above Bar */}
+          <div className="flex justify-between items-center">
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                {probability.challengerWinChance}%
+              </div>
+              <div className="text-xs font-medium text-blue-600 dark:text-blue-400">
                 {battle.challenger.username}
-              </span>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                  {probability.challengerWinChance}%
-                </span>
-                {probability.challengerWinChance > probability.challengedWinChance && (
-                  <TrendingUp size={14} className="text-green-500" />
-                )}
               </div>
             </div>
-            <Progress 
-              value={probability.challengerWinChance} 
-              className="h-3 bg-gray-200 dark:bg-gray-700"
-            />
-            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-              Error: {probability.challengerAccuracy.toFixed(2)}% vs harga saat ini
+            <div className="text-center">
+              <div className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                {probability.challengedWinChance}%
+              </div>
+              <div className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                {battle.challenged?.username || 'Opponent'}
+              </div>
             </div>
           </div>
           
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                {battle.challenged?.username || 'Opponent'}
-              </span>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-bold text-purple-700 dark:text-purple-300">
-                  {probability.challengedWinChance}%
-                </span>
-                {probability.challengedWinChance > probability.challengerWinChance && (
-                  <TrendingUp size={14} className="text-green-500" />
-                )}
-              </div>
-            </div>
-            <Progress 
-              value={probability.challengedWinChance} 
-              className="h-3 bg-gray-200 dark:bg-gray-700"
+          {/* Combined Probability Bar */}
+          <div className="relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-6 overflow-hidden">
+            <div 
+              className="bg-blue-500 h-full transition-all duration-500 absolute left-0 rounded-l-full"
+              style={{ width: `${probability.challengerWinChance}%` }}
             />
-            <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-              Error: {probability.challengedAccuracy.toFixed(2)}% vs harga saat ini
+            <div 
+              className="bg-purple-500 h-full transition-all duration-500 absolute right-0 rounded-r-full"
+              style={{ width: `${probability.challengedWinChance}%` }}
+            />
+            {/* Center divider line */}
+            <div className="absolute left-1/2 transform -translate-x-0.5 top-0 bottom-0 w-0.5 bg-white/70" />
+          </div>
+          
+          {/* Accuracy Information */}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+              <div className="font-semibold">Error: {probability.challengerAccuracy.toFixed(2)}%</div>
+            </div>
+            <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+              <div className="font-semibold">Error: {probability.challengedAccuracy.toFixed(2)}%</div>
             </div>
           </div>
         </div>
