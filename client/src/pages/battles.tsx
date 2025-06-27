@@ -90,13 +90,13 @@ export default function BattlesPage() {
   };
 
   const formatTimeLeft = (timeLeft: number) => {
-    if (timeLeft <= 0) return 'Berakhir';
+    if (timeLeft <= 0) return 'Ended';
     
     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
     
     if (hours > 0) {
-      return `${hours}j ${minutes}m`;
+      return `${hours}h ${minutes}m`;
     }
     return `${minutes}m`;
   };
@@ -457,10 +457,10 @@ export default function BattlesPage() {
               <CardContent className="p-8 text-center">
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Riwayat Battle
+                  Battle History
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Fitur riwayat battle akan segera hadir. Anda dapat melihat semua battle yang pernah Anda ikuti di sini.
+                  Battle history feature coming soon. You will be able to view all battles you have participated in here.
                 </p>
               </CardContent>
             </Card>

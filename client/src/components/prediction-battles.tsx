@@ -55,7 +55,7 @@ interface CreateBattleForm {
   isPublic: boolean;
 }
 
-// Fungsi untuk menghitung probabilitas menang berdasarkan akurasi prediksi
+// Function to calculate win probability based on prediction accuracy
 const calculateWinProbability = (battle: Battle): WinProbability => {
   if (!battle.challengedPrediction || !battle.currentPrice) {
     return {
@@ -67,11 +67,11 @@ const calculateWinProbability = (battle: Battle): WinProbability => {
     };
   }
 
-  // Hitung akurasi masing-masing pemain terhadap harga saat ini
+  // Calculate each player's accuracy against current price
   const challengerAccuracy = Math.abs(battle.challengerPrediction - battle.currentPrice) / battle.currentPrice * 100;
   const challengedAccuracy = Math.abs(battle.challengedPrediction - battle.currentPrice) / battle.currentPrice * 100;
 
-  // Hitung probabilitas berdasarkan perbandingan akurasi
+  // Calculate probability based on accuracy comparison
   let challengerWinChance: number;
   let challengedWinChance: number;
   
@@ -79,13 +79,13 @@ const calculateWinProbability = (battle: Battle): WinProbability => {
     challengerWinChance = 50;
     challengedWinChance = 50;
   } else {
-    // Semakin kecil error, semakin besar peluang menang
+    // The smaller the error, the greater the chance of winning
     const totalError = challengerAccuracy + challengedAccuracy;
     challengedWinChance = (challengerAccuracy / totalError) * 100;
     challengerWinChance = (challengedAccuracy / totalError) * 100;
   }
 
-  // Tentukan confidence level berdasarkan selisih akurasi
+  // Determine confidence level based on accuracy difference
   const accuracyDiff = Math.abs(challengerAccuracy - challengedAccuracy);
   let confidenceLevel: 'low' | 'medium' | 'high';
   
@@ -481,7 +481,7 @@ export function PredictionBattles() {
     if (!user) {
       toast({
         title: 'Login Required',
-        description: 'Silakan hubungkan wallet untuk bergabung battle',
+        description: 'Please connect your wallet to join the battle',
         variant: 'destructive',
       });
       return;
@@ -492,7 +492,7 @@ export function PredictionBattles() {
     if (joinPrediction <= 0) {
       toast({
         title: 'Error',
-        description: 'Masukkan prediksi harga yang valid',
+        description: 'Please enter a valid price prediction',
         variant: 'destructive',
       });
       return;
@@ -501,8 +501,8 @@ export function PredictionBattles() {
     // Check if user has enough balance
     if ((user as any)?.balance < joiningBattle.stakeAmount) {
       toast({
-        title: 'Saldo Tidak Cukup',
-        description: `Anda memerlukan ${joiningBattle.stakeAmount} NTIQ untuk bergabung battle ini`,
+        title: 'Insufficient Balance',
+        description: `You need ${joiningBattle.stakeAmount} NTIQ to join this battle`,
         variant: 'destructive',
       });
       return;
