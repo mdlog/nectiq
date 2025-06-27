@@ -76,6 +76,12 @@ export function PredictionBattles() {
     refetchInterval: 5000 // Update every 5 seconds
   });
 
+  // Fetch crypto prices for logo URLs
+  const { data: cryptoPricesData } = useQuery({
+    queryKey: ['/api/crypto/prices'],
+    refetchInterval: 30000 // Update every 30 seconds
+  });
+
   // Fetch cryptocurrencies for create form
   const { data: cryptos = [] } = useQuery({
     queryKey: ['/api/crypto/prices']
@@ -205,8 +211,16 @@ export function PredictionBattles() {
     return `${seconds}s`;
   };
 
-  // Get crypto logo URL
+  // Get crypto logo URL dynamically from live price data
   const getCryptoImageUrl = (cryptoId: string) => {
+    if (cryptoPricesData && Array.isArray(cryptoPricesData) && cryptoPricesData.length > 0) {
+      const crypto = (cryptoPricesData as any[]).find((c: any) => c.id === cryptoId);
+      if (crypto && crypto.image) {
+        return crypto.image;
+      }
+    }
+    
+    // Fallback to static mapping if live data not available
     const cryptoMap: { [key: string]: string } = {
       'bitcoin': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
       'ethereum': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
@@ -215,7 +229,12 @@ export function PredictionBattles() {
       'solana': 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
       'polkadot': 'https://assets.coingecko.com/coins/images/12171/small/aJGBjJFU_400x400.jpg',
       'chainlink': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
-      'litecoin': 'https://assets.coingecko.com/coins/images/2/small/litecoin.png'
+      'litecoin': 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
+      'stellar': 'https://assets.coingecko.com/coins/images/100/small/Stellar_symbol_black_RGB.png',
+      'tron': 'https://assets.coingecko.com/coins/images/1094/small/tron-logo.png',
+      'matic-network': 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png',
+      'sui': 'https://assets.coingecko.com/coins/images/26375/small/sui_asset.jpeg',
+      'sahara-ai': 'https://assets.coingecko.com/coins/images/44077/small/sahara.png'
     };
     return cryptoMap[cryptoId] || `https://assets.coingecko.com/coins/images/1/small/bitcoin.png`;
   };
