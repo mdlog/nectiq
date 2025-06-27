@@ -172,21 +172,11 @@ export default function BattlesPage() {
 
   // Battle History Section Component
   const BattleHistorySection = () => {
-    const { data: battleHistory, isLoading: isLoadingHistory } = useQuery({
+    const { data: battleHistory, isLoading: isLoadingHistory, error } = useQuery({
       queryKey: ['/api/battles/history'],
     });
 
-    const { data: cryptoPrices } = useQuery({
-      queryKey: ['/api/crypto/prices'],
-    });
-
     const getCryptoImageUrl = (cryptoId: string) => {
-      const cryptoPricesData = cryptoPrices as any[];
-      if (cryptoPricesData) {
-        const cryptoData = cryptoPricesData.find((crypto: any) => crypto.id === cryptoId);
-        if (cryptoData?.image) return cryptoData.image;
-      }
-      
       const imageMapping: { [key: string]: string } = {
         bitcoin: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
         ethereum: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
@@ -195,7 +185,13 @@ export default function BattlesPage() {
         solana: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
         stellar: 'https://assets.coingecko.com/coins/images/100/small/Stellar_symbol_black_RGB.png',
         tron: 'https://assets.coingecko.com/coins/images/1094/small/tron-logo.png',
-        sui: 'https://assets.coingecko.com/coins/images/26375/small/sui_asset.jpeg'
+        sui: 'https://assets.coingecko.com/coins/images/26375/small/sui_asset.jpeg',
+        chainlink: 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
+        polkadot: 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
+        litecoin: 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
+        'matic-network': 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png',
+        hyperliquid: 'https://assets.coingecko.com/coins/images/33223/small/hyperliquid.png',
+        'sahara-ai': 'https://assets.coingecko.com/coins/images/66681/small/SAHARA-token-200.png'
       };
       
       return imageMapping[cryptoId] || 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png';
@@ -207,6 +203,16 @@ export default function BattlesPage() {
           <CardContent className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">Loading battle history...</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (error) {
+      return (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-red-600 dark:text-red-400">Error loading battle history. Please try again.</p>
           </CardContent>
         </Card>
       );
