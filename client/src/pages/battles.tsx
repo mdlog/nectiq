@@ -371,13 +371,13 @@ export default function BattlesPage() {
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-6">
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                       <DollarSign className="w-4 h-4 mr-1" />
                       Stake: {battle.stakeAmount} NTIQ
                     </div>
                     {battle.winnerReward && (
-                      <div className="flex items-center text-sm text-green-600 dark:text-green-400">
+                      <div className="flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
                         <Award className="w-4 h-4 mr-1" />
                         Reward: {battle.winnerReward} NTIQ
                       </div>
