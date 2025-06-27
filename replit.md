@@ -195,6 +195,7 @@ Changelog:
 - June 27, 2025. Fixed cryptocurrency disappearing from Prediction Battles list after someone joins: modified getLiveBattles() function to include both 'open' and 'active' status battles instead of only 'open' battles, enhanced battle data retrieval to include challenged user information, added real-time current price and time remaining calculations, ensuring all battles remain visible regardless of join status
 - June 27, 2025. Fixed cryptocurrency logo mismatch in Prediction Battles: implemented dynamic logo system using real-time CoinGecko API data instead of static mapping, added comprehensive fallback system for all supported cryptocurrencies including Stellar, TRON, Polygon, SUI, and Sahara AI, ensuring correct logo display for all battle cryptocurrencies
 - June 27, 2025. Fixed decimal price input validation in Prediction Battles join dialog: resolved issue preventing users from entering decimal values like 0.24 for Stellar by changing Number() to parseFloat() and adding proper min="0" step="0.01" attributes, now allows proper decimal price predictions for all cryptocurrencies including low-value coins
+- June 27, 2025. Enhanced input handling for zero values in Prediction Battles join dialog: fixed issue where typing "0" in price input field was not responding by improving value state management with proper conditional logic for zero values, enhanced onChange handler to correctly handle empty strings and zero inputs, ensuring all numeric inputs including "0" and decimal values work properly
 ```
 
 ## User Preferences

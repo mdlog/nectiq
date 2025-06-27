@@ -722,8 +722,18 @@ export function PredictionBattles() {
                   placeholder="Masukkan prediksi harga..."
                   min="0"
                   step="0.01"
-                  value={joinPrediction || ''}
-                  onChange={(e) => setJoinPrediction(parseFloat(e.target.value) || 0)}
+                  value={joinPrediction === 0 ? '0' : (joinPrediction || '')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      setJoinPrediction(0);
+                    } else {
+                      const numValue = parseFloat(value);
+                      if (!isNaN(numValue)) {
+                        setJoinPrediction(numValue);
+                      }
+                    }
+                  }}
                   className="w-full"
                 />
                 <div className="text-xs text-muted-foreground">
