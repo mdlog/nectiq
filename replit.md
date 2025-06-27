@@ -188,6 +188,7 @@ Changelog:
 - June 26, 2025. Fixed Prediction Battles display issue: resolved problem where battle creation notifications appeared but new battles didn't show in the list by replacing hardcoded mock data in /api/battles/live endpoint with real database queries using storage.getLiveBattles(), enhanced cache invalidation strategy with multiple refresh methods, and fixed TypeScript typing issues to ensure proper battle list display and refresh functionality
 - June 26, 2025. Implemented comprehensive Battle Join functionality: added "Join Battle" button for open battles, created join dialog with prediction input, implemented /api/battles/:id/join endpoint with balance validation and battle status updates, automatic stake deduction and battle activation when second player joins
 - June 26, 2025. Enhanced Create Battle form with dynamic cryptocurrency selection: replaced hardcoded cryptocurrency list with live data from /api/crypto/prices endpoint, supports all cryptocurrencies available in the system automatically, displays proper names and symbols dynamically
+- June 27, 2025. Fixed text color contrast issue in Prediction Battles: improved visibility of price text above challenger and opponent by changing from default white text to dark blue (text-blue-900) for challenger and dark red (text-red-900) for opponent, ensuring proper contrast against light backgrounds with dark mode support
 ```
 
 ## User Preferences
