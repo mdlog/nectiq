@@ -13,6 +13,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { PredictionBattles } from '@/components/prediction-battles';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { CountdownTimer } from '@/components/countdown-timer';
 import { Swords, Plus, Search, Filter, Trophy, Clock, Users, DollarSign, Award } from 'lucide-react';
 
 interface Battle {
@@ -561,7 +562,7 @@ export default function BattlesPage() {
                           <div className="text-right">
                             {getStatusBadge(battle.status)}
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              {formatTimeLeft(battle.timeLeft)}
+                              <CountdownTimer targetTime={battle.targetTime} />
                             </p>
                           </div>
                         </div>
@@ -718,7 +719,7 @@ export default function BattlesPage() {
                           
                           <div className="text-right">
                             <div className="text-sm text-gray-600 dark:text-gray-400">
-                              Time left: {battle.timeLeft > 0 ? `${Math.floor(battle.timeLeft / 3600)}h ${Math.floor((battle.timeLeft % 3600) / 60)}m` : 'Expired'}
+                              Time left: <CountdownTimer targetTime={battle.targetTime} />
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-500">
                               Status: <span className="font-medium text-orange-600">Active</span>
