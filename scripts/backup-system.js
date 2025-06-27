@@ -6,6 +6,7 @@
 
 import { spawn } from 'child_process';
 import fs from 'fs/promises';
+import { createWriteStream } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -38,7 +39,7 @@ class NectiqBackupSystem {
         stdio: ['ignore', 'pipe', 'pipe']
       });
 
-      const writeStream = require('fs').createWriteStream(backupFile);
+      const writeStream = createWriteStream(backupFile);
       pgDump.stdout.pipe(writeStream);
 
       let errorOutput = '';
