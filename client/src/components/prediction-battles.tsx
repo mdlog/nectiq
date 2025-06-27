@@ -151,10 +151,21 @@ export function PredictionBattles() {
         method: 'POST',
         body: JSON.stringify({ challengedPrediction: prediction })
       }),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      const fairnessInfo = data.fairnessInfo;
+      let fairnessMessage = 'Anda telah bergabung dalam battle prediksi ini.';
+      
+      if (fairnessInfo) {
+        fairnessMessage += `\n\nInformasi Keadilan:`;
+        fairnessMessage += `\n• Pergerakan harga: ${fairnessInfo.priceMovement}%`;
+        fairnessMessage += `\n• Multiplier keadilan: ${fairnessInfo.fairnessMultiplier}x`;
+        fairnessMessage += `\n• Bonus waktu bergabung: ${fairnessInfo.joinTimeBonus}x`;
+        fairnessMessage += `\n• Waktu bergabung: ${fairnessInfo.joinTimePercentage}% dari durasi battle`;
+      }
+      
       toast({
         title: 'Bergabung Battle Berhasil!',
-        description: 'Anda telah bergabung dalam battle prediksi ini.',
+        description: fairnessMessage,
       });
       setJoiningBattle(null);
       setJoinPrediction(0);

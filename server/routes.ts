@@ -1412,7 +1412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Join battle endpoint
+  // Join battle endpoint dengan Anti-Last Minute Joining System
   app.post('/api/battles/:id/join', async (req, res) => {
     if (!(req as any).session?.userId) {
       return res.status(401).json({ message: 'Authentication required' });
@@ -1435,9 +1435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get battle info
-      const battles = await storage.getLiveBattles();
-      const battle = battles.find(b => b.id === battleId);
-      
+      const battle = await storage.getBattle(battleId);
       if (!battle) {
         return res.status(404).json({ message: 'Battle not found' });
       }
@@ -1459,27 +1457,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: `Saldo tidak cukup. Memerlukan ${battle.stakeAmount} NTIQ` });
       }
 
-      // Update battle with challenged user
-      await storage.updateBattle(battleId, {
-        challengedId: userId,
-        challengedPrediction: challengedPrediction,
-        status: 'active',
-        acceptedAt: new Date()
-      });
+      // Use new anti-last-minute joining system
+      const joinResult = await storage.joinBattle(battleId, userId, parseFloat(challengedPrediction));
 
       // Deduct stake from user balance
       await storage.updateUser(userId, {
         balance: user.balance - battle.stakeAmount
       });
 
+      // Log transaction
+      await storage.logTransaction({
+        userId,
+        type: 'battle_join',
+        amount: battle.stakeAmount,
+        description: `Bergabung battle vs user ID ${battle.challengerId}`,
+        relatedId: battleId
+      });
+
       res.json({ 
         message: 'Berhasil bergabung battle!',
-        battle: {
-          ...battle,
-          challengedId: userId,
-          challengedPrediction: challengedPrediction,
-          status: 'active'
-        }
+        battle: joinResult,
+        fairnessInfo: joinResult.joinFairness
       });
     } catch (error) {
       console.error('Error joining battle:', error);
