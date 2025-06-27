@@ -1052,7 +1052,7 @@ export class DatabaseStorage implements IStorage {
         return {
           ...battle,
           challengedUsername,
-          timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+          timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
         };
       })
     );
@@ -1141,7 +1141,7 @@ export class DatabaseStorage implements IStorage {
           challengedUsername,
           challengedUid,
           duration: Math.round((new Date(battle.targetTime).getTime() - new Date(battle.createdAt).getTime()) / (1000 * 60)),
-          timeRemaining: Math.max(0, new Date(battle.targetTime).getTime() - Date.now())
+          timeRemaining: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
         };
       })
     );
@@ -1200,7 +1200,7 @@ export class DatabaseStorage implements IStorage {
           ...battle,
           challengerUsername,
           challengedUsername,
-          timeLeft: Math.max(0, new Date(battle.targetTime).getTime() - Date.now()),
+          timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000)),
           isUserChallenger: battle.challengerId === userId
         };
       })
