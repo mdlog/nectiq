@@ -1,6 +1,6 @@
 import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql } from "drizzle-orm";
+import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt } from "drizzle-orm";
 
 // Generate unique 9-digit UID
 function generateUID(): string {
@@ -692,7 +692,136 @@ export class DatabaseStorage implements IStorage {
     return crypto ? parseFloat(crypto.currentPrice) : 0;
   }
 
+  // Method to resolve expired battles
+  private async resolveExpiredBattles(): Promise<void> {
+    try {
+      // Find all active battles that have passed their target time
+      const expiredBattles = await db
+        .select()
+        .from(predictionBattles)
+        .where(and(
+          eq(predictionBattles.status, 'active'),
+          lt(predictionBattles.targetTime, new Date())
+        ));
+
+      for (const battle of expiredBattles) {
+        await this.resolveBattle(battle.id);
+      }
+    } catch (error) {
+      console.error('Error resolving expired battles:', error);
+    }
+  }
+
+  // Method to resolve a specific battle
+  private async resolveBattle(battleId: number): Promise<void> {
+    try {
+      const [battle] = await db
+        .select()
+        .from(predictionBattles)
+        .where(eq(predictionBattles.id, battleId));
+
+      if (!battle || battle.status !== 'active') {
+        return;
+      }
+
+      // Get current crypto price
+      const currentPrice = await this.getCurrentCryptoPrice(battle.cryptocurrency);
+      
+      if (!currentPrice || !battle.challengerPrediction || !battle.challengedPrediction) {
+        // If we can't get price or missing predictions, mark as cancelled
+        await db
+          .update(predictionBattles)
+          .set({ 
+            status: 'cancelled',
+            actualPrice: currentPrice?.toString() || '0'
+          })
+          .where(eq(predictionBattles.id, battleId));
+        return;
+      }
+
+      // Calculate accuracy for both predictions
+      const challengerAccuracy = Math.abs((parseFloat(battle.challengerPrediction) - currentPrice) / currentPrice) * 100;
+      const challengedAccuracy = Math.abs((parseFloat(battle.challengedPrediction) - currentPrice) / currentPrice) * 100;
+
+      let winnerId: number | null = null;
+      let winnerReward = 0;
+
+      // Determine winner (lower accuracy percentage = more accurate prediction)
+      if (challengerAccuracy < challengedAccuracy) {
+        winnerId = battle.challengerId;
+      } else if (challengedAccuracy < challengerAccuracy) {
+        winnerId = battle.challengedId;
+      }
+      // If equal accuracy, it's a tie (winnerId remains null)
+
+      // Calculate reward based on accuracy and stake
+      if (winnerId) {
+        const winnerAccuracy = winnerId === battle.challengerId ? challengerAccuracy : challengedAccuracy;
+        let multiplier = 1;
+
+        // Accuracy-based multipliers
+        if (winnerAccuracy <= 0.1) multiplier = 5;
+        else if (winnerAccuracy <= 1) multiplier = 3;
+        else if (winnerAccuracy <= 5) multiplier = 1.5;
+        else multiplier = 1;
+
+        winnerReward = parseFloat(battle.stakeAmount) * 2 * multiplier; // Double stake + multiplier
+
+        // Update winner's balance
+        const [winner] = await db.select().from(users).where(eq(users.id, winnerId));
+        if (winner) {
+          await db
+            .update(users)
+            .set({ 
+              balance: winner.balance + winnerReward,
+              totalRewards: winner.totalRewards + winnerReward
+            })
+            .where(eq(users.id, winnerId));
+        }
+      } else {
+        // It's a tie - refund both players
+        const [challenger] = await db.select().from(users).where(eq(users.id, battle.challengerId));
+        const [challenged] = await db.select().from(users).where(eq(users.id, battle.challengedId));
+        
+        if (challenger) {
+          await db
+            .update(users)
+            .set({ balance: challenger.balance + parseFloat(battle.stakeAmount) })
+            .where(eq(users.id, battle.challengerId));
+        }
+        
+        if (challenged) {
+          await db
+            .update(users)
+            .set({ balance: challenged.balance + parseFloat(battle.stakeAmount) })
+            .where(eq(users.id, battle.challengedId));
+        }
+      }
+
+      // Update battle status to completed
+      await db
+        .update(predictionBattles)
+        .set({
+          status: 'completed',
+          winnerId,
+          winnerReward: winnerReward.toString(),
+          actualPrice: currentPrice.toString(),
+          challengerAccuracy: challengerAccuracy.toString(),
+          challengedAccuracy: challengedAccuracy.toString()
+        })
+        .where(eq(predictionBattles.id, battleId));
+
+      console.log(`Battle ${battleId} resolved. Winner: ${winnerId || 'Tie'}, Reward: ${winnerReward}`);
+
+    } catch (error) {
+      console.error(`Error resolving battle ${battleId}:`, error);
+    }
+  }
+
   async getLiveBattles(): Promise<any[]> {
+    // First, resolve any expired battles
+    await this.resolveExpiredBattles();
+
     // Get battles with challenger and challenged user info
     const battles = await db
       .select({
