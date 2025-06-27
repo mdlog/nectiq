@@ -4904,24 +4904,24 @@ export default function AdminPanel() {
                     </div>
 
                     <div className="mt-6 space-y-3">
-                      <p className="text-sm font-medium">Jika kamu ingin, saya bisa bantu buat:</p>
+                      <p className="text-sm font-medium">If you'd like, I can help create:</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                         <div className="flex items-center space-x-2">
                           <span className="text-blue-500">📱</span>
-                          <span>Mockup UI untuk "History of Changes"</span>
+                          <span>Mockup UI for "History of Changes"</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span className="text-green-500">✅</span>
-                          <span>Tampilan "Confirmation Modal" untuk tindakan berisiko</span>
+                          <span>"Confirmation Modal" display for risky actions</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span className="text-purple-500">🔗</span>
-                          <span>Diagram interaksi setting ↔ sistem lain</span>
+                          <span>Settings ↔ other systems interaction diagram</span>
                         </div>
                       </div>
                       
                       <p className="text-xs text-slate-500 mt-4">
-                        Ingin saya bantu lanjutkan ke salah satu fitur ini?
+                        Would you like me to help continue with one of these features?
                       </p>
                     </div>
                   </div>
