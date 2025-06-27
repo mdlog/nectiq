@@ -534,7 +534,7 @@ export function PredictionBattles() {
               {battle.challenger.username}
             </div>
             <div className="text-lg font-bold text-blue-900 dark:text-blue-100">
-              {battle.status === 'open' && !battle.challengedId ? (
+              {battle.status === 'open' && !battle.challengedId && (user as any)?.id !== battle.challengerId ? (
                 <div className="text-sm text-gray-500 dark:text-gray-400">🔒 Hidden</div>
               ) : (
                 `$${battle.challengerPrediction.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -836,7 +836,7 @@ export function PredictionBattles() {
                       {selectedBattle.challenger.username}
                     </div>
                     <div className="text-2xl font-bold">
-                      {selectedBattle.status === 'open' && !selectedBattle.challengedId ? (
+                      {selectedBattle.status === 'open' && !selectedBattle.challengedId && (user as any)?.id !== selectedBattle.challengerId ? (
                         <div className="text-lg text-gray-500 dark:text-gray-400">🔒 Hidden</div>
                       ) : (
                         `$${selectedBattle.challengerPrediction.toLocaleString('en-US', { 
