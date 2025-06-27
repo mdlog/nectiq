@@ -761,7 +761,7 @@ export default function BattlesPage() {
                                   {battle.challengerUsername}
                                 </p>
                                 <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                                  {user && user.id === battle.challengerId ? (
+                                  {user && (user.id === battle.challengerId || user.id === battle.challengedId) ? (
                                     `$${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 6
@@ -801,10 +801,14 @@ export default function BattlesPage() {
                                   {battle.challengedUsername}
                                 </p>
                                 <p className="text-lg font-semibold text-purple-900 dark:text-purple-100">
-                                  ${parseFloat(battle.challengedPrediction || '0').toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 6
-                                  })}
+                                  {user && (user.id === battle.challengerId || user.id === battle.challengedId) ? (
+                                    `$${parseFloat(battle.challengedPrediction || '0').toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 6
+                                    })}`
+                                  ) : (
+                                    "🔒 Hidden"
+                                  )}
                                 </p>
                               </div>
                             </div>
