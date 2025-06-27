@@ -45,7 +45,16 @@ export default function BattlesPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [cryptoFilter, setCryptoFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('live');
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
+  const [predictionPrice, setPredictionPrice] = useState('');
   const { toast } = useToast();
+
+  // Check user authentication
+  const { data: user } = useQuery({
+    queryKey: ['/api/user'],
+    retry: false
+  });
 
   // Fetch battles data
   const { data: battles = [], isLoading: battlesLoading } = useQuery({
@@ -105,11 +114,60 @@ export default function BattlesPage() {
     }
   };
 
+  // Join battle mutation
+  const joinBattleMutation = useQuery({
+    queryKey: ['/api/battles/join', selectedBattle?.id],
+    enabled: false
+  });
+
   const handleJoinBattle = (battle: Battle) => {
-    toast({
-      title: "Info",
-      description: "Untuk bergabung dengan battle, silakan login terlebih dahulu atau gunakan tab 'Buat Battle' untuk membuat battle baru.",
-    });
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Silakan login terlebih dahulu untuk bergabung dengan battle.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSelectedBattle(battle);
+    setPredictionPrice('');
+    setJoinDialogOpen(true);
+  };
+
+  const submitJoinBattle = async () => {
+    if (!selectedBattle || !predictionPrice || !user) return;
+
+    try {
+      const response = await apiRequest(`/api/battles/${selectedBattle.id}/join`, {
+        method: 'POST',
+        body: JSON.stringify({
+          prediction: parseFloat(predictionPrice)
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Battle Joined!",
+          description: `Berhasil bergabung dengan battle ${selectedBattle.cryptocurrency}!`
+        });
+        setJoinDialogOpen(false);
+        queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Error",
+          description: error.message || "Gagal bergabung dengan battle",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat bergabung dengan battle",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -409,6 +467,64 @@ export default function BattlesPage() {
           </TabsContent>
         </Tabs>
       </main>
+      
+      {/* Join Battle Dialog */}
+      <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bergabung dengan Battle</DialogTitle>
+          </DialogHeader>
+          
+          {selectedBattle && (
+            <div className="space-y-4">
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <h3 className="font-semibold text-lg">
+                  {selectedBattle.cryptocurrency}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Stake: {selectedBattle.stakeAmount} NTIQ
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Current Price: ${selectedBattle.currentPrice?.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 6
+                  }) || 'Loading...'}
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="prediction">Prediksi Harga Anda ($)</Label>
+                <Input
+                  id="prediction"
+                  type="number"
+                  placeholder="Masukkan prediksi harga..."
+                  value={predictionPrice}
+                  onChange={(e) => setPredictionPrice(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setJoinDialogOpen(false)}
+                >
+                  Batal
+                </Button>
+                <Button 
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  onClick={submitJoinBattle}
+                  disabled={!predictionPrice || parseFloat(predictionPrice) <= 0}
+                >
+                  Bergabung
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
