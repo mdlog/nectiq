@@ -689,11 +689,20 @@ export class DatabaseStorage implements IStorage {
 
   private async getCurrentCryptoPrice(cryptoId: string): Promise<number> {
     try {
-      // Import crypto service untuk mendapatkan harga real-time
-      const { cryptoService } = await import('../services/cryptoService');
-      const prices = await cryptoService.getCurrentPrices();
-      const crypto = prices.find(p => p.id === cryptoId);
-      return crypto ? crypto.current_price : 0;
+      // Gunakan axios untuk mengambil data dari CoinGecko API secara langsung
+      const axios = await import('axios');
+      const response = await axios.default.get(`https://api.coingecko.com/api/v3/simple/price`, {
+        params: {
+          ids: cryptoId,
+          vs_currencies: 'usd'
+        },
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'Nectiq-Crypto-App/1.0'
+        }
+      });
+
+      return response.data[cryptoId]?.usd || 0;
     } catch (error) {
       console.error(`Error fetching price for ${cryptoId}:`, error);
       // Fallback ke database jika API gagal

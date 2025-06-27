@@ -203,7 +203,7 @@ const WinProbabilityChart = ({ battle }: { battle: Battle }) => {
             <span className="text-gray-600 dark:text-gray-400">Harga Saat Ini:</span>
             <span className="font-semibold">${battle.currentPrice.toLocaleString(undefined, { 
               minimumFractionDigits: 2, 
-              maximumFractionDigits: 6 
+              maximumFractionDigits: 2 
             })}</span>
           </div>
           <div className="flex justify-between text-xs">
@@ -211,7 +211,7 @@ const WinProbabilityChart = ({ battle }: { battle: Battle }) => {
             <span className="text-blue-600 dark:text-blue-400 font-semibold">
               ${battle.challengerPrediction.toLocaleString(undefined, { 
                 minimumFractionDigits: 2, 
-                maximumFractionDigits: 6 
+                maximumFractionDigits: 2 
               })}
             </span>
           </div>
@@ -220,7 +220,7 @@ const WinProbabilityChart = ({ battle }: { battle: Battle }) => {
             <span className="text-purple-600 dark:text-purple-400 font-semibold">
               ${battle.challengedPrediction.toLocaleString(undefined, { 
                 minimumFractionDigits: 2, 
-                maximumFractionDigits: 6 
+                maximumFractionDigits: 2 
               })}
             </span>
           </div>
@@ -570,7 +570,7 @@ export function PredictionBattles() {
                 const currentPrice = realTimePrice || battle.currentPrice;
                 return currentPrice.toLocaleString('en-US', { 
                   minimumFractionDigits: 2, 
-                  maximumFractionDigits: 6 
+                  maximumFractionDigits: 2 
                 });
               })()}
             </span>
@@ -841,7 +841,10 @@ export function PredictionBattles() {
                     <div className="font-semibold text-blue-700 dark:text-blue-300">
                       {selectedBattle.challenger.username}
                     </div>
-                    <div className="text-2xl font-bold">${selectedBattle.challengerPrediction.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">${selectedBattle.challengerPrediction.toLocaleString('en-US', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+              })}</div>
                   </div>
                   
                   <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
@@ -856,7 +859,10 @@ export function PredictionBattles() {
                 
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="text-sm text-muted-foreground">Current Price</div>
-                  <div className="text-3xl font-bold">${selectedBattle.currentPrice.toLocaleString()}</div>
+                  <div className="text-3xl font-bold">${selectedBattle.currentPrice.toLocaleString('en-US', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  })}</div>
                   <div className="text-sm text-muted-foreground">
                     {formatTimeLeft(selectedBattle.timeLeft)} remaining
                   </div>
