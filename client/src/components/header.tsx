@@ -21,8 +21,7 @@ export function Header() {
   const [location, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Check if current page is leaderboard
-  const isLeaderboardPage = location === '/leaderboard';
+
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -102,11 +101,7 @@ export function Header() {
   };
 
   return (
-    <header className={`border-b transition-all duration-300 ${
-      isLeaderboardPage 
-        ? "bg-gradient-to-r from-yellow-600 via-yellow-500 to-amber-500 border-yellow-400" 
-        : "bg-surface border-surface-light"
-    }`}>
+    <header className="bg-surface border-surface-light border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
@@ -126,9 +121,7 @@ export function Header() {
             <button 
               onClick={() => setLocation('/')} 
               className={`transition-colors ${
-                isLeaderboardPage 
-                  ? (location === '/' ? "text-white font-semibold" : "text-yellow-100 hover:text-white") 
-                  : (location === '/' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+                location === '/' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               Home
@@ -136,9 +129,7 @@ export function Header() {
             <button 
               onClick={() => setLocation('/dashboard')} 
               className={`transition-colors ${
-                isLeaderboardPage 
-                  ? (location === '/dashboard' ? "text-white font-semibold" : "text-yellow-100 hover:text-white") 
-                  : (location === '/dashboard' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+                location === '/dashboard' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               My Dashboard
@@ -146,9 +137,7 @@ export function Header() {
             <button 
               onClick={() => setLocation('/battles')} 
               className={`transition-colors ${
-                isLeaderboardPage 
-                  ? (location === '/battles' ? "text-white font-semibold" : "text-yellow-100 hover:text-white") 
-                  : (location === '/battles' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+                location === '/battles' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               Battles
@@ -156,19 +145,15 @@ export function Header() {
             <button 
               onClick={() => setLocation('/leaderboard')} 
               className={`transition-colors ${
-                isLeaderboardPage 
-                  ? "text-white font-bold text-shadow" 
-                  : (location === '/leaderboard' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+                location === '/leaderboard' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
-              🏆 Leaderboard
+              Leaderboard
             </button>
             <button 
               onClick={() => setLocation('/how-to-play')} 
               className={`transition-colors ${
-                isLeaderboardPage 
-                  ? (location === '/how-to-play' ? "text-white font-semibold" : "text-yellow-100 hover:text-white") 
-                  : (location === '/how-to-play' ? "text-white font-semibold" : "text-slate-300 hover:text-white")
+                location === '/how-to-play' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               How to Play
@@ -177,9 +162,7 @@ export function Header() {
               <button 
                 onClick={() => setLocation('/admin')} 
                 className={`transition-colors font-semibold ${
-                  isLeaderboardPage 
-                    ? "text-yellow-200 hover:text-white" 
-                    : "text-primary hover:text-primary/80"
+                  location === '/admin' ? "text-white font-bold" : "text-primary hover:text-primary/80"
                 }`}
               >
                 Admin
@@ -294,9 +277,7 @@ export function Header() {
                     setIsMobileMenuOpen(false);
                   }} 
                   className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    isLeaderboardPage 
-                      ? (location === '/' ? "text-white font-semibold bg-yellow-600/20" : "text-yellow-100 hover:text-white hover:bg-yellow-600/20") 
-                      : (location === '/' ? "text-white font-semibold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light")
+                    location === '/' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
                   }`}
                 >
                   Home
