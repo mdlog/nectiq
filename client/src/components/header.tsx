@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChartLine, Coins, User, Wallet, LogOut, Menu, X } from "lucide-react";
+import { ChartLine, Coins, User, Wallet, LogOut, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useAccount, useDisconnect } from 'wagmi';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -207,9 +208,53 @@ export function Header() {
                 >
                   <LogOut size={16} />
                 </Button>
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <User className="text-white" size={16} />
-                </div>
+                
+                {/* User Profile Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-8 h-8 bg-primary rounded-full flex items-center justify-center p-0 hover:bg-primary/80"
+                    >
+                      <User className="text-white" size={16} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <div className="px-3 py-2">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        User Information
+                      </p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="flex flex-col items-start space-y-1 p-3">
+                      <div className="flex items-center space-x-2 w-full">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium">Username:</span>
+                      </div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400 ml-6">
+                        {user?.username || 'Loading...'}
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex flex-col items-start space-y-1 p-3">
+                      <div className="flex items-center space-x-2 w-full">
+                        <ChartLine className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium">UID:</span>
+                      </div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400 ml-6 font-mono">
+                        {user?.uid || 'Loading...'}
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setLocation('/dashboard')}
+                      className="flex items-center space-x-2 p-3 cursor-pointer"
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Go to Dashboard</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <div className="flex items-center space-x-3">
@@ -223,9 +268,53 @@ export function Header() {
                   <span className="hidden sm:inline">Connect Wallet</span>
                   <span className="sm:hidden">Connect</span>
                 </Button>
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <User className="text-white" size={16} />
-                </div>
+                
+                {/* User Profile Dropdown - Not Connected */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-8 h-8 bg-primary rounded-full flex items-center justify-center p-0 hover:bg-primary/80"
+                    >
+                      <User className="text-white" size={16} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <div className="px-3 py-2">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        User Information
+                      </p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="flex flex-col items-start space-y-1 p-3">
+                      <div className="flex items-center space-x-2 w-full">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium">Username:</span>
+                      </div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400 ml-6">
+                        {user?.username || 'Not connected'}
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex flex-col items-start space-y-1 p-3">
+                      <div className="flex items-center space-x-2 w-full">
+                        <ChartLine className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium">UID:</span>
+                      </div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400 ml-6 font-mono">
+                        {user?.uid || 'Not connected'}
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setLocation('/wallet-login')}
+                      className="flex items-center space-x-2 p-3 cursor-pointer"
+                    >
+                      <Wallet className="h-4 w-4" />
+                      <span>Connect Wallet</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </div>
@@ -336,6 +425,35 @@ export function Header() {
                   </button>
                 )}
               </nav>
+
+              {/* User Information Section */}
+              <div className="border-t border-surface-light pt-3 mt-3">
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium text-white mb-3">
+                    User Information
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <User className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-300">Username:</span>
+                      </div>
+                      <span className="text-sm text-gray-400">
+                        {user?.username || 'Not connected'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <ChartLine className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-300">UID:</span>
+                      </div>
+                      <span className="text-sm text-gray-400 font-mono">
+                        {user?.uid || 'Not connected'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Mobile Connect Wallet Button (if not connected) */}
               {!isConnected && (
