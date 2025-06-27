@@ -814,7 +814,7 @@ export default function BattlesPage() {
             <PredictionBattles />
           </TabsContent>
           
-          <TabsContent value="history" className="mt-6">
+          <TabsContent value="history" className="mt-8">
             <BattleHistorySection />
           </TabsContent>
         </Tabs>
