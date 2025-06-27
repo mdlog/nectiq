@@ -311,7 +311,7 @@ export default function BattlesPage() {
                   {/* Opponent */}
                   <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">Opponent</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{battle.challengedUsername || 'N/A'}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{battle.challenged?.username || 'N/A'}</p>
                     <p className="text-lg font-bold text-red-900 dark:text-red-100">
                       {battle.challengedPrediction ? `$${parseFloat(battle.challengedPrediction).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
