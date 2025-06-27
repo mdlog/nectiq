@@ -1084,7 +1084,7 @@ export class DatabaseStorage implements IStorage {
       new Date(battle.joinDeadline) : 
       new Date(createdAt.getTime() + (battleDuration * 0.8));
     
-    const minimumJoinTime = battle.minimumJoinTime || 300; // 5 menit default
+    const minimumJoinTime = battle.minimumJoinTime || 30; // 30 detik default untuk user experience yang lebih baik
 
     // Check 1: Apakah masih dalam batas waktu join
     if (now > joinDeadline) {
@@ -1094,8 +1094,13 @@ export class DatabaseStorage implements IStorage {
     // Check 2: Apakah sudah melewati minimum join time
     const timeSinceCreation = (now.getTime() - createdAt.getTime()) / 1000; // dalam detik
     if (timeSinceCreation < minimumJoinTime) {
-      const remainingTime = Math.ceil((minimumJoinTime - timeSinceCreation) / 60);
-      throw new Error(`Anda harus menunggu ${remainingTime} menit lagi sebelum dapat bergabung untuk mencegah strategi unfair.`);
+      const remainingTime = Math.ceil((minimumJoinTime - timeSinceCreation));
+      if (remainingTime > 60) {
+        const remainingMinutes = Math.ceil(remainingTime / 60);
+        throw new Error(`Anda harus menunggu ${remainingMinutes} menit lagi sebelum dapat bergabung untuk mencegah strategi unfair.`);
+      } else {
+        throw new Error(`Anda harus menunggu ${remainingTime} detik lagi sebelum dapat bergabung untuk mencegah strategi unfair.`);
+      }
     }
 
     // Calculate fairness multipliers
