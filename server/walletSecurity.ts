@@ -51,7 +51,7 @@ export class WalletSecurityService {
         await this.recordWalletFingerprint(walletAddress, req);
         return {
           success: true,
-          message: 'Login berhasil - perangkat baru',
+          message: 'Login successful - new device',
           confidence: 0,
           requiresReview: false,
           suspiciousWallets: []
@@ -70,7 +70,7 @@ export class WalletSecurityService {
           walletAddress, 
           suspiciousWallets.map(w => w.walletAddress), 
           85, 
-          'Device fingerprint sama dengan wallet berbeda terdeteksi - diizinkan untuk review',
+          'Device fingerprint matches different wallet detected - allowed for review',
           req
         );
 
@@ -78,7 +78,7 @@ export class WalletSecurityService {
         await this.recordWalletFingerprint(walletAddress, req);
         return {
           success: true,
-          message: 'Login berhasil - aktivitas ditandai untuk review keamanan',
+          message: 'Login successful - activity flagged for security review',
           confidence: 85,
           requiresReview: true,
           suspiciousWallets: suspiciousWallets.map(w => w.walletAddress)
@@ -93,15 +93,15 @@ export class WalletSecurityService {
           walletAddress,
           differentWallets.map(w => w.walletAddress),
           60, // Reduced confidence from 70 to 60
-          'Beberapa wallet berbeda terdeteksi dari IP yang sama - threshold tinggi',
+          'Multiple different wallets detected from same IP - high threshold',
           req
         );
 
-        // Izinkan login tapi tandai untuk review
+        // Allow login but mark for review
         await this.recordWalletFingerprint(walletAddress, req);
         return {
           success: true,
-          message: 'Login berhasil tapi ditandai untuk review keamanan',
+          message: 'Login successful but flagged for security review',
           confidence: 70,
           requiresReview: true,
           suspiciousWallets: differentWallets.map(w => w.walletAddress)
@@ -112,7 +112,7 @@ export class WalletSecurityService {
       await this.recordWalletFingerprint(walletAddress, req);
       return {
         success: true,
-        message: 'Login berhasil',
+        message: 'Login successful',
         confidence: 0,
         requiresReview: false,
         suspiciousWallets: []
@@ -120,10 +120,10 @@ export class WalletSecurityService {
 
     } catch (error) {
       console.error('Wallet security check error:', error);
-      // Izinkan login jika ada error tapi tandai untuk review
+      // Allow login if error but mark for review
       return {
         success: true,
-        message: 'Login berhasil dengan peringatan keamanan',
+        message: 'Login successful with security warning',
         confidence: 0,
         requiresReview: true,
         suspiciousWallets: []
