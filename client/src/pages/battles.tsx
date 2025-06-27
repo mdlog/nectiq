@@ -89,6 +89,27 @@ export default function BattlesPage() {
     return crypto?.image || `https://assets.coingecko.com/coins/images/1/large/${cryptoId}.png`;
   };
 
+  const getCryptoDisplayInfo = (cryptoId: string) => {
+    const displayMapping: { [key: string]: { name: string, symbol: string } } = {
+      bitcoin: { name: 'Bitcoin', symbol: 'BTC' },
+      ethereum: { name: 'Ethereum', symbol: 'ETH' },
+      binancecoin: { name: 'BNB', symbol: 'BNB' },
+      cardano: { name: 'Cardano', symbol: 'ADA' },
+      solana: { name: 'Solana', symbol: 'SOL' },
+      stellar: { name: 'Stellar', symbol: 'XLM' },
+      tron: { name: 'TRON', symbol: 'TRX' },
+      sui: { name: 'Sui', symbol: 'SUI' },
+      chainlink: { name: 'Chainlink', symbol: 'LINK' },
+      polkadot: { name: 'Polkadot', symbol: 'DOT' },
+      litecoin: { name: 'Litecoin', symbol: 'LTC' },
+      'matic-network': { name: 'Polygon', symbol: 'MATIC' },
+      hyperliquid: { name: 'Hyperliquid', symbol: 'HYPE' },
+      'sahara-ai': { name: 'Sahara AI', symbol: 'SAHARA' }
+    };
+    
+    return displayMapping[cryptoId] || { name: cryptoId.charAt(0).toUpperCase() + cryptoId.slice(1), symbol: cryptoId.toUpperCase() };
+  };
+
   const formatTimeLeft = (timeLeft: number) => {
     if (timeLeft <= 0) return 'Ended';
     
@@ -195,6 +216,27 @@ export default function BattlesPage() {
       };
       
       return imageMapping[cryptoId] || 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png';
+    };
+
+    const getCryptoDisplayInfo = (cryptoId: string) => {
+      const displayMapping: { [key: string]: { name: string, symbol: string } } = {
+        bitcoin: { name: 'Bitcoin', symbol: 'BTC' },
+        ethereum: { name: 'Ethereum', symbol: 'ETH' },
+        binancecoin: { name: 'BNB', symbol: 'BNB' },
+        cardano: { name: 'Cardano', symbol: 'ADA' },
+        solana: { name: 'Solana', symbol: 'SOL' },
+        stellar: { name: 'Stellar', symbol: 'XLM' },
+        tron: { name: 'TRON', symbol: 'TRX' },
+        sui: { name: 'Sui', symbol: 'SUI' },
+        chainlink: { name: 'Chainlink', symbol: 'LINK' },
+        polkadot: { name: 'Polkadot', symbol: 'DOT' },
+        litecoin: { name: 'Litecoin', symbol: 'LTC' },
+        'matic-network': { name: 'Polygon', symbol: 'MATIC' },
+        hyperliquid: { name: 'Hyperliquid', symbol: 'HYPE' },
+        'sahara-ai': { name: 'Sahara AI', symbol: 'SAHARA' }
+      };
+      
+      return displayMapping[cryptoId] || { name: cryptoId.charAt(0).toUpperCase() + cryptoId.slice(1), symbol: cryptoId.toUpperCase() };
     };
 
     if (isLoadingHistory) {
@@ -508,7 +550,7 @@ export default function BattlesPage() {
                             />
                             <div>
                               <h3 className="font-semibold text-gray-900 dark:text-white">
-                                {battle.cryptocurrency.toUpperCase()} Battle
+                                {getCryptoDisplayInfo(battle.cryptocurrency).name} ({getCryptoDisplayInfo(battle.cryptocurrency).symbol})
                               </h3>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Stake: {battle.stakeAmount} NTIQ
