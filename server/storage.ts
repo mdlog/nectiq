@@ -729,8 +729,15 @@ export class DatabaseStorage implements IStorage {
     }
 
     const now = new Date();
-    const joinDeadline = new Date(battle.joinDeadline);
     const createdAt = new Date(battle.createdAt);
+    const targetTime = new Date(battle.targetTime);
+    
+    // Calculate 80% join deadline if not set
+    const battleDuration = targetTime.getTime() - createdAt.getTime();
+    const joinDeadline = battle.joinDeadline ? 
+      new Date(battle.joinDeadline) : 
+      new Date(createdAt.getTime() + (battleDuration * 0.8));
+    
     const minimumJoinTime = battle.minimumJoinTime || 300; // 5 menit default
 
     // Check 1: Apakah masih dalam batas waktu join
@@ -747,7 +754,7 @@ export class DatabaseStorage implements IStorage {
 
     // Calculate fairness multipliers
     const currentPrice = await this.getCurrentCryptoPrice(battle.cryptocurrency);
-    const priceAtCreation = parseFloat(battle.priceAtCreation);
+    const priceAtCreation = battle.priceAtCreation ? parseFloat(battle.priceAtCreation.toString()) : currentPrice;
     const priceMovement = Math.abs((currentPrice - priceAtCreation) / priceAtCreation * 100);
 
     // Price movement penalty: jika harga bergerak > 2%, ada penalti
@@ -790,6 +797,32 @@ export class DatabaseStorage implements IStorage {
         joinTimePercentage: (joinTimePercentage * 100).toFixed(1)
       }
     };
+  }
+
+  async getCurrentCryptoPrice(cryptocurrency: string): Promise<number> {
+    try {
+      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptocurrency}&vs_currencies=usd`);
+      const data = await response.json();
+      return data[cryptocurrency]?.usd || 50000; // fallback price jika error
+    } catch (error) {
+      console.error('Error fetching crypto price:', error);
+      return 50000; // fallback price
+    }
+  }
+
+  async logTransaction(transaction: any): Promise<void> {
+    try {
+      await db.insert(transactionLogs).values({
+        userId: transaction.userId,
+        type: transaction.type,
+        amount: transaction.amount,
+        description: transaction.description,
+        relatedId: transaction.relatedId,
+        createdAt: new Date()
+      });
+    } catch (error) {
+      console.error('Error logging transaction:', error);
+    }
   }
 
   async updateBattle(id: number, updates: any): Promise<void> {
