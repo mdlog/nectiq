@@ -139,6 +139,16 @@ export default function AdminPanel() {
     autoLogGeoLocation: true
   });
 
+  // Battles Management State
+  const [battlesStatusFilter, setBattlesStatusFilter] = useState("all");
+  const [battlesCryptoFilter, setBattlesCryptoFilter] = useState("all");
+  const [battlesDateFilter, setBattlesDateFilter] = useState({
+    startDate: "",
+    endDate: ""
+  });
+  const [battlesPage, setBattlesPage] = useState(1);
+  const [battlesPerPage] = useState(10);
+
   // System Settings state
   const [settingsForm, setSettingsForm] = useState({
     platform: {
@@ -201,6 +211,29 @@ export default function AdminPanel() {
 
   const { data: events = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/events"],
+    retry: 2,
+    retryDelay: 1000,
+  });
+
+  // Battles data queries
+  const { data: battles = [], isLoading: battlesLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/battles", battlesStatusFilter, battlesCryptoFilter, battlesDateFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (battlesStatusFilter !== "all") params.append("status", battlesStatusFilter);
+      if (battlesCryptoFilter !== "all") params.append("cryptocurrency", battlesCryptoFilter);
+      if (battlesDateFilter.startDate) params.append("dateRange", `${battlesDateFilter.startDate},${battlesDateFilter.endDate || ""}`);
+      
+      const response = await fetch(`/api/admin/battles?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch battles");
+      return response.json();
+    },
+    retry: 2,
+    retryDelay: 1000,
+  });
+
+  const { data: battleStats = {} } = useQuery<any>({
+    queryKey: ["/api/admin/battles/stats"],
     retry: 2,
     retryDelay: 1000,
   });
@@ -5042,6 +5075,318 @@ export default function AdminPanel() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Battles Management Tab */}
+          <TabsContent value="battles" className="space-y-6">
+            {/* Battles Statistics Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Battles</CardTitle>
+                  <Sword className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{battleStats.totalBattles || 0}</div>
+                  <p className="text-xs text-muted-foreground">All-time battles created</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Battles</CardTitle>
+                  <Zap className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{battleStats.activeBattles || 0}</div>
+                  <p className="text-xs text-muted-foreground">Currently ongoing</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Completed Battles</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{battleStats.completedBattles || 0}</div>
+                  <p className="text-xs text-muted-foreground">Finished battles</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Stakes</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{battleStats.totalStakes || 0} NTIQ</div>
+                  <p className="text-xs text-muted-foreground">Total stakes wagered</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Battles Filters */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="h-5 w-5" />
+                  Battle Filters
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Status Filter</Label>
+                    <Select value={battlesStatusFilter} onValueChange={setBattlesStatusFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Cryptocurrency Filter</Label>
+                    <Select value={battlesCryptoFilter} onValueChange={setBattlesCryptoFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select cryptocurrency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Cryptocurrencies</SelectItem>
+                        <SelectItem value="bitcoin">Bitcoin (BTC)</SelectItem>
+                        <SelectItem value="ethereum">Ethereum (ETH)</SelectItem>
+                        <SelectItem value="binancecoin">Binance Coin (BNB)</SelectItem>
+                        <SelectItem value="cardano">Cardano (ADA)</SelectItem>
+                        <SelectItem value="solana">Solana (SOL)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Date Range</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="date"
+                        value={battlesDateFilter.startDate}
+                        onChange={(e) => setBattlesDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                        placeholder="Start date"
+                        className="flex-1"
+                      />
+                      <Input
+                        type="date"
+                        value={battlesDateFilter.endDate}
+                        onChange={(e) => setBattlesDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                        placeholder="End date"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Battles Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sword className="h-5 w-5" />
+                  Battle Management
+                  {wsConnected && (
+                    <Badge variant="secondary" className="ml-auto">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                      LIVE
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {battlesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Loading battles...</span>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Battle ID</TableHead>
+                          <TableHead>Challenger</TableHead>
+                          <TableHead>Opponent</TableHead>
+                          <TableHead>Cryptocurrency</TableHead>
+                          <TableHead>Stake Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Duration</TableHead>
+                          <TableHead>Winner</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {battles.slice((battlesPage - 1) * battlesPerPage, battlesPage * battlesPerPage).map((battle: any) => (
+                          <TableRow key={battle.id}>
+                            <TableCell className="font-mono">#{battle.id}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                  {battle.challengerUsername?.charAt(0) || 'U'}
+                                </div>
+                                <div>
+                                  <div className="font-medium">{battle.challengerUsername || 'Unknown'}</div>
+                                  <div className="text-xs text-muted-foreground">UID: {battle.challengerUid}</div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {battle.challengedUsername ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                    {battle.challengedUsername.charAt(0)}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">{battle.challengedUsername}</div>
+                                    <div className="text-xs text-muted-foreground">UID: {battle.challengedUid}</div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Badge variant="outline">Waiting for opponent</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <img 
+                                  src={`https://coin-images.coingecko.com/coins/images/${battle.cryptoImageId}/small/${battle.cryptocurrency}.png`}
+                                  alt={battle.cryptocurrency}
+                                  className="w-6 h-6"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                                <div>
+                                  <div className="font-medium">{battle.cryptocurrency?.toUpperCase()}</div>
+                                  <div className="text-xs text-muted-foreground">${battle.currentPrice?.toFixed(2)}</div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium">{battle.stakeAmount} NTIQ</div>
+                              <div className="text-xs text-muted-foreground">Each player</div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                battle.status === 'completed' ? 'default' :
+                                battle.status === 'active' ? 'secondary' :
+                                battle.status === 'open' ? 'outline' : 'destructive'
+                              }>
+                                {battle.status?.charAt(0).toUpperCase() + battle.status?.slice(1)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">{new Date(battle.createdAt).toLocaleDateString()}</div>
+                              <div className="text-xs text-muted-foreground">{new Date(battle.createdAt).toLocaleTimeString()}</div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">{battle.duration} mins</div>
+                              {battle.timeRemaining && (
+                                <div className="text-xs text-muted-foreground">{battle.timeRemaining} left</div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {battle.winnerId ? (
+                                <div className="flex items-center gap-1">
+                                  <Trophy className="h-4 w-4 text-yellow-500" />
+                                  <span className="text-sm font-medium">{battle.winnerUsername}</span>
+                                </div>
+                              ) : battle.status === 'completed' ? (
+                                <Badge variant="outline">Draw</Badge>
+                              ) : (
+                                <span className="text-muted-foreground">TBD</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button size="sm" variant="outline" className="h-7 w-7 p-0">
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                                {battle.status === 'open' && (
+                                  <Button size="sm" variant="outline" className="h-7 w-7 p-0">
+                                    <Ban className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {battles.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                              <div className="flex flex-col items-center">
+                                <Sword className="mb-2 h-8 w-8" />
+                                <p>No battles found</p>
+                                <p className="text-sm">Battles will appear here when users create them</p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+
+                    {/* Battles Pagination */}
+                    {battles.length > battlesPerPage && (
+                      <div className="flex items-center justify-between pt-6 border-t">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBattlesPage(prev => Math.max(1, prev - 1))}
+                            disabled={battlesPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBattlesPage(prev => Math.min(Math.ceil(battles.length / battlesPerPage), prev + 1))}
+                            disabled={battlesPage >= Math.ceil(battles.length / battlesPerPage)}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-muted-foreground">
+                            Showing {Math.min((battlesPage - 1) * battlesPerPage + 1, battles.length)} to {Math.min(battlesPage * battlesPerPage, battles.length)} of {battles.length} battles
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center space-x-1">
+                          {Array.from({ length: Math.ceil(battles.length / battlesPerPage) }, (_, i) => i + 1)
+                            .slice(Math.max(0, battlesPage - 3), battlesPage + 2)
+                            .map((page) => (
+                            <Button
+                              key={page}
+                              variant={battlesPage === page ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setBattlesPage(page)}
+                              className="w-8 h-8 p-0"
+                            >
+                              {page}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
