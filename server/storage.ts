@@ -765,7 +765,7 @@ export class DatabaseStorage implements IStorage {
         else if (winnerAccuracy <= 5) multiplier = 1.5;
         else multiplier = 1;
 
-        winnerReward = parseFloat(battle.stakeAmount || '0') * 2 * multiplier; // Double stake + multiplier
+        winnerReward = parseFloat(String(battle.stakeAmount)) * 2 * multiplier; // Double stake + multiplier
 
         // Update winner's balance
         const [winner] = await db.select().from(users).where(eq(users.id, winnerId));
@@ -780,7 +780,7 @@ export class DatabaseStorage implements IStorage {
         }
       } else {
         // It's a tie - refund both players
-        const stakeAmount = parseFloat(battle.stakeAmount || '0');
+        const stakeAmount = parseFloat(String(battle.stakeAmount));
         const [challenger] = await db.select().from(users).where(eq(users.id, battle.challengerId));
         
         if (challenger) {

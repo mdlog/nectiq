@@ -334,7 +334,7 @@ export const battleSpectators = pgTable("battle_spectators", {
   leftAt: timestamp("left_at"),
 });
 
-export const battleComments = pgTable("battle_comments", {
+export const battleComments: any = pgTable("battle_comments", {
   id: serial("id").primaryKey(),
   battleId: integer("battle_id").references(() => predictionBattles.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
