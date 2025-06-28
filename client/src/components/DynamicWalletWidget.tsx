@@ -58,36 +58,45 @@ export default function DynamicWalletWidget() {
     if (!walletAddress) return;
 
     try {
+      console.log('Attempting authentication with wallet:', walletAddress);
+      
       const response = await fetch('/api/auth/dynamic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          user,
           walletAddress: walletAddress,
           address: walletAddress
         }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Authentication failed:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
-      if (response.ok) {
+      const data = await response.json();
+      console.log('Authentication successful:', data);
+
+      if (data.success && data.user) {
         toast({
           title: "Welcome!",
-          description: `Connected as ${data.user?.username || 'User'}`,
+          description: `Connected as ${data.user.username || 'User'}`,
         });
-        window.location.reload();
+        // Use setTimeout to allow toast to show before reload
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
-        toast({
-          title: "Authentication Failed",
-          description: data.message || "Failed to authenticate wallet",
-          variant: "destructive",
-        });
+        throw new Error('Invalid response format');
       }
     } catch (error) {
       console.error('Login error:', error);
+      setHasAuthenticated(false); // Reset to allow retry
       toast({
-        title: "Error",
-        description: "Connection failed. Please try again.",
+        title: "Authentication Failed",
+        description: error instanceof Error ? error.message : "Connection failed. Please try again.",
         variant: "destructive",
       });
     }
