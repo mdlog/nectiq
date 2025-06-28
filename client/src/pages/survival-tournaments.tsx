@@ -35,6 +35,7 @@ const SurvivalTournaments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedTournament, setSelectedTournament] = useState<SurvivalTournament | null>(null);
+  const [showParticipants, setShowParticipants] = useState(false);
 
   // Fetch all survival tournaments
   const { data: tournaments = [], isLoading } = useQuery<SurvivalTournament[]>({
@@ -45,6 +46,22 @@ const SurvivalTournaments = () => {
   // Fetch user data
   const { data: user } = useQuery<any>({
     queryKey: ['/api/user'],
+  });
+
+  // Fetch tournament participants
+  const { data: participants = [], isLoading: participantsLoading } = useQuery<any[]>({
+    queryKey: ['/api/survival-tournaments', selectedTournament?.id, 'participants'],
+    enabled: !!selectedTournament?.id && showParticipants,
+    queryFn: async () => {
+      const response = await fetch(`/api/survival-tournaments/${selectedTournament?.id}/participants`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch participants");
+      }
+      return response.json();
+    },
   });
 
   // Join tournament mutation
@@ -289,17 +306,65 @@ const SurvivalTournaments = () => {
                   
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full text-white border-white/30 hover:bg-white/10">
-                        View Details
+                      <Button 
+                        variant="outline" 
+                        className="w-full text-white border-white/30 hover:bg-white/10"
+                        onClick={() => {
+                          setSelectedTournament(tournament);
+                          setShowParticipants(true);
+                        }}
+                      >
+                        View Participants ({tournament.currentParticipants})
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-lg">
                       <DialogHeader>
-                        <DialogTitle>{tournament.title}</DialogTitle>
+                        <DialogTitle>Tournament Participants</DialogTitle>
                         <DialogDescription>
-                          Tournament Details
+                          {tournament.title} - {tournament.currentParticipants}/{tournament.maxParticipants} participants
                         </DialogDescription>
                       </DialogHeader>
+                      
+                      <div className="space-y-4">
+                        {participantsLoading ? (
+                          <div className="text-center py-4">Loading participants...</div>
+                        ) : participants.length > 0 ? (
+                          <div className="space-y-2">
+                            {participants.map((participant: any, index: number) => (
+                              <div key={participant.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                    {index + 1}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {participant.username}
+                                    </div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                      UID: {participant.uid}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    Joined: {new Date(participant.joinedAt).toLocaleDateString()}
+                                  </div>
+                                  <Badge 
+                                    variant={participant.status === 'active' ? 'default' : 'secondary'}
+                                    className="mt-1"
+                                  >
+                                    {participant.status}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            No participants yet
+                          </div>
+                        )}
+                      </div>
                       
                       <div className="space-y-4">
                         <div>

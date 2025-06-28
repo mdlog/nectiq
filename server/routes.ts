@@ -3972,6 +3972,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get survival tournament participants
+  app.get('/api/survival-tournaments/:id/participants', async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      
+      if (!tournamentId || isNaN(tournamentId)) {
+        return res.status(400).json({ message: 'Invalid tournament ID' });
+      }
+
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      const participants = await storage.getSurvivalParticipants(tournamentId);
+      
+      // Get user details for each participant
+      const participantsWithDetails = await Promise.all(
+        participants.map(async (participant) => {
+          const user = await storage.getUser(participant.userId);
+          return {
+            id: participant.id,
+            userId: participant.userId,
+            username: user?.username || 'Unknown',
+            uid: user?.uid || 'Unknown',
+            status: participant.status,
+            joinedAt: participant.joinedAt,
+            eliminationRound: participant.eliminationRound || null
+          };
+        })
+      );
+
+      res.json(participantsWithDetails);
+    } catch (error) {
+      console.error('Error fetching tournament participants:', error);
+      res.status(500).json({ message: 'Failed to fetch tournament participants' });
+    }
+  });
+
   // Submit prediction for survival tournament round
   app.post('/api/survival-tournaments/:tournamentId/rounds/:roundId/predict', requireAuth, async (req: Request, res: Response) => {
     try {
