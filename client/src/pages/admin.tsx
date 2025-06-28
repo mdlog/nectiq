@@ -5682,13 +5682,23 @@ export default function AdminPanel() {
                                 <span 
                                   className="inline-flex items-center justify-center h-7 w-7 p-0 border border-input rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
                                   onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    console.log('Battle View clicked:', battle.id);
-                                    console.log('Current modal state:', showBattleDetailsModal);
-                                    setSelectedBattleDetails(battle);
-                                    setShowBattleDetailsModal(true);
-                                    console.log('Modal should be shown now');
+                                    try {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log('Battle View clicked:', battle?.id);
+                                      console.log('Battle data:', battle);
+                                      console.log('Current modal state:', showBattleDetailsModal);
+                                      
+                                      if (battle) {
+                                        setSelectedBattleDetails(battle);
+                                        setShowBattleDetailsModal(true);
+                                        console.log('Modal state updated successfully');
+                                      } else {
+                                        console.error('Battle data is null or undefined');
+                                      }
+                                    } catch (error) {
+                                      console.error('Error in View button click:', error);
+                                    }
                                   }}
                                   title="View Battle Details"
                                 >
@@ -5798,15 +5808,16 @@ export default function AdminPanel() {
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">Battle Details #{selectedBattleDetails.id}</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowBattleDetailsModal(false)}
-                  className="h-8 w-8 p-0"
+                <h2 className="text-xl font-semibold">Battle Details #{selectedBattleDetails?.id || 'N/A'}</h2>
+                <button
+                  onClick={() => {
+                    setShowBattleDetailsModal(false);
+                    setSelectedBattleDetails(null);
+                  }}
+                  className="h-8 w-8 p-0 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center"
                 >
                   <X className="h-4 w-4" />
-                </Button>
+                </button>
               </div>
               
               <div className="space-y-6">
@@ -5815,21 +5826,27 @@ export default function AdminPanel() {
                     <h4 className="font-semibold mb-2">Challenger</h4>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                        {selectedBattleDetails.challengerUsername?.charAt(0) || 'U'}
+                        {selectedBattleDetails?.challengerUsername?.charAt(0) || 'U'}
                       </div>
                       <div>
-                        <div className="font-medium">{selectedBattleDetails.challengerUsername || 'Unknown'}</div>
-                        <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails.challengerUid}</div>
+                        <div className="font-medium">{selectedBattleDetails?.challengerUsername || 'Unknown'}</div>
+                        <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails?.challengerUid || 'N/A'}</div>
                       </div>
                     </div>
                     <div className="mt-2">
                       <span className="text-sm text-muted-foreground">Prediction: </span>
-                      <span className="font-mono">${selectedBattleDetails.challengerPrediction?.toFixed(2)}</span>
+                      <span className="font-mono">
+                        ${selectedBattleDetails?.challengerPrediction ? 
+                          (typeof selectedBattleDetails.challengerPrediction === 'number' ? 
+                            selectedBattleDetails.challengerPrediction.toFixed(2) : 
+                            parseFloat(selectedBattleDetails.challengerPrediction).toFixed(2)
+                          ) : 'N/A'}
+                      </span>
                     </div>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Opponent</h4>
-                    {selectedBattleDetails.challengedUsername ? (
+                    {selectedBattleDetails?.challengedUsername ? (
                       <div>
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -5837,12 +5854,18 @@ export default function AdminPanel() {
                           </div>
                           <div>
                             <div className="font-medium">{selectedBattleDetails.challengedUsername}</div>
-                            <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails.challengedUid}</div>
+                            <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails?.challengedUid || 'N/A'}</div>
                           </div>
                         </div>
                         <div className="mt-2">
                           <span className="text-sm text-muted-foreground">Prediction: </span>
-                          <span className="font-mono">${selectedBattleDetails.challengedPrediction?.toFixed(2)}</span>
+                          <span className="font-mono">
+                            ${selectedBattleDetails?.challengedPrediction ? 
+                              (typeof selectedBattleDetails.challengedPrediction === 'number' ? 
+                                selectedBattleDetails.challengedPrediction.toFixed(2) : 
+                                parseFloat(selectedBattleDetails.challengedPrediction).toFixed(2)
+                              ) : 'N/A'}
+                          </span>
                         </div>
                       </div>
                     ) : (
@@ -5855,32 +5878,38 @@ export default function AdminPanel() {
                   <div>
                     <h4 className="font-semibold mb-2">Cryptocurrency</h4>
                     <div className="flex items-center gap-2">
-                      <img 
-                        src={`https://coin-images.coingecko.com/coins/images/${selectedBattleDetails.cryptoImageId}/small/${selectedBattleDetails.cryptocurrency}.png`}
-                        alt={selectedBattleDetails.cryptocurrency}
-                        className="w-6 h-6"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <span className="font-medium">{selectedBattleDetails.cryptocurrency?.toUpperCase()}</span>
+                      {selectedBattleDetails?.cryptoImageId && (
+                        <img 
+                          src={`https://coin-images.coingecko.com/coins/images/${selectedBattleDetails.cryptoImageId}/small/${selectedBattleDetails.cryptocurrency}.png`}
+                          alt={selectedBattleDetails?.cryptocurrency || 'Crypto'}
+                          className="w-6 h-6"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <span className="font-medium">{selectedBattleDetails?.cryptocurrency?.toUpperCase() || 'N/A'}</span>
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">
-                      Current: ${selectedBattleDetails.currentPrice?.toFixed(2)}
+                      Current: ${selectedBattleDetails?.currentPrice ? 
+                        (typeof selectedBattleDetails.currentPrice === 'number' ? 
+                          selectedBattleDetails.currentPrice.toFixed(2) : 
+                          parseFloat(selectedBattleDetails.currentPrice).toFixed(2)
+                        ) : 'N/A'}
                     </div>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Stake Amount</h4>
-                    <span className="font-mono text-lg">{selectedBattleDetails.stakeAmount} NTIQ</span>
+                    <span className="font-mono text-lg">{selectedBattleDetails?.stakeAmount || 'N/A'} NTIQ</span>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Status</h4>
                     <Badge variant={
-                      selectedBattleDetails.status === 'completed' ? 'default' :
-                      selectedBattleDetails.status === 'active' ? 'secondary' :
-                      selectedBattleDetails.status === 'cancelled' ? 'destructive' : 'outline'
+                      selectedBattleDetails?.status === 'completed' ? 'default' :
+                      selectedBattleDetails?.status === 'active' ? 'secondary' :
+                      selectedBattleDetails?.status === 'cancelled' ? 'destructive' : 'outline'
                     }>
-                      {selectedBattleDetails.status}
+                      {selectedBattleDetails?.status || 'Unknown'}
                     </Badge>
                   </div>
                 </div>
@@ -5888,22 +5917,32 @@ export default function AdminPanel() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-semibold mb-2">Created</h4>
-                    <span className="text-sm">{new Date(selectedBattleDetails.createdAt).toLocaleString()}</span>
+                    <span className="text-sm">
+                      {selectedBattleDetails?.createdAt ? 
+                        new Date(selectedBattleDetails.createdAt).toLocaleString() : 
+                        'N/A'
+                      }
+                    </span>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Target Time</h4>
-                    <span className="text-sm">{new Date(selectedBattleDetails.targetTime).toLocaleString()}</span>
+                    <span className="text-sm">
+                      {selectedBattleDetails?.targetTime ? 
+                        new Date(selectedBattleDetails.targetTime).toLocaleString() : 
+                        'N/A'
+                      }
+                    </span>
                   </div>
                 </div>
                 
-                {selectedBattleDetails.winnerId && (
+                {selectedBattleDetails?.winnerId && (
                   <div>
                     <h4 className="font-semibold mb-2">Winner</h4>
                     <div className="flex items-center gap-2">
                       <Trophy className="h-4 w-4 text-yellow-500" />
-                      <span className="font-medium">{selectedBattleDetails.winnerUsername}</span>
+                      <span className="font-medium">{selectedBattleDetails?.winnerUsername || 'Unknown'}</span>
                       <span className="text-sm text-muted-foreground">
-                        (Reward: {selectedBattleDetails.winnerReward || selectedBattleDetails.stakeAmount * 2} NTIQ)
+                        (Reward: {selectedBattleDetails?.winnerReward || (selectedBattleDetails?.stakeAmount ? selectedBattleDetails.stakeAmount * 2 : 0)} NTIQ)
                       </span>
                     </div>
                   </div>
