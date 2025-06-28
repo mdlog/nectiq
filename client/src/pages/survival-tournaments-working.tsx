@@ -160,7 +160,7 @@ const SurvivalTournamentsWorking = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container max-w-6xl mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">🏆 Nectiq Survival Mode</h1>
