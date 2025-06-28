@@ -5791,12 +5791,12 @@ export default function AdminPanel() {
       </main>
       
       {/* Battle Details Modal */}
-      {showBattleDetailsModal && selectedBattleDetails && (
-        <Dialog open={showBattleDetailsModal} onOpenChange={setShowBattleDetailsModal}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Battle Details #{selectedBattleDetails.id}</DialogTitle>
-            </DialogHeader>
+      <Dialog open={showBattleDetailsModal} onOpenChange={setShowBattleDetailsModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Battle Details {selectedBattleDetails && `#${selectedBattleDetails.id}`}</DialogTitle>
+          </DialogHeader>
+          {selectedBattleDetails && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -5897,9 +5897,9 @@ export default function AdminPanel() {
                 </div>
               )}
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
