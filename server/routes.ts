@@ -4070,6 +4070,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Start survival tournament manually
+  app.post('/api/admin/survival-tournaments/:id/start', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      if (tournament.status !== 'open') {
+        return res.status(400).json({ message: 'Tournament is not open for starting' });
+      }
+
+      // Start the tournament
+      await storage.startSurvivalTournament(tournamentId);
+      
+      // Import and start the round service
+      const { survivalRoundService } = await import('./services/survivalRoundService');
+      await survivalRoundService.startTournamentRounds(tournamentId);
+      
+      auditLog("TOURNAMENT_STARTED", { 
+        tournamentId,
+        startedBy: req.session.userId 
+      }, req);
+      
+      res.json({ success: true, message: "Tournament started successfully" });
+    } catch (error) {
+      console.error("Error starting tournament:", error);
+      res.status(500).json({ message: "Failed to start tournament" });
+    }
+  });
+
   // Get current round status for tournament
   app.get('/api/survival-tournaments/:id/current-round', async (req: Request, res: Response) => {
     try {
