@@ -2,6 +2,12 @@ import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, 
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt } from "drizzle-orm";
 
+// Utility function to normalize wallet addresses (lowercase for consistency)
+function normalizeWalletAddress(address: string): string {
+  if (!address) return address;
+  return address.toLowerCase().trim();
+}
+
 // Generate unique 9-digit UID
 function generateUID(): string {
   return Math.floor(100000000 + Math.random() * 900000000).toString();

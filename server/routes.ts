@@ -16,6 +16,12 @@ import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
 import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } from "./routes/userStats";
 
+// Utility function to normalize wallet addresses (lowercase for consistency)
+function normalizeWalletAddress(address: string): string {
+  if (!address) return address;
+  return address.toLowerCase().trim();
+}
+
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -171,7 +177,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Wallet address is required" });
       }
       
-      const user = await storage.getUserByWalletAddress(address);
+      // Normalize wallet address to prevent case-sensitivity issues
+      const normalizedAddress = normalizeWalletAddress(address);
+      const user = await storage.getUserByWalletAddress(normalizedAddress);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -186,14 +194,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/wallet-login", async (req, res) => {
     try {
       const { address, walletAddress, signature, message } = req.body;
-      const finalAddress = address || walletAddress;
+      const rawAddress = address || walletAddress;
       
-      console.log('Wallet login request:', { address: finalAddress, hasSignature: !!signature, hasMessage: !!message });
+      console.log('Wallet login request:', { address: rawAddress, hasSignature: !!signature, hasMessage: !!message });
       
-      if (!finalAddress) {
+      if (!rawAddress) {
         console.log('Missing wallet address');
         return res.status(400).json({ message: "Missing wallet address" });
       }
+
+      // Normalize wallet address to prevent case-sensitivity issues
+      const finalAddress = normalizeWalletAddress(rawAddress);
 
       // Import WalletSecurityService
       const { WalletSecurityService } = await import('./walletSecurity');
