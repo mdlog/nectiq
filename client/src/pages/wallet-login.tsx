@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Wallet, LogOut, Copy, Check, Shield, User, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 
 // Wallet logo components as SVG
@@ -29,6 +29,36 @@ export default function WalletLoginPage() {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const [, navigate] = useLocation();
+
+  // Check if user is already authenticated
+  const { data: currentUser } = useQuery({
+    queryKey: ['/api/user'],
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // Auto-redirect if already authenticated
+  useEffect(() => {
+    if (currentUser && (currentUser as any).id) {
+      toast({
+        title: "Already Authenticated",
+        description: `Welcome back, ${(currentUser as any).username || 'User'}!`,
+      });
+      navigate('/');
+    }
+  }, [currentUser, navigate, toast]);
+
+  // If user is authenticated, show loading state while redirecting
+  if (currentUser && (currentUser as any).id) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Auth mutation
   const authMutation = useMutation({
