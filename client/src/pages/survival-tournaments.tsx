@@ -89,6 +89,7 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
     if (!roundStatus?.currentRound?.timeRemaining) return;
 
     const interval = setInterval(() => {
+      if (!roundStatus?.currentRound) return;
       const remaining = Math.max(0, roundStatus.currentRound.timeRemaining - (Date.now() - (roundStatus.currentRound.lastUpdated || 0)));
       setTimeRemaining(remaining);
       
@@ -189,7 +190,7 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
         </div>
 
         {/* Prediction Buttons or Status */}
-        {hasSubmittedPrediction ? (
+        {hasSubmittedPrediction && userPrediction ? (
           <div className="bg-green-100 border border-green-300 rounded-lg p-4 text-center">
             <div className="flex items-center justify-center gap-2 text-green-700">
               <div className="text-2xl">
