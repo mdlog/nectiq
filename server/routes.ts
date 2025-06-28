@@ -3807,6 +3807,223 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== SURVIVAL TOURNAMENT ROUTES =====
+
+  // Get all survival tournaments
+  app.get('/api/survival-tournaments', async (req: Request, res: Response) => {
+    try {
+      const tournaments = await storage.getAllSurvivalTournaments();
+      res.json(tournaments);
+    } catch (error) {
+      console.error('Error fetching survival tournaments:', error);
+      res.status(500).json({ message: 'Failed to fetch survival tournaments' });
+    }
+  });
+
+  // Get specific survival tournament
+  app.get('/api/survival-tournaments/:id', async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      // Get participants and rounds
+      const participants = await storage.getSurvivalParticipants(tournamentId);
+      const rounds = await storage.getSurvivalRounds(tournamentId);
+
+      res.json({
+        ...tournament,
+        participants,
+        rounds
+      });
+    } catch (error) {
+      console.error('Error fetching survival tournament:', error);
+      res.status(500).json({ message: 'Failed to fetch survival tournament' });
+    }
+  });
+
+  // Create survival tournament
+  app.post('/api/survival-tournaments', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { title, description, cryptocurrency, entryFee, maxParticipants, roundDuration } = req.body;
+      const userId = req.session?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Validate required fields
+      if (!title || !cryptocurrency || !entryFee || !maxParticipants) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      // Validate user has enough balance for entry fee
+      const user = await storage.getUser(userId);
+      if (!user || user.balance < entryFee) {
+        return res.status(400).json({ message: 'Insufficient balance for entry fee' });
+      }
+
+      const tournamentData = {
+        title,
+        description: description || '',
+        cryptocurrency,
+        entryFee: parseInt(entryFee),
+        maxParticipants: parseInt(maxParticipants),
+        currentParticipants: 1, // Creator automatically joins
+        prizePool: parseInt(entryFee), // Creator's entry fee
+        status: 'open',
+        currentRound: 0,
+        roundDuration: parseInt(roundDuration) || 300, // 5 minutes default
+        createdBy: userId
+      };
+
+      const tournament = await storage.createSurvivalTournament(tournamentData);
+
+      // Deduct entry fee from creator
+      await storage.updateUserBalance(userId, user.balance - entryFee);
+
+      // Add creator as participant
+      await storage.joinSurvivalTournament(tournament.id, userId);
+
+      res.json(tournament);
+    } catch (error) {
+      console.error('Error creating survival tournament:', error);
+      res.status(500).json({ message: 'Failed to create survival tournament' });
+    }
+  });
+
+  // Join survival tournament
+  app.post('/api/survival-tournaments/:id/join', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      if (tournament.status !== 'open') {
+        return res.status(400).json({ message: 'Tournament is not open for registration' });
+      }
+
+      if (tournament.currentParticipants >= tournament.maxParticipants) {
+        return res.status(400).json({ message: 'Tournament is full' });
+      }
+
+      // Check if user already joined
+      const participants = await storage.getSurvivalParticipants(tournamentId);
+      const alreadyJoined = participants.some(p => p.userId === userId);
+      if (alreadyJoined) {
+        return res.status(400).json({ message: 'Already joined this tournament' });
+      }
+
+      // Validate user has enough balance
+      const user = await storage.getUser(userId);
+      if (!user || user.balance < tournament.entryFee) {
+        return res.status(400).json({ message: 'Insufficient balance for entry fee' });
+      }
+
+      // Deduct entry fee
+      await storage.updateUserBalance(userId, user.balance - tournament.entryFee);
+
+      // Join tournament
+      const participant = await storage.joinSurvivalTournament(tournamentId, userId);
+
+      // Start tournament if full
+      if (tournament.currentParticipants + 1 >= tournament.maxParticipants) {
+        await storage.startSurvivalTournament(tournamentId);
+      }
+
+      res.json(participant);
+    } catch (error) {
+      console.error('Error joining survival tournament:', error);
+      res.status(500).json({ message: 'Failed to join survival tournament' });
+    }
+  });
+
+  // Submit prediction for survival tournament round
+  app.post('/api/survival-tournaments/:tournamentId/rounds/:roundId/predict', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { tournamentId, roundId } = req.params;
+      const { prediction } = req.body;
+      const userId = req.session?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      if (!prediction || !['up', 'down'].includes(prediction)) {
+        return res.status(400).json({ message: 'Invalid prediction. Must be "up" or "down"' });
+      }
+
+      // Check if user is participant
+      const participants = await storage.getSurvivalParticipants(parseInt(tournamentId));
+      const participant = participants.find(p => p.userId === userId && p.isActive);
+      
+      if (!participant) {
+        return res.status(400).json({ message: 'Not an active participant in this tournament' });
+      }
+
+      const predictionData = {
+        tournamentId: parseInt(tournamentId),
+        roundId: parseInt(roundId),
+        participantId: participant.id,
+        userId,
+        prediction
+      };
+
+      const savedPrediction = await storage.submitSurvivalPrediction(predictionData);
+      res.json(savedPrediction);
+    } catch (error) {
+      console.error('Error submitting survival prediction:', error);
+      res.status(500).json({ message: 'Failed to submit prediction' });
+    }
+  });
+
+  // Admin: Start new round in survival tournament
+  app.post('/api/admin/survival-tournaments/:id/start-round', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      const { startPrice } = req.body;
+
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      if (tournament.status !== 'active') {
+        return res.status(400).json({ message: 'Tournament is not active' });
+      }
+
+      const roundData = {
+        tournamentId,
+        roundNumber: tournament.currentRound + 1,
+        startPrice: parseFloat(startPrice)
+      };
+
+      const round = await storage.createSurvivalRound(roundData);
+
+      // Update tournament
+      await storage.updateSurvivalTournament(tournamentId, {
+        currentRound: tournament.currentRound + 1,
+        nextRoundTime: new Date(Date.now() + tournament.roundDuration * 1000)
+      });
+
+      res.json(round);
+    } catch (error) {
+      console.error('Error starting survival round:', error);
+      res.status(500).json({ message: 'Failed to start round' });
+    }
+  });
+
   // Start background task to check predictions every minute
   setInterval(async () => {
     try {

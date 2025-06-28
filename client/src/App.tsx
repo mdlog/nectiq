@@ -9,6 +9,7 @@ import UserDashboard from "@/pages/user-dashboard";
 import AdminPanel from "@/pages/admin";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
+import SurvivalTournaments from "@/pages/survival-tournaments";
 import NotFound from "@/pages/not-found";
 import HowToPlay from "@/pages/how-to-play";
 import TermsConditions from "@/pages/terms-conditions";
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/user-dashboard" component={UserDashboard} />
       <Route path="/dashboard" component={UserDashboard} />
       <Route path="/battles" component={BattlesPage} />
+      <Route path="/survival" component={SurvivalTournaments} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/admin" component={AdminPanel} />
       <Route path="/how-to-play" component={HowToPlay} />
