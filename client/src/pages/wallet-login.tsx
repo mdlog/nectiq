@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,9 +111,9 @@ const WalletLogos = {
 };
 
 export default function WalletLoginPage() {
-  const { address, isConnected, chain } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
-  const { disconnect } = useDisconnect();
+  const { user, setShowAuthFlow, handleLogOut } = useDynamicContext();
+  const address = user?.verifiedCredentials?.[0]?.address;
+  const isConnected = !!user && !!address;
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -212,12 +212,10 @@ export default function WalletLoginPage() {
                     </Button>
                   </div>
                   
-                  {chain && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Network</span>
-                      <Badge variant="secondary">{chain.name}</Badge>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Network</span>
+                    <Badge variant="secondary">Ethereum</Badge>
+                  </div>
 
                   <div className="flex gap-3">
                     <Button 
@@ -233,7 +231,7 @@ export default function WalletLoginPage() {
                       {authMutation.isPending ? "Authenticating..." : "Authenticate & Continue"}
                     </Button>
                     <Button
-                      onClick={() => disconnect()}
+                      onClick={() => handleLogOut()}
                       variant="destructive"
                       disabled={authMutation.isPending}
                     >
@@ -257,32 +255,21 @@ export default function WalletLoginPage() {
                   </p>
                   
                   <div className="grid gap-3">
-                    {connectors.map((connector) => {
-                      // Get the appropriate logo component
-                      const LogoComponent = WalletLogos[connector.name as keyof typeof WalletLogos] || WalletLogos.Injected;
-                      
-                      return (
-                        <Button
-                          key={connector.uid}
-                          onClick={() => connect({ connector })}
-                          disabled={isPending}
-                          variant="outline"
-                          className="justify-start h-12"
-                        >
-                          <div className="mr-3 flex-shrink-0">
-                            <LogoComponent />
-                          </div>
-                          <div className="text-left">
-                            <div className="font-medium">{connector.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {connector.name === 'MetaMask' && 'Most popular wallet'}
-                              {connector.name === 'WalletConnect' && 'Connect any wallet'}
-                              {connector.name === 'Coinbase Wallet' && 'Coinbase users'}
-                            </div>
-                          </div>
-                        </Button>
-                      );
-                    })}
+                    <Button
+                      onClick={() => setShowAuthFlow(true)}
+                      variant="outline"
+                      className="justify-start h-12"
+                    >
+                      <div className="mr-3 flex-shrink-0">
+                        <WalletLogos.MetaMask />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium">Connect Wallet</div>
+                        <div className="text-xs text-muted-foreground">
+                          MetaMask, WalletConnect & more
+                        </div>
+                      </div>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
