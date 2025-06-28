@@ -98,14 +98,11 @@ export function Header() {
     } catch (error) {
       console.error("Disconnect error:", error);
       // Still disconnect wallet even if server call fails
-      disconnect();
+      handleLogOut();
       
-      // Clear wagmi localStorage data even on error
-      localStorage.removeItem('wagmi.wallet');
-      localStorage.removeItem('wagmi.connected');
-      localStorage.removeItem('wagmi.store');
-      localStorage.removeItem('wagmi.cache');
-      localStorage.removeItem('walletconnect');
+      // Clear Dynamic SDK localStorage data even on error
+      localStorage.removeItem('dynamic_authentication_token');
+      localStorage.removeItem('dynamic_user_data');
       
       // Clear React Query cache
       queryClient.clear();
