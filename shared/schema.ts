@@ -425,6 +425,8 @@ export const survivalPredictions = pgTable("survival_predictions", {
   participantId: integer("participant_id").references(() => survivalParticipants.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
   prediction: varchar("prediction", { length: 10 }).notNull(), // "up" or "down"
+  startingPrice: numeric("starting_price", { precision: 18, scale: 8 }).notNull(), // Price when prediction was made
+  endingPrice: numeric("ending_price", { precision: 18, scale: 8 }), // Price when round ended
   confidence: integer("confidence").default(50), // 1-100 confidence level
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   isCorrect: boolean("is_correct"),

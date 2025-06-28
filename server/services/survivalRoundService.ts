@@ -133,14 +133,9 @@ export class SurvivalRoundService {
       const cryptoData = await cryptoResponse.json();
       const endPrice = cryptoData[round.cryptocurrency]?.usd || 0;
 
-      // Calculate actual price direction
-      const startPrice = parseFloat(round.startPrice);
-      const actualDirection = endPrice > startPrice ? 'up' : 'down';
-
-      // Update round with end price and direction
+      // Update round with end price and status
       await storage.updateRound(roundId, {
         endPrice: endPrice.toString(),
-        priceDirection: actualDirection,
         status: 'completed',
         completedAt: new Date()
       });
@@ -151,22 +146,40 @@ export class SurvivalRoundService {
       let eliminatedCount = 0;
       let correctPredictions = 0;
 
-      // Process each prediction
+      // Process each prediction individually using their starting price
       for (const prediction of predictions) {
-        const isCorrect = prediction.prediction === actualDirection;
+        const userStartingPrice = parseFloat(prediction.startingPrice || '0');
         
-        // Update prediction result
-        await storage.updatePrediction(prediction.id, {
+        if (userStartingPrice === 0) {
+          console.warn(`No starting price found for prediction ${prediction.id}, skipping`);
+          continue;
+        }
+
+        // Determine if user's prediction was correct based on their starting price
+        let isCorrect = false;
+        if (prediction.prediction === 'up') {
+          // User predicted price would go UP - they're correct if endPrice > startingPrice
+          isCorrect = endPrice > userStartingPrice;
+        } else if (prediction.prediction === 'down') {
+          // User predicted price would go DOWN - they're correct if endPrice < startingPrice
+          isCorrect = endPrice < userStartingPrice;
+        }
+        
+        // Update prediction with ending price and result
+        await storage.updateSurvivalPrediction(prediction.id, {
+          endingPrice: endPrice.toString(),
           isCorrect,
           points: isCorrect ? 10 : 0
         });
 
         if (isCorrect) {
           correctPredictions++;
+          console.log(`✅ User ${prediction.userId}: ${prediction.prediction} prediction CORRECT (${userStartingPrice} → ${endPrice})`);
         } else {
           // Eliminate participant
           await storage.eliminateParticipant(prediction.participantId, round.roundNumber);
           eliminatedCount++;
+          console.log(`❌ User ${prediction.userId}: ${prediction.prediction} prediction WRONG (${userStartingPrice} → ${endPrice}) - ELIMINATED`);
         }
       }
 
@@ -177,11 +190,11 @@ export class SurvivalRoundService {
       });
 
       console.log(`Round ${round.roundNumber} completed:`);
-      console.log(`- Start price: $${startPrice}`);
-      console.log(`- End price: $${endPrice}`);
-      console.log(`- Direction: ${actualDirection}`);
+      console.log(`- Final price: $${endPrice}`);
+      console.log(`- Total predictions: ${predictions.length}`);
+      console.log(`- Correct predictions: ${correctPredictions}`);
       console.log(`- Eliminated: ${eliminatedCount} participants`);
-      console.log(`- Survivors: ${correctPredictions} participants`);
+      console.log(`- Advancing to next round: ${correctPredictions} participants`);
 
     } catch (error) {
       console.error('Error ending round:', error);

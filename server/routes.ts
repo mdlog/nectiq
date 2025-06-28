@@ -4030,6 +4030,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid prediction. Must be "up" or "down"' });
       }
 
+      // Get tournament details
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
       // Check if user is participant in this tournament
       const participants = await storage.getSurvivalParticipants(tournamentId);
       const participant = participants.find(p => p.userId === userId && p.status === 'active');
@@ -4052,18 +4058,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'You have already submitted a prediction for this round' });
       }
 
-      // Submit prediction
+      // Get current cryptocurrency price from CoinGecko
+      let currentPrice = 0;
+      try {
+        const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${tournament.cryptocurrency}&vs_currencies=usd`);
+        const cryptoData = await cryptoResponse.json();
+        currentPrice = cryptoData[tournament.cryptocurrency]?.usd || 0;
+        
+        if (currentPrice === 0) {
+          throw new Error('Unable to fetch current price');
+        }
+      } catch (error) {
+        console.error('Error fetching current price:', error);
+        return res.status(500).json({ message: 'Unable to get current cryptocurrency price. Please try again.' });
+      }
+
+      // Submit prediction with starting price
       const predictionData = {
         tournamentId,
         roundId: currentRound.id,
         participantId: participant.id,
         userId,
         prediction,
+        startingPrice: currentPrice.toString(), // Record price when prediction was made
         submittedAt: new Date()
       };
 
       const newPrediction = await storage.submitSurvivalPrediction(predictionData);
-      res.json(newPrediction);
+      
+      // Include the starting price in the response for confirmation
+      res.json({
+        ...newPrediction,
+        startingPrice: currentPrice,
+        message: `Prediction recorded! Starting price: $${currentPrice.toFixed(8)}`
+      });
     } catch (error) {
       console.error('Error submitting survival prediction:', error);
       res.status(500).json({ message: 'Failed to submit prediction' });

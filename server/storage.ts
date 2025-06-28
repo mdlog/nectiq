@@ -1638,6 +1638,15 @@ export class DatabaseStorage implements IStorage {
     return prediction;
   }
 
+  async updateSurvivalPrediction(predictionId: number, updateData: any): Promise<any> {
+    const [prediction] = await db
+      .update(survivalPredictions)
+      .set(updateData)
+      .where(eq(survivalPredictions.id, predictionId))
+      .returning();
+    return prediction;
+  }
+
   async processSurvivalRound(roundId: number): Promise<void> {
     // This method will be called to process round results
     // Implementation will depend on business logic
@@ -1688,8 +1697,11 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: survivalPredictions.id,
         userId: survivalPredictions.userId,
+        participantId: survivalPredictions.participantId,
         username: users.username,
         prediction: survivalPredictions.prediction,
+        startingPrice: survivalPredictions.startingPrice,
+        endingPrice: survivalPredictions.endingPrice,
         isCorrect: survivalPredictions.isCorrect,
         points: survivalPredictions.points,
         submittedAt: survivalPredictions.submittedAt
