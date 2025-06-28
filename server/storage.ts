@@ -1700,6 +1700,101 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(survivalPredictions.submittedAt));
   }
 
+  // Additional methods for survival round service
+  async getCurrentRound(tournamentId: number): Promise<any> {
+    const [round] = await db
+      .select()
+      .from(survivalRounds)
+      .where(
+        and(
+          eq(survivalRounds.tournamentId, tournamentId),
+          eq(survivalRounds.status, 'active')
+        )
+      );
+    return round;
+  }
+
+  async getActiveParticipants(tournamentId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(survivalParticipants)
+      .where(
+        and(
+          eq(survivalParticipants.tournamentId, tournamentId),
+          eq(survivalParticipants.status, 'active')
+        )
+      );
+  }
+
+  async updateRoundSurvivorCount(roundId: number, count: number): Promise<void> {
+    await db
+      .update(survivalRounds)
+      .set({ survivorCount: count })
+      .where(eq(survivalRounds.id, roundId));
+  }
+
+  async getSurvivalRound(roundId: number): Promise<any> {
+    const [round] = await db
+      .select()
+      .from(survivalRounds)
+      .where(eq(survivalRounds.id, roundId));
+    return round;
+  }
+
+  async updateRound(roundId: number, updates: any): Promise<void> {
+    await db
+      .update(survivalRounds)
+      .set(updates)
+      .where(eq(survivalRounds.id, roundId));
+  }
+
+  async getRoundPredictions(roundId: number): Promise<any[]> {
+    return await db
+      .select({
+        id: survivalPredictions.id,
+        participantId: survivalPredictions.participantId,
+        userId: survivalPredictions.userId,
+        prediction: survivalPredictions.prediction,
+        isCorrect: survivalPredictions.isCorrect
+      })
+      .from(survivalPredictions)
+      .where(eq(survivalPredictions.roundId, roundId));
+  }
+
+  async updatePrediction(predictionId: number, updates: any): Promise<void> {
+    await db
+      .update(survivalPredictions)
+      .set(updates)
+      .where(eq(survivalPredictions.id, predictionId));
+  }
+
+  async eliminateParticipant(participantId: number, roundNumber: number): Promise<void> {
+    await db
+      .update(survivalParticipants)
+      .set({
+        status: 'eliminated',
+        eliminatedRound: roundNumber,
+        eliminatedAt: new Date()
+      })
+      .where(eq(survivalParticipants.id, participantId));
+  }
+
+  async updateTournamentStatus(tournamentId: number, status: string, winnerId?: number | null): Promise<void> {
+    const updates: any = { 
+      status, 
+      completedAt: new Date() 
+    };
+    
+    if (winnerId) {
+      updates.winnerId = winnerId;
+    }
+
+    await db
+      .update(survivalTournaments)
+      .set(updates)
+      .where(eq(survivalTournaments.id, tournamentId));
+  }
+
   async updateSurvivalTournament(id: number, updates: any): Promise<void> {
     await db
       .update(survivalTournaments)

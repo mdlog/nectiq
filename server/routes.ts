@@ -3963,6 +3963,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Start tournament if full
       if (tournament.currentParticipants + 1 >= tournament.maxParticipants) {
         await storage.startSurvivalTournament(tournamentId);
+        
+        // Start automatic rounds
+        const { survivalRoundService } = await import('./services/survivalRoundService');
+        await survivalRoundService.startTournamentRounds(tournamentId);
       }
 
       res.json(participant);
@@ -4008,6 +4012,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching tournament participants:', error);
       res.status(500).json({ message: 'Failed to fetch tournament participants' });
+    }
+  });
+
+  // Submit prediction for active round
+  app.post('/api/survival-tournaments/:id/predict', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      const { prediction } = req.body; // "up" or "down"
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      if (!prediction || !['up', 'down'].includes(prediction)) {
+        return res.status(400).json({ message: 'Invalid prediction. Must be "up" or "down"' });
+      }
+
+      // Check if user is participant in this tournament
+      const participants = await storage.getSurvivalParticipants(tournamentId);
+      const participant = participants.find(p => p.userId === userId && p.status === 'active');
+      
+      if (!participant) {
+        return res.status(400).json({ message: 'You are not an active participant in this tournament' });
+      }
+
+      // Get current active round
+      const currentRound = await storage.getCurrentRound(tournamentId);
+      if (!currentRound) {
+        return res.status(400).json({ message: 'No active round found' });
+      }
+
+      // Check if user already submitted prediction for this round
+      const existingPredictions = await storage.getRoundPredictions(currentRound.id);
+      const alreadyPredicted = existingPredictions.some(p => p.userId === userId);
+      
+      if (alreadyPredicted) {
+        return res.status(400).json({ message: 'You have already submitted a prediction for this round' });
+      }
+
+      // Submit prediction
+      const predictionData = {
+        tournamentId,
+        roundId: currentRound.id,
+        participantId: participant.id,
+        userId,
+        prediction,
+        submittedAt: new Date()
+      };
+
+      const newPrediction = await storage.submitSurvivalPrediction(predictionData);
+      res.json(newPrediction);
+    } catch (error) {
+      console.error('Error submitting survival prediction:', error);
+      res.status(500).json({ message: 'Failed to submit prediction' });
+    }
+  });
+
+  // Get current round status for tournament
+  app.get('/api/survival-tournaments/:id/current-round', async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      const currentRound = await storage.getCurrentRound(tournamentId);
+      const activeParticipants = await storage.getActiveParticipants(tournamentId);
+      
+      if (currentRound) {
+        // Get predictions for current round
+        const predictions = await storage.getRoundPredictions(currentRound.id);
+        const timeRemaining = Math.max(0, new Date(currentRound.endTime).getTime() - Date.now());
+        
+        res.json({
+          tournament,
+          currentRound: {
+            ...currentRound,
+            timeRemaining,
+            totalPredictions: predictions.length,
+            participantsRemaining: activeParticipants.length
+          },
+          userPrediction: req.session?.userId ? 
+            predictions.find(p => p.userId === req.session.userId) : null
+        });
+      } else {
+        res.json({
+          tournament,
+          currentRound: null,
+          userPrediction: null
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching current round status:', error);
+      res.status(500).json({ message: 'Failed to fetch round status' });
     }
   });
 
