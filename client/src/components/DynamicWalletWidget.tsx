@@ -13,13 +13,7 @@ export default function DynamicWalletWidget() {
   const walletAddress = user?.verifiedCredentials?.[0]?.address;
   const isConnected = !!user && !!walletAddress;
 
-  // Auto-authenticate when wallet connects (only once)
-  useEffect(() => {
-    if (isConnected && walletAddress && !hasAuthenticated) {
-      setHasAuthenticated(true);
-      loginWithWallet();
-    }
-  }, [isConnected, walletAddress, hasAuthenticated]);
+  // Remove auto-authentication as it's now handled by DynamicProvider events
 
   const copyAddress = async () => {
     if (walletAddress) {

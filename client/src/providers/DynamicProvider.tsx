@@ -66,14 +66,48 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
           }
         `,
         events: {
-          onAuthSuccess: (args) => {
+          onAuthSuccess: async (args) => {
             console.log('Dynamic: Authentication successful', args);
+            const walletAddress = args.user?.verifiedCredentials?.[0]?.address;
+            
+            if (walletAddress) {
+              try {
+                const response = await fetch('/api/auth/dynamic', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    walletAddress: walletAddress,
+                    address: walletAddress,
+                    user: args.user
+                  }),
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  console.log('Backend authentication successful:', data);
+                  
+                  // Success message will be shown after page reload
+                  
+                  // Reload page after successful auth
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1000);
+                } else {
+                  console.error('Backend authentication failed:', response.status);
+                }
+              } catch (error) {
+                console.error('Authentication request failed:', error);
+              }
+            }
           },
           onAuthFailure: (error) => {
             console.error('Dynamic: Authentication failed', error);
           },
           onLogout: () => {
             console.log('Dynamic: User logged out');
+            // Clear backend session
+            fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
           },
         },
       }}
