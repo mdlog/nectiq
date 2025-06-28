@@ -404,12 +404,12 @@ export default function BattlesPage() {
         {/* Page Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <Swords className="h-10 w-10 text-blue-600" />
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+            <Swords className="h-10 w-10 text-gray-800 dark:text-white" />
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-white">
               Prediction Battles
             </h1>
           </div>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
             Challenge other users in cryptocurrency price predictions and win rewards!
             Create a battle or join existing battles to compete in real-time.
           </p>
