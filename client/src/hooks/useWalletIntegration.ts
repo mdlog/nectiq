@@ -39,29 +39,37 @@ export function useWalletIntegration() {
     }));
   }, [isConnected, address, chain, balance]);
 
-  // Direct MetaMask account change listener
+  // Direct MetaMask account change listener with enhanced detection
   useEffect(() => {
     const ethereum = (window as any).ethereum;
-    if (!ethereum) return;
+    if (!ethereum) {
+      console.log('No ethereum provider found');
+      return;
+    }
 
     const handleAccountsChanged = async (accounts: string[]) => {
-      console.log('MetaMask accounts changed:', accounts);
+      console.log('🔍 MetaMask accountsChanged event triggered:', accounts);
       
       // Check if user is logged in
       try {
         const response = await fetch('/api/user');
+        console.log('User check response status:', response.status);
+        
         if (response.ok) {
           const userData = await response.json();
           const loggedInAddress = userData.walletAddress?.toLowerCase();
+          console.log('Logged in address:', loggedInAddress);
           
           if (loggedInAddress) {
             const currentAddress = accounts[0]?.toLowerCase();
+            console.log('Current MetaMask address:', currentAddress);
             
             // If no current address or addresses don't match
             if (!currentAddress || currentAddress !== loggedInAddress) {
-              console.warn('🚨 ACCOUNT SWITCH DETECTED - FORCING LOGOUT!', {
-                current: currentAddress || 'disconnected',
-                expected: loggedInAddress
+              console.warn('🚨 WALLET MISMATCH DETECTED!', {
+                currentMetaMask: currentAddress || 'disconnected',
+                loggedInUser: loggedInAddress,
+                mismatch: true
               });
               
               // Log security event
@@ -77,20 +85,22 @@ export function useWalletIntegration() {
               }).catch(console.error);
               
               toast({
-                title: "Account Changed",
-                description: "MetaMask account switched. Logging out for security.",
+                title: "Security Alert",
+                description: "MetaMask account changed. Logging out for security.",
                 variant: "destructive",
               });
               
               // Force logout
               await fetch('/api/auth/logout', { method: 'POST' });
               
-              // Reload page
-              setTimeout(() => {
-                window.location.reload();
-              }, 1000);
+              // Reload page immediately
+              window.location.reload();
+            } else {
+              console.log('✅ Wallet addresses match - no action needed');
             }
           }
+        } else if (response.status === 401) {
+          console.log('User not logged in - no verification needed');
         }
       } catch (error) {
         console.error('Account change verification error:', error);
@@ -98,10 +108,42 @@ export function useWalletIntegration() {
     };
 
     // Listen for account changes
+    console.log('Setting up MetaMask account change listener');
     ethereum.on('accountsChanged', handleAccountsChanged);
     
+    // Also listen for connect/disconnect events
+    const handleConnect = (connectInfo: any) => {
+      console.log('MetaMask connected:', connectInfo);
+    };
+    
+    const handleDisconnect = (error: any) => {
+      console.log('MetaMask disconnected:', error);
+    };
+    
+    ethereum.on('connect', handleConnect);
+    ethereum.on('disconnect', handleDisconnect);
+    
+    // Manual check on mount to catch existing mismatches
+    const checkCurrentState = async () => {
+      try {
+        const accounts = await ethereum.request({ method: 'eth_accounts' });
+        console.log('Initial wallet check - MetaMask accounts:', accounts);
+        if (accounts && accounts.length > 0) {
+          await handleAccountsChanged(accounts);
+        }
+      } catch (error) {
+        console.error('Initial wallet check failed:', error);
+      }
+    };
+    
+    // Check immediately
+    checkCurrentState();
+    
     return () => {
+      console.log('Cleaning up MetaMask event listeners');
       ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      ethereum.removeListener('connect', handleConnect);
+      ethereum.removeListener('disconnect', handleDisconnect);
     };
   }, [toast]);
 
