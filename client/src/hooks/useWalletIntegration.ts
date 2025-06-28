@@ -39,13 +39,84 @@ export function useWalletIntegration() {
     }));
   }, [isConnected, address, chain, balance]);
 
+  // Direct MetaMask account change listener
+  useEffect(() => {
+    const ethereum = (window as any).ethereum;
+    if (!ethereum) return;
+
+    const handleAccountsChanged = async (accounts: string[]) => {
+      console.log('MetaMask accounts changed:', accounts);
+      
+      // Check if user is logged in
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const userData = await response.json();
+          const loggedInAddress = userData.walletAddress?.toLowerCase();
+          
+          if (loggedInAddress) {
+            const currentAddress = accounts[0]?.toLowerCase();
+            
+            // If no current address or addresses don't match
+            if (!currentAddress || currentAddress !== loggedInAddress) {
+              console.warn('🚨 ACCOUNT SWITCH DETECTED - FORCING LOGOUT!', {
+                current: currentAddress || 'disconnected',
+                expected: loggedInAddress
+              });
+              
+              // Log security event
+              fetch('/api/security/wallet-mismatch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  currentAddress: currentAddress || 'disconnected',
+                  expectedAddress: loggedInAddress,
+                  userAgent: navigator.userAgent,
+                  timestamp: new Date().toISOString()
+                })
+              }).catch(console.error);
+              
+              toast({
+                title: "Account Changed",
+                description: "MetaMask account switched. Logging out for security.",
+                variant: "destructive",
+              });
+              
+              // Force logout
+              await fetch('/api/auth/logout', { method: 'POST' });
+              
+              // Reload page
+              setTimeout(() => {
+                window.location.reload();
+              }, 1000);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Account change verification error:', error);
+      }
+    };
+
+    // Listen for account changes
+    ethereum.on('accountsChanged', handleAccountsChanged);
+    
+    return () => {
+      ethereum.removeListener('accountsChanged', handleAccountsChanged);
+    };
+  }, [toast]);
+
   // Wallet address verification with auto-disconnect
   useEffect(() => {
     const verifyWalletAddress = async () => {
+      // Only check if wallet is connected and we have an address
       if (!isConnected || !address) return;
 
       try {
         const response = await fetch('/api/user');
+        
+        // If user is not authenticated, skip verification
+        if (response.status === 401) return;
+        
         if (response.ok) {
           const userData = await response.json();
           
@@ -55,7 +126,7 @@ export function useWalletIntegration() {
           
           // If wallet addresses don't match, force disconnect
           if (loggedInWalletAddress && currentWalletAddress !== loggedInWalletAddress) {
-            console.log('Wallet address mismatch detected:', {
+            console.warn('🚨 WALLET ADDRESS MISMATCH DETECTED!', {
               current: currentWalletAddress,
               expected: loggedInWalletAddress
             });
@@ -82,7 +153,9 @@ export function useWalletIntegration() {
             await fetch('/api/auth/logout', { method: 'POST' });
             
             // Reload page to clear all state
-            window.location.reload();
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
           }
         }
       } catch (error) {
@@ -91,12 +164,21 @@ export function useWalletIntegration() {
     };
 
     // Verify immediately when wallet connects or address changes
-    verifyWalletAddress();
+    if (isConnected && address) {
+      verifyWalletAddress();
+    }
     
-    // Set up periodic verification every 5 seconds when connected
-    const verificationInterval = setInterval(verifyWalletAddress, 5000);
+    // Set up periodic verification every 3 seconds when connected
+    let verificationInterval: NodeJS.Timeout | null = null;
+    if (isConnected && address) {
+      verificationInterval = setInterval(verifyWalletAddress, 3000);
+    }
     
-    return () => clearInterval(verificationInterval);
+    return () => {
+      if (verificationInterval) {
+        clearInterval(verificationInterval);
+      }
+    };
   }, [isConnected, address, toast]);
 
   // Handle wallet authentication with backend
