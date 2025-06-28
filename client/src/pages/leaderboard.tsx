@@ -151,7 +151,7 @@ export default function Leaderboard() {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container max-w-6xl mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">🏆 Leaderboard</h1>
@@ -174,10 +174,6 @@ export default function Leaderboard() {
             </Link>
           </div>
         </div>
-
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
 
           {/* Search and Filter */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -226,44 +222,43 @@ export default function Leaderboard() {
 
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="bg-surface border-surface-light">
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <Users className="text-primary h-8 w-8" />
+                  <Users className="text-blue-400 h-8 w-8" />
                   <div>
-                    <p className="text-sm text-slate-400">Total Predictors</p>
+                    <p className="text-sm text-gray-300">Total Predictors</p>
                     <p className="text-2xl font-bold text-white">{totalUsers}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-surface border-surface-light">
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <Target className="text-secondary h-8 w-8" />
+                  <Target className="text-green-400 h-8 w-8" />
                   <div>
-                    <p className="text-sm text-slate-400">Total Predictions</p>
+                    <p className="text-sm text-gray-300">Total Predictions</p>
                     <p className="text-2xl font-bold text-white">{totalPredictions.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-surface border-surface-light">
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <TrendingUp className="text-success h-8 w-8" />
+                  <TrendingUp className="text-yellow-400 h-8 w-8" />
                   <div>
-                    <p className="text-sm text-slate-400">Avg. Win Rate</p>
+                    <p className="text-sm text-gray-300">Avg. Win Rate</p>
                     <p className="text-2xl font-bold text-white">{averageWinRate.toFixed(1)}%</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </div>
 
         {/* Leaderboard List */}
-        <Card className="bg-surface border-surface-light">
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
           <CardHeader>
             <CardTitle className="text-white capitalize flex items-center justify-between">
               <span>{filter === 'alltime' ? 'All Time' : filter} Rankings</span>
