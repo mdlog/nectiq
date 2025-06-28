@@ -487,10 +487,6 @@ export default function UserDashboard() {
               <Wallet className="mr-1" size={16} />
               Financial
             </TabsTrigger>
-            <TabsTrigger value="verification" className="data-[state=active]:bg-primary">
-              <Shield className="mr-1" size={16} />
-              Verification
-            </TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
@@ -1215,11 +1211,6 @@ export default function UserDashboard() {
             )}
           </TabsContent>
 
-          {/* Verification Tab */}
-          <TabsContent value="verification">
-            <VerificationSettings user={user} />
-          </TabsContent>
-
           {/* Battles Tab */}
           <TabsContent value="battles">
             <BattlesSection />
@@ -1872,9 +1863,15 @@ function UserProfile() {
             <span className="text-slate-300">Account Type</span>
             <span className="text-white font-medium">{user.isAdmin ? 'Administrator' : 'Standard User'}</span>
           </div>
-          <div className="flex justify-between items-center py-3">
+          <div className="flex justify-between items-center py-3 border-b border-surface-light">
             <span className="text-slate-300">Member Status</span>
             <span className="text-green-400 font-medium">Active</span>
+          </div>
+          
+          {/* Email and Twitter Verification Section */}
+          <div className="pt-4">
+            <h3 className="text-slate-300 font-medium mb-3">Verification Settings</h3>
+            <VerificationSettings user={user} />
           </div>
         </CardContent>
       </Card>
