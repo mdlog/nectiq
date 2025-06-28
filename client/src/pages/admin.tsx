@@ -84,7 +84,7 @@ export default function AdminPanel() {
   
   // Leaderboard enhancements state
   const [leaderboardTimeFilter, setLeaderboardTimeFilter] = useState<"weekly" | "monthly" | "all">("all");
-  const [leaderboardSortField, setLeaderboardSortField] = useState<"accuracy" | "rewards" | "streak">("accuracy");
+  const [leaderboardSortField, setLeaderboardSortField] = useState<"accuracy" | "rewards" | "streak">("rewards");
   const [leaderboardSortOrder, setLeaderboardSortOrder] = useState<"asc" | "desc">("desc");
   
   // Transaction monitoring enhancements state
