@@ -128,7 +128,7 @@ const SurvivalTournaments = () => {
       return;
     }
 
-    if (user.balance < tournament.entryFee) {
+    if (user?.balance < tournament.entryFee) {
       toast({
         title: "Insufficient Balance",
         description: `You need ${tournament.entryFee} NTIQ to join this tournament`,

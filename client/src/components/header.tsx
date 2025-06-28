@@ -161,6 +161,14 @@ export function Header() {
               Battles
             </button>
             <button 
+              onClick={() => setLocation('/survival')} 
+              className={`transition-colors ${
+                location === '/survival' ? "text-white font-bold" : "text-slate-300 hover:text-white"
+              }`}
+            >
+              Survival
+            </button>
+            <button 
               onClick={() => setLocation('/leaderboard')} 
               className={`transition-colors ${
                 location === '/leaderboard' ? "text-white font-bold" : "text-slate-300 hover:text-white"
@@ -433,6 +441,17 @@ export function Header() {
                   }`}
                 >
                   Battles
+                </button>
+                <button 
+                  onClick={() => {
+                    setLocation('/survival');
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    location === '/survival' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
+                  }`}
+                >
+                  Survival
                 </button>
                 <button 
                   onClick={() => {
