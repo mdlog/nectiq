@@ -16,6 +16,10 @@ export const users = pgTable("users", {
   correctPredictions: integer("correct_predictions").notNull().default(0),
   totalRewards: integer("total_rewards").notNull().default(0),
   profilePhoto: text("profile_photo"),
+  email: text("email"),
+  twitterHandle: text("twitter_handle"),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  twitterVerified: boolean("twitter_verified").notNull().default(false),
 });
 
 export const predictions = pgTable("predictions", {
@@ -201,6 +205,20 @@ export const transactionLogs = pgTable("transaction_logs", {
   exchangeRate: numeric("exchange_rate", { precision: 18, scale: 8 }),
   relatedId: integer("related_id"), // ID of related purchase, withdrawal, prediction, etc.
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const userVerifications = pgTable("user_verifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  walletAddress: text("wallet_address").notNull(),
+  email: text("email"),
+  twitterHandle: text("twitter_handle"),
+  emailVerificationCode: text("email_verification_code"),
+  twitterVerificationCode: text("twitter_verification_code"),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  twitterVerified: boolean("twitter_verified").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const banners = pgTable("banners", {

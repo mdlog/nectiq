@@ -194,6 +194,71 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id));
   }
 
+  async updateUserVerification(userId: number, email?: string, twitterHandle?: string): Promise<User> {
+    const updates: any = {};
+    if (email !== undefined) {
+      updates.email = email;
+      updates.emailVerified = false;
+    }
+    if (twitterHandle !== undefined) {
+      updates.twitterHandle = twitterHandle;
+      updates.twitterVerified = false;
+    }
+    
+    const [user] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async verifyUserEmail(userId: number): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ emailVerified: true })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async verifyUserTwitter(userId: number): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ twitterVerified: true })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async checkEmailExists(email: string, excludeUserId?: number): Promise<boolean> {
+    let query = db.select().from(users).where(eq(users.email, email));
+    if (excludeUserId) {
+      query = query.where(ne(users.id, excludeUserId));
+    }
+    const result = await query;
+    return result.length > 0;
+  }
+
+  async checkTwitterExists(twitterHandle: string, excludeUserId?: number): Promise<boolean> {
+    let query = db.select().from(users).where(eq(users.twitterHandle, twitterHandle));
+    if (excludeUserId) {
+      query = query.where(ne(users.id, excludeUserId));
+    }
+    const result = await query;
+    return result.length > 0;
+  }
+
+  async getUsersByEmailOrTwitter(email?: string, twitterHandle?: string): Promise<User[]> {
+    const conditions = [];
+    if (email) conditions.push(eq(users.email, email));
+    if (twitterHandle) conditions.push(eq(users.twitterHandle, twitterHandle));
+    
+    if (conditions.length === 0) return [];
+    
+    return await db.select().from(users).where(or(...conditions));
+  }
+
   async createPrediction(predictionData: any): Promise<Prediction> {
     const [prediction] = await db
       .insert(predictions)
