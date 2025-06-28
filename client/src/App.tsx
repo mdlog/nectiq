@@ -3,9 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { WagmiProvider, useAccount } from 'wagmi';
-import { createWeb3Modal } from '@web3modal/wagmi';
-import { config, projectId } from './lib/web3Config';
+import DynamicProvider from "@/providers/DynamicProvider";
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 import AdminPanel from "@/pages/admin";
@@ -29,7 +27,8 @@ console.error = (...args) => {
     message.includes('Unable to redefine window.ethereum') ||
     message.includes('Cannot both specify accessors') ||
     message.includes('E8Wallet: Received invalid network parameters') ||
-    message.includes('Cross-Origin-Opener-Policy')
+    message.includes('Cross-Origin-Opener-Policy') ||
+    message.includes('Dynamic SDK')
   ) {
     return; // Suppress wallet extension conflicts
   }
@@ -41,37 +40,13 @@ console.warn = (...args) => {
   if (
     message.includes('Unable to redefine window.ethereum') ||
     message.includes('Backpack couldn\'t override') ||
-    message.includes('Lit is in dev mode')
+    message.includes('Lit is in dev mode') ||
+    message.includes('Dynamic SDK')
   ) {
     return; // Suppress wallet extension warnings
   }
   originalWarn.apply(console, args);
 };
-
-// Initialize Web3Modal with error handling
-try {
-  createWeb3Modal({
-    wagmiConfig: config,
-    projectId,
-    enableAnalytics: false,
-    enableOnramp: false,
-  });
-} catch (error) {
-  // Wallet initialization conflicts are common and non-critical
-  console.log('Web3Modal initialized with wallet provider conflicts (normal behavior)');
-}
-
-// Protected Admin Component
-function ProtectedAdmin() {
-  const { address } = useAccount();
-  const AUTHORIZED_WALLET = "0x4C6165286739696849Fb3e77A16b0639D762c5B6";
-  
-  if (!address || address.toLowerCase() !== AUTHORIZED_WALLET.toLowerCase()) {
-    return <NotFound />;
-  }
-  
-  return <AdminPanel />;
-}
 
 function Router() {
   return (
@@ -93,7 +68,7 @@ function Router() {
 
 function App() {
   return (
-    <WagmiProvider config={config}>
+    <DynamicProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
@@ -102,7 +77,7 @@ function App() {
           </div>
         </TooltipProvider>
       </QueryClientProvider>
-    </WagmiProvider>
+    </DynamicProvider>
   );
 }
 

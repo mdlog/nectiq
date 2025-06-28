@@ -18,18 +18,21 @@ export function useDynamicWallet() {
   });
   const { toast } = useToast();
 
+  const isAuthenticated = !!user;
+  const walletAddress = user?.verifiedCredentials?.[0]?.address;
+
   useEffect(() => {
     setWalletState(prev => ({
       ...prev,
       isConnected: isAuthenticated,
-      address: user?.verifiedCredentials?.[0]?.address,
+      address: walletAddress,
       network: user?.verifiedCredentials?.[0]?.chain,
     }));
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, walletAddress]);
 
   // Enhanced wallet verification system
   useEffect(() => {
-    if (!isAuthenticated || !user?.verifiedCredentials?.[0]?.address) return;
+    if (!isAuthenticated || !walletAddress) return;
 
     const handleWalletChange = async () => {
       try {
@@ -38,7 +41,7 @@ export function useDynamicWallet() {
         if (response.ok) {
           const userData = await response.json();
           const loggedInAddress = userData.walletAddress?.toLowerCase();
-          const currentAddress = user.verifiedCredentials[0].address?.toLowerCase();
+          const currentAddress = walletAddress?.toLowerCase();
           
           if (loggedInAddress && currentAddress && currentAddress !== loggedInAddress) {
             console.warn('🚨 WALLET MISMATCH DETECTED!', {
@@ -81,7 +84,7 @@ export function useDynamicWallet() {
     const interval = setInterval(handleWalletChange, 3000);
     
     return () => clearInterval(interval);
-  }, [isAuthenticated, user, toast, handleLogOut]);
+  }, [isAuthenticated, walletAddress, toast, handleLogOut]);
 
   const connectWallet = () => {
     setShowAuthFlow(true);
@@ -101,7 +104,7 @@ export function useDynamicWallet() {
   };
 
   const loginWithWallet = async () => {
-    if (!user?.verifiedCredentials?.[0]?.address) {
+    if (!walletAddress) {
       toast({
         title: "Error",
         description: "No wallet address found",
@@ -112,16 +115,14 @@ export function useDynamicWallet() {
 
     try {
       setWalletState(prev => ({ ...prev, isLoading: true }));
-
-      const address = user.verifiedCredentials[0].address;
       
       const response = await fetch('/api/auth/wallet-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          walletAddress: address,
+          walletAddress: walletAddress,
           signature: 'dynamic-auth',
-          message: `Login to Nectiq with ${address}`
+          message: `Login to Nectiq with ${walletAddress}`
         }),
       });
 
