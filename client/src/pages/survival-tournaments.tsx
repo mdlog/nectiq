@@ -58,17 +58,40 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
   const { data: roundStatus, isLoading: isLoadingRound } = useQuery<RoundStatus>({
     queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`],
     refetchInterval: 5000, // Refresh every 5 seconds
+    queryFn: async () => {
+      console.log('Fetching round status for tournament:', tournament.id);
+      const response = await fetch(`/api/survival-tournaments/${tournament.id}/current-round`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch round status");
+      }
+      const data = await response.json();
+      console.log('Round status response:', data);
+      return data;
+    },
   });
 
   // Mutation for submitting predictions
   const submitPredictionMutation = useMutation({
-    mutationFn: (prediction: 'up' | 'down') =>
-      apiRequest(`/api/survival-tournaments/${tournament.id}/predict`, {
-        method: 'POST',
-        body: JSON.stringify({ prediction }),
-        headers: { 'Content-Type': 'application/json' },
-      }),
+    mutationFn: async (prediction: 'up' | 'down') => {
+      console.log('Submitting prediction:', prediction, 'for tournament:', tournament.id);
+      try {
+        const result = await apiRequest(`/api/survival-tournaments/${tournament.id}/predict`, {
+          method: 'POST',
+          body: JSON.stringify({ prediction }),
+          headers: { 'Content-Type': 'application/json' },
+        });
+        console.log('Prediction result:', result);
+        return result;
+      } catch (error) {
+        console.error('Prediction error:', error);
+        throw error;
+      }
+    },
     onSuccess: (data: any) => {
+      console.log('Prediction success:', data);
       toast({
         title: "Prediction Submitted!",
         description: data.message || `Your ${data.prediction?.toUpperCase()} prediction recorded! ${data.entryFeeDeducted} NTIQ deducted. New balance: ${data.newBalance} NTIQ`,
@@ -79,6 +102,7 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
       queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments'] });
     },
     onError: (error: any) => {
+      console.error('Prediction mutation error:', error);
       toast({
         variant: "destructive",
         title: "Prediction Failed",
@@ -129,10 +153,10 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-gray-600" />
-            No Active Round
+            Round 1 starts when first player makes a prediction
           </CardTitle>
           <CardDescription>
-            Tournament is not currently running any rounds.
+            Connect your wallet and make the first prediction to activate Round 1!
           </CardDescription>
         </CardHeader>
       </Card>
@@ -216,7 +240,10 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
               <Button
                 size="lg"
                 className="h-20 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
-                onClick={() => submitPredictionMutation.mutate('up')}
+                onClick={() => {
+                  console.log('Price UP button clicked!');
+                  submitPredictionMutation.mutate('up');
+                }}
                 disabled={submitPredictionMutation.isPending}
               >
                 <TrendingUp className="h-6 w-6 mr-2" />
@@ -233,7 +260,10 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
               <Button
                 size="lg"
                 className="h-20 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
-                onClick={() => submitPredictionMutation.mutate('down')}
+                onClick={() => {
+                  console.log('Price DOWN button clicked!');
+                  submitPredictionMutation.mutate('down');
+                }}
                 disabled={submitPredictionMutation.isPending}
               >
                 <TrendingDown className="h-6 w-6 mr-2" />
