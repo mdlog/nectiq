@@ -5679,19 +5679,21 @@ export default function AdminPanel() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="h-7 w-7 p-0"
-                                  onClick={() => {
-                                    // View battle details
+                                <span 
+                                  className="inline-flex items-center justify-center h-7 w-7 p-0 border border-input rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    console.log('Battle View clicked:', battle.id);
+                                    console.log('Current modal state:', showBattleDetailsModal);
                                     setSelectedBattleDetails(battle);
                                     setShowBattleDetailsModal(true);
+                                    console.log('Modal should be shown now');
                                   }}
                                   title="View Battle Details"
                                 >
                                   <Eye className="h-3 w-3" />
-                                </Button>
+                                </span>
                                 {battle.status === 'open' && (
                                   <Button 
                                     size="sm" 
