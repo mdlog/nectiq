@@ -4,13 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Trophy, Users, Clock, DollarSign, Plus, Target, Sword, Timer } from "lucide-react";
+import { Trophy, Users, Clock, DollarSign, Target, Sword, Timer } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
@@ -75,8 +71,6 @@ const SurvivalTournaments = () => {
     },
   });
 
-
-
   const handleJoinTournament = (tournament: SurvivalTournament) => {
     if (!user) {
       toast({
@@ -87,7 +81,25 @@ const SurvivalTournaments = () => {
       return;
     }
 
-    if (user?.balance < tournament.entryFee) {
+    if (tournament.status !== 'pending' && tournament.status !== 'accepting_participants') {
+      toast({
+        title: "Cannot Join",
+        description: "This tournament is no longer accepting participants",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (tournament.currentParticipants >= tournament.maxParticipants) {
+      toast({
+        title: "Tournament Full",
+        description: "This tournament has reached its maximum number of participants",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (user.balance < tournament.entryFee) {
       toast({
         title: "Insufficient Balance",
         description: `You need ${tournament.entryFee} NTIQ to join this tournament`,
@@ -99,33 +111,44 @@ const SurvivalTournaments = () => {
     joinTournamentMutation.mutate(tournament.id);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-green-500';
-      case 'active': return 'bg-blue-500';
-      case 'completed': return 'bg-gray-500';
-      default: return 'bg-gray-500';
+      case 'pending':
+      case 'accepting_participants':
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Open</Badge>;
+      case 'active':
+        return <Badge className="bg-green-500 hover:bg-green-600">Active</Badge>;
+      case 'completed':
+        return <Badge className="bg-gray-500 hover:bg-gray-600">Completed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getCryptoImageUrl = (cryptoId: string) => {
-    const cryptoImages: Record<string, string> = {
-      bitcoin: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
-      ethereum: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-      binancecoin: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
-      cardano: 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
-      solana: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-    };
-    return cryptoImages[cryptoId] || '';
+  const formatTimeRemaining = (endTime: string) => {
+    const now = new Date();
+    const end = new Date(endTime);
+    const diff = end.getTime() - now.getTime();
+    
+    if (diff <= 0) return "Ended";
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
         <Header />
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-lg">Loading tournaments...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto"></div>
+            <p className="text-white mt-4">Loading tournaments...</p>
           </div>
         </div>
         <Footer />
@@ -134,251 +157,236 @@ const SurvivalTournaments = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Header Section */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Target className="w-8 h-8 text-red-600" />
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-white">
-              Survival Tournaments
-            </h1>
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center mb-4">
+            <Sword className="h-8 w-8 text-red-400 mr-2" />
+            <h1 className="text-4xl font-bold text-white">Survival Tournaments</h1>
           </div>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
             Elimination-style tournaments where wrong predictions eliminate participants. Last survivor wins the entire prize pool!
           </p>
         </div>
 
-        {/* Action Buttons */}
+        {/* Admin Notice */}
         <div className="flex justify-center mb-8">
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="bg-red-600 hover:bg-red-700 text-white">
-                <Plus className="w-5 h-5 mr-2" />
-                Create Tournament
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create Survival Tournament</DialogTitle>
-                <DialogDescription>
-                  Create a new elimination tournament where participants make predictions to survive.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <form onSubmit={handleCreateTournament} className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Tournament Title</Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    placeholder="Enter tournament title"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    placeholder="Tournament description (optional)"
-                    rows={3}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="cryptocurrency">Cryptocurrency</Label>
-                  <Select name="cryptocurrency" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select cryptocurrency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bitcoin">Bitcoin (BTC)</SelectItem>
-                      <SelectItem value="ethereum">Ethereum (ETH)</SelectItem>
-                      <SelectItem value="binancecoin">BNB</SelectItem>
-                      <SelectItem value="cardano">Cardano (ADA)</SelectItem>
-                      <SelectItem value="solana">Solana (SOL)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="entryFee">Entry Fee (NTIQ)</Label>
-                    <Input
-                      id="entryFee"
-                      name="entryFee"
-                      type="number"
-                      min="10"
-                      max="1000"
-                      defaultValue="100"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="maxParticipants">Max Participants</Label>
-                    <Input
-                      id="maxParticipants"
-                      name="maxParticipants"
-                      type="number"
-                      min="2"
-                      max="100"
-                      defaultValue="20"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="roundDuration">Round Duration (seconds)</Label>
-                  <Select name="roundDuration" defaultValue="300">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="180">3 minutes</SelectItem>
-                      <SelectItem value="300">5 minutes</SelectItem>
-                      <SelectItem value="600">10 minutes</SelectItem>
-                      <SelectItem value="900">15 minutes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsCreateDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={createTournamentMutation.isPending}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    {createTournamentMutation.isPending ? "Creating..." : "Create Tournament"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md text-center">
+            <p className="text-blue-800 text-sm">
+              <strong>Admin Only:</strong> Tournament creation is restricted to administrators. Contact an admin to create new tournaments.
+            </p>
+          </div>
         </div>
 
         {/* Tournaments Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tournaments.map((tournament: SurvivalTournament) => (
-            <Card key={tournament.id} className="hover:shadow-lg transition-shadow">
+            <Card key={tournament.id} className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <img
-                      src={getCryptoImageUrl(tournament.cryptocurrency)}
-                      alt={tournament.cryptocurrency}
-                      className="w-6 h-6"
-                    />
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg font-bold text-white">
                     {tournament.title}
                   </CardTitle>
-                  <Badge className={`${getStatusColor(tournament.status)} text-white`}>
-                    {tournament.status.toUpperCase()}
-                  </Badge>
+                  {getStatusBadge(tournament.status)}
                 </div>
-                <CardDescription>{tournament.description}</CardDescription>
+                <CardDescription className="text-gray-300">
+                  {tournament.description}
+                </CardDescription>
               </CardHeader>
               
-              <CardContent className="space-y-4">
-                {/* Tournament Stats */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-green-600" />
-                    <span>Entry: {tournament.entryFee} NTIQ</span>
+              <CardContent>
+                <div className="space-y-3">
+                  {/* Cryptocurrency */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300">Asset:</span>
+                    <span className="font-medium text-white">{tournament.cryptocurrency.toUpperCase()}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-yellow-600" />
-                    <span>Prize: {tournament.prizePool} NTIQ</span>
+                  
+                  {/* Participants */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 flex items-center">
+                      <Users className="w-4 h-4 mr-1" />
+                      Participants:
+                    </span>
+                    <span className="text-white">{tournament.currentParticipants}/{tournament.maxParticipants}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-blue-600" />
-                    <span>{tournament.currentParticipants}/{tournament.maxParticipants}</span>
+                  
+                  {/* Entry Fee */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 flex items-center">
+                      <DollarSign className="w-4 h-4 mr-1" />
+                      Entry Fee:
+                    </span>
+                    <span className="text-green-400 font-medium">{tournament.entryFee} NTIQ</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Sword className="w-4 h-4 text-red-600" />
-                    <span>Round {tournament.currentRound}</span>
+                  
+                  {/* Prize Pool */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 flex items-center">
+                      <Trophy className="w-4 h-4 mr-1" />
+                      Prize Pool:
+                    </span>
+                    <span className="text-yellow-400 font-bold">{tournament.prizePool} NTIQ</span>
                   </div>
+                  
+                  {/* Round Duration */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 flex items-center">
+                      <Timer className="w-4 h-4 mr-1" />
+                      Round Duration:
+                    </span>
+                    <span className="text-white">{Math.floor(tournament.roundDuration / 60)} min</span>
+                  </div>
+                  
+                  {/* Current Round (if active) */}
+                  {tournament.status === 'active' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 flex items-center">
+                        <Target className="w-4 h-4 mr-1" />
+                        Current Round:
+                      </span>
+                      <span className="text-blue-400 font-medium">Round {tournament.currentRound}</span>
+                    </div>
+                  )}
+                  
+                  {/* Time Remaining (if active) */}
+                  {tournament.status === 'active' && tournament.nextRoundTime && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300 flex items-center">
+                        <Clock className="w-4 h-4 mr-1" />
+                        Next Round:
+                      </span>
+                      <span className="text-orange-400 font-medium">
+                        {formatTimeRemaining(tournament.nextRoundTime)}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Winner (if completed) */}
+                  {tournament.status === 'completed' && tournament.winnerUsername && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-300">Winner:</span>
+                      <span className="text-yellow-400 font-bold">{tournament.winnerUsername}</span>
+                    </div>
+                  )}
                 </div>
-
-                {/* Round Duration */}
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Timer className="w-4 h-4" />
-                  <span>Round Duration: {Math.floor(tournament.roundDuration / 60)}m {tournament.roundDuration % 60}s</span>
-                </div>
-
-                {/* Creator Info */}
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Created by: <span className="font-medium">{tournament.creatorUsername}</span>
-                </div>
-
-                {/* Action Button */}
-                <div className="pt-2">
-                  {tournament.status === 'open' && (
+                
+                {/* Action Buttons */}
+                <div className="mt-6 space-y-2">
+                  {(tournament.status === 'pending' || tournament.status === 'accepting_participants') && 
+                   tournament.currentParticipants < tournament.maxParticipants && (
                     <Button
                       onClick={() => handleJoinTournament(tournament)}
                       disabled={joinTournamentMutation.isPending}
-                      className="w-full bg-red-600 hover:bg-red-700"
+                      className="w-full bg-red-600 hover:bg-red-700 text-white"
                     >
-                      {joinTournamentMutation.isPending ? "Joining..." : "Join Tournament"}
+                      {joinTournamentMutation.isPending ? 'Joining...' : `Join Tournament (${tournament.entryFee} NTIQ)`}
                     </Button>
                   )}
                   
-                  {tournament.status === 'active' && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setSelectedTournament(tournament)}
-                    >
-                      View Tournament
-                    </Button>
-                  )}
-                  
-                  {tournament.status === 'completed' && (
-                    <div className="text-center">
-                      {tournament.winnerUsername ? (
-                        <div className="text-sm">
-                          <span className="text-yellow-600 font-medium">Winner: </span>
-                          <span className="font-medium">{tournament.winnerUsername}</span>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full text-white border-white/30 hover:bg-white/10">
+                        View Details
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>{tournament.title}</DialogTitle>
+                        <DialogDescription>
+                          Tournament Details
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-medium mb-2">Description</h4>
+                          <p className="text-sm text-gray-600">{tournament.description}</p>
                         </div>
-                      ) : (
-                        <span className="text-gray-500">No survivors</span>
-                      )}
-                    </div>
-                  )}
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Tournament Info</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span>Asset:</span>
+                              <span>{tournament.cryptocurrency.toUpperCase()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Entry Fee:</span>
+                              <span>{tournament.entryFee} NTIQ</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Max Participants:</span>
+                              <span>{tournament.maxParticipants}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Prize Pool:</span>
+                              <span>{tournament.prizePool} NTIQ</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Round Duration:</span>
+                              <span>{Math.floor(tournament.roundDuration / 60)} minutes</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Creator:</span>
+                              <span>{tournament.creatorUsername}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {tournament.status === 'active' && (
+                          <div>
+                            <h4 className="font-medium mb-2">Current Status</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Current Round:</span>
+                                <span>Round {tournament.currentRound}</span>
+                              </div>
+                              {tournament.nextRoundTime && (
+                                <div className="flex justify-between">
+                                  <span>Next Round In:</span>
+                                  <span>{formatTimeRemaining(tournament.nextRoundTime)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {tournament.status === 'completed' && tournament.winnerUsername && (
+                          <div>
+                            <h4 className="font-medium mb-2">Tournament Result</h4>
+                            <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                              <Trophy className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
+                              <p className="font-medium text-yellow-800">
+                                Winner: {tournament.winnerUsername}
+                              </p>
+                              <p className="text-sm text-yellow-600">
+                                Prize: {tournament.prizePool} NTIQ
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Empty State */}
-        {tournaments.length === 0 && (
+        {tournaments.length === 0 && !isLoading && (
           <div className="text-center py-12">
-            <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-              No Tournaments Available
+            <Trophy className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No tournaments available
             </h3>
             <p className="text-gray-500 dark:text-gray-500 mb-6">
-              Be the first to create a survival tournament and test your prediction skills!
+              Tournaments are created by administrators. Check back later for new tournaments!
             </p>
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Create First Tournament
-            </Button>
           </div>
         )}
       </div>
