@@ -14,6 +14,7 @@ import HowToPlay from "@/pages/how-to-play";
 import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import WalletLoginPage from "@/pages/wallet-login";
+import DynamicDemo from "@/pages/dynamic-demo";
 
 // Suppress wallet extension conflicts in console
 const originalError = console.error;
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/terms-conditions" component={TermsConditions} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/wallet-login" component={WalletLoginPage} />
+      <Route path="/dynamic-demo" component={DynamicDemo} />
       <Route component={NotFound} />
     </Switch>
   );

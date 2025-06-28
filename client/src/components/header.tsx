@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChartLine, Coins, User, Wallet, LogOut, Menu, X, ChevronDown, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { useAccount, useDisconnect } from 'wagmi';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
@@ -15,8 +15,9 @@ export function Header() {
     queryKey: ["/api/user"],
   });
   
-  const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
+  const { user: dynamicUser, handleLogOut } = useDynamicContext();
+  const address = dynamicUser?.verifiedCredentials?.[0]?.address;
+  const isConnected = !!dynamicUser && !!address;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location, setLocation] = useLocation();
@@ -77,15 +78,12 @@ export function Header() {
       // First logout from server
       await logoutMutation.mutateAsync();
       
-      // Then disconnect wallet
-      disconnect();
+      // Then disconnect wallet using Dynamic SDK
+      handleLogOut();
       
-      // Clear wagmi localStorage data
-      localStorage.removeItem('wagmi.wallet');
-      localStorage.removeItem('wagmi.connected');
-      localStorage.removeItem('wagmi.store');
-      localStorage.removeItem('wagmi.cache');
-      localStorage.removeItem('walletconnect');
+      // Clear Dynamic SDK localStorage data
+      localStorage.removeItem('dynamic_authentication_token');
+      localStorage.removeItem('dynamic_user_data');
       
       toast({
         title: "Disconnected",
