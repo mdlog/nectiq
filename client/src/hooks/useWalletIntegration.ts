@@ -39,6 +39,66 @@ export function useWalletIntegration() {
     }));
   }, [isConnected, address, chain, balance]);
 
+  // Wallet address verification with auto-disconnect
+  useEffect(() => {
+    const verifyWalletAddress = async () => {
+      if (!isConnected || !address) return;
+
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const userData = await response.json();
+          
+          // Normalize addresses for comparison (both to lowercase)
+          const currentWalletAddress = address.toLowerCase();
+          const loggedInWalletAddress = userData.walletAddress?.toLowerCase();
+          
+          // If wallet addresses don't match, force disconnect
+          if (loggedInWalletAddress && currentWalletAddress !== loggedInWalletAddress) {
+            console.log('Wallet address mismatch detected:', {
+              current: currentWalletAddress,
+              expected: loggedInWalletAddress
+            });
+            
+            // Log security event
+            fetch('/api/security/wallet-mismatch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                currentAddress: currentWalletAddress,
+                expectedAddress: loggedInWalletAddress,
+                userAgent: navigator.userAgent,
+                timestamp: new Date().toISOString()
+              })
+            }).catch(console.error);
+            
+            toast({
+              title: "Wallet Address Mismatch",
+              description: "MetaMask wallet address differs from logged-in account. Disconnecting for security.",
+              variant: "destructive",
+            });
+            
+            // Force logout by clearing session
+            await fetch('/api/auth/logout', { method: 'POST' });
+            
+            // Reload page to clear all state
+            window.location.reload();
+          }
+        }
+      } catch (error) {
+        console.error('Wallet verification error:', error);
+      }
+    };
+
+    // Verify immediately when wallet connects or address changes
+    verifyWalletAddress();
+    
+    // Set up periodic verification every 5 seconds when connected
+    const verificationInterval = setInterval(verifyWalletAddress, 5000);
+    
+    return () => clearInterval(verificationInterval);
+  }, [isConnected, address, toast]);
+
   // Handle wallet authentication with backend
   const authenticateWallet = useCallback(async (walletAddress: string) => {
     try {

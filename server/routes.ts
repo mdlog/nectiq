@@ -3063,6 +3063,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Wallet Address Mismatch Security Endpoint
+  app.post("/api/security/wallet-mismatch", async (req, res) => {
+    try {
+      const { currentAddress, expectedAddress, userAgent, timestamp } = req.body;
+      
+      // Create security event for wallet mismatch
+      await createSecurityEvent(
+        "WALLET_ADDRESS_MISMATCH",
+        `Wallet address mismatch detected: Current ${currentAddress}, Expected ${expectedAddress}`,
+        "high",
+        req,
+        undefined // No userId since this is a security violation
+      );
+      
+      console.log('Wallet address mismatch logged:', {
+        currentAddress,
+        expectedAddress,
+        userAgent,
+        timestamp,
+        ip: req.ip
+      });
+      
+      res.json({ success: true, message: "Security event logged" });
+    } catch (error) {
+      console.error("Error logging wallet mismatch:", error);
+      res.status(500).json({ message: "Failed to log security event" });
+    }
+  });
+
   // Enhanced Security Events API
   app.get("/api/admin/security-events", requireAdmin, async (req, res) => {
     auditLog("ADMIN_ACCESS_GRANTED", { 
