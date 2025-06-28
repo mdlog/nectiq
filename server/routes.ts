@@ -3266,7 +3266,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (endDate) filters.endDate = endDate;
       }
 
-      const battles = await storage.getAllBattles(filters);
+      const battles = await storage.getAdminBattles(filters, {
+        startDate: filters.startDate,
+        endDate: filters.endDate
+      }, {
+        page: 1,
+        limit: 1000
+      });
       res.json(battles);
     } catch (error) {
       console.error("Error fetching battles:", error);
