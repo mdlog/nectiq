@@ -153,6 +153,8 @@ export default function AdminPanel() {
   const [showCreateBattleDialog, setShowCreateBattleDialog] = useState(false);
   const [showEditBattleDialog, setShowEditBattleDialog] = useState(false);
   const [editingBattle, setEditingBattle] = useState<any>(null);
+  const [showBattleDetailsModal, setShowBattleDetailsModal] = useState(false);
+  const [selectedBattleDetails, setSelectedBattleDetails] = useState<any>(null);
   const [createBattleForm, setCreateBattleForm] = useState({
     challengerId: "",
     challengedId: "",
@@ -366,6 +368,25 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/battles/stats"] });
       setSelectedBattles([]);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const cancelBattleMutation = useMutation({
+    mutationFn: async (battleId: number) => {
+      const response = await fetch(`/api/admin/battles/${battleId}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/battles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -5658,11 +5679,43 @@ export default function AdminPanel() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
-                                <Button size="sm" variant="outline" className="h-7 w-7 p-0">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="h-7 w-7 p-0"
+                                  onClick={() => {
+                                    // View battle details
+                                    setSelectedBattleDetails(battle);
+                                    setShowBattleDetailsModal(true);
+                                  }}
+                                  title="View Battle Details"
+                                >
                                   <Eye className="h-3 w-3" />
                                 </Button>
                                 {battle.status === 'open' && (
-                                  <Button size="sm" variant="outline" className="h-7 w-7 p-0">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                                    onClick={async () => {
+                                      if (confirm(`Are you sure you want to cancel battle #${battle.id}?`)) {
+                                        try {
+                                          await cancelBattleMutation.mutateAsync(battle.id);
+                                          toast({
+                                            title: "Success",
+                                            description: `Battle #${battle.id} has been cancelled`,
+                                          });
+                                        } catch (error) {
+                                          toast({
+                                            title: "Error",
+                                            description: "Failed to cancel battle",
+                                            variant: "destructive",
+                                          });
+                                        }
+                                      }
+                                    }}
+                                    title="Cancel Battle"
+                                  >
                                     <Ban className="h-3 w-3" />
                                   </Button>
                                 )}
@@ -5736,6 +5789,117 @@ export default function AdminPanel() {
           </TabsContent>
         </Tabs>
       </main>
+      
+      {/* Battle Details Modal */}
+      {showBattleDetailsModal && selectedBattleDetails && (
+        <Dialog open={showBattleDetailsModal} onOpenChange={setShowBattleDetailsModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Battle Details #{selectedBattleDetails.id}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Challenger</h4>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      {selectedBattleDetails.challengerUsername?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                      <div className="font-medium">{selectedBattleDetails.challengerUsername || 'Unknown'}</div>
+                      <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails.challengerUid}</div>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <span className="text-sm text-muted-foreground">Prediction: </span>
+                    <span className="font-mono">${selectedBattleDetails.challengerPrediction?.toFixed(2)}</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Opponent</h4>
+                  {selectedBattleDetails.challengedUsername ? (
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                          {selectedBattleDetails.challengedUsername.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-medium">{selectedBattleDetails.challengedUsername}</div>
+                          <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails.challengedUid}</div>
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-sm text-muted-foreground">Prediction: </span>
+                        <span className="font-mono">${selectedBattleDetails.challengedPrediction?.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <Badge variant="outline">Waiting for opponent</Badge>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Cryptocurrency</h4>
+                  <div className="flex items-center gap-2">
+                    <img 
+                      src={`https://coin-images.coingecko.com/coins/images/${selectedBattleDetails.cryptoImageId}/small/${selectedBattleDetails.cryptocurrency}.png`}
+                      alt={selectedBattleDetails.cryptocurrency}
+                      className="w-6 h-6"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    <span className="font-medium">{selectedBattleDetails.cryptocurrency?.toUpperCase()}</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Current: ${selectedBattleDetails.currentPrice?.toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Stake Amount</h4>
+                  <span className="font-mono text-lg">{selectedBattleDetails.stakeAmount} NTIQ</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Status</h4>
+                  <Badge variant={
+                    selectedBattleDetails.status === 'completed' ? 'default' :
+                    selectedBattleDetails.status === 'active' ? 'secondary' :
+                    selectedBattleDetails.status === 'cancelled' ? 'destructive' : 'outline'
+                  }>
+                    {selectedBattleDetails.status}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Created</h4>
+                  <span className="text-sm">{new Date(selectedBattleDetails.createdAt).toLocaleString()}</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Target Time</h4>
+                  <span className="text-sm">{new Date(selectedBattleDetails.targetTime).toLocaleString()}</span>
+                </div>
+              </div>
+              
+              {selectedBattleDetails.winnerId && (
+                <div>
+                  <h4 className="font-semibold mb-2">Winner</h4>
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-yellow-500" />
+                    <span className="font-medium">{selectedBattleDetails.winnerUsername}</span>
+                    <span className="text-sm text-muted-foreground">
+                      (Reward: {selectedBattleDetails.winnerReward || selectedBattleDetails.stakeAmount * 2} NTIQ)
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       
       <Footer />
     </div>
