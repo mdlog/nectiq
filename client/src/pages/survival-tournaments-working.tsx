@@ -257,6 +257,64 @@ const SurvivalTournamentsWorking = () => {
                         </div>
                       </div>
 
+                      {/* Round Information */}
+                      <div className="mt-6 p-4 bg-black/30 rounded-lg border border-blue-500/30">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Clock className="h-4 w-4 text-blue-400" />
+                          <span className="text-sm font-semibold text-blue-400">Tournament Structure</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="text-center">
+                            <div className={`text-xs font-medium ${tournament.currentRound === 1 ? 'text-yellow-400' : 'text-gray-400'}`}>
+                              Round 1
+                            </div>
+                            <div className={`text-sm font-bold ${tournament.currentRound === 1 ? 'text-yellow-400' : 'text-gray-300'}`}>
+                              15 min
+                            </div>
+                            {tournament.currentRound === 1 && (
+                              <div className="text-xs text-yellow-300 mt-1">Active</div>
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <div className={`text-xs font-medium ${tournament.currentRound === 2 ? 'text-yellow-400' : 'text-gray-400'}`}>
+                              Round 2
+                            </div>
+                            <div className={`text-sm font-bold ${tournament.currentRound === 2 ? 'text-yellow-400' : 'text-gray-300'}`}>
+                              30 min
+                            </div>
+                            {tournament.currentRound === 2 && (
+                              <div className="text-xs text-yellow-300 mt-1">Active</div>
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <div className={`text-xs font-medium ${tournament.currentRound === 3 ? 'text-yellow-400' : 'text-gray-400'}`}>
+                              Round 3
+                            </div>
+                            <div className={`text-sm font-bold ${tournament.currentRound === 3 ? 'text-yellow-400' : 'text-gray-300'}`}>
+                              1 hour
+                            </div>
+                            {tournament.currentRound === 3 && (
+                              <div className="text-xs text-yellow-300 mt-1">Active</div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {tournament.status === 'open' && (
+                          <div className="mt-3 text-xs text-gray-400 text-center">
+                            🎯 Round 1 starts when first player makes a prediction
+                          </div>
+                        )}
+                        
+                        {tournament.status === 'active' && (
+                          <div className="mt-3 text-xs text-center">
+                            <span className="text-orange-300">
+                              Current Round: {tournament.currentRound} • 
+                              Make your prediction: UP or DOWN
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex items-center justify-between pt-4 border-t border-white/20">
                         <Badge className={
                           tournament.status === 'open' ? 'bg-green-600/80 text-white hover:bg-green-600/80' :
