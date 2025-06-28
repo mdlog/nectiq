@@ -144,15 +144,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByWalletAddress(walletAddress: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.walletAddress, walletAddress));
+    const normalizedAddress = normalizeWalletAddress(walletAddress);
+    const [user] = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
     return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const uid = await generateUniqueUID();
+    
+    // Normalize wallet address before insertion
+    const normalizedUser = {
+      ...insertUser,
+      uid,
+      walletAddress: insertUser.walletAddress ? normalizeWalletAddress(insertUser.walletAddress) : null
+    };
+    
     const [user] = await db
       .insert(users)
-      .values({ ...insertUser, uid })
+      .values(normalizedUser)
       .returning();
     return user;
   }

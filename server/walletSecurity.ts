@@ -4,6 +4,12 @@ import { walletFingerprints, abuseDetections } from '@shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 
+// Utility function to normalize wallet addresses (lowercase for consistency)
+function normalizeWalletAddress(address: string): string {
+  if (!address) return address;
+  return address.toLowerCase().trim();
+}
+
 interface WalletSecurityCheck {
   success: boolean;
   message: string;
@@ -33,6 +39,8 @@ export class WalletSecurityService {
   // Validate wallet login with multi-wallet abuse detection
   static async validateWalletLogin(walletAddress: string, req: Request): Promise<WalletSecurityCheck> {
     try {
+      // Normalize wallet address for consistent security checks
+      const normalizedAddress = normalizeWalletAddress(walletAddress);
       const deviceFingerprint = this.generateDeviceFingerprint(req);
       const clientIP = req.ip || req.connection.remoteAddress || '';
       
@@ -134,11 +142,12 @@ export class WalletSecurityService {
   // Record wallet fingerprint
   static async recordWalletFingerprint(walletAddress: string, req: Request): Promise<void> {
     try {
+      const normalizedAddress = normalizeWalletAddress(walletAddress);
       const deviceFingerprint = this.generateDeviceFingerprint(req);
       const clientIP = req.ip || req.connection.remoteAddress || '';
       
       await db.insert(walletFingerprints).values({
-        walletAddress,
+        walletAddress: normalizedAddress,
         ipAddress: clientIP,
         userAgent: req.headers['user-agent'] || '',
         deviceFingerprint,
