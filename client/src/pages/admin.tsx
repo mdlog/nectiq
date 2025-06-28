@@ -267,6 +267,38 @@ export default function AdminPanel() {
     retryDelay: 1000,
   });
 
+  // Survival Tournament queries and mutations
+  const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/survival-tournaments"],
+    retry: false,
+  });
+
+  const createTournamentMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("/api/survival-tournaments", {
+        method: "POST",
+        body: JSON.stringify(newTournament),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Tournament created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
+      setNewTournament({
+        title: "",
+        description: "",
+        cryptocurrency: "",
+        entryFee: 100,
+        maxParticipants: 50,
+        roundDuration: 60
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   // Battle mutations
   const createBattleMutation = useMutation({
     mutationFn: async (battleData: any) => {

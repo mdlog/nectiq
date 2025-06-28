@@ -3810,6 +3810,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== SURVIVAL TOURNAMENT ROUTES =====
 
   // Get all survival tournaments
+  // Admin: Get all survival tournaments for management
+  app.get('/api/admin/survival-tournaments', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const tournaments = await storage.getAllSurvivalTournaments();
+      
+      // Add participant count for each tournament
+      const tournamentsWithCounts = await Promise.all(
+        tournaments.map(async (tournament) => {
+          const participants = await storage.getSurvivalParticipants(tournament.id);
+          return {
+            ...tournament,
+            participantCount: participants.length
+          };
+        })
+      );
+      
+      res.json(tournamentsWithCounts);
+    } catch (error) {
+      console.error('Error fetching admin tournaments:', error);
+      res.status(500).json({ message: 'Failed to fetch tournaments' });
+    }
+  });
+
   app.get('/api/survival-tournaments', async (req: Request, res: Response) => {
     try {
       const tournaments = await storage.getAllSurvivalTournaments();

@@ -38,7 +38,6 @@ interface SurvivalTournament {
 const SurvivalTournaments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState<SurvivalTournament | null>(null);
 
   // Fetch all survival tournaments
@@ -50,32 +49,6 @@ const SurvivalTournaments = () => {
   // Fetch user data
   const { data: user } = useQuery<any>({
     queryKey: ['/api/user'],
-  });
-
-  // Create tournament mutation
-  const createTournamentMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest('/api/survival-tournaments', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      setIsCreateDialogOpen(false);
-      toast({
-        title: "Success",
-        description: "Tournament created successfully!",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create tournament",
-        variant: "destructive",
-      });
-    },
   });
 
   // Join tournament mutation
@@ -102,21 +75,7 @@ const SurvivalTournaments = () => {
     },
   });
 
-  const handleCreateTournament = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    const data = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      cryptocurrency: formData.get('cryptocurrency'),
-      entryFee: parseInt(formData.get('entryFee') as string),
-      maxParticipants: parseInt(formData.get('maxParticipants') as string),
-      roundDuration: parseInt(formData.get('roundDuration') as string),
-    };
 
-    createTournamentMutation.mutate(data);
-  };
 
   const handleJoinTournament = (tournament: SurvivalTournament) => {
     if (!user) {
