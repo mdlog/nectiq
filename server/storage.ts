@@ -123,6 +123,7 @@ export interface IStorage {
   getUserBattles(userId: number): Promise<any[]>;
   addToUserBalance(userId: number, amount: number): Promise<void>;
   updateUser(id: number, updates: any): Promise<void>;
+  clearAllBattles(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1074,6 +1075,19 @@ export class DatabaseStorage implements IStorage {
       .where(eq(predictionBattles.id, id));
   }
 
+  async clearAllBattles(): Promise<number> {
+    // First, delete all battle comments
+    await db.delete(battleComments);
+    
+    // Then delete all battles and get count
+    const battles = await db.select().from(predictionBattles);
+    const deletedCount = battles.length;
+    
+    await db.delete(predictionBattles);
+    
+    return deletedCount;
+  }
+
   async getAdminBattles(filters: any, dateFilters: any, pagination: any): Promise<any[]> {
     let query = db
       .select({
@@ -1639,6 +1653,13 @@ export class MemStorage implements IStorage {
     
     // Delete the user
     this.users.delete(id);
+  }
+
+  async clearAllBattles(): Promise<number> {
+    const battleCount = this.battles.size;
+    this.battles.clear();
+    this.battleComments.clear();
+    return battleCount;
   }
 }
 
