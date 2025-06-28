@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Trophy, Users, Clock, DollarSign, Target, Sword, Timer } from "lucide-react";
+import { Trophy, Users, Clock, DollarSign, Target, Sword, Timer, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
@@ -30,6 +30,222 @@ interface SurvivalTournament {
   participants?: any[];
   rounds?: any[];
 }
+
+interface RoundStatus {
+  tournament: SurvivalTournament;
+  currentRound?: {
+    id: number;
+    roundNumber: number;
+    timeRemaining: number;
+    totalPredictions: number;
+    participantsRemaining: number;
+    startPrice?: number;
+    lastUpdated?: number;
+  };
+  userPrediction?: {
+    prediction: 'up' | 'down';
+    submittedAt: string;
+  };
+}
+
+// Component for round prediction interface
+const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament }) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [timeRemaining, setTimeRemaining] = useState(0);
+
+  // Query for current round status
+  const { data: roundStatus, isLoading: isLoadingRound } = useQuery({
+    queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`],
+    refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
+  // Mutation for submitting predictions
+  const submitPredictionMutation = useMutation({
+    mutationFn: (prediction: 'up' | 'down') =>
+      apiRequest(`/api/survival-tournaments/${tournament.id}/predict`, {
+        method: 'POST',
+        body: JSON.stringify({ prediction }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Prediction Submitted!",
+        description: "Your prediction has been recorded for this round.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Prediction Failed",
+        description: error.message || "Failed to submit prediction. Please try again.",
+      });
+    },
+  });
+
+  // Update countdown timer
+  useEffect(() => {
+    if (!roundStatus?.currentRound?.timeRemaining) return;
+
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, roundStatus.currentRound.timeRemaining - (Date.now() - (roundStatus.currentRound.lastUpdated || 0)));
+      setTimeRemaining(remaining);
+      
+      if (remaining <= 0) {
+        queryClient.invalidateQueries({ queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`] });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [roundStatus, queryClient, tournament.id]);
+
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  if (isLoadingRound) {
+    return (
+      <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-red-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sword className="h-5 w-5 text-orange-600" />
+            Loading Round Status...
+          </CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  if (!roundStatus?.currentRound) {
+    return (
+      <Card className="border-gray-200 bg-gray-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-gray-600" />
+            No Active Round
+          </CardTitle>
+          <CardDescription>
+            Tournament is not currently running any rounds.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const { currentRound, userPrediction } = roundStatus;
+  const hasSubmittedPrediction = !!userPrediction;
+
+  return (
+    <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-red-50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sword className="h-5 w-5 text-orange-600" />
+          Round {currentRound.roundNumber} - Predict or Get Eliminated!
+        </CardTitle>
+        <CardDescription>
+          Make your prediction: Will {tournament.cryptocurrency} price go UP or DOWN?
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Round Stats */}
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="bg-white/60 rounded-lg p-3">
+            <div className="text-2xl font-bold text-orange-600">
+              <Clock className="h-5 w-5 inline mr-1" />
+              {formatTime(timeRemaining || currentRound.timeRemaining)}
+            </div>
+            <div className="text-sm text-gray-600">Time Left</div>
+          </div>
+          <div className="bg-white/60 rounded-lg p-3">
+            <div className="text-2xl font-bold text-blue-600">
+              <Users className="h-5 w-5 inline mr-1" />
+              {currentRound.participantsRemaining}
+            </div>
+            <div className="text-sm text-gray-600">Survivors</div>
+          </div>
+          <div className="bg-white/60 rounded-lg p-3">
+            <div className="text-2xl font-bold text-green-600">
+              <Target className="h-5 w-5 inline mr-1" />
+              {currentRound.totalPredictions}
+            </div>
+            <div className="text-sm text-gray-600">Predictions</div>
+          </div>
+        </div>
+
+        {/* Current Price Info */}
+        <div className="bg-white/80 rounded-lg p-4 text-center">
+          <div className="text-lg font-semibold text-gray-700">
+            Current {tournament.cryptocurrency} Price
+          </div>
+          <div className="text-3xl font-bold text-gray-900">
+            ${currentRound.startPrice?.toFixed(2) || 'Loading...'}
+          </div>
+          <div className="text-sm text-gray-600 mt-1">
+            Round started at this price
+          </div>
+        </div>
+
+        {/* Prediction Buttons or Status */}
+        {hasSubmittedPrediction ? (
+          <div className="bg-green-100 border border-green-300 rounded-lg p-4 text-center">
+            <div className="flex items-center justify-center gap-2 text-green-700">
+              <div className="text-2xl">
+                {userPrediction.prediction === 'up' ? '📈' : '📉'}
+              </div>
+              <div>
+                <div className="font-semibold">Prediction Submitted!</div>
+                <div className="text-sm">
+                  You predicted: {userPrediction.prediction.toUpperCase()}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="text-center text-gray-700 font-medium">
+              ⚠️ Choose wisely - wrong predictions eliminate you!
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                size="lg"
+                className="h-16 bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => submitPredictionMutation.mutate('up')}
+                disabled={submitPredictionMutation.isPending}
+              >
+                <TrendingUp className="h-6 w-6 mr-2" />
+                <div>
+                  <div className="font-bold">PRICE UP</div>
+                  <div className="text-sm opacity-90">Bullish 📈</div>
+                </div>
+              </Button>
+              <Button
+                size="lg"
+                className="h-16 bg-red-600 hover:bg-red-700 text-white"
+                onClick={() => submitPredictionMutation.mutate('down')}
+                disabled={submitPredictionMutation.isPending}
+              >
+                <TrendingDown className="h-6 w-6 mr-2" />
+                <div>
+                  <div className="font-bold">PRICE DOWN</div>
+                  <div className="text-sm opacity-90">Bearish 📉</div>
+                </div>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Warning Message */}
+        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-center text-yellow-800 text-sm">
+          <AlertCircle className="h-4 w-4 inline mr-1" />
+          Wrong predictions result in immediate elimination from the tournament!
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const SurvivalTournaments = () => {
   const { toast } = useToast();
@@ -197,6 +413,20 @@ const SurvivalTournaments = () => {
             </p>
           </div>
         </div>
+
+        {/* Active Round Section - Show for active tournaments */}
+        {tournaments?.some(t => t.status === 'active') && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">🎯 Active Rounds - Predict or Get Eliminated!</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {tournaments
+                ?.filter(t => t.status === 'active')
+                .map((tournament) => (
+                  <RoundPredictionCard key={tournament.id} tournament={tournament} />
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* Tournaments Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
