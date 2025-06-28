@@ -1132,6 +1132,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: predictionBattles.createdAt,
         challengerUsername: users.username,
         challengerUid: users.uid,
+        challengerProfilePhoto: users.profilePhoto,
       })
       .from(predictionBattles)
       .leftJoin(users, eq(predictionBattles.challengerId, users.id));
@@ -1165,16 +1166,18 @@ export class DatabaseStorage implements IStorage {
       battles.map(async (battle) => {
         let challengedUsername = null;
         let challengedUid = null;
+        let challengedProfilePhoto = null;
 
         if (battle.challengedId) {
           const [challengedUser] = await db
-            .select({ username: users.username, uid: users.uid })
+            .select({ username: users.username, uid: users.uid, profilePhoto: users.profilePhoto })
             .from(users)
             .where(eq(users.id, battle.challengedId));
           
           if (challengedUser) {
             challengedUsername = challengedUser.username;
             challengedUid = challengedUser.uid;
+            challengedProfilePhoto = challengedUser.profilePhoto;
           }
         }
 
@@ -1182,6 +1185,7 @@ export class DatabaseStorage implements IStorage {
           ...battle,
           challengedUsername,
           challengedUid,
+          challengedProfilePhoto,
           duration: Math.round((new Date(battle.targetTime).getTime() - new Date(battle.createdAt).getTime()) / (1000 * 60)),
           timeRemaining: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
         };

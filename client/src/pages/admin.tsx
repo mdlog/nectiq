@@ -5602,7 +5602,21 @@ export default function AdminPanel() {
                             <TableCell className="font-mono">#{battle.id}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                {battle.challengerProfilePhoto ? (
+                                  <img 
+                                    src={battle.challengerProfilePhoto} 
+                                    alt={battle.challengerUsername || 'Challenger'}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                      e.currentTarget.nextElementSibling.style.display = 'flex';
+                                    }}
+                                  />
+                                ) : null}
+                                <div 
+                                  className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                                  style={{ display: battle.challengerProfilePhoto ? 'none' : 'flex' }}
+                                >
                                   {battle.challengerUsername?.charAt(0) || 'U'}
                                 </div>
                                 <div>
@@ -5614,7 +5628,21 @@ export default function AdminPanel() {
                             <TableCell>
                               {battle.challengedUsername ? (
                                 <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                  {battle.challengedProfilePhoto ? (
+                                    <img 
+                                      src={battle.challengedProfilePhoto} 
+                                      alt={battle.challengedUsername || 'Opponent'}
+                                      className="w-8 h-8 rounded-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.nextElementSibling.style.display = 'flex';
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div 
+                                    className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                                    style={{ display: battle.challengedProfilePhoto ? 'none' : 'flex' }}
+                                  >
                                     {battle.challengedUsername.charAt(0)}
                                   </div>
                                   <div>
@@ -5825,7 +5853,22 @@ export default function AdminPanel() {
                   <div>
                     <h4 className="font-semibold mb-2 text-gray-900 dark:text-white">Challenger</h4>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      {selectedBattleDetails?.challengerProfilePhoto ? (
+                        <img 
+                          src={selectedBattleDetails.challengerProfilePhoto} 
+                          alt={selectedBattleDetails?.challengerUsername || 'Challenger'}
+                          className="w-8 h-8 rounded-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallbackDiv) fallbackDiv.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                        style={{ display: selectedBattleDetails?.challengerProfilePhoto ? 'none' : 'flex' }}
+                      >
                         {selectedBattleDetails?.challengerUsername?.charAt(0) || 'U'}
                       </div>
                       <div>
@@ -5849,7 +5892,22 @@ export default function AdminPanel() {
                     {selectedBattleDetails?.challengedUsername ? (
                       <div>
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                          {selectedBattleDetails?.challengedProfilePhoto ? (
+                            <img 
+                              src={selectedBattleDetails.challengedProfilePhoto} 
+                              alt={selectedBattleDetails?.challengedUsername || 'Opponent'}
+                              className="w-8 h-8 rounded-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (fallbackDiv) fallbackDiv.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div 
+                            className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                            style={{ display: selectedBattleDetails?.challengedProfilePhoto ? 'none' : 'flex' }}
+                          >
                             {selectedBattleDetails.challengedUsername.charAt(0)}
                           </div>
                           <div>
