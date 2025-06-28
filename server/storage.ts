@@ -1745,6 +1745,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(survivalRounds.id, roundId));
   }
 
+  async getRoundPredictions(roundId: number): Promise<any[]> {
+    return this.getSurvivalPredictions(roundId);
+  }
+
+  async getSurvivalRound(roundId: number): Promise<any> {
+    const [round] = await db
+      .select()
+      .from(survivalRounds)
+      .where(eq(survivalRounds.id, roundId));
+    return round;
+  }
+
+  async updateRound(roundId: number, updateData: any): Promise<any> {
+    const [round] = await db
+      .update(survivalRounds)
+      .set(updateData)
+      .where(eq(survivalRounds.id, roundId))
+      .returning();
+    return round;
+  }
+
+  async eliminateParticipant(participantId: number, roundNumber: number): Promise<void> {
+    await db
+      .update(survivalParticipants)
+      .set({
+        status: 'eliminated',
+        eliminationRound: roundNumber,
+        eliminatedAt: new Date()
+      })
+      .where(eq(survivalParticipants.id, participantId));
+  }
+
   async getSurvivalRound(roundId: number): Promise<any> {
     const [round] = await db
       .select()
