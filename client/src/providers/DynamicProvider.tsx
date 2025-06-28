@@ -84,17 +84,30 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                 });
 
                 if (response.ok) {
-                  const data = await response.json();
-                  console.log('Backend authentication successful:', data);
-                  
-                  // Success message will be shown after page reload
-                  
-                  // Reload page after successful auth
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 1000);
+                  try {
+                    const data = await response.json();
+                    console.log('Backend authentication successful:', data);
+                    
+                    // Reload page after successful auth
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 1000);
+                  } catch (jsonError) {
+                    console.error('JSON parsing error on success response:', jsonError);
+                    // Still reload on success even if JSON parsing fails
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 1000);
+                  }
                 } else {
-                  console.error('Backend authentication failed:', response.status);
+                  try {
+                    const errorData = await response.json();
+                    console.error('Backend authentication failed:', response.status, errorData);
+                  } catch (jsonError) {
+                    // If JSON parsing fails, get response as text
+                    const errorText = await response.text();
+                    console.error('Backend authentication failed (non-JSON response):', response.status, errorText);
+                  }
                 }
               } catch (error) {
                 console.error('Authentication request failed:', error);

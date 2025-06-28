@@ -60,46 +60,8 @@ export default function WalletLoginPage() {
     );
   }
 
-  // Auth mutation
-  const authMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/auth/wallet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: address }),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Authentication failed');
-      }
-      
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Success!",
-        description: `Welcome ${data.user?.username || 'User'}! Authentication successful.`,
-      });
-      
-      // Navigate to dashboard after successful auth
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Authentication Failed", 
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleAuth = () => {
-    if (!address) return;
-    authMutation.mutate();
-  };
+  // Dynamic SDK handles authentication automatically
+  // No need for manual authentication mutation
 
   const copyAddress = async () => {
     if (!address) return;
@@ -167,21 +129,15 @@ export default function WalletLoginPage() {
 
                   <div className="flex gap-3">
                     <Button 
-                      onClick={handleAuth} 
-                      className="flex-1"
-                      disabled={authMutation.isPending}
+                      onClick={() => navigate('/')} 
+                      className="flex-1 bg-green-600 hover:bg-green-700"
                     >
-                      {authMutation.isPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <User className="mr-2" size={16} />
-                      )}
-                      {authMutation.isPending ? "Authenticating..." : "Authenticate & Continue"}
+                      <User className="mr-2" size={16} />
+                      Continue to Dashboard
                     </Button>
                     <Button
                       onClick={() => handleLogOut()}
                       variant="destructive"
-                      disabled={authMutation.isPending}
                     >
                       <LogOut className="mr-2" size={16} />
                       Disconnect
