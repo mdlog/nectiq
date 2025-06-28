@@ -3845,8 +3845,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create survival tournament
-  app.post('/api/survival-tournaments', requireAuth, async (req: Request, res: Response) => {
+  // Create survival tournament (Admin only)
+  app.post('/api/survival-tournaments', requireAdmin, async (req: Request, res: Response) => {
     try {
       const { title, description, cryptocurrency, entryFee, maxParticipants, roundDuration } = req.body;
       const userId = req.session?.userId;

@@ -146,6 +146,16 @@ export default function AdminPanel() {
     startDate: "",
     endDate: ""
   });
+
+  // Survival Tournament state
+  const [newTournament, setNewTournament] = useState({
+    title: "",
+    description: "",
+    cryptocurrency: "",
+    entryFee: 100,
+    maxParticipants: 50,
+    roundDuration: 60
+  });
   const [battlesPage, setBattlesPage] = useState(1);
   const [battlesPerPage] = useState(10);
   const [battlesSearchQuery, setBattlesSearchQuery] = useState("");
@@ -2172,6 +2182,10 @@ export default function AdminPanel() {
             <TabsTrigger value="battles" className="data-[state=active]:bg-primary flex items-center gap-2">
               <Swords className="h-4 w-4" />
               Battles
+            </TabsTrigger>
+            <TabsTrigger value="survival" className="data-[state=active]:bg-primary flex items-center gap-2">
+              <Gamepad2 className="h-4 w-4" />
+              Survival
             </TabsTrigger>
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary flex items-center gap-2">
               <Trophy className="h-4 w-4" />
@@ -5826,6 +5840,166 @@ export default function AdminPanel() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Survival Tournament Management */}
+          <TabsContent value="survival">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Gamepad2 className="h-5 w-5" />
+                    Create Survival Tournament
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Tournament Title</Label>
+                      <Input 
+                        placeholder="Enter tournament title" 
+                        value={newTournament.title}
+                        onChange={(e) => setNewTournament({...newTournament, title: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Input 
+                        placeholder="Enter description" 
+                        value={newTournament.description}
+                        onChange={(e) => setNewTournament({...newTournament, description: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cryptocurrency</Label>
+                      <Select value={newTournament.cryptocurrency} onValueChange={(value) => setNewTournament({...newTournament, cryptocurrency: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cryptocurrency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="bitcoin">Bitcoin (BTC)</SelectItem>
+                          <SelectItem value="ethereum">Ethereum (ETH)</SelectItem>
+                          <SelectItem value="binancecoin">Binance Coin (BNB)</SelectItem>
+                          <SelectItem value="cardano">Cardano (ADA)</SelectItem>
+                          <SelectItem value="solana">Solana (SOL)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Entry Fee (NTIQ)</Label>
+                      <Input 
+                        type="number" 
+                        placeholder="Enter entry fee" 
+                        value={newTournament.entryFee}
+                        onChange={(e) => setNewTournament({...newTournament, entryFee: parseInt(e.target.value) || 0})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Max Participants</Label>
+                      <Input 
+                        type="number" 
+                        placeholder="Enter max participants" 
+                        value={newTournament.maxParticipants}
+                        onChange={(e) => setNewTournament({...newTournament, maxParticipants: parseInt(e.target.value) || 0})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Round Duration (minutes)</Label>
+                      <Input 
+                        type="number" 
+                        placeholder="Enter round duration" 
+                        value={newTournament.roundDuration}
+                        onChange={(e) => setNewTournament({...newTournament, roundDuration: parseInt(e.target.value) || 0})}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Button 
+                      onClick={() => createTournamentMutation.mutate()}
+                      disabled={createTournamentMutation.isPending}
+                      className="w-full"
+                    >
+                      {createTournamentMutation.isPending ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Creating Tournament...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Tournament
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tournament List */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Gamepad2 className="h-5 w-5" />
+                    Tournament Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {tournamentsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <RefreshCw className="h-6 w-6 animate-spin" />
+                      <span className="ml-2">Loading tournaments...</span>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>ID</TableHead>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Cryptocurrency</TableHead>
+                            <TableHead>Entry Fee</TableHead>
+                            <TableHead>Participants</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {(tournaments || []).map((tournament: any) => (
+                            <TableRow key={tournament.id}>
+                              <TableCell>{tournament.id}</TableCell>
+                              <TableCell className="font-medium">{tournament.title}</TableCell>
+                              <TableCell>{tournament.cryptocurrency}</TableCell>
+                              <TableCell>{tournament.entryFee} NTIQ</TableCell>
+                              <TableCell>{tournament.participantCount || 0}/{tournament.maxParticipants}</TableCell>
+                              <TableCell>
+                                <Badge variant={
+                                  tournament.status === 'active' ? 'default' : 
+                                  tournament.status === 'completed' ? 'secondary' : 'outline'
+                                }>
+                                  {tournament.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{new Date(tournament.createdAt).toLocaleDateString()}</TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="outline">
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="text-red-600">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
