@@ -487,6 +487,10 @@ export default function UserDashboard() {
               <Wallet className="mr-1" size={16} />
               Financial
             </TabsTrigger>
+            <TabsTrigger value="verification" className="data-[state=active]:bg-primary">
+              <Shield className="mr-1" size={16} />
+              Verification
+            </TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
@@ -1209,6 +1213,11 @@ export default function UserDashboard() {
               </Card>
             </div>
             )}
+          </TabsContent>
+
+          {/* Verification Tab */}
+          <TabsContent value="verification">
+            <VerificationSettings />
           </TabsContent>
 
           {/* Battles Tab */}
