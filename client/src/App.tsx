@@ -57,6 +57,7 @@ function Router() {
       <Route path="/user-dashboard" component={UserDashboard} />
       <Route path="/dashboard" component={UserDashboard} />
       <Route path="/battles" component={BattlesPage} />
+      <Route path="/survival-tournaments" component={SurvivalTournaments} />
       <Route path="/survival" component={SurvivalTournaments} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/admin" component={AdminPanel} />

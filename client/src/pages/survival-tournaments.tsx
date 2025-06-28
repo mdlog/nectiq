@@ -55,7 +55,7 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
   const [timeRemaining, setTimeRemaining] = useState(0);
 
   // Query for current round status
-  const { data: roundStatus, isLoading: isLoadingRound } = useQuery({
+  const { data: roundStatus, isLoading: isLoadingRound } = useQuery<RoundStatus>({
     queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`],
     refetchInterval: 5000, // Refresh every 5 seconds
   });
