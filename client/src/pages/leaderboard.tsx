@@ -148,32 +148,31 @@ export default function Leaderboard() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-background">
       <Header />
       
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">🏆 Leaderboard</h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-4">
-            Top performing predictors competing for glory and rewards
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-              {totalUsers} Total Users
-            </Badge>
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <Trophy className="text-primary h-8 w-8" />
+              <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
+              <Badge variant="secondary" className="bg-primary/20 text-primary">
+                {totalUsers} Users
+              </Badge>
+            </div>
             <Link href="/">
               <Button
                 variant="outline"
                 size="sm"
-                className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 border-white/30 text-white hover:text-white transition-all duration-200"
+                className="flex items-center space-x-2 bg-surface-light hover:bg-surface border-surface-light text-slate-300 hover:text-white transition-all duration-200"
               >
                 <ArrowLeft size={16} />
                 <span>Back To App</span>
               </Button>
             </Link>
           </div>
-        </div>
 
           {/* Search and Filter */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -222,43 +221,44 @@ export default function Leaderboard() {
 
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <Card className="bg-surface border-surface-light">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <Users className="text-blue-400 h-8 w-8" />
+                  <Users className="text-primary h-8 w-8" />
                   <div>
-                    <p className="text-sm text-gray-300">Total Predictors</p>
+                    <p className="text-sm text-slate-400">Total Predictors</p>
                     <p className="text-2xl font-bold text-white">{totalUsers}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <Card className="bg-surface border-surface-light">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <Target className="text-green-400 h-8 w-8" />
+                  <Target className="text-secondary h-8 w-8" />
                   <div>
-                    <p className="text-sm text-gray-300">Total Predictions</p>
+                    <p className="text-sm text-slate-400">Total Predictions</p>
                     <p className="text-2xl font-bold text-white">{totalPredictions.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <Card className="bg-surface border-surface-light">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <TrendingUp className="text-yellow-400 h-8 w-8" />
+                  <TrendingUp className="text-success h-8 w-8" />
                   <div>
-                    <p className="text-sm text-gray-300">Avg. Win Rate</p>
+                    <p className="text-sm text-slate-400">Avg. Win Rate</p>
                     <p className="text-2xl font-bold text-white">{averageWinRate.toFixed(1)}%</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+        </div>
 
         {/* Leaderboard List */}
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+        <Card className="bg-surface border-surface-light">
           <CardHeader>
             <CardTitle className="text-white capitalize flex items-center justify-between">
               <span>{filter === 'alltime' ? 'All Time' : filter} Rankings</span>
