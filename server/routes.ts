@@ -167,6 +167,28 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
+// Basic authentication middleware for regular users
+const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).session?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Add user to request object for easier access
+    (req as any).user = user;
+    next();
+  } catch (error) {
+    console.error("Auth error:", error);
+    res.status(500).json({ message: "Authentication error" });
+  }
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // Wallet authentication routes
@@ -3742,6 +3764,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('WebSocket error:', error);
       adminClients.delete(ws);
     });
+  });
+
+  // Email and Twitter Verification Endpoints
+  
+  // Update user email
+  app.post('/api/user/update-email', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      const userId = req.session.userId!;
+      
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: 'Valid email is required' });
+      }
+      
+      // Check if email already exists
+      const emailExists = await storage.checkEmailExists(email, userId);
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email is already registered' });
+      }
+      
+      const updatedUser = await storage.updateUserVerification(userId, email, undefined);
+      res.json({ 
+        message: 'Email updated successfully', 
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          emailVerified: updatedUser.emailVerified
+        }
+      });
+    } catch (error) {
+      console.error('Error updating email:', error);
+      res.status(500).json({ message: 'Failed to update email' });
+    }
+  });
+  
+  // Update user Twitter handle
+  app.post('/api/user/update-twitter', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { twitterHandle } = req.body;
+      const userId = req.session.userId!;
+      
+      if (!twitterHandle || !/^@?[\w]{1,15}$/.test(twitterHandle.replace(/^@/, ''))) {
+        return res.status(400).json({ message: 'Valid Twitter handle is required' });
+      }
+      
+      const cleanHandle = twitterHandle.replace(/^@/, '');
+      
+      // Check if Twitter handle already exists
+      const twitterExists = await storage.checkTwitterExists(cleanHandle, userId);
+      if (twitterExists) {
+        return res.status(400).json({ message: 'Twitter handle is already registered' });
+      }
+      
+      const updatedUser = await storage.updateUserVerification(userId, undefined, cleanHandle);
+      res.json({ 
+        message: 'Twitter handle updated successfully', 
+        user: {
+          id: updatedUser.id,
+          twitterHandle: updatedUser.twitterHandle,
+          twitterVerified: updatedUser.twitterVerified
+        }
+      });
+    } catch (error) {
+      console.error('Error updating Twitter handle:', error);
+      res.status(500).json({ message: 'Failed to update Twitter handle' });
+    }
+  });
+  
+  // Verify email (simplified - in production would require email confirmation)
+  app.post('/api/user/verify-email', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.email) {
+        return res.status(400).json({ message: 'No email address found' });
+      }
+      
+      // In production, this would verify an email confirmation code
+      // For now, we'll mark as verified directly
+      const updatedUser = await storage.verifyUserEmail(userId);
+      res.json({ 
+        message: 'Email verified successfully',
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          emailVerified: updatedUser.emailVerified
+        }
+      });
+    } catch (error) {
+      console.error('Error verifying email:', error);
+      res.status(500).json({ message: 'Failed to verify email' });
+    }
+  });
+  
+  // Verify Twitter (simplified - in production would require Twitter API verification)
+  app.post('/api/user/verify-twitter', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.twitterHandle) {
+        return res.status(400).json({ message: 'No Twitter handle found' });
+      }
+      
+      // In production, this would verify through Twitter API
+      // For now, we'll mark as verified directly
+      const updatedUser = await storage.verifyUserTwitter(userId);
+      res.json({ 
+        message: 'Twitter verified successfully',
+        user: {
+          id: updatedUser.id,
+          twitterHandle: updatedUser.twitterHandle,
+          twitterVerified: updatedUser.twitterVerified
+        }
+      });
+    } catch (error) {
+      console.error('Error verifying Twitter:', error);
+      res.status(500).json({ message: 'Failed to verify Twitter' });
+    }
+  });
+  
+  // Check for duplicate email/Twitter across platform
+  app.get('/api/user/check-duplicates', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { email, twitterHandle } = req.query;
+      const result: any = {};
+      
+      if (email) {
+        const users = await storage.getUsersByEmailOrTwitter(email as string, undefined);
+        result.emailUsers = users.map(u => ({
+          id: u.id,
+          username: u.username,
+          walletAddress: u.walletAddress,
+          emailVerified: u.emailVerified
+        }));
+      }
+      
+      if (twitterHandle) {
+        const users = await storage.getUsersByEmailOrTwitter(undefined, twitterHandle as string);
+        result.twitterUsers = users.map(u => ({
+          id: u.id,
+          username: u.username,
+          walletAddress: u.walletAddress,
+          twitterVerified: u.twitterVerified
+        }));
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error checking duplicates:', error);
+      res.status(500).json({ message: 'Failed to check duplicates' });
+    }
   });
 
   return httpServer;

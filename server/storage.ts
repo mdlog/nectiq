@@ -1,6 +1,6 @@
 import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt } from "drizzle-orm";
+import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
 function normalizeWalletAddress(address: string): string {
