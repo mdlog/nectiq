@@ -240,11 +240,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async checkEmailExists(email: string, excludeUserId?: number): Promise<boolean> {
-    let query = db.select().from(users).where(eq(users.email, email));
+    const conditions = [eq(users.email, email)];
     if (excludeUserId) {
-      query = query.where(ne(users.id, excludeUserId));
+      conditions.push(ne(users.id, excludeUserId));
     }
-    const result = await query;
+    const result = await db.select().from(users).where(and(...conditions));
     return result.length > 0;
   }
 
