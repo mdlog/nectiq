@@ -4044,6 +4044,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'You are not an active participant in this tournament' });
       }
 
+      // Get user balance and check if they have enough for entry fee
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      if (user.balance < tournament.entryFee) {
+        return res.status(400).json({ message: `Insufficient balance. You need ${tournament.entryFee} NTIQ to make a prediction.` });
+      }
+
       // Get current active round
       const currentRound = await storage.getCurrentRound(tournamentId);
       if (!currentRound) {
@@ -4073,6 +4083,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: 'Unable to get current cryptocurrency price. Please try again.' });
       }
 
+      // Deduct entry fee from user balance
+      await storage.updateUserBalance(userId, user.balance - tournament.entryFee);
+
       // Submit prediction with starting price
       const predictionData = {
         tournamentId,
@@ -4085,12 +4098,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const newPrediction = await storage.submitSurvivalPrediction(predictionData);
+
+      // Create transaction log for entry fee deduction
+      await storage.createTransactionLog({
+        userId,
+        type: 'survival_prediction',
+        amount: -tournament.entryFee,
+        token: 'NTIQ',
+        status: 'completed',
+        description: `Survival tournament prediction fee - ${prediction.toUpperCase()} on ${tournament.cryptocurrency}`,
+        relatedId: newPrediction.id
+      });
       
-      // Include the starting price in the response for confirmation
+      // Include the starting price and new balance in the response
       res.json({
         ...newPrediction,
         startingPrice: currentPrice,
-        message: `Prediction recorded! Starting price: $${currentPrice.toFixed(8)}`
+        newBalance: user.balance - tournament.entryFee,
+        entryFeeDeducted: tournament.entryFee,
+        message: `Prediction recorded! Starting price: $${currentPrice.toFixed(8)}. ${tournament.entryFee} NTIQ deducted from balance.`
       });
     } catch (error) {
       console.error('Error submitting survival prediction:', error);

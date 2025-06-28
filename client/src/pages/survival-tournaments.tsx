@@ -68,12 +68,15 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
         body: JSON.stringify({ prediction }),
         headers: { 'Content-Type': 'application/json' },
       }),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast({
         title: "Prediction Submitted!",
-        description: "Your prediction has been recorded for this round.",
+        description: data.message || `Your ${data.prediction?.toUpperCase()} prediction recorded! ${data.entryFeeDeducted} NTIQ deducted. New balance: ${data.newBalance} NTIQ`,
       });
+      // Refresh both round status and user data to update balance
       queryClient.invalidateQueries({ queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments'] });
     },
     onError: (error: any) => {
       toast({
@@ -212,26 +215,36 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
             <div className="grid grid-cols-2 gap-4">
               <Button
                 size="lg"
-                className="h-16 bg-green-600 hover:bg-green-700 text-white"
+                className="h-20 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                 onClick={() => submitPredictionMutation.mutate('up')}
                 disabled={submitPredictionMutation.isPending}
               >
                 <TrendingUp className="h-6 w-6 mr-2" />
                 <div>
-                  <div className="font-bold">PRICE UP</div>
+                  <div className="font-bold">
+                    {submitPredictionMutation.isPending ? 'SUBMITTING...' : 'PRICE UP'}
+                  </div>
                   <div className="text-sm opacity-90">Bullish 📈</div>
+                  <div className="text-xs opacity-75 mt-1">
+                    -{tournament.entryFee} NTIQ
+                  </div>
                 </div>
               </Button>
               <Button
                 size="lg"
-                className="h-16 bg-red-600 hover:bg-red-700 text-white"
+                className="h-20 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
                 onClick={() => submitPredictionMutation.mutate('down')}
                 disabled={submitPredictionMutation.isPending}
               >
                 <TrendingDown className="h-6 w-6 mr-2" />
                 <div>
-                  <div className="font-bold">PRICE DOWN</div>
+                  <div className="font-bold">
+                    {submitPredictionMutation.isPending ? 'SUBMITTING...' : 'PRICE DOWN'}
+                  </div>
                   <div className="text-sm opacity-90">Bearish 📉</div>
+                  <div className="text-xs opacity-75 mt-1">
+                    -{tournament.entryFee} NTIQ
+                  </div>
                 </div>
               </Button>
             </div>
