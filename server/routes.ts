@@ -3895,8 +3895,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cryptocurrency,
         entryFee: parseInt(entryFee),
         maxParticipants: parseInt(maxParticipants),
-        currentParticipants: 1, // Creator automatically joins
-        prizePool: parseInt(entryFee), // Creator's entry fee
+        currentParticipants: 0, // Will be incremented when creator joins
+        prizePool: 0, // Will be set when creator joins
         status: 'open',
         currentRound: 0,
         roundDuration: parseInt(roundDuration) || 300, // 5 minutes default
@@ -3908,7 +3908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Deduct entry fee from creator
       await storage.updateUserBalance(userId, user.balance - entryFee);
 
-      // Add creator as participant
+      // Add creator as participant (this will increment currentParticipants and update prizePool)
       await storage.joinSurvivalTournament(tournament.id, userId);
 
       res.json(tournament);
