@@ -1798,6 +1798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalRewards: user.totalRewards,
           weeklyPoints,
           monthlyPoints,
+          profilePhoto: user.profilePhoto,
           // Legacy field for backward compatibility
           accuracy: winRate
         };
