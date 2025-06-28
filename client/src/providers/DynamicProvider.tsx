@@ -21,7 +21,9 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
           StarknetWalletConnectors,
         ],
         appName: 'Nectiq',
-        appLogoUrl: '/logo.png',
+        appLogoUrl: 'https://nectiq.app/logo.png',
+        initialAuthenticationMode: 'connect-and-sign',
+        enableVisitTrackingOnConnectOnly: false,
         cssOverrides: `
           .dynamic-modal {
             z-index: 9999;
