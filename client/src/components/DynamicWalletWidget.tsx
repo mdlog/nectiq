@@ -2,15 +2,24 @@ import { DynamicWidget, useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { Button } from '@/components/ui/button';
 import { Wallet, Copy, Check, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function DynamicWalletWidget() {
   const { user, setShowAuthFlow, handleLogOut } = useDynamicContext();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [hasAuthenticated, setHasAuthenticated] = useState(false);
 
   const walletAddress = user?.verifiedCredentials?.[0]?.address;
   const isConnected = !!user && !!walletAddress;
+
+  // Auto-authenticate when wallet connects (only once)
+  useEffect(() => {
+    if (isConnected && walletAddress && !hasAuthenticated) {
+      setHasAuthenticated(true);
+      loginWithWallet();
+    }
+  }, [isConnected, walletAddress, hasAuthenticated]);
 
   const copyAddress = async () => {
     if (walletAddress) {
@@ -49,13 +58,13 @@ export default function DynamicWalletWidget() {
     if (!walletAddress) return;
 
     try {
-      const response = await fetch('/api/auth/wallet-login', {
+      const response = await fetch('/api/auth/dynamic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          user,
           walletAddress: walletAddress,
-          signature: 'dynamic-auth',
-          message: `Login to Nectiq with ${walletAddress}`
+          address: walletAddress
         }),
       });
 

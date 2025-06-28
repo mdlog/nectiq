@@ -299,6 +299,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dynamic SDK Webhook endpoint for authentication
+  app.post("/api/auth/dynamic-webhook", async (req, res) => {
+    try {
+      console.log('Dynamic webhook received:', req.body);
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error('Dynamic webhook error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+
+  // Dynamic SDK Authentication endpoint
+  app.post("/api/auth/dynamic", async (req, res) => {
+    try {
+      const { user, walletAddress, address } = req.body;
+      const finalAddress = normalizeWalletAddress(walletAddress || address || user?.verifiedCredentials?.[0]?.address);
+      
+      console.log('Dynamic auth request:', { finalAddress, hasUser: !!user });
+      
+      if (!finalAddress) {
+        return res.status(400).json({ message: "Missing wallet address" });
+      }
+
+      // Check security
+      const { WalletSecurityService } = await import('./walletSecurity');
+      const securityCheck = await WalletSecurityService.validateWalletLogin(finalAddress, req);
+      
+      if (!securityCheck.success) {
+        return res.status(403).json({ 
+          message: securityCheck.message,
+          securityBlock: true 
+        });
+      }
+
+      // Find or create user
+      let dbUser = await storage.getUserByWalletAddress(finalAddress);
+      if (!dbUser) {
+        const isAdmin = ADMIN_WALLET_ADDRESSES.includes(finalAddress);
+        const username = isAdmin ? `Admin_${finalAddress.slice(-6)}` : generateRandomUsername();
+        
+        dbUser = await storage.createUser({
+          username,
+          walletAddress: finalAddress,
+          authMethod: "wallet",
+          isAdmin
+        });
+        
+        console.log(`Auto-registered: ${username}, admin: ${isAdmin}`);
+      }
+
+      // Set session
+      req.session.userId = dbUser.id;
+      req.session.isAdmin = dbUser.isAdmin;
+      
+      const responseUser = {
+        id: dbUser.id,
+        username: dbUser.username,
+        walletAddress: dbUser.walletAddress,
+        balance: dbUser.balance,
+        isAdmin: dbUser.isAdmin
+      };
+      
+      res.json({ 
+        success: true, 
+        user: responseUser
+      });
+    } catch (error) {
+      console.error("Dynamic auth error:", error);
+      res.status(500).json({ message: "Authentication failed" });
+    }
+  });
+
   // Logout endpoint - for wallet disconnect
   app.post("/api/auth/logout", async (req, res) => {
     // Since we're using wallet-based auth, just clear cookies and respond
