@@ -81,7 +81,7 @@ const SurvivalTournaments = () => {
       return;
     }
 
-    if (tournament.status !== 'pending' && tournament.status !== 'accepting_participants') {
+    if (tournament.status !== 'open') {
       toast({
         title: "Cannot Join",
         description: "This tournament is no longer accepting participants",
