@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords, Play } from "lucide-react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -444,6 +444,34 @@ export default function AdminPanel() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
+
+  // Start tournament mutation
+  const startTournamentMutation = useMutation({
+    mutationFn: async (tournamentId: number) => {
+      const response = await fetch(`/api/admin/survival-tournaments/${tournamentId}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ 
+        title: "Success", 
+        description: "Tournament started successfully! Participants can now make predictions."
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const startTournament = (tournamentId: number) => {
+    startTournamentMutation.mutate(tournamentId);
+  };
 
   // Event mutations
   const createEventMutation = useMutation({
@@ -6028,6 +6056,16 @@ export default function AdminPanel() {
                                   <Button size="sm" variant="outline">
                                     <Eye className="h-4 w-4" />
                                   </Button>
+                                  {tournament.status === 'open' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="text-green-600"
+                                      onClick={() => startTournament(tournament.id)}
+                                    >
+                                      <Play className="h-4 w-4" />
+                                    </Button>
+                                  )}
                                   <Button size="sm" variant="outline" className="text-red-600">
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
