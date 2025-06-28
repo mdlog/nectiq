@@ -3605,6 +3605,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear all battles (admin only)
+  app.post('/api/admin/battles/clear-all', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const deletedCount = await storage.clearAllBattles();
+      
+      // Audit log
+      auditLog('battles_cleared_all', { 
+        deletedCount,
+        timestamp: new Date().toISOString()
+      }, req);
+      
+      res.json({ 
+        message: `Successfully cleared all battles`,
+        deletedCount
+      });
+    } catch (error) {
+      console.error('Error clearing all battles:', error);
+      res.status(500).json({ message: 'Failed to clear all battles' });
+    }
+  });
+
   // Cancel battle (admin only)
   app.post('/api/admin/battles/:id/cancel', requireAdmin, async (req: Request, res: Response) => {
     try {

@@ -347,6 +347,31 @@ export default function AdminPanel() {
     },
   });
 
+  const clearAllBattlesMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/admin/battles/clear-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: "Success", 
+        description: `All battles cleared successfully. ${data.deletedCount} battles removed.`
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/battles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/battles/stats"] });
+      setSelectedBattles([]);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   // Event mutations
   const createEventMutation = useMutation({
     mutationFn: async (eventData: any) => {
@@ -1025,6 +1050,12 @@ export default function AdminPanel() {
 
     if (confirm(`Are you sure you want to delete ${selectedBattles.length} selected battles?`)) {
       bulkDeleteBattlesMutation.mutate(selectedBattles);
+    }
+  };
+
+  const handleClearAllBattles = async () => {
+    if (confirm("Are you sure you want to clear ALL battles? This action cannot be undone and will delete all battle data including comments and reactions.")) {
+      clearAllBattlesMutation.mutate();
     }
   };
 
@@ -5410,6 +5441,15 @@ export default function AdminPanel() {
                     >
                       <Download className="mr-2 h-4 w-4" />
                       Export CSV
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleClearAllBattles}
+                      disabled={clearAllBattlesMutation.isPending}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Clear All Battles
                     </Button>
                     {selectedBattles.length > 0 && (
                       <Button
