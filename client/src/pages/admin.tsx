@@ -270,6 +270,16 @@ export default function AdminPanel() {
   // Survival Tournament queries and mutations
   const { data: tournaments = [], isLoading: tournamentsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/survival-tournaments"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/survival-tournaments", {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch tournaments");
+      }
+      return response.json();
+    },
     retry: false,
   });
 
