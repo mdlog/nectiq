@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 
@@ -138,6 +138,22 @@ export interface IStorage {
   addToUserBalance(userId: number, amount: number): Promise<void>;
   updateUser(id: number, updates: any): Promise<void>;
   clearAllBattles(): Promise<number>;
+
+  // Survival Tournament operations
+  createSurvivalTournament(tournament: any): Promise<any>;
+  getAllSurvivalTournaments(): Promise<any[]>;
+  getSurvivalTournament(id: number): Promise<any>;
+  joinSurvivalTournament(tournamentId: number, userId: number): Promise<any>;
+  startSurvivalTournament(tournamentId: number): Promise<void>;
+  createSurvivalRound(round: any): Promise<any>;
+  submitSurvivalPrediction(prediction: any): Promise<any>;
+  processSurvivalRound(roundId: number): Promise<void>;
+  eliminateParticipants(roundId: number, incorrectPredictions: number[]): Promise<void>;
+  getSurvivalParticipants(tournamentId: number): Promise<any[]>;
+  getSurvivalRounds(tournamentId: number): Promise<any[]>;
+  getSurvivalPredictions(roundId: number): Promise<any[]>;
+  updateSurvivalTournament(id: number, updates: any): Promise<void>;
+  deleteSurvivalTournament(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {

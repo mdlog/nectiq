@@ -369,6 +369,68 @@ export const battleReactions = pgTable("battle_reactions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Survival Tournament Tables
+export const survivalTournaments = pgTable("survival_tournaments", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(),
+  entryFee: integer("entry_fee").notNull().default(100), // NTIQ required to join
+  prizePool: integer("prize_pool").notNull().default(0),
+  maxParticipants: integer("max_participants").notNull().default(32),
+  currentParticipants: integer("current_participants").notNull().default(0),
+  roundDuration: integer("round_duration").notNull().default(60), // minutes per round
+  status: varchar("status", { length: 20 }).notNull().default("open"), // open, active, completed, cancelled
+  currentRound: integer("current_round").notNull().default(0),
+  winnerId: integer("winner_id").references(() => users.id),
+  startTime: timestamp("start_time"),
+  endTime: timestamp("end_time"),
+  nextRoundTime: timestamp("next_round_time"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const survivalParticipants = pgTable("survival_participants", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").references(() => survivalTournaments.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("active"), // active, eliminated, winner
+  eliminatedRound: integer("eliminated_round"),
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  eliminatedAt: timestamp("eliminated_at"),
+});
+
+export const survivalRounds = pgTable("survival_rounds", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").references(() => survivalTournaments.id).notNull(),
+  roundNumber: integer("round_number").notNull(),
+  cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  startPrice: numeric("start_price", { precision: 18, scale: 8 }).notNull(),
+  endPrice: numeric("end_price", { precision: 18, scale: 8 }),
+  priceDirection: varchar("price_direction", { length: 10 }), // up, down, calculated after round
+  eliminatedCount: integer("eliminated_count").notNull().default(0),
+  survivorCount: integer("survivor_count").notNull().default(0),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, active, completed
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const survivalPredictions = pgTable("survival_predictions", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").references(() => survivalTournaments.id).notNull(),
+  roundId: integer("round_id").references(() => survivalRounds.id).notNull(),
+  participantId: integer("participant_id").references(() => survivalParticipants.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  prediction: varchar("prediction", { length: 10 }).notNull(), // "up" or "down"
+  confidence: integer("confidence").default(50), // 1-100 confidence level
+  submittedAt: timestamp("submitted_at").notNull().defaultNow(),
+  isCorrect: boolean("is_correct"),
+  points: integer("points").default(0),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   predictions: many(predictions),
@@ -585,6 +647,59 @@ export const battleReactionsRelations = relations(battleReactions, ({ one }) => 
   }),
 }));
 
+// Survival Tournament Relations
+export const survivalTournamentsRelations = relations(survivalTournaments, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [survivalTournaments.createdBy],
+    references: [users.id],
+  }),
+  winner: one(users, {
+    fields: [survivalTournaments.winnerId],
+    references: [users.id],
+  }),
+  participants: many(survivalParticipants),
+  rounds: many(survivalRounds),
+}));
+
+export const survivalParticipantsRelations = relations(survivalParticipants, ({ one, many }) => ({
+  tournament: one(survivalTournaments, {
+    fields: [survivalParticipants.tournamentId],
+    references: [survivalTournaments.id],
+  }),
+  user: one(users, {
+    fields: [survivalParticipants.userId],
+    references: [users.id],
+  }),
+  predictions: many(survivalPredictions),
+}));
+
+export const survivalRoundsRelations = relations(survivalRounds, ({ one, many }) => ({
+  tournament: one(survivalTournaments, {
+    fields: [survivalRounds.tournamentId],
+    references: [survivalTournaments.id],
+  }),
+  predictions: many(survivalPredictions),
+}));
+
+export const survivalPredictionsRelations = relations(survivalPredictions, ({ one }) => ({
+  tournament: one(survivalTournaments, {
+    fields: [survivalPredictions.tournamentId],
+    references: [survivalTournaments.id],
+  }),
+  round: one(survivalRounds, {
+    fields: [survivalPredictions.roundId],
+    references: [survivalRounds.id],
+  }),
+  participant: one(survivalParticipants, {
+    fields: [survivalPredictions.participantId],
+    references: [survivalParticipants.id],
+  }),
+  user: one(users, {
+    fields: [survivalPredictions.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -762,6 +877,58 @@ export const insertBattleReactionSchema = createInsertSchema(battleReactions).om
 
 export type PredictionBattle = typeof predictionBattles.$inferSelect;
 export type InsertPredictionBattle = z.infer<typeof insertPredictionBattleSchema>;
+
+// Survival Tournament insert schemas and types
+export const insertSurvivalTournamentSchema = createInsertSchema(survivalTournaments).omit({
+  id: true,
+  currentParticipants: true,
+  prizePool: true,
+  currentRound: true,
+  winnerId: true,
+  startTime: true,
+  endTime: true,
+  nextRoundTime: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSurvivalParticipantSchema = createInsertSchema(survivalParticipants).omit({
+  id: true,
+  eliminatedRound: true,
+  joinedAt: true,
+  eliminatedAt: true,
+});
+
+export const insertSurvivalRoundSchema = createInsertSchema(survivalRounds).omit({
+  id: true,
+  endPrice: true,
+  priceDirection: true,
+  eliminatedCount: true,
+  survivorCount: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export const insertSurvivalPredictionSchema = createInsertSchema(survivalPredictions).omit({
+  id: true,
+  submittedAt: true,
+  isCorrect: true,
+  points: true,
+}).extend({
+  prediction: z.enum(["up", "down"]),
+});
+
+export type SurvivalTournament = typeof survivalTournaments.$inferSelect;
+export type InsertSurvivalTournament = z.infer<typeof insertSurvivalTournamentSchema>;
+
+export type SurvivalParticipant = typeof survivalParticipants.$inferSelect;
+export type InsertSurvivalParticipant = z.infer<typeof insertSurvivalParticipantSchema>;
+
+export type SurvivalRound = typeof survivalRounds.$inferSelect;
+export type InsertSurvivalRound = z.infer<typeof insertSurvivalRoundSchema>;
+
+export type SurvivalPrediction = typeof survivalPredictions.$inferSelect;
+export type InsertSurvivalPrediction = z.infer<typeof insertSurvivalPredictionSchema>;
 export type BattleSpectator = typeof battleSpectators.$inferSelect;
 export type InsertBattleSpectator = z.infer<typeof insertBattleSpectatorSchema>;
 export type BattleComment = typeof battleComments.$inferSelect;
