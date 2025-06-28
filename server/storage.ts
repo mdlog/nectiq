@@ -1576,21 +1576,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async joinSurvivalTournament(tournamentId: number, userId: number): Promise<any> {
+    // Get tournament entry fee first
+    const tournament = await db.select({
+      entryFee: survivalTournaments.entryFee,
+      currentParticipants: survivalTournaments.currentParticipants,
+      prizePool: survivalTournaments.prizePool
+    }).from(survivalTournaments).where(eq(survivalTournaments.id, tournamentId));
+    
+    if (!tournament[0]) {
+      throw new Error('Tournament not found');
+    }
+    
+    const { entryFee, currentParticipants, prizePool } = tournament[0];
+    
+    // Insert participant
     const [participant] = await db
       .insert(survivalParticipants)
       .values({
-        tournamentId,
-        userId,
-        isActive: true
+        tournamentId: tournamentId,
+        userId: userId,
+        status: 'active'
       })
       .returning();
     
-    // Update participant count
+    // Update participant count and prize pool
     await db
       .update(survivalTournaments)
       .set({
-        currentParticipants: sql`${survivalTournaments.currentParticipants} + 1`,
-        prizePool: sql`${survivalTournaments.prizePool} + ${sql.placeholder('entryFee')}`
+        currentParticipants: currentParticipants + 1,
+        prizePool: prizePool + entryFee
       })
       .where(eq(survivalTournaments.id, tournamentId));
     
