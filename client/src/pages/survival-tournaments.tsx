@@ -276,7 +276,7 @@ const SurvivalTournaments = () => {
                 
                 {/* Action Buttons */}
                 <div className="mt-6 space-y-2">
-                  {(tournament.status === 'pending' || tournament.status === 'accepting_participants') && 
+                  {(tournament.status === 'open' || tournament.status === 'pending' || tournament.status === 'accepting_participants') && 
                    tournament.currentParticipants < tournament.maxParticipants && (
                     <Button
                       onClick={() => handleJoinTournament(tournament)}
