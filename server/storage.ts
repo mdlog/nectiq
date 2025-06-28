@@ -1649,7 +1649,7 @@ export class DatabaseStorage implements IStorage {
       await db
         .update(survivalParticipants)
         .set({
-          isActive: false,
+          status: 'eliminated',
           eliminatedRound: roundId,
           eliminatedAt: new Date()
         })
@@ -1664,7 +1664,7 @@ export class DatabaseStorage implements IStorage {
         userId: survivalParticipants.userId,
         username: users.username,
         uid: users.uid,
-        isActive: survivalParticipants.isActive,
+        status: survivalParticipants.status,
         eliminatedRound: survivalParticipants.eliminatedRound,
         joinedAt: survivalParticipants.joinedAt,
         eliminatedAt: survivalParticipants.eliminatedAt

@@ -3966,7 +3966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user is participant
       const participants = await storage.getSurvivalParticipants(parseInt(tournamentId));
-      const participant = participants.find(p => p.userId === userId && p.isActive);
+      const participant = participants.find(p => p.userId === userId && p.status === 'active');
       
       if (!participant) {
         return res.status(400).json({ message: 'Not an active participant in this tournament' });
