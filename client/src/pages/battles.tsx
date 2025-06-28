@@ -49,6 +49,8 @@ export default function BattlesPage() {
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
   const [predictionPrice, setPredictionPrice] = useState('');
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyItemsPerPage] = useState(5);
   const { toast } = useToast();
 
   // Check user authentication
@@ -273,7 +275,11 @@ export default function BattlesPage() {
       return (
         <Card>
           <CardContent className="p-8 text-center">
-            <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <div className="h-12 w-12 text-gray-400 mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-full h-full">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No Battle History
             </h3>
@@ -285,16 +291,98 @@ export default function BattlesPage() {
       );
     }
 
+    // Pagination logic
+    const totalItems = completedBattles.length;
+    const totalPages = Math.ceil(totalItems / historyItemsPerPage);
+    const startIndex = (historyPage - 1) * historyItemsPerPage;
+    const endIndex = startIndex + historyItemsPerPage;
+    const paginatedBattles = completedBattles.slice(startIndex, endIndex);
+
+    const handlePageChange = (page: number) => {
+      setHistoryPage(page);
+    };
+
+    const renderPaginationButton = (page: number, isActive: boolean) => (
+      <button
+        key={page}
+        onClick={() => handlePageChange(page)}
+        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+          isActive 
+            ? 'bg-blue-600 text-white' 
+            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700'
+        }`}
+      >
+        {page}
+      </button>
+    );
+
+    const renderPagination = () => {
+      if (totalPages <= 1) return null;
+
+      const pages = [];
+      const maxVisiblePages = 5;
+      
+      if (totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(renderPaginationButton(i, i === historyPage));
+        }
+      } else {
+        pages.push(renderPaginationButton(1, historyPage === 1));
+        
+        if (historyPage > 3) {
+          pages.push(<span key="ellipsis1" className="px-2 text-gray-400">...</span>);
+        }
+        
+        const start = Math.max(2, historyPage - 1);
+        const end = Math.min(totalPages - 1, historyPage + 1);
+        
+        for (let i = start; i <= end; i++) {
+          pages.push(renderPaginationButton(i, i === historyPage));
+        }
+        
+        if (historyPage < totalPages - 2) {
+          pages.push(<span key="ellipsis2" className="px-2 text-gray-400">...</span>);
+        }
+        
+        pages.push(renderPaginationButton(totalPages, historyPage === totalPages));
+      }
+
+      return (
+        <div className="flex items-center justify-between mt-6">
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} battles
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => handlePageChange(historyPage - 1)}
+              disabled={historyPage === 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            {pages}
+            <button
+              onClick={() => handlePageChange(historyPage + 1)}
+              disabled={historyPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      );
+    };
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            Battle History ({completedBattles.length} completed)
+            Battle History ({totalItems} completed)
           </h3>
         </div>
         
         <div className="grid gap-6">
-          {completedBattles.map((battle: any) => (
+          {paginatedBattles.map((battle: any) => (
             <Card key={battle.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -392,6 +480,9 @@ export default function BattlesPage() {
             </Card>
           ))}
         </div>
+        
+        {/* Pagination Controls */}
+        {renderPagination()}
       </div>
     );
   };
