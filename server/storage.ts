@@ -266,7 +266,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTopPredictors(limit: number = 10): Promise<User[]> {
-    return await db.select().from(users).orderBy(desc(users.totalRewards)).limit(limit);
+    return await db.select().from(users).where(eq(users.isAdmin, false)).orderBy(desc(users.totalRewards)).limit(limit);
   }
 
   async resetLeaderboard(): Promise<void> {
