@@ -282,7 +282,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTopPredictors(limit: number = 10): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.isAdmin, false)).orderBy(desc(users.totalRewards)).limit(limit);
+    return await db.select({
+      id: users.id,
+      uid: users.uid,
+      username: users.username,
+      password: users.password,
+      walletAddress: users.walletAddress,
+      authMethod: users.authMethod,
+      isAdmin: users.isAdmin,
+      balance: users.balance,
+      totalPredictions: users.totalPredictions,
+      correctPredictions: users.correctPredictions,
+      totalRewards: users.totalRewards,
+      profilePhoto: users.profilePhoto
+    }).from(users).where(eq(users.isAdmin, false)).orderBy(desc(users.totalRewards)).limit(limit);
   }
 
   async resetLeaderboard(): Promise<void> {
