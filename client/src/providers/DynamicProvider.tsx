@@ -1,4 +1,8 @@
 import { DynamicContextProvider } from '@dynamic-labs/sdk-react-core';
+import { EthereumWalletConnectors } from '@dynamic-labs/ethereum';
+import { SolanaWalletConnectors } from '@dynamic-labs/solana';
+import { CosmosWalletConnectors } from '@dynamic-labs/cosmos';
+import { StarknetWalletConnectors } from '@dynamic-labs/starknet';
 import { ReactNode } from 'react';
 
 interface DynamicProviderProps {
@@ -10,6 +14,12 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
     <DynamicContextProvider
       settings={{
         environmentId: import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID || 'live_default',
+        walletConnectors: [
+          EthereumWalletConnectors,
+          SolanaWalletConnectors,
+          CosmosWalletConnectors,
+          StarknetWalletConnectors,
+        ],
         appName: 'Nectiq',
         appLogoUrl: '/logo.png',
         cssOverrides: `
