@@ -1217,7 +1217,7 @@ export default function UserDashboard() {
 
           {/* Verification Tab */}
           <TabsContent value="verification">
-            <VerificationSettings />
+            <VerificationSettings user={user} />
           </TabsContent>
 
           {/* Battles Tab */}
@@ -1253,8 +1253,8 @@ function BattlesSection() {
     );
   }
 
-  const battles = battleData?.battles || [];
-  const stats = battleData?.stats || {
+  const battles = (battleData as any)?.battles || [];
+  const stats = (battleData as any)?.stats || {
     totalBattles: 0,
     wonBattles: 0,
     lostBattles: 0,

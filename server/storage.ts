@@ -367,7 +367,11 @@ export class DatabaseStorage implements IStorage {
       totalPredictions: users.totalPredictions,
       correctPredictions: users.correctPredictions,
       totalRewards: users.totalRewards,
-      profilePhoto: users.profilePhoto
+      profilePhoto: users.profilePhoto,
+      email: users.email,
+      twitterHandle: users.twitterHandle,
+      emailVerified: users.emailVerified,
+      twitterVerified: users.twitterVerified
     }).from(users).where(eq(users.isAdmin, false)).orderBy(desc(users.totalRewards)).limit(limit);
   }
 
@@ -1563,7 +1567,12 @@ export class MemStorage implements IStorage {
       balance: 1000,
       totalPredictions: 0,
       correctPredictions: 0,
-      totalRewards: 0
+      totalRewards: 0,
+      profilePhoto: null,
+      email: null,
+      twitterHandle: null,
+      emailVerified: false,
+      twitterVerified: false
     };
     this.users.set(id, user);
     return user;
