@@ -1509,6 +1509,197 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(eq(users.id, id));
   }
+
+  // Survival Tournament Operations
+  async createSurvivalTournament(tournamentData: any): Promise<any> {
+    const [tournament] = await db
+      .insert(survivalTournaments)
+      .values(tournamentData)
+      .returning();
+    return tournament;
+  }
+
+  async getAllSurvivalTournaments(): Promise<any[]> {
+    return await db
+      .select({
+        id: survivalTournaments.id,
+        title: survivalTournaments.title,
+        description: survivalTournaments.description,
+        cryptocurrency: survivalTournaments.cryptocurrency,
+        entryFee: survivalTournaments.entryFee,
+        maxParticipants: survivalTournaments.maxParticipants,
+        currentParticipants: survivalTournaments.currentParticipants,
+        prizePool: survivalTournaments.prizePool,
+        status: survivalTournaments.status,
+        currentRound: survivalTournaments.currentRound,
+        roundDuration: survivalTournaments.roundDuration,
+        startTime: survivalTournaments.startTime,
+        endTime: survivalTournaments.endTime,
+        nextRoundTime: survivalTournaments.nextRoundTime,
+        createdAt: survivalTournaments.createdAt,
+        creatorUsername: users.username,
+        winnerUsername: users.username
+      })
+      .from(survivalTournaments)
+      .leftJoin(users, eq(survivalTournaments.createdBy, users.id))
+      .orderBy(desc(survivalTournaments.createdAt));
+  }
+
+  async getSurvivalTournament(id: number): Promise<any> {
+    const [tournament] = await db
+      .select({
+        id: survivalTournaments.id,
+        title: survivalTournaments.title,
+        description: survivalTournaments.description,
+        cryptocurrency: survivalTournaments.cryptocurrency,
+        entryFee: survivalTournaments.entryFee,
+        maxParticipants: survivalTournaments.maxParticipants,
+        currentParticipants: survivalTournaments.currentParticipants,
+        prizePool: survivalTournaments.prizePool,
+        status: survivalTournaments.status,
+        currentRound: survivalTournaments.currentRound,
+        roundDuration: survivalTournaments.roundDuration,
+        startTime: survivalTournaments.startTime,
+        endTime: survivalTournaments.endTime,
+        nextRoundTime: survivalTournaments.nextRoundTime,
+        createdBy: survivalTournaments.createdBy,
+        winnerId: survivalTournaments.winnerId,
+        createdAt: survivalTournaments.createdAt,
+        updatedAt: survivalTournaments.updatedAt,
+        creatorUsername: users.username
+      })
+      .from(survivalTournaments)
+      .leftJoin(users, eq(survivalTournaments.createdBy, users.id))
+      .where(eq(survivalTournaments.id, id));
+    
+    return tournament || undefined;
+  }
+
+  async joinSurvivalTournament(tournamentId: number, userId: number): Promise<any> {
+    const [participant] = await db
+      .insert(survivalParticipants)
+      .values({
+        tournamentId,
+        userId,
+        isActive: true
+      })
+      .returning();
+    
+    // Update participant count
+    await db
+      .update(survivalTournaments)
+      .set({
+        currentParticipants: sql`${survivalTournaments.currentParticipants} + 1`,
+        prizePool: sql`${survivalTournaments.prizePool} + ${sql.placeholder('entryFee')}`
+      })
+      .where(eq(survivalTournaments.id, tournamentId));
+    
+    return participant;
+  }
+
+  async startSurvivalTournament(tournamentId: number): Promise<void> {
+    await db
+      .update(survivalTournaments)
+      .set({
+        status: 'active',
+        startTime: new Date(),
+        currentRound: 1
+      })
+      .where(eq(survivalTournaments.id, tournamentId));
+  }
+
+  async createSurvivalRound(roundData: any): Promise<any> {
+    const [round] = await db
+      .insert(survivalRounds)
+      .values(roundData)
+      .returning();
+    return round;
+  }
+
+  async submitSurvivalPrediction(predictionData: any): Promise<any> {
+    const [prediction] = await db
+      .insert(survivalPredictions)
+      .values(predictionData)
+      .returning();
+    return prediction;
+  }
+
+  async processSurvivalRound(roundId: number): Promise<void> {
+    // This method will be called to process round results
+    // Implementation will depend on business logic
+    console.log(`Processing survival round ${roundId}`);
+  }
+
+  async eliminateParticipants(roundId: number, incorrectPredictions: number[]): Promise<void> {
+    if (incorrectPredictions.length > 0) {
+      await db
+        .update(survivalParticipants)
+        .set({
+          isActive: false,
+          eliminatedRound: roundId,
+          eliminatedAt: new Date()
+        })
+        .where(inArray(survivalParticipants.id, incorrectPredictions));
+    }
+  }
+
+  async getSurvivalParticipants(tournamentId: number): Promise<any[]> {
+    return await db
+      .select({
+        id: survivalParticipants.id,
+        userId: survivalParticipants.userId,
+        username: users.username,
+        uid: users.uid,
+        isActive: survivalParticipants.isActive,
+        eliminatedRound: survivalParticipants.eliminatedRound,
+        joinedAt: survivalParticipants.joinedAt,
+        eliminatedAt: survivalParticipants.eliminatedAt
+      })
+      .from(survivalParticipants)
+      .leftJoin(users, eq(survivalParticipants.userId, users.id))
+      .where(eq(survivalParticipants.tournamentId, tournamentId))
+      .orderBy(desc(survivalParticipants.joinedAt));
+  }
+
+  async getSurvivalRounds(tournamentId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(survivalRounds)
+      .where(eq(survivalRounds.tournamentId, tournamentId))
+      .orderBy(survivalRounds.roundNumber);
+  }
+
+  async getSurvivalPredictions(roundId: number): Promise<any[]> {
+    return await db
+      .select({
+        id: survivalPredictions.id,
+        userId: survivalPredictions.userId,
+        username: users.username,
+        prediction: survivalPredictions.prediction,
+        isCorrect: survivalPredictions.isCorrect,
+        points: survivalPredictions.points,
+        submittedAt: survivalPredictions.submittedAt
+      })
+      .from(survivalPredictions)
+      .leftJoin(users, eq(survivalPredictions.userId, users.id))
+      .where(eq(survivalPredictions.roundId, roundId))
+      .orderBy(desc(survivalPredictions.submittedAt));
+  }
+
+  async updateSurvivalTournament(id: number, updates: any): Promise<void> {
+    await db
+      .update(survivalTournaments)
+      .set(updates)
+      .where(eq(survivalTournaments.id, id));
+  }
+
+  async deleteSurvivalTournament(id: number): Promise<void> {
+    // Delete related data first
+    await db.delete(survivalPredictions).where(eq(survivalPredictions.tournamentId, id));
+    await db.delete(survivalRounds).where(eq(survivalRounds.tournamentId, id));
+    await db.delete(survivalParticipants).where(eq(survivalParticipants.tournamentId, id));
+    await db.delete(survivalTournaments).where(eq(survivalTournaments.id, id));
+  }
 }
 
 export class MemStorage implements IStorage {
