@@ -5791,115 +5791,126 @@ export default function AdminPanel() {
       </main>
       
       {/* Battle Details Modal */}
-      <Dialog open={showBattleDetailsModal} onOpenChange={setShowBattleDetailsModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Battle Details {selectedBattleDetails && `#${selectedBattleDetails.id}`}</DialogTitle>
-          </DialogHeader>
-          {selectedBattleDetails && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Challenger</h4>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                      {selectedBattleDetails.challengerUsername?.charAt(0) || 'U'}
-                    </div>
-                    <div>
-                      <div className="font-medium">{selectedBattleDetails.challengerUsername || 'Unknown'}</div>
-                      <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails.challengerUid}</div>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <span className="text-sm text-muted-foreground">Prediction: </span>
-                    <span className="font-mono">${selectedBattleDetails.challengerPrediction?.toFixed(2)}</span>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Opponent</h4>
-                  {selectedBattleDetails.challengedUsername ? (
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          {selectedBattleDetails.challengedUsername.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="font-medium">{selectedBattleDetails.challengedUsername}</div>
-                          <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails.challengedUid}</div>
-                        </div>
+      {showBattleDetailsModal && selectedBattleDetails && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold">Battle Details #{selectedBattleDetails.id}</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowBattleDetailsModal(false)}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Challenger</h4>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        {selectedBattleDetails.challengerUsername?.charAt(0) || 'U'}
                       </div>
-                      <div className="mt-2">
-                        <span className="text-sm text-muted-foreground">Prediction: </span>
-                        <span className="font-mono">${selectedBattleDetails.challengedPrediction?.toFixed(2)}</span>
+                      <div>
+                        <div className="font-medium">{selectedBattleDetails.challengerUsername || 'Unknown'}</div>
+                        <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails.challengerUid}</div>
                       </div>
                     </div>
-                  ) : (
-                    <Badge variant="outline">Waiting for opponent</Badge>
-                  )}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Cryptocurrency</h4>
-                  <div className="flex items-center gap-2">
-                    <img 
-                      src={`https://coin-images.coingecko.com/coins/images/${selectedBattleDetails.cryptoImageId}/small/${selectedBattleDetails.cryptocurrency}.png`}
-                      alt={selectedBattleDetails.cryptocurrency}
-                      className="w-6 h-6"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                    <span className="font-medium">{selectedBattleDetails.cryptocurrency?.toUpperCase()}</span>
+                    <div className="mt-2">
+                      <span className="text-sm text-muted-foreground">Prediction: </span>
+                      <span className="font-mono">${selectedBattleDetails.challengerPrediction?.toFixed(2)}</span>
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Current: ${selectedBattleDetails.currentPrice?.toFixed(2)}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Stake Amount</h4>
-                  <span className="font-mono text-lg">{selectedBattleDetails.stakeAmount} NTIQ</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Status</h4>
-                  <Badge variant={
-                    selectedBattleDetails.status === 'completed' ? 'default' :
-                    selectedBattleDetails.status === 'active' ? 'secondary' :
-                    selectedBattleDetails.status === 'cancelled' ? 'destructive' : 'outline'
-                  }>
-                    {selectedBattleDetails.status}
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Created</h4>
-                  <span className="text-sm">{new Date(selectedBattleDetails.createdAt).toLocaleString()}</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Target Time</h4>
-                  <span className="text-sm">{new Date(selectedBattleDetails.targetTime).toLocaleString()}</span>
-                </div>
-              </div>
-              
-              {selectedBattleDetails.winnerId && (
-                <div>
-                  <h4 className="font-semibold mb-2">Winner</h4>
-                  <div className="flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-yellow-500" />
-                    <span className="font-medium">{selectedBattleDetails.winnerUsername}</span>
-                    <span className="text-sm text-muted-foreground">
-                      (Reward: {selectedBattleDetails.winnerReward || selectedBattleDetails.stakeAmount * 2} NTIQ)
-                    </span>
+                  <div>
+                    <h4 className="font-semibold mb-2">Opponent</h4>
+                    {selectedBattleDetails.challengedUsername ? (
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            {selectedBattleDetails.challengedUsername.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="font-medium">{selectedBattleDetails.challengedUsername}</div>
+                            <div className="text-xs text-muted-foreground">UID: {selectedBattleDetails.challengedUid}</div>
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <span className="text-sm text-muted-foreground">Prediction: </span>
+                          <span className="font-mono">${selectedBattleDetails.challengedPrediction?.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <Badge variant="outline">Waiting for opponent</Badge>
+                    )}
                   </div>
                 </div>
-              )}
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Cryptocurrency</h4>
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src={`https://coin-images.coingecko.com/coins/images/${selectedBattleDetails.cryptoImageId}/small/${selectedBattleDetails.cryptocurrency}.png`}
+                        alt={selectedBattleDetails.cryptocurrency}
+                        className="w-6 h-6"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <span className="font-medium">{selectedBattleDetails.cryptocurrency?.toUpperCase()}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Current: ${selectedBattleDetails.currentPrice?.toFixed(2)}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Stake Amount</h4>
+                    <span className="font-mono text-lg">{selectedBattleDetails.stakeAmount} NTIQ</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Status</h4>
+                    <Badge variant={
+                      selectedBattleDetails.status === 'completed' ? 'default' :
+                      selectedBattleDetails.status === 'active' ? 'secondary' :
+                      selectedBattleDetails.status === 'cancelled' ? 'destructive' : 'outline'
+                    }>
+                      {selectedBattleDetails.status}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Created</h4>
+                    <span className="text-sm">{new Date(selectedBattleDetails.createdAt).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Target Time</h4>
+                    <span className="text-sm">{new Date(selectedBattleDetails.targetTime).toLocaleString()}</span>
+                  </div>
+                </div>
+                
+                {selectedBattleDetails.winnerId && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Winner</h4>
+                    <div className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-yellow-500" />
+                      <span className="font-medium">{selectedBattleDetails.winnerUsername}</span>
+                      <span className="text-sm text-muted-foreground">
+                        (Reward: {selectedBattleDetails.winnerReward || selectedBattleDetails.stakeAmount * 2} NTIQ)
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
       
       <Footer />
     </div>
