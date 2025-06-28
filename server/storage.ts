@@ -249,11 +249,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async checkTwitterExists(twitterHandle: string, excludeUserId?: number): Promise<boolean> {
-    let query = db.select().from(users).where(eq(users.twitterHandle, twitterHandle));
+    const conditions = [eq(users.twitterHandle, twitterHandle)];
     if (excludeUserId) {
-      query = query.where(ne(users.id, excludeUserId));
+      conditions.push(ne(users.id, excludeUserId));
     }
-    const result = await query;
+    const result = await db.select().from(users).where(and(...conditions));
     return result.length > 0;
   }
 
@@ -1488,66 +1488,6 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set(updates)
       .where(eq(users.id, id));
-  }
-
-  // Email and Twitter verification methods
-  async updateUserVerification(id: number, email?: string, twitterHandle?: string): Promise<User> {
-    const updates: any = {};
-    if (email !== undefined) {
-      updates.email = email;
-      updates.emailVerified = false; // Reset verification when email changes
-    }
-    if (twitterHandle !== undefined) {
-      updates.twitterHandle = twitterHandle;
-      updates.twitterVerified = false; // Reset verification when Twitter changes
-    }
-    
-    await db.update(users).set(updates).where(eq(users.id, id));
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async verifyUserEmail(id: number): Promise<User> {
-    await db.update(users).set({ emailVerified: true }).where(eq(users.id, id));
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async verifyUserTwitter(id: number): Promise<User> {
-    await db.update(users).set({ twitterVerified: true }).where(eq(users.id, id));
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async checkEmailExists(email: string, excludeUserId?: number): Promise<boolean> {
-    let query = db.select().from(users).where(eq(users.email, email));
-    if (excludeUserId) {
-      query = query.where(ne(users.id, excludeUserId));
-    }
-    const result = await query.limit(1);
-    return result.length > 0;
-  }
-
-  async checkTwitterExists(twitterHandle: string, excludeUserId?: number): Promise<boolean> {
-    let query = db.select().from(users).where(eq(users.twitterHandle, twitterHandle));
-    if (excludeUserId) {
-      query = query.where(ne(users.id, excludeUserId));
-    }
-    const result = await query.limit(1);
-    return result.length > 0;
-  }
-
-  async getUsersByEmailOrTwitter(email?: string, twitterHandle?: string): Promise<User[]> {
-    if (email && twitterHandle) {
-      return await db.select().from(users).where(
-        or(eq(users.email, email), eq(users.twitterHandle, twitterHandle))
-      );
-    } else if (email) {
-      return await db.select().from(users).where(eq(users.email, email));
-    } else if (twitterHandle) {
-      return await db.select().from(users).where(eq(users.twitterHandle, twitterHandle));
-    }
-    return [];
   }
 }
 

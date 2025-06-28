@@ -28,7 +28,7 @@ export function VerificationSettings({ user }: VerificationSettingsProps) {
 
   // Update email mutation
   const updateEmailMutation = useMutation({
-    mutationFn: (email: string) => apiRequest("/api/user/update-email", "POST", { email }),
+    mutationFn: (email: string) => apiRequest("/api/user/update-email", { method: "POST", body: { email } }),
     onSuccess: () => {
       toast({
         title: "Email Updated",
@@ -47,7 +47,7 @@ export function VerificationSettings({ user }: VerificationSettingsProps) {
 
   // Update Twitter mutation
   const updateTwitterMutation = useMutation({
-    mutationFn: (twitterHandle: string) => apiRequest("/api/user/update-twitter", "POST", { twitterHandle }),
+    mutationFn: (twitterHandle: string) => apiRequest("/api/user/update-twitter", { method: "POST", body: { twitterHandle } }),
     onSuccess: () => {
       toast({
         title: "Twitter Handle Updated",
@@ -66,7 +66,7 @@ export function VerificationSettings({ user }: VerificationSettingsProps) {
 
   // Verify email mutation
   const verifyEmailMutation = useMutation({
-    mutationFn: () => apiRequest("/api/user/verify-email", "POST"),
+    mutationFn: () => apiRequest("/api/user/verify-email", { method: "POST" }),
     onSuccess: () => {
       toast({
         title: "Email Verified",
@@ -85,7 +85,7 @@ export function VerificationSettings({ user }: VerificationSettingsProps) {
 
   // Verify Twitter mutation
   const verifyTwitterMutation = useMutation({
-    mutationFn: () => apiRequest("/api/user/verify-twitter", "POST"),
+    mutationFn: () => apiRequest("/api/user/verify-twitter", { method: "POST" }),
     onSuccess: () => {
       toast({
         title: "Twitter Verified",
@@ -105,7 +105,7 @@ export function VerificationSettings({ user }: VerificationSettingsProps) {
   // Check duplicates mutation
   const checkDuplicatesMutation = useMutation({
     mutationFn: (params: { email?: string; twitterHandle?: string }) => 
-      apiRequest(`/api/user/check-duplicates?${new URLSearchParams(params).toString()}`, "GET"),
+      apiRequest(`/api/user/check-duplicates?${new URLSearchParams(params).toString()}`),
     onSuccess: (data) => {
       setDuplicateCheck(data);
     },
