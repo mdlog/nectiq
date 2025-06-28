@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Trophy, Users, Clock, DollarSign, Target, Sword, Timer, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { Trophy, Users, DollarSign, Target, Sword, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
@@ -27,30 +26,9 @@ interface SurvivalTournament {
   nextRoundTime?: string;
   creatorUsername: string;
   winnerUsername?: string;
-  participants?: any[];
-  rounds?: any[];
 }
 
-interface RoundStatus {
-  tournament: SurvivalTournament;
-  currentRound?: {
-    id: number;
-    roundNumber: number;
-    timeRemaining: number;
-    totalPredictions: number;
-    participantsRemaining: number;
-    startPrice?: number;
-    lastUpdated?: number;
-  };
-  userPrediction?: {
-    prediction: 'up' | 'down';
-    submittedAt: string;
-  };
-}
-
-
-
-const SurvivalTournamentsSimple = () => {
+const SurvivalTournamentsWorking = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -240,52 +218,50 @@ const SurvivalTournamentsSimple = () => {
                 </CardContent>
               </Card>
 
-              {/* Round Prediction Card for Active Tournaments */}
+              {/* Simple Prediction Interface for Active Tournaments */}
               {tournament.status === 'active' && (
-                <div className="mt-4">
-                  <Card className="bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-xl">
-                    <CardHeader>
-                      <CardTitle className="text-center text-xl font-bold">
-                        🎯 Active Tournament Round
-                      </CardTitle>
-                      <CardDescription className="text-center text-white/90">
-                        Make your prediction to stay in the tournament!
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="text-center">
-                        <p className="text-white/90 mb-4">
-                          Choose price direction for {tournament.cryptocurrency.toUpperCase()}:
-                        </p>
-                        <div className="grid grid-cols-2 gap-4">
-                          <Button
-                            size="lg"
-                            className="h-16 bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <TrendingUp className="h-6 w-6 mr-2" />
-                            <div>
-                              <div className="font-bold">PRICE UP</div>
-                              <div className="text-sm opacity-90">Bullish</div>
-                            </div>
-                          </Button>
-                          <Button
-                            size="lg"
-                            className="h-16 bg-red-600 hover:bg-red-700 text-white"
-                          >
-                            <TrendingDown className="h-6 w-6 mr-2" />
-                            <div>
-                              <div className="font-bold">PRICE DOWN</div>
-                              <div className="text-sm opacity-90">Bearish</div>
-                            </div>
-                          </Button>
-                        </div>
+                <Card className="bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-xl">
+                  <CardHeader>
+                    <CardTitle className="text-center text-xl font-bold">
+                      🎯 Active Tournament Round
+                    </CardTitle>
+                    <CardDescription className="text-center text-white/90">
+                      Make your prediction to stay in the tournament!
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-center">
+                      <p className="text-white/90 mb-4">
+                        Choose price direction for {tournament.cryptocurrency.toUpperCase()}:
+                      </p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Button
+                          size="lg"
+                          className="h-16 bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <TrendingUp className="h-6 w-6 mr-2" />
+                          <div>
+                            <div className="font-bold">PRICE UP</div>
+                            <div className="text-sm opacity-90">Bullish</div>
+                          </div>
+                        </Button>
+                        <Button
+                          size="lg"
+                          className="h-16 bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          <TrendingDown className="h-6 w-6 mr-2" />
+                          <div>
+                            <div className="font-bold">PRICE DOWN</div>
+                            <div className="text-sm opacity-90">Bearish</div>
+                          </div>
+                        </Button>
                       </div>
-                      <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-center text-yellow-800 text-sm">
-                        ⚠️ Wrong predictions result in elimination!
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
+                    <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-center text-yellow-800 text-sm">
+                      ⚠️ Wrong predictions result in elimination!
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
           ))}
@@ -308,4 +284,4 @@ const SurvivalTournamentsSimple = () => {
   );
 };
 
-export default SurvivalTournamentsSimple;
+export default SurvivalTournamentsWorking;
