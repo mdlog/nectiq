@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Trophy, Users, DollarSign, Target, Sword, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { Trophy, Users, DollarSign, Target, Sword, TrendingUp, TrendingDown, AlertCircle, Clock } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { useState, useEffect } from "react";
 
 interface SurvivalTournament {
   id: number;
@@ -28,6 +29,56 @@ interface SurvivalTournament {
   winnerUsername?: string;
 }
 
+interface CryptoPriceData {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  image: string;
+}
+
+// Countdown Timer Component
+const CountdownTimer = ({ endTime }: { endTime: string }) => {
+  const [timeLeft, setTimeLeft] = useState<string>("");
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const target = new Date(endTime).getTime();
+      const difference = target - now;
+
+      if (difference > 0) {
+        const hours = Math.floor(difference / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        
+        if (hours > 0) {
+          setTimeLeft(`${hours}h • ${minutes}m • ${seconds}s`);
+        } else if (minutes > 0) {
+          setTimeLeft(`${minutes}m • ${seconds}s`);
+        } else {
+          setTimeLeft(`${seconds}s`);
+        }
+      } else {
+        setTimeLeft("Time's up!");
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, [endTime]);
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <Clock className="h-4 w-4" />
+      <span className="font-mono">{timeLeft}</span>
+    </div>
+  );
+};
+
 const SurvivalTournamentsWorking = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -41,6 +92,30 @@ const SurvivalTournamentsWorking = () => {
   const { data: user } = useQuery({
     queryKey: ['/api/user'],
   });
+
+  // Fetch real-time cryptocurrency prices
+  const { data: cryptoPrices = [] } = useQuery<CryptoPriceData[]>({
+    queryKey: ['/api/crypto/prices'],
+    refetchInterval: 2000, // Update every 2 seconds for real-time data
+  });
+
+  // Helper function to get current price for a cryptocurrency
+  const getCurrentPrice = (cryptoSymbol: string) => {
+    const crypto = cryptoPrices.find(c => 
+      c.symbol.toLowerCase() === cryptoSymbol.toLowerCase() || 
+      c.id.toLowerCase() === cryptoSymbol.toLowerCase()
+    );
+    return crypto ? crypto.current_price : 0;
+  };
+
+  // Helper function to get price change percentage
+  const getPriceChange = (cryptoSymbol: string) => {
+    const crypto = cryptoPrices.find(c => 
+      c.symbol.toLowerCase() === cryptoSymbol.toLowerCase() || 
+      c.id.toLowerCase() === cryptoSymbol.toLowerCase()
+    );
+    return crypto ? crypto.price_change_percentage_24h : 0;
+  };
 
   // Join tournament mutation
   const joinTournamentMutation = useMutation({
@@ -120,6 +195,34 @@ const SurvivalTournamentsWorking = () => {
                 </CardHeader>
                 
                 <CardContent className="p-6">
+                  {/* Live Price and Timer Section */}
+                  <div className="mb-6 p-4 bg-black/20 rounded-lg border border-yellow-500/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="text-lg font-bold text-yellow-400">
+                          💰 Live Price: ${getCurrentPrice(tournament.cryptocurrency).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 6
+                          })}
+                        </div>
+                        <div className={`text-sm font-semibold ${
+                          getPriceChange(tournament.cryptocurrency) >= 0 
+                            ? 'text-green-400' 
+                            : 'text-red-400'
+                        }`}>
+                          {getPriceChange(tournament.cryptocurrency) >= 0 ? '↗' : '↘'} 
+                          {Math.abs(getPriceChange(tournament.cryptocurrency)).toFixed(2)}%
+                        </div>
+                      </div>
+                      
+                      {tournament.status === 'active' && tournament.nextRoundTime && (
+                        <div className="text-orange-300">
+                          <CountdownTimer endTime={tournament.nextRoundTime} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="flex gap-6">
                     {/* Left Side - Tournament Information */}
                     <div className="flex-1 space-y-4">
