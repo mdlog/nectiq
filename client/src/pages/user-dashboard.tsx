@@ -19,6 +19,7 @@ import { DailyChallenges } from "@/components/daily-challenges";
 import CryptoChart from "@/components/crypto-chart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
+import { WalletBalances } from "@/components/wallet-balances";
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 
 
@@ -1211,6 +1212,12 @@ export default function UserDashboard() {
                             <span className="font-bold text-lg text-white">{user.balance?.toLocaleString() || "0"}</span>
                             <span className="text-xs text-slate-400">NTIQ</span>
                           </div>
+                        </div>
+
+                        {/* Wallet Token Balances */}
+                        <div className="mt-3 space-y-2">
+                          <div className="text-xs text-slate-500 mb-2">Wallet Token Balances:</div>
+                          <WalletBalances walletAddress={user.walletAddress} />
                         </div>
                       </div>
 
