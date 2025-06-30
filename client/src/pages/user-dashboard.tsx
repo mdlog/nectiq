@@ -450,48 +450,48 @@ export default function UserDashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="profile" className="space-y-4">
-          <div className="bg-surface border border-surface-light rounded-lg p-2 space-y-2">
+        <Tabs defaultValue="profile" className="space-y-6">
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl">
             {/* First Row */}
-            <TabsList className="bg-transparent w-full flex justify-start gap-1 h-auto">
-              <TabsTrigger value="profile" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
-                <UserCircle className="mr-1" size={16} />
+            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-2 h-auto p-2 rounded-xl mb-4 backdrop-blur-sm">
+              <TabsTrigger value="profile" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50">
+                <UserCircle className="h-5 w-5" />
                 Profile
               </TabsTrigger>
-              <TabsTrigger value="predictions" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
-                <Clock className="mr-1" size={16} />
+              <TabsTrigger value="predictions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50">
+                <Clock className="h-5 w-5" />
                 My Predictions
               </TabsTrigger>
-              <TabsTrigger value="achievements" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
-                <Award className="mr-1" size={16} />
+              <TabsTrigger value="achievements" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50">
+                <Award className="h-5 w-5" />
                 Achievements
               </TabsTrigger>
-              <TabsTrigger value="challenges" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
-                <Calendar className="mr-1" size={16} />
+              <TabsTrigger value="challenges" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50">
+                <Calendar className="h-5 w-5" />
                 Daily Challenges
               </TabsTrigger>
-              <TabsTrigger value="rewards" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
-                <History className="mr-1" size={16} />
+              <TabsTrigger value="rewards" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50">
+                <History className="h-5 w-5" />
                 Reward History
               </TabsTrigger>
             </TabsList>
             
             {/* Second Row */}
-            <TabsList className="bg-transparent w-full flex justify-start gap-1 h-auto">
-              <TabsTrigger value="market" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
-                <Eye className="mr-1" size={16} />
+            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-2 h-auto p-2 rounded-xl backdrop-blur-sm">
+              <TabsTrigger value="market" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50">
+                <Eye className="h-5 w-5" />
                 Market Watch
               </TabsTrigger>
-              <TabsTrigger value="performance" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
-                <Activity className="mr-1" size={16} />
+              <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50">
+                <Activity className="h-5 w-5" />
                 Performance
               </TabsTrigger>
-              <TabsTrigger value="battles" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
-                <Swords className="mr-1" size={16} />
+              <TabsTrigger value="battles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50">
+                <Swords className="h-5 w-5" />
                 Battles
               </TabsTrigger>
-              <TabsTrigger value="financial" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
-                <Wallet className="mr-1" size={16} />
+              <TabsTrigger value="financial" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50">
+                <Wallet className="h-5 w-5" />
                 Financial
               </TabsTrigger>
             </TabsList>
