@@ -95,18 +95,15 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                     // Invalidate all queries to refresh authentication state
                     await queryClient.invalidateQueries();
                     
-                    // Redirect to home page after successful auth with smooth navigation
-                    setTimeout(() => {
-                      navigate('/home');
-                      // No need for page reload since we invalidated queries
-                    }, 1500);
+                    // Force redirect using window.location for more reliable navigation
+                    console.log('Forcing redirect to /home');
+                    window.location.href = '/home';
                   } catch (jsonError) {
                     console.error('JSON parsing error on success response:', jsonError);
                     // Still redirect on success even if JSON parsing fails
                     await queryClient.invalidateQueries();
-                    setTimeout(() => {
-                      navigate('/home');
-                    }, 1500);
+                    console.log('Forcing redirect to /home (fallback)');
+                    window.location.href = '/home';
                   }
                 } else {
                   try {
