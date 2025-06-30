@@ -31,7 +31,7 @@ function DashboardPriceTicker() {
   if (!prices.length) return null;
 
   return (
-    <div className="bg-surface border border-surface-light rounded-lg overflow-hidden mb-8">
+    <div className="bg-surface border border-surface-light rounded-lg overflow-hidden">
       <div className="ticker-container py-4">
         <div className="ticker-content flex items-center space-x-8 animate-scroll">
           {/* Duplicate the array to create seamless loop */}
