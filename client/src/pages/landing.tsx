@@ -38,25 +38,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Wallet Connection Card */}
-          <div className="max-w-md mx-auto mb-16">
-            <Card className="bg-card border-border">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl text-card-foreground">
-                  Connect Wallet to Continue
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <DynamicWidget />
-                <p className="text-sm text-muted-foreground text-center">
-                  Connect your wallet to access all features
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Features Grid */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6 mb-16">
             <Card className="bg-card border-border hover:bg-accent/50 transition-colors">
               <CardHeader className="text-center">
                 <TrendingUp className="w-12 h-12 text-primary mx-auto mb-4" />
@@ -89,6 +72,23 @@ export default function LandingPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground text-center">
                   Join tournaments, battles, and climb leaderboards in survival mode
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Wallet Connection Card - Centered */}
+          <div className="max-w-md mx-auto">
+            <Card className="bg-card border-border">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl text-card-foreground">
+                  Log in or sign up
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <DynamicWidget />
+                <p className="text-sm text-muted-foreground text-center">
+                  Connect your wallet to access all features
                 </p>
               </CardContent>
             </Card>
