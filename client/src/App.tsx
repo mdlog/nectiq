@@ -16,6 +16,7 @@ import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import WalletLoginPage from "@/pages/wallet-login";
 import DynamicDemo from "@/pages/dynamic-demo";
+import WalletDebug from "@/pages/wallet-debug";
 
 // Suppress wallet extension conflicts in console
 const originalError = console.error;
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/wallet-login" component={WalletLoginPage} />
       <Route path="/dynamic-demo" component={DynamicDemo} />
+      <Route path="/wallet-debug" component={WalletDebug} />
       <Route component={NotFound} />
     </Switch>
   );
