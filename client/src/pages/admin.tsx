@@ -263,6 +263,16 @@ export default function AdminPanel() {
     refetchInterval: 7000, // Auto-refresh every 7 seconds
   });
 
+  // Leaderboard data query
+  const { data: leaderboardData = [], isLoading: leaderboardLoading } = useQuery<any[]>({
+    queryKey: ["/api/leaderboard"],
+    retry: 2,
+    retryDelay: 1000,
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+  });
+
   // Battles data queries
   const { data: battles = [], isLoading: battlesLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/battles", battlesStatusFilter, battlesCryptoFilter, battlesDateFilter],
@@ -729,16 +739,16 @@ export default function AdminPanel() {
     window.URL.revokeObjectURL(url);
   };
 
-  // Enhanced leaderboard filtering and sorting
-  const filteredAndSortedLeaderboard = users
+  // Enhanced leaderboard filtering and sorting using real leaderboard data
+  const filteredAndSortedLeaderboard = (leaderboardData || [])
     .filter(user => user.totalPredictions > 0) // Only users with predictions
     .map(user => {
       const accuracy = user.totalPredictions > 0 ? (user.correctPredictions / user.totalPredictions) * 100 : 0;
-      // Calculate streak based on recent predictions (simplified calculation)
-      const streak = Math.floor(Math.random() * 10); // Placeholder - would need actual streak data
-      // Calculate average multiplier (simplified calculation)
+      // Calculate streak based on win rate (simplified calculation)
+      const streak = Math.floor(accuracy / 10); // Estimate streak based on accuracy
+      // Calculate average multiplier based on performance
       const avgMultiplier = user.totalRewards > 0 && user.correctPredictions > 0 
-        ? (user.totalRewards / user.correctPredictions) / 100 
+        ? (user.totalRewards / user.correctPredictions) / 50 
         : 1;
       
       return {
