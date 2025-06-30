@@ -12,7 +12,7 @@ export function CountdownTimer({ targetTime, timeLeft: initialTimeLeft, classNam
 
   useEffect(() => {
     if (targetTime) {
-      // Use targetTime mode (original functionality)
+      // Use targetTime mode (original functionality for Battles)
       const calculateTimeLeft = () => {
         const target = new Date(targetTime).getTime();
         const now = Date.now();
@@ -37,10 +37,11 @@ export function CountdownTimer({ targetTime, timeLeft: initialTimeLeft, classNam
       return () => clearInterval(interval);
     } else if (initialTimeLeft !== undefined) {
       // Use timeLeft mode (for Active Predictions)
-      const initialSeconds = Math.max(0, Math.floor(initialTimeLeft / 1000));
-      setTimeLeft(initialSeconds);
+      // initialTimeLeft is in seconds from the API
+      const startingSeconds = Math.max(0, Math.floor(Number(initialTimeLeft)));
+      setTimeLeft(startingSeconds);
 
-      // Update every second
+      // Update every second with live countdown
       const interval = setInterval(() => {
         setTimeLeft(prev => {
           const newTime = Math.max(0, prev - 1);
