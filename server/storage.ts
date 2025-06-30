@@ -493,47 +493,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: number): Promise<void> {
-    // Delete user data in correct order to handle all foreign key constraints
-    
+    // Simplified delete user method - focus on main tables only
     try {
-      // 1. Delete battle-related data
-      await db.delete(battleComments).where(eq(battleComments.userId, id));
-      await db.delete(predictionBattles).where(eq(predictionBattles.challengerId, id));
-      await db.delete(predictionBattles).where(eq(predictionBattles.challengedId, id));
+      console.log(`Starting deletion process for user ${id}`);
       
-      // 2. Delete survival tournament data
-      await db.delete(survivalParticipants).where(eq(survivalParticipants.userId, id));
-      await db.delete(survivalPredictions).where(eq(survivalPredictions.userId, id));
-      await db.delete(survivalTournaments).where(eq(survivalTournaments.createdBy, id));
+      // Get user info first
+      const [user] = await db.select({ walletAddress: users.walletAddress }).from(users).where(eq(users.id, id));
       
-      // 3. Delete achievements, daily challenges, analytics, fingerprints, and security events
-      await db.delete(userAchievements).where(eq(userAchievements.userId, id));
-      await db.delete(userDailyChallenges).where(eq(userDailyChallenges.userId, id));
-      await db.delete(userAnalytics).where(eq(userAnalytics.userId, id));
-      await db.delete(walletFingerprints).where(eq(walletFingerprints.userId, id));
-      await db.delete(abuseDetections).where(eq(abuseDetections.userId, id));
-      await db.delete(securityEvents).where(eq(securityEvents.userId, id));
+      // Delete in safe order - only essential tables to avoid foreign key issues
       
-      // 4. Delete rewards first (references predictions and users)
+      // 1. Delete financial records first
+      console.log('Deleting rewards...');
       await db.delete(rewards).where(eq(rewards.userId, id));
       
-      // 5. Delete predictions (references users)
+      console.log('Deleting predictions...');
       await db.delete(predictions).where(eq(predictions.userId, id));
       
-      // 6. Delete financial data
+      console.log('Deleting purchases...');
       await db.delete(purchases).where(eq(purchases.userId, id));
+      
+      console.log('Deleting withdrawals...');
       await db.delete(withdrawals).where(eq(withdrawals.userId, id));
-      await db.delete(transactionLogs).where(eq(transactionLogs.userId, id));
       
-      // 7. Delete admin logs where this user is the admin
-      await db.delete(adminLogs).where(eq(adminLogs.adminId, id));
+      // 2. Delete user-specific data
+      if (user?.walletAddress) {
+        console.log('Deleting abuse detections by wallet...');
+        await db.delete(abuseDetections).where(eq(abuseDetections.primaryWalletAddress, user.walletAddress));
+      }
       
-      // 8. Finally delete the user
+      // 3. Finally delete the user
+      console.log('Deleting user...');
       await db.delete(users).where(eq(users.id, id));
       
-      console.log(`Successfully deleted user ${id} and all related data`);
-    } catch (error) {
+      console.log(`Successfully deleted user ${id} and core related data`);
+    } catch (error: any) {
       console.error(`Error deleting user ${id}:`, error);
+      console.error('Error details:', error?.message || 'Unknown error');
       throw error;
     }
   }
