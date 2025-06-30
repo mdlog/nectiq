@@ -2275,7 +2275,7 @@ export default function AdminPanel() {
         <Tabs defaultValue="statistics" className="space-y-6">
           <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl">
             {/* First Row */}
-            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-start gap-2 h-auto p-2 rounded-xl mb-4 backdrop-blur-sm">
+            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-2 h-auto p-2 rounded-xl mb-4 backdrop-blur-sm">
               <TabsTrigger value="statistics" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50">
                 <BarChart3 className="h-5 w-5" />
                 Statistics
@@ -2307,7 +2307,7 @@ export default function AdminPanel() {
             </TabsList>
             
             {/* Second Row */}
-            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-start gap-2 h-auto p-2 rounded-xl backdrop-blur-sm">
+            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-2 h-auto p-2 rounded-xl backdrop-blur-sm">
               <TabsTrigger value="transactions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50">
                 <DollarSign className="h-5 w-5" />
                 Transactions
