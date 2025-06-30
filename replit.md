@@ -265,6 +265,7 @@ Changelog:
 - June 30, 2025. **FIXED MY DASHBOARD BACK TO APP NAVIGATION**: Updated "Back to App" button in My Dashboard page to redirect to Home page (/home) instead of Landing page (/) for proper authenticated user navigation flow
 - June 30, 2025. **REMOVED BACK TO APP BUTTON FROM LEADERBOARD**: Eliminated "Back To App" button from Leaderboard page as requested, simplifying the interface and allowing users to navigate naturally through the header menu instead
 - June 30, 2025. **ADDED CRYPTOCURRENCY LOGOS TO HOW TO PLAY PAGE**: Enhanced "Supported Cryptocurrencies" section with real cryptocurrency logos from CoinGecko API, replaced colored circles with actual coin images (Bitcoin, Ethereum, BNB, Cardano, Solana, Chainlink, Polkadot, Litecoin), implemented intelligent fallback system showing symbol text if images fail to load, using dynamic logo fetching with real-time crypto price data for consistent branding across platform
+- June 30, 2025. **IMPLEMENTED RUNNING PRICE TICKER ON HOME PAGE**: Successfully added DashboardPriceTicker component to Home page positioned between "How It Works" section and footer, features real-time cryptocurrency prices with 2-second refresh intervals, displays cryptocurrency logos from CoinGecko API, shows current prices and 24h percentage changes with color-coded indicators (green/red), smooth scrolling animation with rounded container design, proper spacing with mt-12 and mb-8 for optimal visual separation from surrounding sections
 ```
 
 ## User Preferences

@@ -192,7 +192,9 @@ export default function Dashboard() {
         <RulesSection />
         
         {/* Running Price Ticker */}
-        <DashboardPriceTicker />
+        <div className="mt-12 mb-8">
+          <DashboardPriceTicker />
+        </div>
       </main>
       
       {/* Prediction Form Modal */}
