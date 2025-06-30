@@ -393,6 +393,30 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(rewards).where(eq(rewards.userId, userId)).orderBy(desc(rewards.createdAt)).limit(limit);
   }
 
+  async getRecentPredictionResults(userId: number, limit: number = 10): Promise<any[]> {
+    const results = await db.select({
+      id: predictions.id,
+      cryptocurrency: predictions.cryptocurrency,
+      predictedPrice: predictions.predictedPrice,
+      actualPrice: predictions.actualPrice,
+      stakeAmount: predictions.stakeAmount,
+      rewardAmount: predictions.rewardAmount,
+      accuracy: predictions.accuracy,
+      status: predictions.status,
+      completedAt: predictions.completedAt,
+      createdAt: predictions.createdAt
+    })
+    .from(predictions)
+    .where(and(
+      eq(predictions.userId, userId),
+      eq(predictions.status, 'completed')
+    ))
+    .orderBy(desc(predictions.completedAt))
+    .limit(limit);
+
+    return results;
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await db.select({
       id: users.id,

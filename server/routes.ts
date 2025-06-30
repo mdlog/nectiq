@@ -1905,7 +1905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get recent rewards
+  // Get recent prediction results (both wins and losses)
   app.get("/api/rewards/recent", async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
@@ -1913,20 +1913,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const rewards = await storage.getRecentRewards(userId, 5);
+      // Get all recent prediction results (completed predictions)
+      const predictionResults = await storage.getRecentPredictionResults(userId, 10);
       
-      const enrichedRewards = await Promise.all(
-        rewards.map(async (reward) => {
-          const prediction = await storage.getPrediction(reward.predictionId);
-          return {
-            ...reward,
-            cryptocurrency: prediction?.cryptocurrency || "",
-            accuracy: prediction?.accuracy || "0"
-          };
-        })
-      );
+      // Transform to match expected format for Recent Rewards component
+      const enrichedResults = predictionResults.map((prediction) => {
+        const isWin = prediction.rewardAmount > 0;
+        const netResult = isWin ? prediction.rewardAmount : -prediction.stakeAmount;
+        
+        return {
+          id: prediction.id,
+          userId: userId,
+          predictionId: prediction.id,
+          amount: netResult, // Positive for wins, negative for losses
+          description: isWin 
+            ? `Won ${prediction.rewardAmount} NTIQ - ${prediction.accuracy}% accuracy` 
+            : `Lost ${prediction.stakeAmount} NTIQ - ${prediction.accuracy}% accuracy`,
+          createdAt: prediction.completedAt || prediction.createdAt,
+          cryptocurrency: prediction.cryptocurrency,
+          accuracy: prediction.accuracy || "0",
+          isWin: isWin,
+          stakeAmount: prediction.stakeAmount,
+          rewardAmount: prediction.rewardAmount || 0
+        };
+      });
 
-      res.json(enrichedRewards);
+      res.json(enrichedResults);
     } catch (error) {
       res.status(500).json({ message: "Failed to get recent rewards" });
     }

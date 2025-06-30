@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Gift, Check } from "lucide-react";
+import { Gift, Check, X, TrendingUp, TrendingDown } from "lucide-react";
 import type { RecentReward } from "@/types";
 
 // Dynamic function to get crypto image from live API data
@@ -89,8 +89,8 @@ export function RecentRewards() {
         </h3>
         <div className="text-center py-8 text-slate-400">
           <Gift className="mx-auto mb-2" size={32} />
-          <p>No rewards yet</p>
-          <p className="text-sm">Make accurate predictions to earn rewards!</p>
+          <p>No predictions yet</p>
+          <p className="text-sm">Make predictions to see your results here!</p>
         </div>
       </div>
     );
