@@ -1,11 +1,80 @@
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { TrendingUp, Trophy, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
 import nectiqLogo from "@/assets/nectiq-logo.png";
+
+interface CryptoPrice {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  image?: string;
+}
+
+function CryptoPriceTicker() {
+  const { data: prices = [] } = useQuery<CryptoPrice[]>({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 2000, // Update every 2 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+  });
+
+  if (!prices.length) return null;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm border-t border-gray-800 overflow-hidden">
+      <div className="ticker-container py-3">
+        <div className="ticker-content flex items-center space-x-8 animate-scroll">
+          {/* Duplicate the array to create seamless loop */}
+          {[...prices, ...prices].map((crypto, index) => {
+            const isPositive = crypto.price_change_percentage_24h >= 0;
+            return (
+              <div key={`${crypto.id}-${index}`} className="flex items-center space-x-3 text-sm whitespace-nowrap">
+                <div className="flex items-center space-x-2">
+                  <img 
+                    src={crypto.image || `https://coin-images.coingecko.com/coins/images/${
+                      crypto.id === 'bitcoin' ? '1' : 
+                      crypto.id === 'ethereum' ? '279' : 
+                      crypto.id === 'binancecoin' ? '825' : 
+                      crypto.id === 'cardano' ? '975' : 
+                      crypto.id === 'solana' ? '4128' : 
+                      crypto.id === 'chainlink' ? '877' : 
+                      crypto.id === 'polkadot' ? '12171' : 
+                      crypto.id === 'litecoin' ? '2' : 
+                      crypto.id === 'matic-network' ? '4713' : 
+                      crypto.id === 'tron' ? '1094' : 
+                      crypto.id === 'stellar' ? '100' : 
+                      crypto.id === 'hyperliquid' ? '44077' : 
+                      crypto.id === 'sahara-ai' ? '66681' : '1'
+                    }/large/${crypto.id}.png`} 
+                    alt={crypto.name}
+                    className="w-6 h-6 rounded-full"
+                  />
+                  <span className="text-white font-medium">{crypto.symbol.toUpperCase()}</span>
+                </div>
+                <span className="text-gray-300">
+                  ${crypto.current_price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: crypto.current_price >= 1 ? 2 : 6
+                  })}
+                </span>
+                <span className={`${isPositive ? 'text-green-400' : 'text-red-400'} font-medium`}>
+                  {isPositive ? '+' : ''}{crypto.price_change_percentage_24h.toFixed(2)}%
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pb-16">
       {/* Main Content */}
       <main className="px-6 py-20">
         <div className="max-w-4xl mx-auto">
@@ -97,6 +166,9 @@ export default function LandingPage() {
           </div>
         </div>
       </main>
+
+      {/* Crypto Price Ticker at Bottom */}
+      <CryptoPriceTicker />
     </div>
   );
 }

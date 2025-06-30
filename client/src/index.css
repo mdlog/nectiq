@@ -185,3 +185,27 @@
     border-color: hsl(215, 16%, 32%);
   }
 }
+
+/* Crypto Ticker Animation */
+@keyframes scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 60s linear infinite;
+}
+
+.ticker-container {
+  overflow: hidden;
+  width: 100%;
+}
+
+.ticker-content {
+  display: flex;
+  width: max-content;
+}
