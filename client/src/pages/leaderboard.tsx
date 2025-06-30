@@ -162,16 +162,7 @@ export default function Leaderboard() {
                 {totalUsers} Users
               </Badge>
             </div>
-            <Link href="/">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-2 bg-surface-light hover:bg-surface border-surface-light text-slate-300 hover:text-white transition-all duration-200"
-              >
-                <ArrowLeft size={16} />
-                <span>Back To App</span>
-              </Button>
-            </Link>
+
           </div>
 
           {/* Search and Filter */}

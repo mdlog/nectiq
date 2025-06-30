@@ -263,6 +263,7 @@ Changelog:
 - June 30, 2025. **COMPLETED WALLET REDIRECT OPTIMIZATION**: Successfully resolved wallet modal redirect issue by implementing immediate forceful navigation using window.location.href instead of client-side routing, added comprehensive query invalidation with TanStack Query to refresh all authentication-dependent API calls, eliminated Dynamic wallet modal persistence problem, ensured seamless redirect to Home page after successful wallet authentication with all user data properly loaded and 401 authentication errors resolved
 - June 30, 2025. **SIMPLIFIED LANDING PAGE HEADER TO MINIMALIST DESIGN**: Successfully implemented professional fixed header with navigation menu (Features, About, Contact) and "Get Started" button with smooth scrolling to wallet section, backdrop blur styling, and enhanced page structure with About and Contact sections, progressively removed all text branding (tagline "Tactics. Timing. Triumph." and "Nectiq" text) keeping only the official Nectiq logo for ultra-clean minimalist design, removed duplicate logo from body content
 - June 30, 2025. **FIXED MY DASHBOARD BACK TO APP NAVIGATION**: Updated "Back to App" button in My Dashboard page to redirect to Home page (/home) instead of Landing page (/) for proper authenticated user navigation flow
+- June 30, 2025. **REMOVED BACK TO APP BUTTON FROM LEADERBOARD**: Eliminated "Back To App" button from Leaderboard page as requested, simplifying the interface and allowing users to navigate naturally through the header menu instead
 ```
 
 ## User Preferences
