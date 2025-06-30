@@ -1980,8 +1980,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers(); // Get all users including admins for admin panel
+      console.log("Admin users API - Retrieved users count:", users.length);
+      console.log("Admin users API - First user sample:", users[0]);
       res.json(users);
     } catch (error) {
+      console.error("Admin users API error:", error);
       res.status(500).json({ message: "Failed to get users" });
     }
   });
