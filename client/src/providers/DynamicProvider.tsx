@@ -13,7 +13,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
   return (
     <DynamicContextProvider
       settings={{
-        environmentId: import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID || 'live_default',
+        environmentId: import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID || '01933fe7-37b8-73b8-91b9-2f53e5ba52c3',
         walletConnectors: [
           EthereumWalletConnectors,
           SolanaWalletConnectors,
@@ -24,6 +24,10 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         appLogoUrl: 'https://nectiq.app/logo.png',
         initialAuthenticationMode: 'connect-and-sign',
         enableVisitTrackingOnConnectOnly: false,
+        // Localhost-friendly settings
+        accessDeniedMessagePrimary: 'Wallet connection failed',
+        accessDeniedMessageSecondary: 'Please ensure MetaMask is unlocked and try again',
+        shadowDOMEnabled: false,
         cssOverrides: `
           .dynamic-modal {
             z-index: 9999;
