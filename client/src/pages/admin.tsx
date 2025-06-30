@@ -226,6 +226,18 @@ export default function AdminPanel() {
     retryDelay: 1000,
   });
 
+  // Get crypto prices for logos
+  const { data: cryptoPrices = [] } = useQuery<any[]>({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 2000,
+  });
+
+  // Helper function to get cryptocurrency image URL
+  const getCryptoImageUrl = (cryptoId: string) => {
+    const crypto = cryptoPrices.find(c => c.id === cryptoId);
+    return crypto?.image || `https://assets.coingecko.com/coins/images/1/large/${cryptoId}.png`;
+  };
+
   const { data: transactionPurchases = [] } = useQuery({
     queryKey: ["/api/admin/purchases"],
     retry: 2,
@@ -2974,14 +2986,39 @@ export default function AdminPanel() {
                                 <p className="text-sm text-slate-400">ID</p>
                                 <p className="font-semibold">#{prediction.id}</p>
                               </div>
-                              <div>
-                                <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
-                                <button 
-                                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                                  onClick={() => window.open(`/user-profile/${prediction.userId}`, '_blank')}
-                                >
-                                  User ID: {prediction.userId} →
-                                </button>
+                              <div className="flex items-center space-x-3">
+                                {/* Cryptocurrency Logo */}
+                                <div className="relative w-8 h-8 flex-shrink-0">
+                                  <img 
+                                    src={getCryptoImageUrl(prediction.cryptocurrency)}
+                                    alt={prediction.cryptocurrency}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      const fallback = target.nextElementSibling as HTMLElement;
+                                      if (fallback) {
+                                        target.style.display = 'none';
+                                        fallback.style.display = 'flex';
+                                      }
+                                    }}
+                                  />
+                                  <div className="w-8 h-8 bg-primary rounded-full hidden items-center justify-center text-white font-bold text-xs">
+                                    {prediction.cryptocurrency.charAt(0).toUpperCase()}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
+                                  <div className="text-xs text-slate-400 space-y-1">
+                                    <div>UID: {(prediction as any).userUid || prediction.userId}</div>
+                                    <div>@{(prediction as any).username || 'Unknown'}</div>
+                                    <div className="text-xs text-blue-400 truncate max-w-32" title={(prediction as any).walletAddress || 'No wallet'}>
+                                      {(prediction as any).walletAddress ? 
+                                        `${(prediction as any).walletAddress.slice(0, 6)}...${(prediction as any).walletAddress.slice(-4)}` : 
+                                        'No wallet'
+                                      }
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                             <div className="flex items-center space-x-6">

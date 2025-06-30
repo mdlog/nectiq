@@ -303,7 +303,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllPredictions(): Promise<Prediction[]> {
-    return await db.select().from(predictions).orderBy(desc(predictions.createdAt));
+    return await db.select({
+      id: predictions.id,
+      userId: predictions.userId,
+      cryptocurrency: predictions.cryptocurrency,
+      predictedPrice: predictions.predictedPrice,
+      actualPrice: predictions.actualPrice,
+      stakeAmount: predictions.stakeAmount,
+      timeframe: predictions.timeframe,
+      targetTime: predictions.targetTime,
+      createdAt: predictions.createdAt,
+      completedAt: predictions.completedAt,
+      status: predictions.status,
+      rewardAmount: predictions.rewardAmount,
+      accuracy: predictions.accuracy,
+      // Include user details
+      userUid: users.uid,
+      username: users.username,
+      walletAddress: users.walletAddress
+    })
+    .from(predictions)
+    .leftJoin(users, eq(predictions.userId, users.id))
+    .orderBy(desc(predictions.createdAt));
   }
 
   async getActivePredictions(): Promise<Prediction[]> {
