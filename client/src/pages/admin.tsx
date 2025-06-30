@@ -2273,60 +2273,67 @@ export default function AdminPanel() {
 
         {/* Detailed Views */}
         <Tabs defaultValue="statistics" className="space-y-4">
-          <TabsList className="bg-surface border border-surface-light flex-wrap h-auto">
-            <TabsTrigger value="statistics" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Statistics
-            </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Coins className="h-4 w-4" />
-              Crypto
-            </TabsTrigger>
-            <TabsTrigger value="predictions" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Predictions
-            </TabsTrigger>
-            <TabsTrigger value="battles" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Swords className="h-4 w-4" />
-              Battles
-            </TabsTrigger>
-            <TabsTrigger value="survival" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Gamepad2 className="h-4 w-4" />
-              Survival
-            </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Trophy className="h-4 w-4" />
-              Leaderboard
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Transactions
-            </TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Security
-            </TabsTrigger>
-            <TabsTrigger value="banners" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Megaphone className="h-4 w-4" />
-              Banners
-            </TabsTrigger>
-            <TabsTrigger value="events" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Events
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="data-[state=active]:bg-primary flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              Activity
-            </TabsTrigger>
-          </TabsList>
+          <div className="bg-surface border border-surface-light rounded-lg p-2 space-y-2">
+            {/* First Row */}
+            <TabsList className="bg-transparent w-full flex justify-start gap-1 h-auto">
+              <TabsTrigger value="statistics" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <BarChart3 className="h-4 w-4" />
+                Statistics
+              </TabsTrigger>
+              <TabsTrigger value="users" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Users className="h-4 w-4" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Coins className="h-4 w-4" />
+                Crypto
+              </TabsTrigger>
+              <TabsTrigger value="predictions" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Target className="h-4 w-4" />
+                Predictions
+              </TabsTrigger>
+              <TabsTrigger value="battles" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Swords className="h-4 w-4" />
+                Battles
+              </TabsTrigger>
+              <TabsTrigger value="survival" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Gamepad2 className="h-4 w-4" />
+                Survival
+              </TabsTrigger>
+              <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Trophy className="h-4 w-4" />
+                Leaderboard
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Second Row */}
+            <TabsList className="bg-transparent w-full flex justify-start gap-1 h-auto">
+              <TabsTrigger value="transactions" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <DollarSign className="h-4 w-4" />
+                Transactions
+              </TabsTrigger>
+              <TabsTrigger value="security" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Shield className="h-4 w-4" />
+                Security
+              </TabsTrigger>
+              <TabsTrigger value="banners" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Megaphone className="h-4 w-4" />
+                Banners
+              </TabsTrigger>
+              <TabsTrigger value="events" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Calendar className="h-4 w-4" />
+                Events
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Settings className="h-4 w-4" />
+                Settings
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
+                <Activity className="h-4 w-4" />
+                Activity
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Statistics Tab - User Analytics Dashboard */}
           <TabsContent value="statistics" className="space-y-6">
