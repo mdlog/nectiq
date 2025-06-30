@@ -4,12 +4,15 @@ import { SolanaWalletConnectors } from '@dynamic-labs/solana';
 import { CosmosWalletConnectors } from '@dynamic-labs/cosmos';
 import { StarknetWalletConnectors } from '@dynamic-labs/starknet';
 import { ReactNode } from 'react';
+import { useLocation } from 'wouter';
 
 interface DynamicProviderProps {
   children: ReactNode;
 }
 
 export default function DynamicProvider({ children }: DynamicProviderProps) {
+  const [, navigate] = useLocation();
+  
   return (
     <DynamicContextProvider
       settings={{
@@ -88,16 +91,18 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                     const data = await response.json();
                     console.log('Backend authentication successful:', data);
                     
-                    // Redirect to home page after successful auth
+                    // Redirect to home page after successful auth with smooth navigation
                     setTimeout(() => {
-                      window.location.href = '/home';
-                    }, 1000);
+                      navigate('/home');
+                      window.location.reload(); // Refresh to update authentication state
+                    }, 300);
                   } catch (jsonError) {
                     console.error('JSON parsing error on success response:', jsonError);
                     // Still redirect on success even if JSON parsing fails
                     setTimeout(() => {
-                      window.location.href = '/home';
-                    }, 1000);
+                      navigate('/home');
+                      window.location.reload(); // Refresh to update authentication state
+                    }, 300);
                   }
                 } else {
                   try {
