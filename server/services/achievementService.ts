@@ -50,9 +50,26 @@ export class AchievementService {
           .returning();
 
         if (isCompleted && !existingUserAchievement.isCompleted) {
-          // Award PTS reward
-          await storage.updateUserBalance(userId, user.balance + achievement.reward);
+          // Award NTIQ reward and log transaction
+          const newBalance = user.balance + achievement.reward;
+          await storage.updateUserBalance(userId, newBalance);
+          
+          // Log the achievement reward transaction
+          await storage.logTransaction({
+            userId,
+            type: 'achievement_reward',
+            amount: achievement.reward,
+            token: 'NTIQ',
+            status: 'completed',
+            fromAddress: null,
+            toAddress: null,
+            txHash: null,
+            networkFee: null,
+            relatedId: achievement.id
+          });
+          
           completedAchievements.push(updated);
+          console.log(`✅ Awarded ${achievement.reward} NTIQ to user ${userId} for achievement: ${achievement.name}`);
         }
       } else {
         // Create new achievement tracking
@@ -68,9 +85,26 @@ export class AchievementService {
           .returning();
 
         if (isCompleted) {
-          // Award PTS reward
-          await storage.updateUserBalance(userId, user.balance + achievement.reward);
+          // Award NTIQ reward and log transaction
+          const newBalance = user.balance + achievement.reward;
+          await storage.updateUserBalance(userId, newBalance);
+          
+          // Log the achievement reward transaction
+          await storage.logTransaction({
+            userId,
+            type: 'achievement_reward',
+            amount: achievement.reward,
+            token: 'NTIQ',
+            status: 'completed',
+            fromAddress: null,
+            toAddress: null,
+            txHash: null,
+            networkFee: null,
+            relatedId: achievement.id
+          });
+          
           completedAchievements.push(newUserAchievement);
+          console.log(`✅ Awarded ${achievement.reward} NTIQ to user ${userId} for new achievement: ${achievement.name}`);
         }
       }
     }
