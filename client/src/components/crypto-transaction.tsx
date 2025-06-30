@@ -210,7 +210,7 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
           params: [transactionParams],
         });
 
-        txHash = result as string;
+        txHash = result as unknown as string;
         setTransactionHash(txHash);
       }
 

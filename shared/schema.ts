@@ -954,3 +954,16 @@ export type BattleComment = typeof battleComments.$inferSelect;
 export type InsertBattleComment = z.infer<typeof insertBattleCommentSchema>;
 export type BattleReaction = typeof battleReactions.$inferSelect;
 export type InsertBattleReaction = z.infer<typeof insertBattleReactionSchema>;
+
+// Crypto transaction types
+export const insertCryptoTransactionSchema = createInsertSchema(cryptoTransactions).omit({
+  id: true,
+  blockNumber: true,
+  gasUsed: true,
+  networkFee: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CryptoTransaction = typeof cryptoTransactions.$inferSelect;
+export type InsertCryptoTransaction = z.infer<typeof insertCryptoTransactionSchema>;

@@ -106,6 +106,9 @@ export interface IStorage {
   createTransactionLog(transaction: any): Promise<any>;
   getTransactionLogs(filters?: any): Promise<any[]>;
   getTransactionStats(): Promise<any>;
+  
+  // Crypto transaction operations
+  createCryptoTransaction(transaction: any): Promise<any>;
 
   // System settings operations
   getSystemSettings(): Promise<any>;
