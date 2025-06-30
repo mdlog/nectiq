@@ -425,28 +425,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: number): Promise<void> {
-    // Delete user data in correct order to handle foreign key constraints
+    // Delete user data in correct order to handle all foreign key constraints
     
-    // 1. Delete rewards first (references predictions and users)
-    await db.delete(rewards).where(eq(rewards.userId, id));
-    
-    // 2. Delete predictions (references users)
-    await db.delete(predictions).where(eq(predictions.userId, id));
-    
-    // 3. Delete purchases (references users)
-    await db.delete(purchases).where(eq(purchases.userId, id));
-    
-    // 4. Delete withdrawals (references users)
-    await db.delete(withdrawals).where(eq(withdrawals.userId, id));
-    
-    // 5. Delete transaction logs (references users)
-    await db.delete(transactionLogs).where(eq(transactionLogs.userId, id));
-    
-    // 6. Delete admin logs where this user is the admin
-    await db.delete(adminLogs).where(eq(adminLogs.adminId, id));
-    
-    // 7. Finally delete the user
-    await db.delete(users).where(eq(users.id, id));
+    try {
+      // 1. Delete battle-related data
+      await db.delete(battleComments).where(eq(battleComments.userId, id));
+      await db.delete(predictionBattles).where(eq(predictionBattles.challengerId, id));
+      await db.delete(predictionBattles).where(eq(predictionBattles.challengedId, id));
+      
+      // 2. Delete survival tournament data
+      await db.delete(survivalParticipants).where(eq(survivalParticipants.userId, id));
+      await db.delete(survivalRoundPredictions).where(eq(survivalRoundPredictions.userId, id));
+      await db.delete(survivalTournaments).where(eq(survivalTournaments.createdBy, id));
+      
+      // 3. Delete security and wallet data
+      await db.delete(walletFingerprints).where(eq(walletFingerprints.userId, id));
+      await db.delete(abuseDetections).where(eq(abuseDetections.userId, id));
+      await db.delete(securityEvents).where(eq(securityEvents.userId, id));
+      
+      // 4. Delete rewards first (references predictions and users)
+      await db.delete(rewards).where(eq(rewards.userId, id));
+      
+      // 5. Delete predictions (references users)
+      await db.delete(predictions).where(eq(predictions.userId, id));
+      
+      // 6. Delete financial data
+      await db.delete(purchases).where(eq(purchases.userId, id));
+      await db.delete(withdrawals).where(eq(withdrawals.userId, id));
+      await db.delete(transactionLogs).where(eq(transactionLogs.userId, id));
+      
+      // 7. Delete admin logs where this user is the admin
+      await db.delete(adminLogs).where(eq(adminLogs.adminId, id));
+      
+      // 8. Finally delete the user
+      await db.delete(users).where(eq(users.id, id));
+      
+      console.log(`Successfully deleted user ${id} and all related data`);
+    } catch (error) {
+      console.error(`Error deleting user ${id}:`, error);
+      throw error;
+    }
   }
 
   // Security event operations
