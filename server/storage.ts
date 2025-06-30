@@ -1012,6 +1012,16 @@ export class DatabaseStorage implements IStorage {
               totalRewards: winner.totalRewards + winnerReward
             })
             .where(eq(users.id, winnerId));
+
+          // Log battle reward transaction
+          await this.logTransaction({
+            userId: winnerId,
+            type: 'battle_reward',
+            amount: winnerReward,
+            token: 'NTIQ',
+            status: 'completed',
+            relatedId: battleId
+          });
         }
       } else {
         // It's a tie - refund both players
@@ -1023,6 +1033,16 @@ export class DatabaseStorage implements IStorage {
             .update(users)
             .set({ balance: challenger.balance + stakeAmount })
             .where(eq(users.id, battle.challengerId));
+
+          // Log refund transaction for challenger
+          await this.logTransaction({
+            userId: battle.challengerId,
+            type: 'battle_refund',
+            amount: stakeAmount,
+            token: 'NTIQ',
+            status: 'completed',
+            relatedId: battleId
+          });
         }
         
         if (battle.challengedId) {
@@ -1032,6 +1052,16 @@ export class DatabaseStorage implements IStorage {
               .update(users)
               .set({ balance: challenged.balance + stakeAmount })
               .where(eq(users.id, battle.challengedId));
+
+            // Log refund transaction for challenged
+            await this.logTransaction({
+              userId: battle.challengedId,
+              type: 'battle_refund',
+              amount: stakeAmount,
+              token: 'NTIQ',
+              status: 'completed',
+              relatedId: battleId
+            });
           }
         }
       }
