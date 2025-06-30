@@ -213,18 +213,21 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/stats"],
     retry: 2,
     retryDelay: 1000,
+    refetchInterval: 3000, // Auto-refresh every 3 seconds
   });
 
   const { data: users = [], error: usersError } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
     retry: 2,
     retryDelay: 1000,
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
     queryKey: ["/api/admin/predictions"],
     retry: 2,
     retryDelay: 1000,
+    refetchInterval: 3000, // Auto-refresh every 3 seconds
   });
 
   // Get crypto prices for logos
@@ -243,18 +246,21 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/purchases"],
     retry: 2,
     retryDelay: 1000,
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
   const { data: transactionWithdrawals = [] } = useQuery({
     queryKey: ["/api/admin/withdrawals"], 
     retry: 2,
     retryDelay: 1000,
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
   const { data: events = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/events"],
     retry: 2,
     retryDelay: 1000,
+    refetchInterval: 7000, // Auto-refresh every 7 seconds
   });
 
   // Battles data queries
@@ -272,12 +278,14 @@ export default function AdminPanel() {
     },
     retry: 2,
     retryDelay: 1000,
+    refetchInterval: 4000, // Auto-refresh every 4 seconds
   });
 
   const { data: battleStats = {} } = useQuery<any>({
     queryKey: ["/api/admin/battles/stats"],
     retry: 2,
     retryDelay: 1000,
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
   // Survival Tournament queries and mutations
@@ -294,6 +302,7 @@ export default function AdminPanel() {
       return response.json();
     },
     retry: false,
+    refetchInterval: 6000, // Auto-refresh every 6 seconds
   });
 
   const createTournamentMutation = useMutation({

@@ -33,7 +33,9 @@ function getRankColor(rank: number): string {
 export function TopPredictors() {
   const { data: leaderboard = [], isLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/leaderboard"],
-    refetchInterval: 60000, // Refetch every minute
+    refetchInterval: 8000, // Auto-refresh every 8 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   if (isLoading) {

@@ -50,7 +50,9 @@ function formatTimeAgo(dateString: string): string {
 export function RecentRewards() {
   const { data: rewards = [], isLoading } = useQuery<RecentReward[]>({
     queryKey: ["/api/rewards/recent"],
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 3000, // Auto-refresh every 3 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   // Get real-time crypto prices for dynamic logo display
