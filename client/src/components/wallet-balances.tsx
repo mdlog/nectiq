@@ -74,7 +74,7 @@ export function WalletBalances({ walletAddress }: WalletBalancesProps) {
               if (balanceHex) {
                 const balanceBigInt = BigInt(balanceHex);
                 const balanceInEth = Number(balanceBigInt) / Math.pow(10, 18);
-                balance = balanceInEth.toFixed(6);
+                balance = balanceInEth.toFixed(5);
                 console.log(`ETH Balance (window.ethereum): ${balance} ETH (Raw: ${balanceHex})`);
               }
             } catch (directError) {
@@ -94,7 +94,7 @@ export function WalletBalances({ walletAddress }: WalletBalancesProps) {
                 const balanceHex = result;
                 const balanceBigInt = BigInt(balanceHex);
                 const balanceInEth = Number(balanceBigInt) / Math.pow(10, 18);
-                balance = balanceInEth.toFixed(6);
+                balance = balanceInEth.toFixed(5);
                 console.log(`ETH Balance (Dynamic RPC): ${balance} ETH (Raw: ${balanceHex})`);
               }
             } catch (rpcError) {
@@ -120,7 +120,7 @@ export function WalletBalances({ walletAddress }: WalletBalancesProps) {
                   balanceValue = ethBalance;
                 }
                 
-                balance = balanceValue.toFixed(6);
+                balance = balanceValue.toFixed(5);
                 console.log(`ETH Balance (getBalance): ${balance} ETH`);
               }
             } catch (fallbackError) {
@@ -158,7 +158,7 @@ export function WalletBalances({ walletAddress }: WalletBalancesProps) {
             const balanceHex = result;
             const balanceBigInt = BigInt(balanceHex);
             const balanceFloat = Number(balanceBigInt) / Math.pow(10, tokenConfig.decimals);
-            balance = balanceFloat.toFixed(2);
+            balance = balanceFloat.toFixed(5);
           }
         } catch (error) {
           console.log(`${tokenConfig.symbol} balance fetch error:`, error);
