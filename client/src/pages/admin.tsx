@@ -2966,7 +2966,7 @@ export default function AdminPanel() {
                       onClick={() => handlePredictionsSort("createdAt")}
                       className="text-xs"
                     >
-                      Waktu {predictionsSortField === "createdAt" && (predictionsSortOrder === "desc" ? "↓" : "↑")}
+                      Time {predictionsSortField === "createdAt" && (predictionsSortOrder === "desc" ? "↓" : "↑")}
                     </Button>
                     <Button
                       variant={predictionsSortField === "stake" ? "default" : "outline"}
@@ -3136,16 +3136,16 @@ export default function AdminPanel() {
                   {sortedPredictions.length === 0 && predictions.length > 0 && (
                     <div className="text-center py-8 text-slate-400">
                       <TrendingUp className="mx-auto mb-2" size={32} />
-                      <p>Tidak ada prediksi yang cocok dengan filter</p>
-                      <p className="text-sm">Coba ubah filter atau reset untuk melihat semua prediksi</p>
+                      <p>No predictions match the filters</p>
+                      <p className="text-sm">Try changing filters or reset to view all predictions</p>
                     </div>
                   )}
                   
                   {predictions.length === 0 && (
                     <div className="text-center py-8 text-slate-400">
                       <TrendingUp className="mx-auto mb-2" size={32} />
-                      <p>Belum ada prediksi</p>
-                      <p className="text-sm">Prediksi akan muncul di sini ketika pengguna mulai membuatnya</p>
+                      <p>No predictions yet</p>
+                      <p className="text-sm">Predictions will appear here when users start making them</p>
                     </div>
                   )}
                 </div>
@@ -3174,7 +3174,7 @@ export default function AdminPanel() {
                     
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-slate-400">
-                        Menampilkan {Math.min((predictionsPage - 1) * predictionsPerPage + 1, filteredPredictions.length)} sampai {Math.min(predictionsPage * predictionsPerPage, filteredPredictions.length)} dari {filteredPredictions.length} prediksi
+                        Showing {Math.min((predictionsPage - 1) * predictionsPerPage + 1, filteredPredictions.length)} to {Math.min(predictionsPage * predictionsPerPage, filteredPredictions.length)} of {filteredPredictions.length} predictions
                       </span>
                     </div>
                     
