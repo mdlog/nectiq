@@ -80,13 +80,15 @@ export default function LandingPage() {
           {/* Wallet Connection Card - Centered */}
           <div className="max-w-md mx-auto">
             <Card className="bg-card border-border">
-              <CardHeader className="text-center">
+              <CardHeader className="text-center px-8 pb-4">
                 <CardTitle className="text-2xl text-card-foreground">
                   Log in or sign up
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <DynamicWidget />
+              <CardContent className="space-y-4 px-8 pb-8">
+                <div className="flex justify-center">
+                  <DynamicWidget />
+                </div>
                 <p className="text-sm text-muted-foreground text-center">
                   Connect your wallet to access all features
                 </p>
