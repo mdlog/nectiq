@@ -10,6 +10,7 @@ import { Wallet, LogOut, Copy, Check, Shield, User, Loader2 } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import MetaMaskConnector from "@/components/MetaMaskConnector";
 
 // Wallet logo components as SVG
 const WalletLogos = {
@@ -147,7 +148,7 @@ export default function WalletLoginPage() {
               </Card>
             )}
 
-            {/* Wallet Connection */}
+            {/* Dynamic Labs Wallet Connection */}
             {!isConnected && (
               <Card>
                 <CardHeader>
@@ -180,6 +181,18 @@ export default function WalletLoginPage() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Alternative MetaMask Connection */}
+            {!isConnected && (
+              <div className="mt-6">
+                <div className="text-center mb-4">
+                  <p className="text-sm text-muted-foreground">
+                    Having connection issues? Try direct MetaMask connection:
+                  </p>
+                </div>
+                <MetaMaskConnector />
+              </div>
             )}
 
             {/* Info Cards */}
