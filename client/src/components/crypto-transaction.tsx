@@ -68,8 +68,8 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
     }
   };
 
-  // Connect wallet function
-  const handleConnectWallet = async () => {
+  // Connect wallet function for MetaMask payments
+  const connectMetaMaskWallet = async () => {
     if (typeof window !== 'undefined' && window.ethereum) {
       try {
         console.log("🔵 Requesting MetaMask connection...");
@@ -160,41 +160,35 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
     },
   });
 
-  const handleConnectWallet = async () => {
-    if (typeof window !== 'undefined' && window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
-        if (accounts && accounts.length > 0) {
-          setIsConnected(true);
-          setUserAddress(accounts[0]);
-          toast({
-            title: "Wallet Connected",
-            description: `Connected to ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
-          });
-        }
-      } catch (error) {
-        toast({
-          title: "Connection Failed",
-          description: "Please approve the wallet connection",
-          variant: "destructive",
-        });
-      }
-    } else {
-      toast({
-        title: "MetaMask Not Found",
-        description: "Please install MetaMask to continue",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const handleCryptoPayment = async () => {
     console.log("🔵 Starting crypto payment process...");
     
+    // Check if user is authenticated to the platform
+    try {
+      const userResponse = await fetch('/api/user');
+      if (!userResponse.ok) {
+        toast({
+          title: "Login Required",
+          description: "Please login to the platform first before making purchases",
+          variant: "destructive",
+        });
+        return;
+      }
+    } catch (error) {
+      toast({
+        title: "Authentication Error", 
+        description: "Please login to the platform first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!isConnected) {
       toast({
         title: "Wallet Not Connected",
-        description: "Please connect your wallet first",
+        description: "Please connect your MetaMask wallet first",
         variant: "destructive",
       });
       return;
@@ -339,7 +333,7 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               Connect your wallet to make crypto payments
-              <Button onClick={handleConnectWallet} className="ml-2" size="sm">
+              <Button onClick={connectMetaMaskWallet} className="ml-2" size="sm">
                 Connect Wallet
               </Button>
             </AlertDescription>
@@ -400,14 +394,26 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
           </div>
         )}
 
-        {/* Debug Connection */}
+        {/* Authentication & Connection Instructions */}
+        <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800 mb-4">
+          <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+            🔐 How to Use Crypto Payments
+          </h3>
+          <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+            <p><strong>Step 1:</strong> Login to Nectiq platform using the wallet icon in header</p>
+            <p><strong>Step 2:</strong> Connect MetaMask wallet below for payments</p>
+            <p><strong>Step 3:</strong> Enter NTIQ amount and complete purchase</p>
+          </div>
+        </div>
+
+        {/* MetaMask Connection Status */}
         {!isConnected && (
           <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
             <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">
               MetaMask not connected. Click to connect:
             </p>
             <Button
-              onClick={handleConnectWallet}
+              onClick={connectMetaMaskWallet}
               variant="outline"
               className="w-full"
             >
