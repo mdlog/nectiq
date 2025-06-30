@@ -381,7 +381,7 @@ export default function UserDashboard() {
               <Button 
                 variant="outline" 
                 className="bg-surface-light border-surface-light" 
-                onClick={() => setLocation('/')}
+                onClick={() => setLocation('/home')}
               >
                 <ArrowLeft className="mr-2" size={16} />
                 Back to App
