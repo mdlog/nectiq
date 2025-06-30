@@ -1553,15 +1553,16 @@ export class DatabaseStorage implements IStorage {
   async logTransaction(transaction: any): Promise<void> {
     try {
       await db.insert(transactionLogs).values({
+        userId: transaction.userId,
+        type: transaction.type || 'reward',
         amount: transaction.amount || 0,
         token: transaction.token || 'NTIQ',
-        type: transaction.type || 'battle',
-        description: transaction.description || '',
         status: transaction.status || 'completed',
+        hash: transaction.txHash || null,
         fromAddress: transaction.fromAddress || null,
         toAddress: transaction.toAddress || null,
-        txHash: transaction.txHash || null,
         networkFee: transaction.networkFee || null,
+        exchangeRate: null,
         relatedId: transaction.relatedId || null
       });
     } catch (error) {

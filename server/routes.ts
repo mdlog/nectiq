@@ -3119,6 +3119,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to award achievement and daily challenge rewards
+  async function awardReward(userId: number, amount: number, type: 'achievement' | 'daily_challenge', description: string, relatedId?: number) {
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        console.error(`User ${userId} not found for reward`);
+        return false;
+      }
+
+      // Update user balance
+      const newBalance = user.balance + amount;
+      await storage.updateUserBalance(userId, newBalance);
+
+      // Log the reward in transaction logs
+      await storage.logTransaction({
+        userId,
+        type: type === 'achievement' ? 'achievement_reward' : 'daily_challenge_reward',
+        amount,
+        token: 'NTIQ',
+        status: 'completed',
+        fromAddress: null,
+        toAddress: null,
+        txHash: null,
+        networkFee: null,
+        relatedId
+      });
+
+      console.log(`✅ Awarded ${amount} NTIQ to user ${userId} for ${type}: ${description}`);
+      return true;
+    } catch (error) {
+      console.error(`Error awarding ${type} reward to user ${userId}:`, error);
+      return false;
+    }
+  }
+
   // Daily Challenges Routes
   app.get("/api/challenges/today", async (req, res) => {
     try {
@@ -3129,8 +3164,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = session.userId;
       
-      // Update challenge progress
-      await dailyChallengeService.updateChallengeProgress(userId);
+      // Update challenge progress and award rewards for newly completed challenges
+      const completedChallenges = await dailyChallengeService.updateChallengeProgress(userId);
+      
+      // Award rewards for newly completed challenges
+      for (const challenge of completedChallenges) {
+        if (challenge.isCompleted && challenge.completedAt) {
+          await awardReward(
+            userId, 
+            challenge.challenge.reward, 
+            'daily_challenge', 
+            `Completed daily challenge: ${challenge.challenge.name}`,
+            challenge.id
+          );
+        }
+      }
       
       // Get today's challenges
       const challenges = await dailyChallengeService.getUserTodayChallenges(userId);
