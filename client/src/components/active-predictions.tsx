@@ -3,19 +3,7 @@ import { Clock, TrendingUp, TrendingDown, Search, ChevronLeft, ChevronRight } fr
 import { useState } from "react";
 import type { ActivePrediction } from "@/types";
 import type { User } from "@shared/schema";
-
-function formatTimeLeft(timeLeft: number): string {
-  if (timeLeft <= 0) return "Expired";
-  
-  const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m left`;
-  }
-  return `${minutes}m ${seconds}s left`;
-}
+import { CountdownTimer } from "@/components/countdown-timer";
 
 // Dynamic function to get crypto image from live API data
 function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
@@ -265,7 +253,7 @@ export function ActivePredictions() {
                     <div>
                       <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
                       <p className="text-xs text-slate-400">
-                        {isExpired ? "Expired" : formatTimeLeft(prediction.timeLeft)}
+                        {isExpired ? "Expired" : <CountdownTimer timeLeft={prediction.timeLeft} format="compact" />}
                       </p>
                     </div>
                   </div>
