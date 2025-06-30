@@ -3,6 +3,12 @@ import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { Coins, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 interface TokenBalance {
   symbol: string;
   balance: string;
@@ -55,13 +61,75 @@ export function WalletBalances({ walletAddress }: WalletBalancesProps) {
       let balance = "0";
 
       if (tokenConfig.symbol === "ETH") {
-        // Get ETH balance
+        // Get ETH balance using multiple approaches
         try {
-          const ethBalance = await primaryWallet.getBalance();
-          const balanceInEth = parseFloat(ethBalance) / Math.pow(10, 18);
-          balance = balanceInEth.toFixed(4);
+          // Method 1: Direct window.ethereum call
+          if (typeof window !== 'undefined' && window.ethereum) {
+            try {
+              const balanceHex = await window.ethereum.request({
+                method: 'eth_getBalance',
+                params: [walletAddress, 'latest']
+              });
+              
+              if (balanceHex) {
+                const balanceBigInt = BigInt(balanceHex);
+                const balanceInEth = Number(balanceBigInt) / Math.pow(10, 18);
+                balance = balanceInEth.toFixed(6);
+                console.log(`ETH Balance (window.ethereum): ${balance} ETH (Raw: ${balanceHex})`);
+              }
+            } catch (directError) {
+              console.log("Direct window.ethereum method failed:", directError);
+            }
+          }
+          
+          // Method 2: Dynamic wallet RPC call (if Method 1 failed)
+          if (balance === "0" && primaryWallet) {
+            try {
+              const result = await primaryWallet.makeRpcCall({
+                method: "eth_getBalance",
+                params: [walletAddress, "latest"]
+              });
+
+              if (result) {
+                const balanceHex = result;
+                const balanceBigInt = BigInt(balanceHex);
+                const balanceInEth = Number(balanceBigInt) / Math.pow(10, 18);
+                balance = balanceInEth.toFixed(6);
+                console.log(`ETH Balance (Dynamic RPC): ${balance} ETH (Raw: ${balanceHex})`);
+              }
+            } catch (rpcError) {
+              console.log("Dynamic RPC method failed:", rpcError);
+            }
+          }
+          
+          // Method 3: getBalance fallback (if both above failed)
+          if (balance === "0" && primaryWallet) {
+            try {
+              const ethBalance = await primaryWallet.getBalance();
+              console.log("ETH Balance (getBalance method):", ethBalance);
+              
+              if (ethBalance && ethBalance !== "0") {
+                let balanceValue = 0;
+                if (typeof ethBalance === 'string') {
+                  if (ethBalance.startsWith('0x')) {
+                    balanceValue = Number(BigInt(ethBalance)) / Math.pow(10, 18);
+                  } else {
+                    balanceValue = parseFloat(ethBalance);
+                  }
+                } else if (typeof ethBalance === 'number') {
+                  balanceValue = ethBalance;
+                }
+                
+                balance = balanceValue.toFixed(6);
+                console.log(`ETH Balance (getBalance): ${balance} ETH`);
+              }
+            } catch (fallbackError) {
+              console.log("getBalance method failed:", fallbackError);
+            }
+          }
+          
         } catch (error) {
-          console.log("ETH balance fetch error:", error);
+          console.log("All ETH balance methods failed:", error);
           balance = "0";
         }
       } else {
