@@ -264,6 +264,7 @@ Changelog:
 - June 30, 2025. **SIMPLIFIED LANDING PAGE HEADER TO MINIMALIST DESIGN**: Successfully implemented professional fixed header with navigation menu (Features, About, Contact) and "Get Started" button with smooth scrolling to wallet section, backdrop blur styling, and enhanced page structure with About and Contact sections, progressively removed all text branding (tagline "Tactics. Timing. Triumph." and "Nectiq" text) keeping only the official Nectiq logo for ultra-clean minimalist design, removed duplicate logo from body content
 - June 30, 2025. **FIXED MY DASHBOARD BACK TO APP NAVIGATION**: Updated "Back to App" button in My Dashboard page to redirect to Home page (/home) instead of Landing page (/) for proper authenticated user navigation flow
 - June 30, 2025. **REMOVED BACK TO APP BUTTON FROM LEADERBOARD**: Eliminated "Back To App" button from Leaderboard page as requested, simplifying the interface and allowing users to navigate naturally through the header menu instead
+- June 30, 2025. **ADDED CRYPTOCURRENCY LOGOS TO HOW TO PLAY PAGE**: Enhanced "Supported Cryptocurrencies" section with real cryptocurrency logos from CoinGecko API, replaced colored circles with actual coin images (Bitcoin, Ethereum, BNB, Cardano, Solana, Chainlink, Polkadot, Litecoin), implemented intelligent fallback system showing symbol text if images fail to load, using dynamic logo fetching with real-time crypto price data for consistent branding across platform
 ```
 
 ## User Preferences

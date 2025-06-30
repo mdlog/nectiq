@@ -20,20 +20,53 @@ import {
   Zap
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 export default function HowToPlay() {
   const [, setLocation] = useLocation();
 
+  // Fetch real crypto prices for logos
+  const { data: cryptoPrices } = useQuery<any[]>({
+    queryKey: ['/api/crypto/prices'],
+    refetchInterval: 2000
+  });
+
   const cryptoSupported = [
-    { name: "Bitcoin", symbol: "BTC", color: "bg-orange-500" },
-    { name: "Ethereum", symbol: "ETH", color: "bg-blue-500" },
-    { name: "BNB", symbol: "BNB", color: "bg-yellow-500" },
-    { name: "Cardano", symbol: "ADA", color: "bg-blue-600" },
-    { name: "Solana", symbol: "SOL", color: "bg-purple-500" },
-    { name: "Chainlink", symbol: "LINK", color: "bg-blue-400" },
-    { name: "Polkadot", symbol: "DOT", color: "bg-pink-500" },
-    { name: "Litecoin", symbol: "LTC", color: "bg-gray-500" }
+    { name: "Bitcoin", symbol: "BTC", id: "bitcoin", color: "bg-orange-500" },
+    { name: "Ethereum", symbol: "ETH", id: "ethereum", color: "bg-blue-500" },
+    { name: "BNB", symbol: "BNB", id: "binancecoin", color: "bg-yellow-500" },
+    { name: "Cardano", symbol: "ADA", id: "cardano", color: "bg-blue-600" },
+    { name: "Solana", symbol: "SOL", id: "solana", color: "bg-purple-500" },
+    { name: "Chainlink", symbol: "LINK", id: "chainlink", color: "bg-blue-400" },
+    { name: "Polkadot", symbol: "DOT", id: "polkadot", color: "bg-pink-500" },
+    { name: "Litecoin", symbol: "LTC", id: "litecoin", color: "bg-gray-500" }
   ];
+
+  // Function to get cryptocurrency logo URL
+  function getCryptoImageUrl(cryptoId: string): string {
+    // First try to get image from real-time crypto data
+    if (cryptoPrices && Array.isArray(cryptoPrices)) {
+      const cryptoData = cryptoPrices.find((crypto: any) => crypto.id === cryptoId);
+      if (cryptoData?.image) {
+        return cryptoData.image;
+      }
+    }
+    
+    // Fallback: Static mapping for supported cryptocurrencies
+    const commonIds: Record<string, string> = {
+      'bitcoin': '1',
+      'ethereum': '279',
+      'binancecoin': '825',
+      'cardano': '975',
+      'solana': '4128',
+      'chainlink': '877',
+      'polkadot': '12171',
+      'litecoin': '2'
+    };
+    
+    const imageId = commonIds[cryptoId] || '1';
+    return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${cryptoId}.png`;
+  }
 
   const timeframes = [
     { duration: "1 Hour", multiplier: "1.5x", difficulty: "Easy" },
@@ -179,8 +212,24 @@ export default function HowToPlay() {
             {cryptoSupported.map((crypto) => (
               <Card key={crypto.symbol} className="text-center">
                 <CardContent className="pt-6">
-                  <div className={`w-12 h-12 ${crypto.color} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                    <span className="text-white font-bold">{crypto.symbol}</span>
+                  <div className="w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                    <img 
+                      src={getCryptoImageUrl(crypto.id)} 
+                      alt={crypto.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        // Simple fallback: replace with symbol text
+                        const target = e.currentTarget;
+                        target.style.display = 'none';
+                        if (target.parentElement) {
+                          target.parentElement.innerHTML = `
+                            <div class="w-12 h-12 ${crypto.color} rounded-full flex items-center justify-center">
+                              <span class="text-white font-bold text-xs">${crypto.symbol}</span>
+                            </div>
+                          `;
+                        }
+                      }}
+                    />
                   </div>
                   <h3 className="font-semibold">{crypto.name}</h3>
                   <p className="text-sm text-muted-foreground">{crypto.symbol}</p>
