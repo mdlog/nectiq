@@ -91,7 +91,6 @@ function LandingHeader() {
             />
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-foreground">Nectiq</h1>
-              <p className="text-xs text-muted-foreground">Tactics. Timing. Triumph.</p>
             </div>
           </div>
 
