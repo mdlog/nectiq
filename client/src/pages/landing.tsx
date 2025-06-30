@@ -79,7 +79,7 @@ function LandingHeader() {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center">
             <img 
               src={nectiqLogo} 
               alt="Nectiq" 
@@ -89,9 +89,6 @@ function LandingHeader() {
                 mixBlendMode: 'screen'
               }}
             />
-            <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-foreground">Nectiq</h1>
-            </div>
           </div>
 
           {/* Navigation - Simple for landing page */}
