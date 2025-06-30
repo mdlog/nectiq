@@ -2272,64 +2272,64 @@ export default function AdminPanel() {
         </div>
 
         {/* Detailed Views */}
-        <Tabs defaultValue="statistics" className="space-y-4">
-          <div className="bg-surface border border-surface-light rounded-lg p-2 space-y-2">
+        <Tabs defaultValue="statistics" className="space-y-6">
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl">
             {/* First Row */}
-            <TabsList className="bg-transparent w-full flex justify-start gap-1 h-auto">
-              <TabsTrigger value="statistics" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <BarChart3 className="h-4 w-4" />
+            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-start gap-2 h-auto p-2 rounded-xl mb-4 backdrop-blur-sm">
+              <TabsTrigger value="statistics" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50">
+                <BarChart3 className="h-5 w-5" />
                 Statistics
               </TabsTrigger>
-              <TabsTrigger value="users" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Users className="h-4 w-4" />
+              <TabsTrigger value="users" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50">
+                <Users className="h-5 w-5" />
                 Users
               </TabsTrigger>
-              <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Coins className="h-4 w-4" />
+              <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50">
+                <Coins className="h-5 w-5" />
                 Crypto
               </TabsTrigger>
-              <TabsTrigger value="predictions" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Target className="h-4 w-4" />
+              <TabsTrigger value="predictions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50">
+                <Target className="h-5 w-5" />
                 Predictions
               </TabsTrigger>
-              <TabsTrigger value="battles" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Swords className="h-4 w-4" />
+              <TabsTrigger value="battles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50">
+                <Swords className="h-5 w-5" />
                 Battles
               </TabsTrigger>
-              <TabsTrigger value="survival" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Gamepad2 className="h-4 w-4" />
+              <TabsTrigger value="survival" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50">
+                <Gamepad2 className="h-5 w-5" />
                 Survival
               </TabsTrigger>
-              <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Trophy className="h-4 w-4" />
+              <TabsTrigger value="leaderboard" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50">
+                <Trophy className="h-5 w-5" />
                 Leaderboard
               </TabsTrigger>
             </TabsList>
             
             {/* Second Row */}
-            <TabsList className="bg-transparent w-full flex justify-start gap-1 h-auto">
-              <TabsTrigger value="transactions" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <DollarSign className="h-4 w-4" />
+            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-start gap-2 h-auto p-2 rounded-xl backdrop-blur-sm">
+              <TabsTrigger value="transactions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50">
+                <DollarSign className="h-5 w-5" />
                 Transactions
               </TabsTrigger>
-              <TabsTrigger value="security" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Shield className="h-4 w-4" />
+              <TabsTrigger value="security" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50">
+                <Shield className="h-5 w-5" />
                 Security
               </TabsTrigger>
-              <TabsTrigger value="banners" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Megaphone className="h-4 w-4" />
+              <TabsTrigger value="banners" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-cyan-400/50">
+                <Megaphone className="h-5 w-5" />
                 Banners
               </TabsTrigger>
-              <TabsTrigger value="events" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Calendar className="h-4 w-4" />
+              <TabsTrigger value="events" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-indigo-400/50">
+                <Calendar className="h-5 w-5" />
                 Events
               </TabsTrigger>
-              <TabsTrigger value="settings" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Settings className="h-4 w-4" />
+              <TabsTrigger value="settings" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-violet-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-violet-400/50">
+                <Settings className="h-5 w-5" />
                 Settings
               </TabsTrigger>
-              <TabsTrigger value="activity" className="data-[state=active]:bg-primary flex items-center gap-2 px-3 py-2 text-sm">
-                <Activity className="h-4 w-4" />
+              <TabsTrigger value="activity" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-600 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-teal-400/50">
+                <Activity className="h-5 w-5" />
                 Activity
               </TabsTrigger>
             </TabsList>
