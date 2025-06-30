@@ -136,22 +136,8 @@ export default function LandingPage() {
       {/* Main Content */}
       <main className="px-6 pt-32 pb-20">
         <div className="max-w-4xl mx-auto">
-          {/* Logo and Title Section */}
+          {/* Title Section */}
           <div className="text-center mb-16">
-            {/* Logo */}
-            <div className="flex items-center justify-center mb-8">
-              <img 
-                src={nectiqLogo} 
-                alt="Nectiq - Tactics. Timing. Triumph." 
-                className="h-20 rounded-lg p-2" 
-                style={{ 
-                  backgroundColor: 'var(--surface)',
-                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))',
-                  mixBlendMode: 'screen'
-                }}
-              />
-            </div>
-
             {/* Title */}
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
               Cryptocurrency
