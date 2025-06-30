@@ -45,14 +45,61 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
   const checkWalletConnection = async () => {
     if (typeof window !== 'undefined' && window.ethereum) {
       try {
+        console.log("🔵 Checking MetaMask connection...");
         const accounts = await window.ethereum.request({ method: 'eth_accounts' }) as string[];
+        console.log("🔵 MetaMask accounts:", accounts);
+        
         if (accounts && accounts.length > 0) {
           setIsConnected(true);
           setUserAddress(accounts[0]);
+          console.log("🟢 Wallet connected:", accounts[0]);
+        } else {
+          setIsConnected(false);
+          setUserAddress("");
+          console.log("🔴 No wallet connected");
         }
       } catch (error) {
-        console.error("Error checking wallet connection:", error);
+        console.error("🔴 Error checking wallet connection:", error);
+        setIsConnected(false);
       }
+    } else {
+      console.log("🔴 MetaMask not detected");
+      setIsConnected(false);
+    }
+  };
+
+  // Connect wallet function
+  const handleConnectWallet = async () => {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      try {
+        console.log("🔵 Requesting MetaMask connection...");
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
+        console.log("🔵 MetaMask connection result:", accounts);
+        
+        if (accounts && accounts.length > 0) {
+          setIsConnected(true);
+          setUserAddress(accounts[0]);
+          console.log("🟢 Wallet connected successfully:", accounts[0]);
+          
+          toast({
+            title: "MetaMask Connected",
+            description: `Connected to ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
+          });
+        }
+      } catch (error) {
+        console.error("🔴 Error connecting wallet:", error);
+        toast({
+          title: "Connection Failed",
+          description: "Failed to connect to MetaMask",
+          variant: "destructive"
+        });
+      }
+    } else {
+      toast({
+        title: "MetaMask Not Found",
+        description: "Please install MetaMask browser extension",
+        variant: "destructive"
+      });
     }
   };
 
