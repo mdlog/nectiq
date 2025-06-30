@@ -71,6 +71,7 @@ export default function AdminPanel() {
   
   // Search state
   const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [predictionsSearchTerm, setPredictionsSearchTerm] = useState("");
   
   // Predictions sorting state
   const [predictionsSortField, setPredictionsSortField] = useState<"createdAt" | "stake" | "reward">("createdAt");
@@ -626,7 +627,7 @@ export default function AdminPanel() {
     return typeMatch && searchMatch;
   }) : [];
 
-  // Filter predictions based on asset, status, and date range
+  // Filter predictions based on asset, status, date range, and search term
   const filteredPredictions = predictions.filter(prediction => {
     const assetMatch = predictionsAssetFilter === "all" || prediction.cryptocurrency === predictionsAssetFilter;
     const statusMatch = predictionsStatusFilter === "all" || prediction.status === predictionsStatusFilter;
@@ -643,7 +644,16 @@ export default function AdminPanel() {
       }
     }
     
-    return assetMatch && statusMatch && dateMatch;
+    // Search filter
+    const searchMatch = predictionsSearchTerm === "" || 
+      (prediction.userId && prediction.userId.toString().includes(predictionsSearchTerm)) ||
+      ((prediction as any).username && (prediction as any).username.toLowerCase().includes(predictionsSearchTerm.toLowerCase())) ||
+      ((prediction as any).uid && (prediction as any).uid.toString().includes(predictionsSearchTerm)) ||
+      ((prediction as any).walletAddress && (prediction as any).walletAddress.toLowerCase().includes(predictionsSearchTerm.toLowerCase())) ||
+      prediction.cryptocurrency.toLowerCase().includes(predictionsSearchTerm.toLowerCase()) ||
+      prediction.id.toString().includes(predictionsSearchTerm);
+    
+    return assetMatch && statusMatch && dateMatch && searchMatch;
   });
 
   // Sort filtered predictions
@@ -1029,7 +1039,7 @@ export default function AdminPanel() {
   // Reset pagination when filters change
   useEffect(() => {
     setPredictionsPage(1);
-  }, [predictionsAssetFilter, predictionsStatusFilter]);
+  }, [predictionsAssetFilter, predictionsStatusFilter, predictionsSearchTerm]);
 
   // Get unique assets and statuses for filter options
   const uniqueAssets = Array.from(new Set(predictions.map(p => p.cryptocurrency)));
@@ -2852,17 +2862,41 @@ export default function AdminPanel() {
                 
                 {/* Enhanced Filter Controls */}
                 <div className="space-y-4 mt-4">
+                  {/* Search Bar */}
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 max-w-md">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                      <Input
+                        type="text"
+                        placeholder="Search predictions by user ID, username, or cryptocurrency..."
+                        value={predictionsSearchTerm}
+                        onChange={(e) => setPredictionsSearchTerm(e.target.value)}
+                        className="pl-10 bg-surface border-surface-light text-white"
+                      />
+                    </div>
+                    {predictionsSearchTerm && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPredictionsSearchTerm("")}
+                        className="text-gray-400 hover:text-white"
+                      >
+                        <X size={16} />
+                      </Button>
+                    )}
+                  </div>
+                  
                   <div className="flex items-center gap-4 flex-wrap">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="asset-filter" className="text-sm font-medium">
-                        Aset:
+                        Asset:
                       </Label>
                       <Select value={predictionsAssetFilter} onValueChange={setPredictionsAssetFilter}>
                         <SelectTrigger className="w-40">
-                          <SelectValue placeholder="Pilih aset" />
+                          <SelectValue placeholder="Select asset" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Semua Aset</SelectItem>
+                          <SelectItem value="all">All Assets</SelectItem>
                           {uniqueAssets.map((asset) => (
                             <SelectItem key={asset} value={asset}>
                               {asset.toUpperCase()}
@@ -2878,10 +2912,10 @@ export default function AdminPanel() {
                       </Label>
                       <Select value={predictionsStatusFilter} onValueChange={setPredictionsStatusFilter}>
                         <SelectTrigger className="w-40">
-                          <SelectValue placeholder="Pilih status" />
+                          <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Semua Status</SelectItem>
+                          <SelectItem value="all">All Status</SelectItem>
                           {uniqueStatuses.map((status) => (
                             <SelectItem key={status} value={status}>
                               <div className="flex items-center gap-2">
@@ -2894,8 +2928,8 @@ export default function AdminPanel() {
                                   className="text-xs"
                                 >
                                   {status === 'pending' ? 'Active' : 
-                                   status === 'completed' ? 'Selesai' : 
-                                   status === 'expired' ? 'Kadaluarsa' : status}
+                                   status === 'completed' ? 'Completed' : 
+                                   status === 'expired' ? 'Expired' : status}
                                 </Badge>
                               </div>
                             </SelectItem>
@@ -2952,7 +2986,7 @@ export default function AdminPanel() {
                     </Button>
                   </div>
                   
-                  {(predictionsAssetFilter !== "all" || predictionsStatusFilter !== "all" || dateRangeFilter.startDate || dateRangeFilter.endDate) && (
+                  {(predictionsAssetFilter !== "all" || predictionsStatusFilter !== "all" || dateRangeFilter.startDate || dateRangeFilter.endDate || predictionsSearchTerm) && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -2960,10 +2994,11 @@ export default function AdminPanel() {
                         setPredictionsAssetFilter("all");
                         setPredictionsStatusFilter("all");
                         setDateRangeFilter({ startDate: "", endDate: "" });
+                        setPredictionsSearchTerm("");
                       }}
                       className="text-xs"
                     >
-                      Reset Semua Filter
+                      Reset All Filters
                     </Button>
                   )}
                 </div>
