@@ -2807,19 +2807,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`WARNING: Admin user ${userId} (${user.username}) is being deleted by admin ${req.session.userId}`);
       }
 
-      // Delete user
+      // Delete user with comprehensive foreign key handling
       await storage.deleteUser(userId);
 
       auditLog("USER_DELETED", { 
         deletedUserId: userId, 
         username: user.username,
+        walletAddress: user.walletAddress,
         deletedBy: req.session.userId 
       }, req);
 
-      res.json({ success: true, message: "User deleted successfully" });
+      res.json({ success: true, message: `User ${user.username} deleted successfully` });
     } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Failed to delete user" });
+      console.error(`Error deleting user ${req.params.id}:`, error);
+      
+      // Provide more specific error messages
+      if (error.message?.includes('foreign key')) {
+        res.status(500).json({ message: "Cannot delete user due to data dependencies" });
+      } else if (error.message?.includes('does not exist')) {
+        res.status(404).json({ message: "User not found" });
+      } else {
+        res.status(500).json({ message: `Failed to delete user: ${error.message}` });
+      }
     }
   });
 
