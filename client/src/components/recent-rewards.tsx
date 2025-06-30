@@ -132,10 +132,10 @@ export function RecentRewards() {
                   </div>
                 </div>
                 <div>
-                  <p className="font-semibold text-sm">
+                  <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                     {reward.cryptocurrency.toUpperCase()} Prediction
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     {formatTimeAgo(reward.createdAt)}
                   </p>
                 </div>
