@@ -100,49 +100,59 @@ export function RecentRewards() {
     <div className="bg-surface rounded-xl p-6 border border-surface-light">
       <h3 className="text-lg font-bold mb-4 flex items-center">
         <Gift className="text-primary mr-2" size={18} />
-        Recent Rewards
+        Recent Predictions
       </h3>
       
       <div className="space-y-3">
-        {rewards.map((reward) => (
-          <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="relative w-8 h-8 flex-shrink-0">
-                <img 
-                  src={getCryptoImageUrl(reward.cryptocurrency, cryptoPrices || [])} 
-                  alt={reward.cryptocurrency}
-                  className="w-8 h-8 rounded-full object-cover"
-                  onError={(e) => {
-                    // Fallback to success checkmark if image fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const fallback = target.nextElementSibling as HTMLDivElement;
-                    if (fallback) fallback.style.display = 'flex';
-                  }}
-                />
-                <div className="w-8 h-8 bg-success rounded-full flex items-center justify-center" style={{ display: 'none' }}>
-                  <Check className="text-white" size={16} />
+        {rewards.map((reward) => {
+          const isWin = reward.isWin || reward.amount > 0;
+          return (
+            <div key={reward.id} className={`flex items-center justify-between p-3 rounded-lg ${
+              isWin ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+                    : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+            }`}>
+              <div className="flex items-center space-x-3">
+                <div className="relative w-8 h-8 flex-shrink-0">
+                  <img 
+                    src={getCryptoImageUrl(reward.cryptocurrency, cryptoPrices || [])} 
+                    alt={reward.cryptocurrency}
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      // Fallback icon based on win/loss
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const fallback = target.nextElementSibling as HTMLDivElement;
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    isWin ? 'bg-green-500' : 'bg-red-500'
+                  }`} style={{ display: 'none' }}>
+                    {isWin ? <TrendingUp className="text-white" size={16} /> : <TrendingDown className="text-white" size={16} />}
+                  </div>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">
+                    {reward.cryptocurrency.toUpperCase()} Prediction
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {formatTimeAgo(reward.createdAt)}
+                  </p>
                 </div>
               </div>
-              <div>
-                <p className="font-semibold text-sm">
-                  {reward.cryptocurrency.toUpperCase()} Prediction
+              <div className="text-right">
+                <p className={`text-sm font-semibold ${
+                  isWin ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {isWin ? `+${Math.abs(reward.amount)}` : `-${Math.abs(reward.amount)}`} NTIQ
                 </p>
                 <p className="text-xs text-slate-400">
-                  {formatTimeAgo(reward.createdAt)}
+                  {parseFloat(reward.accuracy || "0").toFixed(1)}% accuracy
                 </p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm font-semibold text-success">
-                +{reward.amount} NTIQ
-              </p>
-              <p className="text-xs text-slate-400">
-                {parseFloat(reward.accuracy).toFixed(1)}% accuracy
-              </p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

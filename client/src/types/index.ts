@@ -43,4 +43,7 @@ export interface RecentReward {
   createdAt: string;
   cryptocurrency: string;
   accuracy: string;
+  isWin?: boolean;
+  stakeAmount?: number;
+  rewardAmount?: number;
 }
