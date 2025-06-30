@@ -88,15 +88,15 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                     const data = await response.json();
                     console.log('Backend authentication successful:', data);
                     
-                    // Reload page after successful auth
+                    // Redirect to home page after successful auth
                     setTimeout(() => {
-                      window.location.reload();
+                      window.location.href = '/home';
                     }, 1000);
                   } catch (jsonError) {
                     console.error('JSON parsing error on success response:', jsonError);
-                    // Still reload on success even if JSON parsing fails
+                    // Still redirect on success even if JSON parsing fails
                     setTimeout(() => {
-                      window.location.reload();
+                      window.location.href = '/home';
                     }, 1000);
                   }
                 } else {

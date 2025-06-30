@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import DynamicProvider from "@/providers/DynamicProvider";
+import LandingPage from "@/pages/landing";
+import ProtectedRoute from "@/components/protected-route";
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 import AdminPanel from "@/pages/admin";
@@ -53,19 +55,71 @@ console.warn = (...args) => {
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/user-dashboard" component={UserDashboard} />
-      <Route path="/dashboard" component={UserDashboard} />
-      <Route path="/battles" component={BattlesPage} />
-      <Route path="/survival-tournaments" component={SurvivalTournamentsWorking} />
-      <Route path="/survival" component={SurvivalTournamentsWorking} />
-      <Route path="/leaderboard" component={Leaderboard} />
-      <Route path="/admin" component={AdminPanel} />
-      <Route path="/how-to-play" component={HowToPlay} />
+      {/* Landing page - no authentication required */}
+      <Route path="/" component={LandingPage} />
+      
+      {/* Protected routes - require authentication */}
+      <Route path="/home">
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/user-dashboard">
+        <ProtectedRoute>
+          <UserDashboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <UserDashboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/battles">
+        <ProtectedRoute>
+          <BattlesPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/survival-tournaments">
+        <ProtectedRoute>
+          <SurvivalTournamentsWorking />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/survival">
+        <ProtectedRoute>
+          <SurvivalTournamentsWorking />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/leaderboard">
+        <ProtectedRoute>
+          <Leaderboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/how-to-play">
+        <ProtectedRoute>
+          <HowToPlay />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin">
+        <ProtectedRoute>
+          <AdminPanel />
+        </ProtectedRoute>
+      </Route>
+      
+      {/* Public routes - no authentication required */}
       <Route path="/terms-conditions" component={TermsConditions} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/wallet-login" component={WalletLoginPage} />
       <Route path="/dynamic-demo" component={DynamicDemo} />
+      
+      {/* 404 page */}
       <Route component={NotFound} />
     </Switch>
   );
