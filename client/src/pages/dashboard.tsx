@@ -192,7 +192,7 @@ export default function Dashboard() {
         <RulesSection />
         
         {/* Running Price Ticker */}
-        <div className="mt-12 mb-4">
+        <div className="mt-12">
           <DashboardPriceTicker />
         </div>
       </main>
