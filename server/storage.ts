@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 
@@ -654,6 +654,36 @@ export class DatabaseStorage implements IStorage {
       totalVolume: transactions.reduce((sum, t) => sum + t.amount, 0),
       avgTransactionSize: transactions.length > 0 ? transactions.reduce((sum, t) => sum + t.amount, 0) / transactions.length : 0
     };
+  }
+
+  // Crypto transaction operations
+  async createCryptoTransaction(transaction: any): Promise<any> {
+    const [newTransaction] = await db.insert(cryptoTransactions).values({
+      userId: transaction.userId,
+      transactionHash: transaction.transactionHash,
+      paymentToken: transaction.paymentToken,
+      cryptoAmount: transaction.cryptoAmount.toString(),
+      ntiqAmount: transaction.ntiqAmount,
+      userAddress: transaction.userAddress,
+      status: transaction.status || 'completed',
+      exchangeRate: transaction.exchangeRate || 100
+    }).returning();
+    return newTransaction;
+  }
+
+  async getTransactionByHash(hash: string): Promise<any> {
+    const [transaction] = await db.select().from(cryptoTransactions)
+      .where(eq(cryptoTransactions.transactionHash, hash))
+      .limit(1);
+    return transaction;
+  }
+
+  async getUserCryptoTransactions(userId: number, limit: number = 20): Promise<any[]> {
+    const transactions = await db.select().from(cryptoTransactions)
+      .where(eq(cryptoTransactions.userId, userId))
+      .orderBy(desc(cryptoTransactions.createdAt))
+      .limit(limit);
+    return transactions;
   }
 
   // System settings operations

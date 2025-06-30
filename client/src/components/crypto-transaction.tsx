@@ -203,12 +203,14 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
       }
 
       // Send transaction via MetaMask
+      let txHash: string = "";
       if (window.ethereum) {
-        const txHash = await window.ethereum.request({
+        const result = await window.ethereum.request({
           method: 'eth_sendTransaction',
           params: [transactionParams],
-        }) as string;
+        });
 
+        txHash = result as string;
         setTransactionHash(txHash);
       }
 
@@ -218,12 +220,14 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
       });
 
       // Process the payment on backend
-      processPaymentMutation.mutate({
-        ntiqAmount: ntiq,
-        paymentToken: paymentMethod,
-        transactionHash: txHash,
-        cryptoAmount: crypto.toString(),
-      });
+      if (txHash) {
+        processPaymentMutation.mutate({
+          ntiqAmount: ntiq,
+          paymentToken: paymentMethod,
+          transactionHash: txHash,
+          cryptoAmount: crypto.toString(),
+        });
+      }
 
     } catch (error: any) {
       console.error("Payment error:", error);
