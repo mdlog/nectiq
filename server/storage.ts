@@ -76,6 +76,11 @@ export interface IStorage {
   createPurchase(purchase: InsertPurchase): Promise<Purchase>;
   getUserPurchases(userId: number, limit?: number): Promise<Purchase[]>;
 
+  // Crypto transaction operations  
+  createCryptoTransaction(transaction: any): Promise<any>;
+  getTransactionByHash(hash: string): Promise<any>;
+  getUserCryptoTransactions(userId: number, limit?: number): Promise<any[]>;
+
   // User management operations
   deleteUser(id: number): Promise<void>;
   

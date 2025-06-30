@@ -952,7 +952,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Buy NTIQ with crypto
+  // Buy NTIQ with crypto (real blockchain transactions)
+  app.post("/api/user/buy-ntiq-crypto", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { ntiqAmount, paymentToken, transactionHash, cryptoAmount, userAddress } = req.body;
+
+      // Enhanced security validation
+      if (!ntiqAmount || typeof ntiqAmount !== 'number' || ntiqAmount < 100 || ntiqAmount > 1000000 || !Number.isInteger(ntiqAmount)) {
+        return res.status(400).json({ message: "NTIQ amount must be an integer between 100 and 1,000,000" });
+      }
+
+      // Validate payment token
+      const validTokens = ["ETH", "USDT", "USDC"];
+      if (!paymentToken || !validTokens.includes(paymentToken)) {
+        return res.status(400).json({ message: "Invalid payment token" });
+      }
+
+      // Validate transaction data
+      if (!transactionHash || !cryptoAmount || !userAddress) {
+        return res.status(400).json({ message: "Transaction data incomplete" });
+      }
+
+      // Validate transaction hash format
+      if (!/^0x[a-fA-F0-9]{64}$/.test(transactionHash)) {
+        return res.status(400).json({ message: "Invalid transaction hash format" });
+      }
+
+      // Validate wallet address format
+      if (!/^0x[a-fA-F0-9]{40}$/.test(userAddress)) {
+        return res.status(400).json({ message: "Invalid wallet address format" });
+      }
+
+      // Check if transaction hash already used
+      const existingTransaction = await storage.getTransactionByHash(transactionHash);
+      if (existingTransaction) {
+        return res.status(400).json({ message: "Transaction hash already processed" });
+      }
+
+      // Get user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Calculate exchange rates
+      const exchangeRates = {
+        ETH: 300000, // 1 ETH = 300,000 NTIQ
+        USDT: 100,   // 1 USDT = 100 NTIQ
+        USDC: 100    // 1 USDC = 100 NTIQ
+      };
+
+      const expectedCrypto = ntiqAmount / exchangeRates[paymentToken as keyof typeof exchangeRates];
+      const receivedCrypto = parseFloat(cryptoAmount);
+
+      // Allow 5% tolerance for gas fees and price fluctuation
+      const tolerance = 0.05;
+      if (Math.abs(receivedCrypto - expectedCrypto) > expectedCrypto * tolerance) {
+        return res.status(400).json({ 
+          message: `Payment amount mismatch. Expected: ${expectedCrypto.toFixed(6)} ${paymentToken}, Received: ${receivedCrypto} ${paymentToken}` 
+        });
+      }
+
+      // Update user balance
+      const newBalance = user.balance + ntiqAmount;
+      await storage.updateUserBalance(userId, newBalance);
+
+      // Log crypto transaction
+      await storage.logTransaction({
+        userId,
+        type: 'crypto_purchase',
+        amount: ntiqAmount,
+        description: `Purchased ${ntiqAmount} NTIQ with ${receivedCrypto} ${paymentToken}`,
+        relatedId: transactionHash,
+        metadata: JSON.stringify({
+          paymentToken,
+          cryptoAmount: receivedCrypto,
+          transactionHash,
+          userAddress,
+          exchangeRate: exchangeRates[paymentToken as keyof typeof exchangeRates]
+        })
+      });
+
+      // Store transaction record
+      await storage.createCryptoTransaction({
+        userId,
+        transactionHash,
+        paymentToken,
+        cryptoAmount: receivedCrypto,
+        ntiqAmount,
+        userAddress,
+        status: 'completed'
+      });
+
+      console.log(`✅ Crypto purchase successful: User ${user.username} bought ${ntiqAmount} NTIQ with ${receivedCrypto} ${paymentToken}`);
+
+      res.json({ 
+        success: true, 
+        ntiqAmount,
+        newBalance,
+        transactionHash,
+        message: "Crypto payment processed successfully" 
+      });
+    } catch (error) {
+      console.error("Crypto purchase failed:", error);
+      res.status(500).json({ message: "Failed to process crypto payment" });
+    }
+  });
+
+  // Buy NTIQ with crypto (legacy endpoint for backward compatibility)
   app.post("/api/user/buy-ntiq", async (req, res) => {
     try {
       const userId = (req as any).session?.userId;

@@ -221,6 +221,23 @@ export const userVerifications = pgTable("user_verifications", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const cryptoTransactions = pgTable("crypto_transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  transactionHash: varchar("transaction_hash", { length: 66 }).notNull().unique(),
+  paymentToken: varchar("payment_token", { length: 10 }).notNull(), // ETH, USDT, USDC
+  cryptoAmount: numeric("crypto_amount", { precision: 18, scale: 8 }).notNull(),
+  ntiqAmount: integer("ntiq_amount").notNull(),
+  userAddress: varchar("user_address", { length: 42 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, completed, failed
+  blockNumber: integer("block_number"),
+  gasUsed: varchar("gas_used", { length: 50 }),
+  networkFee: varchar("network_fee", { length: 50 }),
+  exchangeRate: numeric("exchange_rate", { precision: 18, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const banners = pgTable("banners", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
