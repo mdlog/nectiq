@@ -1945,7 +1945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes - protected by wallet-based authentication
   app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     try {
-      const users = await storage.getTopPredictors(1000); // Get all users
+      const users = await storage.getAllUsers(); // Get all users including admins for stats
       const allPredictions = await storage.getRecentPredictions(1000); // Get all predictions
       
       const totalUsers = users.length;
@@ -1979,7 +1979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
-      const users = await storage.getTopPredictors(1000); // Get all users
+      const users = await storage.getAllUsers(); // Get all users including admins for admin panel
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: "Failed to get users" });

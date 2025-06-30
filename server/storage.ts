@@ -41,6 +41,8 @@ export interface IStorage {
   updateUserStats(id: number, totalPredictions: number, correctPredictions: number, totalRewards: number): Promise<void>;
   updateUsername(id: number, username: string): Promise<void>;
   updateProfilePhoto(id: number, profilePhoto: string): Promise<void>;
+  getAllUsers(): Promise<User[]>;
+  getTopPredictors(limit?: number): Promise<User[]>;
 
   // Prediction operations
   createPrediction(prediction: any): Promise<Prediction>;
@@ -368,6 +370,27 @@ export class DatabaseStorage implements IStorage {
 
   async getRecentRewards(userId: number, limit: number = 10): Promise<Reward[]> {
     return await db.select().from(rewards).where(eq(rewards.userId, userId)).orderBy(desc(rewards.createdAt)).limit(limit);
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select({
+      id: users.id,
+      uid: users.uid,
+      username: users.username,
+      password: users.password,
+      walletAddress: users.walletAddress,
+      authMethod: users.authMethod,
+      isAdmin: users.isAdmin,
+      balance: users.balance,
+      totalPredictions: users.totalPredictions,
+      correctPredictions: users.correctPredictions,
+      totalRewards: users.totalRewards,
+      profilePhoto: users.profilePhoto,
+      email: users.email,
+      twitterHandle: users.twitterHandle,
+      emailVerified: users.emailVerified,
+      twitterVerified: users.twitterVerified
+    }).from(users).orderBy(desc(users.totalRewards));
   }
 
   async getTopPredictors(limit: number = 10): Promise<User[]> {
