@@ -451,40 +451,40 @@ export default function UserDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="profile" className="space-y-4">
-          <TabsList className="bg-surface border border-surface-light">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-primary">
+          <TabsList className="bg-surface border border-surface-light flex flex-wrap justify-start w-full p-1 gap-1">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
               <UserCircle className="mr-1" size={16} />
               Profile
             </TabsTrigger>
-            <TabsTrigger value="predictions" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="predictions" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
               <Clock className="mr-1" size={16} />
               My Predictions
             </TabsTrigger>
-            <TabsTrigger value="achievements" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="achievements" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
               <Award className="mr-1" size={16} />
               Achievements
             </TabsTrigger>
-            <TabsTrigger value="challenges" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="challenges" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
               <Calendar className="mr-1" size={16} />
               Daily Challenges
             </TabsTrigger>
-            <TabsTrigger value="rewards" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="rewards" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
               <History className="mr-1" size={16} />
               Reward History
             </TabsTrigger>
-            <TabsTrigger value="market" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="market" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
               <Eye className="mr-1" size={16} />
               Market Watch
             </TabsTrigger>
-            <TabsTrigger value="performance" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="performance" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
               <Activity className="mr-1" size={16} />
               Performance
             </TabsTrigger>
-            <TabsTrigger value="battles" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="battles" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
               <Swords className="mr-1" size={16} />
               Battles
             </TabsTrigger>
-            <TabsTrigger value="financial" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="financial" className="data-[state=active]:bg-primary px-3 py-2 text-sm">
               <Wallet className="mr-1" size={16} />
               Financial
             </TabsTrigger>
