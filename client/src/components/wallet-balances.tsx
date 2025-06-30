@@ -214,7 +214,7 @@ export function WalletBalances({ walletAddress }: WalletBalancesProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-500">Token Balances:</span>
+        <span className="text-xs text-white font-medium">Token Balances:</span>
         <Button
           onClick={fetchAllBalances}
           variant="ghost"
@@ -234,25 +234,25 @@ export function WalletBalances({ walletAddress }: WalletBalancesProps) {
           <div key={token.symbol} className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <Coins size={12} className={token.color} />
-              <span className="text-xs text-slate-400">{token.symbol}:</span>
+              <span className="text-xs text-gray-300">{token.symbol}:</span>
             </div>
             <div className="flex items-center space-x-1">
               <span className={`text-xs font-medium ${token.color}`}>
                 {parseFloat(token.balance).toLocaleString()}
               </span>
-              <span className="text-xs text-slate-500">{token.symbol}</span>
+              <span className="text-xs text-gray-400">{token.symbol}</span>
             </div>
           </div>
         ))}
       </div>
 
       {lastUpdated && (
-        <div className="text-xs text-slate-600 text-center">
+        <div className="text-xs text-gray-300 text-center">
           Last updated: {lastUpdated.toLocaleTimeString()}
         </div>
       )}
 
-      <div className="text-xs text-slate-600 space-y-0.5">
+      <div className="text-xs text-gray-300 space-y-0.5">
         <p className="flex items-center">
           <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
           Real-time balances from Ethereum mainnet

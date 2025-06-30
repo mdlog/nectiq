@@ -1216,7 +1216,7 @@ export default function UserDashboard() {
 
                         {/* Wallet Token Balances */}
                         <div className="mt-3 space-y-2">
-                          <div className="text-xs text-slate-500 mb-2">Wallet Token Balances:</div>
+                          <div className="text-xs text-white font-medium mb-2">Wallet Token Balances:</div>
                           <WalletBalances walletAddress={user.walletAddress} />
                         </div>
                       </div>
