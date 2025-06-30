@@ -1,6 +1,7 @@
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { TrendingUp, Trophy, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 
@@ -72,11 +73,68 @@ function CryptoPriceTicker() {
   );
 }
 
+function LandingHeader() {
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center space-x-2">
+            <img 
+              src={nectiqLogo} 
+              alt="Nectiq" 
+              className="h-10 rounded-lg"
+              style={{ 
+                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                mixBlendMode: 'screen'
+              }}
+            />
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-foreground">Nectiq</h1>
+              <p className="text-xs text-muted-foreground">Tactics. Timing. Triumph.</p>
+            </div>
+          </div>
+
+          {/* Navigation - Simple for landing page */}
+          <nav className="hidden md:flex items-center space-x-6">
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+              Features
+            </a>
+            <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">
+              About
+            </a>
+            <a href="#contact" className="text-muted-foreground hover:text-foreground transition-colors">
+              Contact
+            </a>
+          </nav>
+
+          {/* CTA Button */}
+          <div className="flex items-center">
+            <Button 
+              onClick={() => {
+                document.getElementById('wallet-section')?.scrollIntoView({ 
+                  behavior: 'smooth' 
+                });
+              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              Get Started
+            </Button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-16">
+      {/* Header */}
+      <LandingHeader />
+      
       {/* Main Content */}
-      <main className="px-6 py-20">
+      <main className="px-6 pt-32 pb-20">
         <div className="max-w-4xl mx-auto">
           {/* Logo and Title Section */}
           <div className="text-center mb-16">
@@ -108,7 +166,7 @@ export default function LandingPage() {
           </div>
 
           {/* Features Grid */}
-          <div className="grid md:grid-cols-3 gap-6 mb-16">
+          <div id="features" className="grid md:grid-cols-3 gap-6 mb-16">
             <Card className="bg-card border-border hover:bg-accent/50 transition-colors">
               <CardHeader className="text-center">
                 <TrendingUp className="w-12 h-12 text-primary mx-auto mb-4" />
@@ -146,8 +204,20 @@ export default function LandingPage() {
             </Card>
           </div>
 
+          {/* About Section */}
+          <div id="about" className="mb-16">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-foreground mb-4">About Nectiq</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Nectiq combines the excitement of gaming with the potential of cryptocurrency markets. 
+                Our platform offers multiple ways to engage with crypto predictions, from individual challenges 
+                to competitive battles and survival tournaments.
+              </p>
+            </div>
+          </div>
+
           {/* Wallet Connection Card - Centered */}
-          <div className="max-w-md mx-auto">
+          <div id="wallet-section" className="max-w-md mx-auto mb-16">
             <Card className="bg-card border-border">
               <CardHeader className="text-center px-8 pb-4">
                 <CardTitle className="text-2xl text-card-foreground">
@@ -163,6 +233,22 @@ export default function LandingPage() {
                 </p>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Contact Section */}
+          <div id="contact" className="text-center">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Get in Touch</h2>
+            <p className="text-muted-foreground mb-6">
+              Have questions? We're here to help you get started with crypto predictions.
+            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Email: support@nectiq.com
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Follow us on social media for updates and tips
+              </p>
+            </div>
           </div>
         </div>
       </main>
