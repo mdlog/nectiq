@@ -205,7 +205,7 @@ export function WalletBalances({ walletAddress }: WalletBalancesProps) {
 
   if (!walletAddress || !primaryWallet) {
     return (
-      <div className="text-xs text-slate-500">
+      <div className="text-xs text-gray-300">
         Connect wallet to view token balances
       </div>
     );
