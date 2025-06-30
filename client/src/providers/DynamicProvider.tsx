@@ -5,6 +5,7 @@ import { CosmosWalletConnectors } from '@dynamic-labs/cosmos';
 import { StarknetWalletConnectors } from '@dynamic-labs/starknet';
 import { ReactNode } from 'react';
 import { useLocation } from 'wouter';
+import { queryClient } from '@/lib/queryClient';
 
 interface DynamicProviderProps {
   children: ReactNode;
@@ -91,18 +92,21 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                     const data = await response.json();
                     console.log('Backend authentication successful:', data);
                     
+                    // Invalidate all queries to refresh authentication state
+                    await queryClient.invalidateQueries();
+                    
                     // Redirect to home page after successful auth with smooth navigation
                     setTimeout(() => {
                       navigate('/home');
-                      window.location.reload(); // Refresh to update authentication state
-                    }, 300);
+                      // No need for page reload since we invalidated queries
+                    }, 1500);
                   } catch (jsonError) {
                     console.error('JSON parsing error on success response:', jsonError);
                     // Still redirect on success even if JSON parsing fails
+                    await queryClient.invalidateQueries();
                     setTimeout(() => {
                       navigate('/home');
-                      window.location.reload(); // Refresh to update authentication state
-                    }, 300);
+                    }, 1500);
                   }
                 } else {
                   try {
