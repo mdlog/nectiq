@@ -62,17 +62,25 @@ export default function BattlesPage() {
   // Fetch battles data
   const { data: battles = [], isLoading: battlesLoading } = useQuery({
     queryKey: ['/api/battles/live'],
-    refetchInterval: 5000,
+    refetchInterval: 2000, // Auto-refresh every 2 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   // Fetch battle statistics
   const { data: stats, isLoading: statsLoading } = useQuery<BattleStats>({
     queryKey: ['/api/battles/stats'],
+    refetchInterval: 4000, // Auto-refresh every 4 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   // Fetch crypto prices for filtering
   const { data: cryptos = [] } = useQuery({
     queryKey: ['/api/crypto/prices'],
+    refetchInterval: 1000, // Auto-refresh every 1 second
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   // Filter battles based on search and filters

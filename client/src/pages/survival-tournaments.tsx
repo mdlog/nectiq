@@ -57,7 +57,9 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
   // Query for current round status
   const { data: roundStatus, isLoading: isLoadingRound } = useQuery<RoundStatus>({
     queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`],
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 2000, // Auto-refresh every 2 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
     queryFn: async () => {
       console.log('Fetching round status for tournament:', tournament.id);
       const response = await fetch(`/api/survival-tournaments/${tournament.id}/current-round`, {
@@ -300,7 +302,9 @@ const SurvivalTournaments = () => {
   // Fetch all survival tournaments
   const { data: tournaments = [], isLoading } = useQuery<SurvivalTournament[]>({
     queryKey: ['/api/survival-tournaments'],
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 3000, // Auto-refresh every 3 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   // Fetch user data
