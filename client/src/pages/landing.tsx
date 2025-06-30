@@ -1,6 +1,7 @@
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
-import { TrendingUp, Trophy, Zap, Coins } from "lucide-react";
+import { TrendingUp, Trophy, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import nectiqLogo from "@/assets/nectiq-logo.png";
 
 export default function LandingPage() {
   return (
@@ -11,11 +12,17 @@ export default function LandingPage() {
           {/* Logo and Title Section */}
           <div className="text-center mb-16">
             {/* Logo */}
-            <div className="flex items-center justify-center space-x-3 mb-8">
-              <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center">
-                <Coins className="w-8 h-8 text-primary-foreground" />
-              </div>
-              <span className="text-foreground text-3xl font-bold">Nectiq</span>
+            <div className="flex items-center justify-center mb-8">
+              <img 
+                src={nectiqLogo} 
+                alt="Nectiq - Tactics. Timing. Triumph." 
+                className="h-20 rounded-lg p-2" 
+                style={{ 
+                  backgroundColor: 'var(--surface)',
+                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))',
+                  mixBlendMode: 'screen'
+                }}
+              />
             </div>
 
             {/* Title */}
