@@ -238,7 +238,7 @@ export function WalletBalances({ walletAddress }: WalletBalancesProps) {
             </div>
             <div className="flex items-center space-x-1">
               <span className={`text-xs font-medium ${token.color}`}>
-                {parseFloat(token.balance).toLocaleString()}
+                {parseFloat(token.balance).toFixed(5)}
               </span>
               <span className="text-xs text-gray-400">{token.symbol}</span>
             </div>
