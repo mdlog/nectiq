@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -1170,8 +1170,83 @@ export default function UserDashboard() {
                     Wallet Connection
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <WalletConnect />
+                <CardContent className="space-y-4">
+                  {user?.walletAddress ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="text-green-500" size={20} />
+                        <span className="font-medium text-white">Wallet Connected</span>
+                      </div>
+                      
+                      <div className="p-4 bg-surface-light rounded-lg space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-400">Address:</span>
+                          <div className="flex items-center space-x-2">
+                            <code className="text-sm bg-surface px-2 py-1 rounded text-white">
+                              {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
+                            </code>
+                            <Button
+                              onClick={() => {
+                                navigator.clipboard.writeText(user.walletAddress);
+                                setWalletCopied(true);
+                                setTimeout(() => setWalletCopied(false), 2000);
+                                toast({
+                                  title: "Address Copied",
+                                  description: "Wallet address copied to clipboard",
+                                });
+                              }}
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                            >
+                              {walletCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-400">NTIQ Balance:</span>
+                          <div className="flex items-center space-x-1">
+                            <Coins className="text-warning" size={16} />
+                            <span className="font-bold text-lg text-white">{user.balance?.toLocaleString() || "0"}</span>
+                            <span className="text-xs text-slate-400">NTIQ</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-xs text-slate-500 space-y-1">
+                        <p className="flex items-center">
+                          <CheckCircle className="mr-1 text-green-500" size={12} />
+                          Wallet securely connected via Dynamic SDK
+                        </p>
+                        <p>• Balance updates automatically</p>
+                        <p>• You can now make predictions and earn rewards</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-sm text-slate-400">
+                        Connect your wallet to start making predictions and earning rewards
+                      </p>
+                      
+                      <Button
+                        onClick={() => setLocation('/wallet-login')}
+                        className="w-full"
+                      >
+                        <Wallet className="mr-2" size={16} />
+                        Connect Wallet
+                      </Button>
+
+                      <div className="text-xs text-slate-500 space-y-1">
+                        <p className="flex items-center">
+                          <AlertCircle className="mr-1" size={12} />
+                          Make sure you have a Web3 wallet installed
+                        </p>
+                        <p>• MetaMask, WalletConnect, and other wallets supported</p>
+                        <p>• Your wallet will open for connection approval</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -1185,7 +1260,7 @@ export default function UserDashboard() {
                       <div className="w-2 h-2 bg-success rounded-full mt-2"></div>
                       <div>
                         <p className="font-medium text-slate-300">Secure Connection</p>
-                        <p className="text-xs text-slate-400">Your wallet is connected via Web3Modal</p>
+                        <p className="text-xs text-slate-400">Your wallet is connected via Dynamic SDK</p>
                       </div>
                     </div>
                     
@@ -1193,15 +1268,23 @@ export default function UserDashboard() {
                       <div className="w-2 h-2 bg-warning rounded-full mt-2"></div>
                       <div>
                         <p className="font-medium text-slate-300">Balance Sync</p>
-                        <p className="text-xs text-slate-400">Real-time balance updates from blockchain</p>
+                        <p className="text-xs text-slate-400">Real-time balance updates from platform</p>
                       </div>
                     </div>
                     
                     <div className="flex items-start space-x-2">
                       <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
                       <div>
-                        <p className="font-medium text-slate-300">Multi-Network</p>
-                        <p className="text-xs text-slate-400">Supports Ethereum, Polygon, and Arbitrum</p>
+                        <p className="font-medium text-slate-300">Multi-Chain Support</p>
+                        <p className="text-xs text-slate-400">Supports Ethereum, Solana, and other networks</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="font-medium text-slate-300">Anti-Abuse Protection</p>
+                        <p className="text-xs text-slate-400">Advanced security against multiple wallet usage</p>
                       </div>
                     </div>
                   </div>
