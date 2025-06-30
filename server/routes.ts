@@ -2837,7 +2837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/predictions", requireAdmin, async (req, res) => {
     try {
-      const predictions = await storage.getRecentPredictions(100); // Get recent predictions
+      const predictions = await storage.getAllPredictions(); // Get all predictions with user details
       res.json(predictions);
     } catch (error) {
       res.status(500).json({ message: "Failed to get predictions" });
