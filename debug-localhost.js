@@ -80,7 +80,7 @@ function checkDynamicLabs() {
     
     const req = https.request({
       hostname: 'app.dynamic.xyz',
-      path: '/api/v0/environments/01933fe7-37b8-73b8-91b9-2f53e5ba52c3',
+      path: '/api/v0/environments/bd026474-57a4-4b86-96c5-4897759d9b62',
       method: 'GET',
       headers: {
         'User-Agent': 'Nectiq-Debug/1.0'

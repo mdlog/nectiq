@@ -10,7 +10,7 @@ Create or update your `.env` file with:
 
 ```env
 # Dynamic Labs Environment ID (required for wallet connection)
-VITE_DYNAMIC_ENVIRONMENT_ID=your_dynamic_environment_id_here
+VITE_DYNAMIC_ENVIRONMENT_ID=bd026474-57a4-4b86-96c5-4897759d9b62
 
 # Session Secret
 SESSION_SECRET=localhost-crypto-predict-session-secret
