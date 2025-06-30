@@ -76,7 +76,7 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
       transactionHash: string;
       cryptoAmount: string;
     }) => {
-      const response = await fetch('/api/user/buy-ntiq-crypto', {
+      const response = await fetch('/api/crypto/process-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -142,6 +142,8 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
   };
 
   const handleCryptoPayment = async () => {
+    console.log("🔵 Starting crypto payment process...");
+    
     if (!isConnected) {
       toast({
         title: "Wallet Not Connected",
@@ -160,9 +162,20 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
       return;
     }
 
+    if (!window.ethereum) {
+      toast({
+        title: "MetaMask Not Found",
+        description: "Please install MetaMask to make crypto payments",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const ntiq = parseFloat(ntiqAmount);
       const crypto = parseFloat(cryptoAmount);
+
+      console.log("🔵 Payment details:", { ntiq, crypto, paymentMethod });
 
       if (ntiq < 100) {
         toast({
@@ -173,46 +186,59 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
         return;
       }
 
-      // Get wallet address for receiving payments (this should be your platform's wallet)
-      const PLATFORM_WALLET = "0x742d35Cc6434C0532925C3b8E1AD3aF4E1a3c586"; // Replace with your actual wallet
+      // Platform wallet address to receive payments
+      const PLATFORM_WALLET = "0x742d35Cc6434C0532925C3b8E1AD3aF4E1a3c586";
 
-      let transactionParams;
+      console.log("🔵 Preparing transaction...", { 
+        from: userAddress, 
+        to: PLATFORM_WALLET, 
+        amount: crypto,
+        method: paymentMethod 
+      });
 
-      if (paymentMethod === "ETH") {
-        // Native ETH transfer
-        const weiValue = Math.floor(crypto * Math.pow(10, 18));
-        transactionParams = {
-          from: userAddress,
-          to: PLATFORM_WALLET,
-          value: `0x${weiValue.toString(16)}`,
-        };
-      } else {
-        // ERC-20 token transfer (USDT/USDC)
-        const tokenContract = TOKEN_CONTRACTS[paymentMethod as keyof typeof TOKEN_CONTRACTS];
-        const decimals = 6; // USDT/USDC typically use 6 decimals
-        const amount = Math.floor(crypto * Math.pow(10, decimals));
-        
-        // ERC-20 transfer function call data
-        const transferData = `0xa9059cbb000000000000000000000000${PLATFORM_WALLET.slice(2)}${amount.toString(16).padStart(64, '0')}`;
-        
-        transactionParams = {
-          from: userAddress,
-          to: tokenContract,
-          data: transferData,
-        };
+      // For now, let's support only ETH to simplify debugging
+      if (paymentMethod !== "ETH") {
+        toast({
+          title: "Currently ETH Only",
+          description: "For now, only ETH payments are supported",
+          variant: "destructive",
+        });
+        return;
       }
+
+      // Convert ETH to Wei (simplest conversion)
+      const weiValue = Math.floor(crypto * 1e18);
+      const hexValue = `0x${weiValue.toString(16)}`;
+
+      console.log("🔵 ETH conversion:", { crypto, weiValue, hexValue });
+
+      const transactionParams = {
+        from: userAddress,
+        to: PLATFORM_WALLET,
+        value: hexValue,
+      };
+
+      console.log("🔵 Transaction params:", transactionParams);
 
       // Send transaction via MetaMask
       let txHash: string = "";
-      if (window.ethereum) {
-        const result = await window.ethereum.request({
-          method: 'eth_sendTransaction',
-          params: [transactionParams],
-        });
+      
+      console.log("🔵 Requesting MetaMask transaction...");
+      toast({
+        title: "Opening MetaMask",
+        description: "Please confirm the transaction in MetaMask",
+      });
 
-        txHash = result as unknown as string;
-        setTransactionHash(txHash);
-      }
+      const result = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParams],
+      });
+
+      console.log("🔵 MetaMask response:", result);
+      txHash = result as unknown as string;
+      setTransactionHash(txHash);
+
+      console.log("🔵 Transaction submitted with hash:", txHash);
 
       toast({
         title: "Transaction Sent",
@@ -327,6 +353,34 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
           </div>
         )}
 
+        {/* Debug Connection */}
+        {!isConnected && (
+          <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
+            <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">
+              MetaMask not connected. Click to connect:
+            </p>
+            <Button
+              onClick={handleConnectWallet}
+              variant="outline"
+              className="w-full"
+            >
+              🦊 Connect MetaMask
+            </Button>
+          </div>
+        )}
+
+        {/* Connection Status */}
+        {isConnected && userAddress && (
+          <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+            <p className="text-sm text-green-700 dark:text-green-300 mb-1">
+              ✓ MetaMask Connected
+            </p>
+            <p className="text-xs text-green-600 dark:text-green-400 font-mono">
+              {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
+            </p>
+          </div>
+        )}
+
         {/* Buy Button */}
         <Button
           onClick={handleCryptoPayment}
@@ -348,7 +402,7 @@ export function CryptoTransaction({ userBalance = 0, onSuccess }: CryptoTransact
           ) : (
             <>
               <CreditCard className="mr-2" size={16} />
-              Buy NTIQ with {paymentMethod}
+              {isConnected ? `Buy NTIQ with ${paymentMethod}` : 'Connect MetaMask First'}
             </>
           )}
         </Button>
