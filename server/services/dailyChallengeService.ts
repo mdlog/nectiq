@@ -46,7 +46,7 @@ export class DailyChallengeService {
       },
       {
         name: "High Roller",
-        description: "Make a prediction with 500+ PTS stake",
+        description: "Make a prediction with 500+ NTIQ stake",
         type: "high_stake",
         target: 500,
         reward: 400

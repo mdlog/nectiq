@@ -158,7 +158,7 @@ export function DailyChallenges() {
             <div className="flex items-center space-x-3">
               <Coins className="w-8 h-8 text-yellow-500" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">PTS Earned</p>
+                <p className="text-sm font-medium text-muted-foreground">NTIQ Earned</p>
                 <p className="text-2xl font-bold">{totalRewardsToday}</p>
               </div>
             </div>
@@ -219,7 +219,7 @@ export function DailyChallenges() {
                       )}
                     </div>
                     <Badge variant={userChallenge.isCompleted ? "default" : "outline"}>
-                      +{userChallenge.challenge.reward} PTS
+                      +{userChallenge.challenge.reward} NTIQ
                     </Badge>
                   </div>
                   <CardTitle className="text-lg">{userChallenge.challenge.name}</CardTitle>
