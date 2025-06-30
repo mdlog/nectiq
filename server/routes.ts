@@ -1233,6 +1233,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserBalance(userId, newBalance);
       console.log(`Balance deducted: User ${userId} balance ${user.balance} -> ${newBalance} (stake: ${validatedData.stakeAmount})`);
 
+      // Check for achievement progress updates after prediction creation
+      try {
+        const { AchievementService } = await import('./services/achievementService');
+        const achievementService = new AchievementService();
+        await achievementService.checkAndUpdateAchievements(userId);
+      } catch (error) {
+        console.error('Error checking achievements after prediction:', error);
+      }
+
+      // Check for daily challenge progress updates after prediction creation
+      try {
+        const { DailyChallengeService } = await import('./services/dailyChallengeService');
+        const dailyChallengeService = new DailyChallengeService();
+        await dailyChallengeService.updateChallengeProgress(userId);
+      } catch (error) {
+        console.error('Error checking daily challenges after prediction:', error);
+      }
+
       res.json(prediction);
     } catch (error) {
       console.error("Prediction creation error:", error);
@@ -3147,6 +3165,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log(`✅ Awarded ${amount} NTIQ to user ${userId} for ${type}: ${description}`);
+      
+      // Broadcast reward notification to admins
+      try {
+        broadcastToAdmins({
+          type: 'reward_awarded',
+          data: {
+            userId,
+            username: user.username,
+            amount,
+            rewardType: type,
+            description,
+            timestamp: new Date().toISOString()
+          }
+        });
+      } catch (error) {
+        console.error('Error broadcasting reward notification:', error);
+      }
+      
       return true;
     } catch (error) {
       console.error(`Error awarding ${type} reward to user ${userId}:`, error);
