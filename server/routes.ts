@@ -4436,10 +4436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Tournament not found' });
       }
 
-      // Only allow deletion of tournaments that haven't started yet
-      if (tournament.status !== 'open') {
-        return res.status(400).json({ message: 'Can only delete tournaments that are open (not started)' });
-      }
+      // Allow deletion of tournaments in any status (as requested by admin)
 
       // Delete the tournament
       await storage.deleteSurvivalTournament(tournamentId);
