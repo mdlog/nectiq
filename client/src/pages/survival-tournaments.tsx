@@ -373,36 +373,28 @@ const SurvivalTournaments = () => {
                       
                       {user ? (
                         <div className="grid grid-cols-2 gap-3">
-                          <Button
-                            onClick={(e) => {
-                              alert('PRICE UP clicked!');
-                              console.log('PRICE UP button clicked', e);
-                              e.preventDefault();
-                              e.stopPropagation();
+                          <button
+                            onClick={() => {
+                              alert('PRICE UP NATIVE BUTTON clicked!');
+                              console.log('PRICE UP native button clicked');
                               handleMakePrediction(tournament, 'up');
                             }}
-                            disabled={makePredictionMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 cursor-pointer"
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded cursor-pointer"
                             type="button"
                           >
-                            <TrendingUp className="h-4 w-4 mr-2" />
-                            PRICE UP
-                          </Button>
-                          <Button
-                            onClick={(e) => {
-                              alert('PRICE DOWN clicked!');
-                              console.log('PRICE DOWN button clicked', e);
-                              e.preventDefault();
-                              e.stopPropagation();
+                            ⬆️ PRICE UP
+                          </button>
+                          <button
+                            onClick={() => {
+                              alert('PRICE DOWN NATIVE BUTTON clicked!');
+                              console.log('PRICE DOWN native button clicked');
                               handleMakePrediction(tournament, 'down');
                             }}
-                            disabled={makePredictionMutation.isPending}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 cursor-pointer"
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded cursor-pointer"
                             type="button"
                           >
-                            <TrendingDown className="h-4 w-4 mr-2" />
-                            PRICE DOWN
-                          </Button>
+                            ⬇️ PRICE DOWN
+                          </button>
                         </div>
                       ) : (
                         <div className="bg-gray-600/30 rounded-lg p-4 text-center">
