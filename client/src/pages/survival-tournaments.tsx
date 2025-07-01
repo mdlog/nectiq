@@ -338,6 +338,11 @@ const SurvivalTournaments = () => {
                     </p>
                   </div>
 
+                  {/* Debug Info */}
+                  <div className="bg-blue-900/30 rounded-lg p-2 mb-2 text-xs">
+                    <p className="text-blue-300">Debug: Status={tournament.status}, User={user ? 'logged in' : 'not logged in'}</p>
+                  </div>
+
                   {/* Active Round Predictions */}
                   {tournament.status === 'active' && (
                     <div className="bg-slate-700/50 rounded-lg p-4">
@@ -348,6 +353,11 @@ const SurvivalTournaments = () => {
                         <p className="text-slate-300 text-sm mt-1">
                           Choose price direction for {cryptoData?.name}:
                         </p>
+                        {!user && (
+                          <p className="text-red-400 text-xs mt-1">
+                            Please connect wallet to make predictions
+                          </p>
+                        )}
                       </div>
                       
                       <div className="grid grid-cols-2 gap-3">
