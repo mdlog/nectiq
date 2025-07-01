@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Trophy, Users, DollarSign, Clock, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
+import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
 
 // Types
 interface SurvivalTournament {
@@ -206,22 +208,79 @@ const SurvivalTournaments = () => {
     }
   };
 
+  // Real-time countdown component
+  const JoinCountdown = ({ tournament }: { tournament: SurvivalTournament }) => {
+    const [timeLeft, setTimeLeft] = useState<string>('');
+    
+    useEffect(() => {
+      const updateCountdown = () => {
+        if (tournament.status !== 'open') {
+          setTimeLeft('');
+          return;
+        }
+        
+        const now = new Date().getTime();
+        // For demo purposes, let's assume join deadline is 1 hour from start time
+        const joinDeadline = new Date(tournament.startTime).getTime() + (60 * 60 * 1000); // 1 hour from start
+        const diff = joinDeadline - now;
+        
+        if (diff <= 0) {
+          setTimeLeft('⏰ Join period ended');
+          return;
+        }
+        
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        if (hours > 0) {
+          setTimeLeft(`⏳ ${hours}h ${minutes}m ${seconds}s left to join`);
+        } else if (minutes > 0) {
+          setTimeLeft(`⏳ ${minutes}m ${seconds}s left to join`);
+        } else {
+          setTimeLeft(`⏳ ${seconds}s left to join`);
+        }
+      };
+      
+      updateCountdown();
+      const interval = setInterval(updateCountdown, 1000);
+      
+      return () => clearInterval(interval);
+    }, [tournament]);
+    
+    if (!timeLeft || tournament.status !== 'open') return null;
+    
+    return (
+      <div className="bg-orange-900/30 rounded-lg p-2 mb-3">
+        <p className="text-orange-300 text-sm font-medium text-center">
+          {timeLeft}
+        </p>
+      </div>
+    );
+  };
+
   if (tournamentsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center text-white">
-            <div className="animate-spin w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p>Loading tournaments...</p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+        <Header />
+        <div className="p-4">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center text-white">
+              <div className="animate-spin w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p>Loading tournaments...</p>
+            </div>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <Header />
+      <div className="p-4">
+        <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -441,22 +500,35 @@ const SurvivalTournaments = () => {
                     </div>
                   )}
 
-                  {/* Join Tournament Button */}
+                  {/* Join Tournament Section */}
                   {tournament.status === 'open' && (
-                    <Button
-                      onClick={() => handleJoinTournament(tournament)}
-                      disabled={joinTournamentMutation.isPending}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3"
-                    >
-                      {joinTournamentMutation.isPending ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Joining...
-                        </div>
-                      ) : (
-                        `Join Tournament (${tournament.entryFee} NTIQ)`
-                      )}
-                    </Button>
+                    <div>
+                      {/* Countdown Timer */}
+                      <JoinCountdown tournament={tournament} />
+                      
+                      {/* Join Button */}
+                      <Button
+                        onClick={() => handleJoinTournament(tournament)}
+                        disabled={joinTournamentMutation.isPending}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3"
+                      >
+                        {joinTournamentMutation.isPending ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Joining...
+                          </div>
+                        ) : (
+                          `Join Tournament (${tournament.entryFee} NTIQ)`
+                        )}
+                      </Button>
+                      
+                      {/* Join Info */}
+                      <div className="bg-blue-900/30 rounded-lg p-2 mt-2">
+                        <p className="text-blue-300 text-xs text-center">
+                          💡 Join now before the deadline to participate in the survival battle!
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
