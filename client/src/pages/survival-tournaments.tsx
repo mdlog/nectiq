@@ -341,6 +341,12 @@ const SurvivalTournaments = () => {
                   {/* Debug Info */}
                   <div className="bg-blue-900/30 rounded-lg p-2 mb-2 text-xs">
                     <p className="text-blue-300">Debug: Status={tournament.status}, User={user ? 'logged in' : 'not logged in'}</p>
+                    <button 
+                      onClick={() => alert('Test button works!')} 
+                      className="bg-orange-500 text-white px-2 py-1 rounded mt-1 text-xs"
+                    >
+                      Test Click
+                    </button>
                   </div>
 
                   {/* Active Round Predictions */}
@@ -362,17 +368,29 @@ const SurvivalTournaments = () => {
                       
                       <div className="grid grid-cols-2 gap-3">
                         <Button
-                          onClick={() => handleMakePrediction(tournament, 'up')}
+                          onClick={(e) => {
+                            console.log('PRICE UP button clicked', e);
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleMakePrediction(tournament, 'up');
+                          }}
                           disabled={makePredictionMutation.isPending}
-                          className="bg-green-600 hover:bg-green-700 text-white font-bold py-3"
+                          className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 cursor-pointer"
+                          type="button"
                         >
                           <TrendingUp className="h-4 w-4 mr-2" />
                           PRICE UP
                         </Button>
                         <Button
-                          onClick={() => handleMakePrediction(tournament, 'down')}
+                          onClick={(e) => {
+                            console.log('PRICE DOWN button clicked', e);
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleMakePrediction(tournament, 'down');
+                          }}
                           disabled={makePredictionMutation.isPending}
-                          className="bg-red-600 hover:bg-red-700 text-white font-bold py-3"
+                          className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 cursor-pointer"
+                          type="button"
                         >
                           <TrendingDown className="h-4 w-4 mr-2" />
                           PRICE DOWN
