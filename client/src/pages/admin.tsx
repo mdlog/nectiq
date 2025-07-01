@@ -100,6 +100,12 @@ export default function AdminPanel() {
   const [transactionPage, setTransactionPage] = useState(1);
   const [transactionsPerPage] = useState(15);
 
+  // Modal and state management
+  const [showBattleDetailsModal, setShowBattleDetailsModal] = useState(false);
+  const [selectedBattleDetails, setSelectedBattleDetails] = useState<any>(null);
+  const [showTournamentDetailsModal, setShowTournamentDetailsModal] = useState(false);
+  const [selectedTournamentDetails, setSelectedTournamentDetails] = useState<any>(null);
+
   // Security Dashboard enhancements state
   const [securityEventFilter, setSecurityEventFilter] = useState<"all" | "medium" | "high" | "critical">("all");
   const [securityWalletFilter, setSecurityWalletFilter] = useState("");
@@ -164,10 +170,6 @@ export default function AdminPanel() {
   const [showCreateBattleDialog, setShowCreateBattleDialog] = useState(false);
   const [showEditBattleDialog, setShowEditBattleDialog] = useState(false);
   const [editingBattle, setEditingBattle] = useState<any>(null);
-  const [showBattleDetailsModal, setShowBattleDetailsModal] = useState(false);
-  const [selectedBattleDetails, setSelectedBattleDetails] = useState<any>(null);
-  const [showTournamentDetailsModal, setShowTournamentDetailsModal] = useState(false);
-  const [selectedTournamentDetails, setSelectedTournamentDetails] = useState<any>(null);
   const [createBattleForm, setCreateBattleForm] = useState({
     challengerId: "",
     challengedId: "",
@@ -363,25 +365,9 @@ export default function AdminPanel() {
     },
   });
 
-  // Start tournament mutation
-  const startTournamentMutation = useMutation({
-    mutationFn: async (tournamentId: number) => {
-      const response = await fetch(`/api/admin/survival-tournaments/${tournamentId}/start`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error(await response.text());
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Success", description: "Tournament started successfully" });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
-  });
+
+
+
 
   // Battle mutations
   const createBattleMutation = useMutation({
@@ -513,6 +499,45 @@ export default function AdminPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/battles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Tournament mutations
+  const startTournamentMutation = useMutation({
+    mutationFn: async (tournamentId: number) => {
+      const response = await fetch(`/api/admin/survival-tournaments/${tournamentId}/start`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Tournament started successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteTournamentMutation = useMutation({
+    mutationFn: async (tournamentId: number) => {
+      const response = await fetch(`/api/admin/survival-tournaments/${tournamentId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Tournament deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -6181,7 +6206,12 @@ export default function AdminPanel() {
                               <TableCell>{new Date(tournament.createdAt).toLocaleDateString()}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
-                                  <Button size="sm" variant="outline">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => viewTournamentDetails(tournament)}
+                                    title="View Tournament Details"
+                                  >
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                   {tournament.status === 'open' && (
@@ -6190,11 +6220,18 @@ export default function AdminPanel() {
                                       variant="outline" 
                                       className="text-green-600"
                                       onClick={() => startTournament(tournament.id)}
+                                      title="Start Tournament"
                                     >
                                       <Play className="h-4 w-4" />
                                     </Button>
                                   )}
-                                  <Button size="sm" variant="outline" className="text-red-600">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="text-red-600"
+                                    onClick={() => deleteTournament(tournament.id)}
+                                    title="Delete Tournament"
+                                  >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
@@ -6387,6 +6424,145 @@ export default function AdminPanel() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Tournament Details Modal */}
+      {showTournamentDetailsModal && selectedTournamentDetails && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tournament Details #{selectedTournamentDetails?.id || 'N/A'}</h2>
+                <button
+                  onClick={() => {
+                    setShowTournamentDetailsModal(false);
+                    setSelectedTournamentDetails(null);
+                  }}
+                  className="h-8 w-8 p-0 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Tournament Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Tournament Information</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Title:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedTournamentDetails.title}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Description:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedTournamentDetails.description}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Cryptocurrency:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedTournamentDetails.cryptocurrency}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Entry Fee:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedTournamentDetails.entryFee} NTIQ</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Max Participants:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedTournamentDetails.maxParticipants}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Round Duration:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedTournamentDetails.roundDuration} minutes</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Status & Participants</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                        <Badge variant={
+                          selectedTournamentDetails.status === 'active' ? 'default' : 
+                          selectedTournamentDetails.status === 'completed' ? 'secondary' : 'outline'
+                        }>
+                          {selectedTournamentDetails.status}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Participants:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {selectedTournamentDetails.participantCount || 0}/{selectedTournamentDetails.maxParticipants}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Created Date:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {new Date(selectedTournamentDetails.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Created Time:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {new Date(selectedTournamentDetails.createdAt).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Prize Pool */}
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">Prize Pool</h3>
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {(selectedTournamentDetails.participantCount || 0) * selectedTournamentDetails.entryFee} NTIQ
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Total collected from {selectedTournamentDetails.participantCount || 0} participants
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t">
+                  {selectedTournamentDetails.status === 'open' && (
+                    <Button 
+                      onClick={() => {
+                        startTournament(selectedTournamentDetails.id);
+                        setShowTournamentDetailsModal(false);
+                        setSelectedTournamentDetails(null);
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Start Tournament
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      deleteTournament(selectedTournamentDetails.id);
+                      setShowTournamentDetailsModal(false);
+                      setSelectedTournamentDetails(null);
+                    }}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Tournament
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowTournamentDetailsModal(false);
+                      setSelectedTournamentDetails(null);
+                    }}
+                  >
+                    Close
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
