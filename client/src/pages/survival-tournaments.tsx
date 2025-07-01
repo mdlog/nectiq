@@ -49,6 +49,117 @@ interface RoundStatus {
 }
 
 // Component for round prediction interface
+const SurvivalParticipantsPanel = ({ tournament }: { tournament: SurvivalTournament }) => {
+  const { data: participants = [], isLoading } = useQuery<any[]>({
+    queryKey: ['/api/survival-tournaments', tournament.id, 'participants'],
+    refetchInterval: 2000, // Auto-refresh every 2 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+  });
+
+  const { data: roundStatus } = useQuery({
+    queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`],
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+  });
+
+  // Get participants with their predictions for current round
+  const participantsWithPredictions = participants.map(participant => {
+    // Note: We'll need to fetch round predictions separately or modify the API
+    // For now, we'll show participants without predictions until we have the right data
+    return {
+      ...participant,
+      prediction: null, // Will be filled when we get proper prediction data
+      predictionTime: null
+    };
+  });
+
+  // Sort by join time (earliest first)
+  const sortedParticipants = participantsWithPredictions.sort((a, b) => 
+    new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
+  );
+
+  return (
+    <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Users className="h-5 w-5" />
+          Survival Participants
+        </CardTitle>
+        <CardDescription className="text-gray-300">
+          {participants.length}/{tournament.maxParticipants} participants
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {isLoading ? (
+            <div className="text-center text-gray-300">Loading participants...</div>
+          ) : sortedParticipants.length === 0 ? (
+            <div className="text-center text-gray-300">No participants yet</div>
+          ) : (
+            sortedParticipants.map((participant, index) => (
+              <div key={participant.userId} className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-xs font-bold">
+                      {index + 1}
+                    </div>
+                    <span className="font-medium text-white">{participant.username}</span>
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    UID: {participant.uid}
+                  </div>
+                </div>
+                
+                <div className="text-xs text-gray-300 mb-2">
+                  Joined: {new Date(participant.joinedAt).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+
+                {/* Prediction Status */}
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-gray-400">Current Prediction:</div>
+                  <div className="flex items-center gap-1">
+                    {participant.prediction ? (
+                      <div className={`px-2 py-1 rounded text-xs font-bold ${
+                        participant.prediction === 'up' 
+                          ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                          : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                      }`}>
+                        {participant.prediction === 'up' ? '📈 UP' : '📉 DOWN'}
+                      </div>
+                    ) : (
+                      <div className="px-2 py-1 rounded text-xs bg-gray-500/20 text-gray-400 border border-gray-500/30">
+                        No prediction
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {participant.predictionTime && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    Predicted: {new Date(participant.predictionTime).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    })}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -466,11 +577,14 @@ const SurvivalTournaments = () => {
         {tournaments?.some(t => t.status === 'active') && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white mb-6 text-center">🎯 Active Rounds - Predict or Get Eliminated!</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-8">
               {tournaments
                 ?.filter(t => t.status === 'active')
                 .map((tournament) => (
-                  <RoundPredictionCard key={tournament.id} tournament={tournament} />
+                  <div key={tournament.id} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <RoundPredictionCard tournament={tournament} />
+                    <SurvivalParticipantsPanel tournament={tournament} />
+                  </div>
                 ))}
             </div>
           </div>

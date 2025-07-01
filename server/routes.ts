@@ -4235,6 +4235,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get survival tournament participants with their current round predictions
+  app.get('/api/survival-tournaments/:id/participants-with-predictions', async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      
+      if (!tournamentId || isNaN(tournamentId)) {
+        return res.status(400).json({ message: 'Invalid tournament ID' });
+      }
+
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      const participants = await storage.getSurvivalParticipants(tournamentId);
+      
+      // Get current active round
+      const currentRound = await storage.getCurrentRound(tournamentId);
+      
+      // Get predictions for current round if it exists
+      let roundPredictions: any[] = [];
+      if (currentRound) {
+        roundPredictions = await storage.getSurvivalPredictions(currentRound.id);
+      }
+      
+      // Combine participant data with their predictions
+      const participantsWithPredictions = participants.map((participant) => {
+        const prediction = roundPredictions.find(p => p.userId === participant.userId);
+        return {
+          id: participant.id,
+          userId: participant.userId,
+          username: participant.username || 'Unknown',
+          uid: participant.uid || 'Unknown',
+          status: participant.status,
+          joinedAt: participant.joinedAt,
+          eliminationRound: participant.eliminatedRound || null,
+          prediction: prediction?.prediction || null,
+          predictionTime: prediction?.submittedAt || null,
+          predictionPoints: prediction?.points || null
+        };
+      });
+
+      res.json(participantsWithPredictions);
+    } catch (error) {
+      console.error('Error fetching participants with predictions:', error);
+      res.status(500).json({ message: 'Failed to fetch participants with predictions' });
+    }
+  });
+
   // Submit prediction for active round
   app.post('/api/survival-tournaments/:id/predict', requireAuth, async (req: Request, res: Response) => {
     try {
