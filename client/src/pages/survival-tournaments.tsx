@@ -588,6 +588,49 @@ const SurvivalTournaments = () => {
           </div>
         )}
 
+        {/* Participants Section - Show for all tournaments with participants */}
+        {tournaments?.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">👥 Tournament Participants</h2>
+            <div className="space-y-8">
+              {tournaments.map((tournament) => (
+                <div key={`participants-${tournament.id}`} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white/10 backdrop-blur-sm border-white/20 text-white rounded-lg p-6">
+                    <h3 className="text-xl font-bold mb-4">{tournament.title}</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Status:</span>
+                        <span className={`font-bold ${
+                          tournament.status === 'active' ? 'text-green-400' :
+                          tournament.status === 'completed' ? 'text-blue-400' :
+                          'text-gray-400'
+                        }`}>{tournament.status}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Cryptocurrency:</span>
+                        <span className="font-bold">{tournament.cryptocurrency.toUpperCase()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Entry Fee:</span>
+                        <span className="font-bold">{tournament.entryFee} NTIQ</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Participants:</span>
+                        <span className="font-bold">{tournament.currentParticipants}/{tournament.maxParticipants}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Prize Pool:</span>
+                        <span className="font-bold text-yellow-400">{tournament.prizePool} NTIQ</span>
+                      </div>
+                    </div>
+                  </div>
+                  <SurvivalParticipantsPanel tournament={tournament} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Tournaments Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tournaments.map((tournament: SurvivalTournament) => (
