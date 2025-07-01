@@ -10,6 +10,7 @@ import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 import AdminPanel from "@/pages/admin";
 import Leaderboard from "@/pages/leaderboard";
+import Predictions from "@/pages/predictions";
 import BattlesPage from "@/pages/battles";
 import SurvivalTournamentsWorking from "@/pages/survival-tournaments-working";
 import NotFound from "@/pages/not-found";
@@ -98,6 +99,12 @@ function Router() {
       <Route path="/leaderboard">
         <ProtectedRoute>
           <Leaderboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/predictions">
+        <ProtectedRoute>
+          <Predictions />
         </ProtectedRoute>
       </Route>
       
