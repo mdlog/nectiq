@@ -588,10 +588,22 @@ const SurvivalTournaments = () => {
           </div>
         )}
 
+        {/* Scroll Indicator */}
+        {tournaments?.length > 0 && (
+          <div className="text-center mb-4">
+            <div className="animate-bounce">
+              <p className="text-white/70 text-sm mb-2">Scroll down for Tournament Participants</p>
+              <div className="text-2xl">⬇️</div>
+            </div>
+          </div>
+        )}
+
         {/* Participants Section - Show for all tournaments with participants */}
         {tournaments?.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">👥 Tournament Participants</h2>
+          <div className="mb-8 border-t-2 border-yellow-400/50 pt-8">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+              👥 Tournament Participants & Leaderboard
+            </h2>
             <div className="space-y-8">
               {tournaments.map((tournament) => (
                 <div key={`participants-${tournament.id}`} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
