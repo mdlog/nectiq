@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Trophy, Users, Clock, DollarSign, Target, Sword, Timer, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { Trophy, Users, DollarSign, Clock, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 
+// Types
 interface SurvivalTournament {
   id: number;
   title: string;
@@ -19,458 +17,59 @@ interface SurvivalTournament {
   maxParticipants: number;
   currentParticipants: number;
   prizePool: number;
-  status: string;
+  status: 'open' | 'active' | 'completed' | 'cancelled';
+  startTime: string;
+  endTime: string;
   currentRound: number;
   roundDuration: number;
-  startTime?: string;
-  endTime?: string;
-  nextRoundTime?: string;
-  creatorUsername: string;
-  winnerUsername?: string;
-  participants?: any[];
-  rounds?: any[];
+  eliminationCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface RoundStatus {
-  tournament: SurvivalTournament;
-  currentRound?: {
-    id: number;
-    roundNumber: number;
-    timeRemaining: number;
-    totalPredictions: number;
-    participantsRemaining: number;
-    startPrice?: number;
-    lastUpdated?: number;
-  };
-  userPrediction?: {
-    prediction: 'up' | 'down';
-    submittedAt: string;
-  };
+interface User {
+  id: number;
+  username: string;
+  balance: number;
+  isAdmin: boolean;
 }
 
-// Component for round prediction interface
-const SurvivalParticipantsPanel = ({ tournament }: { tournament: SurvivalTournament }) => {
-  const { data: participants = [], isLoading, error } = useQuery<any[]>({
-    queryKey: ['/api/survival-tournaments', tournament.id, 'participants-with-predictions'],
-    refetchInterval: 2000, // Auto-refresh every 2 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 0,
-  });
-
-  // Debug logging
-  console.log('SurvivalParticipantsPanel:', {
-    tournamentId: tournament.id,
-    tournamentTitle: tournament.title,
-    participantsCount: participants.length,
-    isLoading,
-    error: error?.message,
-    participants
-  });
-
-  // Sort by join time (earliest first)
-  const sortedParticipants = participants.sort((a, b) => 
-    new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
-  );
-
-  return (
-    <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Users className="h-5 w-5" />
-          Survival Participants
-        </CardTitle>
-        <CardDescription className="text-gray-300">
-          {participants.length}/{tournament.maxParticipants} participants
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {isLoading ? (
-            <div className="text-center text-gray-300">Loading participants...</div>
-          ) : sortedParticipants.length === 0 ? (
-            <div className="text-center text-gray-300">No participants yet</div>
-          ) : (
-            sortedParticipants.map((participant, index) => (
-              <div key={participant.userId} className="bg-white/5 rounded-lg p-3 border border-white/10">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-xs font-bold">
-                      {index + 1}
-                    </div>
-                    <span className="font-medium text-white">{participant.username}</span>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    UID: {participant.uid}
-                  </div>
-                </div>
-                
-                <div className="text-xs text-gray-300 mb-2">
-                  Joined: {new Date(participant.joinedAt).toLocaleString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </div>
-
-                {/* Prediction Status */}
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-400">Current Prediction:</div>
-                  <div className="flex items-center gap-1">
-                    {participant.prediction ? (
-                      <div className={`px-2 py-1 rounded text-xs font-bold ${
-                        participant.prediction === 'up' 
-                          ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-                          : 'bg-red-500/20 text-red-300 border border-red-500/30'
-                      }`}>
-                        {participant.prediction === 'up' ? '📈 UP' : '📉 DOWN'}
-                      </div>
-                    ) : (
-                      <div className="px-2 py-1 rounded text-xs bg-gray-500/20 text-gray-400 border border-gray-500/30">
-                        No prediction
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {participant.predictionTime && (
-                  <div className="text-xs text-gray-400 mt-1">
-                    Predicted: {new Date(participant.predictionTime).toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    })}
-                  </div>
-                )}
-
-                {/* Status indicator */}
-                <div className="flex items-center justify-between mt-2">
-                  <div className="text-xs text-gray-400">Status:</div>
-                  <div className={`px-2 py-1 rounded text-xs font-bold ${
-                    participant.status === 'active' 
-                      ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
-                      : participant.status === 'eliminated'
-                      ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                      : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-                  }`}>
-                    {participant.status === 'active' ? '✅ Active' : 
-                     participant.status === 'eliminated' ? '❌ Eliminated' : 
-                     participant.status}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament }) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [timeRemaining, setTimeRemaining] = useState(0);
-
-  // Query for current round status
-  const { data: roundStatus, isLoading: isLoadingRound } = useQuery<RoundStatus>({
-    queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`],
-    refetchInterval: 2000, // Auto-refresh every 2 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 0,
-    queryFn: async () => {
-      console.log('Fetching round status for tournament:', tournament.id);
-      const response = await fetch(`/api/survival-tournaments/${tournament.id}/current-round`, {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" }
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch round status");
-      }
-      const data = await response.json();
-      console.log('Round status response:', data);
-      return data;
-    },
-  });
-
-  // Mutation for submitting predictions
-  const submitPredictionMutation = useMutation({
-    mutationFn: async (prediction: 'up' | 'down') => {
-      console.log('Submitting prediction:', prediction, 'for tournament:', tournament.id);
-      try {
-        const result = await apiRequest(`/api/survival-tournaments/${tournament.id}/predict`, {
-          method: 'POST',
-          body: JSON.stringify({ prediction }),
-          headers: { 'Content-Type': 'application/json' },
-        });
-        console.log('Prediction result:', result);
-        return result;
-      } catch (error) {
-        console.error('Prediction error:', error);
-        throw error;
-      }
-    },
-    onSuccess: (data: any) => {
-      console.log('Prediction success:', data);
-      toast({
-        title: "Prediction Submitted!",
-        description: data.message || `Your ${data.prediction?.toUpperCase()} prediction recorded! ${data.entryFeeDeducted} NTIQ deducted. New balance: ${data.newBalance} NTIQ`,
-      });
-      // Refresh both round status and user data to update balance
-      queryClient.invalidateQueries({ queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments'] });
-    },
-    onError: (error: any) => {
-      console.error('Prediction mutation error:', error);
-      toast({
-        variant: "destructive",
-        title: "Prediction Failed",
-        description: error.message || "Failed to submit prediction. Please try again.",
-      });
-    },
-  });
-
-  // Update countdown timer
-  useEffect(() => {
-    if (!roundStatus?.currentRound?.timeRemaining) return;
-
-    const interval = setInterval(() => {
-      if (!roundStatus?.currentRound) return;
-      const remaining = Math.max(0, roundStatus.currentRound.timeRemaining - (Date.now() - (roundStatus.currentRound.lastUpdated || 0)));
-      setTimeRemaining(remaining);
-      
-      if (remaining <= 0) {
-        queryClient.invalidateQueries({ queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`] });
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [roundStatus, queryClient, tournament.id]);
-
-  const formatTime = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  if (isLoadingRound) {
-    return (
-      <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-red-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sword className="h-5 w-5 text-orange-600" />
-            Loading Round Status...
-          </CardTitle>
-        </CardHeader>
-      </Card>
-    );
-  }
-
-  if (!roundStatus?.currentRound) {
-    return (
-      <Card className="border-gray-200 bg-gray-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-gray-600" />
-            Round 1 starts when first player makes a prediction
-          </CardTitle>
-          <CardDescription>
-            Connect your wallet and make the first prediction to activate Round 1!
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
-  const { currentRound, userPrediction } = roundStatus;
-  const hasSubmittedPrediction = !!userPrediction;
-
-  return (
-    <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-red-50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sword className="h-5 w-5 text-orange-600" />
-          Round {currentRound.roundNumber} - Predict or Get Eliminated!
-        </CardTitle>
-        <CardDescription>
-          Make your prediction: Will {tournament.cryptocurrency} price go UP or DOWN?
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Round Stats */}
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="bg-white/60 rounded-lg p-3">
-            <div className="text-2xl font-bold text-orange-600">
-              <Clock className="h-5 w-5 inline mr-1" />
-              {formatTime(timeRemaining || currentRound.timeRemaining)}
-            </div>
-            <div className="text-sm text-gray-600">Time Left</div>
-          </div>
-          <div className="bg-white/60 rounded-lg p-3">
-            <div className="text-2xl font-bold text-blue-600">
-              <Users className="h-5 w-5 inline mr-1" />
-              {currentRound.participantsRemaining}
-            </div>
-            <div className="text-sm text-gray-600">Survivors</div>
-          </div>
-          <div className="bg-white/60 rounded-lg p-3">
-            <div className="text-2xl font-bold text-green-600">
-              <Target className="h-5 w-5 inline mr-1" />
-              {currentRound.totalPredictions}
-            </div>
-            <div className="text-sm text-gray-600">Predictions</div>
-          </div>
-        </div>
-
-        {/* Current Price Info */}
-        <div className="bg-white/80 rounded-lg p-4 text-center">
-          <div className="text-lg font-semibold text-gray-700">
-            Current {tournament.cryptocurrency} Price
-          </div>
-          <div className="text-3xl font-bold text-gray-900">
-            ${currentRound.startPrice?.toFixed(2) || 'Loading...'}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">
-            Round started at this price
-          </div>
-        </div>
-
-        {/* Prediction Buttons or Status */}
-        {hasSubmittedPrediction && userPrediction ? (
-          <div className="bg-green-100 border border-green-300 rounded-lg p-4 text-center">
-            <div className="flex items-center justify-center gap-2 text-green-700">
-              <div className="text-2xl">
-                {userPrediction.prediction === 'up' ? '📈' : '📉'}
-              </div>
-              <div>
-                <div className="font-semibold">Prediction Submitted!</div>
-                <div className="text-sm">
-                  You predicted: {userPrediction.prediction.toUpperCase()}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="text-center text-gray-700 font-medium">
-              ⚠️ Choose wisely - wrong predictions eliminate you!
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                size="lg"
-                className="h-20 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
-                onClick={() => {
-                  console.log('Price UP button clicked!');
-                  submitPredictionMutation.mutate('up');
-                }}
-                disabled={submitPredictionMutation.isPending}
-              >
-                <TrendingUp className="h-6 w-6 mr-2" />
-                <div>
-                  <div className="font-bold">
-                    {submitPredictionMutation.isPending ? 'SUBMITTING...' : 'PRICE UP'}
-                  </div>
-                  <div className="text-sm opacity-90">Bullish 📈</div>
-                  <div className="text-xs opacity-75 mt-1">
-                    -{tournament.entryFee} NTIQ
-                  </div>
-                </div>
-              </Button>
-              <Button
-                size="lg"
-                className="h-20 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
-                onClick={() => {
-                  console.log('Price DOWN button clicked!');
-                  submitPredictionMutation.mutate('down');
-                }}
-                disabled={submitPredictionMutation.isPending}
-              >
-                <TrendingDown className="h-6 w-6 mr-2" />
-                <div>
-                  <div className="font-bold">
-                    {submitPredictionMutation.isPending ? 'SUBMITTING...' : 'PRICE DOWN'}
-                  </div>
-                  <div className="text-sm opacity-90">Bearish 📉</div>
-                  <div className="text-xs opacity-75 mt-1">
-                    -{tournament.entryFee} NTIQ
-                  </div>
-                </div>
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Join Tournament Button - TESTING VISIBILITY */}
-        <div className="mt-6 mb-4 p-3 border-4 border-red-500 rounded-lg bg-red-500/20 animate-pulse">
-          <p className="text-center text-red-200 font-bold mb-2">🚨 JOIN TOURNAMENT BUTTON BELOW 🚨</p>
-          <Button
-            onClick={() => {
-              console.log('Join Tournament clicked!', tournament);
-              window.dispatchEvent(new CustomEvent('joinTournament', { detail: tournament }));
-            }}
-            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold text-xl py-6 shadow-2xl border-4 border-yellow-400 animate-bounce"
-          >
-            ⚡ JOIN TOURNAMENT ({tournament.entryFee} NTIQ) ⚡
-          </Button>
-        </div>
-
-        {/* Warning Message */}
-        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-center text-yellow-800 text-sm">
-          <AlertCircle className="h-4 w-4 inline mr-1" />
-          Wrong predictions result in immediate elimination from the tournament!
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
+interface CryptoPrice {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  image: string;
+}
 
 const SurvivalTournaments = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedTournament, setSelectedTournament] = useState<SurvivalTournament | null>(null);
-  const [showParticipants, setShowParticipants] = useState(false);
-
-  // Listen for join tournament events from RoundPredictionCard
-  useEffect(() => {
-    const handleJoinTournamentEvent = (event: any) => {
-      const tournament = event.detail;
-      handleJoinTournament(tournament);
-    };
-
-    window.addEventListener('joinTournament', handleJoinTournamentEvent);
-    return () => window.removeEventListener('joinTournament', handleJoinTournamentEvent);
-  }, []);
-
-  // Fetch all survival tournaments
-  const { data: tournaments = [], isLoading } = useQuery<SurvivalTournament[]>({
-    queryKey: ['/api/survival-tournaments'],
-    refetchInterval: 3000, // Auto-refresh every 3 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 0,
-  });
 
   // Fetch user data
-  const { data: user } = useQuery<any>({
+  const { data: user } = useQuery<User>({
     queryKey: ['/api/user'],
+    retry: false,
   });
 
-  // Fetch tournament participants
-  const { data: participants = [], isLoading: participantsLoading } = useQuery<any[]>({
-    queryKey: ['/api/survival-tournaments', selectedTournament?.id, 'participants'],
-    enabled: !!selectedTournament?.id && showParticipants,
-    queryFn: async () => {
-      const response = await fetch(`/api/survival-tournaments/${selectedTournament?.id}/participants`, {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" }
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch participants");
-      }
-      return response.json();
-    },
+  // Fetch tournaments
+  const { data: tournaments, isLoading: tournamentsLoading } = useQuery<SurvivalTournament[]>({
+    queryKey: ['/api/survival-tournaments'],
+    refetchInterval: 3000, // Refresh every 3 seconds
   });
+
+  // Fetch crypto prices
+  const { data: cryptoPrices } = useQuery<CryptoPrice[]>({
+    queryKey: ['/api/crypto/prices'],
+    refetchInterval: 2000, // Refresh every 2 seconds
+  });
+
+  // Get crypto price by symbol
+  const getCryptoPrice = (symbol: string) => {
+    return cryptoPrices?.find(crypto => crypto.symbol.toLowerCase() === symbol.toLowerCase());
+  };
 
   // Join tournament mutation
   const joinTournamentMutation = useMutation({
@@ -484,13 +83,38 @@ const SurvivalTournaments = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: "Success",
-        description: "Joined tournament successfully!",
+        description: "Successfully joined tournament!",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
         description: error.message || "Failed to join tournament",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Make prediction mutation
+  const makePredictionMutation = useMutation({
+    mutationFn: async ({ tournamentId, direction }: { tournamentId: number; direction: 'up' | 'down' }) => {
+      return apiRequest(`/api/survival-tournaments/${tournamentId}/predict`, {
+        method: 'POST',
+        body: JSON.stringify({ direction }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      toast({
+        title: "Success", 
+        description: "Prediction submitted successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit prediction",
         variant: "destructive",
       });
     },
@@ -524,7 +148,8 @@ const SurvivalTournaments = () => {
       return;
     }
 
-    if (user.balance < tournament.entryFee) {
+    const userBalance = user?.balance || 0;
+    if (userBalance < tournament.entryFee) {
       toast({
         title: "Insufficient Balance",
         description: `You need ${tournament.entryFee} NTIQ to join this tournament`,
@@ -536,399 +161,242 @@ const SurvivalTournaments = () => {
     joinTournamentMutation.mutate(tournament.id);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-      case 'accepting_participants':
-        return <Badge className="bg-blue-500 hover:bg-blue-600">Open</Badge>;
-      case 'active':
-        return <Badge className="bg-green-500 hover:bg-green-600">Active</Badge>;
-      case 'completed':
-        return <Badge className="bg-gray-500 hover:bg-gray-600">Completed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const handleMakePrediction = (tournament: SurvivalTournament, direction: 'up' | 'down') => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please connect your wallet to make predictions",
+        variant: "destructive",
+      });
+      return;
     }
+
+    makePredictionMutation.mutate({ tournamentId: tournament.id, direction });
   };
 
   const formatTimeRemaining = (endTime: string) => {
-    const now = new Date();
-    const end = new Date(endTime);
-    const diff = end.getTime() - now.getTime();
-    
-    if (diff <= 0) return "Ended";
-    
+    const now = new Date().getTime();
+    const end = new Date(endTime).getTime();
+    const diff = end - now;
+
+    if (diff <= 0) return "Tournament ended";
+
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    } else {
+      return `${seconds}s`;
     }
-    return `${minutes}m`;
   };
 
-  if (isLoading) {
+  if (tournamentsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto"></div>
-            <p className="text-white mt-4">Loading tournaments...</p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center text-white">
+            <div className="animate-spin w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p>Loading tournaments...</p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <Header />
-      
-      <div className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <Sword className="h-8 w-8 text-red-400 mr-2" />
-            <h1 className="text-4xl font-bold text-white">Survival Tournaments</h1>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+      <div className="container mx-auto max-w-6xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Trophy className="h-10 w-10 text-yellow-400" />
+            <h1 className="text-4xl font-bold text-white">Nectiq Survival Mode</h1>
           </div>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Elimination-style tournaments where wrong predictions eliminate participants. Last survivor wins the entire prize pool!
+          <p className="text-xl text-blue-200 mb-6">
+            Battle royale prediction tournaments - Predict or get eliminated!
           </p>
         </div>
 
-
-
         {/* Admin Notice */}
         <div className="flex justify-center mb-8">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md text-center">
-            <p className="text-blue-800 text-sm">
-              <strong>Admin Only:</strong> Tournament creation is restricted to administrators. Contact an admin to create new tournaments.
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <h3 className="font-semibold text-yellow-800">Admin-Only Tournament Creation</h3>
+            </div>
+            <p className="text-yellow-700 text-sm">
+              Tournament creation is restricted to administrators. You can join existing tournaments and participate in
+              the survival competition.
             </p>
           </div>
         </div>
 
-        {/* Active Round Section - Show for active tournaments */}
-        {tournaments?.some(t => t.status === 'active') && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">🎯 Active Rounds - Predict or Get Eliminated!</h2>
-            <div className="space-y-8">
-              {tournaments
-                ?.filter(t => t.status === 'active')
-                .map((tournament) => (
-                  <div key={tournament.id} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <RoundPredictionCard tournament={tournament} />
-                    <SurvivalParticipantsPanel tournament={tournament} />
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
-
-
-
-        {/* Participants Section - Show for all tournaments with participants */}
-        {tournaments?.length > 0 && (
-          <div className="mb-8 border-t-2 border-yellow-400/50 pt-8">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-              👥 Tournament Participants & Leaderboard
-            </h2>
-            <div className="space-y-8">
-              {tournaments.map((tournament) => (
-                <div key={`participants-${tournament.id}`} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white/10 backdrop-blur-sm border-white/20 text-white rounded-lg p-6">
-                    <h3 className="text-xl font-bold mb-4">{tournament.title}</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Status:</span>
-                        <span className={`font-bold ${
-                          tournament.status === 'active' ? 'text-green-400' :
-                          tournament.status === 'completed' ? 'text-blue-400' :
-                          'text-gray-400'
-                        }`}>{tournament.status}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Cryptocurrency:</span>
-                        <span className="font-bold">{tournament.cryptocurrency.toUpperCase()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Entry Fee:</span>
-                        <span className="font-bold">{tournament.entryFee} NTIQ</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Participants:</span>
-                        <span className="font-bold">{tournament.currentParticipants}/{tournament.maxParticipants}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Prize Pool:</span>
-                        <span className="font-bold text-yellow-400">{tournament.prizePool} NTIQ</span>
-                      </div>
-                    </div>
-                  </div>
-                  <SurvivalParticipantsPanel tournament={tournament} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Tournaments Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tournaments.map((tournament: SurvivalTournament) => (
-            <Card key={tournament.id} className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg font-bold text-white">
-                    {tournament.title}
-                  </CardTitle>
-                  {getStatusBadge(tournament.status)}
-                </div>
-                <CardDescription className="text-gray-300">
-                  {tournament.description}
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="space-y-3">
-                  {/* Cryptocurrency */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {tournaments?.map((tournament) => {
+            const cryptoData = getCryptoPrice(tournament.cryptocurrency);
+            const isUserParticipant = false; // We'll implement this later
+            
+            return (
+              <Card key={tournament.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600">
+                <CardHeader>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-300">Asset:</span>
-                    <span className="font-medium text-white">{tournament.cryptocurrency.toUpperCase()}</span>
+                    <CardTitle className="text-xl text-white flex items-center gap-2">
+                      <Trophy className="h-5 w-5 text-purple-400" />
+                      {tournament.title}
+                    </CardTitle>
+                    <Badge variant={tournament.status === 'open' ? 'default' : 'secondary'}>
+                      {tournament.status}
+                    </Badge>
                   </div>
-                  
-                  {/* Participants */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-300 flex items-center">
-                      <Users className="w-4 h-4 mr-1" />
-                      Participants:
-                    </span>
-                    <span className="text-white">{tournament.currentParticipants}/{tournament.maxParticipants}</span>
-                  </div>
-                  
-                  {/* Entry Fee */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-300 flex items-center">
-                      <DollarSign className="w-4 h-4 mr-1" />
-                      Entry Fee:
-                    </span>
-                    <span className="text-green-400 font-medium">{tournament.entryFee} NTIQ</span>
-                  </div>
-                  
-                  {/* Prize Pool */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-300 flex items-center">
-                      <Trophy className="w-4 h-4 mr-1" />
-                      Prize Pool:
-                    </span>
-                    <span className="text-yellow-400 font-bold">{tournament.prizePool} NTIQ</span>
-                  </div>
-                  
-                  {/* Round Duration */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-300 flex items-center">
-                      <Timer className="w-4 h-4 mr-1" />
-                      Round Duration:
-                    </span>
-                    <span className="text-white">{Math.floor(tournament.roundDuration / 60)} min</span>
-                  </div>
-                  
-                  {/* Current Round (if active) */}
-                  {tournament.status === 'active' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-300 flex items-center">
-                        <Target className="w-4 h-4 mr-1" />
-                        Current Round:
-                      </span>
-                      <span className="text-blue-400 font-medium">Round {tournament.currentRound}</span>
-                    </div>
-                  )}
-                  
-                  {/* Time Remaining (if active) */}
-                  {tournament.status === 'active' && tournament.nextRoundTime && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-300 flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
-                        Next Round:
-                      </span>
-                      <span className="text-orange-400 font-medium">
-                        {formatTimeRemaining(tournament.nextRoundTime)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Winner (if completed) */}
-                  {tournament.status === 'completed' && tournament.winnerUsername && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-300">Winner:</span>
-                      <span className="text-yellow-400 font-bold">{tournament.winnerUsername}</span>
-                    </div>
-                  )}
-                </div>
+                </CardHeader>
                 
-                {/* Action Buttons */}
-                <div className="mt-6 space-y-2">
-                  {/* Always show join button - simplified for testing */}
-                  <Button
-                    onClick={() => handleJoinTournament(tournament)}
-                    disabled={joinTournamentMutation.isPending}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-lg py-3 shadow-lg"
-                  >
-                    {joinTournamentMutation.isPending ? 'Joining...' : `🎯 Join Tournament (${tournament.entryFee} NTIQ)`}
-                  </Button>
-                  
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        className="w-full text-white border-white/30 hover:bg-white/10"
-                        onClick={() => {
-                          setSelectedTournament(tournament);
-                          setShowParticipants(true);
-                        }}
-                      >
-                        View Participants ({tournament.currentParticipants})
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-lg">
-                      <DialogHeader>
-                        <DialogTitle>Tournament Participants</DialogTitle>
-                        <DialogDescription>
-                          {tournament.title} - {tournament.currentParticipants}/{tournament.maxParticipants} participants
-                        </DialogDescription>
-                      </DialogHeader>
-                      
-                      <div className="space-y-4">
-                        {participantsLoading ? (
-                          <div className="text-center py-4">Loading participants...</div>
-                        ) : participants.length > 0 ? (
-                          <div className="space-y-2">
-                            {participants.map((participant: any, index: number) => (
-                              <div key={participant.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                    {index + 1}
-                                  </div>
-                                  <div>
-                                    <div className="font-medium text-gray-900 dark:text-white">
-                                      {participant.username}
-                                    </div>
-                                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                                      UID: {participant.uid}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                                    Joined: {new Date(participant.joinedAt).toLocaleDateString()}
-                                  </div>
-                                  <Badge 
-                                    variant={participant.status === 'active' ? 'default' : 'secondary'}
-                                    className="mt-1"
-                                  >
-                                    {participant.status}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                <CardContent className="space-y-4">
+                  {/* Live Price Section */}
+                  {cryptoData && (
+                    <div className="bg-slate-700/50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <img src={cryptoData.image} alt={cryptoData.name} className="w-6 h-6" />
+                          <span className="font-semibold text-white">{cryptoData.name}</span>
+                        </div>
+                        <span className="text-yellow-400 font-bold text-lg">
+                          ${cryptoData.current_price.toFixed(6)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {cryptoData.price_change_percentage_24h >= 0 ? (
+                          <TrendingUp className="h-4 w-4 text-green-400" />
                         ) : (
-                          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                            No participants yet
-                          </div>
+                          <TrendingDown className="h-4 w-4 text-red-400" />
                         )}
+                        <span className={`text-sm font-medium ${
+                          cryptoData.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'
+                        }`}>
+                          {cryptoData.price_change_percentage_24h > 0 ? '+' : ''}
+                          {cryptoData.price_change_percentage_24h.toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tournament Info */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <DollarSign className="h-4 w-4" />
+                      <span className="text-sm">Entry: {tournament.entryFee} NTIQ</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Trophy className="h-4 w-4" />
+                      <span className="text-sm">Prize: {tournament.prizePool} NTIQ</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Users className="h-4 w-4" />
+                      <span className="text-sm">{tournament.currentParticipants}/{tournament.maxParticipants}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Clock className="h-4 w-4" />
+                      <span className="text-sm">{formatTimeRemaining(tournament.endTime)}</span>
+                    </div>
+                  </div>
+
+                  {/* Tournament Rounds */}
+                  <div className="bg-slate-700/30 rounded-lg p-3">
+                    <h4 className="text-white font-semibold mb-2">Tournament Structure</h4>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="text-center">
+                        <div className="text-yellow-400 font-bold">Round 1</div>
+                        <div className="text-slate-400">15 min</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-slate-300">Round 2</div>
+                        <div className="text-slate-400">30 min</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-slate-300">Round 3</div>
+                        <div className="text-slate-400">1 hour</div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2 text-center">
+                      Round 1 starts when first player makes a prediction
+                    </p>
+                  </div>
+
+                  {/* Active Round Predictions */}
+                  {tournament.status === 'active' && (
+                    <div className="bg-slate-700/50 rounded-lg p-4">
+                      <div className="text-center mb-3">
+                        <Badge className="bg-yellow-600 text-white">
+                          Active Round {tournament.currentRound}
+                        </Badge>
+                        <p className="text-slate-300 text-sm mt-1">
+                          Choose price direction for {cryptoData?.name}:
+                        </p>
                       </div>
                       
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-medium mb-2">Description</h4>
-                          <p className="text-sm text-gray-600">{tournament.description}</p>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-medium mb-2">Tournament Info</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span>Asset:</span>
-                              <span>{tournament.cryptocurrency.toUpperCase()}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Entry Fee:</span>
-                              <span>{tournament.entryFee} NTIQ</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Max Participants:</span>
-                              <span>{tournament.maxParticipants}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Prize Pool:</span>
-                              <span>{tournament.prizePool} NTIQ</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Round Duration:</span>
-                              <span>{Math.floor(tournament.roundDuration / 60)} minutes</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Creator:</span>
-                              <span>{tournament.creatorUsername}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {tournament.status === 'active' && (
-                          <div>
-                            <h4 className="font-medium mb-2">Current Status</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Current Round:</span>
-                                <span>Round {tournament.currentRound}</span>
-                              </div>
-                              {tournament.nextRoundTime && (
-                                <div className="flex justify-between">
-                                  <span>Next Round In:</span>
-                                  <span>{formatTimeRemaining(tournament.nextRoundTime)}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {tournament.status === 'completed' && tournament.winnerUsername && (
-                          <div>
-                            <h4 className="font-medium mb-2">Tournament Result</h4>
-                            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                              <Trophy className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                              <p className="font-medium text-yellow-800">
-                                Winner: {tournament.winnerUsername}
-                              </p>
-                              <p className="text-sm text-yellow-600">
-                                Prize: {tournament.prizePool} NTIQ
-                              </p>
-                            </div>
-                          </div>
-                        )}
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button
+                          onClick={() => handleMakePrediction(tournament, 'up')}
+                          disabled={makePredictionMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700 text-white font-bold py-3"
+                        >
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          PRICE UP
+                        </Button>
+                        <Button
+                          onClick={() => handleMakePrediction(tournament, 'down')}
+                          disabled={makePredictionMutation.isPending}
+                          className="bg-red-600 hover:bg-red-700 text-white font-bold py-3"
+                        >
+                          <TrendingDown className="h-4 w-4 mr-2" />
+                          PRICE DOWN
+                        </Button>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                      
+                      <p className="text-xs text-yellow-400 text-center mt-2">
+                        ⚠️ Wrong predictions result in elimination!
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Join Tournament Button */}
+                  {tournament.status === 'open' && (
+                    <Button
+                      onClick={() => handleJoinTournament(tournament)}
+                      disabled={joinTournamentMutation.isPending}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3"
+                    >
+                      {joinTournamentMutation.isPending ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Joining...
+                        </div>
+                      ) : (
+                        `Join Tournament (${tournament.entryFee} NTIQ)`
+                      )}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
-        {tournaments.length === 0 && !isLoading && (
-          <div className="text-center py-12">
-            <Trophy className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No tournaments available
-            </h3>
-            <p className="text-gray-500 dark:text-gray-500 mb-6">
-              Tournaments are created by administrators. Check back later for new tournaments!
+        {/* Empty State */}
+        {tournaments?.length === 0 && (
+          <div className="text-center text-white mt-12">
+            <Trophy className="h-16 w-16 text-purple-400 mx-auto mb-4" />
+            <h3 className="text-2xl font-bold mb-2">No Active Tournaments</h3>
+            <p className="text-blue-200">
+              Check back later for new survival tournaments!
             </p>
           </div>
         )}
       </div>
-
-      <Footer />
     </div>
   );
 };
