@@ -600,10 +600,10 @@ const SurvivalTournaments = () => {
 
         {/* Scroll Indicator */}
         {tournaments?.length > 0 && (
-          <div className="text-center mb-4">
+          <div className="text-center mb-8 bg-yellow-400/20 border border-yellow-400/50 rounded-lg p-4">
             <div className="animate-bounce">
-              <p className="text-white/70 text-sm mb-2">Scroll down for Tournament Participants</p>
-              <div className="text-2xl">⬇️</div>
+              <p className="text-yellow-300 text-lg font-bold mb-2">👇 SCROLL DOWN FOR TOURNAMENT PARTICIPANTS 👇</p>
+              <div className="text-3xl">⬇️ ⬇️ ⬇️</div>
             </div>
           </div>
         )}
@@ -748,16 +748,35 @@ const SurvivalTournaments = () => {
                 
                 {/* Action Buttons */}
                 <div className="mt-6 space-y-2">
+                  {/* Debug info for join button */}
+                  {console.log('Tournament Join Debug:', {
+                    id: tournament.id,
+                    title: tournament.title,
+                    status: tournament.status,
+                    currentParticipants: tournament.currentParticipants,
+                    maxParticipants: tournament.maxParticipants,
+                    canJoin: (tournament.status === 'open' || tournament.status === 'pending' || tournament.status === 'accepting_participants' || tournament.status === 'active') && tournament.currentParticipants < tournament.maxParticipants
+                  })}
+                  
                   {(tournament.status === 'open' || tournament.status === 'pending' || tournament.status === 'accepting_participants' || tournament.status === 'active') && 
                    tournament.currentParticipants < tournament.maxParticipants && (
                     <Button
                       onClick={() => handleJoinTournament(tournament)}
                       disabled={joinTournamentMutation.isPending}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                      className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-lg py-3"
                     >
-                      {joinTournamentMutation.isPending ? 'Joining...' : `Join Tournament (${tournament.entryFee} NTIQ)`}
+                      {joinTournamentMutation.isPending ? 'Joining...' : `🎯 Join Tournament (${tournament.entryFee} NTIQ)`}
                     </Button>
                   )}
+                  
+                  {/* Always show join button for debugging */}
+                  <Button
+                    onClick={() => handleJoinTournament(tournament)}
+                    disabled={joinTournamentMutation.isPending}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold"
+                  >
+                    [DEBUG] Force Join Tournament
+                  </Button>
                   
                   <Dialog>
                     <DialogTrigger asChild>
