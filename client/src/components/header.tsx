@@ -177,14 +177,6 @@ export function Header() {
               Leaderboard
             </button>
             <button 
-              onClick={() => setLocation('/predictions')} 
-              className={`transition-colors ${
-                location === '/predictions' ? "text-white font-bold" : "text-slate-300 hover:text-white"
-              }`}
-            >
-              Predictions
-            </button>
-            <button 
               onClick={() => setLocation('/how-to-play')} 
               className={`transition-colors ${
                 location === '/how-to-play' ? "text-white font-bold" : "text-slate-300 hover:text-white"
@@ -471,17 +463,6 @@ export function Header() {
                   }`}
                 >
                   🏆 Leaderboard
-                </button>
-                <button 
-                  onClick={() => {
-                    setLocation('/predictions');
-                    setIsMobileMenuOpen(false);
-                  }} 
-                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    location === '/predictions' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
-                  }`}
-                >
-                  🎯 Predictions
                 </button>
                 <button 
                   onClick={() => {
