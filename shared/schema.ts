@@ -388,6 +388,39 @@ export const battleReactions = pgTable("battle_reactions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Time-Based Prediction Events System (Daily, Weekly, Monthly)
+export const predictionEvents = pgTable("prediction_events", {
+  id: serial("id").primaryKey(),
+  eventType: varchar("event_type", { length: 20 }).notNull(), // 'daily', 'weekly', 'monthly'
+  title: varchar("title", { length: 100 }).notNull(),
+  description: text("description"),
+  cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  entryFee: integer("entry_fee").notNull().default(50),
+  prizePool: integer("prize_pool").notNull().default(0),
+  maxParticipants: integer("max_participants").default(100),
+  currentParticipants: integer("current_participants").default(0),
+  status: varchar("status", { length: 20 }).notNull().default("upcoming"), // 'upcoming', 'active', 'completed', 'cancelled'
+  startPrice: numeric("start_price", { precision: 18, scale: 8 }),
+  endPrice: numeric("end_price", { precision: 18, scale: 8 }),
+  winnerId: integer("winner_id").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const predictionEventParticipants = pgTable("prediction_event_participants", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").references(() => predictionEvents.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  prediction: numeric("prediction", { precision: 18, scale: 8 }).notNull(),
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  finalRank: integer("final_rank"),
+  accuracy: numeric("accuracy", { precision: 5, scale: 2 }),
+  reward: integer("reward").default(0),
+  status: varchar("status", { length: 20 }).notNull().default("active"), // 'active', 'completed', 'eliminated'
+});
+
 // Survival Tournament Tables
 export const survivalTournaments = pgTable("survival_tournaments", {
   id: serial("id").primaryKey(),
@@ -969,3 +1002,30 @@ export const insertCryptoTransactionSchema = createInsertSchema(cryptoTransactio
 
 export type CryptoTransaction = typeof cryptoTransactions.$inferSelect;
 export type InsertCryptoTransaction = z.infer<typeof insertCryptoTransactionSchema>;
+
+// Prediction Events types
+export const insertPredictionEventSchema = createInsertSchema(predictionEvents).omit({
+  id: true,
+  currentParticipants: true,
+  prizePool: true,
+  startPrice: true,
+  endPrice: true,
+  winnerId: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  eventType: z.enum(["daily", "weekly", "monthly"]),
+});
+
+export const insertPredictionEventParticipantSchema = createInsertSchema(predictionEventParticipants).omit({
+  id: true,
+  joinedAt: true,
+  finalRank: true,
+  accuracy: true,
+  reward: true,
+});
+
+export type PredictionEvent = typeof predictionEvents.$inferSelect;
+export type InsertPredictionEvent = z.infer<typeof insertPredictionEventSchema>;
+export type PredictionEventParticipant = typeof predictionEventParticipants.$inferSelect;
+export type InsertPredictionEventParticipant = z.infer<typeof insertPredictionEventParticipantSchema>;
