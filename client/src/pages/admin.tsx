@@ -166,6 +166,8 @@ export default function AdminPanel() {
   const [editingBattle, setEditingBattle] = useState<any>(null);
   const [showBattleDetailsModal, setShowBattleDetailsModal] = useState(false);
   const [selectedBattleDetails, setSelectedBattleDetails] = useState<any>(null);
+  const [showTournamentDetailsModal, setShowTournamentDetailsModal] = useState(false);
+  const [selectedTournamentDetails, setSelectedTournamentDetails] = useState<any>(null);
   const [createBattleForm, setCreateBattleForm] = useState({
     challengerId: "",
     challengedId: "",
@@ -341,6 +343,46 @@ export default function AdminPanel() {
     },
   });
 
+  // Delete tournament mutation
+  const deleteTournamentMutation = useMutation({
+    mutationFn: async (tournamentId: number) => {
+      const response = await fetch(`/api/admin/survival-tournaments/${tournamentId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Tournament deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Start tournament mutation
+  const startTournamentMutation = useMutation({
+    mutationFn: async (tournamentId: number) => {
+      const response = await fetch(`/api/admin/survival-tournaments/${tournamentId}/start`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Tournament started successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   // Battle mutations
   const createBattleMutation = useMutation({
     mutationFn: async (battleData: any) => {
@@ -477,32 +519,20 @@ export default function AdminPanel() {
     },
   });
 
-  // Start tournament mutation
-  const startTournamentMutation = useMutation({
-    mutationFn: async (tournamentId: number) => {
-      const response = await fetch(`/api/admin/survival-tournaments/${tournamentId}/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error(await response.text());
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ 
-        title: "Success", 
-        description: "Tournament started successfully! Participants can now make predictions."
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
-  });
-
+  // Helper functions for tournament actions
   const startTournament = (tournamentId: number) => {
     startTournamentMutation.mutate(tournamentId);
+  };
+
+  const viewTournamentDetails = (tournament: any) => {
+    setSelectedTournamentDetails(tournament);
+    setShowTournamentDetailsModal(true);
+  };
+
+  const deleteTournament = async (tournamentId: number) => {
+    if (confirm(`Are you sure you want to delete tournament #${tournamentId}?`)) {
+      deleteTournamentMutation.mutate(tournamentId);
+    }
   };
 
   // Event mutations
