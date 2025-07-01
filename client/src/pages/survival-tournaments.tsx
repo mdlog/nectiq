@@ -51,32 +51,14 @@ interface RoundStatus {
 // Component for round prediction interface
 const SurvivalParticipantsPanel = ({ tournament }: { tournament: SurvivalTournament }) => {
   const { data: participants = [], isLoading } = useQuery<any[]>({
-    queryKey: ['/api/survival-tournaments', tournament.id, 'participants'],
+    queryKey: ['/api/survival-tournaments', tournament.id, 'participants-with-predictions'],
     refetchInterval: 2000, // Auto-refresh every 2 seconds
     refetchIntervalInBackground: true,
     staleTime: 0,
   });
 
-  const { data: roundStatus } = useQuery({
-    queryKey: [`/api/survival-tournaments/${tournament.id}/current-round`],
-    refetchInterval: 2000,
-    refetchIntervalInBackground: true,
-    staleTime: 0,
-  });
-
-  // Get participants with their predictions for current round
-  const participantsWithPredictions = participants.map(participant => {
-    // Note: We'll need to fetch round predictions separately or modify the API
-    // For now, we'll show participants without predictions until we have the right data
-    return {
-      ...participant,
-      prediction: null, // Will be filled when we get proper prediction data
-      predictionTime: null
-    };
-  });
-
   // Sort by join time (earliest first)
-  const sortedParticipants = participantsWithPredictions.sort((a, b) => 
+  const sortedParticipants = participants.sort((a, b) => 
     new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
   );
 
@@ -151,6 +133,22 @@ const SurvivalParticipantsPanel = ({ tournament }: { tournament: SurvivalTournam
                     })}
                   </div>
                 )}
+
+                {/* Status indicator */}
+                <div className="flex items-center justify-between mt-2">
+                  <div className="text-xs text-gray-400">Status:</div>
+                  <div className={`px-2 py-1 rounded text-xs font-bold ${
+                    participant.status === 'active' 
+                      ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
+                      : participant.status === 'eliminated'
+                      ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                      : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                  }`}>
+                    {participant.status === 'active' ? '✅ Active' : 
+                     participant.status === 'eliminated' ? '❌ Eliminated' : 
+                     participant.status}
+                  </div>
+                </div>
               </div>
             ))
           )}
