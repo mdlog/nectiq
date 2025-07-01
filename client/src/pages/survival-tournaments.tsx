@@ -281,8 +281,8 @@ const SurvivalTournaments = () => {
       <Header />
       <div className="p-4">
         <div className="container mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-8">
+          {/* Header */}
+          <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Trophy className="h-10 w-10 text-yellow-400" />
             <h1 className="text-4xl font-bold text-white">Nectiq Survival Mode</h1>
@@ -546,7 +546,9 @@ const SurvivalTournaments = () => {
             </p>
           </div>
         )}
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };
