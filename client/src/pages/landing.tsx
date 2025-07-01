@@ -3,6 +3,7 @@ import { TrendingUp, Trophy, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 
 interface CryptoPrice {
@@ -74,6 +75,27 @@ function CryptoPriceTicker() {
 }
 
 function LandingHeader() {
+  const [, setLocation] = useLocation();
+  
+  // Check if user is authenticated
+  const { data: user } = useQuery({
+    queryKey: ["/api/user"],
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const handleGetStarted = () => {
+    if (user) {
+      // User is logged in, redirect to Home page
+      setLocation("/home");
+    } else {
+      // User is not logged in, scroll to wallet section
+      document.getElementById('wallet-section')?.scrollIntoView({ 
+        behavior: 'smooth' 
+      });
+    }
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="max-w-7xl mx-auto px-6 py-4">
@@ -107,11 +129,7 @@ function LandingHeader() {
           {/* CTA Button */}
           <div className="flex items-center">
             <Button 
-              onClick={() => {
-                document.getElementById('wallet-section')?.scrollIntoView({ 
-                  behavior: 'smooth' 
-                });
-              }}
+              onClick={handleGetStarted}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               Get Started
