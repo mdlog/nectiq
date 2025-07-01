@@ -369,6 +369,7 @@ const SurvivalTournaments = () => {
                       <div className="grid grid-cols-2 gap-3">
                         <Button
                           onClick={(e) => {
+                            alert('PRICE UP clicked!');
                             console.log('PRICE UP button clicked', e);
                             e.preventDefault();
                             e.stopPropagation();
@@ -383,6 +384,7 @@ const SurvivalTournaments = () => {
                         </Button>
                         <Button
                           onClick={(e) => {
+                            alert('PRICE DOWN clicked!');
                             console.log('PRICE DOWN button clicked', e);
                             e.preventDefault();
                             e.stopPropagation();
