@@ -393,6 +393,29 @@ export class DatabaseStorage implements IStorage {
     return reward;
   }
 
+  // Create reward entry for prediction outcome (win or loss)
+  async createPredictionReward(userId: number, predictionId: number, amount: number, cryptocurrency: string, accuracy: string): Promise<void> {
+    try {
+      const isWin = amount > 0;
+      const description = isWin 
+        ? `${cryptocurrency.toUpperCase()} prediction win (${accuracy}% accuracy)`
+        : `${cryptocurrency.toUpperCase()} prediction loss`;
+
+      await db.insert(rewards).values({
+        userId,
+        predictionId,
+        amount,
+        cryptocurrency,
+        accuracy,
+        description,
+      });
+
+      console.log(`Created reward entry: User ${userId}, Amount ${amount} NTIQ, ${isWin ? 'WIN' : 'LOSS'}`);
+    } catch (error) {
+      console.error('Error creating prediction reward:', error);
+    }
+  }
+
   async getUserRewards(userId: number): Promise<Reward[]> {
     return await db.select().from(rewards).where(eq(rewards.userId, userId)).orderBy(desc(rewards.createdAt));
   }

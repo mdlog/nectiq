@@ -51,7 +51,9 @@ export const rewards = pgTable("rewards", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   predictionId: integer("prediction_id").notNull().references(() => predictions.id),
-  amount: integer("amount").notNull(),
+  amount: integer("amount").notNull(), // Can be positive (win) or negative (loss)
+  cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(),
+  accuracy: varchar("accuracy", { length: 10 }),
   description: text("description").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
