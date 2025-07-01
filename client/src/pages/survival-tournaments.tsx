@@ -402,6 +402,19 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
           </div>
         )}
 
+        {/* Join Tournament Button */}
+        <div className="mt-4">
+          <Button
+            onClick={() => {
+              // Call parent's join tournament function
+              window.dispatchEvent(new CustomEvent('joinTournament', { detail: tournament }));
+            }}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-3 shadow-lg"
+          >
+            🎯 Join Tournament ({tournament.entryFee} NTIQ)
+          </Button>
+        </div>
+
         {/* Warning Message */}
         <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 text-center text-yellow-800 text-sm">
           <AlertCircle className="h-4 w-4 inline mr-1" />
@@ -417,6 +430,17 @@ const SurvivalTournaments = () => {
   const queryClient = useQueryClient();
   const [selectedTournament, setSelectedTournament] = useState<SurvivalTournament | null>(null);
   const [showParticipants, setShowParticipants] = useState(false);
+
+  // Listen for join tournament events from RoundPredictionCard
+  useEffect(() => {
+    const handleJoinTournamentEvent = (event: any) => {
+      const tournament = event.detail;
+      handleJoinTournament(tournament);
+    };
+
+    window.addEventListener('joinTournament', handleJoinTournamentEvent);
+    return () => window.removeEventListener('joinTournament', handleJoinTournamentEvent);
+  }, []);
 
   // Fetch all survival tournaments
   const { data: tournaments = [], isLoading } = useQuery<SurvivalTournament[]>({
