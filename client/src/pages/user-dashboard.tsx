@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -117,7 +117,7 @@ function WithdrawalHistory() {
               </div>
               <div>
                 <div className="font-medium text-sm">{withdrawal.tokenAmount} {withdrawal.token}</div>
-                <div className="text-xs text-slate-500">{withdrawal.ptsAmount.toLocaleString()} PTS</div>
+                <div className="text-xs text-slate-500">{withdrawal.ptsAmount.toLocaleString()} NTIQ</div>
               </div>
             </div>
             <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
@@ -625,12 +625,16 @@ export default function UserDashboard() {
                     {recentRewards.map((reward) => (
                       <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
                         <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-success rounded-full flex items-center justify-center">
-                            <Gift className="text-white" size={16} />
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${reward.amount > 0 ? 'bg-green-600' : 'bg-red-600'}`}>
+                            {reward.amount > 0 ? (
+                              <TrendingUp className="text-white" size={16} />
+                            ) : (
+                              <TrendingDown className="text-white" size={16} />
+                            )}
                           </div>
                           <div>
                             <p className="font-semibold text-sm">
-                              {reward.cryptocurrency.toUpperCase()} Prediction Reward
+                              {reward.cryptocurrency.toUpperCase()} Prediction {reward.amount > 0 ? 'Win' : 'Loss'}
                             </p>
                             <p className="text-xs text-slate-400">
                               {formatTimeAgo(reward.createdAt)} • {parseFloat(reward.accuracy).toFixed(1)}% accuracy
@@ -638,8 +642,8 @@ export default function UserDashboard() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-success">
-                            +{reward.amount} PTS
+                          <p className={`text-sm font-semibold ${reward.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {reward.amount > 0 ? '+' : ''}{reward.amount} NTIQ
                           </p>
                         </div>
                       </div>
@@ -810,7 +814,7 @@ export default function UserDashboard() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Earnings</span>
-                    <span className="font-semibold text-success">{stats?.totalRewards || 0} PTS</span>
+                    <span className="font-semibold text-success">{stats?.totalRewards || 0} NTIQ</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Global Rank</span>
