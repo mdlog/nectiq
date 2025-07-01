@@ -50,11 +50,21 @@ interface RoundStatus {
 
 // Component for round prediction interface
 const SurvivalParticipantsPanel = ({ tournament }: { tournament: SurvivalTournament }) => {
-  const { data: participants = [], isLoading } = useQuery<any[]>({
+  const { data: participants = [], isLoading, error } = useQuery<any[]>({
     queryKey: ['/api/survival-tournaments', tournament.id, 'participants-with-predictions'],
     refetchInterval: 2000, // Auto-refresh every 2 seconds
     refetchIntervalInBackground: true,
     staleTime: 0,
+  });
+
+  // Debug logging
+  console.log('SurvivalParticipantsPanel:', {
+    tournamentId: tournament.id,
+    tournamentTitle: tournament.title,
+    participantsCount: participants.length,
+    isLoading,
+    error: error?.message,
+    participants
   });
 
   // Sort by join time (earliest first)
@@ -738,7 +748,7 @@ const SurvivalTournaments = () => {
                 
                 {/* Action Buttons */}
                 <div className="mt-6 space-y-2">
-                  {(tournament.status === 'open' || tournament.status === 'pending' || tournament.status === 'accepting_participants') && 
+                  {(tournament.status === 'open' || tournament.status === 'pending' || tournament.status === 'accepting_participants' || tournament.status === 'active') && 
                    tournament.currentParticipants < tournament.maxParticipants && (
                     <Button
                       onClick={() => handleJoinTournament(tournament)}
