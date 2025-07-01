@@ -4707,5 +4707,179 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Prediction Events API Routes
+  // Get all prediction events (with optional filtering by event type)
+  app.get("/api/prediction-events", async (req, res) => {
+    try {
+      const { eventType } = req.query;
+      const events = await storage.getPredictionEvents(eventType as string);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching prediction events:", error);
+      res.status(500).json({ message: "Failed to fetch prediction events" });
+    }
+  });
+
+  // Get specific prediction event by ID
+  app.get("/api/prediction-events/:id", async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      if (isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      const event = await storage.getPredictionEventById(eventId);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching prediction event:", error);
+      res.status(500).json({ message: "Failed to fetch prediction event" });
+    }
+  });
+
+  // Join a prediction event
+  app.post("/api/prediction-events/:id/join", requireAuth, async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const { prediction } = req.body;
+      const userId = req.session.userId!;
+
+      if (isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      if (!prediction || isNaN(prediction)) {
+        return res.status(400).json({ message: "Valid prediction price is required" });
+      }
+
+      // Get event details
+      const event = await storage.getPredictionEventById(eventId);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      if (event.status !== 'upcoming' && event.status !== 'active') {
+        return res.status(400).json({ message: "Event is not accepting participants" });
+      }
+
+      // Check if event is full
+      if (event.maxParticipants && event.currentParticipants >= event.maxParticipants) {
+        return res.status(400).json({ message: "Event is full" });
+      }
+
+      // Check user balance
+      const user = await storage.getUser(userId);
+      if (!user || user.balance < event.entryFee) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      // Deduct entry fee
+      await storage.updateUserBalance(userId, user.balance - event.entryFee);
+
+      // Join event
+      const participant = await storage.joinPredictionEvent(eventId, userId, prediction);
+
+      // Log transaction
+      await storage.logTransaction({
+        userId,
+        type: 'prediction_event_entry',
+        amount: -event.entryFee,
+        description: `Joined ${event.eventType} prediction event: ${event.title}`,
+        relatedId: eventId.toString(),
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Successfully joined prediction event",
+        participant 
+      });
+    } catch (error) {
+      console.error("Error joining prediction event:", error);
+      if (error.message === 'User already joined this event') {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to join prediction event" });
+    }
+  });
+
+  // Get participants for a prediction event
+  app.get("/api/prediction-events/:id/participants", async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      if (isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      const participants = await storage.getPredictionEventParticipants(eventId);
+      res.json(participants);
+    } catch (error) {
+      console.error("Error fetching event participants:", error);
+      res.status(500).json({ message: "Failed to fetch event participants" });
+    }
+  });
+
+  // Get leaderboard for specific event type
+  app.get("/api/prediction-events/leaderboard/:eventType", async (req, res) => {
+    try {
+      const { eventType } = req.params;
+      
+      if (!['daily', 'weekly', 'monthly'].includes(eventType)) {
+        return res.status(400).json({ message: "Invalid event type" });
+      }
+
+      const leaderboard = await storage.getPredictionEventLeaderboard(eventType);
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching event leaderboard:", error);
+      res.status(500).json({ message: "Failed to fetch event leaderboard" });
+    }
+  });
+
+  // Admin: Create prediction event
+  app.post("/api/admin/prediction-events", requireAdmin, async (req, res) => {
+    try {
+      const eventData = req.body;
+
+      // Validate required fields
+      if (!eventData.eventType || !eventData.title || !eventData.cryptocurrency || 
+          !eventData.startTime || !eventData.endTime) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Validate event type
+      if (!['daily', 'weekly', 'monthly'].includes(eventData.eventType)) {
+        return res.status(400).json({ message: "Invalid event type" });
+      }
+
+      // Get current price from crypto service
+      const currentPrice = await cryptoService.getCurrentPrice(eventData.cryptocurrency);
+      if (!currentPrice) {
+        return res.status(400).json({ message: "Invalid cryptocurrency or price unavailable" });
+      }
+
+      const event = await storage.createPredictionEvent({
+        ...eventData,
+        startPrice: currentPrice,
+        entryFee: eventData.entryFee || 50,
+        maxParticipants: eventData.maxParticipants || 100,
+      });
+
+      auditLog("PREDICTION_EVENT_CREATED", { 
+        eventId: event.id, 
+        eventType: event.eventType,
+        cryptocurrency: event.cryptocurrency,
+        createdBy: req.session.userId 
+      }, req);
+
+      res.json(event);
+    } catch (error) {
+      console.error("Error creating prediction event:", error);
+      res.status(500).json({ message: "Failed to create prediction event" });
+    }
+  });
+
   return httpServer;
 }

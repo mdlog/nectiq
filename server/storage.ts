@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, predictionEvents, predictionEventParticipants, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction, type PredictionEvent, type InsertPredictionEvent, type PredictionEventParticipant, type InsertPredictionEventParticipant } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 
@@ -414,6 +414,117 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error creating prediction reward:', error);
     }
+  }
+
+  // Prediction Events Storage Methods
+  async createPredictionEvent(eventData: any): Promise<any> {
+    const [event] = await db.insert(predictionEvents).values(eventData).returning();
+    return event;
+  }
+
+  async getPredictionEvents(eventType?: string): Promise<any[]> {
+    let query = db.select().from(predictionEvents);
+    
+    if (eventType && eventType !== 'all') {
+      query = query.where(eq(predictionEvents.eventType, eventType));
+    }
+    
+    return await query.orderBy(desc(predictionEvents.createdAt));
+  }
+
+  async getPredictionEventById(id: number): Promise<any | undefined> {
+    const [event] = await db.select().from(predictionEvents).where(eq(predictionEvents.id, id));
+    return event;
+  }
+
+  async joinPredictionEvent(eventId: number, userId: number, prediction: number): Promise<any> {
+    // Check if user already joined
+    const [existing] = await db
+      .select()
+      .from(predictionEventParticipants)
+      .where(and(
+        eq(predictionEventParticipants.eventId, eventId),
+        eq(predictionEventParticipants.userId, userId)
+      ));
+
+    if (existing) {
+      throw new Error('User already joined this event');
+    }
+
+    // Add participant
+    const [participant] = await db
+      .insert(predictionEventParticipants)
+      .values({
+        eventId,
+        userId,
+        prediction,
+      })
+      .returning();
+
+    // Update event participant count
+    await db
+      .update(predictionEvents)
+      .set({
+        currentParticipants: sql`current_participants + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(predictionEvents.id, eventId));
+
+    return participant;
+  }
+
+  async getPredictionEventParticipants(eventId: number): Promise<any[]> {
+    return await db
+      .select({
+        id: predictionEventParticipants.id,
+        userId: predictionEventParticipants.userId,
+        prediction: predictionEventParticipants.prediction,
+        joinedAt: predictionEventParticipants.joinedAt,
+        finalRank: predictionEventParticipants.finalRank,
+        accuracy: predictionEventParticipants.accuracy,
+        reward: predictionEventParticipants.reward,
+        status: predictionEventParticipants.status,
+        username: users.username,
+        profilePhoto: users.profilePhoto,
+      })
+      .from(predictionEventParticipants)
+      .leftJoin(users, eq(predictionEventParticipants.userId, users.id))
+      .where(eq(predictionEventParticipants.eventId, eventId))
+      .orderBy(predictionEventParticipants.finalRank);
+  }
+
+  async getPredictionEventLeaderboard(eventType: string): Promise<any[]> {
+    // Get completed events of the specified type
+    const completedEvents = await db
+      .select({ id: predictionEvents.id })
+      .from(predictionEvents)
+      .where(and(
+        eq(predictionEvents.eventType, eventType),
+        eq(predictionEvents.status, 'completed')
+      ));
+
+    if (completedEvents.length === 0) {
+      return [];
+    }
+
+    const eventIds = completedEvents.map(e => e.id);
+
+    // Get leaderboard from participants
+    return await db
+      .select({
+        userId: predictionEventParticipants.userId,
+        username: users.username,
+        profilePhoto: users.profilePhoto,
+        totalEvents: sql<number>`count(*)`,
+        avgAccuracy: sql<number>`avg(${predictionEventParticipants.accuracy})`,
+        totalRewards: sql<number>`sum(${predictionEventParticipants.reward})`,
+        bestRank: sql<number>`min(${predictionEventParticipants.finalRank})`,
+      })
+      .from(predictionEventParticipants)
+      .leftJoin(users, eq(predictionEventParticipants.userId, users.id))
+      .where(sql`${predictionEventParticipants.eventId} = ANY(${eventIds})`)
+      .groupBy(predictionEventParticipants.userId, users.username, users.profilePhoto)
+      .orderBy(desc(sql`avg(${predictionEventParticipants.accuracy})`));
   }
 
   async getUserRewards(userId: number): Promise<Reward[]> {
