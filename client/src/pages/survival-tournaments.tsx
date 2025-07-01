@@ -402,16 +402,17 @@ const RoundPredictionCard = ({ tournament }: { tournament: SurvivalTournament })
           </div>
         )}
 
-        {/* Join Tournament Button */}
-        <div className="mt-4">
+        {/* Join Tournament Button - TESTING VISIBILITY */}
+        <div className="mt-6 mb-4 p-3 border-4 border-red-500 rounded-lg bg-red-500/20 animate-pulse">
+          <p className="text-center text-red-200 font-bold mb-2">🚨 JOIN TOURNAMENT BUTTON BELOW 🚨</p>
           <Button
             onClick={() => {
-              // Call parent's join tournament function
+              console.log('Join Tournament clicked!', tournament);
               window.dispatchEvent(new CustomEvent('joinTournament', { detail: tournament }));
             }}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-3 shadow-lg"
+            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold text-xl py-6 shadow-2xl border-4 border-yellow-400 animate-bounce"
           >
-            🎯 Join Tournament ({tournament.entryFee} NTIQ)
+            ⚡ JOIN TOURNAMENT ({tournament.entryFee} NTIQ) ⚡
           </Button>
         </div>
 
@@ -596,16 +597,7 @@ const SurvivalTournaments = () => {
           </p>
         </div>
 
-        {/* Scroll Indicator - Moved to top for visibility */}
-        {tournaments?.length > 0 && (
-          <div className="text-center mb-8 bg-yellow-500/30 border-2 border-yellow-400 rounded-xl p-6 mx-auto max-w-2xl">
-            <div className="animate-bounce">
-              <p className="text-yellow-100 text-2xl font-bold mb-3">👇 SCROLL DOWN FOR PARTICIPANTS & JOIN BUTTONS 👇</p>
-              <div className="text-4xl mb-2">⬇️ ⬇️ ⬇️</div>
-              <p className="text-yellow-200 text-lg">Join Tournament buttons are in each tournament card below!</p>
-            </div>
-          </div>
-        )}
+
 
         {/* Admin Notice */}
         <div className="flex justify-center mb-8">
