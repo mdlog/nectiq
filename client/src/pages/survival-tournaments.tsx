@@ -98,12 +98,19 @@ const SurvivalTournaments = () => {
   // Make prediction mutation
   const makePredictionMutation = useMutation({
     mutationFn: async ({ tournamentId, direction }: { tournamentId: number; direction: 'up' | 'down' }) => {
-      return apiRequest(`/api/survival-tournaments/${tournamentId}/predict`, {
+      console.log('makePredictionMutation called with:', { tournamentId, direction });
+      console.log('API URL will be:', `/api/survival-tournaments/${tournamentId}/predict`);
+      
+      const response = await apiRequest(`/api/survival-tournaments/${tournamentId}/predict`, {
         method: 'POST',
         body: JSON.stringify({ prediction: direction }),
       });
+      
+      console.log('API response:', response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Prediction success:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
@@ -112,6 +119,7 @@ const SurvivalTournaments = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Prediction error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to submit prediction",
@@ -162,15 +170,19 @@ const SurvivalTournaments = () => {
   };
 
   const handleMakePrediction = (tournament: SurvivalTournament, direction: 'up' | 'down') => {
+    console.log('handleMakePrediction called:', { tournament, direction, user });
+    
     if (!user) {
+      console.log('No user authenticated');
       toast({
-        title: "Authentication Required",
+        title: "Authentication Required", 
         description: "Please connect your wallet to make predictions",
         variant: "destructive",
       });
       return;
     }
 
+    console.log('Calling makePredictionMutation with:', { tournamentId: tournament.id, direction });
     makePredictionMutation.mutate({ tournamentId: tournament.id, direction });
   };
 
