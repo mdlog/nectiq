@@ -4377,6 +4377,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Delete survival tournament
+  app.delete('/api/admin/survival-tournaments/:id', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      // Only allow deletion of tournaments that haven't started yet
+      if (tournament.status !== 'open') {
+        return res.status(400).json({ message: 'Can only delete tournaments that are open (not started)' });
+      }
+
+      // Delete the tournament
+      await storage.deleteSurvivalTournament(tournamentId);
+      
+      auditLog("TOURNAMENT_DELETED", { 
+        tournamentId,
+        deletedBy: req.session.userId 
+      }, req);
+      
+      res.json({ success: true, message: "Tournament deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting tournament:", error);
+      res.status(500).json({ message: "Failed to delete tournament" });
+    }
+  });
+
   // Get current round status for tournament
   app.get('/api/survival-tournaments/:id/current-round', async (req: Request, res: Response) => {
     try {
