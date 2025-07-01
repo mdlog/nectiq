@@ -100,7 +100,7 @@ const SurvivalTournaments = () => {
     mutationFn: async ({ tournamentId, direction }: { tournamentId: number; direction: 'up' | 'down' }) => {
       return apiRequest(`/api/survival-tournaments/${tournamentId}/predict`, {
         method: 'POST',
-        body: JSON.stringify({ direction }),
+        body: JSON.stringify({ prediction: direction }),
       });
     },
     onSuccess: () => {
