@@ -525,25 +525,6 @@ export default function AdminPanel() {
     },
   });
 
-  const deleteTournamentMutation = useMutation({
-    mutationFn: async (tournamentId: number) => {
-      const response = await fetch(`/api/admin/survival-tournaments/${tournamentId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error(await response.text());
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Success", description: "Tournament deleted successfully" });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
-  });
-
   // Helper functions for tournament actions
   const startTournament = (tournamentId: number) => {
     startTournamentMutation.mutate(tournamentId);
