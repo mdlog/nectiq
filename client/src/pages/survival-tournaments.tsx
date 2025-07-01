@@ -373,28 +373,52 @@ const SurvivalTournaments = () => {
                       
                       {user ? (
                         <div className="grid grid-cols-2 gap-3">
-                          <button
+                          <div
                             onClick={() => {
-                              alert('PRICE UP NATIVE BUTTON clicked!');
-                              console.log('PRICE UP native button clicked');
-                              handleMakePrediction(tournament, 'up');
+                              alert('PRICE UP DIV clicked!');
+                              console.log('PRICE UP div clicked - directly calling API');
+                              // Direct API call
+                              fetch(`/api/survival-tournaments/${tournament.id}/predict`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ prediction: 'up' }),
+                                credentials: 'include'
+                              }).then(r => r.json()).then(data => {
+                                console.log('API response:', data);
+                                alert('API call completed: ' + JSON.stringify(data));
+                              }).catch(err => {
+                                console.error('API error:', err);
+                                alert('API error: ' + err.message);
+                              });
                             }}
-                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded cursor-pointer"
-                            type="button"
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded cursor-pointer text-center"
+                            style={{ userSelect: 'none' }}
                           >
-                            ⬆️ PRICE UP
-                          </button>
-                          <button
+                            ⬆️ PRICE UP (DIV)
+                          </div>
+                          <div
                             onClick={() => {
-                              alert('PRICE DOWN NATIVE BUTTON clicked!');
-                              console.log('PRICE DOWN native button clicked');
-                              handleMakePrediction(tournament, 'down');
+                              alert('PRICE DOWN DIV clicked!');
+                              console.log('PRICE DOWN div clicked - directly calling API');
+                              // Direct API call
+                              fetch(`/api/survival-tournaments/${tournament.id}/predict`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ prediction: 'down' }),
+                                credentials: 'include'
+                              }).then(r => r.json()).then(data => {
+                                console.log('API response:', data);
+                                alert('API call completed: ' + JSON.stringify(data));
+                              }).catch(err => {
+                                console.error('API error:', err);
+                                alert('API error: ' + err.message);
+                              });
                             }}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded cursor-pointer"
-                            type="button"
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded cursor-pointer text-center"
+                            style={{ userSelect: 'none' }}
                           >
-                            ⬇️ PRICE DOWN
-                          </button>
+                            ⬇️ PRICE DOWN (DIV)
+                          </div>
                         </div>
                       ) : (
                         <div className="bg-gray-600/30 rounded-lg p-4 text-center">
