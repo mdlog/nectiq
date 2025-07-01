@@ -360,44 +360,64 @@ const SurvivalTournaments = () => {
                           Choose price direction for {cryptoData?.name}:
                         </p>
                         {!user && (
-                          <p className="text-red-400 text-xs mt-1">
-                            Please connect wallet to make predictions
-                          </p>
+                          <div className="bg-red-900/30 rounded-lg p-3 mt-2">
+                            <p className="text-red-400 text-sm font-semibold">
+                              ⚠️ Connect your wallet first to make predictions!
+                            </p>
+                            <p className="text-red-300 text-xs mt-1">
+                              Click the wallet icon in the header to connect
+                            </p>
+                          </div>
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button
-                          onClick={(e) => {
-                            alert('PRICE UP clicked!');
-                            console.log('PRICE UP button clicked', e);
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleMakePrediction(tournament, 'up');
-                          }}
-                          disabled={makePredictionMutation.isPending}
-                          className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 cursor-pointer"
-                          type="button"
-                        >
-                          <TrendingUp className="h-4 w-4 mr-2" />
-                          PRICE UP
-                        </Button>
-                        <Button
-                          onClick={(e) => {
-                            alert('PRICE DOWN clicked!');
-                            console.log('PRICE DOWN button clicked', e);
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleMakePrediction(tournament, 'down');
-                          }}
-                          disabled={makePredictionMutation.isPending}
-                          className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 cursor-pointer"
-                          type="button"
-                        >
-                          <TrendingDown className="h-4 w-4 mr-2" />
-                          PRICE DOWN
-                        </Button>
-                      </div>
+                      {user ? (
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button
+                            onClick={(e) => {
+                              alert('PRICE UP clicked!');
+                              console.log('PRICE UP button clicked', e);
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleMakePrediction(tournament, 'up');
+                            }}
+                            disabled={makePredictionMutation.isPending}
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 cursor-pointer"
+                            type="button"
+                          >
+                            <TrendingUp className="h-4 w-4 mr-2" />
+                            PRICE UP
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              alert('PRICE DOWN clicked!');
+                              console.log('PRICE DOWN button clicked', e);
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleMakePrediction(tournament, 'down');
+                            }}
+                            disabled={makePredictionMutation.isPending}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 cursor-pointer"
+                            type="button"
+                          >
+                            <TrendingDown className="h-4 w-4 mr-2" />
+                            PRICE DOWN
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-600/30 rounded-lg p-4 text-center">
+                          <p className="text-gray-400 mb-2">Connect wallet to see prediction buttons</p>
+                          <button 
+                            onClick={() => {
+                              alert('Please connect your wallet first!');
+                            }}
+                            className="bg-gray-500 text-gray-300 px-4 py-2 rounded cursor-not-allowed"
+                            disabled
+                          >
+                            Prediction Buttons (Disabled)
+                          </button>
+                        </div>
+                      )}
                       
                       <p className="text-xs text-yellow-400 text-center mt-2">
                         ⚠️ Wrong predictions result in elimination!
