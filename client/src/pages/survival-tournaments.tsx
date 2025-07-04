@@ -284,14 +284,14 @@ const SurvivalTournaments = () => {
         <div className="container mx-auto max-w-6xl">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-400" />
-            <h1 className="text-2xl sm:text-4xl font-bold text-white">Nectiq Survival Mode</h1>
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-400" />
+              <h1 className="text-2xl sm:text-4xl font-bold text-white">Nectiq Survival Mode</h1>
+            </div>
+            <p className="text-base sm:text-xl text-blue-200 mb-4 sm:mb-6 px-2">
+              Battle royale prediction tournaments - Predict or get eliminated!
+            </p>
           </div>
-          <p className="text-base sm:text-xl text-blue-200 mb-4 sm:mb-6 px-2">
-            Battle royale prediction tournaments - Predict or get eliminated!
-          </p>
-        </div>
 
         {/* Admin Notice */}
         <div className="flex justify-center mb-6 sm:mb-8 px-2">
@@ -434,47 +434,63 @@ const SurvivalTournaments = () => {
                       
                       {user ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                          {/* Test Button First */}
                           <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              alert('PRICE UP button clicked!');
-                              console.log('PRICE UP clicked - calling handleMakePrediction');
-                              console.log('User data:', user);
-                              console.log('Tournament data:', tournament);
-                              try {
-                                handleMakePrediction(tournament, 'up');
-                              } catch (error) {
-                                console.error('Error in handleMakePrediction:', error);
-                                alert('Error: ' + error.message);
-                              }
-                            }}
-                            disabled={makePredictionMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:bg-green-800 disabled:opacity-50 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
-                            style={{ pointerEvents: 'auto', userSelect: 'none' }}
+                            onClick={() => alert('TEST BUTTON WORKS!')}
+                            className="bg-blue-600 text-white font-bold py-2 px-4 rounded mb-2"
                           >
-                            {makePredictionMutation.isPending ? '⏳ Processing...' : `⬆️ PRICE UP (-${tournament.entryFee} NTIQ)`}
+                            🧪 TEST BUTTON - CLICK ME!
                           </button>
+                          
+                          {/* Direct API Call Buttons */}
                           <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              alert('PRICE DOWN button clicked!');
-                              console.log('PRICE DOWN clicked - calling handleMakePrediction');
-                              console.log('User data:', user);
-                              console.log('Tournament data:', tournament);
+                            onClick={async () => {
+                              alert('PRICE UP clicked - making direct API call');
                               try {
-                                handleMakePrediction(tournament, 'down');
+                                const response = await fetch(`/api/survival-tournaments/${tournament.id}/predict`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  credentials: 'include',
+                                  body: JSON.stringify({ prediction: 'up' })
+                                });
+                                const data = await response.json();
+                                alert(`API Response: ${JSON.stringify(data)}`);
+                                console.log('API Response:', data);
                               } catch (error) {
-                                console.error('Error in handleMakePrediction:', error);
-                                alert('Error: ' + error.message);
+                                alert(`Error: ${error.message}`);
+                                console.error('Error:', error);
                               }
                             }}
-                            disabled={makePredictionMutation.isPending}
-                            className="bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:bg-red-800 disabled:opacity-50 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
-                            style={{ pointerEvents: 'auto', userSelect: 'none' }}
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded"
                           >
-                            {makePredictionMutation.isPending ? '⏳ Processing...' : `⬇️ PRICE DOWN (-${tournament.entryFee} NTIQ)`}
+                            ⬆️ PRICE UP (-{tournament.entryFee} NTIQ)
+                          </button>
+                          
+                          <button
+                            onClick={async () => {
+                              alert('PRICE DOWN clicked - making direct API call');
+                              try {
+                                const response = await fetch(`/api/survival-tournaments/${tournament.id}/predict`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  credentials: 'include',
+                                  body: JSON.stringify({ prediction: 'down' })
+                                });
+                                const data = await response.json();
+                                alert(`API Response: ${JSON.stringify(data)}`);
+                                console.log('API Response:', data);
+                              } catch (error) {
+                                alert(`Error: ${error}`);
+                                console.error('Error:', error);
+                              }
+                            }}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded"
+                          >
+                            ⬇️ PRICE DOWN (-{tournament.entryFee} NTIQ)
                           </button>
                         </div>
                       ) : (
@@ -531,8 +547,8 @@ const SurvivalTournaments = () => {
               <div className="mt-4">
                 <SurvivalParticipantsList tournamentId={tournament.id} />
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
         {/* Empty State */}
@@ -545,7 +561,6 @@ const SurvivalTournaments = () => {
             </p>
           </div>
         )}
-        </div>
       </div>
       <Footer />
     </div>
