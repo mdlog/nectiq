@@ -272,6 +272,12 @@ export default function SurvivalGame() {
       <Header />
       
       <div className="container max-w-6xl mx-auto px-4 py-8">
+        {/* Page Title */}
+        <div className="text-center mb-6">
+          <h1 className="text-4xl font-bold text-white mb-2">🏆 Nectiq Survival Mode</h1>
+          <p className="text-xl text-gray-300">Battle royale prediction tournaments - Predict or get eliminated!</p>
+        </div>
+
         {/* Game Header */}
         <Card className="bg-gray-900/80 border-blue-500/30 backdrop-blur-sm mb-6">
           <CardContent className="p-6">
