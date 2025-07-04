@@ -435,22 +435,44 @@ const SurvivalTournaments = () => {
                       {user ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              alert('PRICE UP button clicked!');
                               console.log('PRICE UP clicked - calling handleMakePrediction');
-                              handleMakePrediction(tournament, 'up');
+                              console.log('User data:', user);
+                              console.log('Tournament data:', tournament);
+                              try {
+                                handleMakePrediction(tournament, 'up');
+                              } catch (error) {
+                                console.error('Error in handleMakePrediction:', error);
+                                alert('Error: ' + error.message);
+                              }
                             }}
                             disabled={makePredictionMutation.isPending}
                             className="bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:bg-green-800 disabled:opacity-50 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
+                            style={{ pointerEvents: 'auto', userSelect: 'none' }}
                           >
                             {makePredictionMutation.isPending ? '⏳ Processing...' : `⬆️ PRICE UP (-${tournament.entryFee} NTIQ)`}
                           </button>
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              alert('PRICE DOWN button clicked!');
                               console.log('PRICE DOWN clicked - calling handleMakePrediction');
-                              handleMakePrediction(tournament, 'down');
+                              console.log('User data:', user);
+                              console.log('Tournament data:', tournament);
+                              try {
+                                handleMakePrediction(tournament, 'down');
+                              } catch (error) {
+                                console.error('Error in handleMakePrediction:', error);
+                                alert('Error: ' + error.message);
+                              }
                             }}
                             disabled={makePredictionMutation.isPending}
                             className="bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:bg-red-800 disabled:opacity-50 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
+                            style={{ pointerEvents: 'auto', userSelect: 'none' }}
                           >
                             {makePredictionMutation.isPending ? '⏳ Processing...' : `⬇️ PRICE DOWN (-${tournament.entryFee} NTIQ)`}
                           </button>
