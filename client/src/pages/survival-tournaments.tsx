@@ -279,27 +279,27 @@ const SurvivalTournaments = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <Header />
-      <div className="p-4">
+      <div className="p-2 sm:p-4">
         <div className="container mx-auto max-w-6xl">
           {/* Header */}
-          <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Trophy className="h-10 w-10 text-yellow-400" />
-            <h1 className="text-4xl font-bold text-white">Nectiq Survival Mode</h1>
+          <div className="text-center mb-6 sm:mb-8">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-400" />
+            <h1 className="text-2xl sm:text-4xl font-bold text-white">Nectiq Survival Mode</h1>
           </div>
-          <p className="text-xl text-blue-200 mb-6">
+          <p className="text-base sm:text-xl text-blue-200 mb-4 sm:mb-6 px-2">
             Battle royale prediction tournaments - Predict or get eliminated!
           </p>
         </div>
 
         {/* Admin Notice */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md text-center">
+        <div className="flex justify-center mb-6 sm:mb-8 px-2">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 max-w-md text-center w-full sm:w-auto">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
-              <h3 className="font-semibold text-yellow-800">Admin-Only Tournament Creation</h3>
+              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
+              <h3 className="font-semibold text-yellow-800 text-sm sm:text-base">Admin-Only Tournament Creation</h3>
             </div>
-            <p className="text-yellow-700 text-sm">
+            <p className="text-yellow-700 text-xs sm:text-sm">
               Tournament creation is restricted to administrators. You can join existing tournaments and participate in
               the survival competition.
             </p>
@@ -307,7 +307,7 @@ const SurvivalTournaments = () => {
         </div>
 
         {/* Tournaments Grid */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
           {tournaments?.map((tournament) => {
             const cryptoData = getCryptoPrice(tournament.cryptocurrency);
             const isUserParticipant = false; // We'll implement this later
@@ -329,23 +329,23 @@ const SurvivalTournaments = () => {
                 <CardContent className="space-y-4">
                   {/* Live Price Section */}
                   {cryptoData && (
-                    <div className="bg-slate-700/50 rounded-lg p-4">
+                    <div className="bg-slate-700/50 rounded-lg p-3 sm:p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <img src={cryptoData.image} alt={cryptoData.name} className="w-6 h-6" />
-                          <span className="font-semibold text-white">{cryptoData.name}</span>
+                          <img src={cryptoData.image} alt={cryptoData.name} className="w-5 h-5 sm:w-6 sm:h-6" />
+                          <span className="font-semibold text-white text-sm sm:text-base">{cryptoData.name}</span>
                         </div>
-                        <span className="text-yellow-400 font-bold text-lg">
+                        <span className="text-yellow-400 font-bold text-base sm:text-lg">
                           ${cryptoData.current_price.toFixed(6)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         {cryptoData.price_change_percentage_24h >= 0 ? (
-                          <TrendingUp className="h-4 w-4 text-green-400" />
+                          <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-400" />
                         ) : (
-                          <TrendingDown className="h-4 w-4 text-red-400" />
+                          <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
                         )}
-                        <span className={`text-sm font-medium ${
+                        <span className={`text-xs sm:text-sm font-medium ${
                           cryptoData.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
                           {cryptoData.price_change_percentage_24h > 0 ? '+' : ''}
@@ -356,40 +356,40 @@ const SurvivalTournaments = () => {
                   )}
 
                   {/* Tournament Info */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                     <div className="flex items-center gap-2 text-slate-300">
-                      <DollarSign className="h-4 w-4" />
-                      <span className="text-sm">Entry: {tournament.entryFee} NTIQ</span>
+                      <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-xs sm:text-sm">Entry: {tournament.entryFee} NTIQ</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-300">
-                      <Trophy className="h-4 w-4" />
-                      <span className="text-sm">Prize: {tournament.prizePool} NTIQ</span>
+                      <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-xs sm:text-sm">Prize: {tournament.prizePool} NTIQ</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-300">
-                      <Users className="h-4 w-4" />
-                      <span className="text-sm">{tournament.currentParticipants}/{tournament.maxParticipants}</span>
+                      <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-xs sm:text-sm">{tournament.currentParticipants}/{tournament.maxParticipants}</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-300">
-                      <Clock className="h-4 w-4" />
-                      <span className="text-sm">{formatTimeRemaining(tournament.endTime)}</span>
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-xs sm:text-sm">{formatTimeRemaining(tournament.endTime)}</span>
                     </div>
                   </div>
 
                   {/* Tournament Rounds */}
-                  <div className="bg-slate-700/30 rounded-lg p-3">
-                    <h4 className="text-white font-semibold mb-2">Tournament Structure</h4>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="bg-slate-700/30 rounded-lg p-2 sm:p-3">
+                    <h4 className="text-white font-semibold mb-2 text-sm sm:text-base">Tournament Structure</h4>
+                    <div className="grid grid-cols-3 gap-1 sm:gap-2 text-xs">
                       <div className="text-center">
-                        <div className="text-yellow-400 font-bold">Round 1</div>
-                        <div className="text-slate-400">15 min</div>
+                        <div className="text-yellow-400 font-bold text-xs">Round 1</div>
+                        <div className="text-slate-400 text-xs">15 min</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-slate-300">Round 2</div>
-                        <div className="text-slate-400">30 min</div>
+                        <div className="text-slate-300 text-xs">Round 2</div>
+                        <div className="text-slate-400 text-xs">30 min</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-slate-300">Round 3</div>
-                        <div className="text-slate-400">1 hour</div>
+                        <div className="text-slate-300 text-xs">Round 3</div>
+                        <div className="text-slate-400 text-xs">1 hour</div>
                       </div>
                     </div>
                     <p className="text-xs text-slate-400 mt-2 text-center">
@@ -410,17 +410,17 @@ const SurvivalTournaments = () => {
 
                   {/* Active Round Predictions */}
                   {tournament.status === 'active' && (
-                    <div className="bg-slate-700/50 rounded-lg p-4">
+                    <div className="bg-slate-700/50 rounded-lg p-3 sm:p-4">
                       <div className="text-center mb-3">
-                        <Badge className="bg-yellow-600 text-white">
+                        <Badge className="bg-yellow-600 text-white text-xs sm:text-sm">
                           Active Round {tournament.currentRound}
                         </Badge>
-                        <p className="text-slate-300 text-sm mt-1">
+                        <p className="text-slate-300 text-xs sm:text-sm mt-1">
                           Choose price direction for {cryptoData?.name}:
                         </p>
                         {!user && (
-                          <div className="bg-red-900/30 rounded-lg p-3 mt-2">
-                            <p className="text-red-400 text-sm font-semibold">
+                          <div className="bg-red-900/30 rounded-lg p-2 sm:p-3 mt-2">
+                            <p className="text-red-400 text-xs sm:text-sm font-semibold">
                               ⚠️ Connect your wallet first to make predictions!
                             </p>
                             <p className="text-red-300 text-xs mt-1">
@@ -431,7 +431,7 @@ const SurvivalTournaments = () => {
                       </div>
                       
                       {user ? (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                           <div
                             onClick={() => {
                               alert('PRICE UP DIV clicked!');
@@ -450,10 +450,10 @@ const SurvivalTournaments = () => {
                                 alert('API error: ' + err.message);
                               });
                             }}
-                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded cursor-pointer text-center"
-                            style={{ userSelect: 'none' }}
+                            className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
+                            style={{ userSelect: 'none', touchAction: 'manipulation' }}
                           >
-                            ⬆️ PRICE UP (DIV)
+                            ⬆️ PRICE UP (-{tournament.entryFee} NTIQ)
                           </div>
                           <div
                             onClick={() => {
@@ -473,10 +473,10 @@ const SurvivalTournaments = () => {
                                 alert('API error: ' + err.message);
                               });
                             }}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded cursor-pointer text-center"
-                            style={{ userSelect: 'none' }}
+                            className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
+                            style={{ userSelect: 'none', touchAction: 'manipulation' }}
                           >
-                            ⬇️ PRICE DOWN (DIV)
+                            ⬇️ PRICE DOWN (-{tournament.entryFee} NTIQ)
                           </div>
                         </div>
                       ) : (
@@ -538,10 +538,10 @@ const SurvivalTournaments = () => {
 
         {/* Empty State */}
         {tournaments?.length === 0 && (
-          <div className="text-center text-white mt-12">
-            <Trophy className="h-16 w-16 text-purple-400 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-2">No Active Tournaments</h3>
-            <p className="text-blue-200">
+          <div className="text-center text-white mt-8 sm:mt-12 px-4">
+            <Trophy className="h-12 w-12 sm:h-16 sm:w-16 text-purple-400 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-xl sm:text-2xl font-bold mb-2">No Active Tournaments</h3>
+            <p className="text-blue-200 text-sm sm:text-base">
               Check back later for new survival tournaments!
             </p>
           </div>
