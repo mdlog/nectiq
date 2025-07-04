@@ -271,7 +271,7 @@ export default function SurvivalGame() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950">
       <Header />
       
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <div className="container max-w-6xl mx-auto px-4 py-8">
         {/* Game Header */}
         <Card className="bg-gray-900/80 border-blue-500/30 backdrop-blur-sm mb-6">
           <CardContent className="p-6">
