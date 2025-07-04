@@ -8,6 +8,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Trophy, Users, DollarSign, Clock, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { SurvivalParticipantsList } from '@/components/survival-participants-list';
 
 // Types
 interface SurvivalTournament {
@@ -532,6 +533,11 @@ const SurvivalTournaments = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Participants List for this Tournament */}
+              <div className="mt-4">
+                <SurvivalParticipantsList tournamentId={tournament.id} />
+              </div>
             );
           })}
         </div>

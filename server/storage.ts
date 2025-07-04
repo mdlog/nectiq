@@ -1860,6 +1860,64 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(survivalParticipants.joinedAt));
   }
 
+  async getTournamentParticipantsWithPredictions(tournamentId: number): Promise<any[]> {
+    // Get current round
+    const currentRound = await this.getCurrentRound(tournamentId);
+    
+    // Get all participants
+    const participants = await db
+      .select({
+        id: survivalParticipants.id,
+        userId: survivalParticipants.userId,
+        username: users.username,
+        uid: users.uid,
+        status: survivalParticipants.status,
+        eliminatedRound: survivalParticipants.eliminatedRound,
+        joinedAt: survivalParticipants.joinedAt,
+        eliminatedAt: survivalParticipants.eliminatedAt,
+        profilePhoto: users.profilePhoto
+      })
+      .from(survivalParticipants)
+      .leftJoin(users, eq(survivalParticipants.userId, users.id))
+      .where(eq(survivalParticipants.tournamentId, tournamentId))
+      .orderBy(desc(survivalParticipants.joinedAt));
+
+    // If there's no current round, return participants without predictions
+    if (!currentRound) {
+      return participants.map(p => ({ ...p, prediction: null, submittedAt: null }));
+    }
+
+    // Get predictions for current round
+    const predictions = await db
+      .select({
+        participantId: survivalPredictions.participantId,
+        userId: survivalPredictions.userId,
+        prediction: survivalPredictions.prediction,
+        submittedAt: survivalPredictions.submittedAt,
+        startingPrice: survivalPredictions.startingPrice
+      })
+      .from(survivalPredictions)
+      .where(eq(survivalPredictions.roundId, currentRound.id));
+
+    // Create a map for quick lookup
+    const predictionMap = new Map();
+    predictions.forEach(pred => {
+      predictionMap.set(pred.participantId, pred);
+    });
+
+    // Merge participants with their predictions
+    return participants.map(participant => {
+      const prediction = predictionMap.get(participant.id);
+      return {
+        ...participant,
+        prediction: prediction?.prediction || null,
+        submittedAt: prediction?.submittedAt || null,
+        startingPrice: prediction?.startingPrice || null,
+        currentRound: currentRound?.roundNumber || 0
+      };
+    });
+  }
+
   async getSurvivalRounds(tournamentId: number): Promise<any[]> {
     return await db
       .select()
