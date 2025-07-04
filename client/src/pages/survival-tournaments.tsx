@@ -398,17 +398,6 @@ const SurvivalTournaments = () => {
                     </p>
                   </div>
 
-                  {/* Debug Info */}
-                  <div className="bg-blue-900/30 rounded-lg p-2 mb-2 text-xs">
-                    <p className="text-blue-300">Debug: Status={tournament.status}, User={user ? 'logged in' : 'not logged in'}</p>
-                    <button 
-                      onClick={() => alert('Test button works!')} 
-                      className="bg-orange-500 text-white px-2 py-1 rounded mt-1 text-xs"
-                    >
-                      Test Click
-                    </button>
-                  </div>
-
                   {/* Active Round Predictions */}
                   {tournament.status === 'active' && (
                     <div className="bg-slate-700/50 rounded-lg p-3 sm:p-4">
@@ -419,79 +408,61 @@ const SurvivalTournaments = () => {
                         <p className="text-slate-300 text-xs sm:text-sm mt-1">
                           Choose price direction for {cryptoData?.name}:
                         </p>
-                        {!user && (
-                          <div className="bg-red-900/30 rounded-lg p-2 sm:p-3 mt-2">
-                            <p className="text-red-400 text-xs sm:text-sm font-semibold">
-                              ⚠️ Connect your wallet first to make predictions!
-                            </p>
-                            <p className="text-red-300 text-xs mt-1">
-                              Click the wallet icon in the header to connect
-                            </p>
-                          </div>
-                        )}
                       </div>
+                      
+                      {/* Authentication Warning */}
+                      {!user && (
+                        <div className="bg-red-900/50 border border-red-600 rounded-lg p-3 sm:p-4 mb-4">
+                          <div className="text-center">
+                            <p className="text-red-200 text-sm sm:text-base font-semibold mb-2">
+                              🔐 Wallet Connection Required
+                            </p>
+                            <p className="text-red-300 text-xs sm:text-sm mb-3">
+                              You must connect your wallet to make predictions in survival tournaments
+                            </p>
+                            <button 
+                              onClick={() => {
+                                window.location.href = '/wallet-login';
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors"
+                            >
+                              Connect Wallet Now
+                            </button>
+                          </div>
+                        </div>
+                      )}
                       
                       {user ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                          <div
+                          <button
                             onClick={() => {
-                              alert('PRICE UP DIV clicked!');
-                              console.log('PRICE UP div clicked - directly calling API');
-                              // Direct API call
-                              fetch(`/api/survival-tournaments/${tournament.id}/predict`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ prediction: 'up' }),
-                                credentials: 'include'
-                              }).then(r => r.json()).then(data => {
-                                console.log('API response:', data);
-                                alert('API call completed: ' + JSON.stringify(data));
-                              }).catch(err => {
-                                console.error('API error:', err);
-                                alert('API error: ' + err.message);
-                              });
+                              console.log('PRICE UP clicked - calling handleMakePrediction');
+                              handleMakePrediction(tournament, 'up');
                             }}
-                            className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
-                            style={{ userSelect: 'none', touchAction: 'manipulation' }}
+                            disabled={makePredictionMutation.isPending}
+                            className="bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:bg-green-800 disabled:opacity-50 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
                           >
-                            ⬆️ PRICE UP (-{tournament.entryFee} NTIQ)
-                          </div>
-                          <div
+                            {makePredictionMutation.isPending ? '⏳ Processing...' : `⬆️ PRICE UP (-${tournament.entryFee} NTIQ)`}
+                          </button>
+                          <button
                             onClick={() => {
-                              alert('PRICE DOWN DIV clicked!');
-                              console.log('PRICE DOWN div clicked - directly calling API');
-                              // Direct API call
-                              fetch(`/api/survival-tournaments/${tournament.id}/predict`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ prediction: 'down' }),
-                                credentials: 'include'
-                              }).then(r => r.json()).then(data => {
-                                console.log('API response:', data);
-                                alert('API call completed: ' + JSON.stringify(data));
-                              }).catch(err => {
-                                console.error('API error:', err);
-                                alert('API error: ' + err.message);
-                              });
+                              console.log('PRICE DOWN clicked - calling handleMakePrediction');
+                              handleMakePrediction(tournament, 'down');
                             }}
-                            className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
-                            style={{ userSelect: 'none', touchAction: 'manipulation' }}
+                            disabled={makePredictionMutation.isPending}
+                            className="bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:bg-red-800 disabled:opacity-50 text-white font-bold py-3 sm:py-4 px-3 sm:px-4 rounded cursor-pointer text-center text-sm sm:text-base transition-colors"
                           >
-                            ⬇️ PRICE DOWN (-{tournament.entryFee} NTIQ)
-                          </div>
+                            {makePredictionMutation.isPending ? '⏳ Processing...' : `⬇️ PRICE DOWN (-${tournament.entryFee} NTIQ)`}
+                          </button>
                         </div>
                       ) : (
-                        <div className="bg-gray-600/30 rounded-lg p-4 text-center">
-                          <p className="text-gray-400 mb-2">Connect wallet to see prediction buttons</p>
-                          <button 
-                            onClick={() => {
-                              alert('Please connect your wallet first!');
-                            }}
-                            className="bg-gray-500 text-gray-300 px-4 py-2 rounded cursor-not-allowed"
-                            disabled
-                          >
-                            Prediction Buttons (Disabled)
-                          </button>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                          <div className="bg-gray-600/50 border-2 border-dashed border-gray-500 text-gray-400 font-bold py-3 sm:py-4 px-3 sm:px-4 rounded text-center text-sm sm:text-base cursor-not-allowed">
+                            🔒 PRICE UP (Login Required)
+                          </div>
+                          <div className="bg-gray-600/50 border-2 border-dashed border-gray-500 text-gray-400 font-bold py-3 sm:py-4 px-3 sm:px-4 rounded text-center text-sm sm:text-base cursor-not-allowed">
+                            🔒 PRICE DOWN (Login Required)
+                          </div>
                         </div>
                       )}
                       
