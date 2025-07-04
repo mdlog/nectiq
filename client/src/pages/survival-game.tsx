@@ -1,386 +1,413 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { TrendingUp, TrendingDown, Users, Clock, Trophy } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { TrendingUp, TrendingDown, Users, Clock, Trophy, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 
-interface SurvivalGameData {
-  tournament: {
-    id: number;
-    title: string;
-    cryptocurrency: string;
-    currentPrice: number;
-    priceChange24h: number;
-    targetPrice: number;
-    timeRemaining: number;
-    roundDuration: number;
-    currentRound: number;
-    totalRounds: number;
-    status: 'active' | 'waiting' | 'completed';
-  };
+// Types untuk data dari API
+interface SurvivalTournament {
+  id: number;
+  title: string;
+  description: string;
+  cryptocurrency: string;
+  entryFee: number;
+  maxParticipants: number;
+  currentParticipants: number;
+  prizePool: number;
+  status: 'open' | 'active' | 'completed' | 'cancelled';
+  currentRound: number;
+  roundDuration: number;
+  startTime: string;
+  endTime: string;
+  nextRoundTime: string;
   participants: Array<{
     id: number;
-    username: string;
-    profilePhoto: string | null;
-    isEliminated: boolean;
-    prediction: 'up' | 'down' | null;
-    joinedAt: string;
+    userId: number;
+    status: string;
+    username?: string;
+    profilePhoto?: string;
   }>;
-  userParticipation: {
-    isParticipant: boolean;
-    prediction: 'up' | 'down' | null;
-    canPredict: boolean;
+  rounds: Array<{
+    id: number;
+    roundNumber: number;
+    status: string;
+    startTime: string;
+    endTime: string;
+    startPrice?: number;
+    endPrice?: number;
+  }>;
+  currentRound?: {
+    id: number;
+    roundNumber: number;
+    status: string;
+    startTime: string;
+    endTime: string;
   };
 }
 
-// Mock data for development
-const mockGameData: SurvivalGameData = {
-  tournament: {
-    id: 14,
-    title: "ETH/USDT Survival",
-    cryptocurrency: "ethereum",
-    currentPrice: 3087.42,
-    priceChange24h: 2.34,
-    targetPrice: 3100,
-    timeRemaining: 403, // seconds
-    roundDuration: 600, // 10 minutes
-    currentRound: 1,
-    totalRounds: 3,
-    status: 'active'
-  },
-  participants: [
-    { id: 1, username: "CryptoNinja", profilePhoto: null, isEliminated: false, prediction: null, joinedAt: "2025-07-04T19:20:00Z" },
-    { id: 2, username: "DeFiDegen", profilePhoto: null, isEliminated: false, prediction: "up", joinedAt: "2025-07-04T19:21:00Z" },
-    { id: 3, username: "NFTMaster", profilePhoto: null, isEliminated: false, prediction: "down", joinedAt: "2025-07-04T19:22:00Z" },
-    { id: 4, username: "BlochainBen", profilePhoto: null, isEliminated: false, prediction: null, joinedAt: "2025-07-04T19:23:00Z" },
-    { id: 5, username: "CryptoTrader", profilePhoto: null, isEliminated: true, prediction: "down", joinedAt: "2025-07-04T19:24:00Z" },
-    { id: 6, username: "CryptoDamai", profilePhoto: null, isEliminated: true, prediction: "up", joinedAt: "2025-07-04T19:25:00Z" },
-    { id: 7, username: "VitalikFan22", profilePhoto: null, isEliminated: false, prediction: "up", joinedAt: "2025-07-04T19:26:00Z" },
-    { id: 8, username: "EtherMan", profilePhoto: null, isEliminated: false, prediction: null, joinedAt: "2025-07-04T19:27:00Z" },
-    { id: 9, username: "LunaLover", profilePhoto: null, isEliminated: false, prediction: "down", joinedAt: "2025-07-04T19:28:00Z" },
-    { id: 10, username: "DiamondHands", profilePhoto: null, isEliminated: true, prediction: "up", joinedAt: "2025-07-04T19:29:00Z" },
-    { id: 11, username: "CmstolSamurai", profilePhoto: null, isEliminated: true, prediction: "down", joinedAt: "2025-07-04T19:30:00Z" },
-    { id: 12, username: "NFTMaster", profilePhoto: null, isEliminated: false, prediction: null, joinedAt: "2025-07-04T19:31:00Z" },
-    { id: 13, username: "HODLer", profilePhoto: null, isEliminated: false, prediction: "up", joinedAt: "2025-07-04T19:32:00Z" },
-    { id: 14, username: "SmartContract", profilePhoto: null, isEliminated: false, prediction: null, joinedAt: "2025-07-04T19:33:00Z" },
-    { id: 15, username: "BullBuster", profilePhoto: null, isEliminated: true, prediction: "down", joinedAt: "2025-07-04T19:34:00Z" },
-    { id: 16, username: "EtherQueen", profilePhoto: null, isEliminated: false, prediction: "up", joinedAt: "2025-07-04T19:35:00Z" },
-    { id: 17, username: "TradingTim", profilePhoto: null, isEliminated: false, prediction: null, joinedAt: "2025-07-04T19:36:00Z" },
-    { id: 18, username: "EtherWhale", profilePhoto: null, isEliminated: false, prediction: "down", joinedAt: "2025-07-04T19:37:00Z" },
-    { id: 19, username: "BullBuster", profilePhoto: null, isEliminated: false, prediction: null, joinedAt: "2025-07-04T19:38:00Z" },
-    { id: 20, username: "BitGuru", profilePhoto: null, isEliminated: false, prediction: "up", joinedAt: "2025-07-04T19:39:00Z" }
-  ],
-  userParticipation: {
-    isParticipant: true,
-    prediction: null,
-    canPredict: true
-  }
-};
+interface CryptoPrice {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  image: string;
+}
 
-const CountdownTimer = ({ seconds }: { seconds: number }) => {
-  const [timeLeft, setTimeLeft] = useState(seconds);
+// Component untuk countdown timer yang persistent
+const CountdownTimer = ({ endTime }: { endTime: string }) => {
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const end = new Date(endTime).getTime();
+      const difference = end - now;
+      return Math.max(0, Math.floor(difference / 1000));
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
     const timer = setInterval(() => {
-      setTimeLeft((prev) => Math.max(0, prev - 1));
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [endTime]);
 
-  const minutes = Math.floor(timeLeft / 60);
-  const remainingSeconds = timeLeft % 60;
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
 
-  return (
-    <div className="text-yellow-400 text-2xl font-bold">
-      {String(minutes).padStart(2, '0')}:{String(remainingSeconds).padStart(2, '0')}
-    </div>
-  );
-};
-
-const ParticipantAvatar = ({ participant }: { participant: SurvivalGameData['participants'][0] }) => {
-  const getAvatarColor = (username: string) => {
-    const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 
-      'bg-yellow-500', 'bg-red-500', 'bg-indigo-500', 'bg-teal-500'
-    ];
-    const index = username.length % colors.length;
-    return colors[index];
-  };
-
-  const getPredictionIcon = () => {
-    if (participant.prediction === 'up') return <TrendingUp className="h-3 w-3 text-green-400" />;
-    if (participant.prediction === 'down') return <TrendingDown className="h-3 w-3 text-red-400" />;
-    return null;
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${secs}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`;
+    } else {
+      return `${secs}s`;
+    }
   };
 
   return (
-    <div className="relative">
-      <div className={`w-16 h-16 rounded-full ${getAvatarColor(participant.username)} flex items-center justify-center relative`}>
-        {participant.profilePhoto ? (
-          <img 
-            src={participant.profilePhoto} 
-            alt={participant.username}
-            className="w-full h-full rounded-full object-cover"
-          />
-        ) : (
-          <span className="text-white font-bold text-lg">
-            {participant.username.charAt(0).toUpperCase()}
-          </span>
-        )}
-        
-        {/* Eliminated indicator */}
-        {participant.isEliminated && (
-          <div className="absolute inset-0 bg-black bg-opacity-60 rounded-full flex items-center justify-center">
-            <span className="text-red-400 text-2xl font-bold">✕</span>
-          </div>
-        )}
-        
-        {/* Prediction indicator */}
-        {participant.prediction && !participant.isEliminated && (
-          <div className="absolute -top-1 -right-1 bg-gray-800 rounded-full p-1 border-2 border-gray-600">
-            {getPredictionIcon()}
-          </div>
-        )}
-      </div>
-      <div className="text-center mt-2">
-        <p className={`text-xs font-medium ${participant.isEliminated ? 'text-gray-500' : 'text-white'}`}>
-          {participant.username}
-        </p>
-      </div>
+    <div className="flex items-center space-x-1 text-lg font-bold">
+      <Clock className="h-5 w-5" />
+      <span>{formatTime(timeLeft)}</span>
     </div>
   );
 };
 
-const PriceChart = ({ currentPrice }: { currentPrice: number }) => {
-  // Simple mock chart data
-  const chartData = [
-    3110, 3105, 3098, 3102, 3095, 3089, 3092, 3087, 3091, 3094, 3099, 3087
-  ];
-
-  return (
-    <div className="h-32 relative">
-      <svg width="100%" height="100%" className="absolute inset-0">
-        <defs>
-          <linearGradient id="priceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#10B981" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <polyline
-          points={chartData.map((price, index) => {
-            const x = (index / (chartData.length - 1)) * 100;
-            const y = 100 - ((price - Math.min(...chartData)) / (Math.max(...chartData) - Math.min(...chartData))) * 100;
-            return `${x},${y}`;
-          }).join(' ')}
-          fill="none"
-          stroke="#10B981"
-          strokeWidth="2"
-          className="drop-shadow-lg"
-        />
-        <polygon
-          points={`0,100 ${chartData.map((price, index) => {
-            const x = (index / (chartData.length - 1)) * 100;
-            const y = 100 - ((price - Math.min(...chartData)) / (Math.max(...chartData) - Math.min(...chartData))) * 100;
-            return `${x},${y}`;
-          }).join(' ')} 100,100`}
-          fill="url(#priceGradient)"
-        />
-      </svg>
-      
-      {/* Price labels */}
-      <div className="absolute bottom-0 left-0 text-xs text-gray-400">3,110</div>
-      <div className="absolute bottom-0 right-0 text-xs text-gray-400">100</div>
-      <div className="absolute bottom-0 right-1/2 text-xs text-gray-400">110</div>
-    </div>
-  );
-};
-
-export default function SurvivalGame() {
+const SurvivalGame = () => {
   const { toast } = useToast();
-  const [gameData, setGameData] = useState<SurvivalGameData>(mockGameData);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
-  // Get user data for authentication
-  const { data: user } = useQuery({
-    queryKey: ['/api/user'],
-    staleTime: 1000 * 60 * 5
+  // Fetch tournament aktif
+  const { data: tournament, isLoading: tournamentLoading, error: tournamentError } = useQuery<SurvivalTournament>({
+    queryKey: ['/api/survival-tournaments/active'],
+    refetchInterval: 3000, // Refresh setiap 3 detik
+    retry: 1
   });
 
-  const handlePrediction = async (direction: 'up' | 'down') => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please connect your wallet to make predictions",
-        variant: "destructive"
-      });
-      return;
-    }
+  // Fetch crypto prices untuk live price data
+  const { data: cryptoPrices = [] } = useQuery<CryptoPrice[]>({
+    queryKey: ['/api/crypto/prices'],
+    refetchInterval: 2000, // Refresh setiap 2 detik
+  });
 
-    if (!gameData.userParticipation.canPredict) {
-      toast({
-        title: "Cannot Predict",
-        description: "You have already made a prediction for this round",
-        variant: "destructive"
-      });
-      return;
-    }
+  // Fetch user data untuk authentifikasi
+  const { data: user } = useQuery({
+    queryKey: ['/api/user'],
+  });
 
-    setIsSubmitting(true);
-
-    try {
-      // Mock API call - replace with actual endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update local state
-      setGameData(prev => ({
-        ...prev,
-        userParticipation: {
-          ...prev.userParticipation,
-          prediction: direction,
-          canPredict: false
-        }
-      }));
-
+  // Mutation untuk predict UP/DOWN
+  const predictMutation = useMutation({
+    mutationFn: (prediction: 'up' | 'down') =>
+      apiRequest(`/api/survival-tournaments/${tournament?.id}/predict`, {
+        method: 'POST',
+        body: JSON.stringify({ prediction }),
+      }),
+    onSuccess: () => {
       toast({
-        title: "Prediction Submitted",
-        description: `You predicted the price will go ${direction.toUpperCase()}`,
-        variant: "default"
+        title: "Prediksi Berhasil!",
+        description: "Prediksi Anda telah disimpan. Tunggu hasil round ini!",
       });
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+    },
+    onError: (error: any) => {
       toast({
-        title: "Error",
-        description: "Failed to submit prediction. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
+        title: "Prediksi Gagal",
+        description: error.message || "Gagal menyimpan prediksi. Silakan coba lagi.",
       });
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+  });
+
+  // Join tournament mutation
+  const joinTournamentMutation = useMutation({
+    mutationFn: () =>
+      apiRequest(`/api/survival-tournaments/${tournament?.id}/join`, {
+        method: 'POST',
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Bergabung Berhasil!",
+        description: "Anda telah bergabung dalam survival tournament!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Gagal Bergabung",
+        description: error.message || "Gagal bergabung tournament. Silakan coba lagi.",
+      });
+    },
+  });
+
+  // Get current crypto price
+  const getCurrentPrice = () => {
+    if (!tournament || !cryptoPrices) return null;
+    return cryptoPrices.find(crypto => crypto.id === tournament.cryptocurrency);
   };
 
-  const remainingPlayers = gameData.participants.filter(p => !p.isEliminated).length;
-  const totalPlayers = gameData.participants.length;
-  const roundProgress = ((gameData.tournament.roundDuration - gameData.tournament.timeRemaining) / gameData.tournament.roundDuration) * 100;
+  const currentCrypto = getCurrentPrice();
+  const isUserParticipant = tournament?.participants?.some(p => p.userId === user?.id);
+
+  // Handle loading states
+  if (tournamentLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <Header />
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          <div className="text-center text-white">
+            <Trophy className="h-16 w-16 text-purple-400 mx-auto mb-4 animate-spin" />
+            <h2 className="text-2xl font-bold mb-2">Loading Tournament...</h2>
+            <p className="text-blue-200">Mengambil data tournament survival...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Handle error or no tournament
+  if (tournamentError || !tournament) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <Header />
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          <div className="text-center text-white">
+            <Target className="h-16 w-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Tidak Ada Tournament Aktif</h2>
+            <p className="text-blue-200 mb-4">
+              Saat ini tidak ada survival tournament yang sedang berlangsung.
+            </p>
+            <Button 
+              onClick={() => window.location.href = '/survival-tournaments'}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              Lihat Semua Tournament
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-purple-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
       <Header />
       
-      <div className="container max-w-6xl mx-auto px-4 py-8">
-        {/* Page Title */}
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold text-white mb-2">🏆 Nectiq Survival Mode</h1>
-          <p className="text-xl text-gray-300">Battle royale prediction tournaments - Predict or get eliminated!</p>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Header Title */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 bg-clip-text text-transparent">
+            🏆 Nectiq Survival Mode - Battle royale prediction tournaments - Predict or get eliminated!
+          </h1>
+          <p className="text-xl text-blue-200">
+            {tournament.title} - Round {tournament.currentRound}
+          </p>
         </div>
 
-        {/* Game Header */}
-        <Card className="bg-gray-900/80 border-blue-500/30 backdrop-blur-sm mb-6">
+        {/* Main Tournament Card */}
+        <Card className="bg-black/40 border-purple-500/30 backdrop-blur-sm mb-6">
           <CardContent className="p-6">
-            {/* Nectiq Logo and Progress */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                  <Trophy className="h-5 w-5 text-white" />
+            {/* Tournament Status & Live Price */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 space-y-4 lg:space-y-0">
+              <div className="flex items-center space-x-4">
+                <Badge variant={tournament.status === 'active' ? 'default' : 'secondary'} className="text-sm px-3 py-1">
+                  {tournament.status.toUpperCase()}
+                </Badge>
+                <div className="text-sm text-gray-300">
+                  <span className="font-semibold">Round:</span> {tournament.currentRound}
                 </div>
-                <span className="text-white font-bold text-xl">NECTIQ</span>
+                <div className="text-sm text-gray-300">
+                  <span className="font-semibold">Participants:</span> {tournament.currentParticipants}/{tournament.maxParticipants}
+                </div>
               </div>
-              <div className="flex gap-2">
-                <div className="w-20 h-2 bg-purple-600 rounded-full"></div>
-                <div className="w-20 h-2 bg-gray-700 rounded-full"></div>
-                <div className="w-20 h-2 bg-gray-700 rounded-full"></div>
-              </div>
-            </div>
-
-            {/* Cryptocurrency and Timer */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-cyan-400 text-lg font-medium">
-                {gameData.tournament.title}
-              </div>
-              <CountdownTimer seconds={gameData.tournament.timeRemaining} />
-            </div>
-
-            {/* Main Question */}
-            <div className="mb-6">
-              <h1 className="text-white text-2xl font-bold leading-tight mb-2">
-                WILL THE PRICE OF ETH<br />
-                BE ABOVE ${gameData.tournament.targetPrice.toLocaleString()}<br />
-                IN 10 MINUTES?
-              </h1>
-            </div>
-
-            {/* Price Chart */}
-            <div className="mb-6">
-              <PriceChart currentPrice={gameData.tournament.currentPrice} />
-            </div>
-
-            {/* Prediction Buttons */}
-            <div className="flex gap-4 mb-6">
-              <Button
-                onClick={() => handlePrediction('up')}
-                disabled={!gameData.userParticipation.canPredict || isSubmitting}
-                className="flex-1 h-16 bg-green-600 hover:bg-green-700 text-white font-bold text-xl border-0 rounded-lg"
-              >
-                <TrendingUp className="mr-2 h-6 w-6" />
-                UP
-              </Button>
-              <Button
-                onClick={() => handlePrediction('down')}
-                disabled={!gameData.userParticipation.canPredict || isSubmitting}
-                className="flex-1 h-16 bg-red-600 hover:bg-red-700 text-white font-bold text-xl border-0 rounded-lg"
-              >
-                <TrendingDown className="mr-2 h-6 w-6" />
-                DOWN
-              </Button>
-            </div>
-
-            {/* Round Progress */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
-                <span>Round {gameData.tournament.currentRound} of {gameData.tournament.totalRounds}</span>
-                <span>{Math.round(roundProgress)}% Complete</span>
-              </div>
-              <Progress value={roundProgress} className="h-2" />
-            </div>
-
-            {/* Remaining Players */}
-            <div className="text-center">
-              <h3 className="text-cyan-400 text-lg font-bold mb-4">
-                {remainingPlayers} REMAINING PLAYERS
-              </h3>
               
-              {/* Participants Grid */}
-              <div className="grid grid-cols-5 gap-4 justify-items-center">
-                {gameData.participants.map((participant) => (
-                  <ParticipantAvatar key={participant.id} participant={participant} />
-                ))}
+              {/* Live Price Display */}
+              {currentCrypto && (
+                <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-4 text-center">
+                  <div className="flex items-center justify-center space-x-2 mb-1">
+                    <img src={currentCrypto.image} alt={currentCrypto.name} className="w-6 h-6" />
+                    <span className="font-bold text-lg">{currentCrypto.name}</span>
+                  </div>
+                  <div className="text-2xl font-bold">${currentCrypto.current_price.toFixed(2)}</div>
+                  <div className={`text-sm ${currentCrypto.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {currentCrypto.price_change_percentage_24h >= 0 ? '+' : ''}{currentCrypto.price_change_percentage_24h.toFixed(2)}% (24h)
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Round Information */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4 text-center">
+                <div className="text-yellow-400 font-bold text-lg">Round 1</div>
+                <div className="text-sm text-gray-300">(15 minutes)</div>
+              </div>
+              <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-4 text-center">
+                <div className="text-yellow-400 font-bold text-lg">Round 2</div>
+                <div className="text-sm text-gray-300">(30 minutes)</div>
+              </div>
+              <div className="bg-pink-500/20 border border-pink-500/30 rounded-lg p-4 text-center">
+                <div className="text-yellow-400 font-bold text-lg">Round 3</div>
+                <div className="text-sm text-gray-300">(1 hour)</div>
               </div>
             </div>
 
-            {/* User Status */}
-            {gameData.userParticipation.isParticipant && (
-              <div className="mt-6 p-4 bg-blue-900/30 rounded-lg border border-blue-500/30">
-                <div className="text-center text-white">
-                  {gameData.userParticipation.prediction ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <span>Your prediction: </span>
-                      <Badge 
-                        variant={gameData.userParticipation.prediction === 'up' ? 'default' : 'destructive'}
-                        className={gameData.userParticipation.prediction === 'up' ? 'bg-green-600' : 'bg-red-600'}
-                      >
-                        {gameData.userParticipation.prediction.toUpperCase()}
-                      </Badge>
-                    </div>
-                  ) : gameData.userParticipation.canPredict ? (
-                    <span>Make your prediction above to stay in the game!</span>
-                  ) : (
-                    <span>Waiting for round to complete...</span>
-                  )}
+            {/* Current Round Status */}
+            {tournament.currentRound > 0 && tournament.nextRoundTime && (
+              <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-4 text-center mb-6">
+                <div className="text-green-400 font-bold text-lg mb-2">
+                  Round {tournament.currentRound} Active
                 </div>
+                <div className="text-white">
+                  <CountdownTimer endTime={tournament.nextRoundTime} />
+                </div>
+                <div className="text-sm text-gray-300 mt-2">
+                  Make your UP/DOWN prediction below!
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-4">
+              {!user ? (
+                <div className="text-center">
+                  <p className="text-yellow-400 mb-4">Please connect your wallet to participate</p>
+                  <Button 
+                    onClick={() => window.location.href = '/wallet-login'}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3"
+                  >
+                    Connect Wallet
+                  </Button>
+                </div>
+              ) : !isUserParticipant ? (
+                <div className="text-center">
+                  <p className="text-yellow-400 mb-4">
+                    Entry Fee: {tournament.entryFee} NTIQ | Prize Pool: {tournament.prizePool} NTIQ
+                  </p>
+                  <Button
+                    onClick={() => joinTournamentMutation.mutate()}
+                    disabled={joinTournamentMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
+                  >
+                    {joinTournamentMutation.isPending ? 'Joining...' : `Join Tournament (${tournament.entryFee} NTIQ)`}
+                  </Button>
+                </div>
+              ) : tournament.status === 'active' && tournament.currentRound > 0 ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    onClick={() => predictMutation.mutate('up')}
+                    disabled={predictMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-bold"
+                  >
+                    <TrendingUp className="h-6 w-6 mr-2" />
+                    PRICE UP
+                  </Button>
+                  <Button
+                    onClick={() => predictMutation.mutate('down')}
+                    disabled={predictMutation.isPending}
+                    className="bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold"
+                  >
+                    <TrendingDown className="h-6 w-6 mr-2" />
+                    PRICE DOWN
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <p className="text-yellow-400">
+                    {tournament.status === 'open' ? 'Round 1 starts when first player makes a prediction' : 'Waiting for next round to start...'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Participants Section */}
+        <Card className="bg-black/40 border-purple-500/30 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Participants ({tournament.participants.length})
+              </h3>
+              <Badge variant="outline" className="text-sm">
+                {tournament.participants.filter(p => p.status === 'active').length} Active
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {tournament.participants.map((participant, index) => (
+                <div
+                  key={participant.id}
+                  className={`p-3 rounded-lg border ${
+                    participant.status === 'active' 
+                      ? 'bg-green-500/20 border-green-500/30' 
+                      : 'bg-red-500/20 border-red-500/30'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    {participant.profilePhoto ? (
+                      <img 
+                        src={participant.profilePhoto} 
+                        alt={participant.username || `User ${participant.userId}`}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-sm font-bold">
+                        {(participant.username || `U${participant.userId}`).charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {participant.username || `User ${participant.userId}`}
+                      </p>
+                      <p className={`text-xs ${participant.status === 'active' ? 'text-green-400' : 'text-red-400'}`}>
+                        {participant.status === 'active' ? 'Surviving' : 'Eliminated'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {tournament.participants.length === 0 && (
+              <div className="text-center text-gray-400 py-8">
+                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No participants yet. Be the first to join!</p>
               </div>
             )}
           </CardContent>
@@ -390,4 +417,6 @@ export default function SurvivalGame() {
       <Footer />
     </div>
   );
-}
+};
+
+export default SurvivalGame;

@@ -4063,6 +4063,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get active survival tournament for game page
+  app.get('/api/survival-tournaments/active', async (req: Request, res: Response) => {
+    try {
+      const tournaments = await storage.getAllSurvivalTournaments();
+      const activeTournament = tournaments.find(t => t.status === 'active' || t.status === 'open');
+      
+      if (!activeTournament) {
+        return res.status(404).json({ message: 'No active tournament found' });
+      }
+
+      console.log('Found active tournament with ID:', activeTournament.id, 'Type:', typeof activeTournament.id);
+
+      // Get participants and rounds directly without calling getSurvivalTournament 
+      const participants = await storage.getSurvivalParticipants(activeTournament.id);
+      const rounds = await storage.getSurvivalRounds(activeTournament.id);
+      const currentRound = rounds.find(r => r.status === 'active') || rounds[rounds.length - 1];
+
+      res.json({
+        ...activeTournament,
+        participants,
+        rounds,
+        currentRound
+      });
+    } catch (error) {
+      console.error('Error fetching active survival tournament:', error);
+      res.status(500).json({ message: 'Failed to fetch active survival tournament' });
+    }
+  });
+
   // Get specific survival tournament
   app.get('/api/survival-tournaments/:id', async (req: Request, res: Response) => {
     try {
