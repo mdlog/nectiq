@@ -12,6 +12,7 @@ import AdminPanel from "@/pages/admin";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
 import SurvivalTournamentsWorking from "@/pages/survival-tournaments-working";
+import SurvivalGame from "@/pages/survival-game";
 import NotFound from "@/pages/not-found";
 import HowToPlay from "@/pages/how-to-play";
 import TermsConditions from "@/pages/terms-conditions";
@@ -92,6 +93,12 @@ function Router() {
       <Route path="/survival">
         <ProtectedRoute>
           <SurvivalTournamentsWorking />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/survival-game">
+        <ProtectedRoute>
+          <SurvivalGame />
         </ProtectedRoute>
       </Route>
       
