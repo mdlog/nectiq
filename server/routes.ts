@@ -4459,6 +4459,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Update survival tournament
+  app.put('/api/admin/survival-tournaments/:id', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      const { title, description, cryptocurrency, entryFee, maxParticipants, roundDuration } = req.body;
+      
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      // Validate input data
+      if (!title || !description || !cryptocurrency) {
+        return res.status(400).json({ message: 'Title, description, and cryptocurrency are required' });
+      }
+
+      if (entryFee < 1) {
+        return res.status(400).json({ message: 'Entry fee must be at least 1 NTIQ' });
+      }
+
+      if (maxParticipants < 2 || maxParticipants > 100) {
+        return res.status(400).json({ message: 'Max participants must be between 2 and 100' });
+      }
+
+      if (roundDuration < 5 || roundDuration > 1440) {
+        return res.status(400).json({ message: 'Round duration must be between 5 and 1440 minutes' });
+      }
+
+      // Update the tournament
+      const updatedTournament = await storage.updateSurvivalTournament(tournamentId, {
+        title: title.trim(),
+        description: description.trim(),
+        cryptocurrency: cryptocurrency.trim(),
+        entryFee: parseInt(entryFee),
+        maxParticipants: parseInt(maxParticipants),
+        roundDuration: parseInt(roundDuration)
+      });
+      
+      auditLog("TOURNAMENT_UPDATED", { 
+        tournamentId,
+        updatedBy: req.session.userId,
+        changes: { title, description, cryptocurrency, entryFee, maxParticipants, roundDuration }
+      }, req);
+      
+      res.json({ success: true, tournament: updatedTournament, message: "Tournament updated successfully" });
+    } catch (error) {
+      console.error("Error updating tournament:", error);
+      res.status(500).json({ message: "Failed to update tournament" });
+    }
+  });
+
   // Admin: Delete survival tournament
   app.delete('/api/admin/survival-tournaments/:id', requireAdmin, async (req: Request, res: Response) => {
     try {

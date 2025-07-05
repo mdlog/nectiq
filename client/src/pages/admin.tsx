@@ -163,6 +163,8 @@ export default function AdminPanel() {
     maxParticipants: 50,
     roundDuration: 60
   });
+  const [editingTournament, setEditingTournament] = useState<any>(null);
+  const [showEditTournamentDialog, setShowEditTournamentDialog] = useState(false);
   const [battlesPage, setBattlesPage] = useState(1);
   const [battlesPerPage] = useState(10);
   const [battlesSearchQuery, setBattlesSearchQuery] = useState("");
@@ -365,6 +367,30 @@ export default function AdminPanel() {
     },
   });
 
+  // Update tournament mutation
+  const updateTournamentMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/admin/survival-tournaments/${data.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Tournament updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
+      setShowEditTournamentDialog(false);
+      setEditingTournament(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
 
 
 
@@ -538,6 +564,25 @@ export default function AdminPanel() {
   const deleteTournament = async (tournamentId: number) => {
     if (confirm(`Are you sure you want to delete tournament #${tournamentId}?`)) {
       deleteTournamentMutation.mutate(tournamentId);
+    }
+  };
+
+  const editTournament = (tournament: any) => {
+    setEditingTournament({
+      id: tournament.id,
+      title: tournament.title,
+      description: tournament.description,
+      cryptocurrency: tournament.cryptocurrency,
+      entryFee: tournament.entryFee,
+      maxParticipants: tournament.maxParticipants,
+      roundDuration: tournament.roundDuration
+    });
+    setShowEditTournamentDialog(true);
+  };
+
+  const handleUpdateTournament = () => {
+    if (editingTournament) {
+      updateTournamentMutation.mutate(editingTournament);
     }
   };
 
@@ -6162,6 +6207,7 @@ export default function AdminPanel() {
                             <TableHead>Title</TableHead>
                             <TableHead>Cryptocurrency</TableHead>
                             <TableHead>Entry Fee</TableHead>
+                            <TableHead>Round Duration</TableHead>
                             <TableHead>Participants</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Created</TableHead>
@@ -6175,6 +6221,11 @@ export default function AdminPanel() {
                               <TableCell className="font-medium">{tournament.title}</TableCell>
                               <TableCell>{tournament.cryptocurrency}</TableCell>
                               <TableCell>{tournament.entryFee} NTIQ</TableCell>
+                              <TableCell>
+                                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                                  {tournament.roundDuration || 60} minutes
+                                </Badge>
+                              </TableCell>
                               <TableCell>{tournament.participantCount || 0}/{tournament.maxParticipants}</TableCell>
                               <TableCell>
                                 <Badge variant={
@@ -6194,6 +6245,15 @@ export default function AdminPanel() {
                                     title="View Tournament Details"
                                   >
                                     <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="text-blue-600"
+                                    onClick={() => editTournament(tournament)}
+                                    title="Edit Tournament"
+                                  >
+                                    <Edit className="h-4 w-4" />
                                   </Button>
                                   {tournament.status === 'open' && (
                                     <Button 
@@ -6542,6 +6602,154 @@ export default function AdminPanel() {
                     }}
                   >
                     Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Tournament Dialog */}
+      {showEditTournamentDialog && editingTournament && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Edit Tournament #{editingTournament.id}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowEditTournamentDialog(false);
+                    setEditingTournament(null);
+                  }}
+                  className="h-8 w-8 p-0 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-title">Tournament Title</Label>
+                    <Input
+                      id="edit-title"
+                      value={editingTournament.title}
+                      onChange={(e) => setEditingTournament({
+                        ...editingTournament,
+                        title: e.target.value
+                      })}
+                      placeholder="Enter tournament title"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-crypto">Cryptocurrency</Label>
+                    <Select 
+                      value={editingTournament.cryptocurrency} 
+                      onValueChange={(value) => setEditingTournament({
+                        ...editingTournament,
+                        cryptocurrency: value
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select cryptocurrency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(cryptocurrencies || []).map((crypto: any) => (
+                          <SelectItem key={crypto.symbol} value={crypto.symbol}>
+                            {crypto.name} ({crypto.symbol})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Input
+                    id="edit-description"
+                    value={editingTournament.description}
+                    onChange={(e) => setEditingTournament({
+                      ...editingTournament,
+                      description: e.target.value
+                    })}
+                    placeholder="Enter tournament description"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="edit-entry-fee">Entry Fee (NTIQ)</Label>
+                    <Input
+                      id="edit-entry-fee"
+                      type="number"
+                      min="1"
+                      value={editingTournament.entryFee}
+                      onChange={(e) => setEditingTournament({
+                        ...editingTournament,
+                        entryFee: parseInt(e.target.value) || 0
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-max-participants">Max Participants</Label>
+                    <Input
+                      id="edit-max-participants"
+                      type="number"
+                      min="2"
+                      max="100"
+                      value={editingTournament.maxParticipants}
+                      onChange={(e) => setEditingTournament({
+                        ...editingTournament,
+                        maxParticipants: parseInt(e.target.value) || 0
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-round-duration">Round Duration (minutes)</Label>
+                    <Input
+                      id="edit-round-duration"
+                      type="number"
+                      min="5"
+                      max="1440"
+                      value={editingTournament.roundDuration}
+                      onChange={(e) => setEditingTournament({
+                        ...editingTournament,
+                        roundDuration: parseInt(e.target.value) || 60
+                      })}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-6 border-t">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowEditTournamentDialog(false);
+                      setEditingTournament(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleUpdateTournament}
+                    disabled={updateTournamentMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {updateTournamentMutation.isPending ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Update Tournament
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
