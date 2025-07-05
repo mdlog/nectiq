@@ -5166,37 +5166,39 @@ export default function AdminPanel() {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="min-prediction" className="flex items-center">
+                      <Label htmlFor="min-prediction" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         Minimum Prediction Amount (NTIQ)
-                        <Badge variant="outline" className="ml-2 text-xs">Aktif</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</Badge>
                       </Label>
                       <Input 
                         id="min-prediction" 
                         value={settingsForm.platform.minPredictionAmount}
                         onChange={(e) => handleSettingsChange('platform', 'minPredictionAmount', parseInt(e.target.value))}
                         type="number"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter minimum amount"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">Nilai minimum untuk membuat prediksi</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Minimum value required to create a prediction</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="max-prediction" className="flex items-center">
+                      <Label htmlFor="max-prediction" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         Maximum Prediction Amount (NTIQ)
-                        <Badge variant="outline" className="ml-2 text-xs">Aktif</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</Badge>
                       </Label>
                       <Input 
                         id="max-prediction" 
                         value={settingsForm.platform.maxPredictionAmount}
                         onChange={(e) => handleSettingsChange('platform', 'maxPredictionAmount', parseInt(e.target.value))}
                         type="number"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter maximum amount"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">Nilai maksimum untuk membuat prediksi</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Maximum value allowed for creating a prediction</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="withdrawal-fee" className="flex items-center">
+                      <Label htmlFor="withdrawal-fee" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         Withdrawal Fee (%)
-                        <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-700">Critical</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Critical</Badge>
                       </Label>
                       <Input 
                         id="withdrawal-fee" 
@@ -5204,23 +5206,25 @@ export default function AdminPanel() {
                         onChange={(e) => handleSettingsChange('platform', 'withdrawalFee', parseFloat(e.target.value))}
                         type="number" 
                         step="0.1"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter withdrawal fee"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">Fee yang dikenakan saat withdrawal (dalam persen)</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Fee charged during withdrawal (in percentage)</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="min-withdrawal" className="flex items-center">
+                      <Label htmlFor="min-withdrawal" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         Minimum Withdrawal (NTIQ)
-                        <Badge variant="outline" className="ml-2 text-xs">Aktif</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</Badge>
                       </Label>
                       <Input 
                         id="min-withdrawal" 
                         value={settingsForm.platform.minWithdrawal}
                         onChange={(e) => handleSettingsChange('platform', 'minWithdrawal', parseInt(e.target.value))}
                         type="number"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter minimum withdrawal"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">Jumlah minimum untuk penarikan</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Minimum amount required for withdrawal</p>
                     </div>
                   </div>
 
@@ -5280,39 +5284,41 @@ export default function AdminPanel() {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="eth-rate" className="flex items-center">
+                      <Label htmlFor="eth-rate" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         ETH to NTIQ Rate
-                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700">Auto-Update</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Auto-Update</Badge>
                       </Label>
                       <Input 
                         id="eth-rate" 
                         value={settingsForm.exchangeRates.ethToPts}
                         onChange={(e) => handleSettingsChange('exchangeRates', 'ethToPts', parseInt(e.target.value))}
                         type="number"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter ETH rate"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">1 ETH = {settingsForm.exchangeRates.ethToPts.toLocaleString()} NTIQ</p>
-                      <p className="text-xs text-green-600">Terakhir update: 2 menit lalu</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">1 ETH = {settingsForm.exchangeRates.ethToPts.toLocaleString()} NTIQ</p>
+                      <p className="text-xs text-green-600 dark:text-green-400">Last updated: 2 minutes ago</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="usdt-rate" className="flex items-center">
+                      <Label htmlFor="usdt-rate" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         USDT to NTIQ Rate
-                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700">Auto-Update</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Auto-Update</Badge>
                       </Label>
                       <Input 
                         id="usdt-rate" 
                         value={settingsForm.exchangeRates.usdtToPts}
                         onChange={(e) => handleSettingsChange('exchangeRates', 'usdtToPts', parseInt(e.target.value))}
                         type="number"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter USDT rate"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">1 USDT = {settingsForm.exchangeRates.usdtToPts} NTIQ</p>
-                      <p className="text-xs text-green-600">Terakhir update: 1 menit lalu</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">1 USDT = {settingsForm.exchangeRates.usdtToPts} NTIQ</p>
+                      <p className="text-xs text-green-600 dark:text-green-400">Last updated: 1 minute ago</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="pts-usdt-rate" className="flex items-center">
+                      <Label htmlFor="pts-usdt-rate" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         NTIQ to USDT Rate
-                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700">Manual</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">Manual</Badge>
                       </Label>
                       <Input 
                         id="pts-usdt-rate" 
@@ -5320,10 +5326,11 @@ export default function AdminPanel() {
                         onChange={(e) => handleSettingsChange('exchangeRates', 'ptsToUsdt', parseFloat(e.target.value))}
                         type="number" 
                         step="0.001"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter NTIQ rate"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">1 NTIQ = {settingsForm.exchangeRates.ptsToUsdt} USDT</p>
-                      <p className="text-xs text-orange-600">Requires manual update</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">1 NTIQ = {settingsForm.exchangeRates.ptsToUsdt} USDT</p>
+                      <p className="text-xs text-orange-600 dark:text-orange-400">Requires manual update</p>
                     </div>
                   </div>
 
@@ -5361,60 +5368,64 @@ export default function AdminPanel() {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="rate-limit" className="flex items-center">
+                      <Label htmlFor="rate-limit" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         API Rate Limit (requests/minute)
-                        <Badge variant="outline" className="ml-2 text-xs bg-red-100 text-red-700">Critical</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Critical</Badge>
                       </Label>
                       <Input 
                         id="rate-limit" 
                         value={settingsForm.security.rateLimit}
                         onChange={(e) => handleSettingsChange('security', 'rateLimit', parseInt(e.target.value))}
                         type="number"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter rate limit"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">Maksimum request API per menit per IP</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Maximum API requests per minute per IP</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="max-predictions" className="flex items-center">
+                      <Label htmlFor="max-predictions" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         Max Predictions per Hour
-                        <Badge variant="outline" className="ml-2 text-xs">Active</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</Badge>
                       </Label>
                       <Input 
                         id="max-predictions" 
                         value={settingsForm.security.maxPredictionsPerHour}
                         onChange={(e) => handleSettingsChange('security', 'maxPredictionsPerHour', parseInt(e.target.value))}
                         type="number"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter prediction limit"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">Batas prediksi per jam per user</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Prediction limit per hour per user</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="max-withdrawals" className="flex items-center">
+                      <Label htmlFor="max-withdrawals" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         Max Withdrawals per Hour
-                        <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-700">Monitored</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Monitored</Badge>
                       </Label>
                       <Input 
                         id="max-withdrawals" 
                         value={settingsForm.security.maxWithdrawalsPerHour}
                         onChange={(e) => handleSettingsChange('security', 'maxWithdrawalsPerHour', parseInt(e.target.value))}
                         type="number"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter withdrawal limit"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">Batas withdrawal per jam per user</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Withdrawal limit per hour per user</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="session-timeout" className="flex items-center">
+                      <Label htmlFor="session-timeout" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
                         Session Timeout (hours)
-                        <Badge variant="outline" className="ml-2 text-xs">Standard</Badge>
+                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Standard</Badge>
                       </Label>
                       <Input 
                         id="session-timeout" 
                         value={settingsForm.security.sessionTimeout}
                         onChange={(e) => handleSettingsChange('security', 'sessionTimeout', parseInt(e.target.value))}
                         type="number"
-                        className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                        placeholder="Enter timeout hours"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-slate-500">Waktu expire session pengguna</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">User session expiration time</p>
                     </div>
                   </div>
 
@@ -5422,20 +5433,20 @@ export default function AdminPanel() {
                   <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                     <h4 className="font-semibold text-amber-700 dark:text-amber-300 mb-3 flex items-center">
                       <Lock className="mr-2" size={16} />
-                      Keamanan Tambahan
+                      Additional Security
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div className="flex items-center space-x-2">
                         <Switch checked={true} />
-                        <span className="text-slate-700 dark:text-slate-300">Session Timeout bisa ditambahkan pengecekan untuk wallet tertentu (misalnya admin utama).</span>
+                        <span className="text-amber-900 dark:text-amber-100 font-medium">Session timeout checks for specific wallets (e.g., main admin).</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Switch checked={false} />
-                        <span className="text-slate-700 dark:text-slate-300">Tambahkan CAPTCHA atau ubah setting berat (mis. emergency stop).</span>
+                        <span className="text-amber-900 dark:text-amber-100 font-medium">Add CAPTCHA or critical settings (e.g., emergency stop).</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Switch checked={true} />
-                        <span className="text-slate-700 dark:text-slate-300">Logika validasi agar Withdrawal Fee tidak bisa diatur ekstrem (&gt;10%).</span>
+                        <span className="text-amber-900 dark:text-amber-100 font-medium">Validation logic prevents extreme withdrawal fees (&gt;10%).</span>
                       </div>
                     </div>
                   </div>
@@ -5451,23 +5462,23 @@ export default function AdminPanel() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     For example, during a battle campaign:
                   </p>
                   
-                  <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg font-mono text-sm">
-                    <div className="space-y-1 text-slate-800 dark:text-slate-200">
+                  <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg font-mono text-sm">
+                    <div className="space-y-1 text-gray-800 dark:text-gray-200">
                       <div>"Prediction Limit: 20x/hour"</div>
                       <div>"Withdrawal Delay: 4 hours"</div>
                       <div>"Reward Multiplier: 2x"</div>
                     </div>
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600">
+                        <Button variant="outline" size="sm" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
                           <Copy className="mr-1" size={12} />
                           Copy
                         </Button>
-                        <Button variant="outline" size="sm" className="bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600">
+                        <Button variant="outline" size="sm" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
                           <Edit className="mr-1" size={12} />
                           Edit
                         </Button>
@@ -5475,7 +5486,7 @@ export default function AdminPanel() {
                     </div>
                   </div>
                   
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     This feature can automatically activate and configure the panel.
                   </p>
                 </CardContent>
@@ -5491,7 +5502,7 @@ export default function AdminPanel() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Export Logs Button → can add format options:
                     </p>
                     
