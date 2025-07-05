@@ -20,6 +20,8 @@ interface SurvivalTournament {
   maxParticipants: number;
   currentParticipants: number;
   prizePool: number;
+  rewardType: string;
+  rewardAmount: number;
   status: 'open' | 'active' | 'completed' | 'cancelled';
   startTime: string;
   endTime: string;
@@ -315,7 +317,8 @@ const SurvivalTournaments = () => {
             const isUserParticipant = false; // We'll implement this later
             
             return (
-              <Card key={tournament.id} className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600">
+              <div key={tournament.id}>
+                <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl text-white flex items-center gap-2">
@@ -364,8 +367,8 @@ const SurvivalTournaments = () => {
                       <span className="text-xs sm:text-sm">Entry: {tournament.entryFee} NTIQ</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-300">
-                      <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span className="text-xs sm:text-sm">Prize: {tournament.prizePool} NTIQ</span>
+                      <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400" />
+                      <span className="text-xs sm:text-sm font-medium text-yellow-400">Reward: {tournament.rewardAmount} {tournament.rewardType}</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-300">
                       <Users className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -544,12 +547,13 @@ const SurvivalTournaments = () => {
                 </CardContent>
               </Card>
 
-              {/* Participants List for this Tournament */}
-              <div className="mt-4">
-                <SurvivalParticipantsList tournamentId={tournament.id} />
+                {/* Participants List for this Tournament */}
+                <div className="mt-4">
+                  <SurvivalParticipantsList tournamentId={tournament.id} />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Empty State */}
