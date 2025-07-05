@@ -575,7 +575,10 @@ export default function AdminPanel() {
       cryptocurrency: tournament.cryptocurrency,
       entryFee: tournament.entryFee,
       maxParticipants: tournament.maxParticipants,
-      roundDuration: tournament.roundDuration
+      roundDuration: tournament.roundDuration,
+      round1Duration: tournament.round1Duration || null,
+      round2Duration: tournament.round2Duration || null,
+      round3Duration: tournament.round3Duration || null
     });
     setShowEditTournamentDialog(true);
   };
@@ -6709,7 +6712,7 @@ export default function AdminPanel() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="edit-round-duration">Round Duration (minutes)</Label>
+                    <Label htmlFor="edit-round-duration">Default Round Duration (minutes)</Label>
                     <Input
                       id="edit-round-duration"
                       type="number"
@@ -6721,6 +6724,56 @@ export default function AdminPanel() {
                         roundDuration: parseInt(e.target.value) || 60
                       })}
                     />
+                  </div>
+
+                  {/* Individual Round Durations Section */}
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-semibold mb-3 text-gray-900 dark:text-gray-100">Individual Round Durations</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="edit-round1-duration">Round 1 (minutes)</Label>
+                        <Input
+                          id="edit-round1-duration"
+                          type="number"
+                          min="5"
+                          max="1440"
+                          value={editingTournament.round1Duration || ''}
+                          onChange={(e) => setEditingTournament({
+                            ...editingTournament,
+                            round1Duration: e.target.value ? parseInt(e.target.value) : null
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-round2-duration">Round 2 (minutes)</Label>
+                        <Input
+                          id="edit-round2-duration"
+                          type="number"
+                          min="5"
+                          max="1440"
+                          value={editingTournament.round2Duration || ''}
+                          onChange={(e) => setEditingTournament({
+                            ...editingTournament,
+                            round2Duration: e.target.value ? parseInt(e.target.value) : null
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-round3-duration">Round 3 (minutes)</Label>
+                        <Input
+                          id="edit-round3-duration"
+                          type="number"
+                          min="5"
+                          max="1440"
+                          value={editingTournament.round3Duration || ''}
+                          onChange={(e) => setEditingTournament({
+                            ...editingTournament,
+                            round3Duration: e.target.value ? parseInt(e.target.value) : null
+                          })}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">If not filled, will use Default Round Duration for all rounds</p>
                   </div>
                 </div>
 

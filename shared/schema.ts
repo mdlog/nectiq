@@ -398,7 +398,10 @@ export const survivalTournaments = pgTable("survival_tournaments", {
   prizePool: integer("prize_pool").notNull().default(0),
   maxParticipants: integer("max_participants").notNull().default(32),
   currentParticipants: integer("current_participants").notNull().default(0),
-  roundDuration: integer("round_duration").notNull().default(60), // minutes per round
+  roundDuration: integer("round_duration").notNull().default(60), // minutes per round (default for all rounds)
+  round1Duration: integer("round1_duration"), // minutes for round 1 (overrides roundDuration if set)
+  round2Duration: integer("round2_duration"), // minutes for round 2 (overrides roundDuration if set)
+  round3Duration: integer("round3_duration"), // minutes for round 3 (overrides roundDuration if set)
   status: varchar("status", { length: 20 }).notNull().default("open"), // open, active, completed, cancelled
   currentRound: integer("current_round").notNull().default(0),
   winnerId: integer("winner_id").references(() => users.id),

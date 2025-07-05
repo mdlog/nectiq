@@ -4463,7 +4463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/admin/survival-tournaments/:id', requireAdmin, async (req: Request, res: Response) => {
     try {
       const tournamentId = parseInt(req.params.id);
-      const { title, description, cryptocurrency, entryFee, maxParticipants, roundDuration } = req.body;
+      const { title, description, cryptocurrency, entryFee, maxParticipants, roundDuration, round1Duration, round2Duration, round3Duration } = req.body;
       
       const tournament = await storage.getSurvivalTournament(tournamentId);
       if (!tournament) {
@@ -4494,13 +4494,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cryptocurrency: cryptocurrency.trim(),
         entryFee: parseInt(entryFee),
         maxParticipants: parseInt(maxParticipants),
-        roundDuration: parseInt(roundDuration)
+        roundDuration: parseInt(roundDuration),
+        round1Duration: round1Duration ? parseInt(round1Duration) : null,
+        round2Duration: round2Duration ? parseInt(round2Duration) : null,
+        round3Duration: round3Duration ? parseInt(round3Duration) : null
       });
       
       auditLog("TOURNAMENT_UPDATED", { 
         tournamentId,
         updatedBy: req.session.userId,
-        changes: { title, description, cryptocurrency, entryFee, maxParticipants, roundDuration }
+        changes: { title, description, cryptocurrency, entryFee, maxParticipants, roundDuration, round1Duration, round2Duration, round3Duration }
       }, req);
       
       res.json({ success: true, tournament: updatedTournament, message: "Tournament updated successfully" });
