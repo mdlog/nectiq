@@ -22,6 +22,7 @@ import type { LeaderboardEntry } from "@/types";
 import { SimpleAdminAuth } from "@/components/simple-admin-auth";
 import { BannerManagement } from "@/components/admin/banner-management";
 import { UserStatistics } from "@/components/admin/user-statistics";
+import { FeatureToggleSettings } from "@/components/feature-toggle-settings";
 import { useAdminWebSocket } from "@/hooks/useAdminWebSocket";
 
 interface AdminStats {
@@ -5056,6 +5057,8 @@ export default function AdminPanel() {
           {/* Enhanced Settings Tab */}
           <TabsContent value="settings">
             <div className="space-y-6">
+              {/* Feature Toggle Settings */}
+              <FeatureToggleSettings />
               {/* Header with Export and Status */}
               <Card className="bg-surface border-surface-light">
                 <CardHeader>

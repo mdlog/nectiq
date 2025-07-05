@@ -112,6 +112,7 @@ export interface IStorage {
 
   // System settings operations
   getSystemSettings(): Promise<any>;
+  getSystemSetting(category: string, key: string): Promise<string | null>;
   updateSystemSetting(category: string, key: string, value: any, adminId: number): Promise<void>;
 
   // Banner operations
@@ -769,6 +770,17 @@ export class DatabaseStorage implements IStorage {
         ...settingsObj.exchangeRates
       }
     };
+  }
+
+  async getSystemSetting(category: string, key: string): Promise<string | null> {
+    const [setting] = await db.select()
+      .from(systemSettings)
+      .where(and(
+        eq(systemSettings.category, category),
+        eq(systemSettings.key, key)
+      ));
+    
+    return setting ? setting.value : null;
   }
 
   async updateSystemSetting(category: string, key: string, value: any, adminId: number): Promise<void> {
