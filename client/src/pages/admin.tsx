@@ -164,7 +164,9 @@ export default function AdminPanel() {
     roundDuration: 60,
     round1Duration: 15,
     round2Duration: 30,
-    round3Duration: 60
+    round3Duration: 60,
+    rewardType: "NTIQ", // NTIQ, USDT, USDC
+    rewardAmount: 1000
   });
   const [editingTournament, setEditingTournament] = useState<any>(null);
   const [showEditTournamentDialog, setShowEditTournamentDialog] = useState(false);
@@ -345,7 +347,9 @@ export default function AdminPanel() {
         roundDuration: 60,
         round1Duration: 15,
         round2Duration: 30,
-        round3Duration: 60
+        round3Duration: 60,
+        rewardType: "NTIQ",
+        rewardAmount: 1000
       });
     },
     onError: (error: any) => {
@@ -6169,6 +6173,41 @@ export default function AdminPanel() {
                         value={newTournament.roundDuration}
                         onChange={(e) => setNewTournament({...newTournament, roundDuration: parseInt(e.target.value) || 0})}
                       />
+                    </div>
+                  </div>
+
+                  {/* Reward Configuration Section */}
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="text-sm font-semibold mb-3 text-gray-900 dark:text-gray-100">Reward Configuration</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Reward Type</Label>
+                        <Select value={newTournament.rewardType} onValueChange={(value) => setNewTournament({...newTournament, rewardType: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select reward currency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="NTIQ">NTIQ (Platform Token)</SelectItem>
+                            <SelectItem value="USDT">USDT (Tether)</SelectItem>
+                            <SelectItem value="USDC">USDC (USD Coin)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Winner Reward Amount</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="Enter reward amount" 
+                          value={newTournament.rewardAmount}
+                          onChange={(e) => setNewTournament({...newTournament, rewardAmount: parseInt(e.target.value) || 0})}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        <strong>Reward Info:</strong> The winner will receive {newTournament.rewardAmount} {newTournament.rewardType}. 
+                        This is separate from the entry fee pool which accumulates from all participants.
+                      </p>
                     </div>
                   </div>
 

@@ -402,6 +402,8 @@ export const survivalTournaments = pgTable("survival_tournaments", {
   round1Duration: integer("round1_duration"), // minutes for round 1 (overrides roundDuration if set)
   round2Duration: integer("round2_duration"), // minutes for round 2 (overrides roundDuration if set)
   round3Duration: integer("round3_duration"), // minutes for round 3 (overrides roundDuration if set)
+  rewardType: varchar("reward_type", { length: 10 }).notNull().default("NTIQ"), // NTIQ, USDT, USDC
+  rewardAmount: integer("reward_amount").notNull().default(1000), // Winner reward amount
   status: varchar("status", { length: 20 }).notNull().default("open"), // open, active, completed, cancelled
   currentRound: integer("current_round").notNull().default(0),
   winnerId: integer("winner_id").references(() => users.id),
