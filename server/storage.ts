@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 
@@ -130,6 +130,13 @@ export interface IStorage {
   updateEvent(id: number, event: Partial<InsertEvent>): Promise<void>;
   deleteEvent(id: number): Promise<void>;
   getEvent(id: number): Promise<Event | undefined>;
+
+  // Referral operations
+  createReferral(referrerId: number, referredId: number, referralCode: string): Promise<void>;
+  getReferralData(userId: number): Promise<any>;
+  generateReferralCode(userId: number): Promise<string>;
+  getUserByReferralCode(code: string): Promise<User | undefined>;
+  getReferralStats(userId: number): Promise<any>;
 
   // Battle operations
   createBattle(battle: any): Promise<any>;
@@ -2473,6 +2480,177 @@ export class MemStorage implements IStorage {
     this.battles.clear();
     this.battleComments.clear();
     return battleCount;
+  }
+
+  // Referral operations
+  async createReferral(referrerId: number, referredId: number, referralCode: string): Promise<void> {
+    await db.insert(referrals).values({
+      referrerId,
+      referredUserId: referredId,
+      rewardAmount: 100, // 100 NTIQ reward per referral
+    });
+  }
+
+  async getReferralData(userId: number): Promise<any> {
+    // Get user's referral code
+    const user = await db.select({
+      referralCode: users.referralCode,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+    const referralCode = user[0]?.referralCode || null;
+
+    // Get referral stats
+    const stats = await db.select({
+      totalReferrals: count(referrals.id),
+      referralRewards: sql<number>`COALESCE(SUM(${referrals.rewardAmount}), 0)`,
+    })
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId));
+
+    // Get referred users
+    const referredUsers = await db.select({
+      id: users.id,
+      username: users.username,
+      uid: users.uid,
+      joinedAt: referrals.createdAt,
+      rewardAmount: referrals.rewardAmount,
+    })
+    .from(referrals)
+    .innerJoin(users, eq(referrals.referredUserId, users.id))
+    .where(eq(referrals.referrerId, userId))
+    .orderBy(desc(referrals.createdAt));
+
+    return {
+      referralCode,
+      referralLink: referralCode ? `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/?ref=${referralCode}` : null,
+      totalReferrals: stats[0]?.totalReferrals || 0,
+      referralRewards: stats[0]?.referralRewards || 0,
+      referredUsers: referredUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        uid: user.uid,
+        joinedAt: user.joinedAt.toISOString(),
+        rewardAmount: user.rewardAmount,
+      })),
+    };
+  }
+
+  async generateReferralCode(userId: number): Promise<string> {
+    // Generate unique referral code
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    
+    // Update user with referral code
+    await db.update(users)
+      .set({ referralCode: code })
+      .where(eq(users.id, userId));
+
+    return code;
+  }
+
+  async getUserByReferralCode(referralCode: string): Promise<User | undefined> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.referralCode, referralCode))
+      .limit(1);
+    
+    return user || undefined;
+  }
+
+  async getReferralStats(userId: number): Promise<any> {
+    const stats = await db.select({
+      totalReferrals: count(referrals.id),
+      referralRewards: sql<number>`COALESCE(SUM(${referrals.rewardAmount}), 0)`,
+    })
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId));
+
+    return {
+      totalReferrals: stats[0]?.totalReferrals || 0,
+      referralRewards: stats[0]?.referralRewards || 0,
+    };
+  }
+
+  async getReferralData(userId: number): Promise<any> {
+    // Get user's referral code from users table
+    const [user] = await db.select({ referralCode: users.referralCode })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user?.referralCode) {
+      return {
+        referralCode: null,
+        totalReferrals: 0,
+        referralRewards: 0,
+        referralLink: "",
+        referredUsers: []
+      };
+    }
+
+    // Get referral statistics
+    const [stats] = await db.select({
+      totalReferrals: count(),
+      totalRewards: sql<number>`COALESCE(SUM(${referrals.rewardAmount}), 0)`.as('totalRewards'),
+    })
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId));
+
+    // Get referred users
+    const referredUsers = await db.select({
+      id: users.id,
+      username: users.username,
+      uid: users.uid,
+      joinedAt: referrals.createdAt,
+      rewardAmount: referrals.rewardAmount,
+    })
+    .from(referrals)
+    .innerJoin(users, eq(referrals.referredUserId, users.id))
+    .where(eq(referrals.referrerId, userId))
+    .orderBy(desc(referrals.createdAt));
+
+    return {
+      referralCode: user.referralCode,
+      totalReferrals: stats?.totalReferrals || 0,
+      referralRewards: stats?.totalRewards || 0,
+      referralLink: `${process.env.REPLIT_DOMAIN || 'http://localhost:5000'}/?ref=${user.referralCode}`,
+      referredUsers: referredUsers.map(user => ({
+        ...user,
+        joinedAt: user.joinedAt?.toISOString(),
+      }))
+    };
+  }
+
+  async generateReferralCode(userId: number): Promise<string> {
+    // Generate a random 8-character referral code
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    
+    // Update user with referral code
+    await db.update(users)
+      .set({ referralCode: code })
+      .where(eq(users.id, userId));
+
+    return code;
+  }
+
+  async getUserByReferralCode(code: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.referralCode, code));
+    return user || undefined;
+  }
+
+  async getReferralStats(userId: number): Promise<any> {
+    const [stats] = await db.select({
+      totalReferrals: count(),
+      totalRewards: sql<number>`COALESCE(SUM(${referrals.rewardAmount}), 0)`.as('totalRewards'),
+    })
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId));
+
+    return {
+      totalReferrals: stats?.totalReferrals || 0,
+      totalRewards: stats?.totalRewards || 0,
+    };
   }
 }
 

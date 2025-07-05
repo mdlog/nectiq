@@ -20,6 +20,10 @@ export const users = pgTable("users", {
   twitterHandle: text("twitter_handle"),
   emailVerified: boolean("email_verified").notNull().default(false),
   twitterVerified: boolean("twitter_verified").notNull().default(false),
+  referralCode: varchar("referral_code", { length: 8 }).unique(),
+  referredBy: integer("referred_by").references(() => users.id),
+  totalReferrals: integer("total_referrals").notNull().default(0),
+  referralRewards: integer("referral_rewards").notNull().default(0),
 });
 
 export const predictions = pgTable("predictions", {
@@ -127,16 +131,7 @@ export const userDailyChallenges = pgTable("user_daily_challenges", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Referral System Tables
-export const referrals = pgTable("referrals", {
-  id: serial("id").primaryKey(),
-  referrerId: integer("referrer_id").references(() => users.id).notNull(),
-  referredId: integer("referred_id").references(() => users.id).notNull(),
-  referralCode: varchar("referral_code", { length: 20 }).notNull(),
-  reward: integer("reward").default(1000), // 1000 PTS bonus
-  isRewarded: boolean("is_rewarded").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// Referral System Tables - moved to line 247
 
 // User Analytics Tables
 export const userAnalytics = pgTable("user_analytics", {
@@ -238,6 +233,15 @@ export const cryptoTransactions = pgTable("crypto_transactions", {
   exchangeRate: numeric("exchange_rate", { precision: 18, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referrerId: integer("referrer_id").notNull().references(() => users.id),
+  referredUserId: integer("referred_user_id").notNull().references(() => users.id),
+  rewardAmount: integer("reward_amount").notNull().default(100), // Default 100 NTIQ reward
+  status: varchar("status", { length: 20 }).notNull().default("active"), // active, completed, expired
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const banners = pgTable("banners", {
@@ -505,8 +509,8 @@ export const referralsRelations = relations(referrals, ({ one }) => ({
     references: [users.id],
     relationName: "referrer",
   }),
-  referred: one(users, {
-    fields: [referrals.referredId],
+  referredUser: one(users, {
+    fields: [referrals.referredUserId],
     references: [users.id],
     relationName: "referred",
   }),

@@ -21,6 +21,7 @@ import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
+import { ReferralSection } from "@/components/referral-section";
 
 
 // Dynamic function to get crypto image from live API data
@@ -1997,6 +1998,9 @@ function UserProfile() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Referral Section */}
+      <ReferralSection />
     </div>
   );
 }

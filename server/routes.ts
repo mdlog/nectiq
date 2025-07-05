@@ -5286,5 +5286,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== REFERRAL ENDPOINTS =====
+
+  // Get user's referral data
+  app.get('/api/user/referral', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const referralData = await storage.getReferralData(userId);
+      res.json(referralData);
+    } catch (error) {
+      console.error('Error fetching referral data:', error);
+      res.status(500).json({ message: 'Failed to fetch referral data' });
+    }
+  });
+
+  // Generate referral code
+  app.post('/api/user/referral/generate', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Check if user already has a referral code
+      const user = await storage.getUser(userId);
+      if (user?.referralCode) {
+        return res.status(400).json({ message: 'User already has a referral code' });
+      }
+
+      const referralCode = await storage.generateReferralCode(userId);
+      res.json({ referralCode, success: true });
+    } catch (error) {
+      console.error('Error generating referral code:', error);
+      res.status(500).json({ message: 'Failed to generate referral code' });
+    }
+  });
+
+  // Process referral registration (called during user registration)
+  app.post('/api/auth/process-referral', async (req: Request, res: Response) => {
+    try {
+      const { referralCode, newUserId } = req.body;
+      
+      if (!referralCode || !newUserId) {
+        return res.status(400).json({ message: 'Missing referral code or user ID' });
+      }
+
+      // Find referrer by code
+      const referrer = await storage.getUserByReferralCode(referralCode);
+      if (!referrer) {
+        return res.status(404).json({ message: 'Invalid referral code' });
+      }
+
+      // Create referral record
+      await storage.createReferral(referrer.id, newUserId, referralCode);
+
+      // Add reward to referrer's balance
+      await storage.addToUserBalance(referrer.id, 100); // 100 NTIQ reward
+
+      // Create transaction log for reward
+      await storage.createTransactionLog({
+        userId: referrer.id,
+        type: 'referral_reward',
+        amount: 100,
+        description: `Referral reward for inviting user ID ${newUserId}`,
+        relatedId: newUserId,
+        status: 'completed'
+      });
+
+      res.json({ success: true, referrerId: referrer.id, reward: 100 });
+    } catch (error) {
+      console.error('Error processing referral:', error);
+      res.status(500).json({ message: 'Failed to process referral' });
+    }
+  });
+
   return httpServer;
 }
