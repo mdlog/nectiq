@@ -387,7 +387,7 @@ const SurvivalGame = () => {
                     {joinTournamentMutation.isPending ? 'Joining...' : `Join Tournament (${tournament.entryFee} NTIQ)`}
                   </Button>
                 </div>
-              ) : tournament.status === 'active' && tournament.currentRound?.roundNumber && tournament.currentRound.roundNumber > 0 ? (
+              ) : tournament.status === 'active' && (tournament.currentRound || tournament.rounds?.some(r => r.status === 'active')) ? (
                 <div className="grid grid-cols-2 gap-4">
                   <Button
                     onClick={() => {
