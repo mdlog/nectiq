@@ -92,14 +92,25 @@ export class SurvivalRoundService {
       // Use individual round duration based on round number
       let roundDuration = tournament.roundDuration; // Default fallback
       
-      if (tournament.individualRoundDurations) {
+      // Check for individual round durations in database fields first
+      if (nextRoundNumber === 1 && tournament.round1Duration) {
+        roundDuration = tournament.round1Duration;
+        console.log(`Round ${nextRoundNumber}: Using individual duration of ${roundDuration} minutes from round1Duration field`);
+      } else if (nextRoundNumber === 2 && tournament.round2Duration) {
+        roundDuration = tournament.round2Duration;
+        console.log(`Round ${nextRoundNumber}: Using individual duration of ${roundDuration} minutes from round2Duration field`);
+      } else if (nextRoundNumber === 3 && tournament.round3Duration) {
+        roundDuration = tournament.round3Duration;
+        console.log(`Round ${nextRoundNumber}: Using individual duration of ${roundDuration} minutes from round3Duration field`);
+      } else if (tournament.individualRoundDurations) {
+        // Fallback to JSON string format if available
         try {
           const individualDurations = JSON.parse(tournament.individualRoundDurations);
           if (Array.isArray(individualDurations) && individualDurations[nextRoundNumber - 1]) {
             roundDuration = individualDurations[nextRoundNumber - 1];
-            console.log(`Round ${nextRoundNumber}: Using individual duration of ${roundDuration} minutes`);
+            console.log(`Round ${nextRoundNumber}: Using individual duration of ${roundDuration} minutes from JSON`);
           } else {
-            console.log(`Round ${nextRoundNumber}: Using default duration of ${roundDuration} minutes (individual duration not found)`);
+            console.log(`Round ${nextRoundNumber}: Using default duration of ${roundDuration} minutes (individual duration not found in JSON)`);
           }
         } catch (error) {
           console.log(`Round ${nextRoundNumber}: Error parsing individual durations, using default duration of ${roundDuration} minutes`);
