@@ -3132,12 +3132,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
+      console.log(`Delete user request received for ID: ${req.params.id}, parsed as: ${userId}`);
 
       if (!userId || isNaN(userId)) {
+        console.log(`Invalid user ID provided: ${req.params.id}`);
         return res.status(400).json({ message: "Invalid user ID" });
       }
 
       const user = await storage.getUser(userId);
+      console.log(`User lookup result for ID ${userId}:`, user ? `Found user: ${user.username}` : 'User not found');
+      
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
