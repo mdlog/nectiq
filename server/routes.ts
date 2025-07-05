@@ -4397,6 +4397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         prediction,
         startingPrice: currentPrice.toString(), // Record price when prediction was made
+        confidence: 50, // Default confidence level
         submittedAt: new Date()
       };
 

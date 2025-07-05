@@ -138,7 +138,8 @@ const SurvivalGame = () => {
         method: 'POST',
         body: JSON.stringify({ prediction }),
       });
-      return response;
+      const data = await response.json();
+      return data;
     },
     onSuccess: (data) => {
       toast({
@@ -345,7 +346,7 @@ const SurvivalGame = () => {
                     {joinTournamentMutation.isPending ? 'Joining...' : `Join Tournament (${tournament.entryFee} NTIQ)`}
                   </Button>
                 </div>
-              ) : tournament.status === 'active' && tournament.currentRound?.roundNumber > 0 ? (
+              ) : tournament.status === 'active' && tournament.currentRound?.roundNumber && tournament.currentRound.roundNumber > 0 ? (
                 <div className="grid grid-cols-2 gap-4">
                   <Button
                     onClick={() => {
