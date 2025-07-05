@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, predictionReactions, predictionComments, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 
@@ -532,16 +532,64 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: number): Promise<void> {
-    // Simplified delete user method - focus on main tables only
+    // Comprehensive delete user method - handle all foreign key dependencies
     try {
-      console.log(`Starting deletion process for user ${id}`);
+      console.log(`Starting comprehensive deletion process for user ${id}`);
       
       // Get user info first
       const [user] = await db.select({ walletAddress: users.walletAddress }).from(users).where(eq(users.id, id));
       
-      // Delete in safe order - only essential tables to avoid foreign key issues
+      // Delete in safe order to handle all foreign key constraints
       
-      // 1. Delete financial records first
+      // 1. Delete battle-related data first
+      console.log('Deleting battle reactions...');
+      await db.delete(battleReactions).where(eq(battleReactions.userId, id));
+      
+      console.log('Deleting battle comments...');
+      await db.delete(battleComments).where(eq(battleComments.userId, id));
+      
+      console.log('Deleting battle spectators...');
+      await db.delete(battleSpectators).where(eq(battleSpectators.userId, id));
+      
+      console.log('Deleting battles where user is challenger or challenged...');
+      await db.delete(predictionBattles).where(or(
+        eq(predictionBattles.challengerId, id),
+        eq(predictionBattles.challengedId, id)
+      ));
+      
+      // 2. Delete survival tournament data
+      console.log('Deleting survival predictions...');
+      await db.delete(survivalPredictions).where(eq(survivalPredictions.userId, id));
+      
+      console.log('Deleting survival participants...');
+      await db.delete(survivalParticipants).where(eq(survivalParticipants.userId, id));
+      
+      // 3. Delete user achievements and challenges
+      console.log('Deleting user achievements...');
+      await db.delete(userAchievements).where(eq(userAchievements.userId, id));
+      
+      console.log('Deleting daily challenges...');
+      await db.delete(userDailyChallenges).where(eq(userDailyChallenges.userId, id));
+      
+      // 4. Delete social features
+      console.log('Deleting prediction reactions...');
+      await db.delete(predictionReactions).where(eq(predictionReactions.userId, id));
+      
+      console.log('Deleting prediction comments...');
+      await db.delete(predictionComments).where(eq(predictionComments.userId, id));
+      
+      // 5. Delete transaction logs
+      console.log('Deleting transaction logs...');
+      await db.delete(transactionLogs).where(eq(transactionLogs.userId, id));
+      
+      // 6. Delete analytics and security data
+      console.log('Deleting user analytics...');
+      await db.delete(userAnalytics).where(eq(userAnalytics.userId, id));
+      
+      console.log('Deleting security events...');
+      await db.delete(securityEvents).where(eq(securityEvents.userId, id));
+      
+      // 7. Delete financial records
       console.log('Deleting rewards...');
       await db.delete(rewards).where(eq(rewards.userId, id));
       
@@ -554,21 +602,35 @@ export class DatabaseStorage implements IStorage {
       console.log('Deleting withdrawals...');
       await db.delete(withdrawals).where(eq(withdrawals.userId, id));
       
-      // 2. Delete user-specific data
+      // 8. Delete referral data
+      console.log('Deleting referrals...');
+      await db.delete(referrals).where(or(
+        eq(referrals.referrerId, id),
+        eq(referrals.referredUserId, id)
+      ));
+      
+      // 9. Delete wallet security data
       if (user?.walletAddress) {
+        console.log('Deleting wallet fingerprints...');
+        await db.delete(walletFingerprints).where(eq(walletFingerprints.walletAddress, user.walletAddress));
+        
         console.log('Deleting abuse detections by wallet...');
         await db.delete(abuseDetections).where(eq(abuseDetections.primaryWalletAddress, user.walletAddress));
       }
       
-      // 3. Finally delete the user
+      // 10. Update referredBy to null for users who were referred by this user
+      console.log('Updating referredBy references...');
+      await db.update(users).set({ referredBy: null }).where(eq(users.referredBy, id));
+      
+      // 11. Finally delete the user
       console.log('Deleting user...');
       await db.delete(users).where(eq(users.id, id));
       
-      console.log(`Successfully deleted user ${id} and core related data`);
+      console.log(`Successfully deleted user ${id} and all related data`);
     } catch (error: any) {
       console.error(`Error deleting user ${id}:`, error);
       console.error('Error details:', error?.message || 'Unknown error');
-      throw error;
+      throw new Error(`Cannot delete user due to data dependencies: ${error?.message || 'Unknown database error'}`);
     }
   }
 
