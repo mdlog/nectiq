@@ -414,7 +414,7 @@ const SurvivalGame = () => {
                   {joinTournamentMutation.isPending ? 'Joining...' : `Join Tournament (${tournament.entryFee} NTIQ)`}
                 </Button>
               </div>
-            ) : tournament.status === 'active' && (tournament.currentRound || tournament.rounds?.some(r => r.status === 'active')) ? (
+            ) : tournament.status === 'active' ? (
               <div className="bg-gradient-to-r from-slate-800/50 to-gray-800/50 border border-gray-600/50 rounded-xl p-8">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-white mb-2">Make Your Prediction</h3>
