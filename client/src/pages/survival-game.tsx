@@ -23,6 +23,7 @@ interface SurvivalTournament {
   prizePool: number;
   status: 'open' | 'active' | 'completed' | 'cancelled';
   roundDuration: number;
+  individualRoundDurations?: string | null;
   startTime: string;
   endTime: string;
   nextRoundTime: string;
@@ -106,6 +107,21 @@ const CountdownTimer = ({ endTime }: { endTime: string }) => {
 const SurvivalGame = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Helper function to get individual round duration
+  const getRoundDuration = (tournament: SurvivalTournament, roundNumber: number): number => {
+    if (tournament.individualRoundDurations) {
+      try {
+        const durations = JSON.parse(tournament.individualRoundDurations);
+        if (Array.isArray(durations) && durations[roundNumber - 1]) {
+          return durations[roundNumber - 1];
+        }
+      } catch (error) {
+        console.error('Error parsing individual round durations:', error);
+      }
+    }
+    return tournament.roundDuration || 60;
+  };
 
   // Fetch tournament aktif
   const { data: tournament, isLoading: tournamentLoading, error: tournamentError } = useQuery<SurvivalTournament>({
@@ -302,15 +318,15 @@ const SurvivalGame = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4 text-center">
                 <div className="text-yellow-400 font-bold text-lg">Round 1</div>
-                <div className="text-sm text-gray-300">({tournament.roundDuration || 60} minutes)</div>
+                <div className="text-sm text-gray-300">({getRoundDuration(tournament, 1)} minutes)</div>
               </div>
               <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-4 text-center">
                 <div className="text-yellow-400 font-bold text-lg">Round 2</div>
-                <div className="text-sm text-gray-300">({tournament.roundDuration || 60} minutes)</div>
+                <div className="text-sm text-gray-300">({getRoundDuration(tournament, 2)} minutes)</div>
               </div>
               <div className="bg-pink-500/20 border border-pink-500/30 rounded-lg p-4 text-center">
                 <div className="text-yellow-400 font-bold text-lg">Round 3</div>
-                <div className="text-sm text-gray-300">({tournament.roundDuration || 60} minutes)</div>
+                <div className="text-sm text-gray-300">({getRoundDuration(tournament, 3)} minutes)</div>
               </div>
             </div>
 

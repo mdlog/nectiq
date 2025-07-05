@@ -25,6 +25,7 @@ interface SurvivalTournament {
   endTime: string;
   currentRound: number;
   roundDuration: number;
+  individualRoundDurations?: string | null;
   eliminationCount: number;
   createdAt: string;
   updatedAt: string;
