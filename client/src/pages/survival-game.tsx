@@ -23,6 +23,9 @@ interface SurvivalTournament {
   prizePool: number;
   status: 'open' | 'active' | 'completed' | 'cancelled';
   roundDuration: number;
+  round1Duration?: number | null;
+  round2Duration?: number | null;
+  round3Duration?: number | null;
   individualRoundDurations?: string | null;
   startTime: string;
   endTime: string;
@@ -110,6 +113,18 @@ const SurvivalGame = () => {
 
   // Helper function to get individual round duration
   const getRoundDuration = (tournament: SurvivalTournament, roundNumber: number): number => {
+    // First try to use individual round duration fields from database
+    if (roundNumber === 1 && tournament.round1Duration) {
+      return tournament.round1Duration;
+    }
+    if (roundNumber === 2 && tournament.round2Duration) {
+      return tournament.round2Duration;
+    }
+    if (roundNumber === 3 && tournament.round3Duration) {
+      return tournament.round3Duration;
+    }
+    
+    // Fallback to JSON string format if available
     if (tournament.individualRoundDurations) {
       try {
         const durations = JSON.parse(tournament.individualRoundDurations);
@@ -120,6 +135,8 @@ const SurvivalGame = () => {
         console.error('Error parsing individual round durations:', error);
       }
     }
+    
+    // Final fallback to general round duration
     return tournament.roundDuration || 60;
   };
 

@@ -4120,7 +4120,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create survival tournament (Admin only)
   app.post('/api/survival-tournaments', requireAdmin, async (req: Request, res: Response) => {
     try {
-      const { title, description, cryptocurrency, entryFee, maxParticipants, roundDuration } = req.body;
+      const { 
+        title, 
+        description, 
+        cryptocurrency, 
+        entryFee, 
+        maxParticipants, 
+        roundDuration,
+        round1Duration,
+        round2Duration,
+        round3Duration
+      } = req.body;
       const userId = req.session?.userId;
 
       if (!userId) {
@@ -4138,6 +4148,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Insufficient balance for entry fee' });
       }
 
+      // Create individual round durations array
+      const individualRoundDurations = [
+        parseInt(round1Duration) || 15, // 15 minutes default for round 1
+        parseInt(round2Duration) || 30, // 30 minutes default for round 2
+        parseInt(round3Duration) || 60  // 60 minutes default for round 3
+      ];
+
       const tournamentData = {
         title,
         description: description || '',
@@ -4148,7 +4165,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         prizePool: 0, // Will be set when creator joins
         status: 'open',
         currentRound: 0,
-        roundDuration: parseInt(roundDuration) || 300, // 5 minutes default
+        roundDuration: parseInt(roundDuration) || 300, // 5 minutes default (fallback)
+        round1Duration: parseInt(round1Duration) || 15,
+        round2Duration: parseInt(round2Duration) || 30,
+        round3Duration: parseInt(round3Duration) || 60,
         createdBy: userId
       };
 
