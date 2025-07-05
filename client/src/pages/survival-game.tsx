@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { TrendingUp, TrendingDown, Users, Clock, Trophy, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Clock, Trophy, Target, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,8 @@ interface SurvivalTournament {
   maxParticipants: number;
   currentParticipants: number;
   prizePool: number;
+  rewardAmount: number;
+  rewardType: string;
   status: 'open' | 'active' | 'completed' | 'cancelled';
   roundDuration: number;
   round1Duration?: number | null;
@@ -329,6 +331,38 @@ const SurvivalGame = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Reward Information */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center space-x-2 mb-1">
+                  <Trophy className="h-5 w-5 text-green-400" />
+                  <span className="font-bold text-sm">Winner Reward</span>
+                </div>
+                <div className="text-xl font-bold text-green-400">
+                  {tournament.rewardAmount} {tournament.rewardType}
+                </div>
+                <div className="text-xs text-gray-400">Fixed reward from admin</div>
+              </div>
+              
+              <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center space-x-2 mb-1">
+                  <DollarSign className="h-5 w-5 text-purple-400" />
+                  <span className="font-bold text-sm">Entry Fee</span>
+                </div>
+                <div className="text-xl font-bold text-purple-400">{tournament.entryFee} NTIQ</div>
+                <div className="text-xs text-gray-400">Cost per participant</div>
+              </div>
+
+              <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center space-x-2 mb-1">
+                  <Users className="h-5 w-5 text-blue-400" />
+                  <span className="font-bold text-sm">Prize Pool</span>
+                </div>
+                <div className="text-xl font-bold text-blue-400">{tournament.prizePool} NTIQ</div>
+                <div className="text-xs text-gray-400">From entry fees ({tournament.currentParticipants} × {tournament.entryFee})</div>
+              </div>
             </div>
 
             {/* Round Information */}
