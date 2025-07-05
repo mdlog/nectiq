@@ -46,7 +46,7 @@ export function TopPredictors() {
           Top Predictors
         </h3>
         <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
+          {[...Array(5)].map((_, i) => (
             <div key={i} className="p-3 bg-surface-light rounded-lg animate-pulse">
               <div className="h-12 bg-slate-600 rounded"></div>
             </div>
@@ -80,7 +80,7 @@ export function TopPredictors() {
       </h3>
       
       <div className="space-y-3">
-        {leaderboard.slice(0, 3).map((user, index) => {
+        {leaderboard.slice(0, 5).map((user, index) => {
           const rank = index + 1;
           
           return (
