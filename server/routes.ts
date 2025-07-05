@@ -4357,8 +4357,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: `Insufficient balance. You need ${tournament.entryFee} NTIQ to make a prediction.` });
       }
 
-      // Get current active round
-      const currentRound = await storage.getCurrentRound(tournamentId);
+      // Check if current round exists and if not, try to start new round automatically
+      let currentRound = await storage.getCurrentRound(tournamentId);
+      
+      if (!currentRound) {
+        // Check if there are any completed rounds for this tournament
+        const allRounds = await storage.getSurvivalRounds(tournamentId);
+        const completedRounds = allRounds.filter(r => r.status === 'completed');
+        
+        // If there are completed rounds, try to start next round
+        if (completedRounds.length > 0) {
+          const nextRoundNumber = allRounds.length + 1;
+          
+          // Check if we haven't exceeded maximum rounds (3)
+          if (nextRoundNumber <= 3) {
+            console.log(`No active round found for tournament ${tournamentId}. Starting Round ${nextRoundNumber} automatically.`);
+            
+            try {
+              // Get current cryptocurrency price
+              const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${tournament.cryptocurrency}&vs_currencies=usd`);
+              const cryptoData = await cryptoResponse.json();
+              const currentPrice = cryptoData[tournament.cryptocurrency]?.usd || 0;
+              
+              if (currentPrice === 0) {
+                throw new Error('Unable to fetch current price for new round');
+              }
+              
+              const startTime = new Date();
+              
+              // Use individual round duration based on round number
+              let roundDuration = tournament.roundDuration; // Default fallback
+              
+              if (tournament.individualRoundDurations) {
+                try {
+                  const individualDurations = JSON.parse(tournament.individualRoundDurations);
+                  if (Array.isArray(individualDurations) && individualDurations[nextRoundNumber - 1]) {
+                    roundDuration = individualDurations[nextRoundNumber - 1];
+                    console.log(`Round ${nextRoundNumber}: Using individual duration of ${roundDuration} minutes`);
+                  }
+                } catch (error) {
+                  console.log(`Round ${nextRoundNumber}: Error parsing individual durations, using default duration`);
+                }
+              }
+              
+              const endTime = new Date(startTime.getTime() + roundDuration * 60 * 1000);
+              
+              // Create new round
+              currentRound = await storage.createSurvivalRound({
+                tournamentId,
+                roundNumber: nextRoundNumber,
+                cryptocurrency: tournament.cryptocurrency,
+                startTime,
+                endTime,
+                startPrice: currentPrice.toString(),
+                status: 'active'
+              });
+              
+              console.log(`Successfully started Round ${nextRoundNumber} for tournament ${tournamentId}`);
+              console.log(`Round will end at: ${endTime.toISOString()}`);
+              console.log(`Starting price: $${currentPrice}`);
+              
+            } catch (error) {
+              console.error('Error auto-starting new round:', error);
+              return res.status(500).json({ message: 'Failed to start new round automatically. Please try again.' });
+            }
+          } else {
+            return res.status(400).json({ message: 'Tournament has completed all rounds. No more predictions can be made.' });
+          }
+        } else {
+          return res.status(400).json({ message: 'No active round found. Tournament may not have started yet.' });
+        }
+      }
+      
       if (!currentRound) {
         return res.status(400).json({ message: 'No active round found' });
       }
@@ -4618,6 +4688,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error submitting survival prediction:', error);
       res.status(500).json({ message: 'Failed to submit prediction' });
+    }
+  });
+
+  // Debug: Get survival tournament rounds
+  app.get('/api/survival-tournaments/:id/rounds', async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      const rounds = await storage.getSurvivalRounds(tournamentId);
+      
+      // Get current round
+      const currentRound = await storage.getCurrentRound(tournamentId);
+      
+      // Get tournament details for individual durations
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      
+      let individualDurations = null;
+      if (tournament?.individualRoundDurations) {
+        try {
+          individualDurations = JSON.parse(tournament.individualRoundDurations);
+        } catch (error) {
+          console.log('Error parsing individual durations:', error);
+        }
+      }
+      
+      res.json({
+        tournamentId,
+        totalRounds: rounds.length,
+        currentRound,
+        tournament: {
+          title: tournament?.title,
+          status: tournament?.status,
+          roundDuration: tournament?.roundDuration,
+          individualRoundDurations: individualDurations
+        },
+        allRounds: rounds.map(round => ({
+          id: round.id,
+          roundNumber: round.roundNumber,
+          status: round.status,
+          startTime: round.startTime,
+          endTime: round.endTime,
+          startPrice: round.startPrice,
+          endPrice: round.endPrice
+        }))
+      });
+    } catch (error) {
+      console.error('Error getting survival rounds:', error);
+      res.status(500).json({ message: 'Failed to get survival rounds' });
+    }
+  });
+
+  // Debug: Trigger round progression manually for testing
+  app.post('/api/debug/survival-tournaments/:id/progress-round', async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      
+      // Get current round
+      const currentRound = await storage.getCurrentRound(tournamentId);
+      
+      if (currentRound) {
+        // Complete current round
+        await storage.updateRound(currentRound.id, {
+          status: 'completed',
+          endTime: new Date()
+        });
+        
+        console.log(`Manually completed Round ${currentRound.roundNumber} for tournament ${tournamentId}`);
+      }
+      
+      // Get tournament for individual duration settings
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+      
+      // Get all rounds to determine next round number
+      const allRounds = await storage.getSurvivalRounds(tournamentId);
+      const nextRoundNumber = allRounds.length + 1;
+      
+      // Check if we haven't exceeded maximum rounds (3)
+      if (nextRoundNumber <= 3) {
+        // Get current cryptocurrency price
+        const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${tournament.cryptocurrency}&vs_currencies=usd`);
+        const cryptoData = await cryptoResponse.json();
+        const currentPrice = cryptoData[tournament.cryptocurrency]?.usd || 0;
+        
+        if (currentPrice === 0) {
+          throw new Error('Unable to fetch current price for new round');
+        }
+        
+        const startTime = new Date();
+        
+        // Use individual round duration based on round number
+        let roundDuration = tournament.roundDuration; // Default fallback
+        
+        if (tournament.individualRoundDurations) {
+          try {
+            const individualDurations = JSON.parse(tournament.individualRoundDurations);
+            if (Array.isArray(individualDurations) && individualDurations[nextRoundNumber - 1]) {
+              roundDuration = individualDurations[nextRoundNumber - 1];
+              console.log(`Round ${nextRoundNumber}: Using individual duration of ${roundDuration} minutes`);
+            }
+          } catch (error) {
+            console.log(`Round ${nextRoundNumber}: Error parsing individual durations, using default duration`);
+          }
+        }
+        
+        const endTime = new Date(startTime.getTime() + roundDuration * 60 * 1000);
+        
+        // Create new round
+        const newRound = await storage.createSurvivalRound({
+          tournamentId,
+          roundNumber: nextRoundNumber,
+          cryptocurrency: tournament.cryptocurrency,
+          startTime,
+          endTime,
+          startPrice: currentPrice.toString(),
+          status: 'active'
+        });
+        
+        console.log(`Successfully started Round ${nextRoundNumber} for tournament ${tournamentId}`);
+        console.log(`Round will end at: ${endTime.toISOString()}`);
+        console.log(`Starting price: $${currentPrice}`);
+        console.log(`Duration: ${roundDuration} minutes`);
+        
+        res.json({
+          message: `Successfully progressed to Round ${nextRoundNumber}`,
+          previousRound: currentRound,
+          newRound,
+          roundDuration: roundDuration,
+          startingPrice: currentPrice
+        });
+      } else {
+        res.json({
+          message: 'Tournament has completed all rounds',
+          currentRound
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error progressing round:', error);
+      res.status(500).json({ message: 'Failed to progress round' });
     }
   });
 

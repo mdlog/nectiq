@@ -88,7 +88,27 @@ export class SurvivalRoundService {
       const currentPrice = cryptoData[tournament.cryptocurrency]?.usd || 0;
 
       const startTime = new Date();
-      const endTime = new Date(startTime.getTime() + tournament.roundDuration * 60 * 1000);
+      
+      // Use individual round duration based on round number
+      let roundDuration = tournament.roundDuration; // Default fallback
+      
+      if (tournament.individualRoundDurations) {
+        try {
+          const individualDurations = JSON.parse(tournament.individualRoundDurations);
+          if (Array.isArray(individualDurations) && individualDurations[nextRoundNumber - 1]) {
+            roundDuration = individualDurations[nextRoundNumber - 1];
+            console.log(`Round ${nextRoundNumber}: Using individual duration of ${roundDuration} minutes`);
+          } else {
+            console.log(`Round ${nextRoundNumber}: Using default duration of ${roundDuration} minutes (individual duration not found)`);
+          }
+        } catch (error) {
+          console.log(`Round ${nextRoundNumber}: Error parsing individual durations, using default duration of ${roundDuration} minutes`);
+        }
+      } else {
+        console.log(`Round ${nextRoundNumber}: Using default duration of ${roundDuration} minutes (no individual durations set)`);
+      }
+      
+      const endTime = new Date(startTime.getTime() + roundDuration * 60 * 1000);
 
       // Create new round
       const newRound = await storage.createSurvivalRound({
