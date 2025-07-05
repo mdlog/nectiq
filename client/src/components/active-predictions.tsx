@@ -159,27 +159,27 @@ export function ActivePredictions() {
 
   if (predictions.length === 0) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
-        <h3 className="text-lg font-bold mb-4 flex items-center">
-          <Clock className="text-warning mr-2" size={18} />
+      <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light">
+        <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center">
+          <Clock className="text-warning mr-2" size={16} />
           Active Predictions
         </h3>
-        <div className="text-center py-8 text-slate-400">
-          <Clock className="mx-auto mb-2" size={32} />
-          <p>No active predictions</p>
-          <p className="text-sm">Make your first prediction above!</p>
+        <div className="text-center py-6 sm:py-8 text-slate-400">
+          <Clock className="mx-auto mb-2" size={24} />
+          <p className="text-sm sm:text-base">No active predictions</p>
+          <p className="text-xs sm:text-sm">Make your first prediction above!</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl p-6 border border-surface-light">
-      <h3 className="text-lg font-bold mb-4 flex items-center">
-        <Clock className="text-warning mr-2" size={18} />
+    <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light">
+      <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center">
+        <Clock className="text-warning mr-2" size={16} />
         Active Predictions
         {totalItems > 0 && (
-          <span className="ml-auto text-sm text-slate-400">
+          <span className="ml-auto text-xs sm:text-sm text-slate-400">
             {totalItems} predictions
           </span>
         )}
@@ -187,15 +187,15 @@ export function ActivePredictions() {
 
       {/* Search Bar */}
       {predictions.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={14} />
             <input
               type="text"
               placeholder="Search cryptocurrency..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-surface-light border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-primary"
+              className="w-full pl-9 pr-3 py-2 text-sm bg-surface-light border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-primary"
             />
           </div>
         </div>

@@ -369,56 +369,60 @@ export default function UserDashboard() {
               <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
                 <Star className="text-white" size={16} />
               </div>
-              <h1 className="text-xl font-bold">My Dashboard</h1>
+              <h1 className="text-lg sm:text-xl font-bold">My Dashboard</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
-                <Coins className="text-warning" size={16} />
-                <span className="font-semibold">{user?.balance?.toLocaleString() || "0"}</span>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="flex items-center space-x-1 sm:space-x-2 bg-surface-light px-2 sm:px-3 py-1 rounded-lg">
+                <Coins className="text-warning" size={14} />
+                <span className="text-sm sm:text-base font-semibold">{user?.balance?.toLocaleString() || "0"}</span>
                 <span className="text-xs text-slate-400">NTIQ</span>
               </div>
-              {getRankBadge(stats?.rank)}
+              <div className="hidden sm:block">
+                {getRankBadge(stats?.rank)}
+              </div>
               <Button 
                 variant="outline" 
-                className="bg-surface-light border-surface-light" 
+                size="sm"
+                className="bg-surface-light border-surface-light text-xs sm:text-sm" 
                 onClick={() => setLocation('/home')}
               >
-                <ArrowLeft className="mr-2" size={16} />
-                Back to App
+                <ArrowLeft className="mr-1 sm:mr-2" size={14} />
+                <span className="hidden sm:inline">Back to App</span>
+                <span className="sm:hidden">Back</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="container max-w-6xl mx-auto px-4 py-8">
+      <main className="container max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-2">Welcome back, {user?.username || "User"}!</h2>
-          <p className="text-slate-400">Track your predictions, analyze performance, and climb the leaderboard.</p>
+        <div className="mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold mb-2">Welcome back, {user?.username || "User"}!</h2>
+          <p className="text-slate-400 text-sm sm:text-base">Track your predictions, analyze performance, and climb the leaderboard.</p>
         </div>
 
         {/* Key Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-surface border-surface-light">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">Total Predictions</CardTitle>
-              <BarChart3 className="h-4 w-4 text-primary" />
+              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Total Predictions</CardTitle>
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalPredictions || 0}</div>
-              <div className="text-xs text-slate-400 mt-1">Lifetime predictions made</div>
+            <CardContent className="pb-3">
+              <div className="text-lg sm:text-2xl font-bold">{stats?.totalPredictions || 0}</div>
+              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Lifetime predictions made</div>
             </CardContent>
           </Card>
 
           <Card className="bg-surface border-surface-light">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">Accuracy Rate</CardTitle>
-              <Target className="h-4 w-4 text-success" />
+              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Accuracy Rate</CardTitle>
+              <Target className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-success">{stats?.accuracy || 0}%</div>
-              <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${accuracyLevel.bg} ${accuracyLevel.color}`}>
+            <CardContent className="pb-3">
+              <div className="text-lg sm:text-2xl font-bold text-success">{stats?.accuracy || 0}%</div>
+              <div className={`text-xs px-1 sm:px-2 py-1 rounded-full inline-block mt-1 ${accuracyLevel.bg} ${accuracyLevel.color} hidden sm:block`}>
                 {accuracyLevel.label}
               </div>
             </CardContent>
@@ -426,73 +430,73 @@ export default function UserDashboard() {
 
           <Card className="bg-surface border-surface-light">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">Current Rank</CardTitle>
-              <Trophy className="h-4 w-4 text-warning" />
+              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Current Rank</CardTitle>
+              <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-warning">
+            <CardContent className="pb-3">
+              <div className="text-lg sm:text-2xl font-bold text-warning">
                 {stats?.rank ? `#${stats.rank}` : "N/A"}
               </div>
-              <div className="text-xs text-slate-400 mt-1">Global ranking</div>
+              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Global ranking</div>
             </CardContent>
           </Card>
 
           <Card className="bg-surface border-surface-light">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">Total Rewards</CardTitle>
-              <Gift className="h-4 w-4 text-primary" />
+              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Total Rewards</CardTitle>
+              <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">{stats?.totalRewards || 0}</div>
-              <div className="text-xs text-slate-400 mt-1">Points earned</div>
+            <CardContent className="pb-3">
+              <div className="text-lg sm:text-2xl font-bold text-primary">{stats?.totalRewards || 0}</div>
+              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Points earned</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl">
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-3 sm:p-6 shadow-2xl">
             {/* First Row */}
-            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-2 h-auto p-2 rounded-xl mb-4 backdrop-blur-sm">
-              <TabsTrigger value="profile" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50">
-                <UserCircle className="h-5 w-5" />
-                Profile
+            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-1 sm:gap-2 h-auto p-1 sm:p-2 rounded-xl mb-2 sm:mb-4 backdrop-blur-sm">
+              <TabsTrigger value="profile" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50">
+                <UserCircle className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
-              <TabsTrigger value="predictions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50">
-                <Clock className="h-5 w-5" />
-                My Predictions
+              <TabsTrigger value="predictions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50">
+                <Clock className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">My Predictions</span>
               </TabsTrigger>
-              <TabsTrigger value="achievements" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50">
-                <Award className="h-5 w-5" />
-                Achievements
+              <TabsTrigger value="achievements" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50">
+                <Award className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Achievements</span>
               </TabsTrigger>
-              <TabsTrigger value="challenges" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50">
-                <Calendar className="h-5 w-5" />
-                Daily Challenges
+              <TabsTrigger value="challenges" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50">
+                <Calendar className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Daily Challenges</span>
               </TabsTrigger>
-              <TabsTrigger value="rewards" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50">
-                <History className="h-5 w-5" />
-                Reward History
+              <TabsTrigger value="rewards" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50">
+                <History className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Reward History</span>
               </TabsTrigger>
             </TabsList>
             
             {/* Second Row */}
-            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-2 h-auto p-2 rounded-xl backdrop-blur-sm">
-              <TabsTrigger value="market" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50">
-                <Eye className="h-5 w-5" />
-                Market Watch
+            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-1 sm:gap-2 h-auto p-1 sm:p-2 rounded-xl backdrop-blur-sm">
+              <TabsTrigger value="market" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50">
+                <Eye className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Market Watch</span>
               </TabsTrigger>
-              <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50">
-                <Activity className="h-5 w-5" />
-                Performance
+              <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50">
+                <Activity className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Performance</span>
               </TabsTrigger>
-              <TabsTrigger value="battles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50">
-                <Swords className="h-5 w-5" />
-                Battles
+              <TabsTrigger value="battles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50">
+                <Swords className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Battles</span>
               </TabsTrigger>
-              <TabsTrigger value="financial" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50">
-                <Wallet className="h-5 w-5" />
-                Financial
+              <TabsTrigger value="financial" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50">
+                <Wallet className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Financial</span>
               </TabsTrigger>
             </TabsList>
           </div>
