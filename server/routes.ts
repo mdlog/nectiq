@@ -4381,16 +4381,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let currentRound = await storage.getCurrentRound(tournamentId);
       
       if (!currentRound) {
-        // Check if there are any completed rounds for this tournament
+        // Check if there are any rounds for this tournament
         const allRounds = await storage.getSurvivalRounds(tournamentId);
         const completedRounds = allRounds.filter(r => r.status === 'completed');
         
-        // If there are completed rounds, try to start next round
-        if (completedRounds.length > 0) {
-          const nextRoundNumber = allRounds.length + 1;
-          
-          // Check if we haven't exceeded maximum rounds (3)
-          if (nextRoundNumber <= 3) {
+        // Determine next round number
+        const nextRoundNumber = allRounds.length + 1;
+        
+        // Check if we haven't exceeded maximum rounds (3)
+        if (nextRoundNumber <= 3) {
+          // For active tournaments, allow starting any round (including round 1)
+          if (tournament.status === 'active') {
             console.log(`No active round found for tournament ${tournamentId}. Starting Round ${nextRoundNumber} automatically.`);
             
             try {
@@ -4408,17 +4409,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Use individual round duration based on round number
               let roundDuration = tournament.roundDuration; // Default fallback
               
-              if (tournament.individualRoundDurations) {
+              // Try individual round duration fields first
+              if (nextRoundNumber === 1 && tournament.round1Duration) {
+                roundDuration = tournament.round1Duration;
+              } else if (nextRoundNumber === 2 && tournament.round2Duration) {
+                roundDuration = tournament.round2Duration;
+              } else if (nextRoundNumber === 3 && tournament.round3Duration) {
+                roundDuration = tournament.round3Duration;
+              } else if (tournament.individualRoundDurations) {
                 try {
                   const individualDurations = JSON.parse(tournament.individualRoundDurations);
                   if (Array.isArray(individualDurations) && individualDurations[nextRoundNumber - 1]) {
                     roundDuration = individualDurations[nextRoundNumber - 1];
-                    console.log(`Round ${nextRoundNumber}: Using individual duration of ${roundDuration} minutes`);
                   }
                 } catch (error) {
                   console.log(`Round ${nextRoundNumber}: Error parsing individual durations, using default duration`);
                 }
               }
+              
+              console.log(`Round ${nextRoundNumber}: Using duration of ${roundDuration} minutes`);
               
               const endTime = new Date(startTime.getTime() + roundDuration * 60 * 1000);
               
@@ -4442,10 +4451,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return res.status(500).json({ message: 'Failed to start new round automatically. Please try again.' });
             }
           } else {
-            return res.status(400).json({ message: 'Tournament has completed all rounds. No more predictions can be made.' });
+            return res.status(400).json({ message: 'Tournament is not active. Cannot start new rounds.' });
           }
         } else {
-          return res.status(400).json({ message: 'No active round found. Tournament may not have started yet.' });
+          return res.status(400).json({ message: 'Tournament has completed all rounds. No more predictions can be made.' });
         }
       }
       
