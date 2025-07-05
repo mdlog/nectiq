@@ -6636,7 +6636,7 @@ export default function AdminPanel() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="edit-title">Tournament Title</Label>
+                    <Label htmlFor="edit-title" className="text-gray-900 dark:text-gray-100">Tournament Title</Label>
                     <Input
                       id="edit-title"
                       value={editingTournament.title}
@@ -6648,7 +6648,7 @@ export default function AdminPanel() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="edit-crypto">Cryptocurrency</Label>
+                    <Label htmlFor="edit-crypto" className="text-gray-900 dark:text-gray-100">Cryptocurrency</Label>
                     <Select 
                       value={editingTournament.cryptocurrency} 
                       onValueChange={(value) => setEditingTournament({
@@ -6671,7 +6671,7 @@ export default function AdminPanel() {
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-description">Description</Label>
+                  <Label htmlFor="edit-description" className="text-gray-900 dark:text-gray-100">Description</Label>
                   <Input
                     id="edit-description"
                     value={editingTournament.description}
@@ -6685,7 +6685,7 @@ export default function AdminPanel() {
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="edit-entry-fee">Entry Fee (NTIQ)</Label>
+                    <Label htmlFor="edit-entry-fee" className="text-gray-900 dark:text-gray-100">Entry Fee (NTIQ)</Label>
                     <Input
                       id="edit-entry-fee"
                       type="number"
@@ -6698,7 +6698,7 @@ export default function AdminPanel() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="edit-max-participants">Max Participants</Label>
+                    <Label htmlFor="edit-max-participants" className="text-gray-900 dark:text-gray-100">Max Participants</Label>
                     <Input
                       id="edit-max-participants"
                       type="number"
@@ -6712,7 +6712,7 @@ export default function AdminPanel() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="edit-round-duration">Default Round Duration (minutes)</Label>
+                    <Label htmlFor="edit-round-duration" className="text-gray-900 dark:text-gray-100">Default Round Duration (minutes)</Label>
                     <Input
                       id="edit-round-duration"
                       type="number"
@@ -6731,7 +6731,7 @@ export default function AdminPanel() {
                     <h4 className="text-sm font-semibold mb-3 text-gray-900 dark:text-gray-100">Individual Round Durations</h4>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="edit-round1-duration">Round 1 (minutes)</Label>
+                        <Label htmlFor="edit-round1-duration" className="text-gray-900 dark:text-gray-100">Round 1 (minutes)</Label>
                         <Input
                           id="edit-round1-duration"
                           type="number"
@@ -6745,7 +6745,7 @@ export default function AdminPanel() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-round2-duration">Round 2 (minutes)</Label>
+                        <Label htmlFor="edit-round2-duration" className="text-gray-900 dark:text-gray-100">Round 2 (minutes)</Label>
                         <Input
                           id="edit-round2-duration"
                           type="number"
@@ -6759,7 +6759,7 @@ export default function AdminPanel() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="edit-round3-duration">Round 3 (minutes)</Label>
+                        <Label htmlFor="edit-round3-duration" className="text-gray-900 dark:text-gray-100">Round 3 (minutes)</Label>
                         <Input
                           id="edit-round3-duration"
                           type="number"
