@@ -3926,51 +3926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Feature Toggle Settings API
-  app.get('/api/admin/feature-settings', requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const withdrawalEnabled = await storage.getSystemSetting('features', 'withdrawal_enabled');
-      const buyNtiqEnabled = await storage.getSystemSetting('features', 'buy_ntiq_enabled');
-      
-      res.json({
-        withdrawalEnabled: withdrawalEnabled === 'true',
-        buyNtiqEnabled: buyNtiqEnabled === 'true'
-      });
-    } catch (error) {
-      console.error("Failed to get feature settings:", error);
-      res.status(500).json({ error: "Failed to get feature settings" });
-    }
-  });
 
-  app.post('/api/admin/feature-settings', requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const { withdrawalEnabled, buyNtiqEnabled } = req.body;
-      const adminId = req.session.userId;
-      
-      if (typeof withdrawalEnabled === 'boolean') {
-        await storage.updateSystemSetting('features', 'withdrawal_enabled', withdrawalEnabled.toString(), adminId);
-      }
-      
-      if (typeof buyNtiqEnabled === 'boolean') {
-        await storage.updateSystemSetting('features', 'buy_ntiq_enabled', buyNtiqEnabled.toString(), adminId);
-      }
-      
-      await storage.createAdminLog({
-        adminId: adminId!,
-        action: 'Feature settings updated',
-        targetType: 'settings',
-        targetId: null,
-        details: JSON.stringify({ withdrawalEnabled, buyNtiqEnabled }),
-        ipAddress: req.ip || 'unknown',
-        userAgent: req.get('User-Agent') || 'unknown'
-      });
-      
-      res.json({ success: true, message: "Feature settings updated successfully" });
-    } catch (error) {
-      console.error("Failed to update feature settings:", error);
-      res.status(500).json({ error: "Failed to update feature settings" });
-    }
-  });
 
   // Admin Logs API
   app.get("/api/admin/logs", requireAdmin, async (req, res) => {
