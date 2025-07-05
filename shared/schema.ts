@@ -24,6 +24,9 @@ export const users = pgTable("users", {
   referredBy: integer("referred_by").references(() => users.id),
   totalReferrals: integer("total_referrals").notNull().default(0),
   referralRewards: integer("referral_rewards").notNull().default(0),
+  loyaltyTier: varchar("loyalty_tier", { length: 10 }).notNull().default("bronze"), // bronze, silver, gold, platinum
+  lifetimeEarnings: integer("lifetime_earnings").notNull().default(0), // Total NTIQ earned (untuk tier calculation)
+  lastTierUpdate: timestamp("last_tier_update").defaultNow(),
 });
 
 export const predictions = pgTable("predictions", {
@@ -458,6 +461,43 @@ export const survivalPredictions = pgTable("survival_predictions", {
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   isCorrect: boolean("is_correct"),
   points: integer("points").default(0),
+});
+
+// Loyalty Program Tables
+export const loyaltyTiers = pgTable("loyalty_tiers", {
+  id: serial("id").primaryKey(),
+  tierName: varchar("tier_name", { length: 10 }).notNull().unique(), // bronze, silver, gold, platinum
+  minEarnings: integer("min_earnings").notNull(), // Minimum lifetime earnings required
+  maxEarnings: integer("max_earnings"), // Maximum for this tier (null for highest tier)
+  rewardMultiplier: numeric("reward_multiplier", { precision: 3, scale: 2 }).notNull().default("1.00"), // 1.00, 1.10, 1.25, 1.50
+  cashbackPercentage: numeric("cashback_percentage", { precision: 3, scale: 2 }).notNull().default("1.00"), // 1%, 2%, 3%, 5%
+  monthlyBonus: integer("monthly_bonus").notNull().default(0), // Monthly NTIQ bonus
+  freeInsuranceDaily: integer("free_insurance_daily").notNull().default(0), // Free prediction insurance per day
+  prioritySupport: boolean("priority_support").notNull().default(false),
+  earlyAccess: boolean("early_access").notNull().default(false),
+  personalManager: boolean("personal_manager").notNull().default(false),
+});
+
+export const monthlyTierRewards = pgTable("monthly_tier_rewards", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  month: varchar("month", { length: 7 }).notNull(), // YYYY-MM format
+  tier: varchar("tier", { length: 10 }).notNull(),
+  bonusAmount: integer("bonus_amount").notNull(),
+  freeEntries: integer("free_entries").notNull().default(0),
+  claimed: boolean("claimed").notNull().default(false),
+  claimedAt: timestamp("claimed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const tierPromotions = pgTable("tier_promotions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  fromTier: varchar("from_tier", { length: 10 }).notNull(),
+  toTier: varchar("to_tier", { length: 10 }).notNull(),
+  lifetimeEarnings: integer("lifetime_earnings").notNull(), // Earnings at time of promotion
+  promotedAt: timestamp("promoted_at").notNull().defaultNow(),
+  celebrationSent: boolean("celebration_sent").notNull().default(false),
 });
 
 // Relations

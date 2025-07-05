@@ -3431,15 +3431,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return false;
       }
 
-      // Update user balance
-      const newBalance = user.balance + amount;
+      // Get current tier info for multiplier
+      const { LoyaltyService } = await import('./services/loyaltyService');
+      const tierData = await LoyaltyService.getUserTierData(userId);
+      const finalAmount = Math.round(amount * tierData.currentBenefits.rewardMultiplier);
+
+      // Update user balance with tier multiplier
+      const newBalance = user.balance + finalAmount;
       await storage.updateUserBalance(userId, newBalance);
+
+      // Update lifetime earnings and check for tier promotion
+      const promotionResult = await LoyaltyService.updateLifetimeEarnings(userId, finalAmount);
 
       // Log the reward in transaction logs
       await storage.logTransaction({
         userId,
         type: type === 'achievement' ? 'achievement_reward' : 'daily_challenge_reward',
-        amount,
+        amount: finalAmount,
         token: 'NTIQ',
         status: 'completed',
         fromAddress: null,
@@ -3449,7 +3457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         relatedId
       });
 
-      console.log(`✅ Awarded ${amount} NTIQ to user ${userId} for ${type}: ${description}`);
+      console.log(`✅ Awarded ${finalAmount} NTIQ to user ${userId} for ${type}: ${description} (${tierData.currentBenefits.rewardMultiplier}x ${tierData.currentTier} tier multiplier)`);
       
       // Broadcast reward notification to admins
       try {
@@ -3458,17 +3466,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: {
             userId,
             username: user.username,
-            amount,
+            amount: finalAmount,
+            originalAmount: amount,
+            tierMultiplier: tierData.currentBenefits.rewardMultiplier,
+            currentTier: tierData.currentTier,
             rewardType: type,
             description,
             timestamp: new Date().toISOString()
           }
         });
+
+        // If tier promotion occurred, broadcast tier promotion notification
+        if (promotionResult.promoted) {
+          console.log(`🎉 TIER PROMOTION: User ${userId} (${user.username}) promoted from ${promotionResult.oldTier} to ${promotionResult.newTier}!`);
+          
+          broadcastToAdmins({
+            type: 'tier_promotion',
+            data: {
+              userId,
+              username: user.username,
+              fromTier: promotionResult.oldTier,
+              toTier: promotionResult.newTier,
+              lifetimeEarnings: promotionResult.celebrationData?.newEarnings,
+              benefits: promotionResult.celebrationData?.benefits,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
       } catch (error) {
-        console.error('Error broadcasting reward notification:', error);
+        console.error('Error broadcasting notifications:', error);
       }
       
-      return true;
+      return { 
+        success: true, 
+        finalAmount, 
+        tierMultiplier: tierData.currentBenefits.rewardMultiplier,
+        promoted: promotionResult.promoted,
+        promotionData: promotionResult.promoted ? promotionResult : null
+      };
     } catch (error) {
       console.error(`Error awarding ${type} reward to user ${userId}:`, error);
       return false;
@@ -5392,6 +5427,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error processing referral:', error);
       res.status(500).json({ message: 'Failed to process referral' });
+    }
+  });
+
+  // ==================== LOYALTY PROGRAM ENDPOINTS ====================
+  
+  // Get user tier information
+  app.get('/api/user/tier', async (req: Request, res: Response) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const { LoyaltyService } = await import('./services/loyaltyService');
+      const tierData = await LoyaltyService.getUserTierData(req.session.userId);
+      
+      res.json(tierData);
+    } catch (error) {
+      console.error('Error getting user tier:', error);
+      res.status(500).json({ message: 'Failed to get tier information' });
+    }
+  });
+
+  // Get all tier configurations
+  app.get('/api/loyalty/tiers', async (req: Request, res: Response) => {
+    try {
+      const { LoyaltyService } = await import('./services/loyaltyService');
+      const tiers = await LoyaltyService.getAllTiers();
+      
+      res.json(tiers);
+    } catch (error) {
+      console.error('Error getting tiers:', error);
+      res.status(500).json({ message: 'Failed to get tier configurations' });
+    }
+  });
+
+  // Claim monthly tier reward
+  app.post('/api/user/tier/claim-monthly', async (req: Request, res: Response) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const { month } = req.body;
+      if (!month) {
+        return res.status(400).json({ message: 'Month is required (format: YYYY-MM)' });
+      }
+
+      const { LoyaltyService } = await import('./services/loyaltyService');
+      const result = await LoyaltyService.claimMonthlyReward(req.session.userId, month);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error('Error claiming monthly reward:', error);
+      res.status(500).json({ message: 'Failed to claim monthly reward' });
+    }
+  });
+
+  // Get user monthly rewards
+  app.get('/api/user/tier/monthly-rewards', async (req: Request, res: Response) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const { pool } = await import("./db");
+      
+      const rewardsQuery = `
+        SELECT month, tier, bonus_amount, free_entries, claimed, claimed_at, created_at
+        FROM monthly_tier_rewards 
+        WHERE user_id = $1 
+        ORDER BY month DESC
+      `;
+      
+      const result = await pool.query(rewardsQuery, [req.session.userId]);
+      
+      res.json(result.rows.map(row => ({
+        month: row.month,
+        tier: row.tier,
+        bonusAmount: row.bonus_amount,
+        freeEntries: row.free_entries,
+        claimed: row.claimed,
+        claimedAt: row.claimed_at,
+        createdAt: row.created_at
+      })));
+    } catch (error) {
+      console.error('Error getting monthly rewards:', error);
+      res.status(500).json({ message: 'Failed to get monthly rewards' });
+    }
+  });
+
+  // Admin endpoint: Generate monthly rewards for all users
+  app.post('/api/admin/loyalty/generate-monthly', async (req: Request, res: Response) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Check if user is admin
+      const user = await storage.getUser(req.session.userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { month } = req.body;
+      if (!month) {
+        return res.status(400).json({ message: 'Month is required (format: YYYY-MM)' });
+      }
+
+      const { LoyaltyService } = await import('./services/loyaltyService');
+      const generatedCount = await LoyaltyService.generateMonthlyRewards(month);
+      
+      res.json({ 
+        success: true, 
+        message: `Generated monthly rewards for ${generatedCount} users`,
+        generatedCount 
+      });
+    } catch (error) {
+      console.error('Error generating monthly rewards:', error);
+      res.status(500).json({ message: 'Failed to generate monthly rewards' });
     }
   });
 

@@ -22,6 +22,7 @@ import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 import { ReferralSection } from "@/components/referral-section";
+import { LoyaltyTier } from "@/components/loyalty-tier";
 
 
 // Dynamic function to get crypto image from live API data
@@ -475,9 +476,9 @@ export default function UserDashboard() {
                 <Calendar className="h-3 w-3 sm:h-5 sm:w-5" />
                 <span className="hidden sm:inline">Daily Challenges</span>
               </TabsTrigger>
-              <TabsTrigger value="rewards" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50">
-                <History className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Reward History</span>
+              <TabsTrigger value="loyalty" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50">
+                <Shield className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Loyalty</span>
               </TabsTrigger>
             </TabsList>
             
@@ -498,6 +499,10 @@ export default function UserDashboard() {
               <TabsTrigger value="financial" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50">
                 <Wallet className="h-3 w-3 sm:h-5 sm:w-5" />
                 <span className="hidden sm:inline">Financial</span>
+              </TabsTrigger>
+              <TabsTrigger value="rewards" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-indigo-400/50">
+                <History className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Reward History</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -607,6 +612,11 @@ export default function UserDashboard() {
           {/* Daily Challenges Tab */}
           <TabsContent value="challenges">
             <DailyChallenges />
+          </TabsContent>
+
+          {/* Loyalty Tab */}
+          <TabsContent value="loyalty">
+            <LoyaltyTier />
           </TabsContent>
 
           {/* Rewards Tab */}
