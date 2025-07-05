@@ -4,12 +4,13 @@ import axios from 'axios';
 export class SurvivalRoundService {
   private static instance: SurvivalRoundService;
   private roundCheckers: Map<number, NodeJS.Timeout> = new Map();
+  private roundIntervals: Map<number, NodeJS.Timeout> = new Map();
 
   static getInstance(): SurvivalRoundService {
     if (!SurvivalRoundService.instance) {
       SurvivalRoundService.instance = new SurvivalRoundService();
-      // Start automatic checking for all active tournaments
-      SurvivalRoundService.instance.startGlobalRoundChecker();
+      // Disabled global checker to prevent auto-completion of unrelated tournaments
+      // Only start specific tournament rounds when explicitly called
     }
     return SurvivalRoundService.instance;
   }
@@ -118,7 +119,7 @@ export class SurvivalRoundService {
   // Evaluate participants and eliminate those with wrong predictions
   private async evaluateAndEliminateParticipants(tournamentId: number, roundNumber: number, startPrice: number, endPrice: number) {
     try {
-      const participants = await storage.getParticipantsWithPredictions(tournamentId);
+      const participants = await storage.getTournamentParticipantsWithPredictions(tournamentId);
       
       // Determine actual price direction
       const actualDirection = endPrice > startPrice ? 'up' : 'down';
@@ -419,6 +420,31 @@ export class SurvivalRoundService {
     } catch (error) {
       console.error('Error ending tournament:', error);
       throw error;
+    }
+  }
+
+  // Start tournament rounds for specific tournament only (no global checking)
+  async startTournamentRounds(tournamentId: number) {
+    try {
+      console.log(`🎯 Starting rounds for tournament ${tournamentId} only (isolated mode)`);
+      
+      // Only check this specific tournament, not all tournaments
+      await this.checkAndProcessExpiredRounds(tournamentId);
+      
+      // Set up interval for just this tournament
+      const interval = setInterval(async () => {
+        try {
+          await this.checkAndProcessExpiredRounds(tournamentId);
+        } catch (error) {
+          console.error(`Error checking tournament ${tournamentId}:`, error);
+        }
+      }, 30000); // Check every 30 seconds
+      
+      this.roundIntervals.set(tournamentId, interval);
+      console.log(`✅ Successfully started isolated round monitoring for tournament ${tournamentId}`);
+      
+    } catch (error) {
+      console.error(`Failed to start tournament rounds for ${tournamentId}:`, error);
     }
   }
 
