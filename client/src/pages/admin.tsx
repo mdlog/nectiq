@@ -6729,8 +6729,8 @@ export default function AdminPanel() {
                   {/* Individual Round Durations Section */}
                   <div className="border-t pt-4">
                     <h4 className="text-sm font-semibold mb-3 text-gray-900 dark:text-gray-100">Individual Round Durations</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
                         <Label htmlFor="edit-round1-duration" className="text-gray-900 dark:text-gray-100">Round 1 (minutes)</Label>
                         <Input
                           id="edit-round1-duration"
@@ -6745,7 +6745,7 @@ export default function AdminPanel() {
                           })}
                         />
                       </div>
-                      <div>
+                      <div className="space-y-2">
                         <Label htmlFor="edit-round2-duration" className="text-gray-900 dark:text-gray-100">Round 2 (minutes)</Label>
                         <Input
                           id="edit-round2-duration"
@@ -6760,7 +6760,7 @@ export default function AdminPanel() {
                           })}
                         />
                       </div>
-                      <div>
+                      <div className="space-y-2">
                         <Label htmlFor="edit-round3-duration" className="text-gray-900 dark:text-gray-100">Round 3 (minutes)</Label>
                         <Input
                           id="edit-round3-duration"
