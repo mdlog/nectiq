@@ -45,7 +45,7 @@ export function ReferralSection() {
     onError: () => {
       toast({
         title: "Failed",
-        description: "Failed membuat kode referral. Silakan coba lagi.",
+        description: "Failed to generate referral code. Please try again.",
         variant: "destructive",
       });
     },
@@ -92,7 +92,7 @@ export function ReferralSection() {
       <div className="flex items-center gap-2">
         <Users className="h-5 w-5 text-blue-600" />
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Program Referral
+          Referral Program
         </h3>
       </div>
 
@@ -105,7 +105,7 @@ export function ReferralSection() {
                 <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Referral</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Referrals</p>
                 <p className="text-xl font-bold text-gray-900 dark:text-white">
                   {referralData?.totalReferrals || 0}
                 </p>
@@ -152,7 +152,7 @@ export function ReferralSection() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-green-600" />
-            Kode Referral Anda
+            Your Referral Code
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -165,7 +165,7 @@ export function ReferralSection() {
                   className="font-mono text-lg font-bold text-center"
                 />
                 <Button
-                  onClick={() => copyToClipboard(referralData.referralCode, "Kode referral")}
+                  onClick={() => copyToClipboard(referralData.referralCode, "Referral code")}
                   variant="outline"
                   size="icon"
                 >
@@ -178,10 +178,10 @@ export function ReferralSection() {
                   value={referralData.referralLink}
                   readOnly
                   className="text-sm"
-                  placeholder="Link referral"
+                  placeholder="Referral link"
                 />
                 <Button
-                  onClick={() => copyToClipboard(referralData.referralLink, "Link referral")}
+                  onClick={() => copyToClipboard(referralData.referralLink, "Referral link")}
                   variant="outline"
                   size="icon"
                 >
@@ -191,15 +191,15 @@ export function ReferralSection() {
 
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  💡 Bagikan kode atau link referral Anda untuk mengajak teman bergabung. 
-                  Setiap teman yang daftar menggunakan kode Anda akan memberikan reward 100 NTIQ!
+                  💡 Share your referral code or link to invite friends to join. 
+                  Each friend who registers using your code will give you 100 NTIQ reward!
                 </p>
               </div>
             </>
           ) : (
             <div className="text-center space-y-4">
               <p className="text-gray-600 dark:text-gray-400">
-                Anda belum memiliki kode referral. Buat sekarang untuk mulai mengajak teman!
+                You don't have a referral code yet. Create one now to start inviting friends!
               </p>
               <Button
                 onClick={handleGenerateCode}
@@ -207,9 +207,9 @@ export function ReferralSection() {
                 className="w-full"
               >
                 {isGenerating || generateCodeMutation.isPending ? (
-                  "Membuat Kode..."
+                  "Creating Code..."
                 ) : (
-                  "Buat Kode Referral"
+                  "Create Referral Code"
                 )}
               </Button>
             </div>
@@ -223,7 +223,7 @@ export function ReferralSection() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-blue-600" />
-              Teman yang Direferral ({referralData.referredUsers.length})
+              Referred Friends ({referralData.referredUsers.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -244,7 +244,7 @@ export function ReferralSection() {
                         {user.username}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        UID: {user.uid} • Bergabung {new Date(user.joinedAt).toLocaleDateString()}
+                        UID: {user.uid} • Joined {new Date(user.joinedAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -261,7 +261,7 @@ export function ReferralSection() {
       {/* How it Works */}
       <Card>
         <CardHeader>
-          <CardTitle>Cara Kerja Program Referral</CardTitle>
+          <CardTitle>How the Referral Program Works</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
@@ -269,19 +269,19 @@ export function ReferralSection() {
               <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                 1
               </span>
-              <p>Buat kode referral unik Anda (hanya sekali)</p>
+              <p>Create your unique referral code (only once)</p>
             </div>
             <div className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                 2
               </span>
-              <p>Bagikan kode atau link kepada teman-teman Anda</p>
+              <p>Share the code or link with your friends</p>
             </div>
             <div className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                 3
               </span>
-              <p>Teman mendaftar menggunakan kode referral Anda</p>
+              <p>Friend registers using your referral code</p>
             </div>
             <div className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
