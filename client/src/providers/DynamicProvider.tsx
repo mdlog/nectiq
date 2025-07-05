@@ -88,23 +88,16 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                 });
 
                 if (response.ok) {
-                  try {
-                    const data = await response.json();
-                    console.log('Backend authentication successful:', data);
-                    
-                    // Invalidate all queries to refresh authentication state
-                    await queryClient.invalidateQueries();
-                    
-                    // Force redirect using window.location for more reliable navigation
-                    console.log('Forcing redirect to /home');
+                  console.log('Backend authentication successful, response status:', response.status);
+                  
+                  // Invalidate all queries to refresh authentication state
+                  await queryClient.invalidateQueries();
+                  
+                  // Add small delay to ensure state is updated
+                  setTimeout(() => {
+                    console.log('Redirecting to /home after authentication');
                     window.location.href = '/home';
-                  } catch (jsonError) {
-                    console.error('JSON parsing error on success response:', jsonError);
-                    // Still redirect on success even if JSON parsing fails
-                    await queryClient.invalidateQueries();
-                    console.log('Forcing redirect to /home (fallback)');
-                    window.location.href = '/home';
-                  }
+                  }, 500);
                 } else {
                   try {
                     const errorData = await response.json();
