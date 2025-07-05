@@ -2052,7 +2052,102 @@ export class DatabaseStorage implements IStorage {
       .where(eq(survivalPredictions.id, predictionId));
   }
 
-  async eliminateParticipant(participantId: number, roundNumber: number): Promise<void> {
+  // Get active survival tournaments for automatic round checker
+  async getActiveSurvivalTournaments(): Promise<any[]> {
+    return await db
+      .select()
+      .from(survivalTournaments)
+      .where(eq(survivalTournaments.status, 'active'));
+  }
+
+  // Get specific round by ID
+  async getRound(roundId: number): Promise<any> {
+    const [round] = await db
+      .select()
+      .from(survivalRounds)
+      .where(eq(survivalRounds.id, roundId));
+    return round;
+  }
+
+  // Complete a round with end price
+  async completeRound(roundId: number, endPrice: number): Promise<void> {
+    await db
+      .update(survivalRounds)
+      .set({ 
+        status: 'completed',
+        endPrice: endPrice.toString()
+      })
+      .where(eq(survivalRounds.id, roundId));
+  }
+
+  // Get participant's prediction for specific round
+  async getParticipantRoundPrediction(userId: number, tournamentId: number, roundNumber: number): Promise<any> {
+    const [prediction] = await db
+      .select()
+      .from(survivalPredictions)
+      .where(
+        and(
+          eq(survivalPredictions.userId, userId),
+          eq(survivalPredictions.tournamentId, tournamentId),
+          eq(survivalPredictions.roundNumber, roundNumber)
+        )
+      );
+    return prediction;
+  }
+
+  // Create new round with individual duration
+  async createRound(tournamentId: number, roundNumber: number, startPrice: number, durationMinutes: number): Promise<void> {
+    const startTime = new Date();
+    const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
+
+    await db
+      .insert(survivalRounds)
+      .values({
+        tournamentId,
+        roundNumber,
+        cryptocurrency: 'bitcoin',
+        startTime,
+        endTime,
+        startPrice: startPrice.toString(),
+        status: 'active'
+      });
+  }
+
+  // Set tournament winner
+  async setTournamentWinner(tournamentId: number, winnerId: number): Promise<void> {
+    await db
+      .update(survivalTournaments)
+      .set({ winnerId })
+      .where(eq(survivalTournaments.id, tournamentId));
+  }
+
+  // Update tournament status
+  async updateTournamentStatus(tournamentId: number, status: string): Promise<void> {
+    await db
+      .update(survivalTournaments)
+      .set({ status })
+      .where(eq(survivalTournaments.id, tournamentId));
+  }
+
+  // Eliminate participant by userId and tournamentId
+  async eliminateParticipant(userId: number, tournamentId: number, roundNumber: number): Promise<void> {
+    await db
+      .update(survivalParticipants)
+      .set({
+        status: 'eliminated',
+        eliminatedRound: roundNumber,
+        eliminatedAt: new Date()
+      })
+      .where(
+        and(
+          eq(survivalParticipants.userId, userId),
+          eq(survivalParticipants.tournamentId, tournamentId)
+        )
+      );
+  }
+
+  // Original eliminateParticipant method (keep for backward compatibility)
+  async eliminateParticipantById(participantId: number, roundNumber: number): Promise<void> {
     await db
       .update(survivalParticipants)
       .set({

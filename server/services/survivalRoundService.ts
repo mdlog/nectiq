@@ -1,42 +1,195 @@
 import { storage } from '../storage';
+import axios from 'axios';
 
 export class SurvivalRoundService {
   private static instance: SurvivalRoundService;
-  private roundIntervals: Map<number, NodeJS.Timeout> = new Map();
+  private roundCheckers: Map<number, NodeJS.Timeout> = new Map();
 
   static getInstance(): SurvivalRoundService {
     if (!SurvivalRoundService.instance) {
       SurvivalRoundService.instance = new SurvivalRoundService();
+      // Start automatic checking for all active tournaments
+      SurvivalRoundService.instance.startGlobalRoundChecker();
     }
     return SurvivalRoundService.instance;
   }
 
-  // Start automatic round management for a tournament
-  async startTournamentRounds(tournamentId: number) {
+  // Start global round checker that monitors all active tournaments
+  private startGlobalRoundChecker() {
+    console.log('🚀 Starting global survival round checker...');
+    
+    // Check every 30 seconds for expired rounds
+    setInterval(async () => {
+      try {
+        await this.checkAllActiveTournaments();
+      } catch (error) {
+        console.error('Error in global round checker:', error);
+      }
+    }, 30000); // Check every 30 seconds
+  }
+
+  // Check all active tournaments for expired rounds
+  private async checkAllActiveTournaments() {
+    try {
+      const activeTournaments = await storage.getActiveSurvivalTournaments();
+      
+      for (const tournament of activeTournaments) {
+        await this.checkAndProcessExpiredRounds(tournament.id);
+      }
+    } catch (error) {
+      console.error('Error checking active tournaments:', error);
+    }
+  }
+
+  // Check specific tournament for expired rounds and process them
+  private async checkAndProcessExpiredRounds(tournamentId: number) {
+    try {
+      const currentRound = await storage.getCurrentRound(tournamentId);
+      if (!currentRound) return;
+
+      const now = new Date();
+      const endTime = new Date(currentRound.endTime);
+      
+      // Check if current round has expired
+      if (now >= endTime && currentRound.status === 'active') {
+        console.log(`⏰ Round ${currentRound.roundNumber} expired for tournament ${tournamentId}, processing...`);
+        await this.processExpiredRound(tournamentId, currentRound.id);
+      }
+    } catch (error) {
+      console.error(`Error checking expired rounds for tournament ${tournamentId}:`, error);
+    }
+  }
+
+  // Process an expired round: complete it, evaluate eliminations, start next round
+  private async processExpiredRound(tournamentId: number, roundId: number) {
+    try {
+      const round = await storage.getRound(roundId);
+      if (!round) return;
+
+      console.log(`🔄 Processing expired Round ${round.roundNumber} for tournament ${tournamentId}`);
+
+      // Get current Bitcoin price for end price
+      const currentPrice = await this.getCurrentBitcoinPrice();
+      
+      // Complete the current round
+      await this.completeRound(roundId, currentPrice);
+
+      // Evaluate participant predictions and eliminate wrong ones
+      await this.evaluateAndEliminateParticipants(tournamentId, round.roundNumber, round.startPrice, currentPrice);
+
+      // Check if tournament should continue
+      const activeParticipants = await storage.getActiveParticipants(tournamentId);
+      
+      if (activeParticipants.length <= 1) {
+        // Tournament is finished
+        await this.finishTournament(tournamentId, activeParticipants[0]?.userId || null);
+        console.log(`🏆 Tournament ${tournamentId} finished! Winner: ${activeParticipants[0]?.username || 'No winner'}`);
+      } else if (round.roundNumber < 3) {
+        // Start next round
+        await this.startNextRound(tournamentId, round.roundNumber + 1, currentPrice);
+        console.log(`▶️ Started Round ${round.roundNumber + 1} for tournament ${tournamentId}`);
+      } else {
+        // Tournament reached maximum rounds
+        await this.finishTournament(tournamentId, null);
+        console.log(`⏹️ Tournament ${tournamentId} finished after 3 rounds - No clear winner`);
+      }
+    } catch (error) {
+      console.error(`Error processing expired round:`, error);
+    }
+  }
+
+  // Get current Bitcoin price from CoinGecko API
+  private async getCurrentBitcoinPrice(): Promise<number> {
+    try {
+      const response = await axios.get('http://localhost:5000/api/crypto/prices');
+      const bitcoinData = response.data.find((crypto: any) => crypto.id === 'bitcoin');
+      return bitcoinData?.current_price || 0;
+    } catch (error) {
+      console.error('Error fetching Bitcoin price:', error);
+      throw new Error('Failed to fetch current Bitcoin price');
+    }
+  }
+
+  // Complete a round with end price
+  private async completeRound(roundId: number, endPrice: number) {
+    await storage.completeRound(roundId, endPrice);
+  }
+
+  // Evaluate participants and eliminate those with wrong predictions
+  private async evaluateAndEliminateParticipants(tournamentId: number, roundNumber: number, startPrice: number, endPrice: number) {
+    try {
+      const participants = await storage.getParticipantsWithPredictions(tournamentId);
+      
+      // Determine actual price direction
+      const actualDirection = endPrice > startPrice ? 'up' : 'down';
+      
+      console.log(`💰 Round ${roundNumber} result: ${startPrice} → ${endPrice} (${actualDirection.toUpperCase()})`);
+
+      for (const participant of participants) {
+        if (participant.status !== 'active') continue;
+
+        // Check if participant made a prediction for this round
+        const prediction = await storage.getParticipantRoundPrediction(participant.userId, tournamentId, roundNumber);
+        
+        if (!prediction) {
+          // No prediction = automatic elimination
+          await this.eliminateParticipant(participant.userId, tournamentId, roundNumber, 'No prediction made');
+          console.log(`❌ ${participant.username} eliminated (No prediction)`);
+        } else if (prediction.direction !== actualDirection) {
+          // Wrong prediction = elimination
+          await this.eliminateParticipant(participant.userId, tournamentId, roundNumber, 'Wrong prediction');
+          console.log(`❌ ${participant.username} eliminated (Predicted ${prediction.direction.toUpperCase()}, actual ${actualDirection.toUpperCase()})`);
+        } else {
+          // Correct prediction = survives
+          console.log(`✅ ${participant.username} survives (Correct prediction: ${prediction.direction.toUpperCase()})`);
+        }
+      }
+    } catch (error) {
+      console.error('Error evaluating participants:', error);
+    }
+  }
+
+  // Eliminate a participant
+  private async eliminateParticipant(userId: number, tournamentId: number, roundNumber: number, reason: string) {
+    await storage.eliminateParticipant(userId, tournamentId, roundNumber);
+  }
+
+  // Start next round with individual round duration
+  private async startNextRound(tournamentId: number, roundNumber: number, startPrice: number) {
     try {
       const tournament = await storage.getSurvivalTournament(tournamentId);
-      if (!tournament) {
-        throw new Error('Tournament not found');
+      if (!tournament) throw new Error('Tournament not found');
+
+      // Get individual round duration
+      let roundDuration = tournament.roundDuration; // Default fallback
+      
+      if (tournament.individualRoundDurations && tournament.individualRoundDurations.length >= roundNumber) {
+        roundDuration = tournament.individualRoundDurations[roundNumber - 1];
       }
 
-      console.log(`Starting automatic rounds for tournament ${tournamentId}`);
-      
-      // Start the first round immediately
-      await this.startNewRound(tournamentId);
-      
-      // Schedule subsequent rounds
-      const interval = setInterval(async () => {
-        try {
-          await this.processRoundCycle(tournamentId);
-        } catch (error) {
-          console.error(`Error in round cycle for tournament ${tournamentId}:`, error);
-        }
-      }, tournament.roundDuration * 60 * 1000); // Convert minutes to milliseconds
+      console.log(`🎯 Starting Round ${roundNumber} with ${roundDuration} minute duration`);
 
-      this.roundIntervals.set(tournamentId, interval);
+      await storage.createRound(tournamentId, roundNumber, startPrice, roundDuration);
     } catch (error) {
-      console.error('Error starting tournament rounds:', error);
-      throw error;
+      console.error('Error starting next round:', error);
+    }
+  }
+
+  // Finish tournament and declare winner
+  private async finishTournament(tournamentId: number, winnerId: number | null) {
+    try {
+      if (winnerId) {
+        await storage.setTournamentWinner(tournamentId, winnerId);
+      }
+      await storage.updateTournamentStatus(tournamentId, 'completed');
+      
+      // Clear any interval for this tournament
+      if (this.roundCheckers.has(tournamentId)) {
+        clearTimeout(this.roundCheckers.get(tournamentId)!);
+        this.roundCheckers.delete(tournamentId);
+      }
+    } catch (error) {
+      console.error('Error finishing tournament:', error);
     }
   }
 

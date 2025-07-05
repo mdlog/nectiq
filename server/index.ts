@@ -10,6 +10,7 @@ declare module 'express-session' {
 }
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { survivalRoundService } from "./services/survivalRoundService";
 
 const app = express();
 
