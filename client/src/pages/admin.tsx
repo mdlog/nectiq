@@ -161,7 +161,10 @@ export default function AdminPanel() {
     cryptocurrency: "",
     entryFee: 100,
     maxParticipants: 50,
-    roundDuration: 60
+    roundDuration: 60,
+    round1Duration: 15,
+    round2Duration: 30,
+    round3Duration: 60
   });
   const [editingTournament, setEditingTournament] = useState<any>(null);
   const [showEditTournamentDialog, setShowEditTournamentDialog] = useState(false);
@@ -339,7 +342,10 @@ export default function AdminPanel() {
         cryptocurrency: "",
         entryFee: 100,
         maxParticipants: 50,
-        roundDuration: 60
+        roundDuration: 60,
+        round1Duration: 15,
+        round2Duration: 30,
+        round3Duration: 60
       });
     },
     onError: (error: any) => {
@@ -6156,13 +6162,68 @@ export default function AdminPanel() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Round Duration (minutes)</Label>
+                      <Label>Default Round Duration (minutes)</Label>
                       <Input 
                         type="number" 
-                        placeholder="Enter round duration" 
+                        placeholder="Enter default round duration" 
                         value={newTournament.roundDuration}
                         onChange={(e) => setNewTournament({...newTournament, roundDuration: parseInt(e.target.value) || 0})}
                       />
+                    </div>
+                  </div>
+
+                  {/* Individual Round Durations Section */}
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="text-sm font-semibold mb-3 text-gray-900 dark:text-gray-100">Individual Round Durations</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="round1-duration" className="text-gray-900 dark:text-gray-100">Round 1 (minutes)</Label>
+                        <Input
+                          id="round1-duration"
+                          type="number"
+                          min="5"
+                          max="1440"
+                          className="w-full px-3 py-2 min-w-[120px]"
+                          value={newTournament.round1Duration || ''}
+                          onChange={(e) => setNewTournament({
+                            ...newTournament,
+                            round1Duration: e.target.value ? parseInt(e.target.value) : 15
+                          })}
+                          placeholder="e.g., 15"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="round2-duration" className="text-gray-900 dark:text-gray-100">Round 2 (minutes)</Label>
+                        <Input
+                          id="round2-duration"
+                          type="number"
+                          min="5"
+                          max="1440"
+                          className="w-full px-3 py-2 min-w-[120px]"
+                          value={newTournament.round2Duration || ''}
+                          onChange={(e) => setNewTournament({
+                            ...newTournament,
+                            round2Duration: e.target.value ? parseInt(e.target.value) : 30
+                          })}
+                          placeholder="e.g., 30"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="round3-duration" className="text-gray-900 dark:text-gray-100">Round 3 (minutes)</Label>
+                        <Input
+                          id="round3-duration"
+                          type="number"
+                          min="5"
+                          max="1440"
+                          className="w-full px-3 py-2 min-w-[120px]"
+                          value={newTournament.round3Duration || ''}
+                          onChange={(e) => setNewTournament({
+                            ...newTournament,
+                            round3Duration: e.target.value ? parseInt(e.target.value) : 60
+                          })}
+                          placeholder="e.g., 60"
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="mt-4">
