@@ -142,31 +142,6 @@ export default function UserDashboard() {
     queryKey: ["/api/user"],
   });
 
-  // Fetch feature settings to control Financial tab visibility
-  const { data: featureSettings } = useQuery({
-    queryKey: ["/api/admin/feature-settings"],
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
-
-  // Auto-switch to wallet tab if both withdraw and buy are disabled
-  useEffect(() => {
-    if (featureSettings) {
-      const { withdrawalEnabled, buyNtiqEnabled } = featureSettings;
-      
-      // If both features are disabled, switch to wallet
-      if (!withdrawalEnabled && !buyNtiqEnabled) {
-        setSelectedFinancialAction("wallet");
-      }
-      // If current selection is disabled, switch to available option or wallet
-      else if (selectedFinancialAction === "withdraw" && !withdrawalEnabled) {
-        setSelectedFinancialAction(buyNtiqEnabled ? "buy" : "wallet");
-      }
-      else if (selectedFinancialAction === "buy" && !buyNtiqEnabled) {
-        setSelectedFinancialAction(withdrawalEnabled ? "withdraw" : "wallet");
-      }
-    }
-  }, [featureSettings, selectedFinancialAction]);
-  
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -901,26 +876,22 @@ export default function UserDashboard() {
             {/* Financial Actions Navigation */}
             <div className="mb-6">
               <div className="flex space-x-4 bg-surface border border-surface-light rounded-lg p-2">
-                {featureSettings?.withdrawalEnabled && (
-                  <Button
-                    variant={selectedFinancialAction === "withdraw" ? "default" : "ghost"}
-                    onClick={() => setSelectedFinancialAction("withdraw")}
-                    className="flex-1"
-                  >
-                    <DollarSign className="mr-2" size={16} />
-                    Withdraw
-                  </Button>
-                )}
-                {featureSettings?.buyNtiqEnabled && (
-                  <Button
-                    variant={selectedFinancialAction === "buy" ? "default" : "ghost"}
-                    onClick={() => setSelectedFinancialAction("buy")}
-                    className="flex-1"
-                  >
-                    <CreditCard className="mr-2" size={16} />
-                    Buy NTIQ
-                  </Button>
-                )}
+                <Button
+                  variant={selectedFinancialAction === "withdraw" ? "default" : "ghost"}
+                  onClick={() => setSelectedFinancialAction("withdraw")}
+                  className="flex-1"
+                >
+                  <DollarSign className="mr-2" size={16} />
+                  Withdraw
+                </Button>
+                <Button
+                  variant={selectedFinancialAction === "buy" ? "default" : "ghost"}
+                  onClick={() => setSelectedFinancialAction("buy")}
+                  className="flex-1"
+                >
+                  <CreditCard className="mr-2" size={16} />
+                  Buy NTIQ
+                </Button>
                 <Button
                   variant={selectedFinancialAction === "wallet" ? "default" : "ghost"}
                   onClick={() => setSelectedFinancialAction("wallet")}
@@ -933,7 +904,7 @@ export default function UserDashboard() {
             </div>
 
             {/* Withdraw Section */}
-            {selectedFinancialAction === "withdraw" && featureSettings?.withdrawalEnabled && (
+            {selectedFinancialAction === "withdraw" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Withdrawal Form */}
               <Card className="bg-surface border-surface-light">
@@ -1066,7 +1037,7 @@ export default function UserDashboard() {
             )}
 
             {/* Buy NTIQ Section */}
-            {selectedFinancialAction === "buy" && featureSettings?.buyNtiqEnabled && (
+            {selectedFinancialAction === "buy" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Buy NTIQ Form */}
               <Card className="bg-surface border-surface-light">
