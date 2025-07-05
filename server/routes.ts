@@ -4396,9 +4396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         participantId: participant.id,
         userId,
         prediction,
-        startingPrice: currentPrice.toString(), // Record price when prediction was made
-        confidence: 50, // Default confidence level
-        submittedAt: new Date()
+        startingPrice: currentPrice.toString() // Record price when prediction was made
       };
 
       const newPrediction = await storage.submitSurvivalPrediction(predictionData);
