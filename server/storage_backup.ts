@@ -2560,6 +2560,22 @@ export class MemStorage implements IStorage {
   }
 
   async getReferralStats(userId: number): Promise<any> {
+    const stats = await db.select({
+      totalReferrals: count(referrals.id),
+      referralRewards: sql<number>`COALESCE(SUM(${referrals.rewardAmount}), 0)`,
+    })
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId));
+
+    return {
+      totalReferrals: stats[0]?.totalReferrals || 0,
+      referralRewards: stats[0]?.referralRewards || 0,
+    };
+  }
+
+
+
+  async getReferralStats(userId: number): Promise<any> {
     const [stats] = await db.select({
       totalReferrals: count(),
       totalRewards: sql<number>`COALESCE(SUM(${referrals.rewardAmount}), 0)`.as('totalRewards'),
