@@ -6737,7 +6737,7 @@ export default function AdminPanel() {
                           type="number"
                           min="5"
                           max="1440"
-                          className="w-full"
+                          className="w-full px-3 py-2 min-w-[120px]"
                           value={editingTournament.round1Duration || ''}
                           onChange={(e) => setEditingTournament({
                             ...editingTournament,
@@ -6752,7 +6752,7 @@ export default function AdminPanel() {
                           type="number"
                           min="5"
                           max="1440"
-                          className="w-full"
+                          className="w-full px-3 py-2 min-w-[120px]"
                           value={editingTournament.round2Duration || ''}
                           onChange={(e) => setEditingTournament({
                             ...editingTournament,
@@ -6767,7 +6767,7 @@ export default function AdminPanel() {
                           type="number"
                           min="5"
                           max="1440"
-                          className="w-full"
+                          className="w-full px-3 py-2 min-w-[120px]"
                           value={editingTournament.round3Duration || ''}
                           onChange={(e) => setEditingTournament({
                             ...editingTournament,
