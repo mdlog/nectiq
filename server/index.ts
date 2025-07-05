@@ -1,5 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 // Extend Express Request to include session
 declare module 'express-session' {

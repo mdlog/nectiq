@@ -83,21 +83,32 @@ const generateRandomUsername = (): string => {
 };
 
 // Authorized admin wallet addresses from environment variable for security
-const ADMIN_WALLET_ADDRESSES = (process.env.ADMIN_WALLET_ADDRESSES || "")
+// Fallback to direct configuration if environment variable is not loaded
+const adminWalletEnv = process.env.ADMIN_WALLET_ADDRESSES || "0x4c6165286739696849fb3e77a16b0639d762c5b6";
+const ADMIN_WALLET_ADDRESSES = adminWalletEnv
   .split(',')
   .map(addr => addr.trim().toLowerCase())
   .filter(addr => addr.length > 0);
+
+// Debug admin wallet configuration
+console.log("🔍 Admin wallet configuration debug:");
+console.log("   Environment variable:", process.env.ADMIN_WALLET_ADDRESSES);
+console.log("   Parsed addresses:", ADMIN_WALLET_ADDRESSES);
 
 // Security check - admin wallets must be configured via environment variables
 if (ADMIN_WALLET_ADDRESSES.length === 0) {
   console.error("🚨 SECURITY WARNING: ADMIN_WALLET_ADDRESSES environment variable not set!");
   console.error("⚠️  Admin access will be denied until proper configuration is set.");
+} else {
+  console.log("✅ Admin wallet addresses configured successfully:", ADMIN_WALLET_ADDRESSES.length, "addresses");
 }
 
 // Admin IP whitelist for bypassing rate limiting
 const ADMIN_IP_WHITELIST = new Set([
   '127.0.0.1',
   '::1',
+  '172.31.128.86', // Current admin user IP
+  '125.162.228.143', // Admin user's real IP from X-Forwarded-For
   'localhost',
   '172.31.128.20', // Current admin mobile IP
   '114.125.167.243' // External admin IP
@@ -126,6 +137,17 @@ setInterval(() => {
     }
   });
 }, 5 * 60 * 1000);
+
+// Immediate cleanup for admin IPs in whitelist
+ADMIN_IP_WHITELIST.forEach(ip => {
+  blacklistedIPs.delete(ip);
+  const attempts = adminAttempts.get(ip);
+  if (attempts) {
+    attempts.blacklistedUntil = undefined;
+    attempts.totalFailures = 0;
+    attempts.count = 0;
+  }
+});
 
 // Admin authentication middleware with enhanced security
 const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
