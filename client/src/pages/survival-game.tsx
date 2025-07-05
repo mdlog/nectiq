@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { format } from 'date-fns';
 
 // Types untuk data dari API
 interface SurvivalTournament {
@@ -122,6 +123,13 @@ const SurvivalGame = () => {
   // Fetch user data untuk authentifikasi
   const { data: user } = useQuery({
     queryKey: ['/api/user'],
+  });
+
+  // Fetch participants with predictions
+  const { data: participants = [] } = useQuery({
+    queryKey: [`/api/survival-tournaments/${tournament?.id}/participants-with-predictions`],
+    enabled: !!tournament?.id,
+    refetchInterval: 3000, // Refresh every 3 seconds
   });
 
   // Mutation untuk predict UP/DOWN
@@ -402,49 +410,84 @@ const SurvivalGame = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold flex items-center">
                 <Users className="h-5 w-5 mr-2" />
-                Participants ({tournament.participants.length})
+                Participants ({participants.length})
               </h3>
               <Badge variant="outline" className="text-sm">
-                {tournament.participants.filter(p => p.status === 'active').length} Active
+                {participants.filter(p => p.status === 'active').length} Active
               </Badge>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {tournament.participants.map((participant, index) => (
+            {/* Detailed Participants List */}
+            <div className="space-y-3">
+              {participants.map((participant) => (
                 <div
                   key={participant.id}
-                  className={`p-3 rounded-lg border ${
+                  className={`p-4 rounded-lg border ${
                     participant.status === 'active' 
-                      ? 'bg-green-500/20 border-green-500/30' 
-                      : 'bg-red-500/20 border-red-500/30'
+                      ? 'bg-green-500/10 border-green-500/30' 
+                      : 'bg-red-500/10 border-red-500/30'
                   }`}
                 >
-                  <div className="flex items-center space-x-2">
-                    {participant.profilePhoto ? (
-                      <img 
-                        src={participant.profilePhoto} 
-                        alt={participant.username || `User ${participant.userId}`}
-                        className="w-8 h-8 rounded-full"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-sm font-bold">
-                        {(participant.username || `U${participant.userId}`).charAt(0).toUpperCase()}
+                  <div className="flex items-center justify-between">
+                    {/* User Info */}
+                    <div className="flex items-center space-x-3">
+                      {participant.profilePhoto ? (
+                        <img 
+                          src={participant.profilePhoto} 
+                          alt={participant.username || `User ${participant.userId}`}
+                          className="w-10 h-10 rounded-full border-2 border-purple-500/30"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-sm font-bold border-2 border-purple-500/30">
+                          {(participant.username || `U${participant.userId}`).charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-white">
+                          {participant.username || `User ${participant.userId}`}
+                        </p>
+                        <p className={`text-xs ${participant.status === 'active' ? 'text-green-400' : 'text-red-400'}`}>
+                          {participant.status === 'active' ? 'Surviving' : 'Eliminated'}
+                        </p>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {participant.username || `User ${participant.userId}`}
-                      </p>
-                      <p className={`text-xs ${participant.status === 'active' ? 'text-green-400' : 'text-red-400'}`}>
-                        {participant.status === 'active' ? 'Surviving' : 'Eliminated'}
-                      </p>
+                    </div>
+
+                    {/* Prediction Info */}
+                    <div className="flex items-center space-x-4">
+                      {participant.prediction ? (
+                        <div className="flex items-center space-x-2">
+                          <div className={`flex items-center space-x-1 px-2 py-1 rounded-md ${
+                            participant.prediction === 'up' 
+                              ? 'bg-green-600/20 text-green-400' 
+                              : 'bg-red-600/20 text-red-400'
+                          }`}>
+                            {participant.prediction === 'up' ? (
+                              <TrendingUp className="h-4 w-4" />
+                            ) : (
+                              <TrendingDown className="h-4 w-4" />
+                            )}
+                            <span className="text-sm font-bold">
+                              {participant.prediction.toUpperCase()}
+                            </span>
+                          </div>
+                          {participant.submittedAt && (
+                            <div className="text-xs text-gray-400">
+                              {format(new Date(participant.submittedAt), 'HH:mm:ss')}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500">
+                          No prediction yet
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {tournament.participants.length === 0 && (
+            {participants.length === 0 && (
               <div className="text-center text-gray-400 py-8">
                 <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>No participants yet. Be the first to join!</p>
