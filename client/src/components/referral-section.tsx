@@ -38,14 +38,14 @@ export function ReferralSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
       toast({
-        title: "Berhasil",
-        description: "Kode referral berhasil dibuat!",
+        title: "Success",
+        description: "Referral code successfully generated!",
       });
     },
     onError: () => {
       toast({
-        title: "Gagal",
-        description: "Gagal membuat kode referral. Silakan coba lagi.",
+        title: "Failed",
+        description: "Failed membuat kode referral. Silakan coba lagi.",
         variant: "destructive",
       });
     },
@@ -54,13 +54,13 @@ export function ReferralSection() {
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text).then(() => {
       toast({
-        title: "Berhasil",
-        description: `${type} berhasil disalin ke clipboard!`,
+        title: "Success",
+        description: `${type} successfully copied to clipboard!`,
       });
     }).catch(() => {
       toast({
-        title: "Gagal",
-        description: "Gagal menyalin ke clipboard.",
+        title: "Failed",
+        description: "Failed copying to clipboard.",
         variant: "destructive",
       });
     });
@@ -287,7 +287,7 @@ export function ReferralSection() {
               <span className="flex-shrink-0 w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                 4
               </span>
-              <p>Anda otomatis mendapat reward 100 NTIQ untuk setiap referral yang berhasil!</p>
+              <p>You automatically get 100 NTIQ reward for each successful referral!</p>
             </div>
           </div>
         </CardContent>

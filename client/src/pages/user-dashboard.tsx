@@ -169,14 +169,14 @@ export default function UserDashboard() {
         await navigator.clipboard.writeText(user.walletAddress);
         setWalletCopied(true);
         toast({
-          title: "Alamat Wallet Disalin",
-          description: "Alamat wallet berhasil disalin ke clipboard",
+          title: "Wallet Address Copied",
+          description: "Wallet address successfully copied to clipboard",
         });
         setTimeout(() => setWalletCopied(false), 2000);
       } catch (error) {
         toast({
-          title: "Gagal Menyalin",
-          description: "Tidak dapat menyalin alamat wallet",
+          title: "Copy Failed",
+          description: "Unable to copy wallet address",
           variant: "destructive",
         });
       }
@@ -1620,14 +1620,14 @@ function UserProfile() {
         await navigator.clipboard.writeText(user.walletAddress);
         setWalletCopied(true);
         toast({
-          title: "Alamat Wallet Disalin",
-          description: "Alamat wallet berhasil disalin ke clipboard",
+          title: "Wallet Address Copied",
+          description: "Wallet address successfully copied to clipboard",
         });
         setTimeout(() => setWalletCopied(false), 2000);
       } catch (error) {
         toast({
-          title: "Gagal Menyalin",
-          description: "Tidak dapat menyalin alamat wallet",
+          title: "Copy Failed",
+          description: "Unable to copy wallet address",
           variant: "destructive",
         });
       }
@@ -1968,7 +1968,7 @@ function UserProfile() {
                   variant="ghost"
                   onClick={copyWalletAddress}
                   className="h-6 w-6 p-0 text-slate-400 hover:text-white"
-                  title="Salin alamat wallet"
+                  title="Copy wallet address"
                 >
                   {walletCopied ? <Check size={12} /> : <Copy size={12} />}
                 </Button>
