@@ -4148,14 +4148,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Insufficient balance for entry fee' });
       }
 
-      // Close any existing active or open tournaments before creating new one
-      const existingTournaments = await storage.getAllSurvivalTournaments();
-      const activeTournaments = existingTournaments.filter(t => t.status === 'active' || t.status === 'open');
-      
-      for (const tournament of activeTournaments) {
-        console.log(`Closing existing tournament ID ${tournament.id} with status ${tournament.status}`);
-        await storage.updateSurvivalTournament(tournament.id, { status: 'completed' });
-      }
+      // Allow multiple tournaments to run simultaneously
+      // Removed automatic closure of existing tournaments
 
       // Create individual round durations array
       const individualRoundDurations = [
