@@ -102,6 +102,31 @@ export function SurvivalParticipantsList({ tournamentId }: SurvivalParticipantsL
 
   return (
     <div className="space-y-4">
+      {/* Elimination Alerts */}
+      {eliminatedParticipants.length > 0 && (
+        <Card className="border-red-500 bg-red-50 dark:bg-red-900/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 mb-3">
+              <Skull className="h-6 w-6 text-red-500" />
+              <h3 className="text-lg font-bold text-red-700 dark:text-red-300">
+                Elimination Alert!
+              </h3>
+            </div>
+            <div className="text-red-600 dark:text-red-400">
+              {eliminatedParticipants.length === 1 ? (
+                <p>
+                  <strong>{eliminatedParticipants[0].username}</strong> has been eliminated from Round {eliminatedParticipants[0].eliminatedRound} due to wrong prediction.
+                </p>
+              ) : (
+                <p>
+                  <strong>{eliminatedParticipants.length} participants</strong> have been eliminated from the tournament due to wrong predictions.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -186,6 +211,9 @@ export function SurvivalParticipantsList({ tournamentId }: SurvivalParticipantsL
                           </div>
                           <div className="text-xs text-gray-500">
                             UID: {participant.uid} • Eliminated Round {participant.eliminatedRound}
+                          </div>
+                          <div className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">
+                            ❌ Wrong prediction - Eliminated from tournament
                           </div>
                         </div>
                       </div>
