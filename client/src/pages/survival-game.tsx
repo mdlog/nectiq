@@ -21,7 +21,6 @@ interface SurvivalTournament {
   currentParticipants: number;
   prizePool: number;
   status: 'open' | 'active' | 'completed' | 'cancelled';
-  currentRound: number;
   roundDuration: number;
   startTime: string;
   endTime: string;
@@ -234,7 +233,7 @@ const SurvivalGame = () => {
             🏆 Nectiq Survival Mode - Battle royale prediction tournaments - Predict or get eliminated!
           </h1>
           <p className="text-xl text-blue-200">
-            {tournament.title} - Round {tournament.currentRound}
+            {tournament.title} - Round {tournament.currentRound?.roundNumber || 1}
           </p>
         </div>
 
@@ -248,7 +247,7 @@ const SurvivalGame = () => {
                   {tournament.status.toUpperCase()}
                 </Badge>
                 <div className="text-sm text-gray-300">
-                  <span className="font-semibold">Round:</span> {tournament.currentRound}
+                  <span className="font-semibold">Round:</span> {tournament.currentRound?.roundNumber || 1}
                 </div>
                 <div className="text-sm text-gray-300">
                   <span className="font-semibold">Participants:</span> {tournament.currentParticipants}/{tournament.maxParticipants}
@@ -287,13 +286,13 @@ const SurvivalGame = () => {
             </div>
 
             {/* Current Round Status */}
-            {tournament.currentRound > 0 && tournament.nextRoundTime && (
+            {tournament.currentRound && tournament.currentRound.roundNumber > 0 && tournament.currentRound.endTime && (
               <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-4 text-center mb-6">
                 <div className="text-green-400 font-bold text-lg mb-2">
-                  Round {tournament.currentRound} Active
+                  Round {tournament.currentRound.roundNumber} Active
                 </div>
                 <div className="text-white">
-                  <CountdownTimer endTime={tournament.nextRoundTime} />
+                  <CountdownTimer endTime={tournament.currentRound.endTime} />
                 </div>
                 <div className="text-sm text-gray-300 mt-2">
                   Make your UP/DOWN prediction below!
@@ -326,7 +325,7 @@ const SurvivalGame = () => {
                     {joinTournamentMutation.isPending ? 'Joining...' : `Join Tournament (${tournament.entryFee} NTIQ)`}
                   </Button>
                 </div>
-              ) : tournament.status === 'active' && tournament.currentRound > 0 ? (
+              ) : tournament.status === 'active' && tournament.currentRound?.roundNumber > 0 ? (
                 <div className="grid grid-cols-2 gap-4">
                   <Button
                     onClick={() => predictMutation.mutate('up')}
