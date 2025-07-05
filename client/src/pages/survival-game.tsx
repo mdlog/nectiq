@@ -126,24 +126,44 @@ const SurvivalGame = () => {
 
   // Mutation untuk predict UP/DOWN
   const predictMutation = useMutation({
-    mutationFn: (prediction: 'up' | 'down') =>
-      apiRequest(`/api/survival-tournaments/${tournament?.id}/predict`, {
+    mutationFn: async (prediction: 'up' | 'down') => {
+      if (!user) {
+        throw new Error('Please connect your wallet first');
+      }
+      if (!tournament?.id) {
+        throw new Error('Tournament data not available');
+      }
+      
+      const response = await apiRequest(`/api/survival-tournaments/${tournament.id}/predict`, {
         method: 'POST',
         body: JSON.stringify({ prediction }),
-      }),
-    onSuccess: () => {
+      });
+      return response;
+    },
+    onSuccess: (data) => {
       toast({
         title: "Prediksi Berhasil!",
-        description: "Prediksi Anda telah disimpan. Tunggu hasil round ini!",
+        description: data?.message || "Prediksi Anda telah disimpan. Tunggu hasil round ini!",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     },
     onError: (error: any) => {
+      console.error('Prediction error:', error);
+      let errorMessage = "Gagal menyimpan prediksi. Silakan coba lagi.";
+      
+      if (error.message === 'Please connect your wallet first') {
+        errorMessage = "Silakan hubungkan wallet Anda terlebih dahulu";
+      } else if (error.message === 'Authentication required') {
+        errorMessage = "Anda perlu login terlebih dahulu. Silakan hubungkan wallet Anda.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         variant: "destructive",
         title: "Prediksi Gagal",
-        description: error.message || "Gagal menyimpan prediksi. Silakan coba lagi.",
+        description: errorMessage,
       });
     },
   });
@@ -328,7 +348,17 @@ const SurvivalGame = () => {
               ) : tournament.status === 'active' && tournament.currentRound?.roundNumber > 0 ? (
                 <div className="grid grid-cols-2 gap-4">
                   <Button
-                    onClick={() => predictMutation.mutate('up')}
+                    onClick={() => {
+                      if (!user) {
+                        toast({
+                          variant: "destructive",
+                          title: "Authentication Required",
+                          description: "Silakan hubungkan wallet Anda terlebih dahulu untuk membuat prediksi.",
+                        });
+                        return;
+                      }
+                      predictMutation.mutate('up');
+                    }}
                     disabled={predictMutation.isPending}
                     className="bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-bold"
                   >
@@ -336,7 +366,17 @@ const SurvivalGame = () => {
                     PRICE UP
                   </Button>
                   <Button
-                    onClick={() => predictMutation.mutate('down')}
+                    onClick={() => {
+                      if (!user) {
+                        toast({
+                          variant: "destructive",
+                          title: "Authentication Required",
+                          description: "Silakan hubungkan wallet Anda terlebih dahulu untuk membuat prediksi.",
+                        });
+                        return;
+                      }
+                      predictMutation.mutate('down');
+                    }}
                     disabled={predictMutation.isPending}
                     className="bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold"
                   >
