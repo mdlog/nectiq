@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, ChartLine, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, ChartLine, Target, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { CryptoPrice } from "@/types";
 
@@ -31,12 +32,29 @@ interface LivePricesProps {
 }
 
 export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
   const { data: prices = [], isLoading } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 1000, // Refetch every 1 second for real-time updates
     refetchIntervalInBackground: true, // Continue updating when tab is not active
     staleTime: 0, // Always consider data stale to force updates
   });
+
+  // Sort prices by market cap (highest price first)
+  const sortedPrices = prices.sort((a, b) => b.current_price - a.current_price);
+  
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedPrices.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPrices = sortedPrices.slice(startIndex, endIndex);
+
+  // Reset to first page if current page exceeds total pages
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(1);
+  }
 
   if (isLoading) {
     return (
@@ -46,7 +64,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           Live Prices
         </h3>
         <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <div key={i} className="crypto-card p-3 bg-surface-light rounded-lg animate-pulse">
               <div className="h-12 bg-slate-600 rounded"></div>
             </div>
@@ -68,9 +86,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
       </h3>
       
       <div className="space-y-3">
-        {prices
-          .sort((a, b) => b.current_price - a.current_price)
-          .map((crypto) => {
+        {currentPrices.map((crypto) => {
           const isPositive = crypto.price_change_percentage_24h >= 0;
           
           return (
@@ -122,6 +138,59 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           );
         })}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-xs text-slate-400">
+            Showing {startIndex + 1}-{Math.min(endIndex, sortedPrices.length)} of {sortedPrices.length}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => {
+                  // Show first page, last page, current page, and adjacent pages
+                  return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
+                })
+                .map((page, index, array) => {
+                  // Add ellipsis if there's a gap
+                  const showEllipsis = index > 0 && array[index - 1] < page - 1;
+                  return (
+                    <div key={page} className="flex items-center">
+                      {showEllipsis && <span className="text-xs text-slate-400 mx-1">...</span>}
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="h-8 w-8 p-0 text-xs"
+                      >
+                        {page}
+                      </Button>
+                    </div>
+                  );
+                })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
