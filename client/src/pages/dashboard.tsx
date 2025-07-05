@@ -23,7 +23,7 @@ import type { CryptoPrice } from "@/types";
 function DashboardPriceTicker() {
   const { data: prices = [] } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 2000,
+    refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
     refetchIntervalInBackground: true,
     staleTime: 0,
   });
@@ -88,7 +88,7 @@ export default function Dashboard() {
   // Fetch live prices for real-time updates
   const { data: livePrices = [] } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 1000,
+    refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
     refetchIntervalInBackground: true,
     staleTime: 0,
   });

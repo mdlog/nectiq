@@ -191,12 +191,16 @@ export default function UserDashboard() {
 
   const { data: activePredictions = [] } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
-    refetchInterval: 30000,
+    refetchInterval: 2000, // Ultra-fast updates every 2 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   const { data: recentRewards = [] } = useQuery<RecentReward[]>({
     queryKey: ["/api/rewards/recent"],
-    refetchInterval: 30000,
+    refetchInterval: 2000, // Ultra-fast updates every 2 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   const { data: prices = [], isLoading: pricesLoading, refetch: refetchPrices } = useQuery<CryptoPrice[]>({

@@ -225,27 +225,35 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/stats"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 3000, // Auto-refresh every 3 seconds
+    refetchInterval: 1000, // Ultra-fast updates every 1 second
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   const { data: users = [], error: usersError } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    refetchInterval: 1500, // Ultra-fast updates every 1.5 seconds  
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
     queryKey: ["/api/admin/predictions"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 3000, // Auto-refresh every 3 seconds
+    refetchInterval: 1000, // Ultra-fast updates every 1 second
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   // Get crypto prices for logos
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 2000,
+    refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   // Helper function to get cryptocurrency image URL
@@ -258,14 +266,18 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/purchases"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    refetchInterval: 1000, // Ultra-fast updates every 1 second
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   const { data: transactionWithdrawals = [] } = useQuery({
     queryKey: ["/api/admin/withdrawals"], 
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    refetchInterval: 1000, // Ultra-fast updates every 1 second
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
   const { data: events = [] } = useQuery<any[]>({

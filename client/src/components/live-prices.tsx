@@ -37,7 +37,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
 
   const { data: prices = [], isLoading } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 1000, // Refetch every 1 second for real-time updates
+    refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
     refetchIntervalInBackground: true, // Continue updating when tab is not active
     staleTime: 0, // Always consider data stale to force updates
   });
