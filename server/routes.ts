@@ -83,14 +83,40 @@ const generateRandomUsername = (): string => {
 };
 
 // Authorized admin wallet addresses from environment variable for security
-const ADMIN_WALLET_ADDRESSES = (process.env.ADMIN_WALLET_ADDRESSES || "0x4c6165286739696849fb3e77a16b0639d762c5b6")
+const ADMIN_WALLET_ADDRESSES = (process.env.ADMIN_WALLET_ADDRESSES || "")
   .split(',')
-  .map(addr => addr.trim().toLowerCase());
+  .map(addr => addr.trim().toLowerCase())
+  .filter(addr => addr.length > 0);
 
-// Rate limiting for admin endpoints
-const adminAttempts = new Map<string, { count: number; lastAttempt: number }>();
-const ADMIN_RATE_LIMIT = 50; // Increased limit
-const ADMIN_RATE_WINDOW = 5 * 60 * 1000; // 5 minutes
+// Security check - admin wallets must be configured via environment variables
+if (ADMIN_WALLET_ADDRESSES.length === 0) {
+  console.error("🚨 SECURITY WARNING: ADMIN_WALLET_ADDRESSES environment variable not set!");
+  console.error("⚠️  Admin access will be denied until proper configuration is set.");
+}
+
+// Rate limiting and IP blacklisting for admin endpoints
+const adminAttempts = new Map<string, { 
+  count: number; 
+  lastAttempt: number; 
+  totalFailures: number;
+  blacklistedUntil?: number;
+}>();
+const blacklistedIPs = new Set<string>();
+const ADMIN_RATE_LIMIT = 5; // Maximum attempts in window
+const ADMIN_RATE_WINDOW = 15 * 60 * 1000; // 15 minutes
+const BLACKLIST_THRESHOLD = 10; // Blacklist after 10 total failures
+const BLACKLIST_DURATION = 60 * 60 * 1000; // 1 hour blacklist
+
+// Cleanup expired blacklisted IPs every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  adminAttempts.forEach((data, ip) => {
+    if (data.blacklistedUntil && data.blacklistedUntil < now) {
+      blacklistedIPs.delete(ip);
+      data.blacklistedUntil = undefined;
+    }
+  });
+}, 5 * 60 * 1000);
 
 // Admin authentication middleware with enhanced security
 const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
@@ -98,20 +124,59 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
     
-    // Rate limiting check - temporarily disabled for testing
-    // Clear any existing rate limiting data for this IP
-    adminAttempts.delete(clientIP);
+    // Check if IP is blacklisted
     const attempts = adminAttempts.get(clientIP);
-    // Disabled: if (attempts && attempts.count >= ADMIN_RATE_LIMIT && (now - attempts.lastAttempt) < ADMIN_RATE_WINDOW) {
-    //   return res.status(429).json({ message: "Too many admin access attempts. Try again later." });
-    // }
+    if (attempts?.blacklistedUntil && attempts.blacklistedUntil > now) {
+      auditLog('BLACKLISTED_IP_ACCESS_ATTEMPT', { 
+        clientIP,
+        blacklistedUntil: new Date(attempts.blacklistedUntil).toISOString(),
+        totalFailures: attempts.totalFailures
+      }, req);
+      return res.status(403).json({ 
+        message: "Access denied. IP temporarily blacklisted due to suspicious activity.",
+        retryAfter: Math.ceil((attempts.blacklistedUntil - now) / 1000)
+      });
+    }
+    
+    // Rate limiting check - SECURITY ENABLED
+    if (attempts && attempts.count >= ADMIN_RATE_LIMIT && (now - attempts.lastAttempt) < ADMIN_RATE_WINDOW) {
+      // Track failure for potential blacklisting
+      attempts.totalFailures = (attempts.totalFailures || 0) + 1;
+      
+      // Blacklist if threshold exceeded
+      if (attempts.totalFailures >= BLACKLIST_THRESHOLD) {
+        attempts.blacklistedUntil = now + BLACKLIST_DURATION;
+        blacklistedIPs.add(clientIP);
+        auditLog('IP_BLACKLISTED', { 
+          clientIP,
+          totalFailures: attempts.totalFailures,
+          blacklistedUntil: new Date(attempts.blacklistedUntil).toISOString()
+        }, req);
+        return res.status(403).json({ 
+          message: "IP blacklisted due to excessive failed attempts.",
+          retryAfter: Math.ceil(BLACKLIST_DURATION / 1000)
+        });
+      }
+      
+      auditLog('ADMIN_RATE_LIMIT_EXCEEDED', { 
+        clientIP, 
+        attemptCount: attempts.count,
+        totalFailures: attempts.totalFailures,
+        windowMs: ADMIN_RATE_WINDOW 
+      }, req);
+      return res.status(429).json({ 
+        message: "Too many admin access attempts. Try again later.",
+        retryAfter: Math.ceil((ADMIN_RATE_WINDOW - (now - attempts.lastAttempt)) / 1000)
+      });
+    }
 
     const userId = (req as any).session?.userId;
     if (!userId) {
       // Record failed attempt
       adminAttempts.set(clientIP, { 
         count: (attempts?.count || 0) + 1, 
-        lastAttempt: now 
+        lastAttempt: now,
+        totalFailures: (attempts?.totalFailures || 0) + 1
       });
       auditLog('ADMIN_ACCESS_DENIED_NO_SESSION', { clientIP }, req);
       return res.status(401).json({ message: "Authentication required" });
@@ -121,7 +186,8 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     if (!user) {
       adminAttempts.set(clientIP, { 
         count: (attempts?.count || 0) + 1, 
-        lastAttempt: now 
+        lastAttempt: now,
+        totalFailures: (attempts?.totalFailures || 0) + 1
       });
       return res.status(401).json({ message: "User not found" });
     }
@@ -134,7 +200,8 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     if (!isAuthorizedAdmin) {
       adminAttempts.set(clientIP, { 
         count: (attempts?.count || 0) + 1, 
-        lastAttempt: now 
+        lastAttempt: now,
+        totalFailures: (attempts?.totalFailures || 0) + 1
       });
       auditLog('ADMIN_ACCESS_DENIED_UNAUTHORIZED', { 
         clientIP, 
@@ -156,9 +223,15 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
       endpoint: req.path 
     }, req);
     
-    // Add additional security headers for admin endpoints
+    // Add comprehensive security headers for admin endpoints
     res.setHeader('X-Admin-Session', 'true');
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
     
     next();
   } catch (error) {
@@ -412,6 +485,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error during wallet registration:", error);
       res.status(500).json({ message: "Failed to create account with wallet" });
+    }
+  });
+
+  // Security monitoring endpoint for real-time security status
+  app.get('/api/security/status', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const securityStatus = {
+        timestamp: new Date().toISOString(),
+        systemStatus: blacklistedIPs.size > 0 ? "UNDER_ATTACK" : "PROTECTED",
+        activeThreats: blacklistedIPs.size,
+        blacklistedIPs: Array.from(blacklistedIPs),
+        rateLimitedIPs: Array.from(adminAttempts.entries())
+          .filter(([_, data]) => data.count >= ADMIN_RATE_LIMIT)
+          .map(([ip, data]) => ({ ip, attempts: data.count, totalFailures: data.totalFailures })),
+        securityFeatures: {
+          rateLimiting: "ENABLED",
+          ipBlacklisting: "ENABLED", 
+          xssProtection: "ENHANCED",
+          sqlInjectionDetection: "ADVANCED",
+          securityHeaders: "COMPREHENSIVE",
+          adminWalletSecurity: ADMIN_WALLET_ADDRESSES.length > 0 ? "CONFIGURED" : "⚠️  NOT_CONFIGURED"
+        },
+        statistics: {
+          totalFailedAttempts: Array.from(adminAttempts.values()).reduce((sum, data) => sum + data.totalFailures, 0),
+          activeBlacklists: blacklistedIPs.size,
+          rateLimitThreshold: ADMIN_RATE_LIMIT,
+          blacklistThreshold: BLACKLIST_THRESHOLD,
+          blacklistDuration: `${BLACKLIST_DURATION / (60 * 1000)} minutes`,
+          rateLimitWindow: `${ADMIN_RATE_WINDOW / (60 * 1000)} minutes`
+        },
+        recentThreats: Array.from(adminAttempts.entries())
+          .filter(([_, data]) => data.totalFailures > 0)
+          .map(([ip, data]) => ({
+            ip,
+            failures: data.totalFailures,
+            lastAttempt: new Date(data.lastAttempt).toISOString(),
+            isBlacklisted: data.blacklistedUntil ? data.blacklistedUntil > Date.now() : false
+          }))
+          .sort((a, b) => b.failures - a.failures)
+          .slice(0, 10)
+      };
+      
+      res.json(securityStatus);
+    } catch (error) {
+      console.error('Security status error:', error);
+      res.status(500).json({ message: "Failed to retrieve security status" });
+    }
+  });
+
+  // IP Blacklist management endpoint
+  app.post('/api/security/blacklist/:action', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { action } = req.params;
+      const { ip } = req.body;
+      
+      if (!ip) {
+        return res.status(400).json({ message: "IP address is required" });
+      }
+      
+      if (action === 'add') {
+        blacklistedIPs.add(ip);
+        const currentAttempts = adminAttempts.get(ip) || { count: 0, lastAttempt: Date.now(), totalFailures: 0 };
+        adminAttempts.set(ip, {
+          ...currentAttempts,
+          blacklistedUntil: Date.now() + BLACKLIST_DURATION
+        });
+        
+        auditLog('MANUAL_IP_BLACKLIST_ADD', { ip, adminAction: true }, req);
+        res.json({ message: `IP ${ip} has been blacklisted manually` });
+        
+      } else if (action === 'remove') {
+        blacklistedIPs.delete(ip);
+        const currentAttempts = adminAttempts.get(ip);
+        if (currentAttempts) {
+          currentAttempts.blacklistedUntil = undefined;
+        }
+        
+        auditLog('MANUAL_IP_BLACKLIST_REMOVE', { ip, adminAction: true }, req);
+        res.json({ message: `IP ${ip} has been removed from blacklist` });
+        
+      } else {
+        res.status(400).json({ message: "Invalid action. Use 'add' or 'remove'" });
+      }
+    } catch (error) {
+      console.error('Blacklist management error:', error);
+      res.status(500).json({ message: "Failed to manage IP blacklist" });
     }
   });
 

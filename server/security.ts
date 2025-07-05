@@ -1,11 +1,26 @@
 // Security utilities for input validation and sanitization
 export class SecurityValidator {
-  // Sanitize string input to prevent XSS
+  // Enhanced XSS protection with comprehensive sanitization
   static sanitizeString(input: string): string {
-    return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                .replace(/javascript:/gi, '')
-                .replace(/on\w+\s*=/gi, '')
-                .trim();
+    return input
+      // Remove script tags and content
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      // Remove iframe tags
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      // Remove object and embed tags
+      .replace(/<(object|embed|applet)\b[^<]*(?:(?!<\/\1>)<[^<]*)*<\/\1>/gi, '')
+      // Remove dangerous attributes
+      .replace(/javascript:/gi, '')
+      .replace(/vbscript:/gi, '')
+      .replace(/data:/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      // Remove potentially dangerous functions
+      .replace(/eval\s*\(/gi, '')
+      .replace(/expression\s*\(/gi, '')
+      .replace(/behavior\s*:/gi, '')
+      // Remove style attributes that could contain expressions
+      .replace(/style\s*=\s*['""][^'"]*expression[^'"]*['"]/gi, '')
+      .trim();
   }
 
   // Validate and sanitize username
@@ -77,13 +92,29 @@ export class SecurityValidator {
     return { valid: true };
   }
 
-  // Check for potential SQL injection patterns
+  // Enhanced SQL injection detection with advanced patterns
   static checkSqlInjection(input: string): boolean {
     const sqlPatterns = [
-      /(\b(union|select|insert|update|delete|drop|create|alter|exec|execute)\b)/gi,
-      /(--|\/\*|\*\/|;)/g,
-      /(\b(or|and)\b\s+\d+\s*=\s*\d+)/gi,
-      /('|\"|`|;|\||&)/g
+      // Standard SQL keywords
+      /(\b(union|select|insert|update|delete|drop|create|alter|exec|execute|grant|revoke)\b)/gi,
+      // Comments and delimiters
+      /(--|\/\*|\*\/|;|#)/g,
+      // Boolean-based injection
+      /(\b(or|and)\b\s+[\d\w'\"]+\s*[=<>!]+\s*[\d\w'\"]+)/gi,
+      // Special characters often used in injections
+      /('|\"|`|;|\||&|%|<|>|\+|\*)/g,
+      // SQL functions commonly used in attacks
+      /(\b(char|ascii|substring|concat|length|benchmark|sleep|waitfor|cast|convert|hex|unhex)\b)/gi,
+      // Hexadecimal patterns
+      /(0x[0-9a-f]+)/gi,
+      // Time-based injection patterns
+      /(\b(waitfor|delay|sleep|benchmark)\b)/gi,
+      // UNION-based patterns
+      /(\bunion\b\s+(all\s+)?select)/gi,
+      // Information schema patterns
+      /(\binformation_schema\b|\bsysobjects\b|\bsyscolumns\b)/gi,
+      // Script injection patterns
+      /(<script|javascript:|vbscript:|on\w+\s*=)/gi
     ];
 
     return sqlPatterns.some(pattern => pattern.test(input));
