@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -1615,6 +1615,28 @@ function UserProfile() {
     retry: false,
   });
 
+  // Fetch user tier information
+  const { data: userTier } = useQuery({
+    queryKey: ["/api/user/tier"],
+    retry: false,
+  });
+
+  // Function to get tier icon based on tier level
+  const getTierIcon = (tier: string) => {
+    switch (tier?.toLowerCase()) {
+      case 'platinum':
+        return <Crown className="w-5 h-5 text-purple-400" />;
+      case 'gold':
+        return <Trophy className="w-5 h-5 text-yellow-400" />;
+      case 'silver':
+        return <Award className="w-5 h-5 text-gray-400" />;
+      case 'bronze':
+        return <Gem className="w-5 h-5 text-orange-400" />;
+      default:
+        return null;
+    }
+  };
+
   // Copy wallet address function
   const copyWalletAddress = async () => {
     if (user?.walletAddress) {
@@ -1827,7 +1849,10 @@ function UserProfile() {
               </label>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">{user.username}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-white">{user.username}</h2>
+                {userTier?.currentTier && getTierIcon(userTier.currentTier)}
+              </div>
               <p className="text-slate-400">Active Member</p>
             </div>
           </div>
