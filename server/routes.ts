@@ -94,6 +94,15 @@ if (ADMIN_WALLET_ADDRESSES.length === 0) {
   console.error("⚠️  Admin access will be denied until proper configuration is set.");
 }
 
+// Admin IP whitelist for bypassing rate limiting
+const ADMIN_IP_WHITELIST = new Set([
+  '127.0.0.1',
+  '::1',
+  'localhost',
+  '172.31.128.20', // Current admin mobile IP
+  '114.125.167.243' // External admin IP
+]);
+
 // Rate limiting and IP blacklisting for admin endpoints
 const adminAttempts = new Map<string, { 
   count: number; 
@@ -124,22 +133,27 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
     
-    // Check if IP is blacklisted
+    // Get attempts data for this IP
     const attempts = adminAttempts.get(clientIP);
-    if (attempts?.blacklistedUntil && attempts.blacklistedUntil > now) {
-      auditLog('BLACKLISTED_IP_ACCESS_ATTEMPT', { 
-        clientIP,
-        blacklistedUntil: new Date(attempts.blacklistedUntil).toISOString(),
-        totalFailures: attempts.totalFailures
-      }, req);
-      return res.status(403).json({ 
-        message: "Access denied. IP temporarily blacklisted due to suspicious activity.",
-        retryAfter: Math.ceil((attempts.blacklistedUntil - now) / 1000)
-      });
+    
+    // Skip IP blacklist check for whitelisted admin IPs
+    if (!ADMIN_IP_WHITELIST.has(clientIP)) {
+      // Check if IP is blacklisted
+      if (attempts?.blacklistedUntil && attempts.blacklistedUntil > now) {
+        auditLog('BLACKLISTED_IP_ACCESS_ATTEMPT', { 
+          clientIP,
+          blacklistedUntil: new Date(attempts.blacklistedUntil).toISOString(),
+          totalFailures: attempts.totalFailures
+        }, req);
+        return res.status(403).json({ 
+          message: "Access denied. IP temporarily blacklisted due to suspicious activity.",
+          retryAfter: Math.ceil((attempts.blacklistedUntil - now) / 1000)
+        });
+      }
     }
     
-    // Rate limiting check - SECURITY ENABLED
-    if (attempts && attempts.count >= ADMIN_RATE_LIMIT && (now - attempts.lastAttempt) < ADMIN_RATE_WINDOW) {
+    // Rate limiting check - SECURITY ENABLED (skip for whitelisted IPs)
+    if (!ADMIN_IP_WHITELIST.has(clientIP) && attempts && attempts.count >= ADMIN_RATE_LIMIT && (now - attempts.lastAttempt) < ADMIN_RATE_WINDOW) {
       // Track failure for potential blacklisting
       attempts.totalFailures = (attempts.totalFailures || 0) + 1;
       
