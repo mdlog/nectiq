@@ -6729,7 +6729,7 @@ export default function AdminPanel() {
                   {/* Individual Round Durations Section */}
                   <div className="border-t pt-4">
                     <h4 className="text-sm font-semibold mb-3 text-gray-900 dark:text-gray-100">Individual Round Durations</h4>
-                    <div className="grid grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="edit-round1-duration" className="text-gray-900 dark:text-gray-100">Round 1 (minutes)</Label>
                         <Input
@@ -6737,7 +6737,7 @@ export default function AdminPanel() {
                           type="number"
                           min="5"
                           max="1440"
-                          className="w-full min-w-[100px]"
+                          className="w-full"
                           value={editingTournament.round1Duration || ''}
                           onChange={(e) => setEditingTournament({
                             ...editingTournament,
@@ -6752,7 +6752,7 @@ export default function AdminPanel() {
                           type="number"
                           min="5"
                           max="1440"
-                          className="w-full min-w-[100px]"
+                          className="w-full"
                           value={editingTournament.round2Duration || ''}
                           onChange={(e) => setEditingTournament({
                             ...editingTournament,
@@ -6767,7 +6767,7 @@ export default function AdminPanel() {
                           type="number"
                           min="5"
                           max="1440"
-                          className="w-full min-w-[100px]"
+                          className="w-full"
                           value={editingTournament.round3Duration || ''}
                           onChange={(e) => setEditingTournament({
                             ...editingTournament,
