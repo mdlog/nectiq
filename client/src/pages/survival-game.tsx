@@ -302,15 +302,15 @@ const SurvivalGame = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4 text-center">
                 <div className="text-yellow-400 font-bold text-lg">Round 1</div>
-                <div className="text-sm text-gray-300">(15 minutes)</div>
+                <div className="text-sm text-gray-300">({tournament.roundDuration || 60} minutes)</div>
               </div>
               <div className="bg-purple-500/20 border border-purple-500/30 rounded-lg p-4 text-center">
                 <div className="text-yellow-400 font-bold text-lg">Round 2</div>
-                <div className="text-sm text-gray-300">(30 minutes)</div>
+                <div className="text-sm text-gray-300">({tournament.roundDuration || 60} minutes)</div>
               </div>
               <div className="bg-pink-500/20 border border-pink-500/30 rounded-lg p-4 text-center">
                 <div className="text-yellow-400 font-bold text-lg">Round 3</div>
-                <div className="text-sm text-gray-300">(1 hour)</div>
+                <div className="text-sm text-gray-300">({tournament.roundDuration || 60} minutes)</div>
               </div>
             </div>
 
