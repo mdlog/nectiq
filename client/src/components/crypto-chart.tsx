@@ -228,39 +228,46 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   const generateFallbackData = () => {
     const actualDays = parseInt(getActualDaysToFetch(timeframe));
     const data: ChartData[] = [];
-    const basePrice = currentPrice;
+    let basePrice = currentPrice || 100; // Ensure we have a base price
     
+    // Add some realistic price movement
     for (let i = actualDays; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       
-      const variation = (Math.random() - 0.5) * 0.1;
-      const dayPrice = basePrice * (1 + variation * (i / actualDays));
+      // Create more realistic price movements
+      const trendFactor = Math.sin((actualDays - i) / actualDays * Math.PI) * 0.05;
+      const randomWalk = (Math.random() - 0.5) * 0.03;
+      const dailyChange = trendFactor + randomWalk;
+      
+      basePrice = basePrice * (1 + dailyChange);
       
       if (chartType === 'candlestick') {
-        const open = dayPrice * (1 + (Math.random() - 0.5) * 0.02);
-        const close = dayPrice * (1 + (Math.random() - 0.5) * 0.02);
+        const intraday = (Math.random() - 0.5) * 0.04;
+        const open = basePrice * (1 + intraday);
+        const close = basePrice * (1 - intraday);
         const high = Math.max(open, close) * (1 + Math.random() * 0.02);
         const low = Math.min(open, close) * (1 - Math.random() * 0.02);
         
         data.push({
           time: date.toISOString().split('T')[0],
           value: close,
-          open,
-          high,
-          low,
-          close,
-          volume: Math.random() * 1000000,
+          open: Math.max(0, open),
+          high: Math.max(0, high),
+          low: Math.max(0, low),
+          close: Math.max(0, close),
+          volume: Math.random() * 2000000 + 500000,
         });
       } else {
         data.push({
           time: date.toISOString().split('T')[0],
-          value: dayPrice,
-          volume: Math.random() * 1000000,
+          value: Math.max(0, basePrice),
+          volume: Math.random() * 2000000 + 500000,
         });
       }
     }
     
+    console.log(`📊 Generated ${data.length} fallback data points for ${cryptoId}`);
     setChartData(data);
   };
 
@@ -276,6 +283,9 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   }, [isFullscreen]);
 
   useEffect(() => {
+    // Always generate fallback data first for immediate display
+    generateFallbackData();
+    // Then try to fetch real data
     fetchChartData(timeframe);
   }, [cryptoId, timeframe, chartType]);
 
