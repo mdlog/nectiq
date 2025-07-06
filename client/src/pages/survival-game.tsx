@@ -63,15 +63,6 @@ const SurvivalGame = () => {
   // Filter tournament yang open atau active saja
   const activeTournaments = tournaments.filter(t => t.status === 'open' || t.status === 'active');
 
-  // Debug logging
-  if (tournamentError) {
-    console.error('Tournament error:', tournamentError);
-  }
-  if (tournaments) {
-    console.log('Tournaments data:', tournaments);
-    console.log('Active tournaments:', activeTournaments);
-  }
-
   // Fetch user data
   const { data: user } = useQuery({
     queryKey: ['/api/user'],
@@ -83,8 +74,6 @@ const SurvivalGame = () => {
     queryKey: ['/api/crypto/prices'],
     refetchInterval: 2000, // Refresh every 2 seconds
   });
-
-
 
   if (tournamentLoading) {
     return (
@@ -145,32 +134,14 @@ const SurvivalGame = () => {
           {/* Tournament Grid */}
           {activeTournaments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {activeTournaments.map((tournament) => {
-                try {
-                  return (
-                    <div key={tournament.id} className="bg-white p-4 rounded-lg border">
-                      <h3 className="text-lg font-bold">{tournament.title}</h3>
-                      <p className="text-gray-600">{tournament.description}</p>
-                      <p className="text-sm">Status: {tournament.status}</p>
-                      <p className="text-sm">Crypto: {tournament.cryptocurrency}</p>
-                      <p className="text-sm">Participants: {tournament.currentParticipants}/{tournament.maxParticipants}</p>
-                      {/* <TournamentCard
-                        key={tournament.id}
-                        tournament={tournament}
-                        user={user}
-                        cryptoPrices={cryptoPrices}
-                      /> */}
-                    </div>
-                  );
-                } catch (error) {
-                  console.error('Error rendering tournament:', error);
-                  return (
-                    <div key={tournament.id} className="bg-red-100 p-4 rounded-lg border border-red-300">
-                      <p className="text-red-800">Error loading tournament: {tournament.title}</p>
-                    </div>
-                  );
-                }
-              })}
+              {activeTournaments.map((tournament) => (
+                <TournamentCard
+                  key={tournament.id}
+                  tournament={tournament}
+                  user={user}
+                  cryptoPrices={cryptoPrices}
+                />
+              ))}
             </div>
           ) : (
             <div className="text-center py-12">
