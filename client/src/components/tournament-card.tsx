@@ -221,7 +221,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                 <span className="font-semibold">{currentCrypto.name}</span>
               </div>
               <div className="text-right">
-                <div className="font-bold">${currentPrice.toLocaleString()}</div>
+                <div className="font-bold">${currentPrice.toFixed(2)}</div>
                 <div className={`text-sm ${priceChange24h >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                   {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
                 </div>
@@ -234,7 +234,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                 <div className="flex justify-between items-center text-sm">
                   <div>
                     <span className="font-medium">Starting Price:</span>
-                    <span className="ml-1">${startingPrice.toLocaleString()}</span>
+                    <span className="ml-1">${startingPrice.toFixed(2)}</span>
                   </div>
                   <div className="text-right">
                     {(() => {
@@ -242,7 +242,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                       const priceDiffPercent = ((priceDiff / startingPrice) * 100);
                       return (
                         <div className={`font-medium ${priceDiff >= 0 ? 'text-green-800' : 'text-red-800'}`}>
-                          {priceDiff >= 0 ? '+' : ''}${priceDiff.toLocaleString()} 
+                          {priceDiff >= 0 ? '+' : ''}${priceDiff.toFixed(2)} 
                           <span className="text-xs ml-1">
                             ({priceDiff >= 0 ? '+' : ''}{priceDiffPercent.toFixed(2)}%)
                           </span>
