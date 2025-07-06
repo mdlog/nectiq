@@ -49,95 +49,48 @@ export default function EnhancedCryptoChart({
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#0a0e1a' },
-        textColor: '#ffffff',
-        fontSize: 12,
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        background: { type: ColorType.Solid, color: '#0f172a' },
+        textColor: '#e2e8f0',
       },
       grid: {
-        vertLines: { 
-          color: '#1e293b', 
-          style: 0,
-          visible: true,
-        },
-        horzLines: { 
-          color: '#1e293b', 
-          style: 0,
-          visible: true,
-        },
+        vertLines: { color: '#334155', style: 1 },
+        horzLines: { color: '#334155', style: 1 },
       },
       crosshair: {
         mode: 1,
         vertLine: {
-          color: '#6366f1',
+          color: '#3b82f6',
           width: 1,
-          style: 0,
-          visible: true,
-          labelVisible: true,
-          labelBackgroundColor: '#6366f1',
+          style: 2,
+          labelBackgroundColor: '#3b82f6',
         },
         horzLine: {
-          color: '#6366f1',
+          color: '#3b82f6',
           width: 1,
-          style: 0,
-          visible: true,
-          labelVisible: true,
-          labelBackgroundColor: '#6366f1',
+          style: 2,
+          labelBackgroundColor: '#3b82f6',
         },
       },
       rightPriceScale: {
-        borderColor: '#334155',
-        textColor: '#cbd5e1',
-        fontSize: 11,
-        scaleMargins: { top: 0.1, bottom: 0.1 },
-        borderVisible: true,
-        entireTextOnly: false,
+        borderColor: '#475569',
+        textColor: '#e2e8f0',
       },
       timeScale: {
-        borderColor: '#334155',
-        textColor: '#cbd5e1',
-        fontSize: 11,
+        borderColor: '#475569',
+        textColor: '#e2e8f0',
         timeVisible: true,
         secondsVisible: false,
-        borderVisible: true,
-        tickMarkFormatter: (time: any) => {
-          const date = new Date(time * 1000);
-          if (isNaN(date.getTime())) {
-            // Fallback for invalid dates
-            const fallbackDate = new Date(time);
-            if (isNaN(fallbackDate.getTime())) {
-              return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            }
-            return fallbackDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          }
-          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        },
-      },
-      handleScroll: {
-        mouseWheel: true,
-        pressedMouseMove: true,
-        horzTouchDrag: true,
-        vertTouchDrag: true,
-      },
-      handleScale: {
-        axisPressedMouseMove: true,
-        mouseWheel: true,
-        pinch: true,
-      },
-      kineticScroll: {
-        mouse: true,
-        touch: true,
       },
       watermark: {
         visible: true,
-        fontSize: 32,
+        fontSize: 20,
         horzAlign: 'center',
         vertAlign: 'center',
-        color: 'rgba(255, 255, 255, 0.03)',
-        text: `${symbol}`,
+        color: 'rgba(255, 255, 255, 0.05)',
+        text: `${name} • Nectiq`,
       },
       width: chartContainerRef.current.clientWidth,
-      height: isFullscreen ? window.innerHeight - 200 : 450,
+      height: isFullscreen ? window.innerHeight - 200 : 400,
     });
 
     chartRef.current = chart;
@@ -239,81 +192,46 @@ export default function EnhancedCryptoChart({
     let series;
     if (chartType === 'candlestick') {
       series = chartRef.current.addCandlestickSeries({
-        upColor: '#22c55e',
+        upColor: '#10b981',
         downColor: '#ef4444',
-        borderDownColor: '#dc2626',
-        borderUpColor: '#16a34a',
-        wickDownColor: '#dc2626',
-        wickUpColor: '#16a34a',
-        priceFormat: {
-          type: 'price',
-          precision: 4,
-          minMove: 0.0001,
-        },
+        borderDownColor: '#ef4444',
+        borderUpColor: '#10b981',
+        wickDownColor: '#ef4444',
+        wickUpColor: '#10b981',
       });
 
-      const candleData = chartData.map(item => {
-        // Ensure proper time format for lightweight-charts
-        const timeValue = typeof item.time === 'string' ? 
-          Math.floor(new Date(item.time).getTime() / 1000) : 
-          item.time;
-          
-        return {
-          time: timeValue,
-          open: parseFloat((item.open || item.value).toFixed(4)),
-          high: parseFloat((item.high || item.value * 1.01).toFixed(4)),
-          low: parseFloat((item.low || item.value * 0.99).toFixed(4)),
-          close: parseFloat((item.close || item.value).toFixed(4)),
-        };
-      });
+      const candleData = chartData.map(item => ({
+        time: item.time,
+        open: item.open || item.value,
+        high: item.high || item.value * 1.01,
+        low: item.low || item.value * 0.99,
+        close: item.close || item.value,
+      }));
 
       series.setData(candleData);
     } else if (chartType === 'area') {
       series = chartRef.current.addAreaSeries({
-        lineColor: '#6366f1',
-        topColor: 'rgba(99, 102, 241, 0.2)',
-        bottomColor: 'rgba(99, 102, 241, 0.0)',
-        lineWidth: 2,
-        priceFormat: {
-          type: 'price',
-          precision: 4,
-          minMove: 0.0001,
-        },
+        lineColor: '#3b82f6',
+        topColor: 'rgba(59, 130, 246, 0.4)',
+        bottomColor: 'rgba(59, 130, 246, 0.0)',
       });
 
-      const areaData = chartData.map(item => {
-        const timeValue = typeof item.time === 'string' ? 
-          Math.floor(new Date(item.time).getTime() / 1000) : 
-          item.time;
-          
-        return {
-          time: timeValue,
-          value: parseFloat((item.close || item.value).toFixed(4)),
-        };
-      });
+      const areaData = chartData.map(item => ({
+        time: item.time,
+        value: item.close || item.value,
+      }));
 
       series.setData(areaData);
     } else {
       series = chartRef.current.addLineSeries({
-        color: '#6366f1',
+        color: '#3b82f6',
         lineWidth: 2,
-        priceFormat: {
-          type: 'price',
-          precision: 4,
-          minMove: 0.0001,
-        },
       });
 
-      const lineData = chartData.map(item => {
-        const timeValue = typeof item.time === 'string' ? 
-          Math.floor(new Date(item.time).getTime() / 1000) : 
-          item.time;
-          
-        return {
-          time: timeValue,
-          value: parseFloat((item.close || item.value).toFixed(4)),
-        };
-      });
+      const lineData = chartData.map(item => ({
+        time: item.time,
+        value: item.close || item.value,
+      }));
 
       series.setData(lineData);
     }
@@ -324,28 +242,17 @@ export default function EnhancedCryptoChart({
     if (showVolume && chartType === 'candlestick') {
       const volumeSeries = chartRef.current.addHistogramSeries({
         color: '#64748b',
-        priceFormat: { 
-          type: 'volume',
-        },
+        priceFormat: { type: 'volume' },
         priceScaleId: '',
-        scaleMargins: { 
-          top: 0.7, 
-          bottom: 0,
-        },
+        scaleMargins: { top: 0.8, bottom: 0 },
       });
 
-      const volumeData = chartData.map(item => {
-        const isGreen = (item.close || item.value) >= (item.open || item.value);
-        const timeValue = typeof item.time === 'string' ? 
-          Math.floor(new Date(item.time).getTime() / 1000) : 
-          item.time;
-          
-        return {
-          time: timeValue,
-          value: item.volume || Math.random() * 1000000,
-          color: isGreen ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)',
-        };
-      });
+      const volumeData = chartData.map(item => ({
+        time: item.time,
+        value: item.volume || Math.random() * 1000000,
+        color: (item.close || item.value) >= (item.open || item.value) ? 
+               'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)',
+      }));
 
       volumeSeries.setData(volumeData);
     }
@@ -363,32 +270,23 @@ export default function EnhancedCryptoChart({
   };
 
   return (
-    <Card className="w-full bg-gradient-to-br from-slate-950 to-slate-900 border-slate-800">
-      <CardHeader className="pb-4 border-b border-slate-800">
+    <Card className="w-full bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700">
+      <CardHeader className="pb-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <BarChart3 className="w-4 h-4 text-white" />
-            </div>
+          <div className="flex items-center space-x-3">
+            <BarChart3 className="w-6 h-6 text-blue-400" />
             <div>
-              <CardTitle className="text-2xl font-bold text-white flex items-center">
-                {name} 
-                <span className="text-slate-400 ml-2 font-normal text-lg">({symbol})</span>
-              </CardTitle>
-              <div className="flex items-center space-x-4 mt-2">
-                <span className="text-3xl font-bold text-white tracking-tight">
+              <CardTitle className="text-xl text-white">{name} ({symbol})</CardTitle>
+              <div className="flex items-center space-x-4 mt-1">
+                <span className="text-2xl font-bold text-white">
                   ${currentPrice.toLocaleString(undefined, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 6 
                   })}
                 </span>
                 <Badge 
-                  variant="outline"
-                  className={`${
-                    priceChange24h >= 0 
-                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                      : 'bg-red-500/10 border-red-500/20 text-red-400'
-                  } px-3 py-1 text-sm font-semibold`}
+                  variant={priceChange24h >= 0 ? "default" : "destructive"}
+                  className={`${priceChange24h >= 0 ? 'bg-green-600' : 'bg-red-600'} text-white`}
                 >
                   {priceChange24h >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
                   {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
@@ -397,18 +295,18 @@ export default function EnhancedCryptoChart({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Timeframe buttons */}
-            <div className="flex bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="flex border border-slate-600 rounded-lg overflow-hidden">
               {['1', '7', '30', '90'].map((period) => (
                 <Button
                   key={period}
-                  variant="ghost"
+                  variant={timeframe === period ? "default" : "ghost"}
                   size="sm"
-                  className={`px-4 py-2 rounded-none border-0 text-sm font-medium transition-all ${
+                  className={`px-3 py-1 rounded-none border-0 ${
                     timeframe === period 
-                      ? 'bg-indigo-600 text-white shadow-lg' 
-                      : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                      ? 'bg-blue-600 text-white' 
+                      : 'text-slate-300 hover:bg-slate-700'
                   }`}
                   onClick={() => setTimeframe(period)}
                 >
@@ -418,38 +316,38 @@ export default function EnhancedCryptoChart({
             </div>
 
             {/* Chart type buttons */}
-            <div className="flex bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="flex border border-slate-600 rounded-lg overflow-hidden">
               <Button
-                variant="ghost"
+                variant={chartType === 'candlestick' ? "default" : "ghost"}
                 size="sm"
-                className={`px-3 py-2 rounded-none border-0 transition-all ${
+                className={`px-3 py-1 rounded-none border-0 ${
                   chartType === 'candlestick' 
-                    ? 'bg-indigo-600 text-white shadow-lg' 
-                    : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-slate-300 hover:bg-slate-700'
                 }`}
                 onClick={() => setChartType('candlestick')}
               >
                 <BarChart3 className="w-4 h-4" />
               </Button>
               <Button
-                variant="ghost"
+                variant={chartType === 'line' ? "default" : "ghost"}
                 size="sm"
-                className={`px-3 py-2 rounded-none border-0 transition-all ${
+                className={`px-3 py-1 rounded-none border-0 ${
                   chartType === 'line' 
-                    ? 'bg-indigo-600 text-white shadow-lg' 
-                    : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-slate-300 hover:bg-slate-700'
                 }`}
                 onClick={() => setChartType('line')}
               >
                 <LineChart className="w-4 h-4" />
               </Button>
               <Button
-                variant="ghost"
+                variant={chartType === 'area' ? "default" : "ghost"}
                 size="sm"
-                className={`px-3 py-2 rounded-none border-0 transition-all ${
+                className={`px-3 py-1 rounded-none border-0 ${
                   chartType === 'area' 
-                    ? 'bg-indigo-600 text-white shadow-lg' 
-                    : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-slate-300 hover:bg-slate-700'
                 }`}
                 onClick={() => setChartType('area')}
               >
@@ -458,29 +356,23 @@ export default function EnhancedCryptoChart({
             </div>
 
             {/* Control buttons */}
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`px-3 py-2 rounded-xl border border-slate-700 transition-all ${
-                  showVolume 
-                    ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30' 
-                    : 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
-                }`}
-                onClick={() => setShowVolume(!showVolume)}
-              >
-                <Volume2 className="w-4 h-4" />
-              </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-300 hover:bg-slate-700"
+              onClick={() => setShowVolume(!showVolume)}
+            >
+              <Volume2 className={`w-4 h-4 ${showVolume ? 'text-blue-400' : 'text-slate-500'}`} />
+            </Button>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="px-3 py-2 rounded-xl border border-slate-700 text-slate-400 hover:bg-slate-700/50 hover:text-white transition-all"
-                onClick={() => setIsFullscreen(!isFullscreen)}
-              >
-                <Maximize2 className="w-4 h-4" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-300 hover:bg-slate-700"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+            >
+              <Maximize2 className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -505,12 +397,12 @@ export default function EnhancedCryptoChart({
 
         {/* Predict button */}
         {onPredictClick && (
-          <div className="p-6 border-t border-slate-800 bg-slate-900/50">
+          <div className="p-4 border-t border-slate-700">
             <Button 
               onClick={handlePredictClick}
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02]"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3"
             >
-              <Target className="w-5 h-5 mr-3" />
+              <Target className="w-4 h-4 mr-2" />
               Make Prediction for {symbol}
             </Button>
           </div>
