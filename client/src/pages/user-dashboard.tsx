@@ -19,6 +19,7 @@ import { DailyChallenges } from "@/components/daily-challenges";
 import CryptoChart from "@/components/crypto-chart";
 import { AdvancedChartIndicators } from "@/components/advanced-chart-indicators";
 import { SimpleChartTest } from "@/components/simple-chart-test";
+import { MinimalChart } from "@/components/minimal-chart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
@@ -750,6 +751,12 @@ export default function UserDashboard() {
               <div className="space-y-4">
                 {selectedCrypto && showChart ? (
                   <>
+                    {/* Minimal Chart Test */}
+                    <MinimalChart
+                      cryptoId={selectedCrypto.id}
+                      currentPrice={selectedCrypto.current_price}
+                    />
+                    
                     {/* Test Chart to Debug Issue */}
                     <SimpleChartTest
                       cryptoId={selectedCrypto.id}
