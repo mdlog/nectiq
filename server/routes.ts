@@ -3139,10 +3139,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid user ID" });
       }
 
+      // Debug: Check what users exist
+      console.log(`Checking if user ${userId} exists in database...`);
       const user = await storage.getUser(userId);
-      console.log(`User lookup result for ID ${userId}:`, user ? `Found user: ${user.username}` : 'User not found');
+      console.log(`User lookup result for ID ${userId}:`, user ? `Found user: ${user.username} (${user.id})` : 'User not found');
       
+      // Additional debug: List all users if user not found
       if (!user) {
+        try {
+          const allUsers = await storage.getAllUsers();
+          console.log(`Available user IDs in database:`, allUsers.map(u => u.id));
+          console.log(`Total users in database: ${allUsers.length}`);
+        } catch (debugError) {
+          console.error('Debug error listing users:', debugError);
+        }
         return res.status(404).json({ message: "User not found" });
       }
 
