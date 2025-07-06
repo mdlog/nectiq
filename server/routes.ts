@@ -989,25 +989,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate token amount (1 PTS = 0.01 USDT/USDC)
       const tokenAmount = numAmount * 0.01;
 
-      // Create withdrawal record
+      // Create withdrawal record with pending status
       const withdrawal = await storage.createWithdrawal({
         userId,
         ptsAmount: numAmount,
         tokenAmount: tokenAmount.toFixed(2),
         token,
         walletAddress: user.walletAddress || "",
-        status: "completed"
+        status: "pending"
       });
 
-      // Deduct PTS from user balance atomically
+      // Deduct PTS from user balance immediately (reserved for withdrawal)
       const newBalance = user.balance - numAmount;
       await storage.updateUserBalance(userId, newBalance);
 
-      // Real-time notification to admin panel
+      // Real-time notification to admin panel for approval
       broadcastToAdmins({
-        type: 'transaction_update',
+        type: 'withdrawal_request',
         data: {
           type: 'withdrawal',
+          withdrawalId: withdrawal.id,
           user: {
             id: userId,
             username: user.username,
@@ -1017,31 +1018,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           amount: numAmount,
           token,
           tokenAmount: tokenAmount.toFixed(2),
-          status: 'completed',
+          status: 'pending',
           timestamp: new Date().toISOString()
         }
       });
-
-      // In a real implementation, here you would:
-      // 1. Call blockchain API to send USDT/USDC to user's wallet
-      // 2. Log the transaction
-      // 3. Handle any errors and rollback balance if needed
       
-      auditLog("user_withdrawal", {
+      auditLog("user_withdrawal_request", {
         userId,
+        withdrawalId: withdrawal.id,
         ptsAmount: numAmount,
         tokenAmount,
         token,
         walletAddress: user.walletAddress,
-        newBalance
+        newBalance,
+        status: "pending"
       }, req);
 
       res.json({
         success: true,
-        message: "Withdrawal processed successfully",
+        message: "Withdrawal request submitted successfully. Admin approval required.",
+        withdrawalId: withdrawal.id,
         ptsAmount: numAmount,
         tokenAmount: tokenAmount.toFixed(2),
         token,
+        status: "pending",
         newBalance
       });
     } catch (error) {
@@ -2388,6 +2388,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching admin withdrawals:", error);
       res.status(500).json({ message: "Failed to get withdrawals" });
+    }
+  });
+
+  // Admin: Approve withdrawal request
+  app.post("/api/admin/withdrawals/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const withdrawalId = parseInt(req.params.id);
+      const adminId = req.session.userId;
+      const { adminNote } = req.body;
+
+      auditLog("withdrawal_approved", {
+        withdrawalId,
+        adminId,
+        adminNote: adminNote || "No note provided"
+      }, req);
+
+      await storage.updateWithdrawalStatus(withdrawalId, "processing", adminId, adminNote);
+      
+      // Broadcast to admin clients
+      broadcastToAdmins({
+        type: 'withdrawal_approved',
+        withdrawalId,
+        status: 'processing',
+        adminNote,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ message: "Withdrawal approved and set to processing" });
+    } catch (error) {
+      console.error("Error approving withdrawal:", error);
+      res.status(500).json({ message: "Failed to approve withdrawal" });
+    }
+  });
+
+  // Admin: Reject withdrawal request
+  app.post("/api/admin/withdrawals/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const withdrawalId = parseInt(req.params.id);
+      const adminId = req.session.userId;
+      const { adminNote } = req.body;
+
+      if (!adminNote || adminNote.trim().length === 0) {
+        return res.status(400).json({ message: "Admin note is required for rejection" });
+      }
+
+      auditLog("withdrawal_rejected", {
+        withdrawalId,
+        adminId,
+        adminNote
+      }, req);
+
+      // Update withdrawal status and refund the balance
+      await storage.rejectWithdrawal(withdrawalId, adminId, adminNote);
+      
+      // Broadcast to admin clients
+      broadcastToAdmins({
+        type: 'withdrawal_rejected',
+        withdrawalId,
+        status: 'rejected',
+        adminNote,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ message: "Withdrawal rejected and balance refunded" });
+    } catch (error) {
+      console.error("Error rejecting withdrawal:", error);
+      res.status(500).json({ message: "Failed to reject withdrawal" });
+    }
+  });
+
+  // Admin: Complete withdrawal (mark as completed)
+  app.post("/api/admin/withdrawals/:id/complete", requireAdmin, async (req, res) => {
+    try {
+      const withdrawalId = parseInt(req.params.id);
+      const adminId = req.session.userId;
+      const { adminNote, transactionHash } = req.body;
+
+      auditLog("withdrawal_completed", {
+        withdrawalId,
+        adminId,
+        adminNote: adminNote || "No note provided",
+        transactionHash: transactionHash || "No transaction hash"
+      }, req);
+
+      await storage.completeWithdrawal(withdrawalId, adminId, adminNote, transactionHash);
+      
+      // Broadcast to admin clients
+      broadcastToAdmins({
+        type: 'withdrawal_completed',
+        withdrawalId,
+        status: 'completed',
+        adminNote,
+        transactionHash,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ message: "Withdrawal marked as completed" });
+    } catch (error) {
+      console.error("Error completing withdrawal:", error);
+      res.status(500).json({ message: "Failed to complete withdrawal" });
     }
   });
 

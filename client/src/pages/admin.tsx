@@ -34,6 +34,220 @@ interface AdminStats {
   totalStaked: number;
 }
 
+// Withdrawal Approval Card Component
+interface WithdrawalApprovalCardProps {
+  withdrawal: any;
+}
+
+function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [adminNote, setAdminNote] = useState("");
+  const [transactionHash, setTransactionHash] = useState("");
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [actionType, setActionType] = useState<"approve" | "reject" | "complete">("approve");
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Pending</Badge>;
+      case "processing":
+        return <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Processing</Badge>;
+      case "completed":
+        return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Completed</Badge>;
+      case "rejected":
+        return <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const approvalMutation = useMutation({
+    mutationFn: async ({ action, note, hash }: { action: string; note?: string; hash?: string }) => {
+      const endpoint = `/api/admin/withdrawals/${withdrawal.id}/${action}`;
+      const payload: any = {};
+      if (note) payload.adminNote = note;
+      if (hash) payload.transactionHash = hash;
+      
+      return await apiRequest(endpoint, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" }
+      });
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/withdrawals"] });
+      toast({
+        title: "Success",
+        description: variables.action === "approve" ? "Withdrawal approved" : 
+                    variables.action === "reject" ? "Withdrawal rejected" : 
+                    "Withdrawal completed"
+      });
+      setShowApprovalDialog(false);
+      setAdminNote("");
+      setTransactionHash("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || `Failed to ${actionType} withdrawal`,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleApprovalAction = (action: "approve" | "reject" | "complete") => {
+    setActionType(action);
+    setShowApprovalDialog(true);
+  };
+
+  const confirmAction = () => {
+    approvalMutation.mutate({
+      action: actionType,
+      note: adminNote,
+      hash: transactionHash
+    });
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between p-4 bg-surface rounded-lg border">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+            <span className="text-white font-semibold">
+              {withdrawal.username?.[0]?.toUpperCase() || 'U'}
+            </span>
+          </div>
+          <div>
+            <p className="font-medium">{withdrawal.username}</p>
+            <p className="text-sm text-slate-400">
+              {withdrawal.ptsAmount.toLocaleString()} NTIQ → {withdrawal.tokenAmount} {withdrawal.token}
+            </p>
+            <p className="text-xs text-slate-500">
+              {new Date(withdrawal.createdAt).toLocaleString()}
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          {getStatusBadge(withdrawal.status)}
+          
+          {withdrawal.status === "pending" && (
+            <div className="flex space-x-1">
+              <Button
+                size="sm"
+                onClick={() => handleApprovalAction("approve")}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                disabled={approvalMutation.isPending}
+              >
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Approve
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => handleApprovalAction("reject")}
+                disabled={approvalMutation.isPending}
+              >
+                <X className="w-4 h-4 mr-1" />
+                Reject
+              </Button>
+            </div>
+          )}
+          
+          {withdrawal.status === "processing" && (
+            <Button
+              size="sm"
+              onClick={() => handleApprovalAction("complete")}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={approvalMutation.isPending}
+            >
+              <CheckCircle className="w-4 h-4 mr-1" />
+              Complete
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Approval Dialog */}
+      <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === "approve" ? "Approve Withdrawal" :
+               actionType === "reject" ? "Reject Withdrawal" :
+               "Complete Withdrawal"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="font-medium">{withdrawal.username}</p>
+              <p className="text-sm text-slate-600">
+                {withdrawal.ptsAmount.toLocaleString()} NTIQ → {withdrawal.tokenAmount} {withdrawal.token}
+              </p>
+            </div>
+            
+            <div>
+              <Label htmlFor="adminNote">Admin Note {actionType === "reject" ? "(Required)" : "(Optional)"}</Label>
+              <Input
+                id="adminNote"
+                value={adminNote}
+                onChange={(e) => setAdminNote(e.target.value)}
+                placeholder={
+                  actionType === "approve" ? "Approval note..." :
+                  actionType === "reject" ? "Reason for rejection..." :
+                  "Completion note..."
+                }
+                className="mt-1"
+              />
+            </div>
+
+            {actionType === "complete" && (
+              <div>
+                <Label htmlFor="transactionHash">Transaction Hash (Optional)</Label>
+                <Input
+                  id="transactionHash"
+                  value={transactionHash}
+                  onChange={(e) => setTransactionHash(e.target.value)}
+                  placeholder="0x..."
+                  className="mt-1"
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowApprovalDialog(false)}
+                disabled={approvalMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmAction}
+                disabled={
+                  approvalMutation.isPending ||
+                  (actionType === "reject" && !adminNote.trim())
+                }
+                className={
+                  actionType === "approve" ? "bg-green-600 hover:bg-green-700" :
+                  actionType === "reject" ? "bg-red-600 hover:bg-red-700" :
+                  "bg-blue-600 hover:bg-blue-700"
+                }
+              >
+                {approvalMutation.isPending ? "Processing..." : 
+                 actionType === "approve" ? "Approve" :
+                 actionType === "reject" ? "Reject" :
+                 "Complete"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 export default function AdminPanel() {
   const [newCryptoId, setNewCryptoId] = useState("");
   // Remove authentication state as server handles admin access
@@ -3832,12 +4046,12 @@ export default function AdminPanel() {
                       </CardContent>
                     </Card>
 
-                    {/* Recent Withdrawals */}
+                    {/* Withdrawal Approval System */}
                     <Card className="bg-surface-light">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center">
                           <DollarSign className="mr-2" size={18} />
-                          Recent Withdrawals
+                          Withdrawal Approval System
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -3845,33 +4059,11 @@ export default function AdminPanel() {
                           {!Array.isArray(withdrawals) || withdrawals.length === 0 ? (
                             <div className="text-center py-4 text-slate-400">
                               <DollarSign className="mx-auto mb-2" size={24} />
-                              <p className="text-sm">No withdrawals yet</p>
+                              <p className="text-sm">No withdrawal requests</p>
                             </div>
                           ) : (
-                            withdrawals.slice(0, 5).map((withdrawal: any) => (
-                              <div key={withdrawal.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-                                    <span className="text-white text-sm font-semibold">
-                                      {withdrawal.username?.[0]?.toUpperCase() || 'U'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <p className="font-medium">{withdrawal.username}</p>
-                                    <p className="text-sm text-slate-400">
-                                      {withdrawal.ptsAmount.toLocaleString()} PTS → {withdrawal.tokenAmount} {withdrawal.token}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                    {withdrawal.status}
-                                  </Badge>
-                                  <p className="text-xs text-slate-400 mt-1">
-                                    {new Date(withdrawal.createdAt).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
+                            withdrawals.slice(0, 8).map((withdrawal: any) => (
+                              <WithdrawalApprovalCard key={withdrawal.id} withdrawal={withdrawal} />
                             ))
                           )}
                         </div>

@@ -519,6 +519,72 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(withdrawals).where(eq(withdrawals.userId, userId)).orderBy(desc(withdrawals.createdAt)).limit(limit);
   }
 
+  // Admin withdrawal approval methods
+  async updateWithdrawalStatus(withdrawalId: number, status: string, adminId: number, adminNote?: string): Promise<void> {
+    await db
+      .update(withdrawals)
+      .set({
+        status,
+        processedBy: adminId,
+        processedAt: new Date(),
+        adminNote: adminNote || null
+      })
+      .where(eq(withdrawals.id, withdrawalId));
+  }
+
+  async rejectWithdrawal(withdrawalId: number, adminId: number, adminNote: string): Promise<void> {
+    // Get withdrawal details first
+    const [withdrawal] = await db.select().from(withdrawals).where(eq(withdrawals.id, withdrawalId));
+    
+    if (!withdrawal) {
+      throw new Error("Withdrawal not found");
+    }
+
+    // Update withdrawal status to rejected
+    await db
+      .update(withdrawals)
+      .set({
+        status: "rejected",
+        processedBy: adminId,
+        processedAt: new Date(),
+        adminNote
+      })
+      .where(eq(withdrawals.id, withdrawalId));
+
+    // Refund the user's balance
+    await db
+      .update(users)
+      .set({
+        balance: sql`${users.balance} + ${withdrawal.ptsAmount}`
+      })
+      .where(eq(users.id, withdrawal.userId));
+  }
+
+  async completeWithdrawal(withdrawalId: number, adminId: number, adminNote?: string, transactionHash?: string): Promise<void> {
+    const updateData: any = {
+      status: "completed",
+      processedBy: adminId,
+      processedAt: new Date()
+    };
+
+    if (adminNote) {
+      updateData.adminNote = adminNote;
+    }
+
+    // Note: We would store transactionHash if we had that field in schema
+    // For now, we can include it in the admin note if provided
+    if (transactionHash && adminNote) {
+      updateData.adminNote = `${adminNote} | TX: ${transactionHash}`;
+    } else if (transactionHash) {
+      updateData.adminNote = `Transaction Hash: ${transactionHash}`;
+    }
+
+    await db
+      .update(withdrawals)
+      .set(updateData)
+      .where(eq(withdrawals.id, withdrawalId));
+  }
+
   async createPurchase(insertPurchase: InsertPurchase): Promise<Purchase> {
     const [purchase] = await db
       .insert(purchases)

@@ -72,7 +72,10 @@ export const withdrawals = pgTable("withdrawals", {
   tokenAmount: varchar("token_amount", { length: 50 }).notNull(),
   token: varchar("token", { length: 10 }).notNull(),
   walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
-  status: varchar("status", { length: 20 }).notNull().default("completed"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, processing, completed, rejected
+  adminNote: text("admin_note"), // Admin note for approval/rejection
+  processedBy: integer("processed_by").references(() => users.id), // Admin who processed it
+  processedAt: timestamp("processed_at"), // When it was processed
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
