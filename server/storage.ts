@@ -1853,7 +1853,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllSurvivalTournaments(): Promise<any[]> {
-    return await db
+    const tournaments = await db
       .select({
         id: survivalTournaments.id,
         title: survivalTournaments.title,
@@ -1881,6 +1881,19 @@ export class DatabaseStorage implements IStorage {
       .from(survivalTournaments)
       .leftJoin(users, eq(survivalTournaments.createdBy, users.id))
       .orderBy(desc(survivalTournaments.createdAt));
+
+    // Add rounds data to each tournament
+    const tournamentsWithRounds = await Promise.all(
+      tournaments.map(async (tournament) => {
+        const rounds = await this.getSurvivalRounds(tournament.id);
+        return {
+          ...tournament,
+          rounds
+        };
+      })
+    );
+
+    return tournamentsWithRounds;
   }
 
   async getSurvivalTournament(id: number): Promise<any> {
