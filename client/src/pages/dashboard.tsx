@@ -25,7 +25,7 @@ function DashboardPriceTicker() {
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   if (!prices.length) return null;
@@ -90,7 +90,7 @@ export default function Dashboard() {
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Auto-select Bitcoin as default when prices are loaded

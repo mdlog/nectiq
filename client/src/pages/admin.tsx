@@ -441,7 +441,7 @@ export default function AdminPanel() {
     retryDelay: 1000,
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: users = [], error: usersError } = useQuery<User[]>({
@@ -450,7 +450,7 @@ export default function AdminPanel() {
     retryDelay: 1000,
     refetchInterval: 1500, // Ultra-fast updates every 1.5 seconds  
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
@@ -459,7 +459,7 @@ export default function AdminPanel() {
     retryDelay: 1000,
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Get crypto prices for logos
@@ -467,7 +467,7 @@ export default function AdminPanel() {
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Helper function to get cryptocurrency image URL
@@ -482,7 +482,7 @@ export default function AdminPanel() {
     retryDelay: 1000,
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: transactionWithdrawals = [] } = useQuery({
@@ -491,7 +491,7 @@ export default function AdminPanel() {
     retryDelay: 1000,
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: events = [] } = useQuery<any[]>({
@@ -508,7 +508,7 @@ export default function AdminPanel() {
     retryDelay: 1000,
     refetchInterval: 5000, // Auto-refresh every 5 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Battles data queries

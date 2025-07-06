@@ -35,7 +35,7 @@ export function TopPredictors() {
     queryKey: ["/api/leaderboard"],
     refetchInterval: 1000, // Real-time updates every 1 second
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   if (isLoading) {

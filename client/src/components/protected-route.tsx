@@ -19,8 +19,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   });
 
   useEffect(() => {
-    if (!isLoading && (!user || error)) {
-      // If user is not authenticated, redirect to landing page
+    // Only redirect if we're absolutely sure the user is not authenticated
+    // Don't redirect on network errors or temporary loading states
+    if (!isLoading && !user && error && error.message.includes("401")) {
+      // Only redirect on actual authentication errors (401), not network errors
       setLocation("/");
     }
   }, [user, isLoading, error, setLocation]);
@@ -37,9 +39,21 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // If not authenticated, return null (redirect will happen in useEffect)
-  if (!user || error) {
+  // If not authenticated (confirmed by 401 error), return null
+  if (!user && error && error.message.includes("401")) {
     return null;
+  }
+  
+  // If there's no user data but also no 401 error, show loading
+  if (!user && !error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Checking authentication...</p>
+        </div>
+      </div>
+    );
   }
 
   // If authenticated, render the protected content

@@ -64,7 +64,7 @@ export default function BattlesPage() {
     queryKey: ['/api/battles/live'],
     refetchInterval: 2000, // Auto-refresh every 2 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Fetch battle statistics
@@ -72,7 +72,7 @@ export default function BattlesPage() {
     queryKey: ['/api/battles/stats'],
     refetchInterval: 4000, // Auto-refresh every 4 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Fetch crypto prices for filtering
@@ -80,7 +80,7 @@ export default function BattlesPage() {
     queryKey: ['/api/crypto/prices'],
     refetchInterval: 1000, // Auto-refresh every 1 second
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Filter battles based on search and filters

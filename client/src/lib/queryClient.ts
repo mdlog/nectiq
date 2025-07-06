@@ -45,13 +45,13 @@ export const getQueryFn: <T>(options: {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: 2000, // Auto-refresh every 2 seconds
-      refetchIntervalInBackground: true, // Keep refreshing even when tab is not active
-      refetchOnWindowFocus: true, // Refresh when window gains focus
+      queryFn: getQueryFn({ on401: "returnNull" }), // Return null instead of throwing on 401
+      refetchInterval: false, // Disable aggressive auto-refresh
+      refetchIntervalInBackground: false, // Disable background refresh
+      staleTime: 30000, // 30 seconds
+      refetchOnWindowFocus: false, // Don't refetch when window gains focus
       refetchOnReconnect: true, // Refresh when internet reconnects
-      staleTime: 0, // Data is immediately considered stale
-      retry: false,
+      retry: 1, // Only retry once
     },
     mutations: {
       retry: false,

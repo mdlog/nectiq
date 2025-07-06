@@ -20,7 +20,7 @@ function CryptoPriceTicker() {
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 2000, // Update every 2 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   if (!prices.length) return null;

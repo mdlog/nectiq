@@ -193,14 +193,14 @@ export default function UserDashboard() {
     queryKey: ["/api/predictions/active"],
     refetchInterval: 2000, // Ultra-fast updates every 2 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: recentRewards = [] } = useQuery<RecentReward[]>({
     queryKey: ["/api/rewards/recent"],
     refetchInterval: 2000, // Ultra-fast updates every 2 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: prices = [], isLoading: pricesLoading, refetch: refetchPrices } = useQuery<CryptoPrice[]>({
@@ -212,7 +212,7 @@ export default function UserDashboard() {
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 1000,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Auto-select Bitcoin as default when prices are loaded

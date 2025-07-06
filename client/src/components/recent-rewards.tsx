@@ -52,14 +52,14 @@ export function RecentRewards() {
     queryKey: ["/api/rewards/recent"],
     refetchInterval: 3000, // Auto-refresh every 3 seconds
     refetchIntervalInBackground: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Get real-time crypto prices for dynamic logo display
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 1000,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   if (isLoading) {

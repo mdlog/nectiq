@@ -89,14 +89,14 @@ export function ActivePredictions() {
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 1000,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: predictions = [], isLoading } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
     refetchInterval: isAuthenticated ? 1000 : false, // Only refetch if authenticated
     refetchIntervalInBackground: isAuthenticated,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
     enabled: isAuthenticated, // Only enable query if authenticated
   });
 

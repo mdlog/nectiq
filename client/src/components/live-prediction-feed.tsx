@@ -107,21 +107,21 @@ export function LivePredictionFeed() {
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 1000,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Get live predictions feed
   const { data: livePredictions = [], isLoading: feedLoading } = useQuery<LivePrediction[]>({
     queryKey: ["/api/predictions/live-feed"],
     refetchInterval: 2000, // Real-time updates every 2 seconds
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Get trending cryptocurrencies
   const { data: trendingCryptos = [], isLoading: trendingLoading } = useQuery<TrendingCrypto[]>({
     queryKey: ["/api/predictions/trending"],
     refetchInterval: 5000, // Update every 5 seconds
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Add reaction mutation

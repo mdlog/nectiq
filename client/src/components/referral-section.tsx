@@ -29,7 +29,7 @@ export function ReferralSection() {
   // Fetch referral data
   const { data: referralData, isLoading } = useQuery<ReferralData>({
     queryKey: ["/api/user/referral"],
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds
   });
 
   // Generate referral code mutation
