@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, predictionReactions, predictionComments, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, predictionReactions, predictionComments, monthlyTierRewards, tierPromotions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 
@@ -609,7 +609,17 @@ export class DatabaseStorage implements IStorage {
         eq(referrals.referredUserId, id)
       ));
       
-      // 9. Delete wallet security data
+      // 9. Delete tier and crypto transaction data
+      console.log('Deleting crypto transactions...');
+      await db.delete(cryptoTransactions).where(eq(cryptoTransactions.userId, id));
+      
+      console.log('Deleting monthly tier rewards...');
+      await db.delete(monthlyTierRewards).where(eq(monthlyTierRewards.userId, id));
+      
+      console.log('Deleting tier promotions...');
+      await db.delete(tierPromotions).where(eq(tierPromotions.userId, id));
+      
+      // 10. Delete wallet security data
       if (user?.walletAddress) {
         console.log('Deleting wallet fingerprints...');
         await db.delete(walletFingerprints).where(eq(walletFingerprints.walletAddress, user.walletAddress));
@@ -618,11 +628,11 @@ export class DatabaseStorage implements IStorage {
         await db.delete(abuseDetections).where(eq(abuseDetections.primaryWalletAddress, user.walletAddress));
       }
       
-      // 10. Update referredBy to null for users who were referred by this user
+      // 11. Update referredBy to null for users who were referred by this user
       console.log('Updating referredBy references...');
       await db.update(users).set({ referredBy: null }).where(eq(users.referredBy, id));
       
-      // 11. Finally delete the user
+      // 12. Finally delete the user
       console.log('Deleting user...');
       await db.delete(users).where(eq(users.id, id));
       
