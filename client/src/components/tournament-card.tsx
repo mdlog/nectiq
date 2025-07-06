@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { TrendingUp, TrendingDown, Users, Clock, Trophy, Target, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Clock, Trophy, Target, DollarSign, X, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -181,8 +181,14 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
   const userParticipant = (participants as any[])?.find((p: any) => p.userId === user?.id);
   const hasJoined = !!userParticipant;
 
+  // Get current user status and prediction info
+  const currentUser = (participants as any[])?.find((p: any) => p.userId === user?.id);
+  const isEliminated = currentUser?.status === 'eliminated';
+  const userCurrentPrediction = currentUser?.prediction;
+  const eliminationRound = currentUser?.eliminationRound;
+
   // Check if user can make prediction
-  const canPredict = hasJoined && tournament.status === 'active' && tournament.currentRound > 0;
+  const canPredict = hasJoined && tournament.status === 'active' && tournament.currentRound > 0 && !isEliminated && !userCurrentPrediction;
 
   // Get current round info
   const currentRound = tournament.rounds?.find(r => r.roundNumber === tournament.currentRound);
@@ -315,6 +321,42 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                   {tournament.entryFee > 0 && <span className="ml-2">(-{tournament.entryFee} NTIQ)</span>}
                 </Button>
               </div>
+            </div>
+          ) : tournament.status === 'active' && hasJoined && isEliminated ? (
+            <div className="text-center bg-red-900/20 p-4 rounded-lg border border-red-500">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <X className="h-5 w-5 text-red-500" />
+                <Badge className="bg-red-600 text-white">ELIMINATED</Badge>
+              </div>
+              <p className="text-sm text-red-400">
+                Eliminated in Round {eliminationRound || 'N/A'}
+              </p>
+              {userCurrentPrediction && (
+                <div className="flex items-center justify-center gap-1 mt-2 text-sm">
+                  <span className="text-gray-400">Your prediction was:</span>
+                  <div className={`flex items-center gap-1 ${userCurrentPrediction.toLowerCase() === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                    {userCurrentPrediction.toLowerCase() === 'up' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    <span className="font-semibold">{userCurrentPrediction.toUpperCase()}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : tournament.status === 'active' && hasJoined && userCurrentPrediction && !canPredict ? (
+            <div className="text-center bg-blue-900/20 p-4 rounded-lg border border-blue-500">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <CheckCircle className="h-5 w-5 text-blue-500" />
+                <Badge className="bg-blue-600 text-white">PREDICTION SUBMITTED</Badge>
+              </div>
+              <div className="flex items-center justify-center gap-1 mb-2">
+                <span className="text-sm text-gray-400">Your prediction:</span>
+                <div className={`flex items-center gap-1 ${userCurrentPrediction.toLowerCase() === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                  {userCurrentPrediction.toLowerCase() === 'up' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                  <span className="font-semibold">{userCurrentPrediction.toUpperCase()}</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-400">
+                Waiting for Round {tournament.currentRound} to end...
+              </p>
             </div>
           ) : tournament.status === 'active' && hasJoined && !canPredict ? (
             <div className="text-center">

@@ -69,8 +69,15 @@ export class SurvivalRoundService {
 
       console.log(`🔄 Processing expired Round ${round.roundNumber} for tournament ${tournamentId}`);
 
-      // Get current Bitcoin price for end price
-      const currentPrice = await this.getCurrentBitcoinPrice();
+      // Get tournament info to determine cryptocurrency
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        console.error(`Tournament ${tournamentId} not found`);
+        return;
+      }
+
+      // Get current price for the tournament's cryptocurrency
+      const currentPrice = await this.getCurrentCryptoPrice(tournament.cryptocurrency);
       
       // Complete the current round
       await this.completeRound(roundId, currentPrice);
@@ -99,16 +106,21 @@ export class SurvivalRoundService {
     }
   }
 
-  // Get current Bitcoin price from CoinGecko API
-  private async getCurrentBitcoinPrice(): Promise<number> {
+  // Get current price for any cryptocurrency from CoinGecko API
+  private async getCurrentCryptoPrice(cryptoId: string): Promise<number> {
     try {
       const response = await axios.get('http://localhost:5000/api/crypto/prices');
-      const bitcoinData = response.data.find((crypto: any) => crypto.id === 'bitcoin');
-      return bitcoinData?.current_price || 0;
+      const cryptoData = response.data.find((crypto: any) => crypto.id === cryptoId);
+      return cryptoData?.current_price || 0;
     } catch (error) {
-      console.error('Error fetching Bitcoin price:', error);
-      throw new Error('Failed to fetch current Bitcoin price');
+      console.error(`Error fetching ${cryptoId} price:`, error);
+      throw new Error(`Failed to fetch current ${cryptoId} price`);
     }
+  }
+
+  // Get current Bitcoin price from CoinGecko API (backward compatibility)
+  private async getCurrentBitcoinPrice(): Promise<number> {
+    return this.getCurrentCryptoPrice('bitcoin');
   }
 
   // Complete a round with end price
@@ -161,18 +173,57 @@ export class SurvivalRoundService {
       const tournament = await storage.getSurvivalTournament(tournamentId);
       if (!tournament) throw new Error('Tournament not found');
 
-      // Get individual round duration
+      // Get individual round duration from database fields first
       let roundDuration = tournament.roundDuration; // Default fallback
       
-      if (tournament.individualRoundDurations && tournament.individualRoundDurations.length >= roundNumber) {
-        roundDuration = tournament.individualRoundDurations[roundNumber - 1];
+      if (roundNumber === 1 && tournament.round1Duration) {
+        roundDuration = tournament.round1Duration;
+      } else if (roundNumber === 2 && tournament.round2Duration) {
+        roundDuration = tournament.round2Duration;
+      } else if (roundNumber === 3 && tournament.round3Duration) {
+        roundDuration = tournament.round3Duration;
+      } else if (tournament.individualRoundDurations) {
+        try {
+          const individualDurations = JSON.parse(tournament.individualRoundDurations);
+          if (Array.isArray(individualDurations) && individualDurations[roundNumber - 1]) {
+            roundDuration = individualDurations[roundNumber - 1];
+          }
+        } catch (error) {
+          console.log(`Round ${roundNumber}: Error parsing individual durations, using default duration`);
+        }
       }
 
-      console.log(`🎯 Starting Round ${roundNumber} with ${roundDuration} minute duration`);
+      console.log(`🎯 Starting Round ${roundNumber} with ${roundDuration} minute duration and start price $${startPrice}`);
 
-      await storage.createRound(tournamentId, roundNumber, startPrice, roundDuration);
+      const startTime = new Date();
+      const endTime = new Date(startTime.getTime() + roundDuration * 60 * 1000);
+
+      // Create new round using createSurvivalRound method
+      const newRound = await storage.createSurvivalRound({
+        tournamentId,
+        roundNumber,
+        cryptocurrency: tournament.cryptocurrency,
+        startPrice: startPrice.toString(),
+        endPrice: null,
+        startTime,
+        endTime,
+        status: 'active',
+        priceDirection: null,
+        eliminatedCount: 0,
+        survivorCount: 0
+      });
+
+      // Update tournament current round
+      await storage.updateSurvivalTournament(tournamentId, {
+        currentRound: roundNumber
+      });
+
+      console.log(`✅ Round ${roundNumber} created successfully for tournament ${tournamentId}`);
+      console.log(`Round will end at: ${endTime.toISOString()}`);
+
     } catch (error) {
       console.error('Error starting next round:', error);
+      throw error;
     }
   }
 
