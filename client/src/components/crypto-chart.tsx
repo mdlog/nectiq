@@ -147,7 +147,16 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
   // Update chart with new data
   const updateChartData = () => {
-    if (!chartRef.current || !chartData.length) return;
+    console.log('updateChartData called', { 
+      hasChart: !!chartRef.current, 
+      dataLength: chartData.length,
+      chartType 
+    });
+    
+    if (!chartRef.current || !chartData.length) {
+      console.log('⚠️ Chart update skipped - missing chart or data');
+      return;
+    }
 
     // Remove existing series
     if (seriesRef.current) {
@@ -207,7 +216,9 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       }
     });
 
+    console.log(`Setting ${chartType} data:`, formattedData.slice(0, 3), '... (first 3 items)');
     series.setData(formattedData);
+    console.log('✅ Chart series data set successfully');
 
     // Add volume series if enabled
     if (showVolume && chartType === 'candlestick') {
