@@ -106,22 +106,23 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   };
 
   const fetchChartData = async (days: string) => {
-    setLoading(true);
     try {
       const actualDays = getActualDaysToFetch(days);
       const response = await fetch(`/api/crypto/chart/${cryptoId}?days=${actualDays}&type=${chartType}`);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch chart data');
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          console.log(`✅ Fetched ${data.length} chart data points from API`);
+          setChartData(data);
+          return;
+        }
       }
       
-      const data = await response.json();
-      setChartData(data);
+      throw new Error('API returned empty data');
     } catch (error) {
-      console.error('Error fetching chart data:', error);
-      generateFallbackData();
-    } finally {
-      setLoading(false);
+      console.log(`⚠️ Using fallback data for ${cryptoId}:`, error.message);
+      // Fallback data will be generated in useEffect
     }
   };
 
@@ -283,14 +284,18 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   }, [isFullscreen]);
 
   useEffect(() => {
-    // Always generate fallback data first for immediate display
+    // Initialize with immediate fallback data
+    setLoading(false); // Ensure loading state is false
     generateFallbackData();
+    
     // Then try to fetch real data
     fetchChartData(timeframe);
   }, [cryptoId, timeframe, chartType]);
 
   useEffect(() => {
-    updateChartData();
+    if (chartData.length > 0) {
+      updateChartData();
+    }
   }, [chartData, chartType, showVolume]);
 
   if (loading) {
