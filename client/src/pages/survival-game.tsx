@@ -75,6 +75,16 @@ const SurvivalGame = () => {
     refetchInterval: 2000, // Refresh every 2 seconds
   });
 
+  // Debug logging
+  console.log('Survival Page Debug:', {
+    tournamentLoading,
+    tournamentsCount: tournaments?.length,
+    activeTournamentsCount: activeTournaments?.length,
+    user: user?.username,
+    cryptoPricesCount: cryptoPrices?.length,
+    error: tournamentError
+  });
+
   if (tournamentLoading) {
     return (
       <>
@@ -134,14 +144,28 @@ const SurvivalGame = () => {
           {/* Tournament Grid */}
           {activeTournaments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {activeTournaments.map((tournament) => (
-                <TournamentCard
-                  key={tournament.id}
-                  tournament={tournament}
-                  user={user}
-                  cryptoPrices={cryptoPrices}
-                />
-              ))}
+              {activeTournaments.map((tournament) => {
+                try {
+                  return (
+                    <TournamentCard
+                      key={tournament.id}
+                      tournament={tournament}
+                      user={user}
+                      cryptoPrices={cryptoPrices}
+                    />
+                  );
+                } catch (error) {
+                  console.error('Error rendering tournament card:', error, tournament);
+                  return (
+                    <div key={tournament.id} className="bg-red-100 p-4 rounded-lg border border-red-300">
+                      <h3 className="text-red-800 font-bold">Error Loading Tournament</h3>
+                      <p className="text-red-600">Tournament ID: {tournament.id}</p>
+                      <p className="text-red-600">Title: {tournament.title}</p>
+                      <p className="text-sm text-red-500 mt-2">Please refresh the page or contact support.</p>
+                    </div>
+                  );
+                }
+              })}
             </div>
           ) : (
             <div className="text-center py-12">
