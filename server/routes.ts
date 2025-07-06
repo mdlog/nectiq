@@ -1045,8 +1045,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newBalance
       });
     } catch (error) {
-      console.error("Withdrawal error:", error);
-      res.status(500).json({ message: "Failed to process withdrawal" });
+      console.error("Detailed withdrawal error:", error);
+      console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+      console.error("Error message:", error instanceof Error ? error.message : error);
+      res.status(500).json({ 
+        message: "Failed to process withdrawal",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
