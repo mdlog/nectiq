@@ -193,6 +193,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
   // Get current round info
   const currentRound = tournament.rounds?.find(r => r.roundNumber === tournament.currentRound);
   const roundEndTime = currentRound?.endTime || tournament.nextRoundTime;
+  const startingPrice = currentRound?.startPrice || 0;
 
   return (
     <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700 text-white">
@@ -214,7 +215,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
         {/* Live Price Section */}
         {currentCrypto && (
           <div className="bg-yellow-500 text-black p-3 rounded-lg mb-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <img src={currentCrypto.image} alt={currentCrypto.name} className="w-6 h-6" />
                 <span className="font-semibold">{currentCrypto.name}</span>
@@ -226,6 +227,32 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                 </div>
               </div>
             </div>
+            
+            {/* Starting Price vs Current Price Comparison */}
+            {tournament.status === 'active' && startingPrice > 0 && (
+              <div className="border-t border-yellow-600 pt-2 mt-2">
+                <div className="flex justify-between items-center text-sm">
+                  <div>
+                    <span className="font-medium">Starting Price:</span>
+                    <span className="ml-1">${startingPrice.toLocaleString()}</span>
+                  </div>
+                  <div className="text-right">
+                    {(() => {
+                      const priceDiff = currentPrice - startingPrice;
+                      const priceDiffPercent = ((priceDiff / startingPrice) * 100);
+                      return (
+                        <div className={`font-medium ${priceDiff >= 0 ? 'text-green-800' : 'text-red-800'}`}>
+                          {priceDiff >= 0 ? '+' : ''}${priceDiff.toLocaleString()} 
+                          <span className="text-xs ml-1">
+                            ({priceDiff >= 0 ? '+' : ''}{priceDiffPercent.toFixed(2)}%)
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
