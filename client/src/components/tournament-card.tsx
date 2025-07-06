@@ -354,9 +354,11 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                   <span className="font-semibold">{userCurrentPrediction.toUpperCase()}</span>
                 </div>
               </div>
-              <p className="text-sm text-gray-400">
-                Waiting for Round {tournament.currentRound} to end...
-              </p>
+              <div className="flex items-center justify-center gap-2 text-sm">
+                <Clock className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-400">Time remaining: </span>
+                <CountdownTimer targetTime={roundEndTime} />
+              </div>
             </div>
           ) : tournament.status === 'active' && hasJoined && !canPredict ? (
             <div className="text-center">
