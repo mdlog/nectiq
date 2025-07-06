@@ -4901,6 +4901,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { survivalRoundService } = await import('./services/survivalRoundService');
       await survivalRoundService.startTournamentRounds(tournamentId);
       
+      // Automatically create Round 1 when tournament is started
+      try {
+        console.log(`🎯 Creating Round 1 for tournament ${tournamentId} immediately upon activation`);
+        
+        // Get current cryptocurrency price for start price
+        const cryptoResponse = await fetch(`http://localhost:5000/api/crypto/prices`);
+        const cryptoData = await cryptoResponse.json();
+        const currentCrypto = cryptoData.find((crypto: any) => crypto.id === tournament.cryptocurrency);
+        const startPrice = currentCrypto?.current_price || 0;
+        
+        if (!startPrice) {
+          throw new Error(`Could not get current price for ${tournament.cryptocurrency}`);
+        }
+        
+        // Use Round 1 duration from tournament settings
+        const round1Duration = tournament.round1Duration || tournament.roundDuration || 60;
+        
+        console.log(`Creating Round 1 with ${round1Duration} minute duration and start price $${startPrice}`);
+        
+        // Create Round 1
+        await storage.createSurvivalRound({
+          tournamentId,
+          roundNumber: 1,
+          cryptocurrency: tournament.cryptocurrency,
+          startPrice: startPrice.toString(),
+          endPrice: null,
+          startTime: new Date(),
+          endTime: new Date(Date.now() + round1Duration * 60 * 1000),
+          status: 'active',
+          priceDirection: null,
+          eliminatedCount: 0,
+          survivorCount: 0
+        });
+        
+        // Update tournament to Round 1
+        await storage.updateSurvivalTournament(tournamentId, {
+          currentRound: 1,
+          status: 'active'
+        });
+        
+        console.log(`✅ Round 1 created successfully for tournament ${tournamentId}`);
+        
+      } catch (roundError) {
+        console.error(`Error creating Round 1 for tournament ${tournamentId}:`, roundError);
+        // Don't fail the tournament start if Round 1 creation fails
+      }
+      
       auditLog("TOURNAMENT_STARTED", { 
         tournamentId,
         startedBy: req.session.userId 
