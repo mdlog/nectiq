@@ -16,7 +16,7 @@ import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
-import CryptoChart from "@/components/crypto-chart";
+import EnhancedCryptoChart from "@/components/enhanced-crypto-chart";
 import { AdvancedChartIndicators } from "@/components/advanced-chart-indicators";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
@@ -749,7 +749,7 @@ export default function UserDashboard() {
               <div className="space-y-4">
                 {selectedCrypto && showChart ? (
                   <>
-                    <CryptoChart
+                    <EnhancedCryptoChart
                       cryptoId={selectedCrypto.id}
                       symbol={selectedCrypto.symbol}
                       name={selectedCrypto.name}
