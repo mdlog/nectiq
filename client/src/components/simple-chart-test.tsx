@@ -12,13 +12,18 @@ export function SimpleChartTest({ cryptoId, currentPrice }: SimpleChartTestProps
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
+    const width = chartContainerRef.current.clientWidth || 600;
+    const height = 300;
+    
+    console.log(`Creating simple test chart: ${width}x${height}`);
+    
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'white' },
         textColor: 'black',
       },
-      width: chartContainerRef.current.clientWidth,
-      height: 300,
+      width,
+      height,
     });
 
     const candlestickSeries = chart.addCandlestickSeries({

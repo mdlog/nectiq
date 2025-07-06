@@ -39,28 +39,43 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
   // Initialize TradingView Chart
   const initializeChart = () => {
-    if (!chartContainerRef.current) return;
+    if (!chartContainerRef.current) {
+      console.error('Chart container not found');
+      return;
+    }
+
+    // Clear any existing chart
+    if (chartRef.current) {
+      chartRef.current.remove();
+      chartRef.current = null;
+    }
+
+    const container = chartContainerRef.current;
+    const width = container.clientWidth || 800;
+    const height = isFullscreen ? window.innerHeight - 200 : 400;
+
+    console.log(`Initializing chart with dimensions: ${width}x${height}`);
 
     const chartOptions = {
       layout: {
-        background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#d1d5db',
+        background: { type: ColorType.Solid, color: '#ffffff' },
+        textColor: '#333333',
       },
       grid: {
-        vertLines: { color: '#374151', style: 1, visible: true },
-        horzLines: { color: '#374151', style: 1, visible: true },
+        vertLines: { color: '#e0e0e0', style: 1, visible: true },
+        horzLines: { color: '#e0e0e0', style: 1, visible: true },
       },
       crosshair: {
         mode: 1,
         vertLine: {
-          color: '#9ca3af',
+          color: '#666666',
           width: 1,
           style: 2,
           visible: true,
           labelVisible: true,
         },
         horzLine: {
-          color: '#9ca3af',
+          color: '#666666',
           width: 1,
           style: 2,
           visible: true,
@@ -68,41 +83,45 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
         },
       },
       rightPriceScale: {
-        borderColor: '#485563',
-        textColor: '#d1d5db',
+        borderColor: '#cccccc',
+        textColor: '#333333',
         scaleMargins: { top: 0.1, bottom: 0.2 },
       },
       timeScale: {
-        borderColor: '#485563',
-        textColor: '#d1d5db',
+        borderColor: '#cccccc',
+        textColor: '#333333',
         timeVisible: true,
         secondsVisible: false,
       },
       handleScroll: true,
       handleScale: true,
       kineticScroll: { mouse: true, touch: true },
+      width,
+      height,
     };
 
-    const chart = createChart(chartContainerRef.current, {
-      ...chartOptions,
-      width: chartContainerRef.current.clientWidth,
-      height: isFullscreen ? window.innerHeight - 200 : 400,
-    });
+    try {
+      const chart = createChart(container, chartOptions);
+      chartRef.current = chart;
+      console.log('✅ Chart initialized successfully');
+      
+      // Handle resize
+      const handleResize = () => {
+        if (chartContainerRef.current && chartRef.current) {
+          const newWidth = chartContainerRef.current.clientWidth || 800;
+          const newHeight = isFullscreen ? window.innerHeight - 200 : 400;
+          chartRef.current.applyOptions({
+            width: newWidth,
+            height: newHeight,
+          });
+        }
+      };
 
-    chartRef.current = chart;
-
-    // Handle resize
-    const handleResize = () => {
-      if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-          height: isFullscreen ? window.innerHeight - 200 : 400,
-        });
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    } catch (error) {
+      console.error('Failed to initialize chart:', error);
+    }
   };
 
   const fetchChartData = async (days: string) => {
@@ -284,9 +303,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   }, [isFullscreen]);
 
   useEffect(() => {
-    // Initialize with immediate fallback data
-    setLoading(false); // Ensure loading state is false
+    console.log(`Loading chart for ${cryptoId}, timeframe: ${timeframe}, type: ${chartType}`);
+    
+    // Always generate fallback data first
     generateFallbackData();
+    setLoading(false);
     
     // Then try to fetch real data
     fetchChartData(timeframe);
@@ -425,8 +446,12 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
         {/* TradingView Chart Container */}
         <div 
           ref={chartContainerRef}
-          className="w-full bg-background rounded-lg border"
-          style={{ height: isFullscreen ? 'calc(100vh - 250px)' : '400px' }}
+          className="w-full bg-white rounded-lg border border-gray-300"
+          style={{ 
+            height: isFullscreen ? 'calc(100vh - 250px)' : '400px',
+            minHeight: '400px',
+            minWidth: '600px'
+          }}
         />
         
         {/* Professional Trading Info Panel */}
