@@ -17,9 +17,6 @@ import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/t
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
 import CryptoChart from "@/components/crypto-chart";
-import { AdvancedChartIndicators } from "@/components/advanced-chart-indicators";
-import { SimpleChartTest } from "@/components/simple-chart-test";
-import { MinimalChart } from "@/components/minimal-chart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
@@ -750,50 +747,25 @@ export default function UserDashboard() {
               {/* Interactive Chart */}
               <div className="space-y-4">
                 {selectedCrypto && showChart ? (
-                  <>
-                    {/* Minimal Chart Test */}
-                    <MinimalChart
-                      cryptoId={selectedCrypto.id}
-                      currentPrice={selectedCrypto.current_price}
-                    />
-                    
-                    {/* Test Chart to Debug Issue */}
-                    <SimpleChartTest
-                      cryptoId={selectedCrypto.id}
-                      currentPrice={selectedCrypto.current_price}
-                    />
-                    
-                    <CryptoChart
-                      cryptoId={selectedCrypto.id}
-                      symbol={selectedCrypto.symbol}
-                      name={selectedCrypto.name}
-                      currentPrice={selectedCrypto.current_price}
-                      priceChange24h={selectedCrypto.price_change_percentage_24h}
-                    />
-                    
-                    {/* Advanced Technical Indicators */}
-                    <AdvancedChartIndicators
-                      currentPrice={selectedCrypto.current_price}
-                      priceChange24h={selectedCrypto.price_change_percentage_24h}
-                      symbol={selectedCrypto.symbol}
-                      chartData={[]} // Will be enhanced with real chart data
-                    />
-                  </>
+                  <CryptoChart
+                    cryptoId={selectedCrypto.id}
+                    symbol={selectedCrypto.symbol}
+                    name={selectedCrypto.name}
+                    currentPrice={selectedCrypto.current_price}
+                    priceChange24h={selectedCrypto.price_change_percentage_24h}
+                  />
                 ) : (
                   <Card className="bg-surface border-surface-light">
                     <CardContent className="text-center py-12">
                       <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
-                      <h3 className="text-lg font-semibold mb-2">Professional Trading Charts</h3>
+                      <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
                       <p className="text-slate-400 mb-4">
-                        Click on any cryptocurrency from the Live Prices panel to view professional TradingView-style charts
+                        Click on any cryptocurrency from the Live Prices panel to view its interactive price chart
                       </p>
                       <div className="text-sm text-slate-500">
-                        <p>• Real-time TradingView-style candlestick charts</p>
-                        <p>• Advanced technical indicators (RSI, MACD, Bollinger Bands)</p>
-                        <p>• Professional volume analysis</p>
-                        <p>• Multiple timeframes (1D, 7D, 30D, 90D)</p>
-                        <p>• AI-powered trading signals</p>
-                        <p>• Fullscreen mode and crosshair analysis</p>
+                        <p>• Real-time price data from CoinGecko</p>
+                        <p>• Multiple timeframe analysis</p>
+                        <p>• Direct prediction integration</p>
                       </div>
                     </CardContent>
                   </Card>
