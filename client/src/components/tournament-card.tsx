@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';
+import { CountdownTimer } from '@/components/countdown-timer';
 
 // Types
 interface SurvivalTournament {
@@ -64,41 +65,7 @@ interface TournamentCardProps {
   cryptoPrices: CryptoPrice[];
 }
 
-// Countdown Timer Component
-const CountdownTimer = ({ endTime }: { endTime: string }) => {
-  const [timeLeft, setTimeLeft] = useState('');
 
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime();
-      const target = new Date(endTime).getTime();
-      const difference = target - now;
-
-      if (difference > 0) {
-        const hours = Math.floor(difference / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-        
-        if (hours > 0) {
-          setTimeLeft(`${hours}h • ${minutes}m • ${seconds}s`);
-        } else if (minutes > 0) {
-          setTimeLeft(`${minutes}m • ${seconds}s`);
-        } else {
-          setTimeLeft(`${seconds}s`);
-        }
-      } else {
-        setTimeLeft('Ended');
-      }
-    };
-
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000);
-
-    return () => clearInterval(interval);
-  }, [endTime]);
-
-  return <span>{timeLeft}</span>;
-};
 
 export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCardProps) => {
   const { toast } = useToast();
@@ -324,7 +291,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Clock className="h-4 w-4" />
-                  <span className="text-sm">Time remaining: <CountdownTimer endTime={roundEndTime} /></span>
+                  <span className="text-sm">Time remaining: <CountdownTimer targetTime={roundEndTime} /></span>
                 </div>
                 <p className="text-sm text-gray-400">Make your prediction for Round {tournament.currentRound}</p>
               </div>
