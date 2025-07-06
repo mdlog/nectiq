@@ -102,6 +102,14 @@ export default function EnhancedCryptoChart({
         borderVisible: true,
         tickMarkFormatter: (time: any) => {
           const date = new Date(time * 1000);
+          if (isNaN(date.getTime())) {
+            // Fallback for invalid dates
+            const fallbackDate = new Date(time);
+            if (isNaN(fallbackDate.getTime())) {
+              return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+            return fallbackDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }
           return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         },
       },
@@ -244,13 +252,20 @@ export default function EnhancedCryptoChart({
         },
       });
 
-      const candleData = chartData.map(item => ({
-        time: item.time,
-        open: parseFloat((item.open || item.value).toFixed(4)),
-        high: parseFloat((item.high || item.value * 1.01).toFixed(4)),
-        low: parseFloat((item.low || item.value * 0.99).toFixed(4)),
-        close: parseFloat((item.close || item.value).toFixed(4)),
-      }));
+      const candleData = chartData.map(item => {
+        // Ensure proper time format for lightweight-charts
+        const timeValue = typeof item.time === 'string' ? 
+          Math.floor(new Date(item.time).getTime() / 1000) : 
+          item.time;
+          
+        return {
+          time: timeValue,
+          open: parseFloat((item.open || item.value).toFixed(4)),
+          high: parseFloat((item.high || item.value * 1.01).toFixed(4)),
+          low: parseFloat((item.low || item.value * 0.99).toFixed(4)),
+          close: parseFloat((item.close || item.value).toFixed(4)),
+        };
+      });
 
       series.setData(candleData);
     } else if (chartType === 'area') {
@@ -266,10 +281,16 @@ export default function EnhancedCryptoChart({
         },
       });
 
-      const areaData = chartData.map(item => ({
-        time: item.time,
-        value: parseFloat((item.close || item.value).toFixed(4)),
-      }));
+      const areaData = chartData.map(item => {
+        const timeValue = typeof item.time === 'string' ? 
+          Math.floor(new Date(item.time).getTime() / 1000) : 
+          item.time;
+          
+        return {
+          time: timeValue,
+          value: parseFloat((item.close || item.value).toFixed(4)),
+        };
+      });
 
       series.setData(areaData);
     } else {
@@ -283,10 +304,16 @@ export default function EnhancedCryptoChart({
         },
       });
 
-      const lineData = chartData.map(item => ({
-        time: item.time,
-        value: parseFloat((item.close || item.value).toFixed(4)),
-      }));
+      const lineData = chartData.map(item => {
+        const timeValue = typeof item.time === 'string' ? 
+          Math.floor(new Date(item.time).getTime() / 1000) : 
+          item.time;
+          
+        return {
+          time: timeValue,
+          value: parseFloat((item.close || item.value).toFixed(4)),
+        };
+      });
 
       series.setData(lineData);
     }
@@ -309,8 +336,12 @@ export default function EnhancedCryptoChart({
 
       const volumeData = chartData.map(item => {
         const isGreen = (item.close || item.value) >= (item.open || item.value);
+        const timeValue = typeof item.time === 'string' ? 
+          Math.floor(new Date(item.time).getTime() / 1000) : 
+          item.time;
+          
         return {
-          time: item.time,
+          time: timeValue,
           value: item.volume || Math.random() * 1000000,
           color: isGreen ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)',
         };
