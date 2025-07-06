@@ -11,7 +11,7 @@ import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
 import { RulesSection } from "@/components/rules-section";
-import EnhancedCryptoChart from "@/components/enhanced-crypto-chart";
+import CryptoChart from "@/components/crypto-chart";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -148,7 +148,7 @@ export default function Dashboard() {
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
               <div className="space-y-4">
-                <EnhancedCryptoChart
+                <CryptoChart
                   cryptoId={selectedCrypto.id}
                   symbol={selectedCrypto.symbol}
                   name={selectedCrypto.name}
