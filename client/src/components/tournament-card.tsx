@@ -70,30 +70,6 @@ interface TournamentCardProps {
 export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Debug logging for tournament card
-  console.log('TournamentCard rendering:', {
-    tournamentId: tournament.id,
-    title: tournament.title,
-    status: tournament.status,
-    user: user?.id,
-    cryptoPricesLength: cryptoPrices.length
-  });
-
-  // Add error boundary to prevent card crashes
-  if (!tournament || !tournament.id) {
-    console.error('TournamentCard: Invalid tournament data');
-    return (
-      <div className="bg-red-100 dark:bg-red-900 p-4 rounded-lg">
-        <p className="text-red-600 dark:text-red-300">Error: Invalid tournament data</p>
-      </div>
-    );
-  }
-
-  // Validate required props
-  if (!cryptoPrices || !Array.isArray(cryptoPrices)) {
-    console.warn('TournamentCard: cryptoPrices is invalid or empty');
-  }
 
   // Helper function to get individual round duration
   const getRoundDuration = (tournament: SurvivalTournament, roundNumber: number): number => {
