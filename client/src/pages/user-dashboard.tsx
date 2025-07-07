@@ -23,6 +23,7 @@ import { WalletBalances } from "@/components/wallet-balances";
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 import { ReferralSection } from "@/components/referral-section";
 import { LoyaltyTier } from "@/components/loyalty-tier";
+import { FinancialWallet } from "@/components/financial-wallet";
 
 
 // Dynamic function to get crypto image from live API data
@@ -1195,6 +1196,9 @@ export default function UserDashboard() {
 
             {/* Wallet Section */}
             {selectedFinancialAction === "wallet" && (
+              <FinancialWallet />
+            )}
+            {selectedFinancialAction === "old-wallet" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="bg-surface border-surface-light">
                 <CardHeader>

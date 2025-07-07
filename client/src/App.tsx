@@ -19,7 +19,7 @@ import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import WalletLoginPage from "@/pages/wallet-login";
 import DynamicDemo from "@/pages/dynamic-demo";
-import WalletManagement from "@/pages/wallet-management";
+
 
 // Suppress wallet extension conflicts in console
 const originalError = console.error;
@@ -115,11 +115,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
-      <Route path="/wallet">
-        <ProtectedRoute>
-          <WalletManagement />
-        </ProtectedRoute>
-      </Route>
+
       
       {/* Public routes - no authentication required */}
       <Route path="/terms-conditions" component={TermsConditions} />

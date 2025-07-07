@@ -15,8 +15,7 @@ import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
 import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } from "./routes/userStats";
-import { setupWalletRoutes } from "./routes/walletRoutes";
-import { MultiChainWalletService } from "./services/walletService";
+
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
 function normalizeWalletAddress(address: string): string {
@@ -5746,17 +5745,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Setup wallet routes
-  setupWalletRoutes(app);
-
-  // Initialize wallet system (setup chains and tokens)
-  setTimeout(async () => {
+  // Simple wallet routes - integrated into main routes.ts
+  app.get("/api/wallet/summary", async (req: Request, res: Response) => {
     try {
-      await MultiChainWalletService.setupInitialChains();
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Return mock data for now until backend is ready
+      res.json({
+        wallets: [],
+        balances: [],
+        recentDeposits: [],
+        recentWithdrawals: [],
+        credits: [],
+        totalUsdValue: 0
+      });
     } catch (error) {
-      console.error("Error setting up wallet system:", error);
+      console.error("Error getting wallet summary:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-  }, 2000);
+  });
+
+  app.get("/api/wallet/chains", async (req: Request, res: Response) => {
+    try {
+      // Return supported chains
+      const chains = [
+        { chainId: 'ethereum', name: 'Ethereum', symbol: 'ETH', isActive: true },
+        { chainId: 'bsc', name: 'BSC', symbol: 'BNB', isActive: true },
+        { chainId: 'polygon', name: 'Polygon', symbol: 'MATIC', isActive: true },
+        { chainId: 'solana', name: 'Solana', symbol: 'SOL', isActive: true }
+      ];
+      res.json(chains);
+    } catch (error) {
+      console.error("Error getting supported chains:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/wallet/add", async (req: Request, res: Response) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { walletType, chainType, walletAddress } = req.body;
+      
+      // For now, return success message - will implement database later
+      res.json({
+        success: true,
+        message: "Wallet registration feature coming soon"
+      });
+    } catch (error) {
+      console.error("Error adding wallet:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/wallet/withdraw", async (req: Request, res: Response) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { walletId, chainType, tokenSymbol, amount, toAddress } = req.body;
+      
+      // For now, return success message - will implement database later
+      res.json({
+        success: true,
+        message: "Withdrawal request feature coming soon"
+      });
+    } catch (error) {
+      console.error("Error creating withdrawal:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   return httpServer;
 }

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, numeric, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, numeric, varchar, decimal, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -1020,3 +1020,5 @@ export const insertCryptoTransactionSchema = createInsertSchema(cryptoTransactio
 
 export type CryptoTransaction = typeof cryptoTransactions.$inferSelect;
 export type InsertCryptoTransaction = z.infer<typeof insertCryptoTransactionSchema>;
+
+
