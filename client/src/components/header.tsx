@@ -184,6 +184,14 @@ export function Header() {
             >
               How to Play
             </button>
+            <button 
+              onClick={() => setLocation('/wallet')} 
+              className={`transition-colors ${
+                location === '/wallet' ? "text-white font-bold" : "text-slate-300 hover:text-white"
+              }`}
+            >
+              Wallet
+            </button>
             {address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
               <button 
                 onClick={() => setLocation('/admin')} 

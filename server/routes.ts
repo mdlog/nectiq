@@ -15,6 +15,8 @@ import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
 import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } from "./routes/userStats";
+import { setupWalletRoutes } from "./routes/walletRoutes";
+import { MultiChainWalletService } from "./services/walletService";
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
 function normalizeWalletAddress(address: string): string {
@@ -5743,6 +5745,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to generate monthly rewards' });
     }
   });
+
+  // Setup wallet routes
+  setupWalletRoutes(app);
+
+  // Initialize wallet system (setup chains and tokens)
+  setTimeout(async () => {
+    try {
+      await MultiChainWalletService.setupInitialChains();
+    } catch (error) {
+      console.error("Error setting up wallet system:", error);
+    }
+  }, 2000);
 
   return httpServer;
 }
