@@ -1875,6 +1875,7 @@ export class DatabaseStorage implements IStorage {
         startTime: survivalTournaments.startTime,
         endTime: survivalTournaments.endTime,
         nextRoundTime: survivalTournaments.nextRoundTime,
+        winnerId: survivalTournaments.winnerId,
         createdAt: survivalTournaments.createdAt,
         creatorUsername: users.username,
         winnerUsername: users.username

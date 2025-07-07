@@ -200,12 +200,15 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
   const userCurrentPrediction = currentUser?.prediction;
   const eliminationRound = currentUser?.eliminatedRound;
   
-  // Check if user is winner - for completed tournaments, check if user is one of the survivors
+  // Check if user is winner
+  const activeParticipants = (participants as any[])?.filter((p: any) => p.status === 'active') || [];
   const isWinner = currentUser?.status === 'winner' || 
+                   (tournament.winnerId && tournament.winnerId === user?.id) || // Check tournament winnerId
                    (tournament.status === 'completed' && 
                     currentUser?.status === 'active' && 
                     !isEliminated &&
-                    tournament.currentParticipants <= 1); // Last person standing
+                    activeParticipants.length === 1 &&
+                    activeParticipants[0]?.userId === user?.id); // Last person standing wins
 
   // Check if user can make prediction
   const canPredict = hasJoined && tournament.status === 'active' && tournament.currentRound > 0 && !isEliminated && !userCurrentPrediction;
