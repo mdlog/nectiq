@@ -285,13 +285,7 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
 const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).session?.userId;
-    console.log('🔍 requireAuth - session check:', {
-      hasSession: !!(req as any).session,
-      userId: userId,
-      sessionData: (req as any).session
-    });
     if (!userId) {
-      console.log('❌ requireAuth - No userId found in session');
       return res.status(401).json({ message: "Authentication required" });
     }
 
@@ -310,6 +304,8 @@ const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+
   
   // Wallet authentication routes
   app.get("/api/auth/wallet-user", async (req, res) => {
@@ -5109,9 +5105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user survival tournament status
   app.get('/api/user/survival-status', requireAuth, async (req: Request, res: Response) => {
     try {
-      console.log('🎯 survival-status endpoint reached!');
       const userId = req.session?.userId;
-      console.log('🎯 survival-status userId from session:', userId);
       if (!userId) {
         return res.status(401).json({ message: 'Authentication required' });
       }

@@ -12,12 +12,21 @@ async function testSurvivalStatus() {
     
     if (response.data.success) {
       const cookies = response.headers['set-cookie'];
+      console.log('Raw cookies from login:', cookies);
+      
+      // Extract session cookie
+      let sessionCookie = '';
+      if (cookies && cookies.length > 0) {
+        sessionCookie = cookies.find(cookie => cookie.startsWith('connect.sid=')) || cookies[0];
+        console.log('Session cookie to send:', sessionCookie);
+      }
       
       // Test survival status endpoint
       const statusResponse = await axios.get('http://localhost:5000/api/user/survival-status', {
         headers: {
-          'Cookie': cookies?.[0] || ''
-        }
+          'Cookie': sessionCookie
+        },
+        withCredentials: true
       });
       
       console.log('\n=== SURVIVAL STATUS RESPONSE ===');
