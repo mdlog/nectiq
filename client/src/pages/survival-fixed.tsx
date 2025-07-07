@@ -249,8 +249,21 @@ const SurvivalFixed = () => {
                   const isEliminated = userParticipant?.status === 'eliminated';
                   const userPrediction = userParticipant?.prediction;
                   
-                  // Can predict if joined, tournament active, not eliminated, and no prediction yet
-                  const canPredict = hasJoined && tournament.status === 'active' && tournament.currentRound > 0 && !isEliminated && !userPrediction;
+                  // Debug logging
+                  console.log('Tournament Debug:', {
+                    tournamentId: tournament.id,
+                    hasJoined,
+                    status: tournament.status,
+                    currentRound: tournament.currentRound,
+                    isEliminated,
+                    userPrediction,
+                    userId: user?.id,
+                    participants: tournament.participants
+                  });
+                  
+                  // Can predict if joined, tournament active, and not eliminated
+                  // Remove currentRound > 0 requirement for now
+                  const canPredict = hasJoined && tournament.status === 'active' && !isEliminated && !userPrediction;
 
                   return (
                     <Card key={tournament.id} className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700 text-white">
@@ -380,21 +393,26 @@ const SurvivalFixed = () => {
                             </DialogContent>
                           </Dialog>
                         ) : canPredict ? (
-                          <div className="flex gap-4">
-                            <Button
-                              onClick={() => predictUpMutation.mutate(tournament.id)}
-                              disabled={predictUpMutation.isPending}
-                              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium"
-                            >
-                              {predictUpMutation.isPending ? 'Submitting...' : 'Price UP ↗'}
-                            </Button>
-                            <Button
-                              onClick={() => predictDownMutation.mutate(tournament.id)}
-                              disabled={predictDownMutation.isPending}
-                              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium"
-                            >
-                              {predictDownMutation.isPending ? 'Submitting...' : 'Price DOWN ↘'}
-                            </Button>
+                          <div className="space-y-2">
+                            <p className="text-center text-green-400 text-sm font-medium">
+                              Make your prediction for Round {tournament.currentRound || 1}
+                            </p>
+                            <div className="flex gap-4">
+                              <Button
+                                onClick={() => predictUpMutation.mutate(tournament.id)}
+                                disabled={predictUpMutation.isPending}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium"
+                              >
+                                {predictUpMutation.isPending ? 'Submitting...' : 'Price UP ↗'}
+                              </Button>
+                              <Button
+                                onClick={() => predictDownMutation.mutate(tournament.id)}
+                                disabled={predictDownMutation.isPending}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium"
+                              >
+                                {predictDownMutation.isPending ? 'Submitting...' : 'Price DOWN ↘'}
+                              </Button>
+                            </div>
                           </div>
                         ) : (
                           <div className="text-center py-3">
