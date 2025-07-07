@@ -62,6 +62,18 @@ const SurvivalGame = () => {
 
   // Filter tournament yang open atau active saja
   const activeTournaments = tournaments.filter(t => t.status === 'open' || t.status === 'active');
+  
+  // Debug logging
+  console.log('=== SURVIVAL PAGE DEBUG ===');
+  console.log('Tournament loading:', tournamentLoading);
+  console.log('Tournament error:', tournamentError);
+  console.log('All tournaments count:', tournaments.length);
+  console.log('All tournaments:', tournaments);
+  console.log('Active tournaments count:', activeTournaments.length);
+  console.log('Active tournaments:', activeTournaments);
+  console.log('User data:', user);
+  console.log('Crypto prices count:', cryptoPrices.length);
+  console.log('=== END DEBUG ===');
 
   // Fetch user data
   const { data: user } = useQuery({
@@ -83,10 +95,10 @@ const SurvivalGame = () => {
           <div className="container mx-auto px-4 py-8 max-w-6xl">
             <div className="text-center py-12">
               <h1 className="text-3xl font-bold mb-4">Nectiq Survival Mode</h1>
-              <p className="text-gray-600 mb-8">Loading tournaments...</p>
+              <p className="text-gray-600 dark:text-gray-400 mb-8">Loading tournaments...</p>
               <div className="animate-pulse space-y-4">
                 {[1, 2, 3].map(n => (
-                  <div key={n} className="h-64 bg-gray-200 rounded-lg"></div>
+                  <div key={n} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
                 ))}
               </div>
             </div>
@@ -134,18 +146,39 @@ const SurvivalGame = () => {
           {/* Tournament Grid */}
           {activeTournaments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {activeTournaments.map((tournament) => (
-                <TournamentCard
-                  key={tournament.id}
-                  tournament={tournament}
-                  user={user}
-                  cryptoPrices={cryptoPrices}
-                />
-              ))}
+              {activeTournaments.map((tournament) => {
+                try {
+                  return (
+                    <TournamentCard
+                      key={tournament.id}
+                      tournament={tournament}
+                      user={user}
+                      cryptoPrices={cryptoPrices}
+                    />
+                  );
+                } catch (error) {
+                  console.error('Error rendering tournament card:', error, tournament);
+                  return (
+                    <div key={tournament.id} className="bg-red-100 p-4 rounded-lg">
+                      <p className="text-red-600">Error loading tournament: {tournament.title}</p>
+                    </div>
+                  );
+                }
+              })}
+            </div>
+          ) : tournaments.length > 0 ? (
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-semibold mb-4">No Active Tournaments</h2>
+              <p className="text-muted-foreground mb-6">
+                There are {tournaments.length} tournaments, but none are currently accepting participants or active.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Tournament statuses: {tournaments.map(t => t.status).join(', ')}
+              </p>
             </div>
           ) : (
             <div className="text-center py-12">
-              <h2 className="text-2xl font-semibold mb-4">No Active Tournaments</h2>
+              <h2 className="text-2xl font-semibold mb-4">No Tournaments Available</h2>
               <p className="text-muted-foreground mb-6">
                 There are currently no survival tournaments available. 
                 New tournaments are created regularly by administrators.
