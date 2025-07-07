@@ -4,8 +4,10 @@ import { Footer } from '@/components/footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useState, useEffect } from 'react';
 
 // Types
 interface SurvivalTournament {
@@ -54,9 +56,39 @@ interface CryptoPrice {
   image: string;
 }
 
+// Countdown Timer Component
+const CountdownTimer = ({ targetTime }: { targetTime: string }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const target = new Date(targetTime).getTime();
+      const difference = target - now;
+
+      if (difference > 0) {
+        const hours = Math.floor(difference / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setTimeLeft('Ended');
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    
+    return () => clearInterval(interval);
+  }, [targetTime]);
+
+  return <span>{timeLeft}</span>;
+};
+
 const SurvivalFixed = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
 
   // Fetch tournaments
   const { data: tournaments = [], isLoading: tournamentLoading, error: tournamentError } = useQuery<SurvivalTournament[]>({
@@ -121,6 +153,29 @@ const SurvivalFixed = () => {
       toast({
         title: "Failed",
         description: error.message || "Unable to submit prediction",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Join tournament mutation
+  const joinTournamentMutation = useMutation({
+    mutationFn: (tournamentId: number) => apiRequest(`/api/survival-tournaments/${tournamentId}/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }),
+    onSuccess: () => {
+      toast({
+        title: "Successfully Joined!",
+        description: "You have joined the tournament. You can now make predictions.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments'] });
+      setJoinDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Join",
+        description: error.message || "Unable to join tournament",
         variant: "destructive",
       });
     }
@@ -249,6 +304,16 @@ const SurvivalFixed = () => {
                           </div>
                         </div>
 
+                        {/* Time Remaining */}
+                        {tournament.status === 'active' && tournament.rounds && tournament.rounds.length > 0 && (
+                          <div className="mb-4 p-3 bg-blue-900/20 border border-blue-600 rounded">
+                            <p className="text-blue-200 text-sm">Time Remaining</p>
+                            <p className="text-blue-100 text-lg font-bold">
+                              <CountdownTimer targetTime={tournament.rounds.find(r => r.roundNumber === tournament.currentRound)?.endTime || tournament.nextRoundTime} />
+                            </p>
+                          </div>
+                        )}
+
                         {/* Round Structure */}
                         <div className="mb-4 p-3 bg-slate-800/50 rounded">
                           <h4 className="text-sm font-medium text-gray-300 mb-2">Tournament Structure</h4>
@@ -265,8 +330,56 @@ const SurvivalFixed = () => {
                           </div>
                         </div>
 
-                        {/* Prediction Buttons */}
-                        {canPredict ? (
+                        {/* Action Buttons */}
+                        {!hasJoined ? (
+                          <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button 
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                                disabled={!user || tournament.status === 'completed'}
+                              >
+                                Join Tournament ({tournament.entryFee} NTIQ)
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                              <DialogHeader>
+                                <DialogTitle>Join Tournament</DialogTitle>
+                                <DialogDescription>
+                                  You are about to join "{tournament.title}" for {tournament.entryFee} NTIQ.
+                                  This amount will be deducted from your balance.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <p className="text-gray-600">Your Balance:</p>
+                                    <p className="font-bold">{user?.balance || 0} NTIQ</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-600">Entry Fee:</p>
+                                    <p className="font-bold">{tournament.entryFee} NTIQ</p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setJoinDialogOpen(false)}
+                                    className="flex-1"
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    onClick={() => joinTournamentMutation.mutate(tournament.id)}
+                                    disabled={joinTournamentMutation.isPending || (user?.balance || 0) < tournament.entryFee}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                  >
+                                    {joinTournamentMutation.isPending ? 'Joining...' : 'Join Tournament'}
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        ) : canPredict ? (
                           <div className="flex gap-4">
                             <Button
                               onClick={() => predictUpMutation.mutate(tournament.id)}
@@ -285,9 +398,6 @@ const SurvivalFixed = () => {
                           </div>
                         ) : (
                           <div className="text-center py-3">
-                            {!hasJoined && (
-                              <p className="text-gray-400">Join tournament to make predictions</p>
-                            )}
                             {hasJoined && isEliminated && (
                               <p className="text-red-400">❌ Eliminated in Round {userParticipant?.eliminationRound}</p>
                             )}
@@ -298,6 +408,9 @@ const SurvivalFixed = () => {
                             )}
                             {hasJoined && tournament.status !== 'active' && (
                               <p className="text-gray-400">Tournament not active</p>
+                            )}
+                            {hasJoined && tournament.status === 'active' && tournament.currentRound === 0 && (
+                              <p className="text-yellow-400">Waiting for tournament to start...</p>
                             )}
                           </div>
                         )}
