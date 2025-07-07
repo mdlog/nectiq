@@ -68,8 +68,11 @@ export default function WalletLoginPage() {
     }
   };
 
-  // If user is authenticated, show loading state while redirecting
-  if (currentUser && (currentUser as any).id) {
+  // Early return condition moved to end to avoid hooks order issues  
+  const isAuthenticatedUser = currentUser && (currentUser as any).id;
+
+  // If authenticated user, show redirect screen
+  if (isAuthenticatedUser) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center">
         <div className="text-center">
