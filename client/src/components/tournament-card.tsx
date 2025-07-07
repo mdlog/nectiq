@@ -220,7 +220,11 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
           </div>
           <Badge
             variant={tournament.status === 'active' ? 'default' : 'secondary'}
-            className={tournament.status === 'active' ? 'bg-green-600' : 'bg-blue-600'}
+            className={
+              tournament.status === 'active' ? 'bg-green-600' : 
+              tournament.status === 'completed' ? 'bg-gray-600' : 
+              'bg-blue-600'
+            }
           >
             {tournament.status.toUpperCase()}
           </Badge>

@@ -3,7 +3,6 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import DynamicProvider from "@/providers/DynamicProvider";
 import LandingPage from "@/pages/landing";
 import ProtectedRoute from "@/components/protected-route";
 import Dashboard from "@/pages/dashboard";
@@ -18,7 +17,6 @@ import HowToPlay from "@/pages/how-to-play";
 import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import WalletLoginPage from "@/pages/wallet-login";
-import DynamicDemo from "@/pages/dynamic-demo";
 
 
 // Suppress wallet extension conflicts in console
@@ -121,7 +119,6 @@ function Router() {
       <Route path="/terms-conditions" component={TermsConditions} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/wallet-login" component={WalletLoginPage} />
-      <Route path="/dynamic-demo" component={DynamicDemo} />
       
       {/* 404 page */}
       <Route component={NotFound} />
@@ -131,16 +128,14 @@ function Router() {
 
 function App() {
   return (
-    <DynamicProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <div className="min-h-screen bg-background text-foreground">
-            <Toaster />
-            <Router />
-          </div>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </DynamicProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <div className="min-h-screen bg-background text-foreground">
+          <Toaster />
+          <Router />
+        </div>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

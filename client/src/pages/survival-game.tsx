@@ -60,8 +60,8 @@ const SurvivalGame = () => {
     retry: 1
   });
 
-  // Filter tournament yang open atau active saja
-  const activeTournaments = tournaments.filter(t => t.status === 'open' || t.status === 'active');
+  // Tampilkan semua tournament (open, active, dan completed)
+  const displayTournaments = tournaments.filter(t => t.status === 'open' || t.status === 'active' || t.status === 'completed');
 
   // Fetch user data
   const { data: user } = useQuery({
@@ -135,9 +135,9 @@ const SurvivalGame = () => {
 
 
           {/* Tournament Grid */}
-          {activeTournaments.length > 0 ? (
+          {displayTournaments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {activeTournaments.map((tournament) => (
+              {displayTournaments.map((tournament) => (
                 <TournamentCard
                   key={tournament.id}
                   tournament={tournament}
@@ -160,23 +160,25 @@ const SurvivalGame = () => {
           )}
 
           {/* Tournament Stats */}
-          {activeTournaments.length > 0 && (
+          {displayTournaments.length > 0 && (
             <div className="mt-12 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg p-6">
               <h3 className="text-xl font-semibold mb-4">Tournament Statistics</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{activeTournaments.length}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {displayTournaments.filter(t => t.status === 'active' || t.status === 'open').length}
+                  </div>
                   <div className="text-sm text-muted-foreground">Active Tournaments</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {activeTournaments.reduce((total, t) => total + t.currentParticipants, 0)}
+                    {displayTournaments.reduce((total, t) => total + t.currentParticipants, 0)}
                   </div>
                   <div className="text-sm text-muted-foreground">Total Participants</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {activeTournaments.reduce((total, t) => total + t.prizePool, 0)} NTIQ
+                    {displayTournaments.reduce((total, t) => total + t.prizePool, 0)} NTIQ
                   </div>
                   <div className="text-sm text-muted-foreground">Total Prize Pool</div>
                 </div>
