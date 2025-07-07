@@ -5225,6 +5225,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug: Trigger elimination evaluation manually for testing
+  app.post('/api/debug/survival-tournaments/:id/evaluate-round/:roundNumber', async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      const roundNumber = parseInt(req.params.roundNumber);
+      
+      console.log(`🔍 Debug: Evaluating Round ${roundNumber} for tournament ${tournamentId}`);
+      
+      // Get round data
+      const rounds = await storage.getSurvivalRounds(tournamentId);
+      const round = rounds.find(r => r.roundNumber === roundNumber);
+      
+      if (!round) {
+        return res.status(404).json({ message: `Round ${roundNumber} not found` });
+      }
+      
+      // Get participants for this tournament
+      const participants = await storage.getSurvivalParticipants(tournamentId);
+      console.log(`Found ${participants.length} participants`);
+      
+      // Determine actual price direction
+      const startPrice = parseFloat(round.startPrice);
+      const endPrice = parseFloat(round.endPrice);
+      const actualDirection = endPrice > startPrice ? 'up' : 'down';
+      
+      console.log(`💰 Round ${roundNumber} result: ${startPrice} → ${endPrice} (${actualDirection.toUpperCase()})`);
+      
+      // Get predictions for this round
+      const predictions = await db
+        .select()
+        .from(survivalPredictions)
+        .where(eq(survivalPredictions.roundId, round.id));
+      
+      console.log(`Found ${predictions.length} predictions for round ${roundNumber}`);
+      
+      for (const participant of participants) {
+        if (participant.status !== 'active') {
+          console.log(`⏭️ Skipping ${participant.username} (status: ${participant.status})`);
+          continue;
+        }
+
+        // Find prediction for this participant
+        const prediction = predictions.find(p => p.userId === participant.userId);
+        
+        if (!prediction) {
+          // No prediction = automatic elimination
+          await storage.eliminateParticipant(participant.userId, tournamentId, roundNumber);
+          console.log(`❌ ${participant.username} eliminated (No prediction)`);
+        } else if (prediction.prediction !== actualDirection) {
+          // Wrong prediction = elimination
+          await storage.eliminateParticipant(participant.userId, tournamentId, roundNumber);
+          console.log(`❌ ${participant.username} eliminated (Predicted ${prediction.prediction.toUpperCase()}, actual ${actualDirection.toUpperCase()})`);
+        } else {
+          // Correct prediction = survives
+          console.log(`✅ ${participant.username} survives (Correct prediction: ${prediction.prediction.toUpperCase()})`);
+        }
+      }
+      
+      res.json({ 
+        message: `Evaluation completed for Round ${roundNumber}`,
+        roundNumber,
+        actualDirection,
+        startPrice,
+        endPrice,
+        predictionsCount: predictions.length,
+        participantsCount: participants.length
+      });
+      
+    } catch (error) {
+      console.error('Error in debug evaluation:', error);
+      res.status(500).json({ message: 'Failed to evaluate round' });
+    }
+  });
+
   // Debug: Trigger round progression manually for testing
   app.post('/api/debug/survival-tournaments/:id/progress-round', async (req: Request, res: Response) => {
     try {
