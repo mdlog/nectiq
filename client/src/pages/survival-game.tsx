@@ -124,42 +124,56 @@ const SurvivalGame = () => {
 
   console.log('Rendering main survival page with', activeTournaments.length, 'tournaments');
 
-  return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
-          {/* Header Section */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-4">Nectiq Survival Mode</h1>
-            <p className="text-xl text-muted-foreground mb-2">
-              Battle Royale Prediction Tournaments
-            </p>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Join survival tournaments where you predict cryptocurrency price movements. 
-              Make the wrong prediction and get eliminated. Last survivor wins the prize pool!
-            </p>
-          </div>
+  try {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-background">
+          <div className="container mx-auto px-4 py-8 max-w-6xl">
+            {/* Header Section */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-foreground mb-4">Nectiq Survival Mode</h1>
+              <p className="text-xl text-muted-foreground mb-2">
+                Battle Royale Prediction Tournaments
+              </p>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Join survival tournaments where you predict cryptocurrency price movements. 
+                Make the wrong prediction and get eliminated. Last survivor wins the prize pool!
+              </p>
+            </div>
 
-          {/* Debug Info */}
-          <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <p className="text-sm">Debug: Found {tournaments.length} total tournaments, {activeTournaments.length} active</p>
-            <p className="text-sm">Loading: {String(tournamentLoading)}, Error: {String(tournamentError)}</p>
-          </div>
+            {/* Debug Info */}
+            <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <p className="text-sm">Debug: Found {tournaments.length} total tournaments, {activeTournaments.length} active</p>
+              <p className="text-sm">Loading: {String(tournamentLoading)}, Error: {String(tournamentError)}</p>
+              <p className="text-sm">User: {user ? `${user.id} - ${user.username}` : 'Not logged in'}</p>
+              <p className="text-sm">CryptoPrices: {cryptoPrices?.length || 0} items</p>
+            </div>
 
           {/* Tournament Grid */}
           {activeTournaments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {activeTournaments.map((tournament) => {
                 console.log('Rendering tournament:', tournament.id, tournament.title);
-                return (
-                  <TournamentCard
-                    key={tournament.id}
-                    tournament={tournament}
-                    user={user}
-                    cryptoPrices={cryptoPrices}
-                  />
-                );
+                try {
+                  return (
+                    <TournamentCard
+                      key={tournament.id}
+                      tournament={tournament}
+                      user={user}
+                      cryptoPrices={cryptoPrices}
+                    />
+                  );
+                } catch (error) {
+                  console.error('Error rendering tournament card:', error);
+                  return (
+                    <div key={tournament.id} className="p-4 bg-red-100 border border-red-300 rounded-lg">
+                      <h3 className="font-bold text-red-800">Tournament Error</h3>
+                      <p className="text-red-600">Failed to render tournament: {tournament.title}</p>
+                      <p className="text-sm text-red-500">{String(error)}</p>
+                    </div>
+                  );
+                }
               })}
             </div>
           ) : (
@@ -238,6 +252,30 @@ const SurvivalGame = () => {
       <Footer />
     </>
   );
+  } catch (error) {
+    console.error('Survival page error:', error);
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-background">
+          <div className="container mx-auto px-4 py-8 max-w-6xl">
+            <div className="text-center py-12">
+              <h1 className="text-3xl font-bold mb-4 text-red-600">Survival Page Error</h1>
+              <p className="text-red-500 mb-8">An error occurred while loading the survival page.</p>
+              <p className="text-sm text-gray-600">{String(error)}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Reload Page
+              </button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 };
 
 export default SurvivalGame;

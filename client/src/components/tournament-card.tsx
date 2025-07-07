@@ -71,6 +71,19 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Early return with error card if props are invalid
+  if (!tournament) {
+    return (
+      <Card className="p-4 bg-red-100 border-red-300">
+        <CardContent>
+          <p className="text-red-600">Error: Tournament data is missing</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  console.log('TournamentCard rendering for:', tournament.id, tournament.title);
+
   // Helper function to get individual round duration
   const getRoundDuration = (tournament: SurvivalTournament, roundNumber: number): number => {
     if (roundNumber === 1 && tournament.round1Duration) {
@@ -195,9 +208,10 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
   const roundEndTime = currentRound?.endTime || tournament.nextRoundTime;
   const startingPrice = currentRound?.startPrice || 0;
 
-  return (
-    <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700 text-white">
-      <CardContent className="p-6">
+  try {
+    return (
+      <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700 text-white">
+        <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -434,5 +448,17 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
         </div>
       </CardContent>
     </Card>
-  );
+    );
+  } catch (error) {
+    console.error('TournamentCard error:', error);
+    return (
+      <Card className="p-4 bg-red-100 border-red-300">
+        <CardContent>
+          <h3 className="font-bold text-red-800">Tournament Card Error</h3>
+          <p className="text-red-600">Failed to render tournament: {tournament?.title || 'Unknown'}</p>
+          <p className="text-sm text-red-500">{String(error)}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 };
