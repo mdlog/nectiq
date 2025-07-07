@@ -1,5 +1,4 @@
-import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
-import { TrendingUp, Trophy, Zap } from "lucide-react";
+import { TrendingUp, Trophy, Zap, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -89,10 +88,8 @@ function LandingHeader() {
       // User is logged in, redirect to Home page
       setLocation("/home");
     } else {
-      // User is not logged in, scroll to wallet section
-      document.getElementById('wallet-section')?.scrollIntoView({ 
-        behavior: 'smooth' 
-      });
+      // User is not logged in, redirect to wallet login page
+      setLocation("/wallet-login");
     }
   };
 
@@ -142,6 +139,8 @@ function LandingHeader() {
 }
 
 export default function LandingPage() {
+  const [, setLocation] = useLocation();
+  
   return (
     <div className="min-h-screen bg-background text-foreground pb-16">
       {/* Header */}
@@ -226,10 +225,16 @@ export default function LandingPage() {
               </CardHeader>
               <CardContent className="space-y-4 px-8 pb-8">
                 <div className="flex justify-center">
-                  <DynamicWidget />
+                  <Button 
+                    onClick={() => setLocation("/wallet-login")}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  >
+                    <Wallet className="w-5 h-5 mr-2" />
+                    Connect Wallet
+                  </Button>
                 </div>
                 <p className="text-sm text-muted-foreground text-center">
-                  Connect your wallet to access all features
+                  Connect your crypto wallet to access all features
                 </p>
               </CardContent>
             </Card>
