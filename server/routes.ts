@@ -18,6 +18,7 @@ import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
 import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } from "./routes/userStats";
 import { calculateAntiGamingMetrics, getPredictionDeadline, formatCountdown } from "./antiGamingUtils.js";
+import { SurvivalRoundService } from "./services/survivalRoundService.js";
 
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
@@ -5027,6 +5028,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error getting prediction deadline:', error);
       res.status(500).json({ message: 'Failed to get prediction deadline' });
+    }
+  });
+
+  // Test: Award retroactive rewards to tournament winners (temporary endpoint)
+  app.post('/api/test/award-retroactive-rewards', async (req: Request, res: Response) => {
+    try {
+      console.log('🔍 Starting retroactive reward test...');
+      const survivalService = SurvivalRoundService.getInstance();
+      await survivalService.awardRetroactiveRewards();
+      
+      res.json({ 
+        message: 'Retroactive rewards awarded successfully',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error awarding retroactive rewards:', error);
+      res.status(500).json({ message: 'Failed to award retroactive rewards', error: error.message });
+    }
+  });
+
+  // Admin: Award retroactive rewards to tournament winners
+  app.post('/api/admin/award-retroactive-rewards', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const survivalService = SurvivalRoundService.getInstance();
+      await survivalService.awardRetroactiveRewards();
+      
+      res.json({ 
+        message: 'Retroactive rewards awarded successfully',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error awarding retroactive rewards:', error);
+      res.status(500).json({ message: 'Failed to award retroactive rewards' });
     }
   });
 

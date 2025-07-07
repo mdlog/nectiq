@@ -248,11 +248,70 @@ export class SurvivalRoundService {
     }
   }
 
+  // Award retroactive rewards to existing winners who haven't received them yet
+  async awardRetroactiveRewards() {
+    try {
+      console.log('🔍 Checking for completed tournaments without awarded rewards...');
+      
+      // Get all completed tournaments with winners
+      const completedTournaments = await storage.getCompletedTournamentsWithWinners();
+      
+      for (const tournament of completedTournaments) {
+        // Check if winner already received reward
+        const existingReward = await storage.checkTournamentRewardAwarded(tournament.id);
+        
+        if (!existingReward && tournament.prizePool > 0) {
+          console.log(`🏆 Awarding retroactive reward: ${tournament.prizePool} NTIQ to winner ${tournament.winnerId} for tournament ${tournament.id}`);
+          
+          // Add prize pool to winner's balance
+          await storage.updateUserBalance(tournament.winnerId, tournament.prizePool);
+          
+          // Log transaction for reward
+          await storage.logTransaction({
+            userId: tournament.winnerId,
+            type: 'survival_tournament_reward',
+            amount: tournament.prizePool,
+            token: 'NTIQ',
+            status: 'completed',
+            relatedId: tournament.id
+          });
+          
+          console.log(`✅ Successfully awarded retroactive ${tournament.prizePool} NTIQ to tournament winner`);
+        }
+      }
+      
+      console.log('✅ Retroactive reward check completed');
+    } catch (error) {
+      console.error('Error awarding retroactive rewards:', error);
+    }
+  }
+
   // Finish tournament and declare winner
   private async finishTournament(tournamentId: number, winnerId: number | null) {
     try {
       if (winnerId) {
         await storage.setTournamentWinner(tournamentId, winnerId);
+        
+        // Award prize pool to winner
+        const tournament = await storage.getSurvivalTournament(tournamentId);
+        if (tournament && tournament.prizePool > 0) {
+          console.log(`🏆 Awarding ${tournament.prizePool} NTIQ to winner (User ID: ${winnerId})`);
+          
+          // Add prize pool to winner's balance
+          await storage.updateUserBalance(winnerId, tournament.prizePool);
+          
+          // Log transaction for reward
+          await storage.logTransaction({
+            userId: winnerId,
+            type: 'survival_tournament_reward',
+            amount: tournament.prizePool,
+            token: 'NTIQ',
+            status: 'completed',
+            relatedId: tournamentId
+          });
+          
+          console.log(`✅ Successfully awarded ${tournament.prizePool} NTIQ to tournament winner`);
+        }
       }
       await storage.updateTournamentStatus(tournamentId, 'completed');
       

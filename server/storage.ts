@@ -2283,6 +2283,39 @@ export class DatabaseStorage implements IStorage {
       .where(eq(survivalTournaments.id, tournamentId));
   }
 
+  async getCompletedTournamentsWithWinners(): Promise<Array<{id: number, winnerId: number, prizePool: number}>> {
+    const tournaments = await db
+      .select({
+        id: survivalTournaments.id,
+        winnerId: survivalTournaments.winnerId,
+        prizePool: survivalTournaments.prizePool
+      })
+      .from(survivalTournaments)
+      .where(and(
+        eq(survivalTournaments.status, 'completed'),
+        isNotNull(survivalTournaments.winnerId)
+      ));
+    
+    return tournaments.filter(t => t.winnerId !== null).map(t => ({
+      id: t.id,
+      winnerId: t.winnerId!,
+      prizePool: t.prizePool
+    }));
+  }
+
+  async checkTournamentRewardAwarded(tournamentId: number): Promise<boolean> {
+    const reward = await db
+      .select()
+      .from(transactionLogs)
+      .where(and(
+        eq(transactionLogs.type, 'survival_tournament_reward'),
+        eq(transactionLogs.relatedId, tournamentId)
+      ))
+      .limit(1);
+    
+    return reward.length > 0;
+  }
+
   // Eliminate participant by userId and tournamentId
   async eliminateParticipant(userId: number, tournamentId: number, roundNumber: number): Promise<void> {
     await db
