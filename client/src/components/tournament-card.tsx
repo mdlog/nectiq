@@ -302,7 +302,9 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
               <div
                 key={roundNum}
                 className={`p-2 rounded text-center ${
-                  roundNum === tournament.currentRound
+                  tournament.status === 'completed'
+                    ? 'bg-green-600' // All rounds green when tournament completed
+                    : roundNum === tournament.currentRound
                     ? 'bg-yellow-600 text-black'
                     : roundNum < tournament.currentRound
                     ? 'bg-green-600'
