@@ -17,6 +17,7 @@ import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
 import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } from "./routes/userStats";
+import { calculateAntiGamingMetrics, getPredictionDeadline, formatCountdown } from "./antiGamingUtils.js";
 
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
@@ -4852,6 +4853,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'You have already submitted a prediction for this round' });
       }
 
+      // Anti-Gaming System: Check prediction deadline and calculate timing metrics
+      const roundStartTime = new Date(currentRound.startTime).getTime();
+      const roundEndTime = new Date(currentRound.endTime).getTime();
+      const roundDuration = roundEndTime - roundStartTime;
+      const submissionTime = Date.now();
+      
+      const antiGamingResult = calculateAntiGamingMetrics({
+        roundStartTime,
+        roundDuration,
+        submissionTime
+      });
+      
+      // If prediction deadline has passed (75% rule), reject the submission
+      if (!antiGamingResult.isValid) {
+        return res.status(400).json({ 
+          message: antiGamingResult.message,
+          deadline: 'Prediction deadline has passed',
+          timingInfo: {
+            timePercentage: `${(antiGamingResult.timePercentage * 100).toFixed(1)}%`,
+            deadlinePassed: true,
+            bonusDescription: antiGamingResult.bonusDescription
+          }
+        });
+      }
+
       // Get current cryptocurrency price from CoinGecko
       let currentPrice = 0;
       try {
@@ -4904,14 +4930,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Deduct entry fee from user balance
       await storage.updateUserBalance(userId, user.balance - tournament.entryFee);
 
-      // Submit prediction with starting price
+      // Submit prediction with starting price and anti-gaming data
       const predictionData = {
         tournamentId,
         roundId: currentRound.id,
         participantId: participant.id,
         userId,
         prediction,
-        startingPrice: currentPrice.toString() // Record price when prediction was made
+        startingPrice: currentPrice.toString(), // Record price when prediction was made
+        
+        // Anti-Gaming System fields
+        roundStartTime: new Date(roundStartTime),
+        roundDuration: roundDuration,
+        submissionTimePercentage: antiGamingResult.timePercentage,
+        timingMultiplier: antiGamingResult.timingMultiplier,
+        predictionDeadlinePassed: antiGamingResult.deadlinePassed,
+        earlyBirdBonus: antiGamingResult.earlyBirdBonus,
+        latePenalty: antiGamingResult.latePenalty
       };
 
       const newPrediction = await storage.submitSurvivalPrediction(predictionData);
@@ -4927,17 +4962,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
         relatedId: newPrediction.id
       });
       
-      // Include the starting price and new balance in the response
+      // Include the starting price, new balance, and anti-gaming info in the response
       res.json({
         ...newPrediction,
         startingPrice: currentPrice,
         newBalance: user.balance - tournament.entryFee,
         entryFeeDeducted: tournament.entryFee,
-        message: `Prediction recorded! Starting price: $${currentPrice.toFixed(8)}. ${tournament.entryFee} NTIQ deducted from balance.`
+        antiGaming: {
+          timingMultiplier: antiGamingResult.timingMultiplier,
+          timePercentage: `${(antiGamingResult.timePercentage * 100).toFixed(1)}%`,
+          bonusDescription: antiGamingResult.bonusDescription,
+          earlyBirdBonus: antiGamingResult.earlyBirdBonus,
+          latePenalty: antiGamingResult.latePenalty,
+          deadlinePassed: antiGamingResult.deadlinePassed
+        },
+        message: `Prediction recorded! Starting price: $${currentPrice.toFixed(8)}. ${tournament.entryFee} NTIQ deducted from balance. ${antiGamingResult.bonusDescription || ''}`
       });
     } catch (error) {
       console.error('Error submitting survival prediction:', error);
       res.status(500).json({ message: 'Failed to submit prediction' });
+    }
+  });
+
+  // Get prediction deadline info for a tournament round
+  app.get('/api/survival-tournaments/:id/prediction-deadline', async (req: Request, res: Response) => {
+    try {
+      const tournamentId = parseInt(req.params.id);
+      
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        return res.status(404).json({ message: 'Tournament not found' });
+      }
+
+      const currentRound = await storage.getCurrentRound(tournamentId);
+      if (!currentRound) {
+        return res.status(404).json({ message: 'No active round found' });
+      }
+
+      const roundStartTime = new Date(currentRound.startTime).getTime();
+      const roundEndTime = new Date(currentRound.endTime).getTime();
+      const roundDuration = roundEndTime - roundStartTime;
+      
+      const deadlineInfo = getPredictionDeadline(roundStartTime, roundDuration);
+      
+      res.json({
+        roundId: currentRound.id,
+        roundNumber: currentRound.roundNumber,
+        roundStartTime,
+        roundEndTime,
+        roundDuration,
+        predictionDeadline: deadlineInfo.deadlineTime,
+        deadlineCountdown: deadlineInfo.deadlineCountdown,
+        isDeadlineExpired: deadlineInfo.isExpired,
+        deadlineFormatted: formatCountdown(deadlineInfo.deadlineCountdown),
+        timeRemaining: formatCountdown(roundEndTime - Date.now()),
+        rules: {
+          deadlinePercentage: '75%',
+          description: 'Predictions must be submitted within the first 75% of round duration',
+          earlyBirdBonus: 'First 25% of round: +30% multiplier',
+          goodTimingBonus: '25-50% of round: +10% multiplier',
+          latePenalty: '50-75% of round: -20% penalty'
+        }
+      });
+    } catch (error) {
+      console.error('Error getting prediction deadline:', error);
+      res.status(500).json({ message: 'Failed to get prediction deadline' });
     }
   });
 

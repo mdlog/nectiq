@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';
 import { CountdownTimer } from '@/components/countdown-timer';
+import PredictionTimingIndicator from '@/components/prediction-timing-indicator';
 
 // Types
 interface SurvivalTournament {
@@ -455,6 +456,9 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
             </div>
           ) : tournament.status === 'active' && hasJoined && canPredict ? (
             <div className="space-y-3">
+              {/* Anti-Gaming System - Prediction Timing Indicator */}
+              <PredictionTimingIndicator tournamentId={tournament.id} />
+              
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Clock className="h-4 w-4" />

@@ -464,6 +464,15 @@ export const survivalPredictions = pgTable("survival_predictions", {
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   isCorrect: boolean("is_correct"),
   points: integer("points").default(0),
+  
+  // Anti-Gaming System Fields
+  roundStartTime: timestamp("round_start_time").notNull(), // When the round started
+  roundDuration: integer("round_duration").notNull(), // Round duration in milliseconds
+  submissionTimePercentage: numeric("submission_time_percentage", { precision: 5, scale: 2 }).notNull(), // 0.00 to 1.00 (0% to 100% of round)
+  timingMultiplier: numeric("timing_multiplier", { precision: 3, scale: 2 }).notNull().default("1.00"), // Bonus/penalty multiplier based on submission timing
+  predictionDeadlinePassed: boolean("prediction_deadline_passed").notNull().default(false), // Whether prediction was made after deadline
+  earlyBirdBonus: boolean("early_bird_bonus").notNull().default(false), // Whether user got early bird bonus
+  latePenalty: boolean("late_penalty").notNull().default(false), // Whether user got late penalty
 });
 
 // Loyalty Program Tables
