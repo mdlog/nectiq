@@ -298,23 +298,35 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
         <div className="mb-4">
           <h4 className="font-semibold mb-2">Round Structure:</h4>
           <div className="grid grid-cols-3 gap-2 text-xs">
-            {[1, 2, 3].map(roundNum => (
-              <div
-                key={roundNum}
-                className={`p-2 rounded text-center ${
-                  tournament.status === 'completed'
-                    ? 'bg-green-600' // All rounds green when tournament completed
-                    : roundNum === tournament.currentRound
-                    ? 'bg-yellow-600 text-black'
-                    : roundNum < tournament.currentRound
-                    ? 'bg-green-600'
-                    : 'bg-gray-600'
-                }`}
-              >
-                <div className="font-semibold">Round {roundNum}</div>
-                <div>{getRoundDuration(tournament, roundNum)} min</div>
-              </div>
-            ))}
+            {[1, 2, 3].map(roundNum => {
+              // Find the round data to get starting price
+              const roundData = tournament.rounds?.find(r => r.roundNumber === roundNum);
+              const startingPrice = roundData?.startPrice ? parseFloat(roundData.startPrice.toString()) : null;
+              
+              return (
+                <div
+                  key={roundNum}
+                  className={`p-2 rounded text-center ${
+                    tournament.status === 'completed'
+                      ? 'bg-green-600' // All rounds green when tournament completed
+                      : roundNum === tournament.currentRound
+                      ? 'bg-yellow-600 text-black'
+                      : roundNum < tournament.currentRound
+                      ? 'bg-green-600'
+                      : 'bg-gray-600'
+                  }`}
+                >
+                  <div className="font-semibold">Round {roundNum}</div>
+                  <div>{getRoundDuration(tournament, roundNum)} min</div>
+                  {/* Show starting price if round has started */}
+                  {startingPrice && (
+                    <div className="text-[10px] mt-1 opacity-90">
+                      Start: ${Number(startingPrice).toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
