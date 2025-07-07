@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChartLine, Coins, User, Wallet, LogOut, Menu, X, ChevronDown, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
@@ -15,9 +14,7 @@ export function Header() {
     queryKey: ["/api/user"],
   });
   
-  const { user: dynamicUser, handleLogOut } = useDynamicContext();
-  const address = dynamicUser?.verifiedCredentials?.[0]?.address;
-  const isConnected = !!dynamicUser && !!address;
+  const isConnected = !!user;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location, setLocation] = useLocation();
@@ -67,6 +64,14 @@ export function Header() {
       queryClient.removeQueries({ queryKey: ['/api/user'] });
       queryClient.removeQueries({ queryKey: ['/api/predictions/active'] });
       queryClient.removeQueries({ queryKey: ['/api/rewards/recent'] });
+      
+      toast({
+        title: "Disconnected",
+        description: "Wallet disconnected successfully",
+      });
+      
+      // Redirect to landing page
+      setLocation('/');
     },
     onError: (error) => {
       console.error("Logout error:", error);
@@ -75,46 +80,15 @@ export function Header() {
 
   const handleDisconnect = async () => {
     try {
-      // First logout from server
+      // Logout from server
       await logoutMutation.mutateAsync();
-      
-      // Then disconnect wallet using Dynamic SDK
-      handleLogOut();
-      
-      // Clear Dynamic SDK localStorage data
-      localStorage.removeItem('dynamic_authentication_token');
-      localStorage.removeItem('dynamic_user_data');
-      
-      toast({
-        title: "Disconnected",
-        description: "Wallet disconnected successfully",
-      });
-      
-      // Force page refresh to ensure wallet state is completely cleared
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-      
     } catch (error) {
       console.error("Disconnect error:", error);
-      // Still disconnect wallet even if server call fails
-      handleLogOut();
-      
-      // Clear Dynamic SDK localStorage data even on error
-      localStorage.removeItem('dynamic_authentication_token');
-      localStorage.removeItem('dynamic_user_data');
-      
-      // Clear React Query cache
-      queryClient.clear();
-      
       toast({
-        title: "Disconnected", 
-        description: "Wallet disconnected successfully",
+        title: "Disconnect Error", 
+        description: "Failed to disconnect properly",
+        variant: "destructive",
       });
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
     }
   };
 
@@ -185,7 +159,7 @@ export function Header() {
               How to Play
             </button>
 
-            {address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
+            {user?.isAdmin && (
               <button 
                 onClick={() => setLocation('/admin')} 
                 className={`transition-colors font-semibold ${
@@ -216,12 +190,12 @@ export function Header() {
               <span className="text-xs text-slate-400">NTIQ</span>
             </div>
             
-            {isConnected && address ? (
+            {isConnected && user?.walletAddress ? (
               <div className="flex items-center space-x-2">
                 <div className="hidden sm:flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-3 py-1 rounded-lg border border-green-200 dark:border-green-800">
                   <Wallet className="text-green-600 dark:text-green-400" size={16} />
                   <span className="text-xs font-mono text-green-700 dark:text-green-300">
-                    {address.slice(0, 6)}...{address.slice(-4)}
+                    {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
                   </span>
                 </div>
                 <Button
@@ -386,12 +360,12 @@ export function Header() {
                   <span className="text-xs text-slate-400">NTIQ</span>
                 </div>
                 
-                {isConnected && address && (
+                {isConnected && user?.walletAddress && (
                   <div className="flex items-center space-x-2">
                     <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded-lg border border-green-200 dark:border-green-800">
                       <Wallet className="text-green-600 dark:text-green-400" size={14} />
                       <span className="text-xs font-mono text-green-700 dark:text-green-300">
-                        {address.slice(0, 4)}...{address.slice(-3)}
+                        {user.walletAddress.slice(0, 4)}...{user.walletAddress.slice(-3)}
                       </span>
                     </div>
                     <Button
