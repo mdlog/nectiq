@@ -202,14 +202,14 @@ const SurvivalGame = () => {
       <>
         <Header />
         <main className="min-h-screen bg-background">
-          <div className="container mx-auto px-4 py-8 max-w-6xl">
+          <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-6xl">
             {/* Header Section */}
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-foreground mb-4">Nectiq Survival Mode</h1>
-              <p className="text-xl text-muted-foreground mb-2">
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3 sm:mb-4">Nectiq Survival Mode</h1>
+              <p className="text-lg sm:text-xl text-muted-foreground mb-2">
                 Battle Royale Prediction Tournaments
               </p>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto px-2 sm:px-0">
                 Join survival tournaments where you predict cryptocurrency price movements. 
                 Make the wrong prediction and get eliminated. Last survivor wins the prize pool!
               </p>
@@ -217,44 +217,48 @@ const SurvivalGame = () => {
 
             {/* Search and Filters */}
             <div className="mb-6">
-              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-                <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                  <div className="relative flex-1 max-w-md">
+              <div className="flex flex-col gap-4">
+                {/* Mobile: Stack all elements vertically */}
+                <div className="flex flex-col gap-3">
+                  <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Search tournaments by title, cryptocurrency, or status..."
+                      placeholder="Search tournaments..."
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 w-full"
                     />
                   </div>
-                  <div className="relative min-w-[180px]">
-                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
-                    <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                      <SelectTrigger className="pl-10">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Tournaments</SelectItem>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1 sm:min-w-[180px]">
+                      <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+                      <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                        <SelectTrigger className="pl-10 w-full">
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Tournaments</SelectItem>
+                          <SelectItem value="open">Open</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {hasActiveFilters && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className="flex items-center gap-2 justify-center sm:justify-start whitespace-nowrap"
+                      >
+                        <X className="h-4 w-4" />
+                        Clear Filters
+                      </Button>
+                    )}
                   </div>
-                  {hasActiveFilters && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={clearAllFilters}
-                      className="flex items-center gap-2 whitespace-nowrap"
-                    >
-                      <X className="h-4 w-4" />
-                      Clear Filters
-                    </Button>
-                  )}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                {/* Results count - always visible at bottom */}
+                <div className="text-sm text-muted-foreground text-center sm:text-left">
                   {filteredTournaments.length > 0 ? (
                     `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredTournaments.length)} of ${filteredTournaments.length} tournaments`
                   ) : (
@@ -268,7 +272,7 @@ const SurvivalGame = () => {
 
           {/* Tournament Grid */}
           {displayTournaments.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {displayTournaments.map((tournament) => (
                 <TournamentCard
                   key={tournament.id}
@@ -301,19 +305,19 @@ const SurvivalGame = () => {
 
           {/* Pagination Controls */}
           {filteredTournaments.length > tournamentsPerPage && (
-            <div className="mt-8 flex justify-center items-center space-x-2">
+            <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full sm:w-auto"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
               
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1 flex-wrap justify-center">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
                   // Show first page, last page, current page, and pages around current page
                   const showPage = page === 1 || 
@@ -323,10 +327,10 @@ const SurvivalGame = () => {
                   if (!showPage) {
                     // Show ellipsis
                     if (page === 2 && currentPage > 3) {
-                      return <span key={page} className="px-2 text-muted-foreground">...</span>;
+                      return <span key={page} className="px-2 text-muted-foreground text-sm">...</span>;
                     }
                     if (page === totalPages - 1 && currentPage < totalPages - 2) {
-                      return <span key={page} className="px-2 text-muted-foreground">...</span>;
+                      return <span key={page} className="px-2 text-muted-foreground text-sm">...</span>;
                     }
                     return null;
                   }
@@ -337,7 +341,7 @@ const SurvivalGame = () => {
                       variant={currentPage === page ? "default" : "outline"}
                       size="sm"
                       onClick={() => setCurrentPage(page)}
-                      className="w-8 h-8 p-0"
+                      className="w-8 h-8 p-0 text-sm"
                     >
                       {page}
                     </Button>
@@ -350,7 +354,7 @@ const SurvivalGame = () => {
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full sm:w-auto"
               >
                 Next
                 <ChevronRight className="h-4 w-4" />
@@ -360,11 +364,11 @@ const SurvivalGame = () => {
 
           {/* Tournament Stats */}
           {filteredTournaments.length > 0 && (
-            <div className="mt-12 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg p-6">
-              <h3 className="text-xl font-semibold mb-4">
-                {searchQuery ? 'Search Results Statistics' : 'Tournament Statistics'}
+            <div className="mt-8 sm:mt-12 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4 text-center sm:text-left">
+                {searchQuery || statusFilter !== 'all' ? 'Filtered Results Statistics' : 'Tournament Statistics'}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
                     {filteredTournaments.filter(t => t.status === 'active' || t.status === 'open').length}
