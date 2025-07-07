@@ -199,6 +199,13 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
   const isEliminated = currentUser?.status === 'eliminated';
   const userCurrentPrediction = currentUser?.prediction;
   const eliminationRound = currentUser?.eliminatedRound;
+  
+  // Check if user is winner - for completed tournaments, check if user is one of the survivors
+  const isWinner = currentUser?.status === 'winner' || 
+                   (tournament.status === 'completed' && 
+                    currentUser?.status === 'active' && 
+                    !isEliminated &&
+                    tournament.currentParticipants <= 1); // Last person standing
 
   // Check if user can make prediction
   const canPredict = hasJoined && tournament.status === 'active' && tournament.currentRound > 0 && !isEliminated && !userCurrentPrediction;
@@ -388,17 +395,17 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                   <Badge className="bg-red-600 text-white text-xs">ELIMINATED</Badge>
                   <span className="text-red-400 text-xs">Round {eliminationRound || 'Unknown'}</span>
                 </div>
+              ) : isWinner ? (
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-yellow-500" />
+                  <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-bold border border-yellow-400 text-xs">WIN 🏆</Badge>
+                  <span className="text-yellow-400 text-xs">Tournament champion!</span>
+                </div>
               ) : currentUser?.status === 'active' ? (
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   <Badge className="bg-green-600 text-white text-xs">ACTIVE</Badge>
                   <span className="text-green-400 text-xs">Still in tournament</span>
-                </div>
-              ) : currentUser?.status === 'winner' ? (
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-yellow-500" />
-                  <Badge className="bg-yellow-600 text-white text-xs">WINNER</Badge>
-                  <span className="text-yellow-400 text-xs">Tournament champion!</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
