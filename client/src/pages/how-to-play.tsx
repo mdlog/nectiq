@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { 
@@ -17,7 +18,9 @@ import {
   Info,
   ArrowRight,
   Star,
-  Zap
+  Zap,
+  Swords,
+  Shield
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -121,10 +124,29 @@ export default function HowToPlay() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-12">
+      <div className="max-w-6xl mx-auto px-6 py-12">
         
-        {/* Quick Start Guide */}
-        <section>
+        {/* Navigation Tabs */}
+        <Tabs defaultValue="prediction" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-12">
+            <TabsTrigger value="prediction" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Prediction
+            </TabsTrigger>
+            <TabsTrigger value="battle" className="flex items-center gap-2">
+              <Swords className="h-4 w-4" />
+              Battle Mode
+            </TabsTrigger>
+            <TabsTrigger value="survival" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Survival
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Prediction Tab Content */}
+          <TabsContent value="prediction" className="space-y-12">
+            {/* Quick Start Guide */}
+            <section>
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-4">Quick Start Guide</h2>
             <p className="text-muted-foreground">Get started in just 4 simple steps</p>
@@ -433,8 +455,12 @@ export default function HowToPlay() {
           </Card>
         </section>
 
-        {/* Battle Mode Guide */}
-        <section>
+          </TabsContent>
+
+          {/* Battle Mode Tab Content */}
+          <TabsContent value="battle" className="space-y-12">
+            {/* Battle Mode Guide */}
+            <section>
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-4">How to Play: Prediction Battles</h2>
             <p className="text-muted-foreground">Challenge other players in head-to-head prediction battles</p>
@@ -565,8 +591,12 @@ export default function HowToPlay() {
           </Card>
         </section>
 
-        {/* Survival Tournament Guide */}
-        <section>
+          </TabsContent>
+
+          {/* Survival Tournament Tab Content */}
+          <TabsContent value="survival" className="space-y-12">
+            {/* Survival Tournament Guide */}
+            <section>
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-4">How to Play: Survival Tournaments</h2>
             <p className="text-muted-foreground">Battle royale-style prediction tournaments with elimination rounds</p>
@@ -705,159 +735,165 @@ export default function HowToPlay() {
           </Card>
         </section>
 
-        {/* Tips & Strategies */}
-        <section>
-          <h2 className="text-3xl font-bold mb-6 text-center">Tips & Strategies</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Shared sections outside tabs */}
+        <div className="mt-12 space-y-12">
+          {/* Tips & Strategies */}
+          <section>
+            <h2 className="text-3xl font-bold mb-6 text-center">Tips & Strategies</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <TrendingUp className="mr-2 h-5 w-5 text-green-500" />
+                    Market Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Study price charts and historical patterns
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Follow crypto news and market sentiment
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Use technical indicators for better accuracy
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Target className="mr-2 h-5 w-5 text-blue-500" />
+                    Stake Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Start with smaller stakes while learning
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Increase stakes on high-confidence predictions
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Diversify across different timeframes
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Users className="mr-2 h-5 w-5 text-purple-500" />
+                    Community
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Check leaderboard for top predictors
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Learn from successful prediction patterns
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Share achievements on social media
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* Important Notes */}
+          <section>
+            <Card className="border-yellow-500/20 bg-yellow-500/5">
               <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <TrendingUp className="mr-2 h-5 w-5 text-green-500" />
-                  Market Analysis
+                <CardTitle className="flex items-center text-yellow-600">
+                  <AlertCircle className="mr-2 h-5 w-5" />
+                  Important Notes
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Study price charts and historical patterns
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Follow crypto news and market sentiment
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Use technical indicators for better accuracy
-                  </li>
-                </ul>
+              <CardContent className="space-y-3">
+                <div className="flex items-start">
+                  <Info className="mr-2 h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm">
+                    <strong>Prediction Deadline:</strong> Predictions are automatically resolved at the specified deadline. 
+                    Late submissions are not accepted.
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <Info className="mr-2 h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm">
+                    <strong>Price Source:</strong> All prices are sourced from CoinGecko API for fairness and accuracy.
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <Info className="mr-2 h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm">
+                    <strong>Rewards Distribution:</strong> NTIQ rewards are automatically calculated and distributed 
+                    when predictions are resolved.
+                  </p>
+                </div>
+                <div className="flex items-start">
+                  <Info className="mr-2 h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm">
+                    <strong>Minimum Balance:</strong> Ensure you have sufficient NTIQ balance before making predictions. 
+                    Staked amounts are locked until resolution.
+                  </p>
+                </div>
               </CardContent>
             </Card>
+          </section>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <Target className="mr-2 h-5 w-5 text-blue-500" />
-                  Stake Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Start with smaller stakes while learning
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Increase stakes on high-confidence predictions
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Diversify across different timeframes
-                  </li>
-                </ul>
+          {/* Call to Action */}
+          <section className="text-center">
+            <Card className="bg-gradient-to-r from-primary/10 to-blue-500/10 border-primary/20">
+              <CardContent className="pt-8">
+                <h2 className="text-2xl font-bold mb-4">Ready to Start Predicting?</h2>
+                <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                  Join thousands of users who are already earning NTIQ rewards through accurate 
+                  cryptocurrency price predictions. Start your journey today!
+                </p>
+                <div className="flex flex-wrap justify-center gap-4">
+                  <Button 
+                    onClick={() => setLocation("/")} 
+                    size="lg" 
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <Target className="mr-2 h-5 w-5" />
+                    Make Your First Prediction
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                  <Button 
+                    onClick={() => setLocation("/dashboard")} 
+                    variant="outline" 
+                    size="lg"
+                  >
+                    <Users className="mr-2 h-5 w-5" />
+                    View Dashboard
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <Users className="mr-2 h-5 w-5 text-purple-500" />
-                  Community
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Check leaderboard for top predictors
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Learn from successful prediction patterns
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Share achievements on social media
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* Important Notes */}
-        <section>
-          <Card className="border-yellow-500/20 bg-yellow-500/5">
-            <CardHeader>
-              <CardTitle className="flex items-center text-yellow-600">
-                <AlertCircle className="mr-2 h-5 w-5" />
-                Important Notes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start">
-                <Info className="mr-2 h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <p className="text-sm">
-                  <strong>Prediction Deadline:</strong> Predictions are automatically resolved at the specified deadline. 
-                  Late submissions are not accepted.
-                </p>
-              </div>
-              <div className="flex items-start">
-                <Info className="mr-2 h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <p className="text-sm">
-                  <strong>Price Source:</strong> All prices are sourced from CoinGecko API for fairness and accuracy.
-                </p>
-              </div>
-              <div className="flex items-start">
-                <Info className="mr-2 h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <p className="text-sm">
-                  <strong>Rewards Distribution:</strong> NTIQ rewards are automatically calculated and distributed 
-                  when predictions are resolved.
-                </p>
-              </div>
-              <div className="flex items-start">
-                <Info className="mr-2 h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <p className="text-sm">
-                  <strong>Minimum Balance:</strong> Ensure you have sufficient NTIQ balance before making predictions. 
-                  Staked amounts are locked until resolution.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Call to Action */}
-        <section className="text-center">
-          <Card className="bg-gradient-to-r from-primary/10 to-blue-500/10 border-primary/20">
-            <CardContent className="pt-8">
-              <h2 className="text-2xl font-bold mb-4">Ready to Start Predicting?</h2>
-              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Join thousands of users who are already earning NTIQ rewards through accurate 
-                cryptocurrency price predictions. Start your journey today!
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Button 
-                  onClick={() => setLocation("/")} 
-                  size="lg" 
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  <Target className="mr-2 h-5 w-5" />
-                  Make Your First Prediction
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button 
-                  onClick={() => setLocation("/dashboard")} 
-                  variant="outline" 
-                  size="lg"
-                >
-                  <Users className="mr-2 h-5 w-5" />
-                  View Dashboard
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+          </section>
+        </div>
 
       </div>
       
