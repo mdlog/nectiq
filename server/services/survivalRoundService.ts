@@ -169,13 +169,13 @@ export class SurvivalRoundService {
           // No prediction = automatic elimination
           await this.eliminateParticipant(participant.userId, tournamentId, roundNumber, 'No prediction made');
           console.log(`❌ ${participant.username} eliminated (No prediction)`);
-        } else if (prediction.direction !== actualDirection) {
+        } else if (prediction.prediction !== actualDirection) {
           // Wrong prediction = elimination
           await this.eliminateParticipant(participant.userId, tournamentId, roundNumber, 'Wrong prediction');
-          console.log(`❌ ${participant.username} eliminated (Predicted ${prediction.direction.toUpperCase()}, actual ${actualDirection.toUpperCase()})`);
+          console.log(`❌ ${participant.username} eliminated (Predicted ${prediction.prediction.toUpperCase()}, actual ${actualDirection.toUpperCase()})`);
         } else {
           // Correct prediction = survives
-          console.log(`✅ ${participant.username} survives (Correct prediction: ${prediction.direction.toUpperCase()})`);
+          console.log(`✅ ${participant.username} survives (Correct prediction: ${prediction.prediction.toUpperCase()})`);
         }
       }
     } catch (error) {
