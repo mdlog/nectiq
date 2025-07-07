@@ -49,6 +49,43 @@ export default function WalletLoginPage() {
     }
   }, [currentUser, navigate, toast]);
 
+  // Authenticate with backend
+  const authenticateMutation = useMutation({
+    mutationFn: async (address: string) => {
+      const message = `Login to Nectiq with ${address}`;
+      const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, address],
+      });
+
+      const response = await apiRequest('/api/auth/wallet-login', {
+        method: 'POST',
+        body: JSON.stringify({
+          walletAddress: address,
+          message,
+          signature
+        }),
+      });
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Authentication Successful",
+        description: `Welcome ${data.user?.username || 'User'}!`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      navigate('/home');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Authentication Failed",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Check for existing wallet connection on load
   useEffect(() => {
     checkWalletConnection();
@@ -115,43 +152,6 @@ export default function WalletLoginPage() {
       setIsConnecting(false);
     }
   };
-
-  // Authenticate with backend
-  const authenticateMutation = useMutation({
-    mutationFn: async (address: string) => {
-      const message = `Login to Nectiq with ${address}`;
-      const signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [message, address],
-      });
-
-      const response = await apiRequest('/api/auth/wallet-login', {
-        method: 'POST',
-        body: JSON.stringify({
-          walletAddress: address,
-          message,
-          signature
-        }),
-      });
-      
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Authentication Successful",
-        description: `Welcome ${data.user?.username || 'User'}!`,
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      navigate('/home');
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Authentication Failed",
-        description: error.message || "Please try again",
-        variant: "destructive",
-      });
-    }
-  });
 
   const handleAuthenticate = () => {
     if (walletAddress) {
