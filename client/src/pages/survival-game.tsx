@@ -53,6 +53,8 @@ interface CryptoPrice {
 }
 
 const SurvivalGame = () => {
+  console.log('SurvivalGame component mounting...');
+  
   // Fetch semua tournament (open dan active)
   const { data: tournaments = [], isLoading: tournamentLoading, error: tournamentError } = useQuery<SurvivalTournament[]>({
     queryKey: ['/api/survival-tournaments'],
@@ -60,8 +62,12 @@ const SurvivalGame = () => {
     retry: 1
   });
 
+  console.log('Tournament data:', { tournaments, isLoading: tournamentLoading, error: tournamentError });
+
   // Filter tournament yang open atau active saja
   const activeTournaments = tournaments.filter(t => t.status === 'open' || t.status === 'active');
+  
+  console.log('Active tournaments:', activeTournaments);
 
   // Fetch user data
   const { data: user } = useQuery({
@@ -76,6 +82,7 @@ const SurvivalGame = () => {
   });
 
   if (tournamentLoading) {
+    console.log('Showing loading state');
     return (
       <>
         <Header />
@@ -98,6 +105,7 @@ const SurvivalGame = () => {
   }
 
   if (tournamentError) {
+    console.log('Tournament error:', tournamentError);
     return (
       <>
         <Header />
@@ -105,7 +113,7 @@ const SurvivalGame = () => {
           <div className="container mx-auto px-4 py-8 max-w-6xl">
             <div className="text-center py-12">
               <h1 className="text-3xl font-bold mb-4">Nectiq Survival Mode</h1>
-              <p className="text-red-600 mb-8">Error loading tournaments. Please try again later.</p>
+              <p className="text-red-600 mb-8">Error loading tournaments: {String(tournamentError)}</p>
             </div>
           </div>
         </main>
@@ -113,6 +121,8 @@ const SurvivalGame = () => {
       </>
     );
   }
+
+  console.log('Rendering main survival page with', activeTournaments.length, 'tournaments');
 
   return (
     <>
@@ -131,17 +141,26 @@ const SurvivalGame = () => {
             </p>
           </div>
 
+          {/* Debug Info */}
+          <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <p className="text-sm">Debug: Found {tournaments.length} total tournaments, {activeTournaments.length} active</p>
+            <p className="text-sm">Loading: {String(tournamentLoading)}, Error: {String(tournamentError)}</p>
+          </div>
+
           {/* Tournament Grid */}
           {activeTournaments.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {activeTournaments.map((tournament) => (
-                <TournamentCard
-                  key={tournament.id}
-                  tournament={tournament}
-                  user={user}
-                  cryptoPrices={cryptoPrices}
-                />
-              ))}
+              {activeTournaments.map((tournament) => {
+                console.log('Rendering tournament:', tournament.id, tournament.title);
+                return (
+                  <TournamentCard
+                    key={tournament.id}
+                    tournament={tournament}
+                    user={user}
+                    cryptoPrices={cryptoPrices}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">
