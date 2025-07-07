@@ -172,7 +172,7 @@ export interface IStorage {
   getSurvivalPredictions(roundId: number): Promise<any[]>;
   updateSurvivalTournament(id: number, updates: any): Promise<void>;
   deleteSurvivalTournament(id: number): Promise<void>;
-  getUserSurvivalStatus(userId: number): Promise<any[]>;
+  getUserSurvivalStatus(userId: number): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2172,34 +2172,6 @@ export class DatabaseStorage implements IStorage {
     return round;
   }
 
-  async updateRound(roundId: number, updateData: any): Promise<any> {
-    const [round] = await db
-      .update(survivalRounds)
-      .set(updateData)
-      .where(eq(survivalRounds.id, roundId))
-      .returning();
-    return round;
-  }
-
-  async eliminateParticipant(participantId: number, roundNumber: number): Promise<void> {
-    await db
-      .update(survivalParticipants)
-      .set({
-        status: 'eliminated',
-        eliminationRound: roundNumber,
-        eliminatedAt: new Date()
-      })
-      .where(eq(survivalParticipants.id, participantId));
-  }
-
-  async getSurvivalRound(roundId: number): Promise<any> {
-    const [round] = await db
-      .select()
-      .from(survivalRounds)
-      .where(eq(survivalRounds.id, roundId));
-    return round;
-  }
-
   async updateRound(roundId: number, updates: any): Promise<void> {
     await db
       .update(survivalRounds)
@@ -2310,14 +2282,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(survivalTournaments.id, tournamentId));
   }
 
-  // Update tournament status
-  async updateTournamentStatus(tournamentId: number, status: string): Promise<void> {
-    await db
-      .update(survivalTournaments)
-      .set({ status })
-      .where(eq(survivalTournaments.id, tournamentId));
-  }
-
   // Eliminate participant by userId and tournamentId
   async eliminateParticipant(userId: number, tournamentId: number, roundNumber: number): Promise<void> {
     await db
@@ -2347,6 +2311,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(survivalParticipants.id, participantId));
   }
 
+  // Update tournament status with optional winnerId
   async updateTournamentStatus(tournamentId: number, status: string, winnerId?: number | null): Promise<void> {
     const updates: any = { 
       status, 
@@ -2751,6 +2716,8 @@ export class MemStorage implements IStorage {
     };
   }
 
+
+
   async getUserSurvivalStatus(userId: number): Promise<any> {
     // Get all user's tournament participations
     const participations = await db
@@ -2829,15 +2796,15 @@ export class MemStorage implements IStorage {
         remainingParticipants: remainingParticipants,
         prizePool: p.rewardAmount || 0,
         entryFee: p.entryFee || 0,
-        joinedAt: p.joinedAt,
+        joinedAt: p.joinedAt?.toISOString() || new Date().toISOString(),
         prediction: predictions[0]?.prediction || null,
-        eliminatedAt: p.eliminatedAt,
-        wonAt: p.status === 'winner' ? p.endTime : null,
+        eliminatedAt: p.eliminatedAt?.toISOString() || null,
+        wonAt: p.status === 'winner' ? p.endTime?.toISOString() : null,
         finalPosition: finalPosition
       };
     }));
 
-    // Calculate statistics
+    // Calculate stats
     const totalTournaments = tournaments.length;
     const tournamentsWon = tournaments.filter(t => t.status === 'winner').length;
     const totalWinnings = tournaments

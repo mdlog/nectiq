@@ -81,7 +81,7 @@ export function SurvivalStatus() {
       case 'eliminated':
         return <Badge className="bg-red-600 text-white">ELIMINATED</Badge>;
       case 'winner':
-        return <Badge className="bg-yellow-600 text-white">WINNER</Badge>;
+        return <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-bold border border-yellow-400">WIN 🏆</Badge>;
       case 'completed':
         return <Badge className="bg-gray-600 text-white">COMPLETED</Badge>;
       default:
@@ -205,11 +205,21 @@ export function SurvivalStatus() {
                 )}
 
                 {tournament.status === 'winner' && (
-                  <div className="mt-3 p-2 bg-yellow-900/20 rounded border border-yellow-700/30">
-                    <div className="flex items-center space-x-2 text-yellow-400 text-sm">
-                      <Trophy size={16} />
-                      <span>Tournament Winner! 🏆</span>
+                  <div className="mt-3 p-2 bg-gradient-to-r from-yellow-900/30 to-amber-900/30 rounded border border-yellow-500/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-yellow-300 text-sm">
+                        <Trophy size={16} />
+                        <span className="font-semibold">WIN - Tournament Champion!</span>
+                      </div>
+                      <div className="text-green-400 font-bold text-sm">
+                        +{tournament.prizePool} NTIQ
+                      </div>
                     </div>
+                    {tournament.wonAt && (
+                      <div className="text-xs text-yellow-400/70 mt-1">
+                        Won on {new Date(tournament.wonAt).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
                 )}
 

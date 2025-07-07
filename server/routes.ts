@@ -6,11 +6,13 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
+import { db } from "./db";
 import { cryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
-import { insertPredictionSchema, insertCryptocurrencySchema } from "@shared/schema";
+import { insertPredictionSchema, insertCryptocurrencySchema, survivalParticipants, survivalTournaments, survivalPredictions } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
@@ -283,7 +285,13 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
 const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).session?.userId;
+    console.log('🔍 requireAuth - session check:', {
+      hasSession: !!(req as any).session,
+      userId: userId,
+      sessionData: (req as any).session
+    });
     if (!userId) {
+      console.log('❌ requireAuth - No userId found in session');
       return res.status(401).json({ message: "Authentication required" });
     }
 
@@ -5101,12 +5109,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user survival tournament status
   app.get('/api/user/survival-status', requireAuth, async (req: Request, res: Response) => {
     try {
+      console.log('🎯 survival-status endpoint reached!');
       const userId = req.session?.userId;
+      console.log('🎯 survival-status userId from session:', userId);
       if (!userId) {
         return res.status(401).json({ message: 'Authentication required' });
       }
       
-      const survivalStatus = await storage.getUserSurvivalStatus(userId);
+      // Direct implementation using raw SQL to avoid schema issues
+      const participationsResult = await db.execute(
+        `SELECT 
+          sp.tournament_id as "tournamentId",
+          st.title as "tournamentTitle",
+          st.cryptocurrency,
+          sp.status,
+          sp.eliminated_round as "eliminatedRound",
+          sp.joined_at as "joinedAt",
+          sp.eliminated_at as "eliminatedAt",
+          st.status as "tournamentStatus",
+          st.entry_fee as "entryFee",
+          st.reward_amount as "rewardAmount",
+          st.reward_type as "rewardType",
+          st.winner_id as "winnerId",
+          st.current_round as "currentRound",
+          st.end_time as "endTime",
+          st.max_participants as "totalParticipants",
+          st.prize_pool as "prizePool"
+        FROM survival_participants sp
+        INNER JOIN survival_tournaments st ON sp.tournament_id = st.id
+        WHERE sp.user_id = ${userId}`
+      );
+      const participations = participationsResult;
+
+      const tournaments = await Promise.all(participations.rows.map(async (p) => {
+        const allParticipants = await db.execute(
+          `SELECT * FROM survival_participants 
+          WHERE tournament_id = ${p.tournamentId}`
+        );
+
+        const remainingParticipants = allParticipants.rows.filter(participant => 
+          participant.status === 'active' || participant.status === 'winner'
+        ).length;
+
+        const userParticipant = allParticipants.rows.find(participant => 
+          participant.user_id === userId && participant.tournament_id === p.tournamentId
+        );
+
+        const predictions = await db.execute(
+          `SELECT * FROM survival_predictions 
+          WHERE participant_id = ${userParticipant?.id || 0}
+          LIMIT 1`
+        );
+
+        const finalPosition = p.status === 'winner' ? 1 : 
+          p.status === 'eliminated' ? allParticipants.rows.filter(participant => 
+            participant.eliminated_round && participant.eliminated_round >= (p.eliminatedRound || 0)
+          ).length + 1 : 0;
+
+        return {
+          id: p.tournamentId,
+          title: p.tournamentTitle,
+          cryptocurrency: p.cryptocurrency,
+          status: p.status,
+          round: p.currentRound || 1,
+          eliminatedRound: p.eliminatedRound,
+          wonRound: p.status === 'winner' ? p.currentRound : null,
+          totalParticipants: p.totalParticipants || allParticipants.rows.length,
+          remainingParticipants: remainingParticipants,
+          prizePool: p.rewardAmount || 0,
+          entryFee: p.entryFee || 0,
+          joinedAt: p.joinedAt || new Date().toISOString(),
+          prediction: predictions.rows[0]?.prediction || null,
+          eliminatedAt: p.eliminatedAt || null,
+          wonAt: p.status === 'winner' ? p.endTime : null,
+          finalPosition: finalPosition
+        };
+      }));
+
+      const totalTournaments = tournaments.length;
+      const tournamentsWon = tournaments.filter(t => t.status === 'winner').length;
+      const totalWinnings = tournaments
+        .filter(t => t.status === 'winner')
+        .reduce((sum, t) => sum + t.prizePool, 0);
+      
+      const eliminatedTournaments = tournaments.filter(t => t.eliminatedRound);
+      const averageRoundsReached = eliminatedTournaments.length > 0 
+        ? eliminatedTournaments.reduce((sum, t) => sum + (t.eliminatedRound || 0), 0) / eliminatedTournaments.length
+        : 0;
+      
+      const bestFinish = tournaments.reduce((best, t) => {
+        if (t.finalPosition && (best === 0 || t.finalPosition < best)) {
+          return t.finalPosition;
+        }
+        return best;
+      }, 0);
+      
+      const winRate = totalTournaments > 0 ? (tournamentsWon / totalTournaments) * 100 : 0;
+
+      const survivalStatus = {
+        tournaments: tournaments,
+        stats: {
+          totalTournaments,
+          tournamentsWon,
+          totalWinnings,
+          averageRoundsReached: Math.round(averageRoundsReached * 10) / 10,
+          bestFinish: bestFinish || 999,
+          winRate: Math.round(winRate * 10) / 10
+        }
+      };
+
       res.json(survivalStatus);
     } catch (error) {
       console.error('Error fetching user survival status:', error);
