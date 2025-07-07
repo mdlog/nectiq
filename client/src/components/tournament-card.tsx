@@ -271,6 +271,34 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                 </div>
               </div>
             )}
+
+            {/* Completed Rounds Results for Completed Tournaments */}
+            {tournament.status === 'completed' && tournament.rounds && tournament.rounds.length > 0 && (
+              <div className="border-t border-yellow-600 pt-2 mt-2">
+                <div className="font-medium text-sm mb-2">Tournament Results:</div>
+                <div className="space-y-1">
+                  {tournament.rounds
+                    .filter(round => round.status === 'completed')
+                    .sort((a, b) => a.roundNumber - b.roundNumber)
+                    .map(round => {
+                      const startPrice = parseFloat(round.startPrice?.toString() || '0');
+                      const endPrice = parseFloat(round.endPrice?.toString() || '0');
+                      const priceChange = endPrice - startPrice;
+                      const priceChangePercent = startPrice > 0 ? ((priceChange / startPrice) * 100) : 0;
+                      
+                      return (
+                        <div key={round.id} className="flex justify-between items-center text-xs bg-black/20 p-2 rounded">
+                          <span className="font-medium">Round {round.roundNumber}:</span>
+                          <span className="font-mono">${startPrice.toFixed(2)} → ${endPrice.toFixed(2)}</span>
+                          <span className={`font-bold ${priceChange >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                            {priceChange >= 0 ? '↗ UP' : '↘ DOWN'} ({priceChangePercent >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -299,9 +327,11 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
           <h4 className="font-semibold mb-2">Round Structure:</h4>
           <div className="grid grid-cols-3 gap-2 text-xs">
             {[1, 2, 3].map(roundNum => {
-              // Find the round data to get starting price
+              // Find the round data to get starting and ending prices
               const roundData = tournament.rounds?.find(r => r.roundNumber === roundNum);
               const startingPrice = roundData?.startPrice ? parseFloat(roundData.startPrice.toString()) : null;
+              const endingPrice = roundData?.endPrice ? parseFloat(roundData.endPrice.toString()) : null;
+              const isRoundCompleted = roundData?.status === 'completed';
               
               return (
                 <div
@@ -318,10 +348,27 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                 >
                   <div className="font-semibold">Round {roundNum}</div>
                   <div>{getRoundDuration(tournament, roundNum)} min</div>
-                  {/* Show starting price if round has started */}
+                  
+                  {/* Show start price if round has started */}
                   {startingPrice && (
                     <div className="text-[10px] mt-1 opacity-90">
                       Start: ${Number(startingPrice).toFixed(2)}
+                    </div>
+                  )}
+                  
+                  {/* Show end price if round is completed */}
+                  {isRoundCompleted && endingPrice && (
+                    <div className="text-[10px] opacity-90">
+                      End: ${Number(endingPrice).toFixed(2)}
+                    </div>
+                  )}
+                  
+                  {/* Show price direction if round is completed */}
+                  {isRoundCompleted && startingPrice && endingPrice && (
+                    <div className={`text-[10px] font-bold mt-1 ${
+                      endingPrice > startingPrice ? 'text-green-300' : 'text-red-300'
+                    }`}>
+                      {endingPrice > startingPrice ? '↗ UP' : '↘ DOWN'}
                     </div>
                   )}
                 </div>
