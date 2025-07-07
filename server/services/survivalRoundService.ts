@@ -9,15 +9,15 @@ export class SurvivalRoundService {
   static getInstance(): SurvivalRoundService {
     if (!SurvivalRoundService.instance) {
       SurvivalRoundService.instance = new SurvivalRoundService();
-      // Disabled global checker to prevent auto-completion of unrelated tournaments
-      // Only start specific tournament rounds when explicitly called
+      // Start the global round checker for automatic elimination processing
+      SurvivalRoundService.instance.startGlobalRoundChecker();
     }
     return SurvivalRoundService.instance;
   }
 
   // Start global round checker that monitors all active tournaments
   private startGlobalRoundChecker() {
-    console.log('🚀 Starting global survival round checker...');
+    console.log('🚀 Starting global survival round checker for automatic elimination...');
     
     // Check every 30 seconds for expired rounds
     setInterval(async () => {
@@ -33,6 +33,10 @@ export class SurvivalRoundService {
   private async checkAllActiveTournaments() {
     try {
       const activeTournaments = await storage.getActiveSurvivalTournaments();
+      
+      if (activeTournaments.length > 0) {
+        console.log(`🔍 Checking ${activeTournaments.length} active tournaments for expired rounds...`);
+      }
       
       for (const tournament of activeTournaments) {
         await this.checkAndProcessExpiredRounds(tournament.id);

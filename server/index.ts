@@ -128,6 +128,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Initialize survival round service for automatic elimination
+console.log('🔧 Initializing Survival Round Service...');
+survivalRoundService;
+
 (async () => {
   const server = await registerRoutes(app);
 
