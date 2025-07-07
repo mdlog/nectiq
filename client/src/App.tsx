@@ -13,8 +13,6 @@ import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
 
 import SurvivalGame from "@/pages/survival-game";
-import SurvivalTest from "@/pages/survival-test";
-import SurvivalSimple from "@/pages/survival-simple";
 import SurvivalFixed from "@/pages/survival-fixed";
 import NotFound from "@/pages/not-found";
 import HowToPlay from "@/pages/how-to-play";
