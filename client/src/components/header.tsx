@@ -455,7 +455,7 @@ export function Header() {
                     location === '/leaderboard' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
                   }`}
                 >
-                  🏆 Leaderboard
+                  Leaderboard
                 </button>
                 <button 
                   onClick={() => {
