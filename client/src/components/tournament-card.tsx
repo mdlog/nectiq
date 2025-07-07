@@ -198,7 +198,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
   const currentUser = (participants as any[])?.find((p: any) => p.userId === user?.id);
   const isEliminated = currentUser?.status === 'eliminated';
   const userCurrentPrediction = currentUser?.prediction;
-  const eliminationRound = currentUser?.eliminationRound;
+  const eliminationRound = currentUser?.eliminatedRound;
 
   // Check if user can make prediction
   const canPredict = hasJoined && tournament.status === 'active' && tournament.currentRound > 0 && !isEliminated && !userCurrentPrediction;
@@ -329,6 +329,51 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
             })}
           </div>
         </div>
+
+        {/* User Status Section */}
+        {hasJoined && (
+          <div className="mb-4 p-3 rounded-lg border border-slate-600 bg-slate-800/50">
+            <h4 className="font-semibold mb-2 text-sm">Your Status:</h4>
+            <div className="space-y-2">
+              {isEliminated ? (
+                <div className="flex items-center gap-2">
+                  <X className="h-4 w-4 text-red-500" />
+                  <Badge className="bg-red-600 text-white text-xs">ELIMINATED</Badge>
+                  <span className="text-red-400 text-xs">Round {eliminationRound || 'Unknown'}</span>
+                </div>
+              ) : currentUser?.status === 'active' ? (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <Badge className="bg-green-600 text-white text-xs">ACTIVE</Badge>
+                  <span className="text-green-400 text-xs">Still in tournament</span>
+                </div>
+              ) : currentUser?.status === 'winner' ? (
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-yellow-500" />
+                  <Badge className="bg-yellow-600 text-white text-xs">WINNER</Badge>
+                  <span className="text-yellow-400 text-xs">Tournament champion!</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                  <Badge className="bg-orange-600 text-white text-xs">UNKNOWN</Badge>
+                  <span className="text-orange-400 text-xs">Status unknown</span>
+                </div>
+              )}
+              
+              {/* Show prediction for current round if made */}
+              {userCurrentPrediction && tournament.status === 'active' && !isEliminated && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-gray-400">Current prediction:</span>
+                  <div className={`flex items-center gap-1 ${userCurrentPrediction.toLowerCase() === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                    {userCurrentPrediction.toLowerCase() === 'up' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    <span className="font-semibold text-xs">{userCurrentPrediction.toUpperCase()}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Tournament Actions */}
         <div className="space-y-3">
