@@ -4752,12 +4752,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             try {
               // Get current cryptocurrency price
-              const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${tournament.cryptocurrency}&vs_currencies=usd`);
-              const cryptoData = await cryptoResponse.json();
-              const currentPrice = cryptoData[tournament.cryptocurrency]?.usd || 0;
+              console.log(`Fetching price for new round - cryptocurrency: ${tournament.cryptocurrency}`);
+              let currentPrice = 0;
               
-              if (currentPrice === 0) {
-                throw new Error('Unable to fetch current price for new round');
+              try {
+                const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${tournament.cryptocurrency}&vs_currencies=usd`);
+                const cryptoData = await cryptoResponse.json();
+                currentPrice = cryptoData[tournament.cryptocurrency]?.usd || 0;
+                
+                if (currentPrice === 0) {
+                  throw new Error('CoinGecko returned zero price');
+                }
+              } catch (apiError) {
+                console.log('CoinGecko API failed, trying internal fallback...');
+                // Try internal crypto prices as fallback
+                const internalResponse = await fetch('http://localhost:5000/api/crypto/prices');
+                const internalData = await internalResponse.json();
+                const cryptoMatch = internalData.find(crypto => 
+                  crypto.id === tournament.cryptocurrency || 
+                  crypto.symbol.toLowerCase() === tournament.cryptocurrency.toLowerCase()
+                );
+                
+                if (cryptoMatch && cryptoMatch.current_price) {
+                  currentPrice = cryptoMatch.current_price;
+                  console.log(`Using internal fallback price: $${currentPrice}`);
+                } else {
+                  throw new Error('Unable to fetch current price for new round');
+                }
               }
               
               const startTime = new Date();
@@ -4829,16 +4850,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get current cryptocurrency price from CoinGecko
       let currentPrice = 0;
       try {
+        console.log(`Fetching price for cryptocurrency: ${tournament.cryptocurrency}`);
         const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${tournament.cryptocurrency}&vs_currencies=usd`);
+        
+        if (!cryptoResponse.ok) {
+          throw new Error(`CoinGecko API returned ${cryptoResponse.status}: ${cryptoResponse.statusText}`);
+        }
+        
         const cryptoData = await cryptoResponse.json();
+        console.log('CoinGecko response:', cryptoData);
+        
         currentPrice = cryptoData[tournament.cryptocurrency]?.usd || 0;
         
         if (currentPrice === 0) {
-          throw new Error('Unable to fetch current price');
+          throw new Error(`Unable to fetch current price for ${tournament.cryptocurrency}`);
         }
+        
+        console.log(`Successfully fetched price: $${currentPrice}`);
       } catch (error) {
         console.error('Error fetching current price:', error);
-        return res.status(500).json({ message: 'Unable to get current cryptocurrency price. Please try again.' });
+        console.error('Tournament cryptocurrency:', tournament.cryptocurrency);
+        
+        // Try alternative approach - use our existing crypto prices endpoint as fallback
+        try {
+          console.log('Attempting fallback to internal crypto prices...');
+          const internalResponse = await fetch('http://localhost:5000/api/crypto/prices');
+          const internalData = await internalResponse.json();
+          
+          // Find matching cryptocurrency in our internal data
+          const cryptoMatch = internalData.find(crypto => 
+            crypto.id === tournament.cryptocurrency || 
+            crypto.symbol.toLowerCase() === tournament.cryptocurrency.toLowerCase() ||
+            crypto.name.toLowerCase() === tournament.cryptocurrency.toLowerCase()
+          );
+          
+          if (cryptoMatch && cryptoMatch.current_price) {
+            currentPrice = cryptoMatch.current_price;
+            console.log(`Fallback successful: Using internal price $${currentPrice}`);
+          } else {
+            throw new Error('No matching cryptocurrency found in internal data');
+          }
+        } catch (fallbackError) {
+          console.error('Fallback method also failed:', fallbackError);
+          return res.status(500).json({ message: 'Unable to get current cryptocurrency price. Please try again.' });
+        }
       }
 
       // Deduct entry fee from user balance
