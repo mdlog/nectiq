@@ -433,6 +433,278 @@ export default function HowToPlay() {
           </Card>
         </section>
 
+        {/* Battle Mode Guide */}
+        <section>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-4">How to Play: Prediction Battles</h2>
+            <p className="text-muted-foreground">Challenge other players in head-to-head prediction battles</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="border-blue-500/20 bg-blue-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center text-blue-600">
+                  <Users className="mr-2 h-5 w-5" />
+                  Creating a Battle
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">1</div>
+                    <div>
+                      <p className="font-medium">Select Cryptocurrency</p>
+                      <p className="text-sm text-muted-foreground">Choose any supported crypto from the dropdown menu</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">2</div>
+                    <div>
+                      <p className="font-medium">Set Battle Duration</p>
+                      <p className="text-sm text-muted-foreground">Choose timeframe: 1 hour, 6 hours, 24 hours, or 7 days</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">3</div>
+                    <div>
+                      <p className="font-medium">Set Stake Amount</p>
+                      <p className="text-sm text-muted-foreground">Stake between 50-500 NTIQ (both players stake same amount)</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">4</div>
+                    <div>
+                      <p className="font-medium">Make Price Prediction</p>
+                      <p className="text-sm text-muted-foreground">Enter your predicted price for the end of the battle period</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-500/20 bg-purple-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center text-purple-600">
+                  <Target className="mr-2 h-5 w-5" />
+                  Joining a Battle
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">1</div>
+                    <div>
+                      <p className="font-medium">Browse Open Battles</p>
+                      <p className="text-sm text-muted-foreground">View available battles on the Battles page</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">2</div>
+                    <div>
+                      <p className="font-medium">Check Battle Details</p>
+                      <p className="text-sm text-muted-foreground">Review cryptocurrency, stake amount, and time remaining</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">3</div>
+                    <div>
+                      <p className="font-medium">Join Before Deadline</p>
+                      <p className="text-sm text-muted-foreground">Join within first 80% of battle duration to ensure fairness</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">4</div>
+                    <div>
+                      <p className="font-medium">Make Your Prediction</p>
+                      <p className="text-sm text-muted-foreground">Enter your price prediction and confirm to join the battle</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="mt-6 border-green-500/20 bg-green-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center text-green-600">
+                <Award className="mr-2 h-5 w-5" />
+                Battle Results & Rewards
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Trophy className="w-8 h-8 text-green-500" />
+                  </div>
+                  <h4 className="font-semibold mb-2">Winner Takes All</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Player with most accurate prediction wins both stakes (2x their original stake)
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Target className="w-8 h-8 text-yellow-500" />
+                  </div>
+                  <h4 className="font-semibold mb-2">Tie Scenario</h4>
+                  <p className="text-sm text-muted-foreground">
+                    If predictions are equally accurate (±0.01%), both players get their stakes refunded
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Clock className="w-8 h-8 text-blue-500" />
+                  </div>
+                  <h4 className="font-semibold mb-2">Fairness System</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Anti-gaming features prevent last-minute joining and ensure fair competition
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Survival Tournament Guide */}
+        <section>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-4">How to Play: Survival Tournaments</h2>
+            <p className="text-muted-foreground">Battle royale-style prediction tournaments with elimination rounds</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="border-orange-500/20 bg-orange-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center text-orange-600">
+                  <Users className="mr-2 h-5 w-5" />
+                  Tournament Structure
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start">
+                    <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">R1</div>
+                    <div>
+                      <p className="font-medium">Round 1 (15 minutes)</p>
+                      <p className="text-sm text-muted-foreground">All participants predict UP or DOWN price movement</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">R2</div>
+                    <div>
+                      <p className="font-medium">Round 2 (30 minutes)</p>
+                      <p className="text-sm text-muted-foreground">Survivors continue with longer prediction window</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">R3</div>
+                    <div>
+                      <p className="font-medium">Round 3 (1 hour)</p>
+                      <p className="text-sm text-muted-foreground">Final round determines the ultimate winner</p>
+                    </div>
+                  </div>
+                  <div className="bg-yellow-100 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                      <AlertCircle className="w-4 h-4 inline mr-1" />
+                      Wrong predictions result in immediate elimination!
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-red-500/20 bg-red-500/5">
+              <CardHeader>
+                <CardTitle className="flex items-center text-red-600">
+                  <Target className="mr-2 h-5 w-5" />
+                  How to Participate
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">1</div>
+                    <div>
+                      <p className="font-medium">Join Tournament</p>
+                      <p className="text-sm text-muted-foreground">Pay entry fee (varies per tournament) to participate</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">2</div>
+                    <div>
+                      <p className="font-medium">Make Predictions</p>
+                      <p className="text-sm text-muted-foreground">Choose UP or DOWN for each round before time expires</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">3</div>
+                    <div>
+                      <p className="font-medium">Survive Elimination</p>
+                      <p className="text-sm text-muted-foreground">Correct predictions advance you to the next round</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">4</div>
+                    <div>
+                      <p className="font-medium">Win the Prize Pool</p>
+                      <p className="text-sm text-muted-foreground">Last survivor wins the accumulated prize pool</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="mt-6 border-purple-500/20 bg-purple-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center text-purple-600">
+                <Trophy className="mr-2 h-5 w-5" />
+                Prize Pool & Rewards
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <DollarSign className="w-6 h-6 text-purple-500" />
+                  </div>
+                  <h4 className="font-semibold text-sm">Entry Fees</h4>
+                  <p className="text-xs text-muted-foreground">All entry fees form the prize pool</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Award className="w-6 h-6 text-green-500" />
+                  </div>
+                  <h4 className="font-semibold text-sm">Winner Takes All</h4>
+                  <p className="text-xs text-muted-foreground">Last survivor wins entire pool</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Users className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <h4 className="font-semibold text-sm">More Players</h4>
+                  <p className="text-xs text-muted-foreground">Bigger prize pools with more participants</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Zap className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <h4 className="font-semibold text-sm">Quick Rounds</h4>
+                  <p className="text-xs text-muted-foreground">Fast-paced elimination gameplay</p>
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+                <h4 className="font-semibold mb-2 text-center">Example Tournament Scenario</h4>
+                <div className="text-sm text-center space-y-1">
+                  <p>10 players × 100 NTIQ entry fee = 1,000 NTIQ prize pool</p>
+                  <p className="text-green-600 font-medium">Winner receives full 1,000 NTIQ reward!</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* Tips & Strategies */}
         <section>
           <h2 className="text-3xl font-bold mb-6 text-center">Tips & Strategies</h2>
