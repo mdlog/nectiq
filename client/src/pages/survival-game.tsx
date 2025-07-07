@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
+import { useState, useMemo } from 'react';
 import { TournamentCard } from '@/components/tournament-card';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Types
 interface SurvivalTournament {
@@ -53,6 +57,11 @@ interface CryptoPrice {
 }
 
 const SurvivalGame = () => {
+  // State for pagination and search
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const tournamentsPerPage = 4; // 4 tournaments per page
+
   // Fetch semua tournament (open dan active)
   const { data: tournaments = [], isLoading: tournamentLoading, error: tournamentError } = useQuery<SurvivalTournament[]>({
     queryKey: ['/api/survival-tournaments'],
@@ -60,8 +69,33 @@ const SurvivalGame = () => {
     retry: 1
   });
 
-  // Tampilkan semua tournament (open, active, dan completed)
-  const displayTournaments = tournaments.filter(t => t.status === 'open' || t.status === 'active' || t.status === 'completed');
+  // Filter and search tournaments
+  const filteredTournaments = useMemo(() => {
+    let filtered = tournaments.filter(t => t.status === 'open' || t.status === 'active' || t.status === 'completed');
+    
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(tournament => 
+        tournament.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tournament.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tournament.cryptocurrency.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tournament.status.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [tournaments, searchQuery]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredTournaments.length / tournamentsPerPage);
+  const startIndex = (currentPage - 1) * tournamentsPerPage;
+  const endIndex = startIndex + tournamentsPerPage;
+  const displayTournaments = filteredTournaments.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search query changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
 
   // Fetch user data
   const { data: user } = useQuery({
@@ -160,6 +194,28 @@ const SurvivalGame = () => {
               </p>
             </div>
 
+            {/* Search and Filters */}
+            <div className="mb-6">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search tournaments by title, cryptocurrency, or status..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {filteredTournaments.length > 0 ? (
+                    `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredTournaments.length)} of ${filteredTournaments.length} tournaments`
+                  ) : (
+                    'No tournaments found'
+                  )}
+                </div>
+              </div>
+            </div>
+
 
 
           {/* Tournament Grid */}
@@ -176,37 +232,106 @@ const SurvivalGame = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <h2 className="text-2xl font-semibold mb-4">No Active Tournaments</h2>
+              <h2 className="text-2xl font-semibold mb-4">
+                {searchQuery ? 'No tournaments found' : 'No Active Tournaments'}
+              </h2>
               <p className="text-muted-foreground mb-6">
-                There are currently no survival tournaments available. 
-                New tournaments are created regularly by administrators.
+                {searchQuery ? (
+                  <>Try adjusting your search terms or check back later for new tournaments.</>
+                ) : (
+                  <>There are currently no survival tournaments available. 
+                  New tournaments are created regularly by administrators.</>
+                )}
               </p>
-              <p className="text-sm text-muted-foreground">
-                Check back soon or contact an administrator to create new tournaments.
-              </p>
+              {!searchQuery && (
+                <p className="text-sm text-muted-foreground">
+                  Check back soon or contact an administrator to create new tournaments.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {filteredTournaments.length > tournamentsPerPage && (
+            <div className="mt-8 flex justify-center items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show first page, last page, current page, and pages around current page
+                  const showPage = page === 1 || 
+                                  page === totalPages || 
+                                  (page >= currentPage - 1 && page <= currentPage + 1);
+                  
+                  if (!showPage) {
+                    // Show ellipsis
+                    if (page === 2 && currentPage > 3) {
+                      return <span key={page} className="px-2 text-muted-foreground">...</span>;
+                    }
+                    if (page === totalPages - 1 && currentPage < totalPages - 2) {
+                      return <span key={page} className="px-2 text-muted-foreground">...</span>;
+                    }
+                    return null;
+                  }
+                  
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-2"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           )}
 
           {/* Tournament Stats */}
-          {displayTournaments.length > 0 && (
+          {filteredTournaments.length > 0 && (
             <div className="mt-12 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg p-6">
-              <h3 className="text-xl font-semibold mb-4">Tournament Statistics</h3>
+              <h3 className="text-xl font-semibold mb-4">
+                {searchQuery ? 'Search Results Statistics' : 'Tournament Statistics'}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {displayTournaments.filter(t => t.status === 'active' || t.status === 'open').length}
+                    {filteredTournaments.filter(t => t.status === 'active' || t.status === 'open').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Active Tournaments</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {displayTournaments.reduce((total, t) => total + t.currentParticipants, 0)}
+                    {filteredTournaments.reduce((total, t) => total + t.currentParticipants, 0)}
                   </div>
                   <div className="text-sm text-muted-foreground">Total Participants</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {displayTournaments.reduce((total, t) => total + t.prizePool, 0)} NTIQ
+                    {filteredTournaments.reduce((total, t) => total + t.prizePool, 0)} NTIQ
                   </div>
                   <div className="text-sm text-muted-foreground">Total Prize Pool</div>
                 </div>
