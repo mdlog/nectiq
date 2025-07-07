@@ -185,7 +185,7 @@ export function Header() {
               How to Play
             </button>
 
-            {address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
+            {user?.isAdmin && (
               <button 
                 onClick={() => setLocation('/admin')} 
                 className={`transition-colors font-semibold ${
@@ -476,6 +476,20 @@ export function Header() {
                 >
                   How to Play
                 </button>
+
+                {user?.isAdmin && (
+                  <button 
+                    onClick={() => {
+                      setLocation('/admin');
+                      setIsMobileMenuOpen(false);
+                    }} 
+                    className={`block w-full text-left px-3 py-2 rounded-lg transition-colors font-semibold ${
+                      location === '/admin' ? "text-white font-bold bg-primary" : "text-primary hover:text-primary/80 hover:bg-surface-light"
+                    }`}
+                  >
+                    Admin
+                  </button>
+                )}
                 {user?.isAdmin && (
                   <button 
                     onClick={() => {
