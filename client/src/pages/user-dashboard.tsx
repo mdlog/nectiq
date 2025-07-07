@@ -207,14 +207,15 @@ export default function UserDashboard() {
 
   const { data: prices = [], isLoading: pricesLoading, refetch: refetchPrices } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 3000, // Real-time updates every 3 seconds
+    refetchInterval: 15000, // Reduced to 15 seconds to prevent rate limiting
   });
 
   // Get real-time crypto prices for dynamic logo display in predictions
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 1000,
-    staleTime: 30000, // 30 seconds
+    refetchInterval: 15000, // Reduced to 15 seconds to prevent rate limiting
+    staleTime: 10000, // 10 seconds
+    retry: 2, // Retry failed requests
   });
 
   // Auto-select Bitcoin as default when prices are loaded

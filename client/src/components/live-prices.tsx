@@ -37,9 +37,10 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
 
   const { data: prices = [], isLoading } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
+    refetchInterval: 15000, // Reduced to 15 seconds to prevent rate limiting
     refetchIntervalInBackground: true, // Continue updating when tab is not active
-    staleTime: 5000, // 5 seconds for price data
+    staleTime: 10000, // 10 seconds for price data
+    retry: 2, // Retry failed requests
   });
 
   // Sort prices by market cap (highest price first)

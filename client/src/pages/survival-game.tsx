@@ -69,10 +69,12 @@ const SurvivalGame = () => {
     retry: false
   });
 
-  // Fetch crypto prices
+  // Fetch crypto prices (reduced frequency to avoid rate limits)
   const { data: cryptoPrices = [] } = useQuery<CryptoPrice[]>({
     queryKey: ['/api/crypto/prices'],
-    refetchInterval: 2000, // Refresh every 2 seconds
+    refetchInterval: 10000, // Refresh every 10 seconds instead of 2
+    staleTime: 5000, // Data considered fresh for 5 seconds
+    retry: 2,
   });
 
   if (tournamentLoading) {
@@ -98,6 +100,32 @@ const SurvivalGame = () => {
   }
 
   if (tournamentError) {
+    // Don't show error for rate limiting, show loading instead
+    const errorMessage = String(tournamentError);
+    const isRateLimit = errorMessage.includes('429') || errorMessage.includes('Too many requests');
+    
+    if (isRateLimit) {
+      return (
+        <>
+          <Header />
+          <main className="min-h-screen bg-background">
+            <div className="container mx-auto px-4 py-8 max-w-6xl">
+              <div className="text-center py-12">
+                <h1 className="text-3xl font-bold mb-4">Nectiq Survival Mode</h1>
+                <p className="text-yellow-600 mb-8">Loading tournaments... Please wait</p>
+                <div className="animate-pulse space-y-4">
+                  {[1, 2, 3].map(n => (
+                    <div key={n} className="h-64 bg-gray-200 rounded-lg"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </>
+      );
+    }
+    
     return (
       <>
         <Header />
@@ -105,7 +133,7 @@ const SurvivalGame = () => {
           <div className="container mx-auto px-4 py-8 max-w-6xl">
             <div className="text-center py-12">
               <h1 className="text-3xl font-bold mb-4">Nectiq Survival Mode</h1>
-              <p className="text-red-600 mb-8">Error loading tournaments: {String(tournamentError)}</p>
+              <p className="text-red-600 mb-8">Error loading tournaments: {errorMessage}</p>
             </div>
           </div>
         </main>

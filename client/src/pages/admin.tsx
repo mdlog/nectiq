@@ -465,7 +465,7 @@ export default function AdminPanel() {
   // Get crypto prices for logos
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
+    refetchInterval: 20000, // Reduced to 20 seconds to prevent rate limiting
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
   });
