@@ -2256,6 +2256,20 @@ export class DatabaseStorage implements IStorage {
 
   // Get participant's prediction for specific round
   async getParticipantRoundPrediction(userId: number, tournamentId: number, roundNumber: number): Promise<any> {
+    // First get the round ID for this tournament and round number
+    const [round] = await db
+      .select()
+      .from(survivalRounds)
+      .where(
+        and(
+          eq(survivalRounds.tournamentId, tournamentId),
+          eq(survivalRounds.roundNumber, roundNumber)
+        )
+      );
+    
+    if (!round) return null;
+    
+    // Then get the prediction for this round
     const [prediction] = await db
       .select()
       .from(survivalPredictions)
@@ -2263,7 +2277,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(survivalPredictions.userId, userId),
           eq(survivalPredictions.tournamentId, tournamentId),
-          eq(survivalPredictions.roundNumber, roundNumber)
+          eq(survivalPredictions.roundId, round.id)
         )
       );
     return prediction;

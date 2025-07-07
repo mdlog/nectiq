@@ -19,30 +19,39 @@ export class SurvivalRoundService {
   private startGlobalRoundChecker() {
     console.log('🚀 Starting global survival round checker for automatic elimination...');
     
-    // Check every 30 seconds for expired rounds
+    // Check every 10 seconds for expired rounds (faster debugging)
     setInterval(async () => {
       try {
         await this.checkAllActiveTournaments();
       } catch (error) {
         console.error('Error in global round checker:', error);
       }
-    }, 30000); // Check every 30 seconds
+    }, 10000); // Check every 10 seconds
+    
+    // Also run initial check after 5 seconds
+    setTimeout(async () => {
+      console.log('🚀 [CHECKER] Running initial check after server startup...');
+      await this.checkAllActiveTournaments();
+    }, 5000);
   }
 
   // Check all active tournaments for expired rounds
   private async checkAllActiveTournaments() {
     try {
+      console.log(`🔍 [CHECKER] Running global round checker at ${new Date().toISOString()}`);
       const activeTournaments = await storage.getActiveSurvivalTournaments();
       
       if (activeTournaments.length > 0) {
-        console.log(`🔍 Checking ${activeTournaments.length} active tournaments for expired rounds...`);
-      }
-      
-      for (const tournament of activeTournaments) {
-        await this.checkAndProcessExpiredRounds(tournament.id);
+        console.log(`🔍 [CHECKER] Found ${activeTournaments.length} active tournaments for expired rounds...`);
+        for (const tournament of activeTournaments) {
+          console.log(`🔍 [CHECKER] Checking tournament ${tournament.id} (${tournament.title}) - Status: ${tournament.status}`);
+          await this.checkAndProcessExpiredRounds(tournament.id);
+        }
+      } else {
+        console.log(`🔍 [CHECKER] No active tournaments found`);
       }
     } catch (error) {
-      console.error('Error checking active tournaments:', error);
+      console.error('[CHECKER] Error checking active tournaments:', error);
     }
   }
 
@@ -50,18 +59,26 @@ export class SurvivalRoundService {
   private async checkAndProcessExpiredRounds(tournamentId: number) {
     try {
       const currentRound = await storage.getCurrentRound(tournamentId);
-      if (!currentRound) return;
+      if (!currentRound) {
+        console.log(`🔍 [CHECKER] Tournament ${tournamentId} has no current round`);
+        return;
+      }
 
       const now = new Date();
       const endTime = new Date(currentRound.endTime);
+      const timeLeft = endTime.getTime() - now.getTime();
+      
+      console.log(`🔍 [CHECKER] Tournament ${tournamentId} Round ${currentRound.roundNumber}: Status=${currentRound.status}, TimeLeft=${Math.round(timeLeft/1000)}s`);
       
       // Check if current round has expired
       if (now >= endTime && currentRound.status === 'active') {
-        console.log(`⏰ Round ${currentRound.roundNumber} expired for tournament ${tournamentId}, processing...`);
+        console.log(`⏰ [CHECKER] Round ${currentRound.roundNumber} EXPIRED for tournament ${tournamentId}, processing...`);
         await this.processExpiredRound(tournamentId, currentRound.id);
+      } else if (currentRound.status === 'completed') {
+        console.log(`✅ [CHECKER] Round ${currentRound.roundNumber} already completed for tournament ${tournamentId}`);
       }
     } catch (error) {
-      console.error(`Error checking expired rounds for tournament ${tournamentId}:`, error);
+      console.error(`[CHECKER] Error checking expired rounds for tournament ${tournamentId}:`, error);
     }
   }
 
