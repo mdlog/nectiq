@@ -82,7 +82,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
     );
   }
 
-  console.log('TournamentCard rendering for:', tournament.id, tournament.title);
+
 
   // Helper function to get individual round duration
   const getRoundDuration = (tournament: SurvivalTournament, roundNumber: number): number => {
@@ -206,7 +206,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
   // Get current round info
   const currentRound = tournament.rounds?.find(r => r.roundNumber === tournament.currentRound);
   const roundEndTime = currentRound?.endTime || tournament.nextRoundTime;
-  const startingPrice = currentRound?.startPrice || 0;
+  const startingPrice = parseFloat(currentRound?.startPrice?.toString() || '0') || 0;
 
   try {
     return (
@@ -235,9 +235,9 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                 <span className="font-semibold">{currentCrypto.name}</span>
               </div>
               <div className="text-right">
-                <div className="font-bold">${currentPrice.toFixed(2)}</div>
+                <div className="font-bold">${Number(currentPrice).toFixed(2)}</div>
                 <div className={`text-sm ${priceChange24h >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                  {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
+                  {priceChange24h >= 0 ? '+' : ''}{Number(priceChange24h).toFixed(2)}%
                 </div>
               </div>
             </div>
@@ -248,17 +248,17 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                 <div className="flex justify-between items-center text-sm">
                   <div>
                     <span className="font-medium">Starting Price:</span>
-                    <span className="ml-1">${startingPrice.toFixed(2)}</span>
+                    <span className="ml-1">${Number(startingPrice).toFixed(2)}</span>
                   </div>
                   <div className="text-right">
                     {(() => {
-                      const priceDiff = currentPrice - startingPrice;
-                      const priceDiffPercent = ((priceDiff / startingPrice) * 100);
+                      const priceDiff = Number(currentPrice) - Number(startingPrice);
+                      const priceDiffPercent = ((priceDiff / Number(startingPrice)) * 100);
                       return (
                         <div className={`font-medium ${priceDiff >= 0 ? 'text-green-800' : 'text-red-800'}`}>
-                          {priceDiff >= 0 ? '+' : ''}${priceDiff.toFixed(2)} 
+                          {priceDiff >= 0 ? '+' : ''}${Number(priceDiff).toFixed(2)} 
                           <span className="text-xs ml-1">
-                            ({priceDiff >= 0 ? '+' : ''}{priceDiffPercent.toFixed(2)}%)
+                            ({priceDiff >= 0 ? '+' : ''}{Number(priceDiffPercent).toFixed(2)}%)
                           </span>
                         </div>
                       );
