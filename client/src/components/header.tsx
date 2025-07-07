@@ -482,19 +482,7 @@ export function Header() {
                     Admin
                   </button>
                 )}
-                {user?.isAdmin && (
-                  <button 
-                    onClick={() => {
-                      setLocation('/admin');
-                      setIsMobileMenuOpen(false);
-                    }} 
-                    className={`block w-full text-left px-3 py-2 rounded-lg transition-colors font-semibold ${
-                      location === '/admin' ? "text-white font-bold bg-surface-light" : "text-primary hover:text-primary/80 hover:bg-surface-light"
-                    }`}
-                  >
-                    Admin
-                  </button>
-                )}
+
               </nav>
 
               {/* User Information Section */}
