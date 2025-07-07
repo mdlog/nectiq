@@ -172,6 +172,7 @@ export interface IStorage {
   getSurvivalPredictions(roundId: number): Promise<any[]>;
   updateSurvivalTournament(id: number, updates: any): Promise<void>;
   deleteSurvivalTournament(id: number): Promise<void>;
+  getUserSurvivalStatus(userId: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2747,6 +2748,126 @@ export class MemStorage implements IStorage {
     return {
       totalReferrals: stats?.totalReferrals || 0,
       totalRewards: stats?.totalRewards || 0,
+    };
+  }
+
+  async getUserSurvivalStatus(userId: number): Promise<any> {
+    // Get all user's tournament participations
+    const participations = await db
+      .select({
+        tournamentId: survivalParticipants.tournamentId,
+        tournamentTitle: survivalTournaments.title,
+        cryptocurrency: survivalTournaments.cryptocurrency,
+        status: survivalParticipants.status,
+        eliminatedRound: survivalParticipants.eliminatedRound,
+        joinedAt: survivalParticipants.joinedAt,
+        eliminatedAt: survivalParticipants.eliminatedAt,
+        tournamentStatus: survivalTournaments.status,
+        entryFee: survivalTournaments.entryFee,
+        rewardAmount: survivalTournaments.rewardAmount,
+        rewardType: survivalTournaments.rewardType,
+        winnerId: survivalTournaments.winnerId,
+        currentRound: survivalTournaments.currentRound,
+        endTime: survivalTournaments.endTime,
+        totalParticipants: survivalTournaments.maxParticipants,
+        rounds: survivalTournaments.rounds
+      })
+      .from(survivalParticipants)
+      .innerJoin(survivalTournaments, eq(survivalParticipants.tournamentId, survivalTournaments.id))
+      .where(eq(survivalParticipants.userId, userId))
+      .orderBy(desc(survivalParticipants.joinedAt));
+
+    // Process tournament data
+    const tournaments = await Promise.all(participations.map(async (p: any) => {
+      // Get remaining participants for this tournament
+      const allParticipants = await this.getSurvivalParticipants(p.tournamentId);
+      const remainingParticipants = allParticipants.filter((participant: any) => 
+        participant.status === 'active'
+      ).length;
+
+      // Get user's latest prediction for this tournament
+      const predictions = await db
+        .select({
+          prediction: survivalPredictions.prediction
+        })
+        .from(survivalPredictions)
+        .where(
+          and(
+            eq(survivalPredictions.userId, userId),
+            eq(survivalPredictions.tournamentId, p.tournamentId)
+          )
+        )
+        .orderBy(desc(survivalPredictions.createdAt))
+        .limit(1);
+
+      // Determine final position if eliminated or completed
+      let finalPosition = null;
+      if (p.status === 'eliminated' || p.status === 'winner') {
+        const allFinishedParticipants = allParticipants.filter((participant: any) => 
+          participant.status === 'eliminated' || participant.status === 'winner'
+        );
+        // Sort by elimination round (higher round = better position)
+        allFinishedParticipants.sort((a: any, b: any) => {
+          if (a.status === 'winner') return -1;
+          if (b.status === 'winner') return 1;
+          return (b.eliminatedRound || 0) - (a.eliminatedRound || 0);
+        });
+        finalPosition = allFinishedParticipants.findIndex((participant: any) => 
+          participant.userId === userId
+        ) + 1;
+      }
+
+      return {
+        id: p.tournamentId,
+        title: p.tournamentTitle,
+        cryptocurrency: p.cryptocurrency,
+        status: p.status,
+        round: p.currentRound || 1,
+        eliminatedRound: p.eliminatedRound,
+        wonRound: p.status === 'winner' ? p.currentRound : null,
+        totalParticipants: p.totalParticipants || allParticipants.length,
+        remainingParticipants: remainingParticipants,
+        prizePool: p.rewardAmount || 0,
+        entryFee: p.entryFee || 0,
+        joinedAt: p.joinedAt,
+        prediction: predictions[0]?.prediction || null,
+        eliminatedAt: p.eliminatedAt,
+        wonAt: p.status === 'winner' ? p.endTime : null,
+        finalPosition: finalPosition
+      };
+    }));
+
+    // Calculate statistics
+    const totalTournaments = tournaments.length;
+    const tournamentsWon = tournaments.filter(t => t.status === 'winner').length;
+    const totalWinnings = tournaments
+      .filter(t => t.status === 'winner')
+      .reduce((sum, t) => sum + t.prizePool, 0);
+    
+    const eliminatedTournaments = tournaments.filter(t => t.eliminatedRound);
+    const averageRoundsReached = eliminatedTournaments.length > 0 
+      ? eliminatedTournaments.reduce((sum, t) => sum + (t.eliminatedRound || 0), 0) / eliminatedTournaments.length
+      : 0;
+    
+    const bestFinish = tournaments.reduce((best, t) => {
+      if (t.finalPosition && (best === 0 || t.finalPosition < best)) {
+        return t.finalPosition;
+      }
+      return best;
+    }, 0);
+    
+    const winRate = totalTournaments > 0 ? (tournamentsWon / totalTournaments) * 100 : 0;
+
+    return {
+      tournaments: tournaments,
+      stats: {
+        totalTournaments,
+        tournamentsWon,
+        totalWinnings,
+        averageRoundsReached: Math.round(averageRoundsReached * 10) / 10,
+        bestFinish: bestFinish || 999,
+        winRate: Math.round(winRate * 10) / 10
+      }
     };
   }
 }

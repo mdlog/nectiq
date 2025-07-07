@@ -24,6 +24,7 @@ import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 import { ReferralSection } from "@/components/referral-section";
 import { LoyaltyTier } from "@/components/loyalty-tier";
 import { FinancialWallet } from "@/components/financial-wallet";
+import { SurvivalStatus } from "@/components/survival-status";
 
 
 // Dynamic function to get crypto image from live API data
@@ -2043,6 +2044,9 @@ function UserProfile() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Survival Tournament Status */}
+      <SurvivalStatus />
 
       {/* Referral Section */}
       <ReferralSection />

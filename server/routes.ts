@@ -5098,6 +5098,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user survival tournament status
+  app.get('/api/user/survival-status', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      
+      const survivalStatus = await storage.getUserSurvivalStatus(userId);
+      res.json(survivalStatus);
+    } catch (error) {
+      console.error('Error fetching user survival status:', error);
+      res.status(500).json({ message: 'Failed to fetch survival status' });
+    }
+  });
+
   // Get current round status for tournament
   app.get('/api/survival-tournaments/:id/current-round', async (req: Request, res: Response) => {
     try {
