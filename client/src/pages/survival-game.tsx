@@ -64,15 +64,16 @@ const SurvivalGame = () => {
   const activeTournaments = tournaments.filter(t => t.status === 'open' || t.status === 'active');
   
   // Debug logging
-  console.log('=== SURVIVAL PAGE DEBUG ===');
+  console.log('=== SURVIVAL PAGE RENDER START ===');
   console.log('Tournament loading:', tournamentLoading);
-  console.log('Tournament error:', tournamentError);
-  console.log('All tournaments count:', tournaments.length);
+  console.log('Tournament error:', tournamentError?.message || 'none');
+  console.log('All tournaments count:', tournaments?.length || 0);
   console.log('All tournaments:', tournaments);
-  console.log('Active tournaments count:', activeTournaments.length);
+  console.log('Active tournaments count:', activeTournaments?.length || 0);
   console.log('Active tournaments:', activeTournaments);
   console.log('User data:', user);
-  console.log('Crypto prices count:', cryptoPrices.length);
+  console.log('Crypto prices count:', cryptoPrices?.length || 0);
+  console.log('About to render component...');
   console.log('=== END DEBUG ===');
 
   // Fetch user data
@@ -126,6 +127,8 @@ const SurvivalGame = () => {
     );
   }
 
+  console.log('=== SURVIVAL PAGE RENDERING MAIN COMPONENT ===');
+  
   return (
     <>
       <Header />
@@ -141,30 +144,67 @@ const SurvivalGame = () => {
               Join survival tournaments where you predict cryptocurrency price movements. 
               Make the wrong prediction and get eliminated. Last survivor wins the prize pool!
             </p>
+            
+            {/* Debug Info for User */}
+            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm text-left max-w-md mx-auto">
+              <h3 className="font-bold mb-2">Debug Info:</h3>
+              <p>Loading: {tournamentLoading ? 'Yes' : 'No'}</p>
+              <p>Error: {tournamentError ? 'Yes' : 'No'}</p>
+              <p>Tournaments: {tournaments.length}</p>
+              <p>Active: {activeTournaments.length}</p>
+              <p>User: {user ? user.username : 'Not logged in'}</p>
+              <p>Crypto Prices: {cryptoPrices.length}</p>
+            </div>
           </div>
 
           {/* Tournament Grid */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">Tournament Status</h2>
+            <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-lg mb-6">
+              <p><strong>Loading:</strong> {tournamentLoading ? 'Yes' : 'No'}</p>
+              <p><strong>Error:</strong> {tournamentError ? JSON.stringify(tournamentError) : 'None'}</p>
+              <p><strong>Total Tournaments:</strong> {tournaments.length}</p>
+              <p><strong>Active Tournaments:</strong> {activeTournaments.length}</p>
+            </div>
+          </div>
+
           {activeTournaments.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {activeTournaments.map((tournament) => {
-                try {
-                  return (
-                    <TournamentCard
-                      key={tournament.id}
-                      tournament={tournament}
-                      user={user}
-                      cryptoPrices={cryptoPrices}
-                    />
-                  );
-                } catch (error) {
-                  console.error('Error rendering tournament card:', error, tournament);
-                  return (
-                    <div key={tournament.id} className="bg-red-100 p-4 rounded-lg">
-                      <p className="text-red-600">Error loading tournament: {tournament.title}</p>
-                    </div>
-                  );
-                }
-              })}
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">Active Tournaments ({activeTournaments.length})</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {activeTournaments.map((tournament) => {
+                  console.log('Rendering tournament:', tournament.id, tournament.title);
+                  try {
+                    return (
+                      <div key={tournament.id} className="bg-blue-50 dark:bg-blue-900 p-6 rounded-lg border">
+                        <h3 className="text-xl font-bold text-blue-900 dark:text-blue-100 mb-2">{tournament.title}</h3>
+                        <p className="text-gray-700 dark:text-gray-300 mb-2">{tournament.description}</p>
+                        <div className="space-y-2 text-sm">
+                          <p><strong>Status:</strong> {tournament.status}</p>
+                          <p><strong>Cryptocurrency:</strong> {tournament.cryptocurrency}</p>
+                          <p><strong>Entry Fee:</strong> {tournament.entryFee} NTIQ</p>
+                          <p><strong>Current Round:</strong> {tournament.currentRound}</p>
+                          <p><strong>Participants:</strong> {tournament.currentParticipants}/{tournament.maxParticipants}</p>
+                          <p><strong>Prize Pool:</strong> {tournament.prizePool} NTIQ</p>
+                        </div>
+                        <div className="mt-4">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            TournamentCard component temporarily replaced with simple display for debugging
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  } catch (error) {
+                    console.error('Error rendering tournament card:', error, tournament);
+                    return (
+                      <div key={tournament.id} className="bg-red-100 dark:bg-red-900 p-4 rounded-lg">
+                        <p className="text-red-600 dark:text-red-300">Error loading tournament: {tournament.title}</p>
+                        <pre className="text-xs mt-2">{JSON.stringify(error, null, 2)}</pre>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
             </div>
           ) : tournaments.length > 0 ? (
             <div className="text-center py-12">
@@ -172,9 +212,13 @@ const SurvivalGame = () => {
               <p className="text-muted-foreground mb-6">
                 There are {tournaments.length} tournaments, but none are currently accepting participants or active.
               </p>
-              <p className="text-sm text-muted-foreground">
-                Tournament statuses: {tournaments.map(t => t.status).join(', ')}
-              </p>
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-left max-w-lg mx-auto">
+                {tournaments.map((t, i) => (
+                  <p key={i} className="text-sm">
+                    <strong>{t.title}:</strong> {t.status}
+                  </p>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="text-center py-12">
