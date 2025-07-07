@@ -14,6 +14,7 @@ import BattlesPage from "@/pages/battles";
 
 import SurvivalGame from "@/pages/survival-game";
 import SurvivalTest from "@/pages/survival-test";
+import SurvivalSimple from "@/pages/survival-simple";
 import NotFound from "@/pages/not-found";
 import HowToPlay from "@/pages/how-to-play";
 import TermsConditions from "@/pages/terms-conditions";
@@ -88,7 +89,7 @@ function Router() {
       
       <Route path="/survival">
         <ProtectedRoute>
-          <SurvivalGame />
+          <SurvivalSimple />
         </ProtectedRoute>
       </Route>
       
