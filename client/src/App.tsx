@@ -88,7 +88,7 @@ function Router() {
       
       <Route path="/survival">
         <ProtectedRoute>
-          <SurvivalTest />
+          <SurvivalGame />
         </ProtectedRoute>
       </Route>
       

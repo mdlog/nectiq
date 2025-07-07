@@ -76,7 +76,7 @@ const SurvivalGame = () => {
   console.log('About to render component...');
   console.log('=== END DEBUG ===');
 
-  // Fetch user data
+  // Fetch user data  
   const { data: user } = useQuery({
     queryKey: ['/api/user'],
     retry: false
@@ -176,23 +176,12 @@ const SurvivalGame = () => {
                   console.log('Rendering tournament:', tournament.id, tournament.title);
                   try {
                     return (
-                      <div key={tournament.id} className="bg-blue-50 dark:bg-blue-900 p-6 rounded-lg border">
-                        <h3 className="text-xl font-bold text-blue-900 dark:text-blue-100 mb-2">{tournament.title}</h3>
-                        <p className="text-gray-700 dark:text-gray-300 mb-2">{tournament.description}</p>
-                        <div className="space-y-2 text-sm">
-                          <p><strong>Status:</strong> {tournament.status}</p>
-                          <p><strong>Cryptocurrency:</strong> {tournament.cryptocurrency}</p>
-                          <p><strong>Entry Fee:</strong> {tournament.entryFee} NTIQ</p>
-                          <p><strong>Current Round:</strong> {tournament.currentRound}</p>
-                          <p><strong>Participants:</strong> {tournament.currentParticipants}/{tournament.maxParticipants}</p>
-                          <p><strong>Prize Pool:</strong> {tournament.prizePool} NTIQ</p>
-                        </div>
-                        <div className="mt-4">
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            TournamentCard component temporarily replaced with simple display for debugging
-                          </p>
-                        </div>
-                      </div>
+                      <TournamentCard
+                        key={tournament.id}
+                        tournament={tournament}
+                        user={user}
+                        cryptoPrices={cryptoPrices}
+                      />
                     );
                   } catch (error) {
                     console.error('Error rendering tournament card:', error, tournament);
