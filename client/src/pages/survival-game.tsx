@@ -5,7 +5,8 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
 
 // Types
 interface SurvivalTournament {
@@ -57,9 +58,10 @@ interface CryptoPrice {
 }
 
 const SurvivalGame = () => {
-  // State for pagination and search
+  // State for pagination, search, and filtering
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const tournamentsPerPage = 4; // 4 tournaments per page
 
   // Fetch semua tournament (open dan active)
@@ -73,6 +75,12 @@ const SurvivalGame = () => {
   const filteredTournaments = useMemo(() => {
     let filtered = tournaments.filter(t => t.status === 'open' || t.status === 'active' || t.status === 'completed');
     
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(tournament => tournament.status === statusFilter);
+    }
+    
+    // Apply search query
     if (searchQuery.trim()) {
       filtered = filtered.filter(tournament => 
         tournament.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -83,7 +91,7 @@ const SurvivalGame = () => {
     }
     
     return filtered;
-  }, [tournaments, searchQuery]);
+  }, [tournaments, searchQuery, statusFilter]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredTournaments.length / tournamentsPerPage);
@@ -91,11 +99,24 @@ const SurvivalGame = () => {
   const endIndex = startIndex + tournamentsPerPage;
   const displayTournaments = filteredTournaments.slice(startIndex, endIndex);
 
-  // Reset to page 1 when search query changes
+  // Reset to page 1 when search query or filter changes
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
   };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all';
 
   // Fetch user data
   const { data: user } = useQuery({
@@ -196,15 +217,42 @@ const SurvivalGame = () => {
 
             {/* Search and Filters */}
             <div className="mb-6">
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search tournaments by title, cryptocurrency, or status..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    className="pl-10"
-                  />
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+                <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search tournaments by title, cryptocurrency, or status..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <div className="relative min-w-[180px]">
+                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+                    <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                      <SelectTrigger className="pl-10">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Tournaments</SelectItem>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="flex items-center gap-2 whitespace-nowrap"
+                    >
+                      <X className="h-4 w-4" />
+                      Clear Filters
+                    </Button>
+                  )}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {filteredTournaments.length > 0 ? (
@@ -233,17 +281,17 @@ const SurvivalGame = () => {
           ) : (
             <div className="text-center py-12">
               <h2 className="text-2xl font-semibold mb-4">
-                {searchQuery ? 'No tournaments found' : 'No Active Tournaments'}
+                {searchQuery || statusFilter !== 'all' ? 'No tournaments found' : 'No Active Tournaments'}
               </h2>
               <p className="text-muted-foreground mb-6">
-                {searchQuery ? (
-                  <>Try adjusting your search terms or check back later for new tournaments.</>
+                {searchQuery || statusFilter !== 'all' ? (
+                  <>Try adjusting your search terms or filters, or check back later for new tournaments.</>
                 ) : (
                   <>There are currently no survival tournaments available. 
                   New tournaments are created regularly by administrators.</>
                 )}
               </p>
-              {!searchQuery && (
+              {!searchQuery && statusFilter === 'all' && (
                 <p className="text-sm text-muted-foreground">
                   Check back soon or contact an administrator to create new tournaments.
                 </p>
