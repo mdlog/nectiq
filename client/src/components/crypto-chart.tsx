@@ -172,8 +172,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const maxValue = Math.max(...values);
     const valueRange = maxValue - minValue || 1;
 
-    // Draw grid lines
-    ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
+    // Draw premium grid lines
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.15)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
       const y = topPadding + (chartHeight * i) / 5;
@@ -183,9 +183,31 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.stroke();
     }
 
-    // Draw price line
-    ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
-    ctx.lineWidth = 2;
+    // Draw vertical grid lines
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.1)';
+    for (let i = 0; i <= 10; i++) {
+      const x = leftPadding + (chartWidth * i) / 10;
+      ctx.beginPath();
+      ctx.moveTo(x, topPadding);
+      ctx.lineTo(x, topPadding + chartHeight);
+      ctx.stroke();
+    }
+
+    // Draw premium price line with gradient
+    const gradient = ctx.createLinearGradient(0, 0, chartWidth, 0);
+    if (priceChange24h >= 0) {
+      gradient.addColorStop(0, '#10b981');
+      gradient.addColorStop(0.5, '#34d399');
+      gradient.addColorStop(1, '#6ee7b7');
+    } else {
+      gradient.addColorStop(0, '#ef4444');
+      gradient.addColorStop(0.5, '#f87171');
+      gradient.addColorStop(1, '#fca5a5');
+    }
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+    ctx.shadowBlur = 10;
     ctx.beginPath();
 
     chartData.forEach((point, index) => {
@@ -201,12 +223,21 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
     ctx.stroke();
 
-    // Draw gradient fill
-    const gradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
-    gradient.addColorStop(0, priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)');
-    gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+    // Draw premium gradient fill
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    const areaGradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
+    if (priceChange24h >= 0) {
+      areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+      areaGradient.addColorStop(0.5, 'rgba(16, 185, 129, 0.2)');
+      areaGradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
+    } else {
+      areaGradient.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
+      areaGradient.addColorStop(0.5, 'rgba(239, 68, 68, 0.2)');
+      areaGradient.addColorStop(1, 'rgba(239, 68, 68, 0.05)');
+    }
     
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = areaGradient;
     ctx.beginPath();
     ctx.moveTo(leftPadding, topPadding + chartHeight);
     chartData.forEach((point, index) => {
@@ -218,30 +249,47 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.closePath();
     ctx.fill();
 
-    // Draw price labels
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '12px sans-serif';
+    // Draw premium price labels
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'right';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+    ctx.shadowBlur = 3;
     
     for (let i = 0; i <= 5; i++) {
       const value = maxValue - (valueRange * i) / 5;
       const y = topPadding + (chartHeight * i) / 5;
-      ctx.fillText(`$${value.toFixed(2)}`, leftPadding - 5, y + 4);
+      
+      // Format price with appropriate decimal places
+      let formattedValue = value.toLocaleString(undefined, {
+        minimumFractionDigits: value >= 1 ? 2 : 6,
+        maximumFractionDigits: value >= 1 ? 2 : 6
+      });
+      
+      ctx.fillText(`$${formattedValue}`, leftPadding - 12, y + 5);
     }
+    
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
 
-    // Draw date labels at the bottom
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '11px sans-serif';
+    // Draw premium date labels at the bottom
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 2;
     
     chartData.forEach((point, index) => {
       const dateLabel = formatDateLabel(point.time, index, chartData.length);
       if (dateLabel) {
         const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
-        const y = topPadding + chartHeight + 20;
+        const y = topPadding + chartHeight + 25;
         ctx.fillText(dateLabel, x, y);
       }
     });
+    
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
 
     // Draw real-time price indicator at the edge of the chart
     if (chartData.length > 0) {
@@ -249,35 +297,75 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const priceY = topPadding + chartHeight - ((lastPrice - minValue) / valueRange) * chartHeight;
       const rightEdge = leftPadding + chartWidth;
 
-      // Draw price line extending to the right edge
+      // Draw premium price line extending to the right edge
       ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 4]);
+      ctx.shadowColor = priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+      ctx.shadowBlur = 5;
       ctx.beginPath();
-      ctx.moveTo(rightEdge - 40, priceY);
+      ctx.moveTo(rightEdge - 50, priceY);
       ctx.lineTo(rightEdge, priceY);
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
 
-      // Draw price label background
-      const priceText = `$${currentPrice.toFixed(2)}`;
-      ctx.font = 'bold 12px sans-serif';
+      // Draw premium price label background
+      const priceText = `$${currentPrice.toLocaleString(undefined, {
+        minimumFractionDigits: currentPrice >= 1 ? 2 : 6,
+        maximumFractionDigits: currentPrice >= 1 ? 2 : 6
+      })}`;
+      ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
       ctx.textAlign = 'left';
       const textWidth = ctx.measureText(priceText).width;
-      const labelPadding = 6;
-      const labelHeight = 20;
+      const labelPadding = 8;
+      const labelHeight = 26;
       
-      ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
-      ctx.fillRect(rightEdge + 5, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+      // Create gradient background for price label
+      const labelGradient = ctx.createLinearGradient(rightEdge + 8, priceY - labelHeight/2, rightEdge + 8 + textWidth + labelPadding * 2, priceY + labelHeight/2);
+      if (priceChange24h >= 0) {
+        labelGradient.addColorStop(0, '#059669');
+        labelGradient.addColorStop(1, '#047857');
+      } else {
+        labelGradient.addColorStop(0, '#dc2626');
+        labelGradient.addColorStop(1, '#b91c1c');
+      }
+      
+      ctx.fillStyle = labelGradient;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      ctx.shadowBlur = 6;
+      ctx.fillRect(rightEdge + 8, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
 
-      // Draw price text
+      // Draw price label border
+      ctx.strokeStyle = priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(rightEdge + 8, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+
+      // Draw premium price text
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(priceText, rightEdge + 5 + labelPadding, priceY + 4);
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+      ctx.shadowBlur = 2;
+      ctx.fillText(priceText, rightEdge + 8 + labelPadding, priceY + 5);
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
 
-      // Draw small circle at the price point
+      // Draw premium glowing circle at the price point
       ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      ctx.shadowColor = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      ctx.shadowBlur = 8;
       ctx.beginPath();
-      ctx.arc(rightEdge - 40, priceY, 3, 0, Math.PI * 2);
+      ctx.arc(rightEdge - 50, priceY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+
+      // Add inner white circle for premium effect
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(rightEdge - 50, priceY, 2, 0, Math.PI * 2);
       ctx.fill();
     }
   };
@@ -441,41 +529,49 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   ];
 
   return (
-    <Card className="bg-surface border-surface-light mx-2 md:mx-0 rounded-xl md:rounded-lg">
-      <CardHeader className="pb-3 px-4 md:px-6">
-        {/* Mobile-optimized header layout */}
-        <div className="space-y-3">
+    <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 shadow-2xl backdrop-blur-sm mx-2 md:mx-0 rounded-2xl">
+      <CardHeader className="pb-4 px-6">
+        {/* Premium header layout */}
+        <div className="space-y-4">
           {/* Title and Price Info */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="text-primary" size={20} />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-slate-600/30">
+                  <BarChart3 className="text-white" size={24} />
+                </div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-md"></div>
+              </div>
               <div>
-                <div className="text-lg md:text-xl font-bold">
+                <div className="text-xl md:text-2xl font-bold text-white">
                   {name} ({symbol.toUpperCase()})
                 </div>
-                <div className="text-lg font-semibold text-slate-300 mt-0.5">
-                  ${currentPrice.toLocaleString()}
+                <div className="text-2xl md:text-3xl font-bold text-emerald-400 mt-1">
+                  ${currentPrice.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: currentPrice >= 1 ? 2 : 6
+                  })}
                 </div>
               </div>
             </div>
             
-            {/* Price Change Badge */}
+            {/* Premium Price Change Badge */}
             <div className="flex items-center">
-              <span className={`flex items-center text-sm md:text-base px-3 py-2 rounded-full font-medium ${
+              <div className={`flex items-center px-4 py-2 rounded-xl font-bold text-lg shadow-lg border ${
                 priceChange24h >= 0 
-                  ? 'text-green-400 bg-green-400/10' 
-                  : 'text-red-400 bg-red-400/10'
+                  ? 'text-green-400 bg-green-500/20 border-green-500/30 shadow-green-500/20' 
+                  : 'text-red-400 bg-red-500/20 border-red-500/30 shadow-red-500/20'
               }`}>
-                {priceChange24h >= 0 ? <TrendingUp size={16} className="mr-1.5" /> : <TrendingDown size={16} className="mr-1.5" />}
-                {priceChange24h.toFixed(2)}%
-              </span>
+                {priceChange24h >= 0 ? <TrendingUp size={20} className="mr-2" /> : <TrendingDown size={20} className="mr-2" />}
+                {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
+              </div>
             </div>
           </div>
         </div>
         
-        {/* Mobile-optimized Chart Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4">
-          {/* Timeframe Selector - Better mobile spacing */}
+        {/* Premium Chart Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-slate-700/30">
+          {/* Timeframe Selector - Premium styling */}
           <div className="flex gap-1 flex-wrap">
             {timeframeOptions.map((option) => (
               <Button
@@ -483,20 +579,28 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
                 variant={timeframe === option.value ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setTimeframe(option.value)}
-                className="h-9 px-4 text-sm font-medium min-w-[48px]"
+                className={`h-10 px-4 text-sm font-bold min-w-[52px] transition-all duration-200 ${
+                  timeframe === option.value 
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50 border border-slate-600/30'
+                }`}
               >
                 {option.label}
               </Button>
             ))}
           </div>
           
-          {/* Chart Type Selector - Better mobile sizing */}
-          <div className="flex gap-1">
+          {/* Chart Type Selector - Premium styling */}
+          <div className="flex gap-1 bg-slate-800/50 rounded-xl p-1 border border-slate-600/30">
             <Button
               variant={chartType === 'line' ? "default" : "ghost"}
               size="sm"
               onClick={() => setChartType('line')}
-              className="h-9 px-4 text-sm font-medium"
+              className={`h-9 px-5 text-sm font-bold transition-all duration-200 ${
+                chartType === 'line' 
+                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg' 
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+              }`}
             >
               Line
             </Button>
@@ -504,7 +608,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
               variant={chartType === 'candlestick' ? "default" : "ghost"}
               size="sm"
               onClick={() => setChartType('candlestick')}
-              className="h-9 px-4 text-sm font-medium"
+              className={`h-9 px-5 text-sm font-bold transition-all duration-200 ${
+                chartType === 'candlestick' 
+                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg' 
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+              }`}
             >
               Candles
             </Button>
@@ -513,33 +621,33 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       </CardHeader>
 
       <CardContent className="p-0">
-        {/* Chart Area - Mobile optimized */}
-        <div className="relative px-2 md:px-4">
+        {/* Premium Chart Area */}
+        <div className="relative px-4 pb-4">
           {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-surface/80 z-10 rounded-lg">
-              <div className="flex items-center gap-2 text-slate-400">
-                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
-                <span className="text-sm md:text-base">Loading Chart...</span>
+            <div className="absolute inset-4 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm z-10 rounded-xl border border-slate-700/50">
+              <div className="flex items-center gap-3 text-slate-300">
+                <div className="animate-spin w-7 h-7 border-3 border-slate-600 border-t-blue-500 rounded-full shadow-lg"></div>
+                <span className="text-sm font-semibold">Loading premium chart data...</span>
               </div>
             </div>
           )}
           
           <canvas 
             ref={canvasRef}
-            className="w-full h-[350px] md:h-[400px] bg-slate-900 rounded-lg"
+            className="w-full h-[350px] md:h-[400px] bg-gradient-to-br from-slate-900/90 via-slate-800/70 to-slate-900/90 rounded-xl border border-slate-700/50 shadow-2xl"
             style={{ minHeight: '350px' }}
           />
         </div>
 
-        {/* Predict Button - Mobile optimized with better spacing */}
+        {/* Premium Predict Button */}
         {onPredictClick && (
-          <div className="p-4 md:p-6">
+          <div className="p-6">
             <Button
               onClick={() => onPredictClick(cryptoId)}
-              className="w-full bg-primary hover:bg-primary/90 text-white py-4 md:py-3 text-lg font-semibold rounded-xl"
+              className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 text-white py-4 text-lg font-bold rounded-xl shadow-xl shadow-blue-500/25 border border-blue-500/30 transition-all duration-300 transform hover:scale-[1.02]"
               size="lg"
             >
-              <Target size={20} className="mr-2" />
+              <Target size={22} className="mr-3" />
               Make Prediction for {symbol.toUpperCase()}
             </Button>
           </div>
