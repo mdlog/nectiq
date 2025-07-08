@@ -535,7 +535,7 @@ export default function BattlesPage() {
 
                   {/* Opponent */}
                   <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">Opponent</p>
+                    <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">{battle.challenged?.username || 'Opponent'}</p>
                     <p className="font-semibold text-gray-900 dark:text-white">{battle.challenged?.username || 'N/A'}</p>
                     <p className="text-lg font-bold text-red-900 dark:text-red-100">
                       {battle.challengedPrediction ? `$${parseFloat(battle.challengedPrediction).toLocaleString(undefined, {
@@ -928,12 +928,12 @@ export default function BattlesPage() {
                             <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
                               <div className="text-center">
                                 <h4 className="font-medium text-purple-900 dark:text-purple-100 mb-2">
-                                  {battle.challengedUsername || 'Opponent'}
+                                  {battle.challenged?.username || 'Opponent'}
                                 </h4>
-                                {battle.challengedUsername ? (
+                                {battle.challenged?.username ? (
                                   <>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                      {battle.challengedUsername}
+                                      {battle.challenged.username}
                                     </p>
                                     <p className="text-lg font-semibold text-purple-900 dark:text-purple-100">
                                       ${parseFloat(battle.challengedPrediction || '0').toLocaleString(undefined, {
@@ -1042,7 +1042,7 @@ export default function BattlesPage() {
                           
                           <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                             <div className="font-semibold text-red-700 dark:text-red-300">
-                              {battle.challengedUsername || 'Opponent'}
+                              {battle.challenged?.username || 'Opponent'}
                             </div>
                             <div className="text-lg font-bold text-red-900 dark:text-red-100">
                               {battle.challengedPrediction && user && (user.id === battle.challengerId || user.id === battle.challengedId) ? (
