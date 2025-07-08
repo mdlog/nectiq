@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleSpectators, battleComments, battleReactions, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, predictionReactions, predictionComments, monthlyTierRewards, tierPromotions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleComments, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, monthlyTierRewards, tierPromotions, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 
@@ -747,9 +747,7 @@ export class DatabaseStorage implements IStorage {
       
       // 2. Delete all battle-related data
       console.log('Clearing battle data...');
-      await db.delete(battleReactions).where(eq(battleReactions.userId, id));
       await db.delete(battleComments).where(eq(battleComments.userId, id));
-      await db.delete(battleSpectators).where(eq(battleSpectators.userId, id));
       await db.delete(predictionBattles).where(or(
         eq(predictionBattles.challengerId, id),
         eq(predictionBattles.challengedId, id)
@@ -765,10 +763,9 @@ export class DatabaseStorage implements IStorage {
       await db.delete(userAchievements).where(eq(userAchievements.userId, id));
       await db.delete(userDailyChallenges).where(eq(userDailyChallenges.userId, id));
       
-      // 5. Delete social and interaction data
+      // 5. Delete social and interaction data (skip non-existent tables)
       console.log('Clearing social data...');
-      await db.delete(predictionReactions).where(eq(predictionReactions.userId, id));
-      await db.delete(predictionComments).where(eq(predictionComments.userId, id));
+      // Note: predictionReactions and predictionComments tables don't exist
       
       // 6. Delete transaction and financial logs
       console.log('Clearing transaction history...');
