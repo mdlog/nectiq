@@ -619,12 +619,29 @@ export default function BattlesPage() {
           </CardContent>
         </Card>
 
+        {/* Create Battle Button */}
+        <div className="mb-6 flex justify-center">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold">
+                <Swords className="mr-2 h-5 w-5" />
+                Create New Battle
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create Battle</DialogTitle>
+              </DialogHeader>
+              <PredictionBattles />
+            </DialogContent>
+          </Dialog>
+        </div>
+
         {/* Battles Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="live">Open Battles</TabsTrigger>
-            <TabsTrigger value="active">Active Battles</TabsTrigger>
-            <TabsTrigger value="create">Create Battle</TabsTrigger>
+            <TabsTrigger value="create">Active Battles</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           
@@ -789,7 +806,7 @@ export default function BattlesPage() {
             </div>
           </TabsContent>
           
-          <TabsContent value="active" className="mt-8">
+          <TabsContent value="create" className="mt-8">
             <div className="space-y-4">
               {battlesLoading ? (
                 <div className="text-center py-8">
@@ -936,10 +953,6 @@ export default function BattlesPage() {
                 </div>
               )}
             </div>
-          </TabsContent>
-          
-          <TabsContent value="create" className="mt-8">
-            <PredictionBattles />
           </TabsContent>
           
           <TabsContent value="history" className="mt-8">
