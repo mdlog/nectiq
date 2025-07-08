@@ -172,13 +172,15 @@ export default function Dashboard() {
               </Card>
             )}
             
-
-
             {/* Active Predictions */}
-            <ActivePredictions />
+            <div className="mt-8">
+              <ActivePredictions />
+            </div>
             
             {/* Events Section */}
-            <EventsSection />
+            <div className="mt-8">
+              <EventsSection />
+            </div>
           </div>
           
           {/* Right Sidebar */}
@@ -188,9 +190,10 @@ export default function Dashboard() {
           </div>
         </div>
         
-
-        
-        <LiveActivityFeed />
+        {/* Live Activity Feed */}
+        <div className="mt-12">
+          <LiveActivityFeed />
+        </div>
         
         {/* Running Price Ticker */}
         <div className="mt-12">
