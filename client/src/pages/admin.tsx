@@ -1736,6 +1736,7 @@ export default function AdminPanel() {
     try {
       for (const userId of selectedUsers) {
         try {
+          console.log(`🗑️ [BULK DELETE] Processing user ID: ${userId}`);
           const response = await fetch(`/api/admin/users/${userId}`, {
             method: "DELETE",
             credentials: "include",
@@ -1743,16 +1744,22 @@ export default function AdminPanel() {
               "Content-Type": "application/json",
             },
           });
+          console.log(`📡 [BULK DELETE] Response for user ${userId}: ${response.status} ${response.statusText}`);
+          
           if (!response.ok) {
             const errorText = await response.text();
+            console.error(`❌ [BULK DELETE] Failed for user ${userId}:`, errorText);
             throw new Error(errorText || "Failed to delete user");
           }
+          
+          const result = await response.json();
+          console.log(`✅ [BULK DELETE] Success for user ${userId}:`, result);
           successCount++;
         } catch (error: any) {
           errorCount++;
           const errorMsg = error?.message || error?.response?.data?.message || "Unknown error";
           errors.push(`User ${userId}: ${errorMsg}`);
-          console.error(`Error deleting user ${userId}:`, error);
+          console.error(`💥 [BULK DELETE] Error deleting user ${userId}:`, error);
         }
       }
 
@@ -2327,6 +2334,7 @@ export default function AdminPanel() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: number) => {
+      console.log(`🗑️ [FRONTEND] Starting deletion for user ID: ${userId}`);
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: "DELETE",
         credentials: "include",
@@ -2334,13 +2342,20 @@ export default function AdminPanel() {
           "Content-Type": "application/json",
         },
       });
+      console.log(`📡 [FRONTEND] Response status: ${response.status} ${response.statusText}`);
+      
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`❌ [FRONTEND] Delete failed with error:`, errorText);
         throw new Error(errorText || "Failed to delete user");
       }
-      return response.json();
+      
+      const result = await response.json();
+      console.log(`✅ [FRONTEND] Delete successful:`, result);
+      return result;
     },
     onSuccess: (data) => {
+      console.log(`🎉 [FRONTEND] Delete mutation success:`, data);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       toast({
@@ -2349,7 +2364,12 @@ export default function AdminPanel() {
       });
     },
     onError: (error: any) => {
-      console.error("Delete user error:", error);
+      console.error("💥 [FRONTEND] Delete user error:", error);
+      console.error("💥 [FRONTEND] Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       toast({
         title: "Error",
         description: error.message || "Failed to delete user",
