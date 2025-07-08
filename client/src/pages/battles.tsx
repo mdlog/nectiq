@@ -1114,10 +1114,10 @@ export default function BattlesPage() {
                                 {/* Percentage labels */}
                                 <div className="flex justify-between text-xs font-medium">
                                   <span className="text-blue-600 dark:text-blue-400">
-                                    {battle.challengerUsername}: {challengerWinProb}%
+                                    {battle.challenger?.username}: {challengerWinProb}%
                                   </span>
                                   <span className="text-red-600 dark:text-red-400">
-                                    {battle.challengedUsername}: {challengedWinProb}%
+                                    {battle.challenged?.username}: {challengedWinProb}%
                                   </span>
                                 </div>
                                 
