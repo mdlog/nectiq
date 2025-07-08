@@ -213,7 +213,6 @@
 .animate-scroll-up {
   animation: scroll-up 30s linear infinite;
 }
-}
 
 .ticker-container {
   overflow: hidden;
