@@ -368,9 +368,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user exists, if not create one
       let user = await storage.getUserByWalletAddress(finalAddress);
       if (!user) {
-        // Check if this is admin wallet
-        const ADMIN_WALLET = "0x4C6165286739696849Fb3e77A16b0639D762c5B6";
-        const isAdmin = finalAddress.toLowerCase() === ADMIN_WALLET.toLowerCase();
+        // Check if this is admin wallet using environment variable
+        const isAdmin = ADMIN_WALLET_ADDRESSES.includes(finalAddress.toLowerCase());
         
         // Auto-register new wallet address with random username
         const username = isAdmin ? `Admin_${finalAddress.slice(-6)}` : generateRandomUsername();
