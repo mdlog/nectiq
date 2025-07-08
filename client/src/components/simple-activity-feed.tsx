@@ -63,18 +63,39 @@ export function SimpleActivityFeed() {
 
   if (isLoading) {
     return (
-      <div className="bg-surface border border-surface-light rounded-xl p-4">
-        <div className="flex items-center space-x-2 mb-3">
-          <Activity className="text-primary animate-pulse" size={16} />
-          <h3 className="text-sm font-semibold text-slate-200">Live Activity</h3>
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 shadow-2xl backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="w-10 h-10 bg-gradient-to-r from-slate-700 to-slate-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Activity className="text-slate-400 animate-pulse" size={20} />
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-slate-600 rounded-full animate-pulse"></div>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Live Activity</h3>
+              <p className="text-xs text-slate-400">Loading predictions...</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="h-7 w-20 bg-slate-700 rounded-full animate-pulse"></div>
+          </div>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center space-x-3 animate-pulse">
-              <div className="w-6 h-6 bg-slate-700 rounded-full"></div>
-              <div className="flex-1">
-                <div className="h-3 bg-slate-700 rounded w-2/3 mb-1"></div>
-                <div className="h-2 bg-slate-800 rounded w-1/2"></div>
+            <div key={i} className="bg-slate-800/30 rounded-xl p-4 animate-pulse">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-slate-600 rounded-lg"></div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="h-4 bg-slate-600 rounded w-1/3"></div>
+                    <div className="h-4 bg-slate-600 rounded w-16"></div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="h-3 bg-slate-700 rounded w-20"></div>
+                    <div className="h-3 bg-slate-700 rounded w-16"></div>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -84,59 +105,92 @@ export function SimpleActivityFeed() {
   }
 
   return (
-    <div className="bg-surface border border-surface-light rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <Activity className="text-primary" size={16} />
-          <h3 className="text-sm font-semibold text-slate-200">Live Activity</h3>
-          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 shadow-2xl backdrop-blur-sm">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Activity className="text-white" size={20} />
+            </div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-white">Live Activity</h3>
+            <p className="text-xs text-slate-400">Real-time predictions</p>
+          </div>
         </div>
-        <Badge variant="secondary" className="bg-slate-800 text-slate-300 text-xs">
-          <Users size={12} className="mr-1" />
-          {activePredictions.length}
-        </Badge>
+        <div className="flex items-center space-x-2">
+          <Badge variant="secondary" className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 text-blue-300 text-sm px-3 py-1">
+            <Users size={14} className="mr-1" />
+            {activePredictions.length} active
+          </Badge>
+        </div>
       </div>
       
-      <div className="space-y-2 max-h-48 overflow-y-auto">
+      <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
         {activePredictions.length === 0 ? (
-          <div className="text-center py-4 text-slate-400">
-            <Activity className="h-6 w-6 mx-auto mb-1 opacity-50" />
-            <p className="text-xs">No active predictions</p>
+          <div className="text-center py-8 text-slate-400">
+            <div className="w-16 h-16 bg-gradient-to-r from-slate-700 to-slate-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+              <Activity className="h-8 w-8 opacity-50" />
+            </div>
+            <p className="text-sm font-medium">No active predictions</p>
+            <p className="text-xs text-slate-500 mt-1">Check back soon for live activity</p>
           </div>
         ) : (
           activePredictions.slice(0, 8).map((prediction) => (
             <div
               key={prediction.id}
-              className="flex items-center space-x-3 p-2 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-colors"
+              className="group relative bg-gradient-to-r from-slate-800/50 via-slate-700/30 to-slate-800/50 border border-slate-600/30 rounded-xl p-4 hover:from-slate-700/60 hover:via-slate-600/40 hover:to-slate-700/60 hover:border-slate-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/20"
             >
-              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-3 h-3 text-primary" />
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-medium text-slate-200 truncate">
-                      {prediction.username}
-                    </span>
-                    <Badge variant="outline" className="text-xs px-1 py-0 h-4 border-slate-600">
-                      {getCryptoName(prediction.cryptocurrency)}
-                    </Badge>
+              <div className="flex items-start space-x-3">
+                <div className="relative flex-shrink-0">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                    <TrendingUp className="w-4 h-4 text-white" />
                   </div>
-                  <div className="flex items-center space-x-1 text-xs text-slate-400">
-                    <Clock size={10} />
-                    <span>{formatTimeLeft(prediction.timeLeft)}</span>
-                  </div>
+                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></div>
                 </div>
                 
-                <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-xs text-slate-400">
-                    ${Number(prediction.predictedPrice).toLocaleString()}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {prediction.stakeAmount} NTIQ
-                  </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-semibold text-white truncate">
+                        {prediction.username}
+                      </span>
+                      <Badge variant="outline" className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-400/40 text-blue-300 text-xs px-2 py-0.5 h-5">
+                        {getCryptoName(prediction.cryptocurrency)}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center space-x-1.5 text-xs text-slate-300 bg-slate-700/40 rounded-full px-2 py-1">
+                      <Clock size={11} />
+                      <span className="font-medium">{formatTimeLeft(prediction.timeLeft)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-slate-400 mb-0.5">Target Price</span>
+                      <span className="text-sm font-bold text-emerald-400">
+                        ${Number(prediction.predictedPrice).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-xs text-slate-400 mb-0.5">Stake</span>
+                      <span className="text-sm font-bold text-amber-400">
+                        {prediction.stakeAmount} NTIQ
+                      </span>
+                    </div>
+                  </div>
                 </div>
+              </div>
+              
+              {/* Progress bar for time remaining */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-700/50 rounded-b-xl overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-1000"
+                  style={{ 
+                    width: `${Math.max(0, Math.min(100, (prediction.timeLeft / (24 * 3600)) * 100))}%` 
+                  }}
+                ></div>
               </div>
             </div>
           ))
