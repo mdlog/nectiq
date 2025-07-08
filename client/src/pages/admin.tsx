@@ -3783,8 +3783,8 @@ export default function AdminPanel() {
                   {filteredAndSortedLeaderboard.length === 0 && (
                     <div className="text-center py-8 text-slate-400">
                       <Award className="mx-auto mb-2" size={32} />
-                      <p>Tidak ada data leaderboard tersedia</p>
-                      <p className="text-sm">User akan muncul di sini setelah membuat prediksi</p>
+                      <p>No leaderboard data available</p>
+                      <p className="text-sm">Users will appear here after making predictions</p>
                     </div>
                   )}
                 </div>
@@ -3793,10 +3793,10 @@ export default function AdminPanel() {
                 <div className="mt-8 p-4 bg-primary/10 rounded-lg border border-primary/20">
                   <h4 className="text-lg font-bold text-primary mb-3 flex items-center">
                     <Trophy className="mr-2" size={18} />
-                    Fitur Lanjutan untuk Kompetisi Musiman
+                    Advanced Features for Seasonal Competition
                   </h4>
                   <p className="text-sm text-slate-300 mb-4">
-                    Jika Nectiq ingin mengadakan <strong>battle musiman</strong>:
+                    If Nectiq wants to hold <strong>seasonal battles</strong>:
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="space-y-2">
@@ -5291,7 +5291,7 @@ export default function AdminPanel() {
                   <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <h4 className="text-lg font-bold text-blue-700 dark:text-blue-300 mb-3 flex items-center">
                       <Lightbulb className="mr-2" size={18} />
-                      Rekomendasi Peningkatan
+                      Improvement Recommendations
                     </h4>
                     <div className="space-y-3 text-sm">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -5300,21 +5300,21 @@ export default function AdminPanel() {
                             <span className="text-yellow-500">🔄</span>
                             <div>
                               <strong>Dynamic Exchange Rate</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Integrasi ke price oracle (Chainlink, CoinGecko API) agar nilai tukar tidak statis</p>
+                              <p className="text-slate-600 dark:text-slate-300">Integration with price oracle (Chainlink, CoinGecko API) so exchange rates are not static</p>
                             </div>
                           </div>
                           <div className="flex items-start space-x-2">
                             <span className="text-red-500">🛑</span>
                             <div>
                               <strong>Emergency Stop Granular</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Pilih jenis: hanya stop withdrawal, atau total shutdown sistem</p>
+                              <p className="text-slate-600 dark:text-slate-300">Choose type: stop withdrawals only, or total system shutdown</p>
                             </div>
                           </div>
                           <div className="flex items-start space-x-2">
                             <span className="text-blue-500">📝</span>
                             <div>
                               <strong>History Tracking</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Setiap perubahan setting perlu audit log: siapa yang ubah, kapan, dari masa</p>
+                              <p className="text-slate-600 dark:text-slate-300">Every setting change needs audit log: who changed it, when, from which time</p>
                             </div>
                           </div>
                         </div>
@@ -5330,7 +5330,7 @@ export default function AdminPanel() {
                             <span className="text-purple-500">💾</span>
                             <div>
                               <strong>Preset Saving</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Bisa simpan dan kembalikan ke konfigurasi tertentu (mis. "Mode Panic", "Mode Event")</p>
+                              <p className="text-slate-600 dark:text-slate-300">Can save and restore to specific configurations (e.g., "Panic Mode", "Event Mode")</p>
                             </div>
                           </div>
                           <div className="flex items-start space-x-2">
