@@ -5,6 +5,11 @@ import dotenv from "dotenv";
 // Load environment variables
 dotenv.config();
 
+// Debug environment variables immediately after loading
+console.log("🔍 Environment variables loaded:");
+console.log("   ADMIN_WALLET_ADDRESSES:", process.env.ADMIN_WALLET_ADDRESSES);
+console.log("   NODE_ENV:", process.env.NODE_ENV);
+
 // Extend Express Request to include session
 declare module 'express-session' {
   interface SessionData {

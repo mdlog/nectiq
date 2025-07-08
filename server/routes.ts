@@ -87,25 +87,13 @@ const generateRandomUsername = (): string => {
   return `${adjective}${noun}${number}`;
 };
 
-// Authorized admin wallet addresses from environment variable for security
-// Fallback to direct configuration if environment variable is not loaded
-const adminWalletEnv = process.env.ADMIN_WALLET_ADDRESSES || "0x4c6165286739696849fb3e77a16b0639d762c5b6";
-const ADMIN_WALLET_ADDRESSES = adminWalletEnv
-  .split(',')
-  .map(addr => addr.trim().toLowerCase())
-  .filter(addr => addr.length > 0);
-
-// Debug admin wallet configuration
-console.log("🔍 Admin wallet configuration debug:");
-console.log("   Environment variable:", process.env.ADMIN_WALLET_ADDRESSES);
-console.log("   Parsed addresses:", ADMIN_WALLET_ADDRESSES);
-
-// Security check - admin wallets must be configured via environment variables
-if (ADMIN_WALLET_ADDRESSES.length === 0) {
-  console.error("🚨 SECURITY WARNING: ADMIN_WALLET_ADDRESSES environment variable not set!");
-  console.error("⚠️  Admin access will be denied until proper configuration is set.");
-} else {
-  console.log("✅ Admin wallet addresses configured successfully:", ADMIN_WALLET_ADDRESSES.length, "addresses");
+// Function to get admin wallet addresses - will be called when needed
+function getAdminWalletAddresses(): string[] {
+  const adminWalletEnv = process.env.ADMIN_WALLET_ADDRESSES || "0x4c6165286739696849fb3e77a16b0639d762c5b6";
+  return adminWalletEnv
+    .split(',')
+    .map(addr => addr.trim().toLowerCase())
+    .filter(addr => addr.length > 0);
 }
 
 // Admin IP whitelist for bypassing rate limiting
@@ -237,9 +225,19 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     // Strict admin verification - must have wallet address AND be in authorized list
+    const normalizedUserWallet = user.walletAddress?.toLowerCase();
+    const ADMIN_WALLET_ADDRESSES = getAdminWalletAddresses(); // Get fresh admin addresses
     const isAuthorizedAdmin = user.walletAddress && 
-      ADMIN_WALLET_ADDRESSES.includes(user.walletAddress.toLowerCase()) &&
+      ADMIN_WALLET_ADDRESSES.includes(normalizedUserWallet) &&
       user.authMethod === 'wallet'; // Ensure wallet authentication
+
+    // Debug admin check
+    console.log("🔍 Admin verification debug:");
+    console.log("   User wallet:", normalizedUserWallet);
+    console.log("   Environment variable:", process.env.ADMIN_WALLET_ADDRESSES);
+    console.log("   Authorized wallets:", ADMIN_WALLET_ADDRESSES);
+    console.log("   Auth method:", user.authMethod);
+    console.log("   Is admin authorized:", isAuthorizedAdmin);
 
     if (!isAuthorizedAdmin) {
       adminAttempts.set(clientIP, { 
