@@ -110,11 +110,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const date = new Date(timeStr);
     const actualDays = parseInt(getActualDaysToFetch(timeframe));
     
-    // Adjust max labels based on data range - more data needs fewer labels
-    let maxLabels = 6;
-    if (actualDays >= 28) maxLabels = 5;  // For 28+ days (14D timeframe), show fewer labels
-    if (actualDays >= 60) maxLabels = 5;  // For 60+ days, show fewer labels
-    if (actualDays >= 180) maxLabels = 4; // For 180+ days, show even fewer labels
+    // Show more labels for better date visibility like in the reference image
+    let maxLabels = 10;  // Increased to show more dates
+    if (actualDays >= 28) maxLabels = 8;   // For 28+ days (14D timeframe) 
+    if (actualDays >= 60) maxLabels = 7;   // For 60+ days
+    if (actualDays >= 180) maxLabels = 6;  // For 180+ days
     
     const step = Math.max(1, Math.floor(totalPoints / maxLabels));
     
@@ -123,13 +123,13 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     }
     
     if (actualDays <= 7) {
-      // For 7 days or less, show day and month
+      // For 7 days or less, show month and day
       return date.toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric' 
       });
-    } else if (actualDays <= 30) {
-      // For up to 30 days (including 14D timeframe), show day and month
+    } else if (actualDays <= 60) {
+      // For up to 60 days, show month and day in abbreviated format like "Jun 24"
       return date.toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric' 
@@ -276,23 +276,32 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     }
 
     // Draw enhanced date labels with background
-    ctx.font = 'bold 10px Inter, system-ui, sans-serif';
+    ctx.font = 'bold 11px Inter, system-ui, sans-serif';
     ctx.textAlign = 'center';
     
     chartData.forEach((point, index) => {
       const dateLabel = formatDateLabel(point.time, index, chartData.length);
       if (dateLabel) {
         const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
-        const y = topPadding + chartHeight + 20;
+        const y = topPadding + chartHeight + 22;
         
-        // Draw semi-transparent background for label
+        // Draw semi-transparent background for label with rounded corners effect
         const textMetrics = ctx.measureText(dateLabel);
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-        ctx.fillRect(x - textMetrics.width/2 - 4, y - 10, textMetrics.width + 8, 16);
+        const bgWidth = textMetrics.width + 10;
+        const bgHeight = 18;
         
-        // Draw label text
-        ctx.fillStyle = '#cbd5e1';
-        ctx.fillText(dateLabel, x, y + 2);
+        // Background with rounded rectangle effect
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.fillRect(x - bgWidth/2, y - 12, bgWidth, bgHeight);
+        
+        // Add subtle border
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x - bgWidth/2, y - 12, bgWidth, bgHeight);
+        
+        // Draw label text with better contrast
+        ctx.fillStyle = '#f1f5f9';
+        ctx.fillText(dateLabel, x, y + 3);
       }
     });
 
