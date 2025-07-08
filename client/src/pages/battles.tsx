@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +51,16 @@ export default function BattlesPage() {
   const [predictionPrice, setPredictionPrice] = useState('');
   const [historyPage, setHistoryPage] = useState(1);
   const [historyItemsPerPage] = useState(5);
+
+  // Create battle dialog state
+  const [createBattleDialogOpen, setCreateBattleDialogOpen] = useState(false);
+  const [createBattleForm, setCreateBattleForm] = useState({
+    cryptocurrency: '',
+    timeframe: '',
+    stakeAmount: 0,
+    challengerPrediction: 0
+  });
+
   const { toast } = useToast();
 
   // Check user authentication
@@ -223,6 +233,59 @@ export default function BattlesPage() {
         variant: "destructive"
       });
     }
+  };
+
+  // Create battle mutation
+  const createBattleMutation = useMutation({
+    mutationFn: async (battleData: any) => {
+      const response = await apiRequest('/api/battles/create', {
+        method: 'POST',
+        body: JSON.stringify(battleData)
+      });
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Battle created successfully!",
+      });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/battles/stats'] });
+      
+      setCreateBattleDialogOpen(false);
+      setCreateBattleForm({
+        cryptocurrency: '',
+        timeframe: '',
+        stakeAmount: 0,
+        challengerPrediction: 0
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed",
+        description: error.message || "Failed to create battle. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const submitCreateBattle = () => {
+    if (!createBattleForm.cryptocurrency || !createBattleForm.timeframe || !createBattleForm.stakeAmount || !createBattleForm.challengerPrediction) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    createBattleMutation.mutate(createBattleForm);
   };
 
   // Battle History Section Component
@@ -621,18 +684,117 @@ export default function BattlesPage() {
 
         {/* Create Battle Button */}
         <div className="mb-6 flex justify-center">
-          <Dialog>
+          <Dialog open={createBattleDialogOpen} onOpenChange={setCreateBattleDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold"
+                onClick={() => {
+                  if (!user) {
+                    toast({
+                      title: 'Login Required',
+                      description: 'Please connect your wallet to create prediction battles',
+                      variant: 'destructive',
+                    });
+                    return;
+                  }
+                  setCreateBattleDialogOpen(true);
+                }}
+                disabled={!user}
+              >
                 <Swords className="mr-2 h-5 w-5" />
-                Create New Battle
+                {user ? 'Create New Battle' : 'Login to Create Battle'}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Create Battle</DialogTitle>
+                <DialogTitle>Create New Battle</DialogTitle>
               </DialogHeader>
-              <PredictionBattles />
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="cryptocurrency">Cryptocurrency</Label>
+                  <Select
+                    value={createBattleForm.cryptocurrency}
+                    onValueChange={(value) => setCreateBattleForm(prev => ({ ...prev, cryptocurrency: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select cryptocurrency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cryptos.map((crypto: any) => (
+                        <SelectItem key={crypto.id} value={crypto.id}>
+                          <div className="flex items-center gap-2">
+                            <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
+                            {crypto.name} ({crypto.symbol.toUpperCase()})
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="timeframe">Timeframe</Label>
+                  <Select
+                    value={createBattleForm.timeframe}
+                    onValueChange={(value) => setCreateBattleForm(prev => ({ ...prev, timeframe: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select timeframe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1h">1 Hour</SelectItem>
+                      <SelectItem value="6h">6 Hours</SelectItem>
+                      <SelectItem value="24h">24 Hours</SelectItem>
+                      <SelectItem value="7d">7 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="stakeAmount">Stake Amount (NTIQ)</Label>
+                  <Input
+                    id="stakeAmount"
+                    type="number"
+                    min="1"
+                    max="500"
+                    value={createBattleForm.stakeAmount}
+                    onChange={(e) => setCreateBattleForm(prev => ({ ...prev, stakeAmount: parseInt(e.target.value) || 0 }))}
+                    placeholder="Enter stake amount..."
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="challengerPrediction">Your Price Prediction ($)</Label>
+                  <Input
+                    id="challengerPrediction"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={createBattleForm.challengerPrediction}
+                    onChange={(e) => setCreateBattleForm(prev => ({ ...prev, challengerPrediction: parseFloat(e.target.value) || 0 }))}
+                    placeholder="Enter your price prediction..."
+                  />
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setCreateBattleDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    onClick={submitCreateBattle}
+                    disabled={createBattleMutation.isPending || !createBattleForm.cryptocurrency || !createBattleForm.timeframe || !createBattleForm.stakeAmount || !createBattleForm.challengerPrediction}
+                  >
+                    {createBattleMutation.isPending ? 'Creating...' : 'Create Battle'}
+                  </Button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
