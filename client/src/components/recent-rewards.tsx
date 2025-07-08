@@ -48,7 +48,7 @@ function formatTimeAgo(dateString: string): string {
 }
 
 export function RecentRewards() {
-  const { data: rewards = [], isLoading } = useQuery<RecentReward[]>({
+  const { data: rewards = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/rewards/recent"],
     refetchInterval: 3000, // Auto-refresh every 3 seconds
     refetchIntervalInBackground: true,
@@ -100,12 +100,43 @@ export function RecentRewards() {
     <div className="bg-surface rounded-xl p-6 border border-surface-light">
       <h3 className="text-lg font-bold mb-4 flex items-center">
         <Gift className="text-primary mr-2" size={18} />
-        Recent Predictions
+        Recent Rewards
       </h3>
       
       <div className="space-y-3">
         {rewards.map((reward) => {
-          const isWin = reward.isWin || reward.amount > 0;
+          const isWin = reward.amount > 0;
+          
+          // Determine source type and display text
+          let sourceText = '';
+          let sourceIcon = <Gift size={16} />;
+          
+          switch (reward.type) {
+            case 'prediction':
+              sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction`;
+              sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+              break;
+            case 'battle':
+              sourceText = `Battle vs ${reward.sourceDetails?.opponent || 'Opponent'}`;
+              sourceIcon = <TrendingUp size={16} />;
+              break;
+            case 'survival':
+              sourceText = `Survival Tournament`;
+              sourceIcon = <TrendingUp size={16} />;
+              break;
+            case 'achievement':
+              sourceText = 'Achievement Reward';
+              sourceIcon = <Check size={16} />;
+              break;
+            case 'daily_challenge':
+              sourceText = 'Daily Challenge';
+              sourceIcon = <Gift size={16} />;
+              break;
+            default:
+              sourceText = 'Reward';
+              sourceIcon = <Gift size={16} />;
+          }
+          
           return (
             <div key={reward.id} className={`flex items-center justify-between p-3 rounded-lg ${
               isWin ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
@@ -113,27 +144,52 @@ export function RecentRewards() {
             }`}>
               <div className="flex items-center space-x-3">
                 <div className="relative w-8 h-8 flex-shrink-0">
-                  <img 
-                    src={getCryptoImageUrl(reward.cryptocurrency, cryptoPrices || [])} 
-                    alt={reward.cryptocurrency}
-                    className="w-8 h-8 rounded-full object-cover"
-                    onError={(e) => {
-                      // Fallback icon based on win/loss
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const fallback = target.nextElementSibling as HTMLDivElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    isWin ? 'bg-green-500' : 'bg-red-500'
-                  }`} style={{ display: 'none' }}>
-                    {isWin ? <TrendingUp className="text-white" size={16} /> : <TrendingDown className="text-white" size={16} />}
+                  {/* Activity Type Badge */}
+                  <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${
+                    reward.type === 'battle' ? 'bg-purple-500' :
+                    reward.type === 'survival' ? 'bg-orange-500' :
+                    reward.type === 'achievement' ? 'bg-yellow-500' :
+                    reward.type === 'daily_challenge' ? 'bg-blue-500' :
+                    'bg-green-500'
+                  }`}>
+                    {reward.type === 'battle' ? '⚔' : 
+                     reward.type === 'survival' ? '🏆' : 
+                     reward.type === 'achievement' ? '🎯' :
+                     reward.type === 'daily_challenge' ? '📅' :
+                     '📈'}
                   </div>
+                  
+                  {reward.cryptocurrency ? (
+                    <>
+                      <img 
+                        src={getCryptoImageUrl(reward.cryptocurrency, cryptoPrices || [])} 
+                        alt={reward.cryptocurrency}
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => {
+                          // Fallback icon based on win/loss
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLDivElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        isWin ? 'bg-green-500' : 'bg-red-500'
+                      }`} style={{ display: 'none' }}>
+                        {sourceIcon}
+                      </div>
+                    </>
+                  ) : (
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      isWin ? 'bg-green-500' : 'bg-blue-500'
+                    }`}>
+                      {sourceIcon}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                    {reward.cryptocurrency.toUpperCase()} Prediction
+                    {sourceText}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
                     {formatTimeAgo(reward.createdAt)}
@@ -146,9 +202,11 @@ export function RecentRewards() {
                 }`}>
                   {isWin ? `+${Math.abs(reward.amount)}` : `-${Math.abs(reward.amount)}`} NTIQ
                 </p>
-                <p className="text-xs text-slate-400">
-                  {parseFloat(reward.accuracy || "0").toFixed(1)}% accuracy
-                </p>
+                {reward.sourceDetails?.accuracy && (
+                  <p className="text-xs text-slate-400">
+                    {parseFloat(reward.sourceDetails.accuracy || "0").toFixed(1)}% accuracy
+                  </p>
+                )}
               </div>
             </div>
           );

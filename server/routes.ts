@@ -2279,7 +2279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get recent prediction results (both wins and losses)
+  // Get recent prediction results (both wins and losses) including battles and survival
   app.get("/api/rewards/recent", async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
@@ -2287,19 +2287,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      // Get all recent prediction results (completed predictions)
+      // Combine all sources of rewards/activities
+      const allActivities: any[] = [];
+
+      // 1. Get recent prediction results (completed predictions)
       const predictionResults = await storage.getRecentPredictionResults(userId, 10);
-      
-      // Transform to match expected format for Recent Rewards component
-      const enrichedResults = predictionResults.map((prediction) => {
+      predictionResults.forEach((prediction) => {
         const isWin = prediction.rewardAmount > 0;
         const netResult = isWin ? prediction.rewardAmount : -prediction.stakeAmount;
         
-        return {
-          id: prediction.id,
+        allActivities.push({
+          id: `prediction_${prediction.id}`,
+          type: 'prediction',
           userId: userId,
           predictionId: prediction.id,
-          amount: netResult, // Positive for wins, negative for losses
+          amount: netResult,
           description: isWin 
             ? `Won ${prediction.rewardAmount} NTIQ - ${prediction.accuracy}% accuracy` 
             : `Lost ${prediction.stakeAmount} NTIQ - ${prediction.accuracy}% accuracy`,
@@ -2309,12 +2311,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isWin: isWin,
           stakeAmount: prediction.stakeAmount,
           rewardAmount: prediction.rewardAmount || 0
-        };
+        });
       });
 
-      res.json(enrichedResults);
+      // 2. Get recent battle results
+      try {
+        const recentBattles = await storage.getUserRecentBattles(userId, 5);
+        recentBattles.forEach((battle) => {
+          if (battle.status === 'completed' && battle.winnerId) {
+            const isWin = battle.winnerId === userId;
+            const amount = isWin ? (battle.winnerReward || battle.stakeAmount * 2) : -battle.stakeAmount;
+            
+            allActivities.push({
+              id: `battle_${battle.id}`,
+              type: 'battle',
+              userId: userId,
+              battleId: battle.id,
+              amount: amount,
+              description: isWin 
+                ? `Won Battle vs ${battle.challengerId === userId ? battle.challenged?.username : battle.challenger?.username} - ${amount} NTIQ`
+                : `Lost Battle vs ${battle.challengerId === userId ? battle.challenged?.username : battle.challenger?.username} - ${Math.abs(amount)} NTIQ`,
+              createdAt: battle.endTime || battle.createdAt,
+              cryptocurrency: battle.cryptocurrency,
+              isWin: isWin,
+              stakeAmount: battle.stakeAmount,
+              rewardAmount: isWin ? amount : 0
+            });
+          }
+        });
+      } catch (error) {
+        console.log('No recent battles found for user');
+      }
+
+      // 3. Get recent survival tournament activities
+      try {
+        const survivalActivities = await storage.getUserSurvivalHistory(userId, 5);
+        survivalActivities.forEach((activity) => {
+          if (activity.outcome) {
+            const isWin = activity.outcome === 'won';
+            const amount = isWin ? (activity.prize || 0) : -(activity.entryFee || 100);
+            
+            allActivities.push({
+              id: `survival_${activity.id}`,
+              type: 'survival',
+              userId: userId,
+              survivalId: activity.id,
+              amount: amount,
+              description: isWin 
+                ? `Won Survival Tournament - ${amount} NTIQ Prize`
+                : `Eliminated from Survival Tournament - ${Math.abs(amount)} NTIQ Entry`,
+              createdAt: activity.endTime || activity.createdAt,
+              cryptocurrency: activity.cryptocurrency || 'Multiple',
+              isWin: isWin,
+              stakeAmount: activity.entryFee || 100,
+              rewardAmount: isWin ? amount : 0
+            });
+          }
+        });
+      } catch (error) {
+        console.log('No recent survival activities found for user');
+      }
+
+      // Sort all activities by date (newest first) and limit to 10
+      const sortedActivities = allActivities
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10);
+
+      res.json(sortedActivities);
     } catch (error) {
+      console.error('Error getting recent rewards:', error);
       res.status(500).json({ message: "Failed to get recent rewards" });
+    }
+  });
+
+  // Get comprehensive rewards from all sources (predictions, battles, survival)
+  app.get("/api/rewards/comprehensive", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 10;
+      const comprehensiveRewards = await storage.getComprehensiveRewards(userId, limit);
+      
+      res.json(comprehensiveRewards);
+    } catch (error) {
+      console.error('Error fetching comprehensive rewards:', error);
+      res.status(500).json({ message: "Failed to get comprehensive rewards" });
     }
   });
 
