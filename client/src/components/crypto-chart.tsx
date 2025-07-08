@@ -752,13 +752,13 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse border-2 border-slate-800"></div>
               </div>
               <div>
-                <div className="text-xl md:text-2xl font-bold text-white">
+                <div className="text-lg md:text-xl font-bold text-white">
                   {name}
                 </div>
                 <div className="text-sm text-slate-400 font-medium">
                   {symbol.toUpperCase()}
                 </div>
-                <div className="text-2xl md:text-3xl font-bold text-white mt-1">
+                <div className="text-xl md:text-2xl font-bold text-white mt-1">
                   ${currentPrice.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 6
