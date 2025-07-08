@@ -152,7 +152,7 @@ export default function LandingPage() {
           {/* Title Section */}
           <div className="text-center mb-16">
             {/* Title */}
-            <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-6 leading-tight">
               Cryptocurrency
               <br />
               <span className="text-primary">Price Predictions</span>
