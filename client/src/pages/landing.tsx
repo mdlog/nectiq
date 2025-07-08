@@ -27,9 +27,9 @@ function CryptoPriceTicker() {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm border-t border-gray-800 overflow-hidden">
       <div className="ticker-container py-3">
-        <div className="ticker-content flex items-center space-x-8 animate-scroll">
-          {/* Duplicate the array to create seamless loop */}
-          {[...prices, ...prices].map((crypto, index) => {
+        <div className="ticker-content animate-scroll">
+          {/* Triple the array to create longer seamless loop */}
+          {[...prices, ...prices, ...prices].map((crypto, index) => {
             const isPositive = crypto.price_change_percentage_24h >= 0;
             return (
               <div key={`${crypto.id}-${index}`} className="flex items-center space-x-3 text-sm whitespace-nowrap">

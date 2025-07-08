@@ -197,7 +197,20 @@
 }
 
 .animate-scroll {
-  animation: scroll 60s linear infinite;
+  animation: scroll 20s linear infinite;
+  will-change: transform;
+}
+
+.ticker-container {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+}
+
+.ticker-content {
+  display: flex;
+  width: max-content;
+  gap: 2rem;
 }
 
 /* Live Activity Feed Scroll Up Animation */
