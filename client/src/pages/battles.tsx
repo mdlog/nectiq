@@ -912,6 +912,61 @@ export default function BattlesPage() {
                               }
                             </span>
                           </div>
+                          
+                          {/* Win Probability Bar */}
+                          {battle.challengerPrediction && battle.challengedPrediction && battle.currentPrice && (() => {
+                            const currentPrice = battle.currentPrice;
+                            const challengerPrediction = parseFloat(battle.challengerPrediction);
+                            const challengedPrediction = parseFloat(battle.challengedPrediction);
+                            
+                            // Calculate accuracy percentages
+                            const challengerAccuracy = Math.abs(challengerPrediction - currentPrice) / currentPrice * 100;
+                            const challengedAccuracy = Math.abs(challengedPrediction - currentPrice) / currentPrice * 100;
+                            
+                            // Calculate win probabilities (inverse of accuracy - lower error = higher probability)
+                            const totalError = challengerAccuracy + challengedAccuracy;
+                            const challengerWinProb = totalError > 0 ? Math.round((challengedAccuracy / totalError) * 100) : 50;
+                            const challengedWinProb = 100 - challengerWinProb;
+                            
+                            return (
+                              <div className="mt-3 space-y-2">
+                                <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                                  <span>Win Probability</span>
+                                </div>
+                                
+                                {/* Probability bar */}
+                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                  <div 
+                                    className="absolute left-0 top-0 h-full bg-blue-500 transition-all duration-500"
+                                    style={{ width: `${challengerWinProb}%` }}
+                                  />
+                                  <div 
+                                    className="absolute right-0 top-0 h-full bg-red-500 transition-all duration-500"
+                                    style={{ width: `${challengedWinProb}%` }}
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-0.5 h-4 bg-gray-800 dark:bg-gray-200"></div>
+                                  </div>
+                                </div>
+                                
+                                {/* Percentage labels */}
+                                <div className="flex justify-between text-xs font-medium">
+                                  <span className="text-blue-600 dark:text-blue-400">
+                                    {battle.challengerUsername}: {challengerWinProb}%
+                                  </span>
+                                  <span className="text-red-600 dark:text-red-400">
+                                    {battle.challengedUsername}: {challengedWinProb}%
+                                  </span>
+                                </div>
+                                
+                                {/* Accuracy details */}
+                                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                  <span>Error: {challengerAccuracy.toFixed(2)}%</span>
+                                  <span>Error: {challengedAccuracy.toFixed(2)}%</span>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </CardContent>
                     </Card>
