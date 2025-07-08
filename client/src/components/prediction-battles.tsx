@@ -374,9 +374,32 @@ export function PredictionBattles() {
       queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
     },
     onError: (error: any) => {
+      console.error('Join battle mutation error:', error);
+      
+      // Extract clean error message
+      let errorMessage = 'Failed to join battle';
+      
+      if (error?.message) {
+        // Remove the error code prefix (e.g., "400: ") to show clean message
+        errorMessage = error.message.replace(/^\d+:\s*/, '');
+        
+        // Try to parse JSON from the error message if it looks like JSON
+        try {
+          const jsonMatch = errorMessage.match(/\{.*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.message) {
+              errorMessage = parsed.message;
+            }
+          }
+        } catch (parseError) {
+          // If JSON parsing fails, use the cleaned error message
+        }
+      }
+      
       toast({
         title: 'Error',
-        description: error.message || 'Failed to join battle',
+        description: errorMessage,
         variant: 'destructive',
       });
     }

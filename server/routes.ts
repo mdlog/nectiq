@@ -1891,7 +1891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate input
       if (!challengedPrediction || challengedPrediction <= 0) {
-        return res.status(400).json({ message: 'Prediksi harga harus lebih besar dari 0' });
+        return res.status(400).json({ message: 'Price prediction must be greater than 0' });
       }
 
       // Get user info
@@ -1920,7 +1920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check user balance
       if (user.balance < battle.stakeAmount) {
-        return res.status(400).json({ message: `Saldo tidak cukup. Memerlukan ${battle.stakeAmount} NTIQ` });
+        return res.status(400).json({ message: `Insufficient balance. Required ${battle.stakeAmount} NTIQ` });
       }
 
       // Use new anti-last-minute joining system
@@ -1936,7 +1936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: 'battle_join',
         amount: battle.stakeAmount,
-        description: `Bergabung battle vs user ID ${battle.challengerId}`,
+        description: `Joined battle vs user ID ${battle.challengerId}`,
         relatedId: battleId
       });
 

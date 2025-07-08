@@ -184,25 +184,42 @@ export default function BattlesPage() {
         })
       });
 
-      if (response.ok) {
-        toast({
-          title: "Battle Joined!",
-          description: `Successfully joined the ${selectedBattle.cryptocurrency} battle!`
-        });
-        setJoinDialogOpen(false);
-        queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Error",
-          description: error.message || "Failed to join battle",
-          variant: "destructive"
-        });
+      const result = await response.json();
+      
+      toast({
+        title: "Battle Joined!",
+        description: `Successfully joined the ${selectedBattle.cryptocurrency} battle!`
+      });
+      setJoinDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
+      
+    } catch (error: any) {
+      console.error('Join battle error:', error);
+      
+      // Extract error message from the error object
+      let errorMessage = "An error occurred while joining the battle";
+      
+      if (error?.message) {
+        // Remove the error code prefix (e.g., "400: ") to show clean message
+        errorMessage = error.message.replace(/^\d+:\s*/, '');
+        
+        // Try to parse JSON from the error message if it looks like JSON
+        try {
+          const jsonMatch = errorMessage.match(/\{.*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.message) {
+              errorMessage = parsed.message;
+            }
+          }
+        } catch (parseError) {
+          // If JSON parsing fails, use the original error message
+        }
       }
-    } catch (error) {
+      
       toast({
         title: "Error",
-        description: "An error occurred while joining the battle",
+        description: errorMessage,
         variant: "destructive"
       });
     }
