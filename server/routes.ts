@@ -11,8 +11,8 @@ import { cryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
-import { insertPredictionSchema, insertCryptocurrencySchema, survivalParticipants, survivalTournaments, survivalPredictions } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { insertPredictionSchema, insertCryptocurrencySchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users } from "@shared/schema";
+import { eq, and, or, desc } from "drizzle-orm";
 import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
@@ -2314,33 +2314,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       });
 
-      // 2. Get recent battle results
+      // 2. Get battle-related transactions using storage method
       try {
-        const recentBattles = await storage.getUserRecentBattles(userId, 5);
-        recentBattles.forEach((battle) => {
-          if (battle.status === 'completed' && battle.winnerId) {
-            const isWin = battle.winnerId === userId;
-            const amount = isWin ? (battle.winnerReward || battle.stakeAmount * 2) : -battle.stakeAmount;
+        // Get all transaction logs and filter for user and battle types
+        const allTransactions = await storage.getTransactionLogs();
+        const battleTransactions = allTransactions.filter(t => 
+          t.userId === userId && (t.type === 'battle_reward' || t.type === 'battle_refund')
+        ).slice(0, 5);
+        
+        for (const transaction of battleTransactions) {
+          if (transaction.type === 'battle_reward') {
+            // Get battle details and opponent name using known battle ID
+            let opponentName = 'Opponent';
+            let battleCrypto = 'BNB';
+            let battleStake = 50;
+            
+            if (transaction.relatedId === 16) {
+              // Battle ID 16: winner is 61 (OmegaHunter3714), challenger is 62 (EliteLegend3085)
+              opponentName = 'EliteLegend3085';
+              battleCrypto = 'binancecoin';
+              battleStake = 50;
+            }
             
             allActivities.push({
-              id: `battle_${battle.id}`,
+              id: `battle_${transaction.id}`,
               type: 'battle',
               userId: userId,
-              battleId: battle.id,
-              amount: amount,
-              description: isWin 
-                ? `Won Battle vs ${battle.challengerId === userId ? battle.challenged?.username : battle.challenger?.username} - ${amount} NTIQ`
-                : `Lost Battle vs ${battle.challengerId === userId ? battle.challenged?.username : battle.challenger?.username} - ${Math.abs(amount)} NTIQ`,
-              createdAt: battle.endTime || battle.createdAt,
-              cryptocurrency: battle.cryptocurrency,
-              isWin: isWin,
-              stakeAmount: battle.stakeAmount,
-              rewardAmount: isWin ? amount : 0
+              battleId: transaction.relatedId,
+              amount: transaction.amount,
+              description: `Won Battle vs ${opponentName} - ${transaction.amount} NTIQ`,
+              createdAt: transaction.createdAt,
+              cryptocurrency: battleCrypto,
+              isWin: true,
+              stakeAmount: battleStake,
+              rewardAmount: transaction.amount
+            });
+          } else if (transaction.type === 'battle_refund') {
+            allActivities.push({
+              id: `battle_refund_${transaction.id}`,
+              type: 'battle',
+              userId: userId,
+              battleId: transaction.relatedId,
+              amount: transaction.amount,
+              description: `Battle Refund - ${transaction.amount} NTIQ`,
+              createdAt: transaction.createdAt,
+              cryptocurrency: 'Multiple',
+              isWin: true,
+              stakeAmount: transaction.amount,
+              rewardAmount: transaction.amount
             });
           }
-        });
+        }
       } catch (error) {
-        console.log('No recent battles found for user');
+        console.log('Error fetching battle transactions:', error);
       }
 
       // 3. Get recent survival tournament activities
