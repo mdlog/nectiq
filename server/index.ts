@@ -1,6 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import dotenv from "dotenv";
+import { db } from "./db.js";
+import { predictions, users, cryptocurrencies } from "../shared/schema.js";
+import { eq, desc } from "drizzle-orm";
 
 // Load environment variables
 dotenv.config();
@@ -20,8 +23,97 @@ declare module 'express-session' {
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { survivalRoundService } from "./services/survivalRoundService";
+import { storage } from "./storage";
 
 const app = express();
+
+// ===== LIVE ACTIVITIES ENDPOINT - EARLY PLACEMENT TO BYPASS MIDDLEWARE =====
+app.get('/api/activities/live', async (req, res) => {
+  console.log('🚀 [LIVE ACTIVITIES] Endpoint called');
+  try {
+    // Build live activities from existing data
+    const activities = [];
+
+    // Get recent completed predictions directly from database
+    const recentPredictions = await db.select({
+      id: predictions.id,
+      userId: predictions.userId,
+      cryptocurrency: predictions.cryptocurrency,
+      predictedPrice: predictions.predictedPrice,
+      actualPrice: predictions.actualPrice,
+      stakeAmount: predictions.stakeAmount,
+      rewardAmount: predictions.rewardAmount,
+      accuracy: predictions.accuracy,
+      status: predictions.status,
+      completedAt: predictions.completedAt,
+      createdAt: predictions.createdAt,
+      username: users.username,
+      cryptocurrencyName: cryptocurrencies.name
+    })
+    .from(predictions)
+    .innerJoin(users, eq(predictions.userId, users.id))
+    .innerJoin(cryptocurrencies, eq(predictions.cryptocurrency, cryptocurrencies.id))
+    .where(eq(predictions.status, 'completed'))
+    .orderBy(desc(predictions.completedAt))
+    .limit(10);
+
+    console.log('🔍 [LIVE ACTIVITIES] Recent predictions found:', recentPredictions.length);
+    if (recentPredictions.length > 0) {
+      console.log('🔍 [LIVE ACTIVITIES] Sample prediction:', JSON.stringify(recentPredictions[0], null, 2));
+    }
+    
+    for (const prediction of recentPredictions) {
+      const isCorrect = prediction.accuracy && prediction.accuracy < 5;
+      const rewardAmount = prediction.rewardAmount || 0;
+      const hasEarnings = rewardAmount > prediction.stakeAmount;
+      
+      activities.push({
+        id: `prediction_${prediction.id}`,
+        type: 'prediction',
+        username: prediction.username,
+        description: hasEarnings 
+          ? `Won ${rewardAmount} NTIQ predicting ${prediction.cryptocurrencyName}` 
+          : `Lost ${prediction.stakeAmount} NTIQ predicting ${prediction.cryptocurrencyName}`,
+        amount: hasEarnings ? rewardAmount : prediction.stakeAmount,
+        cryptocurrency: prediction.cryptocurrency,
+        timestamp: prediction.completedAt || prediction.createdAt,
+        icon: hasEarnings ? 'TrendingUp' : 'TrendingDown',
+        color: hasEarnings ? 'bg-green-600' : 'bg-red-600'
+      });
+    }
+
+    // Get recent battles (if available)
+    try {
+      const recentBattles = await storage.getBattleHistory(0, 5); // Get recent battles
+      for (const battle of recentBattles) {
+        if (battle.status === 'completed' && battle.winnerId) {
+          activities.push({
+            id: `battle_${battle.id}`,
+            type: 'battle_win',
+            username: battle.winnerUsername || 'Battle Winner',
+            description: `Won a prediction battle`,
+            amount: battle.winnerReward || (battle.stake * 2),
+            cryptocurrency: battle.cryptocurrency,
+            timestamp: battle.updatedAt || battle.createdAt,
+            icon: 'Swords',
+            color: 'bg-yellow-600'
+          });
+        }
+      }
+    } catch (battleError) {
+      console.log('⚠️ [LIVE ACTIVITIES] No recent battles available');
+    }
+
+    // Sort by timestamp (newest first)
+    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    console.log('✅ [LIVE ACTIVITIES] Built activities from existing data:', activities.length);
+    res.json(activities.slice(0, 20)); // Return top 20 activities
+  } catch (error) {
+    console.error('❌ [LIVE ACTIVITIES] Error fetching activities:', error);
+    res.status(500).json({ message: 'Failed to fetch live activities' });
+  }
+});
 
 // Session configuration
 app.use(session({

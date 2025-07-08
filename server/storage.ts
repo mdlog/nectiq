@@ -174,6 +174,9 @@ export interface IStorage {
   updateSurvivalTournament(id: number, updates: any): Promise<void>;
   deleteSurvivalTournament(id: number): Promise<void>;
   getUserSurvivalStatus(userId: number): Promise<any>;
+
+  // Live Activity operations
+  getLiveActivities(limit?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3014,6 +3017,53 @@ export class MemStorage implements IStorage {
         winRate: Math.round(winRate * 10) / 10
       }
     };
+  }
+
+  async getLiveActivities(limit: number = 20): Promise<any[]> {
+    console.log('📊 [LIVE ACTIVITIES] Starting to fetch activities...');
+    try {
+      // Return some mock activities for testing first
+      const mockActivities = [
+        {
+          id: 'mock_1',
+          type: 'prediction',
+          username: 'TestUser',
+          description: 'Successfully predicted BTC price',
+          amount: 150,
+          cryptocurrency: 'bitcoin',
+          timestamp: new Date().toISOString(),
+          icon: 'TrendingUp',
+          color: 'bg-green-600'
+        },
+        {
+          id: 'mock_2',
+          type: 'battle_win',
+          username: 'BattleChamp',
+          description: 'Won a prediction battle',
+          amount: 200,
+          cryptocurrency: 'ethereum',
+          timestamp: new Date(Date.now() - 300000).toISOString(),
+          icon: 'Swords',
+          color: 'bg-yellow-600'
+        },
+        {
+          id: 'mock_3',
+          type: 'achievement',
+          username: 'AchievementHunter',
+          description: 'Unlocked new achievement',
+          amount: 100,
+          timestamp: new Date(Date.now() - 600000).toISOString(),
+          icon: 'Crown',
+          color: 'bg-purple-600'
+        }
+      ];
+
+      console.log('✅ [LIVE ACTIVITIES] Returning mock activities:', mockActivities.length);
+      return mockActivities.slice(0, limit);
+    } catch (error) {
+      console.error('❌ [LIVE ACTIVITIES] Error fetching live activities:', error);
+      return [];
+    }
   }
 }
 

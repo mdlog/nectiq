@@ -4315,6 +4315,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // ===== LIVE ACTIVITY FEED ROUTES =====
+  // Removed duplicate endpoint - using one in index.ts
+
   // Enhanced middleware for security monitoring
   app.use((req, res, next) => {
     const ip = req.ip;

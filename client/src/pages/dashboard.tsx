@@ -10,7 +10,7 @@ import { RecentRewards } from "@/components/recent-rewards";
 import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
-import { RulesSection } from "@/components/rules-section";
+import { LiveActivityFeed } from "@/components/live-activity-feed";
 import CryptoChart from "@/components/crypto-chart";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -190,7 +190,7 @@ export default function Dashboard() {
         
 
         
-        <RulesSection />
+        <LiveActivityFeed />
         
         {/* Running Price Ticker */}
         <div className="mt-12">
