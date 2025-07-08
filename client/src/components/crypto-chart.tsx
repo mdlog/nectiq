@@ -732,7 +732,6 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   const timeframeOptions = [
     { value: '1', label: '1D' },
     { value: '7', label: '7D' },
-    { value: '14', label: '14D' },
     { value: '30', label: '30D' },
     { value: '90', label: '3M' },
     { value: '365', label: '1Y' },
