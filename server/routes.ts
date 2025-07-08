@@ -2322,6 +2322,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           t.userId === userId && (t.type === 'battle_reward' || t.type === 'battle_refund')
         ).slice(0, 5);
         
+        // Get user's battle history to find losses
+        const userBattles = await storage.getUserBattles(userId);
+        const completedBattles = userBattles.filter(battle => 
+          battle.status === 'completed' && battle.winnerId !== userId
+        ).slice(0, 5);
+        
+        // Add battle losses
+        for (const battle of completedBattles) {
+          const opponentName = battle.challengerId === userId ? 
+            battle.challengedUsername : battle.challengerUsername;
+          
+          allActivities.push({
+            id: `battle_loss_${battle.id}`,
+            type: 'battle',
+            userId: userId,
+            battleId: battle.id,
+            amount: -battle.stakeAmount, // Negative amount for loss
+            description: `Lost Battle vs ${opponentName} - ${battle.stakeAmount} NTIQ`,
+            createdAt: battle.completedAt || battle.createdAt,
+            cryptocurrency: battle.cryptocurrency,
+            isWin: false,
+            stakeAmount: battle.stakeAmount,
+            rewardAmount: 0
+          });
+        }
+        
+        // Add battle wins
         for (const transaction of battleTransactions) {
           if (transaction.type === 'battle_reward') {
             // Get battle details and opponent name using known battle ID
