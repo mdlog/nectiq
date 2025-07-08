@@ -408,10 +408,13 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const container = canvas.parentElement;
       if (container) {
         const dpr = window.devicePixelRatio || 1;
+        // Mobile-responsive height: 350px on mobile, 400px on desktop
+        const canvasHeight = window.innerWidth < 768 ? 350 : 400;
+        
         canvas.width = container.clientWidth * dpr;
-        canvas.height = 400 * dpr;
+        canvas.height = canvasHeight * dpr;
         canvas.style.width = container.clientWidth + 'px';
-        canvas.style.height = '400px';
+        canvas.style.height = canvasHeight + 'px';
         
         const ctx = canvas.getContext('2d');
         if (ctx) {
@@ -438,58 +441,62 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   ];
 
   return (
-    <Card className="bg-surface border-surface-light">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold flex items-center gap-3">
-            <BarChart3 className="text-primary" size={24} />
-            <div>
-              <div className="flex items-center gap-2">
-                {name} ({symbol.toUpperCase()})
-                <span className={`flex items-center text-sm px-2 py-1 rounded-full ${
-                  priceChange24h >= 0 
-                    ? 'text-green-400 bg-green-400/10' 
-                    : 'text-red-400 bg-red-400/10'
-                }`}>
-                  {priceChange24h >= 0 ? <TrendingUp size={14} className="mr-1" /> : <TrendingDown size={14} className="mr-1" />}
-                  {priceChange24h.toFixed(2)}%
-                </span>
-              </div>
-              <div className="text-sm font-normal text-slate-400 mt-1">
-                ${currentPrice.toLocaleString()}
+    <Card className="bg-surface border-surface-light mx-2 md:mx-0 rounded-xl md:rounded-lg">
+      <CardHeader className="pb-3 px-4 md:px-6">
+        {/* Mobile-optimized header layout */}
+        <div className="space-y-3">
+          {/* Title and Price Info */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="text-primary" size={20} />
+              <div>
+                <div className="text-lg md:text-xl font-bold">
+                  {name} ({symbol.toUpperCase()})
+                </div>
+                <div className="text-lg font-semibold text-slate-300 mt-0.5">
+                  ${currentPrice.toLocaleString()}
+                </div>
               </div>
             </div>
-          </CardTitle>
-          
-          <div className="flex items-center gap-2">
-            {/* Tombol Predict dipindahkan ke bawah chart */}
+            
+            {/* Price Change Badge */}
+            <div className="flex items-center">
+              <span className={`flex items-center text-sm md:text-base px-3 py-2 rounded-full font-medium ${
+                priceChange24h >= 0 
+                  ? 'text-green-400 bg-green-400/10' 
+                  : 'text-red-400 bg-red-400/10'
+              }`}>
+                {priceChange24h >= 0 ? <TrendingUp size={16} className="mr-1.5" /> : <TrendingDown size={16} className="mr-1.5" />}
+                {priceChange24h.toFixed(2)}%
+              </span>
+            </div>
           </div>
         </div>
         
-        {/* Chart Controls */}
-        <div className="flex items-center justify-between pt-4">
-          {/* Timeframe Selector */}
-          <div className="flex gap-1">
+        {/* Mobile-optimized Chart Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4">
+          {/* Timeframe Selector - Better mobile spacing */}
+          <div className="flex gap-1 flex-wrap">
             {timeframeOptions.map((option) => (
               <Button
                 key={option.value}
                 variant={timeframe === option.value ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setTimeframe(option.value)}
-                className="h-8 px-3 text-xs"
+                className="h-9 px-4 text-sm font-medium min-w-[48px]"
               >
                 {option.label}
               </Button>
             ))}
           </div>
           
-          {/* Chart Type Selector */}
+          {/* Chart Type Selector - Better mobile sizing */}
           <div className="flex gap-1">
             <Button
               variant={chartType === 'line' ? "default" : "ghost"}
               size="sm"
               onClick={() => setChartType('line')}
-              className="h-8 px-3 text-xs"
+              className="h-9 px-4 text-sm font-medium"
             >
               Line
             </Button>
@@ -497,7 +504,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
               variant={chartType === 'candlestick' ? "default" : "ghost"}
               size="sm"
               onClick={() => setChartType('candlestick')}
-              className="h-8 px-3 text-xs"
+              className="h-9 px-4 text-sm font-medium"
             >
               Candles
             </Button>
@@ -506,29 +513,30 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       </CardHeader>
 
       <CardContent className="p-0">
-        <div className="relative">
+        {/* Chart Area - Mobile optimized */}
+        <div className="relative px-2 md:px-4">
           {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-surface/80 z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-surface/80 z-10 rounded-lg">
               <div className="flex items-center gap-2 text-slate-400">
-                <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full"></div>
-                Loading Chart...
+                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                <span className="text-sm md:text-base">Loading Chart...</span>
               </div>
             </div>
           )}
           
           <canvas 
             ref={canvasRef}
-            className="w-full h-[400px] bg-slate-900 rounded-lg"
-            style={{ minHeight: '400px' }}
+            className="w-full h-[350px] md:h-[400px] bg-slate-900 rounded-lg"
+            style={{ minHeight: '350px' }}
           />
         </div>
 
-        {/* Predict Button - Full Width Below Chart */}
+        {/* Predict Button - Mobile optimized with better spacing */}
         {onPredictClick && (
-          <div className="mt-4">
+          <div className="p-4 md:p-6">
             <Button
               onClick={() => onPredictClick(cryptoId)}
-              className="w-full bg-primary hover:bg-primary/90 text-white py-3 text-lg font-semibold"
+              className="w-full bg-primary hover:bg-primary/90 text-white py-4 md:py-3 text-lg font-semibold rounded-xl"
               size="lg"
             >
               <Target size={20} className="mr-2" />

@@ -131,8 +131,8 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 md:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
           {/* Left Sidebar - Live Prices */}
           <div className="lg:col-span-1 space-y-6">
             <LivePrices 
@@ -145,10 +145,10 @@ export default function Dashboard() {
           </div>
 
           {/* Main Content - Center */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-3 md:space-y-6">
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
-              <div className="space-y-4">
+              <div className="space-y-2 md:space-y-4">
                 <CryptoChart
                   cryptoId={selectedCrypto.id}
                   symbol={selectedCrypto.symbol}
