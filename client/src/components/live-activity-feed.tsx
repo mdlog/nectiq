@@ -112,57 +112,60 @@ export function LiveActivityFeed() {
             <h4 className="font-semibold text-slate-200">Completed Activities</h4>
           </div>
           
-          <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
+          <div className="max-h-80 overflow-hidden relative">
             {activities.length === 0 ? (
               <div className="text-center py-6 text-slate-400">
                 <CheckCircle2 className="h-10 w-10 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No completed activities</p>
               </div>
             ) : (
-              activities.map((activity) => {
-                const IconComponent = iconMap[activity.icon as keyof typeof iconMap] || Activity;
-                return (
-                <div
-                  key={activity.id}
-                  className="flex items-start space-x-3 p-3 rounded-lg bg-slate-800/30 border border-slate-700/50 hover:bg-slate-800/50 transition-colors"
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activity.color} flex-shrink-0 mt-0.5`}>
-                    <IconComponent className="w-4 h-4 text-white" />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-slate-200 truncate text-sm">
-                        {activity.username}
-                      </span>
-                      {activity.type === 'battle_win' && (
-                        <Badge variant="secondary" className="bg-yellow-600/20 text-yellow-400 text-xs">
-                          Battle
-                        </Badge>
-                      )}
-                      {activity.type === 'survival_win' && (
-                        <Badge variant="secondary" className="bg-purple-600/20 text-purple-400 text-xs">
-                          Survival
-                        </Badge>
-                      )}
+              <div className="animate-scroll-up space-y-3">
+                {/* Duplicate activities for seamless loop */}
+                {[...activities, ...activities].map((activity, index) => {
+                  const IconComponent = iconMap[activity.icon as keyof typeof iconMap] || Activity;
+                  return (
+                  <div
+                    key={`${activity.id}-${index}`}
+                    className="flex items-start space-x-3 p-3 rounded-lg bg-slate-800/30 border border-slate-700/50 hover:bg-slate-800/50 transition-colors"
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activity.color} flex-shrink-0 mt-0.5`}>
+                      <IconComponent className="w-4 h-4 text-white" />
                     </div>
                     
-                    <p className="text-xs text-slate-300 mt-1">
-                      {activity.description}
-                      {activity.amount && (
-                        <span className="font-semibold text-green-400 ml-1">
-                          +{activity.amount} NTIQ
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium text-slate-200 truncate text-sm">
+                          {activity.username}
                         </span>
-                      )}
-                    </p>
-                    
-                    <p className="text-xs text-slate-500 mt-1">
-                      {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
-                    </p>
+                        {activity.type === 'battle_win' && (
+                          <Badge variant="secondary" className="bg-yellow-600/20 text-yellow-400 text-xs">
+                            Battle
+                          </Badge>
+                        )}
+                        {activity.type === 'survival_win' && (
+                          <Badge variant="secondary" className="bg-purple-600/20 text-purple-400 text-xs">
+                            Survival
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <p className="text-xs text-slate-300 mt-1">
+                        {activity.description}
+                        {activity.amount && (
+                          <span className="font-semibold text-green-400 ml-1">
+                            +{activity.amount} NTIQ
+                          </span>
+                        )}
+                      </p>
+                      
+                      <p className="text-xs text-slate-500 mt-1">
+                        {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
@@ -174,50 +177,53 @@ export function LiveActivityFeed() {
             <h4 className="font-semibold text-slate-200">Ongoing Activities</h4>
           </div>
           
-          <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
+          <div className="max-h-80 overflow-hidden relative">
             {activePredictions.length === 0 ? (
               <div className="text-center py-6 text-slate-400">
                 <Clock className="h-10 w-10 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No ongoing activities</p>
               </div>
             ) : (
-              activePredictions.slice(0, 8).map((prediction) => (
-                <div
-                  key={prediction.id}
-                  className="flex items-start space-x-3 p-3 rounded-lg bg-orange-800/20 border border-orange-700/50 hover:bg-orange-800/30 transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-orange-600 flex-shrink-0 mt-0.5">
-                    <Clock className="w-4 h-4 text-white" />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-slate-200 truncate text-sm">
-                        {prediction.username || `User #${prediction.userId}`}
-                      </span>
-                      <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 text-xs">
-                        Predicting
-                      </Badge>
+              <div className="animate-scroll-up space-y-3">
+                {/* Duplicate predictions for seamless loop */}
+                {[...activePredictions.slice(0, 8), ...activePredictions.slice(0, 8)].map((prediction, index) => (
+                  <div
+                    key={`${prediction.id}-${index}`}
+                    className="flex items-start space-x-3 p-3 rounded-lg bg-orange-800/20 border border-orange-700/50 hover:bg-orange-800/30 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-orange-600 flex-shrink-0 mt-0.5">
+                      <Clock className="w-4 h-4 text-white" />
                     </div>
                     
-                    <p className="text-xs text-slate-300 mt-1">
-                      {prediction.cryptocurrencyName || prediction.cryptocurrency} prediction
-                      <span className="font-semibold text-blue-400 ml-1">
-                        ${parseFloat(prediction.predictedPrice).toFixed(2)}
-                      </span>
-                    </p>
-                    
-                    <div className="flex items-center justify-between mt-1">
-                      <p className="text-xs text-slate-500">
-                        Stake: {prediction.stakeAmount} NTIQ
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium text-slate-200 truncate text-sm">
+                          {prediction.username || `User #${prediction.userId}`}
+                        </span>
+                        <Badge variant="secondary" className="bg-orange-600/20 text-orange-400 text-xs">
+                          Predicting
+                        </Badge>
+                      </div>
+                      
+                      <p className="text-xs text-slate-300 mt-1">
+                        {prediction.cryptocurrencyName || prediction.cryptocurrency} prediction
+                        <span className="font-semibold text-blue-400 ml-1">
+                          ${parseFloat(prediction.predictedPrice).toFixed(2)}
+                        </span>
                       </p>
-                      <p className="text-xs text-orange-400 font-medium">
-                        {formatTimeLeft(prediction.timeLeft)}
-                      </p>
+                      
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-xs text-slate-500">
+                          Stake: {prediction.stakeAmount} NTIQ
+                        </p>
+                        <p className="text-xs text-orange-400 font-medium">
+                          {formatTimeLeft(prediction.timeLeft)}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </div>

@@ -200,6 +200,21 @@
   animation: scroll 60s linear infinite;
 }
 
+/* Live Activity Feed Scroll Up Animation */
+@keyframes scroll-up {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-scroll-up {
+  animation: scroll-up 30s linear infinite;
+}
+}
+
 .ticker-container {
   overflow: hidden;
   width: 100%;
