@@ -3418,35 +3418,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
-      console.log(`Delete user request received for ID: ${req.params.id}, parsed as: ${userId}`);
+      console.log(`🗑️ Delete user request received for ID: ${req.params.id}, parsed as: ${userId}`);
+      console.log(`🔐 Admin session info:`, { adminId: req.session.userId, sessionValid: !!req.session.userId });
 
       if (!userId || isNaN(userId)) {
-        console.log(`Invalid user ID provided: ${req.params.id}`);
+        console.log(`❌ Invalid user ID provided: ${req.params.id}`);
         return res.status(400).json({ message: "Invalid user ID" });
       }
 
       // Debug: Check what users exist
-      console.log(`Checking if user ${userId} exists in database...`);
+      console.log(`🔍 Checking if user ${userId} exists in database...`);
       const user = await storage.getUser(userId);
-      console.log(`User lookup result for ID ${userId}:`, user ? `Found user: ${user.username} (${user.id})` : 'User not found');
+      console.log(`👤 User lookup result for ID ${userId}:`, user ? `Found user: ${user.username} (${user.id})` : 'User not found');
       
       // Additional debug: List all users if user not found
       if (!user) {
+        let availableIds = 'none';
         try {
           const allUsers = await storage.getAllUsers();
-          console.log(`Available user IDs in database:`, allUsers.map(u => u.id));
-          console.log(`Total users in database: ${allUsers.length}`);
+          console.log(`📋 Available user IDs in database:`, allUsers.map(u => ({ id: u.id, username: u.username })));
+          console.log(`📊 Total users in database: ${allUsers.length}`);
+          console.log(`🎯 Requested user ID ${userId} does not exist in available IDs: [${allUsers.map(u => u.id).join(', ')}]`);
+          availableIds = allUsers.map(u => u.id).join(', ') || 'none';
         } catch (debugError) {
-          console.error('Debug error listing users:', debugError);
+          console.error('❌ Debug error listing users:', debugError);
         }
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: `User with ID ${userId} not found. Available users: ${availableIds}` });
       }
 
       // Allow admin deletion with proper warning
       if (user.isAdmin) {
-        console.log(`WARNING: Admin user ${userId} (${user.username}) is being deleted by admin ${req.session.userId}`);
+        console.log(`⚠️  WARNING: Admin user ${userId} (${user.username}) is being deleted by admin ${req.session.userId}`);
       }
 
+      console.log(`🔥 Proceeding to delete user ${userId} (${user.username})...`);
       // Delete user with comprehensive foreign key handling
       await storage.deleteUser(userId);
 
@@ -3457,9 +3462,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deletedBy: req.session.userId 
       }, req);
 
+      console.log(`✅ Successfully deleted user ${userId} (${user.username})`);
       res.json({ success: true, message: `User ${user.username} deleted successfully` });
     } catch (error) {
-      console.error(`Error deleting user ${req.params.id}:`, error);
+      console.error(`💥 Error deleting user ${req.params.id}:`, error);
+      console.error(`📋 Error details:`, { 
+        message: error.message, 
+        stack: error.stack?.substring(0, 500),
+        type: error.constructor.name 
+      });
       
       // Provide more specific error messages
       if (error.message?.includes('foreign key')) {
