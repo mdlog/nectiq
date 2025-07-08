@@ -769,14 +769,32 @@ export class DatabaseStorage implements IStorage {
       
       // 6. Delete transaction and financial logs
       console.log('Clearing transaction history...');
-      await db.delete(transactionLogs).where(eq(transactionLogs.userId, id));
-      await db.delete(cryptoTransactions).where(eq(cryptoTransactions.userId, id));
+      try {
+        await db.delete(transactionLogs).where(eq(transactionLogs.userId, id));
+      } catch (error: any) {
+        console.warn('transactionLogs table operation failed:', error.message);
+      }
+      
+      try {
+        await db.delete(cryptoTransactions).where(eq(cryptoTransactions.userId, id));
+      } catch (error: any) {
+        console.warn('cryptoTransactions table operation failed:', error.message);
+      }
       
       // 7. Delete analytics and security data (but keep basic security for protection)
       console.log('Clearing analytics and some security data...');
-      await db.delete(userAnalytics).where(eq(userAnalytics.userId, id));
+      try {
+        await db.delete(userAnalytics).where(eq(userAnalytics.userId, id));
+      } catch (error: any) {
+        console.warn('userAnalytics table operation failed:', error.message);
+      }
+      
       // Note: Keep some security events for protection, only delete abuse detections
-      await db.delete(abuseDetections).where(eq(abuseDetections.userId, id));
+      try {
+        await db.delete(abuseDetections).where(eq(abuseDetections.userId, id));
+      } catch (error: any) {
+        console.warn('abuseDetections table operation failed:', error.message);
+      }
       
       // 8. Delete all financial records
       console.log('Clearing financial records...');
