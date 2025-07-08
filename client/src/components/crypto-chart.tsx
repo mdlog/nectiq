@@ -152,6 +152,27 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
     const { width, height } = canvas;
     ctx.clearRect(0, 0, width, height);
+    
+    // Create ultra-premium radial gradient background
+    const bgGradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height)/2);
+    bgGradient.addColorStop(0, 'rgba(15, 23, 42, 1)');
+    bgGradient.addColorStop(0.3, 'rgba(30, 41, 59, 0.98)');
+    bgGradient.addColorStop(0.6, 'rgba(51, 65, 85, 0.95)');
+    bgGradient.addColorStop(1, 'rgba(71, 85, 105, 0.9)');
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Add subtle noise texture for premium feel
+    ctx.globalAlpha = 0.02;
+    for (let i = 0; i < width; i += 6) {
+      for (let j = 0; j < height; j += 6) {
+        if (Math.random() > 0.7) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(i, j, 1, 1);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
 
     // Set up chart dimensions with extra space for price labels and date labels
     const leftPadding = 80; // More space for price labels on the left
@@ -174,14 +195,19 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const maxValue = Math.max(...values);
     const valueRange = maxValue - minValue || 1;
 
-    // Draw professional grid lines with gradient
+    // Draw ultra-premium grid lines with enhanced gradients
     const gridGradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
-    gridGradient.addColorStop(0, 'rgba(100, 116, 139, 0.4)');
-    gridGradient.addColorStop(0.5, 'rgba(100, 116, 139, 0.2)');
-    gridGradient.addColorStop(1, 'rgba(100, 116, 139, 0.1)');
+    gridGradient.addColorStop(0, 'rgba(100, 116, 139, 0.5)');
+    gridGradient.addColorStop(0.2, 'rgba(120, 136, 159, 0.4)');
+    gridGradient.addColorStop(0.5, 'rgba(100, 116, 139, 0.3)');
+    gridGradient.addColorStop(0.8, 'rgba(80, 96, 119, 0.2)');
+    gridGradient.addColorStop(1, 'rgba(60, 76, 99, 0.1)');
     
+    // Draw horizontal grid lines with subtle glow
     ctx.strokeStyle = gridGradient;
     ctx.lineWidth = 1;
+    ctx.shadowColor = 'rgba(100, 116, 139, 0.3)';
+    ctx.shadowBlur = 1;
     for (let i = 0; i <= 5; i++) {
       const y = topPadding + (chartHeight * i) / 5;
       ctx.beginPath();
@@ -189,6 +215,18 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.lineTo(leftPadding + chartWidth, y);
       ctx.stroke();
     }
+    
+    // Draw vertical grid lines for better readability
+    ctx.shadowBlur = 0.5;
+    const verticalLines = Math.min(chartData.length, 8);
+    for (let i = 0; i <= verticalLines; i++) {
+      const x = leftPadding + (chartWidth * i) / verticalLines;
+      ctx.beginPath();
+      ctx.moveTo(x, topPadding);
+      ctx.lineTo(x, topPadding + chartHeight);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
 
     // Draw professional gradient price line with glow effect
     const lineGradient = ctx.createLinearGradient(leftPadding, topPadding, leftPadding + chartWidth, topPadding);
@@ -202,30 +240,95 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       lineGradient.addColorStop(1, '#ec4899');
     }
 
-    // Add glow effect
-    ctx.shadowColor = priceChange24h >= 0 ? '#10b981' : '#ef4444';
-    ctx.shadowBlur = 6;
-    ctx.strokeStyle = lineGradient;
-    ctx.lineWidth = 3;
+    // Create line path function for reuse
+    const createLinePath = () => {
+      ctx.beginPath();
+      chartData.forEach((point, index) => {
+        const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
+        const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+        
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+    };
+
+    // Draw multiple glow layers for dramatic effect
+    const glowColor = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+    
+    // Outer glow (widest, most transparent)
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 15;
+    ctx.strokeStyle = glowColor;
+    ctx.lineWidth = 8;
+    ctx.globalAlpha = 0.15;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.beginPath();
-
-    chartData.forEach((point, index) => {
-      const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
-      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
-      
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-
+    createLinePath();
+    ctx.stroke();
+    
+    // Medium glow
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 5;
+    ctx.globalAlpha = 0.3;
+    createLinePath();
+    ctx.stroke();
+    
+    // Inner glow
+    ctx.shadowBlur = 5;
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.6;
+    createLinePath();
+    ctx.stroke();
+    
+    // Main line with premium gradient
+    ctx.shadowBlur = 2;
+    ctx.strokeStyle = lineGradient;
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 1;
+    createLinePath();
     ctx.stroke();
     
     // Reset shadow for other elements
     ctx.shadowBlur = 0;
+    
+    // Add premium highlight points along the line
+    chartData.forEach((point, index) => {
+      const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
+      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      
+      // Skip too many points for performance, show only key points
+      if (index % Math.max(1, Math.floor(chartData.length / 12)) === 0 || index === chartData.length - 1) {
+        // Outer glow for points
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = glowColor;
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Inner bright point
+        ctx.shadowBlur = 4;
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Center highlight
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    });
+    
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
 
     // Draw enhanced gradient fill with multiple stops
     const areaGradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
@@ -265,14 +368,39 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
         maximumFractionDigits: 6
       })}`;
       
-      // Draw semi-transparent background for label
+      // Draw premium glass morphism background for label
       const textMetrics = ctx.measureText(text);
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-      ctx.fillRect(leftPadding - textMetrics.width - 12, y - 8, textMetrics.width + 8, 16);
+      const bgWidth = textMetrics.width + 16;
+      const bgHeight = 20;
       
-      // Draw label text
-      ctx.fillStyle = '#e2e8f0';
+      // Premium gradient background
+      const labelGradient = ctx.createLinearGradient(leftPadding - bgWidth, y - bgHeight/2, leftPadding, y + bgHeight/2);
+      labelGradient.addColorStop(0, 'rgba(15, 23, 42, 0.95)');
+      labelGradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.9)');
+      labelGradient.addColorStop(1, 'rgba(51, 65, 85, 0.85)');
+      ctx.fillStyle = labelGradient;
+      
+      // Add shadow for depth
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
+      ctx.fillRect(leftPadding - bgWidth, y - bgHeight/2, bgWidth, bgHeight);
+      ctx.shadowBlur = 0;
+      
+      // Add premium border
+      const borderGradient = ctx.createLinearGradient(leftPadding - bgWidth, y - bgHeight/2, leftPadding, y + bgHeight/2);
+      borderGradient.addColorStop(0, 'rgba(148, 163, 184, 0.5)');
+      borderGradient.addColorStop(1, 'rgba(100, 116, 139, 0.3)');
+      ctx.strokeStyle = borderGradient;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(leftPadding - bgWidth, y - bgHeight/2, bgWidth, bgHeight);
+      
+      // Draw label text with subtle glow
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      ctx.shadowBlur = 2;
+      ctx.fillStyle = '#f8fafc';
       ctx.fillText(text, leftPadding - 8, y + 4);
+      ctx.shadowBlur = 0;
     }
 
     // Draw enhanced date labels with background
@@ -285,23 +413,39 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
         const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
         const y = topPadding + chartHeight + 22;
         
-        // Draw semi-transparent background for label with rounded corners effect
+        // Draw premium glass morphism background for date label
         const textMetrics = ctx.measureText(dateLabel);
-        const bgWidth = textMetrics.width + 10;
-        const bgHeight = 18;
+        const bgWidth = textMetrics.width + 14;
+        const bgHeight = 20;
         
-        // Background with rounded rectangle effect
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        // Premium gradient background for date labels
+        const dateLabelGradient = ctx.createLinearGradient(x - bgWidth/2, y - 12, x + bgWidth/2, y + 8);
+        dateLabelGradient.addColorStop(0, 'rgba(15, 23, 42, 0.95)');
+        dateLabelGradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.9)');
+        dateLabelGradient.addColorStop(1, 'rgba(51, 65, 85, 0.85)');
+        ctx.fillStyle = dateLabelGradient;
+        
+        // Add shadow for depth
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetY = 2;
         ctx.fillRect(x - bgWidth/2, y - 12, bgWidth, bgHeight);
+        ctx.shadowBlur = 0;
         
-        // Add subtle border
-        ctx.strokeStyle = 'rgba(100, 116, 139, 0.3)';
+        // Add premium border
+        const dateBorderGradient = ctx.createLinearGradient(x - bgWidth/2, y - 12, x + bgWidth/2, y + 8);
+        dateBorderGradient.addColorStop(0, 'rgba(148, 163, 184, 0.5)');
+        dateBorderGradient.addColorStop(1, 'rgba(100, 116, 139, 0.3)');
+        ctx.strokeStyle = dateBorderGradient;
         ctx.lineWidth = 1;
         ctx.strokeRect(x - bgWidth/2, y - 12, bgWidth, bgHeight);
         
-        // Draw label text with better contrast
-        ctx.fillStyle = '#f1f5f9';
+        // Draw label text with subtle glow
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = 2;
+        ctx.fillStyle = '#f8fafc';
         ctx.fillText(dateLabel, x, y + 3);
+        ctx.shadowBlur = 0;
       }
     });
 
@@ -321,25 +465,71 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Draw price label background
+      // Draw premium price label background
       const priceText = `$${currentPrice.toFixed(2)}`;
-      ctx.font = 'bold 12px sans-serif';
+      ctx.font = 'bold 13px Inter, sans-serif';
       ctx.textAlign = 'left';
       const textWidth = ctx.measureText(priceText).width;
-      const labelPadding = 6;
-      const labelHeight = 20;
+      const labelPadding = 10;
+      const labelHeight = 26;
       
-      ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      // Premium gradient background for price label
+      const priceGradient = ctx.createLinearGradient(rightEdge + 5, priceY - labelHeight/2, rightEdge + 5 + textWidth + labelPadding * 2, priceY + labelHeight/2);
+      if (priceChange24h >= 0) {
+        priceGradient.addColorStop(0, '#10b981');
+        priceGradient.addColorStop(0.5, '#059669');
+        priceGradient.addColorStop(1, '#047857');
+      } else {
+        priceGradient.addColorStop(0, '#ef4444');
+        priceGradient.addColorStop(0.5, '#dc2626');
+        priceGradient.addColorStop(1, '#b91c1c');
+      }
+      
+      // Add shadow to price label
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 2;
+      ctx.fillStyle = priceGradient;
       ctx.fillRect(rightEdge + 5, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+      ctx.shadowBlur = 0;
 
-      // Draw price text
+      // Add border to price label
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(rightEdge + 5, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+
+      // Draw price text with glow
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      ctx.shadowBlur = 2;
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(priceText, rightEdge + 5 + labelPadding, priceY + 4);
+      ctx.fillText(priceText, rightEdge + 5 + labelPadding, priceY + 5);
+      ctx.shadowBlur = 0;
 
-      // Draw small circle at the price point
-      ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      // Draw premium animated circle at the price point with glow
+      const circleColor = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+      
+      // Outer glow
+      ctx.shadowColor = circleColor;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = circleColor;
+      ctx.globalAlpha = 0.4;
       ctx.beginPath();
-      ctx.arc(rightEdge - 40, priceY, 3, 0, Math.PI * 2);
+      ctx.arc(rightEdge - 40, priceY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Inner bright circle
+      ctx.shadowBlur = 5;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(rightEdge - 40, priceY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Center white highlight
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(rightEdge - 40, priceY, 2, 0, Math.PI * 2);
       ctx.fill();
     }
   };
