@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords, Play } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords, Play, RotateCcw } from "lucide-react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -2378,6 +2378,52 @@ export default function AdminPanel() {
     },
   });
 
+  const resetUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      console.log(`🔄 [FRONTEND] Starting reset for user ID: ${userId}`);
+      const response = await fetch(`/api/admin/users/${userId}/reset`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log(`📡 [FRONTEND] Response status: ${response.status} ${response.statusText}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ [FRONTEND] Reset failed with error:`, errorText);
+        throw new Error(errorText || "Failed to reset user");
+      }
+      
+      const result = await response.json();
+      console.log(`✅ [FRONTEND] Reset successful:`, result);
+      return result;
+    },
+    onSuccess: (data) => {
+      console.log(`🎉 [FRONTEND] Reset mutation success:`, data);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({
+        title: "Success",
+        description: data.message || "User reset successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.error("💥 [FRONTEND] Reset user error:", error);
+      console.error("💥 [FRONTEND] Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset user",
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetLeaderboardMutation = useMutation({
     mutationFn: async () => {
       const response = await fetch("/api/admin/leaderboard/reset", {
@@ -3063,19 +3109,34 @@ export default function AdminPanel() {
                                   </DialogContent>
                                 </Dialog>
                                 {!user.isAdmin && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      if (confirm(`Are you sure you want to delete user "${user.username}"? This action cannot be undone.`)) {
-                                        deleteUserMutation.mutate(user.id);
-                                      }
-                                    }}
-                                    disabled={deleteUserMutation.isPending}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <UserX className="w-4 h-4" />
-                                  </Button>
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm(`Are you sure you want to RESET user "${user.username}"?\n\nThis will:\n✅ Clear ALL user data (predictions, battles, achievements, etc.)\n✅ Reset balance to 1000 NTIQ\n✅ Keep the user account active\n\nThis action cannot be undone!`)) {
+                                          resetUserMutation.mutate(user.id);
+                                        }
+                                      }}
+                                      disabled={resetUserMutation.isPending}
+                                      className="text-yellow-600 hover:text-yellow-700"
+                                    >
+                                      <RotateCcw className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm(`Are you sure you want to delete user "${user.username}"? This action cannot be undone.`)) {
+                                          deleteUserMutation.mutate(user.id);
+                                        }
+                                      }}
+                                      disabled={deleteUserMutation.isPending}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <UserX className="w-4 h-4" />
+                                    </Button>
+                                  </>
                                 )}
                               </div>
                             </TableCell>

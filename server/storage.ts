@@ -712,6 +712,104 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async resetUser(id: number): Promise<void> {
+    // Reset user to initial state - clear all data but keep user account
+    try {
+      console.log(`Starting user reset process for user ${id}`);
+      
+      // Get user info first for logging
+      const [user] = await db.select({ 
+        username: users.username, 
+        walletAddress: users.walletAddress 
+      }).from(users).where(eq(users.id, id));
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      console.log(`Resetting user: ${user.username} (${user.walletAddress})`);
+      
+      // Reset user data to initial state
+      // 1. Reset basic user fields to initial values
+      console.log('Resetting user profile to initial state...');
+      await db.update(users).set({
+        balance: 1000, // Reset to initial balance
+        totalPredictions: 0,
+        correctPredictions: 0,
+        totalRewards: 0,
+        profilePhoto: null,
+        email: null,
+        twitterHandle: null,
+        emailVerified: false,
+        twitterVerified: false,
+        referralCode: null
+      }).where(eq(users.id, id));
+      
+      // 2. Delete all battle-related data
+      console.log('Clearing battle data...');
+      await db.delete(battleReactions).where(eq(battleReactions.userId, id));
+      await db.delete(battleComments).where(eq(battleComments.userId, id));
+      await db.delete(battleSpectators).where(eq(battleSpectators.userId, id));
+      await db.delete(predictionBattles).where(or(
+        eq(predictionBattles.challengerId, id),
+        eq(predictionBattles.challengedId, id)
+      ));
+      
+      // 3. Delete survival tournament data
+      console.log('Clearing survival tournament data...');
+      await db.delete(survivalPredictions).where(eq(survivalPredictions.userId, id));
+      await db.delete(survivalParticipants).where(eq(survivalParticipants.userId, id));
+      
+      // 4. Delete achievements and challenges
+      console.log('Clearing achievements and challenges...');
+      await db.delete(userAchievements).where(eq(userAchievements.userId, id));
+      await db.delete(userDailyChallenges).where(eq(userDailyChallenges.userId, id));
+      
+      // 5. Delete social and interaction data
+      console.log('Clearing social data...');
+      await db.delete(predictionReactions).where(eq(predictionReactions.userId, id));
+      await db.delete(predictionComments).where(eq(predictionComments.userId, id));
+      
+      // 6. Delete transaction and financial logs
+      console.log('Clearing transaction history...');
+      await db.delete(transactionLogs).where(eq(transactionLogs.userId, id));
+      await db.delete(cryptoTransactions).where(eq(cryptoTransactions.userId, id));
+      
+      // 7. Delete analytics and security data (but keep basic security for protection)
+      console.log('Clearing analytics and some security data...');
+      await db.delete(userAnalytics).where(eq(userAnalytics.userId, id));
+      // Note: Keep some security events for protection, only delete abuse detections
+      await db.delete(abuseDetections).where(eq(abuseDetections.userId, id));
+      
+      // 8. Delete all financial records
+      console.log('Clearing financial records...');
+      await db.delete(rewards).where(eq(rewards.userId, id));
+      await db.delete(predictions).where(eq(predictions.userId, id));
+      await db.delete(purchases).where(eq(purchases.userId, id));
+      await db.delete(withdrawals).where(eq(withdrawals.userId, id));
+      
+      // 9. Delete referral data
+      console.log('Clearing referral data...');
+      await db.delete(referrals).where(or(
+        eq(referrals.referrerId, id),
+        eq(referrals.referredUserId, id)
+      ));
+      
+      // 10. Update any users who were referred by this user
+      console.log('Updating referral references...');
+      await db.update(users).set({
+        referredBy: null
+      }).where(eq(users.referredBy, id));
+      
+      console.log(`✅ Successfully reset user ${id} (${user.username}) - all data cleared, user reset to initial state with 1000 NTIQ balance`);
+      
+    } catch (error: any) {
+      console.error(`Error resetting user ${id}:`, error);
+      console.error('Error details:', error?.message || 'Unknown error');
+      throw new Error(`Cannot reset user: ${error?.message || 'Unknown database error'}`);
+    }
+  }
+
   // Security event operations
   async createSecurityEvent(event: any): Promise<any> {
     const [newEvent] = await db.insert(securityEvents).values(event).returning();

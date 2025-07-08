@@ -3483,6 +3483,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Reset user (clear all data but keep account)
+  app.post("/api/admin/users/:id/reset", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      console.log(`🔄 Reset user request received for ID: ${req.params.id}, parsed as: ${userId}`);
+
+      if (!userId || isNaN(userId)) {
+        console.log(`❌ Invalid user ID provided: ${req.params.id}`);
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Check if user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        console.log(`❌ User ${userId} not found in database`);
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      console.log(`🔄 Proceeding to reset user ${userId} (${user.username})...`);
+      
+      // Reset user to initial state
+      await storage.resetUser(userId);
+
+      auditLog("USER_RESET", { 
+        resetUserId: userId, 
+        username: user.username,
+        walletAddress: user.walletAddress,
+        resetBy: req.session.userId 
+      }, req);
+
+      console.log(`✅ Successfully reset user ${userId} (${user.username}) to initial state`);
+      res.json({ message: "User reset successfully" });
+    } catch (error: any) {
+      console.error("❌ Error resetting user:", error);
+      res.status(500).json({ 
+        message: error.message || "Failed to reset user",
+        details: error.stack
+      });
+    }
+  });
+
   app.get("/api/admin/predictions", requireAdmin, async (req, res) => {
     try {
       const predictions = await storage.getAllPredictions(); // Get all predictions with user details
