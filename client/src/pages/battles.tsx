@@ -1056,7 +1056,7 @@ export default function BattlesPage() {
                                 '---'
                               )}
                             </div>
-                            <div className="text-xs text-muted-foreground">{battle.challengedUsername}</div>
+                            <div className="text-xs text-muted-foreground">Opponent</div>
                           </div>
                         </div>
 
