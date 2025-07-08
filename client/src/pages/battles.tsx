@@ -992,7 +992,7 @@ export default function BattlesPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {activeBattles.map((battle: Battle) => (
                     <Card key={battle.id} className="border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
                       <CardHeader className="pb-3">
