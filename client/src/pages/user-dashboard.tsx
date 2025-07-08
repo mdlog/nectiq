@@ -646,32 +646,84 @@ export default function UserDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {recentRewards.map((reward) => (
-                      <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${reward.amount > 0 ? 'bg-green-600' : 'bg-red-600'}`}>
-                            {reward.amount > 0 ? (
-                              <TrendingUp className="text-white" size={16} />
-                            ) : (
-                              <TrendingDown className="text-white" size={16} />
-                            )}
+                    {recentRewards.map((reward) => {
+                      const isWin = reward.amount > 0;
+                      
+                      // Determine source type and display text
+                      let sourceText = '';
+                      let sourceIcon = <Gift size={16} />;
+                      
+                      switch (reward.type) {
+                        case 'prediction':
+                          sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
+                          sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+                          break;
+                        case 'battle':
+                          // Parse battle description to extract opponent name
+                          const battleDescription = reward.description || '';
+                          const opponentMatch = battleDescription.match(/vs (.+?) -/);
+                          const opponentName = opponentMatch ? opponentMatch[1] : 'Opponent';
+                          sourceText = `Battle vs ${opponentName}`;
+                          sourceIcon = <TrendingUp size={16} />;
+                          break;
+                        case 'survival':
+                          sourceText = `Survival Tournament`;
+                          sourceIcon = <TrendingUp size={16} />;
+                          break;
+                        case 'achievement':
+                          sourceText = 'Achievement Reward';
+                          sourceIcon = <Check size={16} />;
+                          break;
+                        case 'daily_challenge':
+                          sourceText = 'Daily Challenge';
+                          sourceIcon = <Gift size={16} />;
+                          break;
+                        default:
+                          sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
+                          sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+                      }
+                      
+                      return (
+                        <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className="relative w-8 h-8 flex-shrink-0">
+                              {/* Activity Type Badge */}
+                              <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${
+                                reward.type === 'battle' ? 'bg-purple-500' :
+                                reward.type === 'survival' ? 'bg-orange-500' :
+                                reward.type === 'achievement' ? 'bg-yellow-500' :
+                                reward.type === 'daily_challenge' ? 'bg-blue-500' :
+                                'bg-green-500'
+                              }`}>
+                                {reward.type === 'battle' ? '⚔' : 
+                                 reward.type === 'survival' ? '🏆' : 
+                                 reward.type === 'achievement' ? '🎯' :
+                                 reward.type === 'daily_challenge' ? '📅' :
+                                 '📈'}
+                              </div>
+                              
+                              {/* Main Icon */}
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${reward.amount > 0 ? 'bg-green-600' : 'bg-red-600'}`}>
+                                {sourceIcon}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                                {sourceText}
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                {formatTimeAgo(reward.createdAt)}{reward.accuracy ? ` • ${parseFloat(reward.accuracy).toFixed(1)}% accuracy` : ''}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-sm">
-                              {reward.cryptocurrency.toUpperCase()} Prediction {reward.amount > 0 ? 'Win' : 'Loss'}
-                            </p>
-                            <p className="text-xs text-slate-400">
-                              {formatTimeAgo(reward.createdAt)} • {parseFloat(reward.accuracy).toFixed(1)}% accuracy
+                          <div className="text-right">
+                            <p className={`text-sm font-semibold ${reward.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                              {reward.amount > 0 ? '+' : ''}{reward.amount} NTIQ
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className={`text-sm font-semibold ${reward.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {reward.amount > 0 ? '+' : ''}{reward.amount} NTIQ
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
