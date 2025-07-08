@@ -191,7 +191,7 @@ export default function Dashboard() {
         </div>
         
         {/* Live Activity Feed */}
-        <div className="mt-12">
+        <div className="mt-8">
           <LiveActivityFeed />
         </div>
         
