@@ -174,11 +174,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     }
     ctx.globalAlpha = 1;
 
-    // Set up chart dimensions with extra space for price labels and date labels
-    const leftPadding = 80; // More space for price labels on the left
-    const rightPadding = 80; // Reduced space for real-time price display
-    const topPadding = 40;
-    const bottomPadding = 60; // Increased space for date labels at bottom
+    // Set up balanced chart dimensions for better proportions
+    const leftPadding = 70; // Optimal space for price labels
+    const rightPadding = 100; // Adequate space for real-time price display
+    const topPadding = 30; // Reduced top padding for better height utilization
+    const bottomPadding = 45; // Optimal space for date labels
     const chartWidth = width - leftPadding - rightPadding;
     const chartHeight = height - topPadding - bottomPadding;
 
@@ -203,22 +203,22 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     gridGradient.addColorStop(0.8, 'rgba(80, 96, 119, 0.2)');
     gridGradient.addColorStop(1, 'rgba(60, 76, 99, 0.1)');
     
-    // Draw horizontal grid lines with subtle glow
+    // Draw horizontal grid lines with subtle glow - more lines for better proportion
     ctx.strokeStyle = gridGradient;
     ctx.lineWidth = 1;
     ctx.shadowColor = 'rgba(100, 116, 139, 0.3)';
     ctx.shadowBlur = 1;
-    for (let i = 0; i <= 5; i++) {
-      const y = topPadding + (chartHeight * i) / 5;
+    for (let i = 0; i <= 8; i++) { // Increased from 5 to 8 for better proportions
+      const y = topPadding + (chartHeight * i) / 8;
       ctx.beginPath();
       ctx.moveTo(leftPadding, y);
       ctx.lineTo(leftPadding + chartWidth, y);
       ctx.stroke();
     }
     
-    // Draw vertical grid lines for better readability
+    // Draw vertical grid lines for better readability - optimized spacing
     ctx.shadowBlur = 0.5;
-    const verticalLines = Math.min(chartData.length, 8);
+    const verticalLines = Math.min(chartData.length, 12); // Increased from 8 to 12
     for (let i = 0; i <= verticalLines; i++) {
       const x = leftPadding + (chartWidth * i) / verticalLines;
       ctx.beginPath();
@@ -360,9 +360,9 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.font = 'bold 11px Inter, system-ui, sans-serif';
     ctx.textAlign = 'right';
     
-    for (let i = 0; i <= 5; i++) {
-      const value = maxValue - (valueRange * i) / 5;
-      const y = topPadding + (chartHeight * i) / 5;
+    for (let i = 0; i <= 8; i++) {
+      const value = maxValue - (valueRange * i) / 8;
+      const y = topPadding + (chartHeight * i) / 8;
       const text = `$${value.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 6
@@ -540,16 +540,26 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const maxValue = Math.max(...values);
     const valueRange = maxValue - minValue || 1;
 
-    // Draw grid lines
-    ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
+    // Draw professional grid lines matching line chart
+    const gridGradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
+    gridGradient.addColorStop(0, 'rgba(100, 116, 139, 0.5)');
+    gridGradient.addColorStop(0.2, 'rgba(120, 136, 159, 0.4)');
+    gridGradient.addColorStop(0.5, 'rgba(100, 116, 139, 0.3)');
+    gridGradient.addColorStop(0.8, 'rgba(80, 96, 119, 0.2)');
+    gridGradient.addColorStop(1, 'rgba(60, 76, 99, 0.1)');
+    
+    ctx.strokeStyle = gridGradient;
     ctx.lineWidth = 1;
-    for (let i = 0; i <= 5; i++) {
-      const y = topPadding + (chartHeight * i) / 5;
+    ctx.shadowColor = 'rgba(100, 116, 139, 0.3)';
+    ctx.shadowBlur = 1;
+    for (let i = 0; i <= 8; i++) {
+      const y = topPadding + (chartHeight * i) / 8;
       ctx.beginPath();
       ctx.moveTo(leftPadding, y);
       ctx.lineTo(leftPadding + chartWidth, y);
       ctx.stroke();
     }
+    ctx.shadowBlur = 0;
 
     const candleWidth = chartWidth / chartData.length * 0.6;
 
@@ -578,15 +588,50 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyHeight);
     });
 
-    // Draw price labels
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '12px sans-serif';
+    // Draw premium price labels with glass morphism
+    ctx.font = 'bold 11px Inter, system-ui, sans-serif';
     ctx.textAlign = 'right';
     
-    for (let i = 0; i <= 5; i++) {
-      const value = maxValue - (valueRange * i) / 5;
-      const y = topPadding + (chartHeight * i) / 5;
-      ctx.fillText(`$${value.toFixed(2)}`, leftPadding - 5, y + 4);
+    for (let i = 0; i <= 8; i++) {
+      const value = maxValue - (valueRange * i) / 8;
+      const y = topPadding + (chartHeight * i) / 8;
+      const text = `$${value.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6
+      })}`;
+      
+      // Draw premium glass morphism background for label
+      const textMetrics = ctx.measureText(text);
+      const bgWidth = textMetrics.width + 16;
+      const bgHeight = 20;
+      
+      // Premium gradient background
+      const labelGradient = ctx.createLinearGradient(leftPadding - bgWidth, y - bgHeight/2, leftPadding, y + bgHeight/2);
+      labelGradient.addColorStop(0, 'rgba(15, 23, 42, 0.95)');
+      labelGradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.9)');
+      labelGradient.addColorStop(1, 'rgba(51, 65, 85, 0.85)');
+      
+      ctx.fillStyle = labelGradient;
+      ctx.shadowColor = 'rgba(15, 23, 42, 0.8)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
+      ctx.fillRect(leftPadding - bgWidth, y - bgHeight/2, bgWidth, bgHeight);
+      ctx.shadowBlur = 0;
+      
+      // Add premium border
+      const borderGradient = ctx.createLinearGradient(leftPadding - bgWidth, y - bgHeight/2, leftPadding, y + bgHeight/2);
+      borderGradient.addColorStop(0, 'rgba(148, 163, 184, 0.5)');
+      borderGradient.addColorStop(1, 'rgba(100, 116, 139, 0.3)');
+      ctx.strokeStyle = borderGradient;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(leftPadding - bgWidth, y - bgHeight/2, bgWidth, bgHeight);
+      
+      // Draw label text with glow
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      ctx.shadowBlur = 2;
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillText(text, leftPadding - 8, y + 4);
+      ctx.shadowBlur = 0;
     }
 
     // Draw date labels at the bottom
@@ -660,8 +705,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const container = canvas.parentElement;
       if (container) {
         const dpr = window.devicePixelRatio || 1;
-        // Mobile-responsive height: 350px on mobile, 400px on desktop
-        const canvasHeight = window.innerWidth < 768 ? 350 : 400;
+        // Improved proportional height: 420px on mobile, 480px on desktop for better chart proportions
+        const canvasHeight = window.innerWidth < 768 ? 420 : 480;
         
         canvas.width = container.clientWidth * dpr;
         canvas.height = canvasHeight * dpr;
