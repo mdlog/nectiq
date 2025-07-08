@@ -5286,63 +5286,11 @@ export default function AdminPanel() {
                   </div>
                 </CardHeader>
                 
-                {/* Rekomendasi Peningkatan Section */}
                 <CardContent>
-                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <h4 className="text-lg font-bold text-blue-700 dark:text-blue-300 mb-3 flex items-center">
-                      <Lightbulb className="mr-2" size={18} />
-                      Improvement Recommendations
-                    </h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-start space-x-2">
-                            <span className="text-yellow-500">🔄</span>
-                            <div>
-                              <strong>Dynamic Exchange Rate</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Integration with price oracle (Chainlink, CoinGecko API) so exchange rates are not static</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start space-x-2">
-                            <span className="text-red-500">🛑</span>
-                            <div>
-                              <strong>Emergency Stop Granular</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Choose type: stop withdrawals only, or total system shutdown</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start space-x-2">
-                            <span className="text-blue-500">📝</span>
-                            <div>
-                              <strong>History Tracking</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Every setting change needs audit log: who changed it, when, from which time</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-start space-x-2">
-                            <span className="text-green-500">🔔</span>
-                            <div>
-                              <strong>Notification Hooks</strong>
-                              <p className="text-slate-600 dark:text-slate-300">When important settings change (withdrawal fee, rates, etc.) → email admin</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start space-x-2">
-                            <span className="text-purple-500">💾</span>
-                            <div>
-                              <strong>Preset Saving</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Can save and restore to specific configurations (e.g., "Panic Mode", "Event Mode")</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start space-x-2">
-                            <span className="text-orange-500">🔐</span>
-                            <div>
-                              <strong>Two-step Auth for save</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Saving important settings (e.g., withdrawal fee) requires second authorization (PIN/email/OTP)</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                      Configure platform settings, limits, and security options below
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -5420,27 +5368,26 @@ export default function AdminPanel() {
                     </div>
                   </div>
 
-                  {/* Prediction Limits */}
-                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Prediction Limit: 20x/hour</h4>
+                  {/* Limits Section */}
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">System Limits</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <Label htmlFor="prediction-delay" className="text-slate-700 dark:text-slate-300">Withdrawal Delay: 4 jam</Label>
+                        <Label htmlFor="prediction-limit" className="text-gray-700 dark:text-gray-300">Predictions per Hour</Label>
                         <Input 
-                          id="prediction-delay"
-                          value="4"
+                          id="prediction-limit"
+                          value="20"
                           type="number"
-                          className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                          className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="reward-multiplier" className="text-slate-700 dark:text-slate-300">Reward Multiplier: 2x</Label>
+                        <Label htmlFor="withdrawal-delay" className="text-gray-700 dark:text-gray-300">Withdrawal Delay (hours)</Label>
                         <Input 
-                          id="reward-multiplier"
-                          value="2"
+                          id="withdrawal-delay"
+                          value="4"
                           type="number"
-                          step="0.1"
-                          className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                          className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
                         />
                       </div>
                     </div>
@@ -5645,95 +5592,49 @@ export default function AdminPanel() {
                 </CardContent>
               </Card>
 
-              {/* Mode Event & Preset Saving */}
+              {/* Save Settings */}
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Gamepad2 className="mr-2" size={18} />
-                    New Feature: Event Mode
+                    <Save className="mr-2" size={18} />
+                    Save Configuration
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    For example, during a battle campaign:
-                  </p>
-                  
-                  <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg font-mono text-sm">
-                    <div className="space-y-1 text-gray-800 dark:text-gray-200">
-                      <div>"Prediction Limit: 20x/hour"</div>
-                      <div>"Withdrawal Delay: 4 hours"</div>
-                      <div>"Reward Multiplier: 2x"</div>
-                    </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
-                          <Copy className="mr-1" size={12} />
-                          Copy
-                        </Button>
-                        <Button variant="outline" size="sm" className="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
-                          <Edit className="mr-1" size={12} />
-                          Edit
-                        </Button>
-                      </div>
-                    </div>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Save current settings configuration
+                    </p>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Save className="mr-2" size={16} />
+                      Save Settings
+                    </Button>
                   </div>
-                  
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    This feature can automatically activate and configure the panel.
-                  </p>
                 </CardContent>
               </Card>
 
-              {/* Enhanced Export & Backup Features */}
+              {/* Export Options */}
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <FileDown className="mr-2" size={18} />
-                    Format Export
+                    Export Data
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Export Logs Button → can add format options:
-                    </p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Button variant="outline" className="justify-start">
-                        <FileSpreadsheet className="mr-2" size={16} />
-                        CSV
-                      </Button>
-                      <Button variant="outline" className="justify-start">
-                        <Code className="mr-2" size={16} />
-                        JSON
-                      </Button>
-                      <Button variant="outline" className="justify-start">
-                        <Archive className="mr-2" size={16} />
-                        Encrypted ZIP (for compliance submission)
-                      </Button>
-                    </div>
-
-                    <div className="mt-6 space-y-3">
-                      <p className="text-sm font-medium">If you'd like, I can help create:</p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-blue-500">📱</span>
-                          <span>Mockup UI for "History of Changes"</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-green-500">✅</span>
-                          <span>"Confirmation Modal" display for risky actions</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-purple-500">🔗</span>
-                          <span>Settings ↔ other systems interaction diagram</span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-xs text-slate-500 mt-4">
-                        Would you like me to help continue with one of these features?
-                      </p>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button variant="outline" className="justify-start">
+                      <FileSpreadsheet className="mr-2" size={16} />
+                      Export CSV
+                    </Button>
+                    <Button variant="outline" className="justify-start">
+                      <Code className="mr-2" size={16} />
+                      Export JSON
+                    </Button>
+                    <Button variant="outline" className="justify-start">
+                      <Archive className="mr-2" size={16} />
+                      Download Backup
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
