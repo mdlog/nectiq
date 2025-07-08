@@ -58,7 +58,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   const getActualDaysToFetch = (timeframeDays: string): string => {
     switch(timeframeDays) {
       case '1': return '7';    // 1D timeframe shows 7 days of data
-      case '7': return '14';   // 7D timeframe shows 14 days of data  
+      case '7': return '14';   // 7D timeframe shows 14 days of data
+      case '14': return '28';  // 14D timeframe shows 28 days of data  
       case '30': return '60';  // 30D timeframe shows 60 days of data
       case '90': return '180'; // 90D timeframe shows 180 days of data
       default: return timeframeDays;
@@ -111,6 +112,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     
     // Adjust max labels based on data range - more data needs fewer labels
     let maxLabels = 6;
+    if (actualDays >= 28) maxLabels = 5;  // For 28+ days (14D timeframe), show fewer labels
     if (actualDays >= 60) maxLabels = 5;  // For 60+ days, show fewer labels
     if (actualDays >= 180) maxLabels = 4; // For 180+ days, show even fewer labels
     
@@ -127,7 +129,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
         day: 'numeric' 
       });
     } else if (actualDays <= 30) {
-      // For up to 30 days, show day and month
+      // For up to 30 days (including 14D timeframe), show day and month
       return date.toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric' 
@@ -486,6 +488,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   const timeframeOptions = [
     { value: '1', label: '1D' },
     { value: '7', label: '7D' },
+    { value: '14', label: '14D' },
     { value: '30', label: '30D' },
     { value: '90', label: '3M' },
     { value: '365', label: '1Y' },
