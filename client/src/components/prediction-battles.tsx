@@ -198,10 +198,10 @@ const WinProbabilityChart = ({ battle }: { battle: Battle }) => {
           </div>
         </div>
 
-        {/* Informasi tambahan */}
+        {/* Additional information */}
         <div className="bg-white dark:bg-gray-900 rounded-lg p-3 space-y-2">
           <div className="flex justify-between text-xs">
-            <span className="text-gray-600 dark:text-gray-400">Harga Saat Ini:</span>
+            <span className="text-gray-600 dark:text-gray-400">Current Price:</span>
             <span className="font-semibold">${battle.currentPrice.toLocaleString(undefined, { 
               minimumFractionDigits: 2, 
               maximumFractionDigits: 2 
@@ -355,18 +355,18 @@ export function PredictionBattles() {
       }),
     onSuccess: (data: any) => {
       const fairnessInfo = data.fairnessInfo;
-      let fairnessMessage = 'Anda telah bergabung dalam battle prediksi ini.';
+      let fairnessMessage = 'You have successfully joined this prediction battle.';
       
       if (fairnessInfo) {
-        fairnessMessage += `\n\nInformasi Keadilan:`;
-        fairnessMessage += `\n• Pergerakan harga: ${fairnessInfo.priceMovement}%`;
-        fairnessMessage += `\n• Multiplier keadilan: ${fairnessInfo.fairnessMultiplier}x`;
-        fairnessMessage += `\n• Bonus waktu bergabung: ${fairnessInfo.joinTimeBonus}x`;
-        fairnessMessage += `\n• Waktu bergabung: ${fairnessInfo.joinTimePercentage}% dari durasi battle`;
+        fairnessMessage += `\n\nFairness Information:`;
+        fairnessMessage += `\n• Price movement: ${fairnessInfo.priceMovement}%`;
+        fairnessMessage += `\n• Fairness multiplier: ${fairnessInfo.fairnessMultiplier}x`;
+        fairnessMessage += `\n• Join time bonus: ${fairnessInfo.joinTimeBonus}x`;
+        fairnessMessage += `\n• Join time: ${fairnessInfo.joinTimePercentage}% of battle duration`;
       }
       
       toast({
-        title: 'Bergabung Battle Berhasil!',
+        title: 'Successfully Joined Battle!',
         description: fairnessMessage,
       });
       setJoiningBattle(null);

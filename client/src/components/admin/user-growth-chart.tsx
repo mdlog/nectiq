@@ -64,7 +64,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p>Gagal memuat data pertumbuhan</p>
+          <p>Failed to load growth data</p>
         </CardContent>
       </Card>
     );
@@ -186,7 +186,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Calendar className="h-4 w-4" />
-            Pertumbuhan Kumulatif
+            Cumulative Growth
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -201,8 +201,8 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
                 />
                 <YAxis fontSize={12} />
                 <Tooltip 
-                  labelFormatter={(label) => `Tanggal: ${label}`}
-                  formatter={(value) => [value, 'Total Pengguna']}
+                  labelFormatter={(label) => `Date: ${label}`}
+                  formatter={(value) => [value, 'Total Users']}
                 />
                 <Area
                   type="monotone"
@@ -221,7 +221,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
       {growthData.retentionData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Ringkasan Retensi Pengguna</CardTitle>
+            <CardTitle className="text-base">User Retention Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -230,7 +230,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
                   {growthData.retentionData.length}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Pengguna yang membuat prediksi
+                  Users who made predictions
                 </div>
               </div>
               <div className="text-center">
@@ -238,7 +238,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
                   {(growthData.retentionData.reduce((sum, user) => sum + user.daysBetween, 0) / growthData.retentionData.length).toFixed(1)}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Rata-rata hari hingga prediksi pertama
+                  Average days to first prediction
                 </div>
               </div>
               <div className="text-center">
@@ -246,7 +246,7 @@ export function UserGrowthChart({ days = 30 }: UserGrowthChartProps) {
                   {((growthData.retentionData.filter(user => user.daysBetween <= 7).length / growthData.retentionData.length) * 100).toFixed(1)}%
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Retensi 7 hari
+                  7-day retention
                 </div>
               </div>
             </div>

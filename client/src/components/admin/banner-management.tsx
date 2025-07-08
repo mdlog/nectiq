@@ -71,11 +71,11 @@ export function BannerManagement() {
     },
     onSuccess: (data) => {
       setFormData(prev => ({ ...prev, imageUrl: data.imageUrl }));
-      toast({ title: "Success", description: "Gambar berhasil diupload" });
+      toast({ title: "Success", description: "Image uploaded successfully" });
       setIsUploading(false);
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message || "Gagal upload gambar", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to upload image", variant: "destructive" });
       setIsUploading(false);
     },
   });
@@ -91,14 +91,14 @@ export function BannerManagement() {
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "Banner berhasil dibuat" });
+      toast({ title: "Success", description: "Banner created successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
       queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
       setShowCreateDialog(false);
       resetForm();
     },
     onError: () => {
-      toast({ title: "Error", description: "Gagal membuat banner", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to create banner", variant: "destructive" });
     },
   });
 
@@ -113,14 +113,14 @@ export function BannerManagement() {
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "Banner berhasil diupdate" });
+      toast({ title: "Success", description: "Banner updated successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
       queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
       setEditingBanner(null);
       resetForm();
     },
     onError: () => {
-      toast({ title: "Error", description: "Gagal mengupdate banner", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to update banner", variant: "destructive" });
     },
   });
 
@@ -133,12 +133,12 @@ export function BannerManagement() {
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "Banner berhasil dihapus" });
+      toast({ title: "Success", description: "Banner deleted successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
       queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
     },
     onError: () => {
-      toast({ title: "Error", description: "Gagal menghapus banner", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to delete banner", variant: "destructive" });
     },
   });
 

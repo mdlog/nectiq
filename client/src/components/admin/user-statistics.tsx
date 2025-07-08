@@ -335,19 +335,19 @@ export function UserStatistics() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Total Prediksi</span>
+                  <span className="text-sm">Total Predictions</span>
                   <Badge variant="default">{formatNumber(stats.predictionStats.total)}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Prediksi Berhasil</span>
+                  <span className="text-sm">Successful Predictions</span>
                   <Badge variant="default">{formatNumber(stats.predictionStats.successful)}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Tingkat Keberhasilan</span>
+                  <span className="text-sm">Success Rate</span>
                   <Badge variant="outline">{formatPercentage(stats.predictionStats.successRate)}</Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Prediksi Pending</span>
+                  <span className="text-sm">Pending Predictions</span>
                   <Badge variant="secondary">{formatNumber(stats.predictionStats.pending)}</Badge>
                 </div>
               </CardContent>
@@ -388,7 +388,7 @@ export function UserStatistics() {
                 <div className="flex items-center">
                   <DollarSign className="h-8 w-8 text-green-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">Total Reward Dibayar</p>
+                    <p className="text-sm font-medium text-muted-foreground">Total Rewards Paid</p>
                     <p className="text-2xl font-bold">{formatCurrency(stats.financialStats.totalRewards)}</p>
                   </div>
                 </div>

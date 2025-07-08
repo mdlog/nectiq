@@ -3643,7 +3643,7 @@ export default function AdminPanel() {
                     <Label htmlFor="sortField" className="text-sm font-medium">Sorting</Label>
                     <Select value={leaderboardSortField} onValueChange={(value: "accuracy" | "rewards" | "streak") => setLeaderboardSortField(value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Urutkan berdasarkan" />
+                        <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="accuracy">Accuracy</SelectItem>
@@ -4494,7 +4494,7 @@ export default function AdminPanel() {
                               onCheckedChange={(checked) => setSecurityAutoActions(prev => ({...prev, autoBlockSuspiciousIp: checked}))}
                             />
                           </div>
-                          <p className="text-xs text-slate-400">Otomatis blokir IP yang gagal login 10x dalam 10 menit</p>
+                          <p className="text-xs text-slate-400">Automatically block IPs that fail login 10x within 10 minutes</p>
                         </div>
 
                         <div className="space-y-4">
@@ -4518,7 +4518,7 @@ export default function AdminPanel() {
                               onCheckedChange={(checked) => setSecurityAutoActions(prev => ({...prev, autoLogGeoLocation: checked}))}
                             />
                           </div>
-                          <p className="text-xs text-slate-400">Tampilkan negara asal IP untuk deteksi login mencurigakan</p>
+                          <p className="text-xs text-slate-400">Display IP country origin for suspicious login detection</p>
                         </div>
                       </div>
                     </CardContent>
@@ -4894,13 +4894,13 @@ export default function AdminPanel() {
                         <div>
                           <h4 className="font-semibold mb-3">Area</h4>
                           <div className="space-y-2 text-sm">
-                            <div><strong>Severity Levels:</strong> Tambahkan level lain: Medium, High, Critical untuk login aneh, withdrawal besar, IP luar biasa</div>
-                            <div><strong>Filter & Search:</strong> Filter berdasarkan jenis event, wallet, IP, severity, tanggal</div>
-                            <div><strong>Export Log:</strong> Untuk keperluan audit (CSV atau PDF)</div>
-                            <div><strong>Alert System:</strong> Notifikasi real-time ke Telegram/email bila ada High/Critical Alert (bisa opsional admin)</div>
-                            <div><strong>GeoIP:</strong> Tampilkan negara asal IP → membantu deteksi login mencurigakan</div>
-                            <div><strong>Auto Actions:</strong> Misalnya: IP gagal login 10x dalam 10 menit → langsung autoblocked</div>
-                            <div><strong>Tagging & Notes:</strong> Admin bisa tandai satu log: "sudah diperiksa", "false positive", "under review"</div>
+                            <div><strong>Severity Levels:</strong> Add other levels: Medium, High, Critical for suspicious logins, large withdrawals, unusual IPs</div>
+                            <div><strong>Filter & Search:</strong> Filter by event type, wallet, IP, severity, date</div>
+                            <div><strong>Export Log:</strong> For audit purposes (CSV or PDF)</div>
+                            <div><strong>Alert System:</strong> Real-time notifications to Telegram/email for High/Critical alerts (optional for admin)</div>
+                            <div><strong>GeoIP:</strong> Display IP country origin → helps detect suspicious logins</div>
+                            <div><strong>Auto Actions:</strong> For example: IP fails login 10x within 10 minutes → automatically blocked</div>
+                            <div><strong>Tagging & Notes:</strong> Admin can tag logs: "reviewed", "false positive", "under review"</div>
                           </div>
                         </div>
                         <div>
@@ -5323,7 +5323,7 @@ export default function AdminPanel() {
                             <span className="text-green-500">🔔</span>
                             <div>
                               <strong>Notification Hooks</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Jika ada setting penting berubah (withdrawal fee, rate, dsb) → email ke admin</p>
+                              <p className="text-slate-600 dark:text-slate-300">When important settings change (withdrawal fee, rates, etc.) → email admin</p>
                             </div>
                           </div>
                           <div className="flex items-start space-x-2">
@@ -5337,7 +5337,7 @@ export default function AdminPanel() {
                             <span className="text-orange-500">🔐</span>
                             <div>
                               <strong>Two-step Auth for save</strong>
-                              <p className="text-slate-600 dark:text-slate-300">Aksi menyimpan setting penting (mis. withdrawal fee) memerlukan otorisasi kedua (PIN/email/OTP)</p>
+                              <p className="text-slate-600 dark:text-slate-300">Saving important settings (e.g., withdrawal fee) requires second authorization (PIN/email/OTP)</p>
                             </div>
                           </div>
                         </div>
@@ -5533,7 +5533,7 @@ export default function AdminPanel() {
                       Dynamic Price Oracle Integration
                     </h4>
                     <p className="text-sm text-blue-600 dark:text-blue-400 mb-3">
-                      Real-time price feeds dari CoinGecko API dan Chainlink untuk exchange rate yang akurat
+                      Real-time price feeds from CoinGecko API and Chainlink for accurate exchange rates
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                       <div className="flex items-center space-x-2">
