@@ -123,13 +123,13 @@ function LandingHeader() {
             </a>
           </nav>
 
-          {/* CTA Button */}
+          {/* Login/Sign Up Button */}
           <div className="flex items-center">
             <Button 
               onClick={handleGetStarted}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              Get Started
+              Login or Sign Up
             </Button>
           </div>
         </div>
@@ -215,30 +215,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Wallet Connection Card - Centered */}
-          <div id="wallet-section" className="max-w-md mx-auto mb-16">
-            <Card className="bg-card border-border">
-              <CardHeader className="text-center px-8 pb-4">
-                <CardTitle className="text-2xl text-card-foreground">
-                  Log in or sign up
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 px-8 pb-8">
-                <div className="flex justify-center">
-                  <Button 
-                    onClick={() => setLocation("/wallet-login")}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-                  >
-                    <Wallet className="w-5 h-5 mr-2" />
-                    Connect Wallet
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground text-center">
-                  Connect your crypto wallet to access all features
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+
 
           {/* Contact Section */}
           <div id="contact" className="text-center">
