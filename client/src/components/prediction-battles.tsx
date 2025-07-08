@@ -302,12 +302,15 @@ export function PredictionBattles() {
         challengerPrediction: 0,
         isPublic: true
       });
-      // Force refresh the battles list with multiple strategies
+      // Force refresh the battles list and user balance
       queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] }); // Refresh user balance
       queryClient.refetchQueries({ queryKey: ['/api/battles/live'] });
+      queryClient.refetchQueries({ queryKey: ['/api/user'] }); // Refresh user balance
       // Also refresh after a short delay to ensure database consistency
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/user'] }); // Refresh user balance
       }, 500);
     },
     onError: (error: any) => {

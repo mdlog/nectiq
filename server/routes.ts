@@ -1778,6 +1778,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         balance: user.balance - stakeAmount 
       });
 
+      // Log transaction for battle creation with proper error handling
+      try {
+        await storage.logTransaction({
+          userId,
+          type: 'battle_create',
+          amount: stakeAmount,
+          relatedId: battle.id
+        });
+        console.log(`✅ Transaction logged successfully for battle ${battle.id}`);
+      } catch (logError) {
+        console.error('❌ Failed to log transaction for battle creation:', logError);
+        // Continue despite logging error - don't break battle creation
+      }
+
+      console.log(`✅ Battle created successfully by user ${userId}:`);
+      console.log(`   - Battle ID: ${battle.id}`);
+      console.log(`   - Stake: ${stakeAmount} NTIQ`);
+      console.log(`   - Balance before: ${user.balance} NTIQ`);
+      console.log(`   - Balance after: ${user.balance - stakeAmount} NTIQ`);
+
       res.json({ 
         message: 'Battle created successfully', 
         battle: {
