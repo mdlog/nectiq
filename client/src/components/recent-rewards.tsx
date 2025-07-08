@@ -113,11 +113,15 @@ export function RecentRewards() {
           
           switch (reward.type) {
             case 'prediction':
-              sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction`;
+              sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
               sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
               break;
             case 'battle':
-              sourceText = `Battle vs ${reward.sourceDetails?.opponent || 'Opponent'}`;
+              // Parse battle description to extract opponent name
+              const battleDescription = reward.description || '';
+              const opponentMatch = battleDescription.match(/vs (.+?) -/);
+              const opponentName = opponentMatch ? opponentMatch[1] : 'Opponent';
+              sourceText = `Battle vs ${opponentName}`;
               sourceIcon = <TrendingUp size={16} />;
               break;
             case 'survival':
