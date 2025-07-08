@@ -217,7 +217,7 @@ const WinProbabilityChart = ({ battle }: { battle: Battle }) => {
             </span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-gray-600 dark:text-gray-400">Prediksi Opponent:</span>
+            <span className="text-gray-600 dark:text-gray-400">Opponent Prediction:</span>
             <span className="text-purple-600 dark:text-purple-400 font-semibold">
               ${battle.challengedPrediction.toLocaleString(undefined, { 
                 minimumFractionDigits: 2, 
@@ -576,7 +576,7 @@ export function PredictionBattles() {
             <div className="text-lg font-bold text-red-900 dark:text-red-100">
               {battle.challengedPrediction ? `$${battle.challengedPrediction.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '---'}
             </div>
-            <div className="text-xs text-muted-foreground">Opponent</div>
+            <div className="text-xs text-muted-foreground">{battle.challenged?.username || 'Opponent'}</div>
           </div>
         </div>
 

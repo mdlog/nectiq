@@ -928,7 +928,7 @@ export default function BattlesPage() {
                             <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
                               <div className="text-center">
                                 <h4 className="font-medium text-purple-900 dark:text-purple-100 mb-2">
-                                  Opponent
+                                  {battle.challengedUsername || 'Opponent'}
                                 </h4>
                                 {battle.challengedUsername ? (
                                   <>
@@ -1056,7 +1056,7 @@ export default function BattlesPage() {
                                 '---'
                               )}
                             </div>
-                            <div className="text-xs text-muted-foreground">Opponent</div>
+                            <div className="text-xs text-muted-foreground">{battle.challengedUsername}</div>
                           </div>
                         </div>
 
