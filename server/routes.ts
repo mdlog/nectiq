@@ -1638,10 +1638,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cryptoPrices = await cryptoService.getCurrentPrices();
       const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
 
-      // Format predictions with current prices
+      // Format predictions with current prices and time left
       const formattedPredictions = await Promise.all(
         recentPredictions.map(async (prediction: any) => {
           const user = await storage.getUser(prediction.userId);
+          // Calculate time left in seconds
+          const timeLeft = prediction.targetTime 
+            ? Math.max(0, Math.floor((new Date(prediction.targetTime).getTime() - Date.now()) / 1000))
+            : 0;
+          
           return {
             id: prediction.id,
             userId: prediction.userId,
@@ -1651,6 +1656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             currentPrice: priceMap.get(prediction.cryptocurrency) || 0,
             stake: prediction.stakeAmount,
             timeframe: prediction.timeframe,
+            timeLeft: timeLeft, // Add timeLeft field
             createdAt: prediction.createdAt,
             reactions: [], // Will be populated when reactions table is ready
             comments: [], // Will be populated when comments table is ready
