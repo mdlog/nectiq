@@ -1555,6 +1555,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserBalance(userId, newBalance);
       console.log(`Balance deducted: User ${userId} balance ${user.balance} -> ${newBalance} (stake: ${validatedData.stakeAmount})`);
 
+      // Log transaction for prediction stake with proper error handling
+      try {
+        await storage.logTransaction({
+          userId,
+          type: 'prediction_stake',
+          amount: validatedData.stakeAmount,
+          relatedId: prediction.id
+        });
+        console.log(`✅ Prediction stake transaction logged successfully for prediction ${prediction.id}`);
+      } catch (logError) {
+        console.error('❌ Failed to log transaction for prediction stake:', logError);
+        // Continue despite logging error - don't break prediction creation
+      }
+
       // Check for achievement progress updates after prediction creation
       try {
         const { AchievementService } = await import('./services/achievementService');
