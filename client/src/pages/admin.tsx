@@ -1311,11 +1311,45 @@ export default function AdminPanel() {
   // Handle security event actions
   const handleSecurityAction = async (eventId: number, action: 'resolve' | 'investigate' | 'block') => {
     try {
+      const requestBody: any = {};
+      
+      // Set appropriate status and resolved state based on action
+      switch (action) {
+        case 'resolve':
+          requestBody.status = 'resolved';
+          requestBody.resolved = true;
+          break;
+        case 'investigate':
+          requestBody.status = 'under-investigation';
+          requestBody.resolved = false;
+          break;
+        case 'block':
+          requestBody.status = 'blocked';
+          requestBody.resolved = true;
+          break;
+      }
+
+      const response = await fetch(`/api/admin/security-events/${eventId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update security event');
+      }
+
+      // Refresh security events data
+      queryClient.invalidateQueries(['/api/admin/security-events']);
+
       toast({
-        title: "Security Action",
-        description: `Event ${eventId} marked as ${action}`,
+        title: "Security Action Completed",
+        description: `Event ${eventId} successfully marked as ${action}`,
       });
     } catch (error) {
+      console.error('Security action error:', error);
       toast({
         title: "Error",
         description: "Failed to perform security action",
@@ -1329,19 +1363,53 @@ export default function AdminPanel() {
     if (selectedSecurityEvents.length === 0) {
       toast({
         title: "Warning",
-        description: "Pilih event terlebih dahulu",
+        description: "Select events first",
         variant: "destructive"
       });
       return;
     }
 
     try {
+      const requestBody: any = { eventIds: selectedSecurityEvents, action };
+      
+      // Set appropriate status based on action
+      switch (action) {
+        case 'resolve':
+          requestBody.status = 'resolved';
+          requestBody.resolved = true;
+          break;
+        case 'investigate':
+          requestBody.status = 'under-investigation';
+          requestBody.resolved = false;
+          break;
+        case 'block':
+          requestBody.status = 'blocked';
+          requestBody.resolved = true;
+          break;
+      }
+
+      const response = await fetch('/api/admin/security-events/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to perform bulk action');
+      }
+
+      // Refresh security events data
+      queryClient.invalidateQueries(['/api/admin/security-events']);
+
       toast({
-        title: "Bulk Action",
-        description: `${selectedSecurityEvents.length} events marked as ${action}`,
+        title: "Bulk Action Completed",
+        description: `${selectedSecurityEvents.length} events successfully marked as ${action}`,
       });
       setSelectedSecurityEvents([]);
     } catch (error) {
+      console.error('Bulk security action error:', error);
       toast({
         title: "Error",
         description: "Failed to perform bulk action",

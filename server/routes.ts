@@ -115,6 +115,7 @@ const ADMIN_IP_WHITELIST = new Set([
   '172.31.128.86', // Current admin user IP
   '172.31.128.118', // Admin user IP that was blacklisted
   '172.31.128.40', // Main admin IP that was getting blacklisted
+  '172.31.128.38', // Current admin IP being blacklisted
   '125.162.228.143', // Admin user's real IP from X-Forwarded-For
   'localhost',
   '172.31.128.20', // Current admin mobile IP
