@@ -119,13 +119,12 @@ export function LiveActivityFeed() {
                 <p className="text-sm">No completed activities</p>
               </div>
             ) : (
-              <div className="animate-scroll-up space-y-3">
-                {/* Duplicate activities for seamless loop */}
-                {[...activities, ...activities].map((activity, index) => {
+              <div className="space-y-3">
+                {activities.map((activity, index) => {
                   const IconComponent = iconMap[activity.icon as keyof typeof iconMap] || Activity;
                   return (
                   <div
-                    key={`${activity.id}-${index}`}
+                    key={activity.id}
                     className="flex items-start space-x-3 p-3 rounded-lg bg-slate-800/30 border border-slate-700/50 hover:bg-slate-800/50 transition-colors"
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${activity.color} flex-shrink-0 mt-0.5`}>
@@ -184,11 +183,10 @@ export function LiveActivityFeed() {
                 <p className="text-sm">No ongoing activities</p>
               </div>
             ) : (
-              <div className="animate-scroll-up space-y-3">
-                {/* Duplicate predictions for seamless loop */}
-                {[...activePredictions.slice(0, 8), ...activePredictions.slice(0, 8)].map((prediction, index) => (
+              <div className="space-y-3">
+                {activePredictions.slice(0, 8).map((prediction, index) => (
                   <div
-                    key={`${prediction.id}-${index}`}
+                    key={prediction.id}
                     className="flex items-start space-x-3 p-3 rounded-lg bg-orange-800/20 border border-orange-700/50 hover:bg-orange-800/30 transition-colors"
                   >
                     <div className="w-8 h-8 rounded-full flex items-center justify-center bg-orange-600 flex-shrink-0 mt-0.5">
