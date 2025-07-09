@@ -68,7 +68,15 @@ function calculateAccuracy(predicted: string, current: string): number {
   const predictedNum = parseFloat(predicted);
   const currentNum = parseFloat(current);
   if (currentNum === 0) return 0;
-  return ((currentNum - predictedNum) / predictedNum) * 100;
+  
+  // Using the new percentage accuracy formula:
+  // accuracy = (1 - |Predicted Price - Actual Price| / Actual Price) × 100
+  const difference = Math.abs(predictedNum - currentNum);
+  const accuracyDecimal = 1 - (difference / currentNum);
+  const accuracyPercentage = accuracyDecimal * 100;
+  
+  // Ensure accuracy is between 0 and 100
+  return Math.max(0, Math.min(100, accuracyPercentage));
 }
 
 export function ActivePredictions() {
@@ -225,7 +233,8 @@ export function ActivePredictions() {
         <div className="space-y-4">
           {paginatedPredictions.map((prediction) => {
             const accuracy = calculateAccuracy(prediction.predictedPrice, prediction.currentPrice);
-            const isPositive = accuracy >= 0;
+            // Accuracy is now a percentage (0-100), determine if prediction is good based on threshold
+            const isGoodPrediction = accuracy >= 90; // 90% minimum threshold for reward
             const isExpired = prediction.timeLeft <= 0;
             
             return (
@@ -283,15 +292,35 @@ export function ActivePredictions() {
                     </span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <div className={`w-2 h-2 rounded-full ${isPositive ? "bg-success pulse-green" : "bg-error"}`}></div>
-                    {isPositive ? (
+                    <div className={`w-2 h-2 rounded-full ${isGoodPrediction ? "bg-success pulse-green" : "bg-warning"}`}></div>
+                    {isGoodPrediction ? (
                       <TrendingUp className="text-success" size={12} />
                     ) : (
-                      <TrendingDown className="text-error" size={12} />
+                      <TrendingDown className="text-warning" size={12} />
                     )}
-                    <span className={`text-xs font-medium ${isPositive ? "text-success" : "text-error"}`}>
-                      {isPositive ? "+" : ""}{accuracy.toFixed(2)}% accuracy
+                    <span className={`text-xs font-medium ${isGoodPrediction ? "text-success" : "text-warning"}`}>
+                      {accuracy.toFixed(2)}% accuracy
                     </span>
+                    {accuracy >= 99.5 && (
+                      <span className="text-xs bg-emerald-500/20 text-emerald-400 px-1 py-0.5 rounded ml-1">
+                        Perfect! 3x
+                      </span>
+                    )}
+                    {accuracy >= 98 && accuracy < 99.5 && (
+                      <span className="text-xs bg-blue-500/20 text-blue-400 px-1 py-0.5 rounded ml-1">
+                        Excellent! 2.5x
+                      </span>
+                    )}
+                    {accuracy >= 95 && accuracy < 98 && (
+                      <span className="text-xs bg-green-500/20 text-green-400 px-1 py-0.5 rounded ml-1">
+                        Great! 2x
+                      </span>
+                    )}
+                    {accuracy >= 90 && accuracy < 95 && (
+                      <span className="text-xs bg-yellow-500/20 text-yellow-400 px-1 py-0.5 rounded ml-1">
+                        Good! 1x
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

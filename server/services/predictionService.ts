@@ -46,7 +46,8 @@ export class PredictionService {
       if (user) {
         const newBalance = user.balance - prediction.stakeAmount + rewardAmount;
         const newTotalPredictions = user.totalPredictions + 1;
-        const newCorrectPredictions = user.correctPredictions + (accuracy <= 5 ? 1 : 0);
+        // Mark as correct if accuracy is 90% or higher (minimum threshold for reward)
+        const newCorrectPredictions = user.correctPredictions + (accuracy >= 90 ? 1 : 0);
         const newTotalRewards = user.totalRewards + rewardAmount;
 
         await storage.updateUserBalance(prediction.userId, newBalance);
@@ -67,20 +68,50 @@ export class PredictionService {
     }
   }
 
+  /**
+   * Calculate accuracy percentage using the formula:
+   * accuracy = (1 - |Predicted Price - Actual Price| / Actual Price) × 100
+   * 
+   * Example from screenshot:
+   * Predicted: $57,000, Actual: $58,600
+   * accuracy = (1 - |57,000 - 58,600| / 58,600) × 100 = 97.27%
+   */
   private calculateAccuracy(predictedPrice: number, actualPrice: number): number {
-    return Math.abs((predictedPrice - actualPrice) / actualPrice) * 100;
+    const difference = Math.abs(predictedPrice - actualPrice);
+    const accuracyDecimal = 1 - (difference / actualPrice);
+    const accuracyPercentage = accuracyDecimal * 100;
+    
+    // Ensure accuracy is between 0 and 100
+    return Math.max(0, Math.min(100, accuracyPercentage));
   }
 
+  /**
+   * Calculate reward based on accuracy percentage with new multipliers:
+   * - ≥ 99.5%: 3.0x multiplier
+   * - ≥ 98%: 2.5x multiplier  
+   * - ≥ 95%: 2.0x multiplier
+   * - ≥ 90%: 1.0x multiplier (minimal threshold for reward)
+   * - < 90%: 0x multiplier (no reward - below minimal accuracy)
+   */
   private calculateReward(stakeAmount: number, accuracy: number): number {
-    if (accuracy <= 0.1) {
-      return stakeAmount * 5; // Perfect prediction: 5x stake
-    } else if (accuracy <= 1) {
-      return stakeAmount * 3; // Excellent prediction: 3x stake
-    } else if (accuracy <= 5) {
-      return Math.floor(stakeAmount * 1.5); // Good prediction: 1.5x stake
-    } else {
-      return 0; // Poor prediction: lose stake
+    // Minimum accuracy threshold is 90%
+    if (accuracy < 90) {
+      return 0; // Below minimal accuracy - no reward
     }
+    
+    let multiplier = 0;
+    
+    if (accuracy >= 99.5) {
+      multiplier = 3.0; // Perfect prediction: 3x stake
+    } else if (accuracy >= 98) {
+      multiplier = 2.5; // Excellent prediction: 2.5x stake
+    } else if (accuracy >= 95) {
+      multiplier = 2.0; // Great prediction: 2x stake
+    } else if (accuracy >= 90) {
+      multiplier = 1.0; // Good prediction: 1x stake (break-even)
+    }
+    
+    return Math.floor(stakeAmount * multiplier);
   }
 
   getTargetTime(timeframe: string): Date {

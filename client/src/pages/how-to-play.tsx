@@ -217,7 +217,7 @@ export default function HowToPlay() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Wait for the prediction deadline and earn NTIQ rewards based on 
-                  your accuracy. Perfect predictions get 5x multiplier!
+                  your accuracy. ≥99.5% accuracy gets 3x multiplier!
                 </p>
               </CardContent>
               <div className="absolute top-4 right-4">
@@ -338,25 +338,30 @@ export default function HowToPlay() {
 
               {/* Compact Reward System */}
               <div className="bg-gradient-to-r from-primary/5 to-green-500/5 rounded-lg border border-primary/10 p-6">
-                <div className="flex justify-between items-center text-sm mb-4">
-                  <div className="flex items-center space-x-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                    <span className="text-white text-xs">≥99.5% Accuracy</span>
+                    <span className="text-emerald-500 font-bold text-lg">3.0x</span>
+                  </div>
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span className="text-white text-xs">≥98% Accuracy</span>
+                    <span className="text-blue-500 font-bold text-lg">2.5x</span>
+                  </div>
+                  <div className="flex flex-col items-center space-y-2">
                     <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-white">Perfect ±0.1%</span>
-                    <span className="text-green-500 font-bold text-lg">5x</span>
+                    <span className="text-white text-xs">≥95% Accuracy</span>
+                    <span className="text-green-500 font-bold text-lg">2.0x</span>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex flex-col items-center space-y-2">
                     <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <span className="text-white">Great ±1%</span>
-                    <span className="text-yellow-500 font-bold text-lg">3x</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-                    <span className="text-white">Good ±5%</span>
-                    <span className="text-blue-400 font-bold text-lg">1.5x</span>
+                    <span className="text-white text-xs">≥90% Accuracy</span>
+                    <span className="text-yellow-500 font-bold text-lg">1.0x</span>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  Connect wallet • Stake 1-500 NTIQ • Withdraw to USDT/USDC
+                  Minimum 90% accuracy required for rewards • Stake 1-500 NTIQ • Withdraw to USDT/USDC
                 </p>
               </div>
             </CardContent>
@@ -379,31 +384,31 @@ export default function HowToPlay() {
                 <div className="space-y-4">
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                     <div className="text-center mb-3">
-                      <div className="text-sm text-muted-foreground mb-2">Accuracy Formula:</div>
+                      <div className="text-sm text-muted-foreground mb-2">New Accuracy Formula:</div>
                       <div className="font-mono text-lg">
-                        |Predicted Price - Actual Price| / Actual Price × 100%
+                        (1 - |Predicted Price - Actual Price| / Actual Price) × 100%
                       </div>
                     </div>
                   </div>
                   
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-                      <h5 className="font-semibold text-green-500 mb-2">Example: Perfect Prediction</h5>
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
+                      <h5 className="font-semibold text-emerald-500 mb-2">Example: Perfect Prediction</h5>
                       <div className="text-sm space-y-1">
-                        <div>Predicted: $50,000</div>
-                        <div>Actual: $50,050</div>
-                        <div className="font-mono">|50,000 - 50,050| / 50,050 × 100% = 0.1%</div>
-                        <div className="text-green-500 font-bold">Result: 5x Multiplier</div>
+                        <div>Predicted: $57,000</div>
+                        <div>Actual: $58,600</div>
+                        <div className="font-mono">(1 - |57,000 - 58,600| / 58,600) × 100% = 97.27%</div>
+                        <div className="text-emerald-500 font-bold">Result: ≥95% = 2.0x Multiplier</div>
                       </div>
                     </div>
                     
                     <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                      <h5 className="font-semibold text-yellow-500 mb-2">Example: Great Prediction</h5>
+                      <h5 className="font-semibold text-yellow-500 mb-2">Example: Good Prediction</h5>
                       <div className="text-sm space-y-1">
                         <div>Predicted: $50,000</div>
-                        <div>Actual: $50,500</div>
-                        <div className="font-mono">|50,000 - 50,500| / 50,500 × 100% = 0.99%</div>
-                        <div className="text-yellow-500 font-bold">Result: 3x Multiplier</div>
+                        <div>Actual: $55,000</div>
+                        <div className="font-mono">(1 - |50,000 - 55,000| / 55,000) × 100% = 90.91%</div>
+                        <div className="text-yellow-500 font-bold">Result: ≥90% = 1.0x Multiplier</div>
                       </div>
                     </div>
                   </div>
@@ -434,18 +439,19 @@ export default function HowToPlay() {
                     <div className="text-center">
                       <div className="text-muted-foreground">Accuracy Multipliers:</div>
                       <div className="space-y-1 mt-2">
-                        <div>±0.1%: 5x</div>
-                        <div>±1%: 3x</div>
-                        <div>±5%: 1.5x</div>
-                        <div>&gt;5%: 0x</div>
+                        <div>≥99.5%: 3.0x</div>
+                        <div>≥98%: 2.5x</div>
+                        <div>≥95%: 2.0x</div>
+                        <div>≥90%: 1.0x</div>
+                        <div>&lt;90%: 0x</div>
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-muted-foreground">Maximum Possible:</div>
                       <div className="space-y-1 mt-2">
-                        <div className="text-green-500 font-bold">500 NTIQ × 5x × 5x</div>
-                        <div className="text-green-500 font-bold">= 12,500 NTIQ</div>
-                        <div className="text-xs text-muted-foreground">(7-day perfect prediction)</div>
+                        <div className="text-green-500 font-bold">500 NTIQ × 5x × 3x</div>
+                        <div className="text-green-500 font-bold">= 7,500 NTIQ</div>
+                        <div className="text-xs text-muted-foreground">(7-day ≥99.5% accuracy)</div>
                       </div>
                     </div>
                   </div>
