@@ -540,9 +540,30 @@ export default function UserDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {activePredictions.map((prediction) => {
-                      const accuracy = ((parseFloat(prediction.currentPrice) - parseFloat(prediction.predictedPrice)) / parseFloat(prediction.predictedPrice)) * 100;
+                      // Calculate accuracy using the new formula: (1 - |Predicted - Current| / Current) × 100
+                      const predictedPrice = parseFloat(prediction.predictedPrice);
+                      const currentPrice = parseFloat(prediction.currentPrice);
+                      const accuracyDecimal = 1 - (Math.abs(predictedPrice - currentPrice) / currentPrice);
+                      const accuracy = accuracyDecimal * 100;
                       const isPositive = accuracy >= 0;
                       const isExpired = prediction.timeLeft <= 0;
+                      
+                      // Format time left properly
+                      const formatTimeLeft = (timeLeft: number): string => {
+                        if (timeLeft <= 0) return "Expired";
+                        
+                        const hours = Math.floor(timeLeft / 3600);
+                        const minutes = Math.floor((timeLeft % 3600) / 60);
+                        const seconds = timeLeft % 60;
+                        
+                        if (hours > 0) {
+                          return `${hours}h ${minutes}m`;
+                        } else if (minutes > 0) {
+                          return `${minutes}m ${seconds}s`;
+                        } else {
+                          return `${seconds}s`;
+                        }
+                      };
                       
                       return (
                         <div key={prediction.id} className="p-4 bg-surface-light rounded-lg border border-slate-600">
@@ -573,7 +594,7 @@ export default function UserDashboard() {
                             </div>
                             <div className="text-right">
                               <p className={`text-sm font-medium ${isExpired ? "text-error" : "text-success"}`}>
-                                {isExpired ? "Expired" : formatTimeLeft(prediction.timeLeft)}
+                                {formatTimeLeft(prediction.timeLeft)}
                               </p>
                               <p className="text-xs text-slate-400">Stake: {prediction.stakeAmount} NTIQ</p>
                             </div>
@@ -582,21 +603,21 @@ export default function UserDashboard() {
                           <div className="grid grid-cols-2 gap-4 mb-3">
                             <div>
                               <p className="text-xs text-slate-400">Predicted Price</p>
-                              <p className="font-semibold">${parseFloat(prediction.predictedPrice).toLocaleString()}</p>
+                              <p className="font-semibold">${predictedPrice.toLocaleString()}</p>
                             </div>
                             <div>
                               <p className="text-xs text-slate-400">Current Price</p>
-                              <p className={`font-semibold ${isPositive ? "text-success" : "text-error"}`}>
-                                ${parseFloat(prediction.currentPrice).toLocaleString()}
+                              <p className={`font-semibold ${currentPrice >= predictedPrice ? "text-success" : "text-error"}`}>
+                                ${currentPrice.toLocaleString()}
                               </p>
                             </div>
                           </div>
                           
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${isPositive ? "bg-success" : "bg-error"}`}></div>
-                              <span className={`text-sm font-medium ${isPositive ? "text-success" : "text-error"}`}>
-                                {isPositive ? "+" : ""}{accuracy.toFixed(2)}% from prediction
+                              <div className={`w-2 h-2 rounded-full ${accuracy >= 90 ? "bg-success" : accuracy >= 70 ? "bg-warning" : "bg-error"}`}></div>
+                              <span className={`text-sm font-medium ${accuracy >= 90 ? "text-success" : accuracy >= 70 ? "text-warning" : "text-error"}`}>
+                                {accuracy.toFixed(2)}% accuracy
                               </span>
                             </div>
                             <Progress 
