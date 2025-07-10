@@ -244,9 +244,10 @@ export const cryptoTransactions = pgTable("crypto_transactions", {
 export const referrals = pgTable("referrals", {
   id: serial("id").primaryKey(),
   referrerId: integer("referrer_id").notNull().references(() => users.id),
-  referredUserId: integer("referred_user_id").notNull().references(() => users.id),
-  rewardAmount: integer("reward_amount").notNull().default(100), // Default 100 NTIQ reward
-  status: varchar("status", { length: 20 }).notNull().default("active"), // active, completed, expired
+  referredId: integer("referred_id").notNull().references(() => users.id),
+  referralCode: varchar("referral_code", { length: 8 }),
+  reward: integer("reward").notNull().default(100), // Default 100 NTIQ reward
+  isRewarded: boolean("is_rewarded").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -562,7 +563,7 @@ export const referralsRelations = relations(referrals, ({ one }) => ({
     relationName: "referrer",
   }),
   referredUser: one(users, {
-    fields: [referrals.referredUserId],
+    fields: [referrals.referredId],
     references: [users.id],
     relationName: "referred",
   }),

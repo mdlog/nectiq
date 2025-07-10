@@ -2849,7 +2849,7 @@ export class MemStorage implements IStorage {
     // Get referral stats
     const stats = await db.select({
       totalReferrals: count(referrals.id),
-      referralRewards: sql<number>`COALESCE(SUM(${referrals.rewardAmount}), 0)`,
+      referralRewards: sql<number>`COALESCE(SUM(${referrals.reward}), 0)`,
     })
     .from(referrals)
     .where(eq(referrals.referrerId, userId));
@@ -2860,10 +2860,10 @@ export class MemStorage implements IStorage {
       username: users.username,
       uid: users.uid,
       joinedAt: referrals.createdAt,
-      rewardAmount: referrals.rewardAmount,
+      rewardAmount: referrals.reward,
     })
     .from(referrals)
-    .innerJoin(users, eq(referrals.referredUserId, users.id))
+    .innerJoin(users, eq(referrals.referredId, users.id))
     .where(eq(referrals.referrerId, userId))
     .orderBy(desc(referrals.createdAt));
 
