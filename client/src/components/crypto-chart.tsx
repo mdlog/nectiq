@@ -221,9 +221,6 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.beginPath();
 
     chartData.forEach((point, index) => {
-      // Add padding to both sides to center the line properly
-      const chartAreaPadding = chartWidth * 0.05; // 5% padding on each side
-      const usableWidth = chartWidth - (chartAreaPadding * 2);
       const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
       const y = topPadding + chartHeight - ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
       
@@ -308,8 +305,6 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     chartData.forEach((point, index) => {
       const dateLabel = formatDateLabel(point.time, index, chartData.length);
       if (dateLabel) {
-        const chartAreaPadding = chartWidth * 0.05;
-        const usableWidth = chartWidth - (chartAreaPadding * 2);
         const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
         const y = topPadding + chartHeight + 25;
         ctx.fillText(dateLabel, x, y);
