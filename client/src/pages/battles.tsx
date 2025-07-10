@@ -602,30 +602,30 @@ export default function BattlesPage() {
             <Card>
               <CardContent className="p-4 text-center">
                 <Trophy className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
-                <div className="text-3xl font-black text-slate-900 dark:text-white">
+                <div className="text-3xl font-black text-white dark:text-white">
                   {stats.totalBattles}
                 </div>
-                <div className="text-sm text-slate-900 dark:text-white font-bold">Total Battles</div>
+                <div className="text-sm text-white dark:text-white font-bold">Total Battles</div>
               </CardContent>
             </Card>
             
             <Card>
               <CardContent className="p-4 text-center">
                 <Clock className="h-6 w-6 text-green-500 mx-auto mb-2" />
-                <div className="text-3xl font-black text-slate-900 dark:text-white">
+                <div className="text-3xl font-black text-white dark:text-white">
                   {stats.activeBattles}
                 </div>
-                <div className="text-sm text-slate-900 dark:text-white font-bold">Active</div>
+                <div className="text-sm text-white dark:text-white font-bold">Active</div>
               </CardContent>
             </Card>
             
             <Card>
               <CardContent className="p-4 text-center">
                 <Users className="h-6 w-6 text-blue-500 mx-auto mb-2" />
-                <div className="text-3xl font-black text-slate-900 dark:text-white">
+                <div className="text-3xl font-black text-white dark:text-white">
                   {stats.openBattles}
                 </div>
-                <div className="text-sm text-slate-900 dark:text-white font-bold">Open</div>
+                <div className="text-sm text-white dark:text-white font-bold">Open</div>
               </CardContent>
             </Card>
             
