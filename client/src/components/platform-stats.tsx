@@ -21,7 +21,8 @@ export function PlatformStats() {
     queryKey: ['/api/platform/stats'],
     refetchInterval: 3000, // Update every 3 seconds for real-time data
     refetchIntervalInBackground: true,
-    staleTime: 1000, // Consider data stale after 1 second
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache data
   });
 
   if (isLoading || !stats) {

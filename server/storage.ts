@@ -3037,147 +3037,54 @@ export class MemStorage implements IStorage {
     }
   }
 
-  // Platform statistics method  
+  // Platform statistics method - using direct database queries for reliability
   async getPlatformStats(): Promise<any> {
-    console.log('📊 [PLATFORM STATS] Starting to fetch platform statistics...');
+    console.log('📊 [PLATFORM STATS] Fetching platform statistics...');
     
     try {
-      let totalPredictions = 0;
-      let activePredictions = 0;
-      let totalBattles = 0;
-      let activeBattles = 0;
-      let totalSurvivalTournaments = 0;
-      let activeSurvivalTournaments = 0;
-      let totalUsers = 0;
-      let totalTransactions = 0;
-      let totalStakedNTIQ = 0;
-      let totalRewardsDistributed = 0;
+      // Get basic count data
+      const allPredictions = await db.select().from(predictions);
+      const allBattles = await db.select().from(predictionBattles);
+      const allUsers = await db.select().from(users);
+      const allTransactions = await db.select().from(transactionLogs);
+      const allSurvivalTournaments = await db.select().from(survivalTournaments);
 
-      // Get basic counts with individual try-catch
-      try {
-        const result = await db.execute('SELECT COUNT(*) as count FROM predictions');
-        totalPredictions = Number(result.rows[0]?.count || 0);
-        console.log('✅ Total predictions:', totalPredictions);
-      } catch (err) {
-        console.error('❌ Error fetching total predictions:', err);
-      }
+      // Calculate active counts
+      const activePredictions = allPredictions.filter(p => p.status === 'active').length;
+      const activeBattles = allBattles.filter(b => b.status === 'open' || b.status === 'active').length;
+      const activeSurvivalTournaments = allSurvivalTournaments.filter(s => s.status === 'open' || s.status === 'active').length;
 
-      try {
-        const result = await db.execute('SELECT COUNT(*) as count FROM prediction_battles');
-        totalBattles = Number(result.rows[0]?.count || 0);
-        console.log('✅ Total battles:', totalBattles);
-      } catch (err) {
-        console.error('❌ Error fetching total battles:', err);
-      }
+      // Calculate stake amounts
+      const totalPredictionStakes = allPredictions.reduce((sum, p) => sum + (Number(p.stakeAmount) || 0), 0);
+      const totalBattleStakes = allBattles.reduce((sum, b) => sum + (Number(b.stakeAmount) || 0), 0) * 2; // 2 participants per battle
 
-      try {
-        const result = await db.execute('SELECT COUNT(*) as count FROM survival_tournaments');
-        totalSurvivalTournaments = Number(result.rows[0]?.count || 0);
-        console.log('✅ Total survival tournaments:', totalSurvivalTournaments);
-      } catch (err) {
-        console.error('❌ Error fetching survival tournaments:', err);
-      }
-
-      try {
-        const result = await db.execute('SELECT COUNT(*) as count FROM users');
-        totalUsers = Number(result.rows[0]?.count || 0);
-        console.log('✅ Total users:', totalUsers);
-      } catch (err) {
-        console.error('❌ Error fetching total users:', err);
-      }
-
-      try {
-        const result = await db.execute('SELECT COUNT(*) as count FROM transaction_logs');
-        totalTransactions = Number(result.rows[0]?.count || 0);
-        console.log('✅ Total transactions:', totalTransactions);
-      } catch (err) {
-        console.error('❌ Error fetching total transactions:', err);
-      }
-
-      // Get active counts
-      try {
-        const result = await db.execute('SELECT COUNT(*) as count FROM predictions WHERE status = \'active\'');
-        activePredictions = Number(result.rows[0]?.count || 0);
-        console.log('✅ Active predictions:', activePredictions);
-      } catch (err) {
-        console.error('❌ Error fetching active predictions:', err);
-      }
-
-      try {
-        const result = await db.execute('SELECT COUNT(*) as count FROM prediction_battles WHERE status IN (\'open\', \'active\')');
-        activeBattles = Number(result.rows[0]?.count || 0);
-        console.log('✅ Active battles:', activeBattles);
-      } catch (err) {
-        console.error('❌ Error fetching active battles:', err);
-      }
-
-      try {
-        const result = await db.execute('SELECT COUNT(*) as count FROM survival_tournaments WHERE status IN (\'open\', \'active\')');
-        activeSurvivalTournaments = Number(result.rows[0]?.count || 0);
-        console.log('✅ Active survival tournaments:', activeSurvivalTournaments);
-      } catch (err) {
-        console.error('❌ Error fetching active survival tournaments:', err);
-      }
-
-      // Calculate basic stakes
-      try {
-        const result = await db.execute('SELECT COALESCE(SUM(stake_amount), 0) as total FROM predictions');
-        const predictionStakes = Number(result.rows[0]?.total || 0);
-        totalStakedNTIQ += predictionStakes;
-        console.log('✅ Prediction stakes:', predictionStakes);
-      } catch (err) {
-        console.error('❌ Error fetching prediction stakes:', err);
-      }
-
-      try {
-        const result = await db.execute('SELECT COALESCE(SUM(stake_amount), 0) as total FROM prediction_battles');
-        const battleStakes = Number(result.rows[0]?.total || 0) * 2; // Each battle has 2 participants
-        totalStakedNTIQ += battleStakes;
-        console.log('✅ Battle stakes:', battleStakes);
-      } catch (err) {
-        console.error('❌ Error fetching battle stakes:', err);
-      }
-
-      // Calculate basic rewards
-      try {
-        const result = await db.execute('SELECT COALESCE(SUM(reward_amount), 0) as total FROM predictions WHERE reward_amount > 0');
-        const predictionRewards = Number(result.rows[0]?.total || 0);
-        totalRewardsDistributed += predictionRewards;
-        console.log('✅ Prediction rewards:', predictionRewards);
-      } catch (err) {
-        console.error('❌ Error fetching prediction rewards:', err);
-      }
+      // Calculate total rewards from transaction logs
+      const rewardTransactions = allTransactions.filter(t => 
+        t.type === 'prediction_reward' || 
+        t.type === 'battle_reward' || 
+        t.type === 'achievement_reward' || 
+        t.type === 'daily_challenge_reward'
+      );
+      const totalRewardsDistributed = rewardTransactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
       const stats = {
-        totalPredictions,
-        totalBattles,
-        totalSurvivalTournaments,
-        totalStakedNTIQ,
-        totalRewardsDistributed,
+        totalPredictions: allPredictions.length,
+        totalBattles: allBattles.length,
+        totalSurvivalTournaments: allSurvivalTournaments.length,
+        totalStakedNTIQ: Math.round(totalPredictionStakes + totalBattleStakes),
+        totalRewardsDistributed: Math.round(totalRewardsDistributed),
         activePredictions,
         activeBattles,
         activeSurvivalTournaments,
-        totalUsers,
-        totalTransactions
+        totalUsers: allUsers.length,
+        totalTransactions: allTransactions.length
       };
 
-      console.log('✅ [PLATFORM STATS] Final stats:', stats);
+      console.log('✅ [PLATFORM STATS] Real database stats calculated:', stats);
       return stats;
     } catch (error) {
-      console.error('❌ [PLATFORM STATS] Critical error:', error);
-      // Return default stats with some mock data for testing
-      return {
-        totalPredictions: 125,
-        totalBattles: 8,
-        totalSurvivalTournaments: 3,
-        totalStakedNTIQ: 15420,
-        totalRewardsDistributed: 8930,
-        activePredictions: 12,
-        activeBattles: 2,
-        activeSurvivalTournaments: 1,
-        totalUsers: 68,
-        totalTransactions: 456
-      };
+      console.error('❌ [PLATFORM STATS] Error:', error);
+      throw error;
     }
   }
 }

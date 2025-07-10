@@ -11,7 +11,7 @@ import { cryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
-import { insertPredictionSchema, insertCryptocurrencySchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users } from "@shared/schema";
+import { insertPredictionSchema, insertCryptocurrencySchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions } from "@shared/schema";
 import { eq, and, or, desc } from "drizzle-orm";
 import { z } from "zod";
 import { ethers } from "ethers";
@@ -2927,36 +2927,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get platform statistics
+  // Get platform statistics - Direct implementation for reliability
   app.get('/api/platform/stats', async (req: Request, res: Response) => {
     try {
-      console.log('📊 [API] Platform stats endpoint called - fetching real data from database');
+      console.log('📊 [API] Platform stats endpoint called - fetching REAL database data');
       
-      // Use real database storage method
-      const stats = await storage.getPlatformStats();
+      // Direct database queries for reliability
+      const allPredictions = await db.select().from(predictions);
+      const allBattles = await db.select().from(predictionBattles);
+      const allUsers = await db.select().from(users);
+      const allTransactions = await db.select().from(transactionLogs);
+      const allSurvivalTournaments = await db.select().from(survivalTournaments);
+
+      // Calculate active counts
+      const activePredictions = allPredictions.filter(p => p.status === 'active').length;
+      const activeBattles = allBattles.filter(b => b.status === 'open' || b.status === 'active').length;
+      const activeSurvivalTournaments = allSurvivalTournaments.filter(s => s.status === 'open' || s.status === 'active').length;
+
+      // Calculate stake amounts
+      const totalPredictionStakes = allPredictions.reduce((sum, p) => sum + (Number(p.stakeAmount) || 0), 0);
+      const totalBattleStakes = allBattles.reduce((sum, b) => sum + (Number(b.stakeAmount) || 0), 0) * 2; // 2 participants per battle
+
+      // Calculate total rewards from transaction logs
+      const rewardTransactions = allTransactions.filter(t => 
+        t.type === 'prediction_reward' || 
+        t.type === 'battle_reward' || 
+        t.type === 'achievement_reward' || 
+        t.type === 'daily_challenge_reward'
+      );
+      const totalRewardsDistributed = rewardTransactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+      const stats = {
+        totalPredictions: allPredictions.length,
+        totalBattles: allBattles.length,
+        totalSurvivalTournaments: allSurvivalTournaments.length,
+        totalStakedNTIQ: Math.round(totalPredictionStakes + totalBattleStakes),
+        totalRewardsDistributed: Math.round(totalRewardsDistributed),
+        activePredictions,
+        activeBattles,
+        activeSurvivalTournaments,
+        totalUsers: allUsers.length,
+        totalTransactions: allTransactions.length
+      };
+
+      console.log('✅ [API] SUCCESS: Returning REAL platform stats from database:', stats);
       
-      console.log('✅ [API] Returning real platform stats:', stats);
+      // Clear cache headers to ensure fresh data
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       res.json(stats);
     } catch (error) {
       console.error('❌ [API] Critical error in platform stats:', error);
+      console.error('❌ [API] Error details:', error instanceof Error ? error.message : 'Unknown error');
       console.error('❌ [API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       
-      // Return fallback data for now while debugging
-      const fallbackStats = {
-        totalPredictions: 113,
-        totalBattles: 12,
-        totalSurvivalTournaments: 4,
-        totalStakedNTIQ: 18750,
-        totalRewardsDistributed: 12340,
-        activePredictions: 8,
-        activeBattles: 3,
-        activeSurvivalTournaments: 1,
-        totalUsers: 85,
-        totalTransactions: 523
-      };
-      
-      console.log('✅ [API] Returning fallback stats due to error:', fallbackStats);
-      res.json(fallbackStats);
+      // Return meaningful error response
+      res.status(500).json({ 
+        error: 'Failed to fetch platform statistics',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
