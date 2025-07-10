@@ -107,7 +107,8 @@ const ADMIN_IP_WHITELIST = new Set([
   '125.162.228.143', // Admin user's real IP from X-Forwarded-For
   'localhost',
   '172.31.128.20', // Current admin mobile IP
-  '114.125.167.243' // External admin IP
+  '114.125.167.243', // External admin IP
+  '172.31.128.30' // Admin IP that is currently blacklisted - need to whitelist
 ]);
 
 // Rate limiting and IP blacklisting for admin endpoints
