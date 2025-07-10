@@ -153,7 +153,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
     // Set up chart dimensions with optimal padding for proper label visibility
     const leftPadding = 100; // More space for price labels on the left
-    const rightPadding = 60; // Space for real-time price display
+    const rightPadding = 120; // Increased space for real-time price display to prevent cutoff
     const topPadding = 30;
     const bottomPadding = 50; // Space for date labels at bottom
     const chartWidth = width - leftPadding - rightPadding;
@@ -354,20 +354,20 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.fillStyle = labelGradient;
       ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
       ctx.shadowBlur = 6;
-      ctx.fillRect(rightEdge + 8, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+      ctx.fillRect(rightEdge + 15, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
 
       // Draw price label border
       ctx.strokeStyle = priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(rightEdge + 8, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+      ctx.strokeRect(rightEdge + 15, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
 
       // Draw premium price text
       ctx.fillStyle = '#ffffff';
       ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
       ctx.shadowBlur = 2;
-      ctx.fillText(priceText, rightEdge + 8 + labelPadding, priceY + 5);
+      ctx.fillText(priceText, rightEdge + 15 + labelPadding, priceY + 5);
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
 
@@ -529,11 +529,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const labelHeight = 24;
       
       ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
-      ctx.fillRect(rightEdge + 5, currentPriceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+      ctx.fillRect(rightEdge + 15, currentPriceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
 
       // Draw price text
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(priceText, rightEdge + 5 + labelPadding, currentPriceY + 5);
+      ctx.fillText(priceText, rightEdge + 15 + labelPadding, currentPriceY + 5);
 
       // Draw small circle at the price point
       ctx.fillStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
