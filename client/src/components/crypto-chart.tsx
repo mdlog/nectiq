@@ -151,11 +151,11 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const { width, height } = canvas;
     ctx.clearRect(0, 0, width, height);
 
-    // Set up chart dimensions with extra space for price labels and date labels
-    const leftPadding = 80; // More space for price labels on the left
-    const rightPadding = 80; // Reduced space for real-time price display
-    const topPadding = 40;
-    const bottomPadding = 60; // Increased space for date labels at bottom
+    // Set up chart dimensions with optimal padding for proper label visibility
+    const leftPadding = 100; // More space for price labels on the left
+    const rightPadding = 60; // Space for real-time price display
+    const topPadding = 30;
+    const bottomPadding = 50; // Space for date labels at bottom
     const chartWidth = width - leftPadding - rightPadding;
     const chartHeight = height - topPadding - bottomPadding;
 
@@ -171,6 +171,12 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const minValue = Math.min(...values);
     const maxValue = Math.max(...values);
     const valueRange = maxValue - minValue || 1;
+    
+    // Add padding to prevent line from touching chart edges
+    const valuePadding = valueRange * 0.1; // 10% padding
+    const paddedMinValue = minValue - valuePadding;
+    const paddedMaxValue = maxValue + valuePadding;
+    const paddedValueRange = paddedMaxValue - paddedMinValue;
 
     // Draw premium grid lines
     ctx.strokeStyle = 'rgba(100, 116, 139, 0.15)';
@@ -212,7 +218,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
     chartData.forEach((point, index) => {
       const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
-      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      const y = topPadding + chartHeight - ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
       
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -242,31 +248,44 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.moveTo(leftPadding, topPadding + chartHeight);
     chartData.forEach((point, index) => {
       const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
-      const y = topPadding + chartHeight - ((point.value - minValue) / valueRange) * chartHeight;
+      const y = topPadding + chartHeight - ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
       ctx.lineTo(x, y);
     });
     ctx.lineTo(leftPadding + chartWidth, topPadding + chartHeight);
     ctx.closePath();
     ctx.fill();
 
-    // Draw premium price labels
-    ctx.fillStyle = '#f1f5f9';
-    ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
+    // Draw premium price labels with better visibility
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'right';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-    ctx.shadowBlur = 3;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 2;
     
     for (let i = 0; i <= 5; i++) {
-      const value = maxValue - (valueRange * i) / 5;
+      const value = paddedMaxValue - (paddedValueRange * i) / 5;
       const y = topPadding + (chartHeight * i) / 5;
       
-      // Format price with appropriate decimal places
-      let formattedValue = value.toLocaleString(undefined, {
-        minimumFractionDigits: value >= 1 ? 2 : 6,
-        maximumFractionDigits: value >= 1 ? 2 : 6
-      });
+      // Format price with appropriate decimal places and commas
+      let formattedValue;
+      if (value >= 1000) {
+        formattedValue = value.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      } else if (value >= 1) {
+        formattedValue = value.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 4
+        });
+      } else {
+        formattedValue = value.toLocaleString(undefined, {
+          minimumFractionDigits: 6,
+          maximumFractionDigits: 8
+        });
+      }
       
-      ctx.fillText(`$${formattedValue}`, leftPadding - 12, y + 5);
+      ctx.fillText(`$${formattedValue}`, leftPadding - 15, y + 4);
     }
     
     ctx.shadowColor = 'transparent';
@@ -294,7 +313,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     // Draw real-time price indicator at the edge of the chart
     if (chartData.length > 0) {
       const lastPrice = chartData[chartData.length - 1].value;
-      const priceY = topPadding + chartHeight - ((lastPrice - minValue) / valueRange) * chartHeight;
+      const priceY = topPadding + chartHeight - ((lastPrice - paddedMinValue) / paddedValueRange) * chartHeight;
       const rightEdge = leftPadding + chartWidth;
 
       // Draw premium price line extending to the right edge
@@ -375,9 +394,15 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const minValue = Math.min(...values);
     const maxValue = Math.max(...values);
     const valueRange = maxValue - minValue || 1;
+    
+    // Add padding to prevent candles from touching chart edges
+    const valuePadding = valueRange * 0.1; // 10% padding
+    const paddedMinValue = minValue - valuePadding;
+    const paddedMaxValue = maxValue + valuePadding;
+    const paddedValueRange = paddedMaxValue - paddedMinValue;
 
-    // Draw grid lines
-    ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)';
+    // Draw premium grid lines
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.15)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
       const y = topPadding + (chartHeight * i) / 5;
@@ -387,14 +412,24 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.stroke();
     }
 
+    // Draw vertical grid lines
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.1)';
+    for (let i = 0; i <= 10; i++) {
+      const x = leftPadding + (chartWidth * i) / 10;
+      ctx.beginPath();
+      ctx.moveTo(x, topPadding);
+      ctx.lineTo(x, topPadding + chartHeight);
+      ctx.stroke();
+    }
+
     const candleWidth = chartWidth / chartData.length * 0.6;
 
     chartData.forEach((candle, index) => {
       const x = leftPadding + (chartWidth * (index + 0.5)) / chartData.length;
-      const openY = topPadding + chartHeight - ((candle.open! - minValue) / valueRange) * chartHeight;
-      const closeY = topPadding + chartHeight - ((candle.close! - minValue) / valueRange) * chartHeight;
-      const highY = topPadding + chartHeight - ((candle.high! - minValue) / valueRange) * chartHeight;
-      const lowY = topPadding + chartHeight - ((candle.low! - minValue) / valueRange) * chartHeight;
+      const openY = topPadding + chartHeight - ((candle.open! - paddedMinValue) / paddedValueRange) * chartHeight;
+      const closeY = topPadding + chartHeight - ((candle.close! - paddedMinValue) / paddedValueRange) * chartHeight;
+      const highY = topPadding + chartHeight - ((candle.high! - paddedMinValue) / paddedValueRange) * chartHeight;
+      const lowY = topPadding + chartHeight - ((candle.low! - paddedMinValue) / paddedValueRange) * chartHeight;
 
       const isGreen = candle.close! >= candle.open!;
       const color = isGreen ? '#10b981' : '#ef4444';
@@ -414,35 +449,65 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyHeight);
     });
 
-    // Draw price labels
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '12px sans-serif';
+    // Draw premium price labels with better visibility
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'right';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 2;
     
     for (let i = 0; i <= 5; i++) {
-      const value = maxValue - (valueRange * i) / 5;
+      const value = paddedMaxValue - (paddedValueRange * i) / 5;
       const y = topPadding + (chartHeight * i) / 5;
-      ctx.fillText(`$${value.toFixed(2)}`, leftPadding - 5, y + 4);
+      
+      // Format price with appropriate decimal places and commas
+      let formattedValue;
+      if (value >= 1000) {
+        formattedValue = value.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      } else if (value >= 1) {
+        formattedValue = value.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 4
+        });
+      } else {
+        formattedValue = value.toLocaleString(undefined, {
+          minimumFractionDigits: 6,
+          maximumFractionDigits: 8
+        });
+      }
+      
+      ctx.fillText(`$${formattedValue}`, leftPadding - 15, y + 4);
     }
+    
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
 
-    // Draw date labels at the bottom
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '11px sans-serif';
+    // Draw premium date labels at the bottom
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 2;
     
     chartData.forEach((candle, index) => {
       const dateLabel = formatDateLabel(candle.time, index, chartData.length);
       if (dateLabel) {
         const x = leftPadding + (chartWidth * (index + 0.5)) / chartData.length;
-        const y = topPadding + chartHeight + 20;
+        const y = topPadding + chartHeight + 25;
         ctx.fillText(dateLabel, x, y);
       }
     });
+    
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
 
     // Draw real-time price indicator for candlestick
     if (chartData.length > 0) {
       const lastCandle = chartData[chartData.length - 1];
-      const currentPriceY = topPadding + chartHeight - ((currentPrice - minValue) / valueRange) * chartHeight;
+      const currentPriceY = topPadding + chartHeight - ((currentPrice - paddedMinValue) / paddedValueRange) * chartHeight;
       const rightEdge = leftPadding + chartWidth;
 
       // Draw price line extending to the right edge
