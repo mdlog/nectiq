@@ -214,10 +214,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserBalance(id: number, balance: number): Promise<void> {
-    await db
+    console.log(`🔧 [BALANCE UPDATE] Updating user ${id} balance to ${balance}`);
+    const result = await db
       .update(users)
       .set({ balance })
       .where(eq(users.id, id));
+    console.log(`✅ [BALANCE UPDATE] Database update completed for user ${id}, new balance: ${balance}`);
   }
 
   async updateUserStats(id: number, totalPredictions: number, correctPredictions: number, totalRewards: number): Promise<void> {
