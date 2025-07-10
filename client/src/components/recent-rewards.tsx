@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Gift, Check, X, TrendingUp, TrendingDown } from "lucide-react";
+import { Gift, Check, X, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 import type { RecentReward } from "@/types";
 
 // Dynamic function to get crypto image from live API data
@@ -48,6 +49,9 @@ function formatTimeAgo(dateString: string): string {
 }
 
 export function RecentRewards() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4; // Show 4 rewards per page
+
   const { data: rewards = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/rewards/recent"],
     refetchInterval: 3000, // Auto-refresh every 3 seconds
@@ -61,6 +65,19 @@ export function RecentRewards() {
     refetchInterval: 1000,
     staleTime: 30000, // 30 seconds
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(rewards.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRewards = rewards.slice(startIndex, endIndex);
+
+  // Reset to first page when rewards change
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [rewards.length, currentPage, totalPages]);
 
   if (isLoading) {
     return (
@@ -104,7 +121,7 @@ export function RecentRewards() {
       </h3>
       
       <div className="space-y-3">
-        {rewards.map((reward) => {
+        {currentRewards.map((reward) => {
           const isWin = reward.amount > 0;
           
           // Determine source type and display text
@@ -216,6 +233,77 @@ export function RecentRewards() {
           );
         })}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-6 pt-4 border-t border-surface-light">
+          <div className="flex items-center justify-between">
+            {/* Pagination Info */}
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {startIndex + 1} to {Math.min(endIndex, rewards.length)} of {rewards.length} rewards
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center space-x-2">
+              {/* Previous Button */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  currentPage === 1
+                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                    : 'bg-surface hover:bg-surface-light text-gray-700 dark:text-gray-300 hover:text-primary shadow-sm hover:shadow-md'
+                }`}
+              >
+                <ChevronLeft size={16} className="mr-1" />
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex space-x-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                  if (totalPages <= 5 || pageNum === 1 || pageNum === totalPages || Math.abs(pageNum - currentPage) <= 1) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          currentPage === pageNum
+                            ? 'bg-primary text-white shadow-lg'
+                            : 'bg-surface hover:bg-surface-light text-gray-700 dark:text-gray-300 hover:text-primary'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                    return (
+                      <span key={pageNum} className="w-8 h-8 flex items-center justify-center text-gray-400">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  currentPage === totalPages
+                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                    : 'bg-surface hover:bg-surface-light text-gray-700 dark:text-gray-300 hover:text-primary shadow-sm hover:shadow-md'
+                }`}
+              >
+                Next
+                <ChevronRight size={16} className="ml-1" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
