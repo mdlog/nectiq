@@ -50,7 +50,7 @@ function formatTimeAgo(dateString: string): string {
 
 export function RecentRewards() {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4; // Show 4 rewards per page
+  const itemsPerPage = 5; // Show 5 rewards per page
 
   const { data: rewards = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/rewards/recent"],
