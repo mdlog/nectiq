@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import nectiqLogo from "@/assets/nectiq-logo.png";
+import { PlatformStats } from "@/components/platform-stats";
 
 interface CryptoPrice {
   id: string;
@@ -201,6 +202,17 @@ export default function LandingPage() {
                 </p>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Platform Statistics Section */}
+          <div className="mb-16">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-foreground mb-4">Live Platform Activity</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Real-time insights into our active prediction community
+              </p>
+            </div>
+            <PlatformStats />
           </div>
 
           {/* About Section */}
