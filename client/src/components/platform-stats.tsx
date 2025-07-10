@@ -17,11 +17,18 @@ interface PlatformStats {
 }
 
 export function PlatformStats() {
-  const { data: stats, isLoading } = useQuery<PlatformStats>({
+  const { data: stats, isLoading, error } = useQuery<PlatformStats>({
     queryKey: ['/api/platform/stats'],
     refetchInterval: 3000, // Update every 3 seconds for real-time data
     refetchIntervalInBackground: true,
     staleTime: 1000, // Consider data stale after 1 second
+  });
+
+  console.log('🔍 [PLATFORM STATS] Component state:', { 
+    isLoading, 
+    hasStats: !!stats, 
+    error: error?.message,
+    stats 
   });
 
   if (isLoading || !stats) {
@@ -125,6 +132,12 @@ export function PlatformStats() {
       borderColor: 'border-pink-500/20'
     }
   ];
+
+  console.log('🎯 [PLATFORM STATS] Rendering with data:', { 
+    totalPredictions: stats.totalPredictions,
+    totalBattles: stats.totalBattles,
+    statsData: statsData.map(s => ({ title: s.title, value: s.value }))
+  });
 
   return (
     <div className="w-full">
