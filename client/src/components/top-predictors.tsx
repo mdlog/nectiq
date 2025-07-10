@@ -98,7 +98,7 @@ export function TopPredictors() {
                 <p className="text-sm font-semibold text-success">
                   {user.totalRewards.toLocaleString()}
                 </p>
-                <p className="text-xs text-slate-400">points</p>
+                <p className="text-xs text-slate-400">NTIQ</p>
               </div>
             </div>
           );
