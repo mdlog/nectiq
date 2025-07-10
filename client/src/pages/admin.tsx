@@ -2598,7 +2598,7 @@ export default function AdminPanel() {
                 </div>
                 
                 <Button 
-                  onClick={() => setLocation('/')}
+                  onClick={() => setLocation('/home')}
                   variant="outline"
                   className="w-full"
                 >
@@ -2652,7 +2652,7 @@ export default function AdminPanel() {
               variant="outline" 
               size="sm"
               className="bg-surface-light border-surface-light text-xs sm:text-sm" 
-              onClick={() => setLocation('/')}
+              onClick={() => setLocation('/home')}
             >
               <Eye className="mr-1 sm:mr-2" size={14} />
               <span className="hidden sm:inline">Back to App</span>
