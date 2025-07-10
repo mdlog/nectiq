@@ -202,6 +202,7 @@ export default function BattlesPage() {
       });
       setJoinDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] }); // Refresh user balance in header
       
     } catch (error: any) {
       console.error('Join battle error:', error);
@@ -257,6 +258,7 @@ export default function BattlesPage() {
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
       queryClient.invalidateQueries({ queryKey: ['/api/battles/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] }); // Refresh user balance in header
       
       setCreateBattleDialogOpen(false);
       setCreateBattleForm({
