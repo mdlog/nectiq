@@ -4986,17 +4986,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const tournament = await storage.createSurvivalTournament(tournamentData);
 
-      // CRITICAL FIX: Use BalanceService for tournament creation fee
-      const balanceResult = await BalanceService.processTransaction({
-        userId,
-        type: 'survival_entry',
-        amount: entryFee,
-        description: `Created survival tournament - ${title}`,
-        relatedId: tournament.id
-      }, storage);
-
-      // Add creator as participant (this will increment currentParticipants and update prizePool)
-      await storage.joinSurvivalTournament(tournament.id, userId);
+      // ADMIN NO LONGER AUTO-JOINS TOURNAMENT - Admin creates tournament but doesn't participate
+      // This prevents admin balance reduction and allows clean tournament management
 
       res.json(tournament);
     } catch (error) {
@@ -5191,15 +5182,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'You are not an active participant in this tournament' });
       }
 
-      // Get user balance and check if they have enough for entry fee
+      // Get user data (no balance check needed - user already paid entry fee when joining)
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      if (user.balance < tournament.entryFee) {
-        return res.status(400).json({ message: `Insufficient balance. You need ${tournament.entryFee} NTIQ to make a prediction.` });
-      }
+      // FIXED: No balance check needed for predictions - user already paid entry fee when joining tournament
 
       // Check if current round exists and if not, try to start new round automatically
       let currentRound = await storage.getCurrentRound(tournamentId);
@@ -5389,14 +5378,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // CRITICAL FIX: Use BalanceService instead of direct updateUserBalance
-      const balanceResult = await BalanceService.processTransaction({
-        userId,
-        type: 'survival_entry',
-        amount: tournament.entryFee,
-        description: `Survival tournament prediction fee - ${prediction.toUpperCase()} on ${tournament.cryptocurrency}`,
-        relatedId: tournamentId
-      }, storage);
+      // CRITICAL FIX: DO NOT CHARGE USER FOR EACH PREDICTION
+      // User already paid entry fee when joining tournament
+      // Each round prediction should be FREE for participants
 
       // Submit prediction with starting price and anti-gaming data
       const predictionData = {
@@ -5419,12 +5403,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newPrediction = await storage.submitSurvivalPrediction(predictionData);
       
-      // Include the starting price, new balance, and anti-gaming info in the response
+      // Include the starting price and anti-gaming info in the response (NO balance deduction)
       res.json({
         ...newPrediction,
         startingPrice: currentPrice,
-        newBalance: user.balance - tournament.entryFee,
-        entryFeeDeducted: tournament.entryFee,
+        newBalance: user.balance, // NO deduction - user already paid entry fee
+        entryFeeDeducted: 0, // NO fee deducted for predictions
         antiGaming: {
           timingMultiplier: antiGamingResult.timingMultiplier,
           timePercentage: `${(antiGamingResult.timePercentage * 100).toFixed(1)}%`,
@@ -5433,7 +5417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           latePenalty: antiGamingResult.latePenalty,
           deadlinePassed: antiGamingResult.deadlinePassed
         },
-        message: `Prediction recorded! Starting price: $${currentPrice.toFixed(8)}. ${tournament.entryFee} NTIQ deducted from balance. ${antiGamingResult.bonusDescription || ''}`
+        message: `Prediction recorded! Starting price: $${currentPrice.toFixed(8)}. Free prediction for tournament participants. ${antiGamingResult.bonusDescription || ''}`
       });
     } catch (error) {
       console.error('Error submitting survival prediction:', error);
