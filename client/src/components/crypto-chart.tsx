@@ -182,10 +182,10 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const chartAreaPadding = chartWidth * 0.05;
     const usableWidth = chartWidth - (chartAreaPadding * 2);
     
-    // Draw premium grid lines
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.15)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 5; i++) {
+    // Draw elegant grid lines with premium styling
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
+    ctx.lineWidth = 0.5;
+    for (let i = 1; i <= 4; i++) {
       const y = topPadding + (chartHeight * i) / 5;
       ctx.beginPath();
       ctx.moveTo(leftPadding + chartAreaPadding, y);
@@ -193,9 +193,9 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.stroke();
     }
 
-    // Draw vertical grid lines with consistent padding
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.1)';
-    for (let i = 0; i <= 10; i++) {
+    // Draw subtle vertical grid lines
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.04)';
+    for (let i = 1; i <= 9; i++) {
       const x = leftPadding + chartAreaPadding + (usableWidth * i) / 10;
       ctx.beginPath();
       ctx.moveTo(x, topPadding);
@@ -203,21 +203,50 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.stroke();
     }
 
-    // Draw premium price line with gradient
+    // Draw elegant price line with enhanced effects
+    const chartColor = priceChange24h >= 0 ? '#10b981' : '#ef4444';
+    
+    // Create subtle outer glow for premium feel
+    ctx.strokeStyle = chartColor;
+    ctx.lineWidth = 5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.shadowColor = chartColor;
+    ctx.shadowBlur = 15;
+    ctx.globalAlpha = 0.2;
+    ctx.beginPath();
+
+    chartData.forEach((point, index) => {
+      const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
+      const y = topPadding + chartHeight - ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
+      
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+
+    ctx.stroke();
+    
+    // Draw main line with crisp gradient
+    ctx.globalAlpha = 1;
     const gradient = ctx.createLinearGradient(0, 0, chartWidth, 0);
     if (priceChange24h >= 0) {
       gradient.addColorStop(0, '#10b981');
-      gradient.addColorStop(0.5, '#34d399');
-      gradient.addColorStop(1, '#6ee7b7');
+      gradient.addColorStop(0.3, '#34d399');
+      gradient.addColorStop(0.7, '#6ee7b7');
+      gradient.addColorStop(1, '#10b981');
     } else {
       gradient.addColorStop(0, '#ef4444');
-      gradient.addColorStop(0.5, '#f87171');
-      gradient.addColorStop(1, '#fca5a5');
+      gradient.addColorStop(0.3, '#f87171');
+      gradient.addColorStop(0.7, '#fca5a5');
+      gradient.addColorStop(1, '#ef4444');
     }
     ctx.strokeStyle = gradient;
-    ctx.lineWidth = 3;
-    ctx.shadowColor = priceChange24h >= 0 ? '#10b981' : '#ef4444';
-    ctx.shadowBlur = 10;
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = chartColor;
+    ctx.shadowBlur = 6;
     ctx.beginPath();
 
     chartData.forEach((point, index) => {
@@ -233,18 +262,22 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
     ctx.stroke();
 
-    // Draw premium gradient fill
+    // Draw elegant gradient fill with enhanced smoothness
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
     const areaGradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
     if (priceChange24h >= 0) {
-      areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
-      areaGradient.addColorStop(0.5, 'rgba(16, 185, 129, 0.2)');
-      areaGradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
+      areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+      areaGradient.addColorStop(0.2, 'rgba(52, 211, 153, 0.15)');
+      areaGradient.addColorStop(0.5, 'rgba(110, 231, 183, 0.08)');
+      areaGradient.addColorStop(0.8, 'rgba(16, 185, 129, 0.03)');
+      areaGradient.addColorStop(1, 'rgba(16, 185, 129, 0.01)');
     } else {
-      areaGradient.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
-      areaGradient.addColorStop(0.5, 'rgba(239, 68, 68, 0.2)');
-      areaGradient.addColorStop(1, 'rgba(239, 68, 68, 0.05)');
+      areaGradient.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
+      areaGradient.addColorStop(0.2, 'rgba(248, 113, 113, 0.15)');
+      areaGradient.addColorStop(0.5, 'rgba(252, 165, 165, 0.08)');
+      areaGradient.addColorStop(0.8, 'rgba(239, 68, 68, 0.03)');
+      areaGradient.addColorStop(1, 'rgba(239, 68, 68, 0.01)');
     }
     
     ctx.fillStyle = areaGradient;
@@ -321,12 +354,12 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       const chartAreaPadding = chartWidth * 0.05;
       const rightEdge = leftPadding + chartWidth - chartAreaPadding;
 
-      // Draw premium price line extending to the right edge
+      // Draw elegant price line with sophisticated dash pattern
       ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([8, 4]);
-      ctx.shadowColor = priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)';
-      ctx.shadowBlur = 5;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 3]);
+      ctx.shadowColor = priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+      ctx.shadowBlur = 3;
       ctx.beginPath();
       ctx.moveTo(rightEdge - 50, priceY);
       ctx.lineTo(rightEdge - 20, priceY);
