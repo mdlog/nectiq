@@ -632,10 +632,10 @@ export default function BattlesPage() {
             <Card>
               <CardContent className="p-4 text-center">
                 <DollarSign className="h-6 w-6 text-purple-500 mx-auto mb-2" />
-                <div className="text-3xl font-black text-slate-900 dark:text-white">
+                <div className="text-3xl font-black text-white dark:text-white">
                   {stats.totalStaked.toLocaleString()}
                 </div>
-                <div className="text-sm text-slate-900 dark:text-white font-bold">Total Staked NTIQ</div>
+                <div className="text-sm text-white dark:text-white font-bold">Total Staked NTIQ</div>
               </CardContent>
             </Card>
           </div>
