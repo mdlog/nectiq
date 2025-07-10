@@ -6524,5 +6524,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Temporary test endpoint for deleteUser function
+  app.post('/api/test/delete-user', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+      }
+
+      console.log(`🧪 Testing deleteUser function with user ID: ${userId}`);
+      
+      // Test the deleteUser function
+      const result = await storage.deleteUser(parseInt(userId));
+      
+      console.log(`✅ Test completed successfully. Result:`, result);
+      
+      res.json({ 
+        success: true, 
+        message: `User ${userId} deleted successfully`, 
+        result 
+      });
+    } catch (error) {
+      console.error("❌ Error testing deleteUser:", error);
+      res.status(500).json({ 
+        message: "Delete user test failed", 
+        error: error.message 
+      });
+    }
+  });
+
   return httpServer;
 }
