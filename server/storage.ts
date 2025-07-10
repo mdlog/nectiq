@@ -1,6 +1,7 @@
 import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleComments, battleReactions, battleSpectators, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, monthlyTierRewards, tierPromotions, predictionReactions, predictionComments, userVerifications, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
+import { BalanceService } from "./services/balanceService";
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
 function normalizeWalletAddress(address: string): string {
@@ -1328,66 +1329,114 @@ export class DatabaseStorage implements IStorage {
 
         winnerReward = parseFloat(String(battle.stakeAmount)) * 2 * multiplier; // Double stake + multiplier
 
-        // Update winner's balance
-        const [winner] = await db.select().from(users).where(eq(users.id, winnerId));
-        if (winner) {
-          await db
-            .update(users)
-            .set({ 
-              balance: winner.balance + winnerReward,
-              totalRewards: winner.totalRewards + winnerReward
-            })
-            .where(eq(users.id, winnerId));
+        // CRITICAL: Use BalanceService for guaranteed real-time balance updates
+        try {
+          const balanceResult = await BalanceService.processBattleReward(
+            winnerId,
+            battleId,
+            parseFloat(String(battle.stakeAmount)),
+            multiplier,
+            this
+          );
+          
+          // Update user total rewards for statistics
+          const [winner] = await db.select().from(users).where(eq(users.id, winnerId));
+          if (winner) {
+            await db
+              .update(users)
+              .set({ 
+                totalRewards: winner.totalRewards + winnerReward
+              })
+              .where(eq(users.id, winnerId));
+          }
+          
+          console.log(`✅ BATTLE REWARD: Battle ${battleId} winner ${winnerId} received ${winnerReward} NTIQ`);
+        } catch (error) {
+          console.error(`❌ BATTLE REWARD ERROR: Failed to process battle ${battleId} reward:`, error);
+          // Fallback to old method if BalanceService fails
+          const [winner] = await db.select().from(users).where(eq(users.id, winnerId));
+          if (winner) {
+            await db
+              .update(users)
+              .set({ 
+                balance: winner.balance + winnerReward,
+                totalRewards: winner.totalRewards + winnerReward
+              })
+              .where(eq(users.id, winnerId));
 
-          // Log battle reward transaction
-          await this.logTransaction({
-            userId: winnerId,
-            type: 'battle_reward',
-            amount: winnerReward,
-            token: 'NTIQ',
-            status: 'completed',
-            relatedId: battleId
-          });
+            await this.logTransaction({
+              userId: winnerId,
+              type: 'battle_reward',
+              amount: winnerReward,
+              token: 'NTIQ',
+              status: 'completed',
+              relatedId: battleId
+            });
+          }
         }
       } else {
-        // It's a tie - refund both players
+        // It's a tie - refund both players using BalanceService
         const stakeAmount = parseFloat(String(battle.stakeAmount));
-        const [challenger] = await db.select().from(users).where(eq(users.id, battle.challengerId));
         
-        if (challenger) {
-          await db
-            .update(users)
-            .set({ balance: challenger.balance + stakeAmount })
-            .where(eq(users.id, battle.challengerId));
-
-          // Log refund transaction for challenger
-          await this.logTransaction({
+        try {
+          // Refund challenger
+          await BalanceService.processTransaction({
             userId: battle.challengerId,
             type: 'battle_refund',
             amount: stakeAmount,
-            token: 'NTIQ',
-            status: 'completed',
+            description: `Battle tie refund - Battle #${battleId}`,
             relatedId: battleId
-          });
-        }
-        
-        if (battle.challengedId) {
-          const [challenged] = await db.select().from(users).where(eq(users.id, battle.challengedId));
-          if (challenged) {
+          }, this);
+          
+          // Refund challenged player
+          if (battle.challengedId) {
+            await BalanceService.processTransaction({
+              userId: battle.challengedId,
+              type: 'battle_refund',
+              amount: stakeAmount,
+              description: `Battle tie refund - Battle #${battleId}`,
+              relatedId: battleId
+            }, this);
+          }
+          
+          console.log(`✅ BATTLE TIE: Battle ${battleId} both players refunded ${stakeAmount} NTIQ each`);
+        } catch (error) {
+          console.error(`❌ BATTLE REFUND ERROR: Failed to process battle ${battleId} refunds:`, error);
+          // Fallback to old method if BalanceService fails
+          const [challenger] = await db.select().from(users).where(eq(users.id, battle.challengerId));
+          if (challenger) {
             await db
               .update(users)
-              .set({ balance: challenged.balance + stakeAmount })
-              .where(eq(users.id, battle.challengedId));
+              .set({ balance: challenger.balance + stakeAmount })
+              .where(eq(users.id, battle.challengerId));
 
-            // Log refund transaction for challenged
             await this.logTransaction({
-              userId: battle.challengedId,
+              userId: battle.challengerId,
               type: 'battle_refund',
               amount: stakeAmount,
               token: 'NTIQ',
               status: 'completed',
               relatedId: battleId
             });
+          }
+          
+          if (battle.challengedId) {
+            const [challenged] = await db.select().from(users).where(eq(users.id, battle.challengedId));
+            if (challenged) {
+              await db
+                .update(users)
+                .set({ balance: challenged.balance + stakeAmount })
+                .where(eq(users.id, battle.challengedId));
+
+              await this.logTransaction({
+                userId: battle.challengedId,
+                type: 'battle_refund',
+                amount: stakeAmount,
+                token: 'NTIQ',
+                status: 'completed',
+                relatedId: battleId
+              });
+            }
           }
         }
       }

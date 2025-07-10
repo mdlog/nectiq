@@ -1,5 +1,6 @@
 import { storage } from '../storage';
 import axios from 'axios';
+import { BalanceService } from './balanceService';
 
 export class SurvivalRoundService {
   private static instance: SurvivalRoundService;
@@ -263,20 +264,32 @@ export class SurvivalRoundService {
         if (!existingReward && tournament.prizePool > 0) {
           console.log(`🏆 Awarding retroactive reward: ${tournament.prizePool} NTIQ to winner ${tournament.winnerId} for tournament ${tournament.id}`);
           
-          // Add prize pool to winner's balance
-          await storage.updateUserBalance(tournament.winnerId, tournament.prizePool);
-          
-          // Log transaction for reward
-          await storage.logTransaction({
-            userId: tournament.winnerId,
-            type: 'survival_tournament_reward',
-            amount: tournament.prizePool,
-            token: 'NTIQ',
-            status: 'completed',
-            relatedId: tournament.id
-          });
-          
-          console.log(`✅ Successfully awarded retroactive ${tournament.prizePool} NTIQ to tournament winner`);
+          // CRITICAL: Use BalanceService for guaranteed real-time balance updates
+          try {
+            const balanceResult = await BalanceService.processSurvivalReward(
+              tournament.winnerId,
+              tournament.id,
+              tournament.prizePool,
+              storage
+            );
+            
+            console.log(`✅ SURVIVAL REWARD: Tournament ${tournament.id} winner ${tournament.winnerId} received ${tournament.prizePool} NTIQ`);
+          } catch (error) {
+            console.error(`❌ SURVIVAL REWARD ERROR: Failed to process tournament ${tournament.id} reward:`, error);
+            // Fallback to old method if BalanceService fails
+            await storage.updateUserBalance(tournament.winnerId, tournament.prizePool);
+            
+            await storage.logTransaction({
+              userId: tournament.winnerId,
+              type: 'survival_tournament_reward',
+              amount: tournament.prizePool,
+              token: 'NTIQ',
+              status: 'completed',
+              relatedId: tournament.id
+            });
+            
+            console.log(`✅ Successfully awarded retroactive ${tournament.prizePool} NTIQ to tournament winner (fallback)`);
+          }
         }
       }
       
