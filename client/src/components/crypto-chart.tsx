@@ -217,7 +217,10 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     ctx.beginPath();
 
     chartData.forEach((point, index) => {
-      const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
+      // Add padding to both sides to center the line properly
+      const chartAreaPadding = chartWidth * 0.05; // 5% padding on each side
+      const usableWidth = chartWidth - (chartAreaPadding * 2);
+      const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
       const y = topPadding + chartHeight - ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
       
       if (index === 0) {
@@ -245,13 +248,15 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     
     ctx.fillStyle = areaGradient;
     ctx.beginPath();
-    ctx.moveTo(leftPadding, topPadding + chartHeight);
+    const chartAreaPadding = chartWidth * 0.05; // Match the line padding
+    const usableWidth = chartWidth - (chartAreaPadding * 2);
+    ctx.moveTo(leftPadding + chartAreaPadding, topPadding + chartHeight);
     chartData.forEach((point, index) => {
-      const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
+      const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
       const y = topPadding + chartHeight - ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
       ctx.lineTo(x, y);
     });
-    ctx.lineTo(leftPadding + chartWidth, topPadding + chartHeight);
+    ctx.lineTo(leftPadding + chartAreaPadding + usableWidth, topPadding + chartHeight);
     ctx.closePath();
     ctx.fill();
 
@@ -301,7 +306,9 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     chartData.forEach((point, index) => {
       const dateLabel = formatDateLabel(point.time, index, chartData.length);
       if (dateLabel) {
-        const x = leftPadding + (chartWidth * index) / (chartData.length - 1);
+        const chartAreaPadding = chartWidth * 0.05;
+        const usableWidth = chartWidth - (chartAreaPadding * 2);
+        const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
         const y = topPadding + chartHeight + 25;
         ctx.fillText(dateLabel, x, y);
       }
@@ -314,7 +321,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     if (chartData.length > 0) {
       const lastPrice = chartData[chartData.length - 1].value;
       const priceY = topPadding + chartHeight - ((lastPrice - paddedMinValue) / paddedValueRange) * chartHeight;
-      const rightEdge = leftPadding + chartWidth;
+      const chartAreaPadding = chartWidth * 0.05;
+      const rightEdge = leftPadding + chartWidth - chartAreaPadding;
 
       // Draw premium price line extending to the right edge
       ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
@@ -422,10 +430,13 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.stroke();
     }
 
-    const candleWidth = chartWidth / chartData.length * 0.6;
+    // Add consistent padding for candlestick chart
+    const chartAreaPadding = chartWidth * 0.05;
+    const usableWidth = chartWidth - (chartAreaPadding * 2);
+    const candleWidth = usableWidth / chartData.length * 0.6;
 
     chartData.forEach((candle, index) => {
-      const x = leftPadding + (chartWidth * (index + 0.5)) / chartData.length;
+      const x = leftPadding + chartAreaPadding + (usableWidth * (index + 0.5)) / chartData.length;
       const openY = topPadding + chartHeight - ((candle.open! - paddedMinValue) / paddedValueRange) * chartHeight;
       const closeY = topPadding + chartHeight - ((candle.close! - paddedMinValue) / paddedValueRange) * chartHeight;
       const highY = topPadding + chartHeight - ((candle.high! - paddedMinValue) / paddedValueRange) * chartHeight;
@@ -495,7 +506,9 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     chartData.forEach((candle, index) => {
       const dateLabel = formatDateLabel(candle.time, index, chartData.length);
       if (dateLabel) {
-        const x = leftPadding + (chartWidth * (index + 0.5)) / chartData.length;
+        const chartAreaPadding = chartWidth * 0.05;
+        const usableWidth = chartWidth - (chartAreaPadding * 2);
+        const x = leftPadding + chartAreaPadding + (usableWidth * (index + 0.5)) / chartData.length;
         const y = topPadding + chartHeight + 25;
         ctx.fillText(dateLabel, x, y);
       }
@@ -508,7 +521,8 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     if (chartData.length > 0) {
       const lastCandle = chartData[chartData.length - 1];
       const currentPriceY = topPadding + chartHeight - ((currentPrice - paddedMinValue) / paddedValueRange) * chartHeight;
-      const rightEdge = leftPadding + chartWidth;
+      const chartAreaPadding = chartWidth * 0.05;
+      const rightEdge = leftPadding + chartWidth - chartAreaPadding;
 
       // Draw price line extending to the right edge
       ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
