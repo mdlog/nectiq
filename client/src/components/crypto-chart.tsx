@@ -611,7 +611,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
                 <div className="text-lg md:text-xl font-bold text-white">
                   {name} ({symbol.toUpperCase()})
                 </div>
-                <div className="text-xl md:text-2xl font-bold text-emerald-400 mt-1">
+                <div className="text-lg md:text-xl font-bold text-emerald-400 mt-1">
                   ${currentPrice.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: currentPrice >= 1 ? 2 : 6
@@ -709,10 +709,10 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
           <div className="p-6">
             <Button
               onClick={() => onPredictClick(cryptoId)}
-              className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 text-white py-4 text-lg font-bold rounded-xl shadow-xl shadow-blue-500/25 border border-blue-500/30 transition-all duration-300 transform hover:scale-[1.02]"
-              size="lg"
+              className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 text-white py-3 text-base font-bold rounded-xl shadow-xl shadow-blue-500/25 border border-blue-500/30 transition-all duration-300 transform hover:scale-[1.02]"
+              size="default"
             >
-              <Target size={22} className="mr-3" />
+              <Target size={18} className="mr-2" />
               Make Prediction for {symbol.toUpperCase()}
             </Button>
           </div>
