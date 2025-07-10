@@ -367,7 +367,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUserByWalletAddress(finalAddress);
       if (!user) {
         // Check if this is admin wallet using environment variable
-        const isAdmin = ADMIN_WALLET_ADDRESSES.includes(finalAddress.toLowerCase());
+        const adminWallets = getAdminWalletAddresses();
+        const isAdmin = adminWallets.includes(finalAddress.toLowerCase());
         
         // Auto-register new wallet address with random username
         const username = isAdmin ? `Admin_${finalAddress.slice(-6)}` : generateRandomUsername();
@@ -452,7 +453,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find or create user
       let dbUser = await storage.getUserByWalletAddress(finalAddress);
       if (!dbUser) {
-        const isAdmin = ADMIN_WALLET_ADDRESSES.includes(finalAddress);
+        const adminWallets = getAdminWalletAddresses();
+        const isAdmin = adminWallets.includes(finalAddress);
         const username = isAdmin ? `Admin_${finalAddress.slice(-6)}` : generateRandomUsername();
         
         dbUser = await storage.createUser({
@@ -548,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           xssProtection: "ENHANCED",
           sqlInjectionDetection: "ADVANCED",
           securityHeaders: "COMPREHENSIVE",
-          adminWalletSecurity: ADMIN_WALLET_ADDRESSES.length > 0 ? "CONFIGURED" : "⚠️  NOT_CONFIGURED"
+          adminWalletSecurity: getAdminWalletAddresses().length > 0 ? "CONFIGURED" : "⚠️  NOT_CONFIGURED"
         },
         statistics: {
           totalFailedAttempts: Array.from(adminAttempts.values()).reduce((sum, data) => sum + data.totalFailures, 0),
@@ -3764,8 +3766,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ isAdmin: false, reason: "User not found" });
       }
 
+      const adminWallets = getAdminWalletAddresses();
       const isAuthorizedAdmin = user.walletAddress && 
-        ADMIN_WALLET_ADDRESSES.includes(user.walletAddress.toLowerCase());
+        adminWallets.includes(user.walletAddress.toLowerCase());
       
       res.json({ 
         isAdmin: isAuthorizedAdmin || user.isAdmin,
