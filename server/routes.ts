@@ -2940,7 +2940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allSurvivalTournaments = await db.select().from(survivalTournaments);
 
       // Calculate active counts
-      const activePredictions = allPredictions.filter(p => p.status === 'active').length;
+      const activePredictions = allPredictions.filter(p => p.status === 'pending').length;
       const activeBattles = allBattles.filter(b => b.status === 'open' || b.status === 'active').length;
       const activeSurvivalTournaments = allSurvivalTournaments.filter(s => s.status === 'open' || s.status === 'active').length;
 
