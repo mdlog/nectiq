@@ -9,6 +9,7 @@ import {
 } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { storage } from "../storage";
+import { BalanceService } from "./balanceService";
 
 export class DailyChallengeService {
   // Generate daily challenges for today
@@ -163,28 +164,16 @@ export class DailyChallengeService {
         .returning();
 
       if (isCompleted && !userChallenge.isCompleted) {
-        // Award NTIQ reward and log transaction
-        const user = await storage.getUser(userId);
-        if (user) {
-          const newBalance = user.balance + userChallenge.challenge.reward;
-          await storage.updateUserBalance(userId, newBalance);
-          
-          // Log the daily challenge reward transaction
-          await storage.logTransaction({
-            userId,
-            type: 'daily_challenge_reward',
-            amount: userChallenge.challenge.reward,
-            token: 'NTIQ',
-            status: 'completed',
-            fromAddress: null,
-            toAddress: null,
-            txHash: null,
-            networkFee: null,
-            relatedId: userChallenge.challengeId
-          });
-          
-          console.log(`✅ Awarded ${userChallenge.challenge.reward} NTIQ to user ${userId} for daily challenge: ${userChallenge.challenge.name}`);
-        }
+        // CRITICAL FIX: Use BalanceService for daily challenge rewards
+        const balanceResult = await BalanceService.processTransaction({
+          userId,
+          type: 'daily_challenge_reward',
+          amount: userChallenge.challenge.reward,
+          description: `Daily challenge reward: ${userChallenge.challenge.name}`,
+          relatedId: userChallenge.challengeId
+        }, storage);
+        
+        console.log(`✅ Awarded ${userChallenge.challenge.reward} NTIQ to user ${userId} for daily challenge: ${userChallenge.challenge.name}`);
         completedChallenges.push(updated);
       }
     }

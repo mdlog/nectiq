@@ -19,6 +19,7 @@ import { SecurityValidator } from "./security";
 import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } from "./routes/userStats";
 import { calculateAntiGamingMetrics, getPredictionDeadline, formatCountdown } from "./antiGamingUtils.js";
 import { SurvivalRoundService } from "./services/survivalRoundService.js";
+import { BalanceService } from "./services/balanceService.js";
 
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
@@ -1009,9 +1010,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "pending"
       });
 
-      // Deduct PTS from user balance immediately (reserved for withdrawal)
-      const newBalance = user.balance - numAmount;
-      await storage.updateUserBalance(userId, newBalance);
+      // CRITICAL FIX: Use BalanceService for withdrawal deduction
+      const balanceResult = await BalanceService.processTransaction({
+        userId,
+        type: 'withdrawal',
+        amount: numAmount,
+        description: `Withdrawal request - ${numAmount} NTIQ to ${token}`,
+        relatedId: withdrawal.id
+      }, storage);
 
       // Real-time notification to admin panel for approval
       broadcastToAdmins({
@@ -1228,25 +1234,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Update user balance
-      const newBalance = user.balance + ntiqAmount;
-      await storage.updateUserBalance(userId, newBalance);
-
-      // Log crypto transaction
-      await storage.logTransaction({
+      // CRITICAL FIX: Use BalanceService for crypto purchase
+      const balanceResult = await BalanceService.processTransaction({
         userId,
         type: 'crypto_purchase',
         amount: ntiqAmount,
         description: `Purchased ${ntiqAmount} NTIQ with ${receivedCrypto} ${paymentToken}`,
         relatedId: transactionHash,
-        metadata: JSON.stringify({
+        metadata: {
           paymentToken,
           cryptoAmount: receivedCrypto,
           transactionHash,
           userAddress,
           exchangeRate: exchangeRates[paymentToken as keyof typeof exchangeRates]
-        })
-      });
+        }
+      }, storage);
 
       // Store transaction record
       await storage.createCryptoTransaction({
@@ -1325,9 +1327,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "completed"
       });
 
-      // Add NTIQ to user balance atomically
-      const newBalance = user.balance + numAmount;
-      await storage.updateUserBalance(userId, newBalance);
+      // CRITICAL FIX: Use BalanceService for NTIQ purchase  
+      const balanceResult = await BalanceService.processTransaction({
+        userId,
+        type: 'crypto_purchase',
+        amount: numAmount,
+        description: `Purchased ${numAmount} NTIQ with ${paymentAmount.toFixed(6)} ${paymentToken}`,
+        relatedId: purchase.id
+      }, storage);
 
       // Real-time notification to admin panel
       broadcastToAdmins({
@@ -1550,24 +1557,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetTime
       });
 
-      // Deduct stake amount from user balance
-      const newBalance = user.balance - validatedData.stakeAmount;
-      await storage.updateUserBalance(userId, newBalance);
-      console.log(`Balance deducted: User ${userId} balance ${user.balance} -> ${newBalance} (stake: ${validatedData.stakeAmount})`);
-
-      // Log transaction for prediction stake with proper error handling
-      try {
-        await storage.logTransaction({
-          userId,
-          type: 'prediction_stake',
-          amount: validatedData.stakeAmount,
-          relatedId: prediction.id
-        });
-        console.log(`✅ Prediction stake transaction logged successfully for prediction ${prediction.id}`);
-      } catch (logError) {
-        console.error('❌ Failed to log transaction for prediction stake:', logError);
-        // Continue despite logging error - don't break prediction creation
-      }
+      // CRITICAL FIX: Use BalanceService for prediction stake deduction
+      const balanceResult = await BalanceService.processTransaction({
+        userId,
+        type: 'prediction_stake',
+        amount: validatedData.stakeAmount,
+        description: `Prediction stake - ${validatedData.cryptocurrency} ${validatedData.timeframe}`,
+        relatedId: prediction.id
+      }, storage);
+      
+      console.log(`✅ Balance deducted: User ${userId} stake ${validatedData.stakeAmount} NTIQ (Prediction ID: ${prediction.id})`);
 
       // Check for achievement progress updates after prediction creation
       try {
@@ -3440,9 +3439,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isAdmin: false,
       });
 
-      // Set initial balance
+      // CRITICAL FIX: Use BalanceService for initial balance
       if (balance !== undefined) {
-        await storage.updateUserBalance(user.id, balance);
+        const balanceResult = await BalanceService.processTransaction({
+          userId: user.id,
+          type: 'admin_adjustment',
+          amount: balance,
+          description: `Initial balance set by admin - ${username}`,
+          relatedId: user.id
+        }, storage);
       }
 
       auditLog("USER_CREATED", { 
@@ -3474,9 +3479,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Update user balance if provided
+      // CRITICAL FIX: Use BalanceService for balance updates
       if (balance !== undefined) {
-        await storage.updateUserBalance(userId, balance);
+        const currentUser = await storage.getUser(userId);
+        const balanceChange = balance - (currentUser?.balance || 0);
+        
+        if (balanceChange !== 0) {
+          const balanceResult = await BalanceService.processTransaction({
+            userId,
+            type: 'admin_adjustment',
+            amount: Math.abs(balanceChange),
+            description: `Balance ${balanceChange > 0 ? 'increase' : 'decrease'} by admin`,
+            relatedId: userId
+          }, storage);
+        }
       }
 
       // Get updated user
@@ -3892,26 +3908,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tierData = await LoyaltyService.getUserTierData(userId);
       const finalAmount = Math.round(amount * tierData.currentBenefits.rewardMultiplier);
 
-      // Update user balance with tier multiplier
-      const newBalance = user.balance + finalAmount;
-      await storage.updateUserBalance(userId, newBalance);
-
-      // Update lifetime earnings and check for tier promotion
-      const promotionResult = await LoyaltyService.updateLifetimeEarnings(userId, finalAmount);
-
-      // Log the reward in transaction logs
-      await storage.logTransaction({
+      // CRITICAL FIX: Use BalanceService for reward distribution
+      const balanceResult = await BalanceService.processTransaction({
         userId,
         type: type === 'achievement' ? 'achievement_reward' : 'daily_challenge_reward',
         amount: finalAmount,
-        token: 'NTIQ',
-        status: 'completed',
-        fromAddress: null,
-        toAddress: null,
-        txHash: null,
-        networkFee: null,
+        description: `${type === 'achievement' ? 'Achievement' : 'Daily Challenge'} reward: ${description}`,
         relatedId
-      });
+      }, storage);
+
+      // Update lifetime earnings and check for tier promotion
+      const promotionResult = await LoyaltyService.updateLifetimeEarnings(userId, finalAmount);
 
       console.log(`✅ Awarded ${finalAmount} NTIQ to user ${userId} for ${type}: ${description} (${tierData.currentBenefits.rewardMultiplier}x ${tierData.currentTier} tier multiplier)`);
       
@@ -4934,8 +4941,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const tournament = await storage.createSurvivalTournament(tournamentData);
 
-      // Deduct entry fee from creator
-      await storage.updateUserBalance(userId, user.balance - entryFee);
+      // CRITICAL FIX: Use BalanceService for tournament creation fee
+      const balanceResult = await BalanceService.processTransaction({
+        userId,
+        type: 'survival_entry',
+        amount: entryFee,
+        description: `Created survival tournament - ${title}`,
+        relatedId: tournament.id
+      }, storage);
 
       // Add creator as participant (this will increment currentParticipants and update prizePool)
       await storage.joinSurvivalTournament(tournament.id, userId);
@@ -4983,8 +4996,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Insufficient balance for entry fee' });
       }
 
-      // Deduct entry fee
-      await storage.updateUserBalance(userId, user.balance - tournament.entryFee);
+      // CRITICAL FIX: Use BalanceService for tournament join fee
+      const balanceResult = await BalanceService.processTransaction({
+        userId,
+        type: 'survival_entry',
+        amount: tournament.entryFee,
+        description: `Joined survival tournament - ${tournament.title}`,
+        relatedId: tournamentId
+      }, storage);
 
       // Join tournament
       const participant = await storage.joinSurvivalTournament(tournamentId, userId);
@@ -5325,8 +5344,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Deduct entry fee from user balance
-      await storage.updateUserBalance(userId, user.balance - tournament.entryFee);
+      // CRITICAL FIX: Use BalanceService instead of direct updateUserBalance
+      const balanceResult = await BalanceService.processTransaction({
+        userId,
+        type: 'survival_entry',
+        amount: tournament.entryFee,
+        description: `Survival tournament prediction fee - ${prediction.toUpperCase()} on ${tournament.cryptocurrency}`,
+        relatedId: tournamentId
+      }, storage);
 
       // Submit prediction with starting price and anti-gaming data
       const predictionData = {
@@ -5348,17 +5373,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const newPrediction = await storage.submitSurvivalPrediction(predictionData);
-
-      // Create transaction log for entry fee deduction
-      await storage.createTransactionLog({
-        userId,
-        type: 'survival_prediction',
-        amount: -tournament.entryFee,
-        token: 'NTIQ',
-        status: 'completed',
-        description: `Survival tournament prediction fee - ${prediction.toUpperCase()} on ${tournament.cryptocurrency}`,
-        relatedId: newPrediction.id
-      });
       
       // Include the starting price, new balance, and anti-gaming info in the response
       res.json({

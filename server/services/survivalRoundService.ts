@@ -276,17 +276,14 @@ export class SurvivalRoundService {
             console.log(`✅ SURVIVAL REWARD: Tournament ${tournament.id} winner ${tournament.winnerId} received ${tournament.prizePool} NTIQ`);
           } catch (error) {
             console.error(`❌ SURVIVAL REWARD ERROR: Failed to process tournament ${tournament.id} reward:`, error);
-            // Fallback to old method if BalanceService fails
-            await storage.updateUserBalance(tournament.winnerId, tournament.prizePool);
-            
-            await storage.logTransaction({
+            // Use BalanceService fallback method 
+            const fallbackResult = await BalanceService.processTransaction({
               userId: tournament.winnerId,
               type: 'survival_tournament_reward',
               amount: tournament.prizePool,
-              token: 'NTIQ',
-              status: 'completed',
+              description: `Survival tournament reward: ${tournament.title}`,
               relatedId: tournament.id
-            });
+            }, storage);
             
             console.log(`✅ Successfully awarded retroactive ${tournament.prizePool} NTIQ to tournament winner (fallback)`);
           }
@@ -310,18 +307,14 @@ export class SurvivalRoundService {
         if (tournament && tournament.prizePool > 0) {
           console.log(`🏆 Awarding ${tournament.prizePool} NTIQ to winner (User ID: ${winnerId})`);
           
-          // Add prize pool to winner's balance
-          await storage.updateUserBalance(winnerId, tournament.prizePool);
-          
-          // Log transaction for reward
-          await storage.logTransaction({
+          // CRITICAL FIX: Use BalanceService for survival tournament rewards
+          const balanceResult = await BalanceService.processTransaction({
             userId: winnerId,
             type: 'survival_tournament_reward',
             amount: tournament.prizePool,
-            token: 'NTIQ',
-            status: 'completed',
+            description: `Survival tournament reward: ${tournament.title}`,
             relatedId: tournamentId
-          });
+          }, storage);
           
           console.log(`✅ Successfully awarded ${tournament.prizePool} NTIQ to tournament winner`);
         }
@@ -553,7 +546,14 @@ export class SurvivalRoundService {
         // Award prize to winner
         const winner = await storage.getUser(winnerId);
         if (winner) {
-          await storage.updateUserBalance(winnerId, winner.balance + prizePool);
+          // CRITICAL FIX: Use BalanceService for survival tournament rewards
+          const balanceResult = await BalanceService.processTransaction({
+            userId: winnerId,
+            type: 'survival_tournament_reward',
+            amount: prizePool,
+            description: `Survival tournament prize: ${tournament?.title || 'Tournament'}`,
+            relatedId: tournamentId
+          }, storage);
           
           console.log(`Tournament ${tournamentId} completed!`);
           console.log(`Winner: ${winner.username} (ID: ${winnerId})`);

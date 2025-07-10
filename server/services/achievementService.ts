@@ -9,6 +9,7 @@ import {
 } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { storage } from "../storage";
+import { BalanceService } from "./balanceService";
 
 export class AchievementService {
   // Check and update achievements for a user
@@ -50,23 +51,14 @@ export class AchievementService {
           .returning();
 
         if (isCompleted && !existingUserAchievement.isCompleted) {
-          // Award NTIQ reward and log transaction
-          const newBalance = user.balance + achievement.reward;
-          await storage.updateUserBalance(userId, newBalance);
-          
-          // Log the achievement reward transaction
-          await storage.logTransaction({
+          // CRITICAL FIX: Use BalanceService for achievement rewards
+          const balanceResult = await BalanceService.processTransaction({
             userId,
             type: 'achievement_reward',
             amount: achievement.reward,
-            token: 'NTIQ',
-            status: 'completed',
-            fromAddress: null,
-            toAddress: null,
-            txHash: null,
-            networkFee: null,
+            description: `Achievement reward: ${achievement.name}`,
             relatedId: achievement.id
-          });
+          }, storage);
           
           completedAchievements.push(updated);
           console.log(`✅ Awarded ${achievement.reward} NTIQ to user ${userId} for achievement: ${achievement.name}`);
@@ -85,23 +77,14 @@ export class AchievementService {
           .returning();
 
         if (isCompleted) {
-          // Award NTIQ reward and log transaction
-          const newBalance = user.balance + achievement.reward;
-          await storage.updateUserBalance(userId, newBalance);
-          
-          // Log the achievement reward transaction
-          await storage.logTransaction({
+          // CRITICAL FIX: Use BalanceService for achievement rewards
+          const balanceResult = await BalanceService.processTransaction({
             userId,
             type: 'achievement_reward',
             amount: achievement.reward,
-            token: 'NTIQ',
-            status: 'completed',
-            fromAddress: null,
-            toAddress: null,
-            txHash: null,
-            networkFee: null,
+            description: `Achievement reward: ${achievement.name}`,
             relatedId: achievement.id
-          });
+          }, storage);
           
           completedAchievements.push(newUserAchievement);
           console.log(`✅ Awarded ${achievement.reward} NTIQ to user ${userId} for new achievement: ${achievement.name}`);
