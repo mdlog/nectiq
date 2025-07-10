@@ -11,6 +11,7 @@ import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
 import { SimpleActivityFeed } from "@/components/simple-activity-feed";
+import { PlatformStats } from "@/components/platform-stats";
 import CryptoChart from "@/components/crypto-chart";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -134,6 +135,11 @@ export default function Dashboard() {
         {/* Live Activity Feed */}
         <div className="mt-8">
           <SimpleActivityFeed />
+        </div>
+        
+        {/* Platform Statistics */}
+        <div className="mt-8">
+          <PlatformStats />
         </div>
       </main>
       

@@ -3033,6 +3033,121 @@ export class MemStorage implements IStorage {
       return [];
     }
   }
+
+  // Platform statistics method
+  async getPlatformStats(): Promise<any> {
+    try {
+      // Get total predictions
+      const totalPredictionsResult = await db.execute('SELECT COUNT(*) as count FROM predictions');
+      const totalPredictions = totalPredictionsResult.rows[0]?.count || 0;
+
+      // Get active predictions
+      const activePredictionsResult = await db.execute(`
+        SELECT COUNT(*) as count FROM predictions 
+        WHERE target_time > NOW() AND status = 'pending'
+      `);
+      const activePredictions = activePredictionsResult.rows[0]?.count || 0;
+
+      // Get total battles
+      const totalBattlesResult = await db.execute('SELECT COUNT(*) as count FROM prediction_battles');
+      const totalBattles = totalBattlesResult.rows[0]?.count || 0;
+
+      // Get active battles
+      const activeBattlesResult = await db.execute(`
+        SELECT COUNT(*) as count FROM prediction_battles 
+        WHERE status IN ('open', 'active')
+      `);
+      const activeBattles = activeBattlesResult.rows[0]?.count || 0;
+
+      // Get total survival tournaments
+      const totalSurvivalResult = await db.execute('SELECT COUNT(*) as count FROM survival_tournaments');
+      const totalSurvivalTournaments = totalSurvivalResult.rows[0]?.count || 0;
+
+      // Get active survival tournaments
+      const activeSurvivalResult = await db.execute(`
+        SELECT COUNT(*) as count FROM survival_tournaments 
+        WHERE status IN ('open', 'active')
+      `);
+      const activeSurvivalTournaments = activeSurvivalResult.rows[0]?.count || 0;
+
+      // Get total users
+      const totalUsersResult = await db.execute('SELECT COUNT(*) as count FROM users');
+      const totalUsers = totalUsersResult.rows[0]?.count || 0;
+
+      // Get total transactions
+      const totalTransactionsResult = await db.execute('SELECT COUNT(*) as count FROM transaction_logs');
+      const totalTransactions = totalTransactionsResult.rows[0]?.count || 0;
+
+      // Calculate total staked NTIQ (from predictions and battles)
+      const predictionStakesResult = await db.execute('SELECT SUM(stake_amount) as total FROM predictions');
+      const predictionStakes = predictionStakesResult.rows[0]?.total || 0;
+
+      const battleStakesResult = await db.execute('SELECT SUM(stake_amount * 2) as total FROM prediction_battles WHERE status IN (\'active\', \'completed\')');
+      const battleStakes = battleStakesResult.rows[0]?.total || 0;
+
+      const survivalStakesResult = await db.execute(`
+        SELECT SUM(st.entry_fee * sp.participant_count) as total 
+        FROM survival_tournaments st 
+        JOIN (
+          SELECT tournament_id, COUNT(*) as participant_count 
+          FROM survival_participants 
+          GROUP BY tournament_id
+        ) sp ON st.id = sp.tournament_id
+      `);
+      const survivalStakes = survivalStakesResult.rows[0]?.total || 0;
+
+      const totalStakedNTIQ = Number(predictionStakes) + Number(battleStakes) + Number(survivalStakes);
+
+      // Calculate total rewards distributed
+      const predictionRewardsResult = await db.execute(`
+        SELECT SUM(reward_amount) as total FROM predictions 
+        WHERE status = 'completed' AND reward_amount > 0
+      `);
+      const predictionRewards = predictionRewardsResult.rows[0]?.total || 0;
+
+      const battleRewardsResult = await db.execute(`
+        SELECT SUM(winner_reward) as total FROM prediction_battles 
+        WHERE status = 'completed' AND winner_reward > 0
+      `);
+      const battleRewards = battleRewardsResult.rows[0]?.total || 0;
+
+      const achievementRewardsResult = await db.execute(`
+        SELECT SUM(amount) as total FROM transaction_logs 
+        WHERE type IN ('achievement_reward', 'daily_challenge_reward')
+      `);
+      const achievementRewards = achievementRewardsResult.rows[0]?.total || 0;
+
+      const totalRewardsDistributed = Number(predictionRewards) + Number(battleRewards) + Number(achievementRewards);
+
+      return {
+        totalPredictions: Number(totalPredictions),
+        totalBattles: Number(totalBattles),
+        totalSurvivalTournaments: Number(totalSurvivalTournaments),
+        totalStakedNTIQ: totalStakedNTIQ,
+        totalRewardsDistributed: totalRewardsDistributed,
+        activePredictions: Number(activePredictions),
+        activeBattles: Number(activeBattles),
+        activeSurvivalTournaments: Number(activeSurvivalTournaments),
+        totalUsers: Number(totalUsers),
+        totalTransactions: Number(totalTransactions)
+      };
+    } catch (error) {
+      console.error('Error getting platform stats:', error);
+      // Return fallback stats
+      return {
+        totalPredictions: 0,
+        totalBattles: 0,
+        totalSurvivalTournaments: 0,
+        totalStakedNTIQ: 0,
+        totalRewardsDistributed: 0,
+        activePredictions: 0,
+        activeBattles: 0,
+        activeSurvivalTournaments: 0,
+        totalUsers: 0,
+        totalTransactions: 0
+      };
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

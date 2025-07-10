@@ -2927,6 +2927,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get platform statistics
+  app.get('/api/platform/stats', async (req: Request, res: Response) => {
+    try {
+      const stats = await storage.getPlatformStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching platform stats:', error);
+      res.status(500).json({ message: 'Failed to fetch platform statistics' });
+    }
+  });
+
   // Event management endpoints
   app.get("/api/events", async (req, res) => {
     try {
