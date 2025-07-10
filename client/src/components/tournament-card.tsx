@@ -212,7 +212,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                     activeParticipants[0]?.userId === user?.id); // Last person standing wins
 
   // Check if user can make prediction
-  const canPredict = hasJoined && tournament.status === 'active' && tournament.currentRound > 0 && !isEliminated && !userCurrentPrediction;
+  const canPredict = hasJoined && tournament.status === 'active' && tournament.currentRound > 0 && !isEliminated && !isWinner && !userCurrentPrediction;
 
   // Get current round info
   const currentRound = tournament.rounds?.find(r => r.roundNumber === tournament.currentRound);
@@ -524,6 +524,19 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                 <span className="text-gray-400">Time remaining: </span>
                 <CountdownTimer targetTime={roundEndTime} />
               </div>
+            </div>
+          ) : tournament.status === 'active' && hasJoined && isWinner ? (
+            <div className="text-center bg-gradient-to-r from-yellow-900/30 to-amber-900/30 p-4 rounded-lg border border-yellow-500">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-bold border border-yellow-400">🏆 WINNER</Badge>
+              </div>
+              <p className="text-sm text-yellow-400">
+                Congratulations! You are the tournament champion!
+              </p>
+              <p className="text-xs text-yellow-300 mt-1">
+                Tournament will end when all rounds complete
+              </p>
             </div>
           ) : tournament.status === 'active' && hasJoined && !canPredict ? (
             <div className="text-center">
