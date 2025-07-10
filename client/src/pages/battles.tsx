@@ -523,14 +523,14 @@ export default function BattlesPage() {
 
                   {/* Actual Price */}
                   <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Final Price</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Final Price</p>
                     <p className="text-lg font-bold text-gray-900 dark:text-white">
                       ${battle.actualPrice ? parseFloat(battle.actualPrice).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 6
                       }) : 'N/A'}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-900 dark:text-white font-medium">
                       {new Date(battle.targetTime).toLocaleTimeString()}
                     </p>
                   </div>
@@ -550,7 +550,7 @@ export default function BattlesPage() {
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center space-x-6">
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center text-sm text-gray-900 dark:text-white font-medium">
                       <DollarSign className="w-4 h-4 mr-1" />
                       Stake: {battle.stakeAmount} NTIQ
                     </div>
@@ -562,7 +562,7 @@ export default function BattlesPage() {
                     )}
                   </div>
                   
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-900 dark:text-white font-medium">
                     Duration: {battle.timeframe}
                   </div>
                 </div>
@@ -602,40 +602,40 @@ export default function BattlesPage() {
             <Card>
               <CardContent className="p-4 text-center">
                 <Trophy className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-3xl font-black text-slate-900 dark:text-white">
                   {stats.totalBattles}
                 </div>
-                <div className="text-sm text-gray-900 dark:text-white font-medium">Total Battles</div>
+                <div className="text-sm text-slate-900 dark:text-white font-bold">Total Battles</div>
               </CardContent>
             </Card>
             
             <Card>
               <CardContent className="p-4 text-center">
                 <Clock className="h-6 w-6 text-green-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-3xl font-black text-slate-900 dark:text-white">
                   {stats.activeBattles}
                 </div>
-                <div className="text-sm text-gray-900 dark:text-white font-medium">Active</div>
+                <div className="text-sm text-slate-900 dark:text-white font-bold">Active</div>
               </CardContent>
             </Card>
             
             <Card>
               <CardContent className="p-4 text-center">
                 <Users className="h-6 w-6 text-blue-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-3xl font-black text-slate-900 dark:text-white">
                   {stats.openBattles}
                 </div>
-                <div className="text-sm text-gray-900 dark:text-white font-medium">Open</div>
+                <div className="text-sm text-slate-900 dark:text-white font-bold">Open</div>
               </CardContent>
             </Card>
             
             <Card>
               <CardContent className="p-4 text-center">
                 <DollarSign className="h-6 w-6 text-purple-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-3xl font-black text-slate-900 dark:text-white">
                   {stats.totalStaked.toLocaleString()}
                 </div>
-                <div className="text-sm text-gray-900 dark:text-white font-medium">Total Staked NTIQ</div>
+                <div className="text-sm text-slate-900 dark:text-white font-bold">Total Staked NTIQ</div>
               </CardContent>
             </Card>
           </div>
@@ -1094,7 +1094,7 @@ export default function BattlesPage() {
                             
                             return (
                               <div className="mt-3 space-y-2">
-                                <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                                <div className="flex justify-between text-xs text-gray-900 dark:text-white font-medium">
                                   <span>Win Probability</span>
                                 </div>
                                 
@@ -1124,7 +1124,7 @@ export default function BattlesPage() {
                                 </div>
                                 
                                 {/* Accuracy details */}
-                                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <div className="flex justify-between text-xs text-gray-800 dark:text-gray-200 font-medium">
                                   <span>Error: {challengerAccuracy.toFixed(2)}%</span>
                                   <span>Error: {challengedAccuracy.toFixed(2)}%</span>
                                 </div>
@@ -1159,10 +1159,10 @@ export default function BattlesPage() {
                 <h3 className="font-semibold text-lg">
                   {selectedBattle.cryptocurrency}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-900 dark:text-white font-medium">
                   Stake: {selectedBattle.stakeAmount} NTIQ
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-900 dark:text-white font-medium">
                   Current Price: ${selectedBattle.currentPrice?.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 6
