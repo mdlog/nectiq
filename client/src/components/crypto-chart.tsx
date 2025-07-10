@@ -329,25 +329,28 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.shadowBlur = 5;
       ctx.beginPath();
       ctx.moveTo(rightEdge - 50, priceY);
-      ctx.lineTo(rightEdge, priceY);
+      ctx.lineTo(rightEdge - 20, priceY);
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
 
-      // Draw premium price label background
+      // Draw premium price label background - positioned within chart area
       const priceText = `$${currentPrice.toLocaleString(undefined, {
         minimumFractionDigits: currentPrice >= 1 ? 2 : 6,
         maximumFractionDigits: currentPrice >= 1 ? 2 : 6
       })}`;
       ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
-      ctx.textAlign = 'left';
+      ctx.textAlign = 'right';
       const textWidth = ctx.measureText(priceText).width;
       const labelPadding = 8;
       const labelHeight = 26;
       
+      // Position label inside chart area, not extending beyond
+      const labelX = rightEdge - textWidth - labelPadding * 2 - 25;
+      
       // Create gradient background for price label
-      const labelGradient = ctx.createLinearGradient(rightEdge + 8, priceY - labelHeight/2, rightEdge + 8 + textWidth + labelPadding * 2, priceY + labelHeight/2);
+      const labelGradient = ctx.createLinearGradient(labelX, priceY - labelHeight/2, labelX + textWidth + labelPadding * 2, priceY + labelHeight/2);
       if (priceChange24h >= 0) {
         labelGradient.addColorStop(0, '#059669');
         labelGradient.addColorStop(1, '#047857');
@@ -359,20 +362,20 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       ctx.fillStyle = labelGradient;
       ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
       ctx.shadowBlur = 6;
-      ctx.fillRect(rightEdge + 15, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+      ctx.fillRect(labelX, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
 
       // Draw price label border
       ctx.strokeStyle = priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(rightEdge + 15, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
+      ctx.strokeRect(labelX, priceY - labelHeight/2, textWidth + labelPadding * 2, labelHeight);
 
       // Draw premium price text
       ctx.fillStyle = '#ffffff';
       ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
       ctx.shadowBlur = 2;
-      ctx.fillText(priceText, rightEdge + 15 + labelPadding, priceY + 5);
+      ctx.fillText(priceText, labelX + textWidth + labelPadding, priceY + 5);
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
 
