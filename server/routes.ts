@@ -1790,10 +1790,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isPublic
       });
 
+      console.log(`🔍 DEBUG: Battle created with ID ${battle.id}`);
+      console.log(`🔍 DEBUG: Original balance: ${user.balance} NTIQ`);
+      console.log(`🔍 DEBUG: Stake amount: ${stakeAmount} NTIQ`);
+      console.log(`🔍 DEBUG: Calculating new balance: ${user.balance} - ${stakeAmount} = ${user.balance - stakeAmount}`);
+
       // Deduct stake amount from user balance
+      const newBalance = user.balance - stakeAmount;
       await storage.updateUser(userId, { 
-        balance: user.balance - stakeAmount 
+        balance: newBalance 
       });
+
+      // Verify balance update
+      const updatedUser = await storage.getUser(userId);
+      console.log(`🔍 DEBUG: User balance after update: ${updatedUser?.balance} NTIQ`);
 
       // Log transaction for battle creation with proper error handling
       try {
@@ -1813,7 +1823,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`   - Battle ID: ${battle.id}`);
       console.log(`   - Stake: ${stakeAmount} NTIQ`);
       console.log(`   - Balance before: ${user.balance} NTIQ`);
-      console.log(`   - Balance after: ${user.balance - stakeAmount} NTIQ`);
+      console.log(`   - Balance after: ${newBalance} NTIQ`);
+      console.log(`   - Actual balance in DB: ${updatedUser?.balance} NTIQ`);
 
       res.json({ 
         message: 'Battle created successfully', 
