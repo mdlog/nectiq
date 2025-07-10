@@ -103,6 +103,9 @@ export interface IStorage {
   createAdminLog(log: any): Promise<any>;
   getAdminLogs(filters?: any): Promise<any[]>;
 
+  // Platform statistics operations
+  getPlatformStats(): Promise<any>;
+
   // Transaction log operations
   createTransactionLog(transaction: any): Promise<any>;
   getTransactionLogs(filters?: any): Promise<any[]>;
@@ -3089,6 +3092,31 @@ export class MemStorage implements IStorage {
         console.log('✅ Total transactions:', totalTransactions);
       } catch (err) {
         console.error('❌ Error fetching total transactions:', err);
+      }
+
+      // Get active counts
+      try {
+        const result = await db.execute('SELECT COUNT(*) as count FROM predictions WHERE status = \'active\'');
+        activePredictions = Number(result.rows[0]?.count || 0);
+        console.log('✅ Active predictions:', activePredictions);
+      } catch (err) {
+        console.error('❌ Error fetching active predictions:', err);
+      }
+
+      try {
+        const result = await db.execute('SELECT COUNT(*) as count FROM prediction_battles WHERE status IN (\'open\', \'active\')');
+        activeBattles = Number(result.rows[0]?.count || 0);
+        console.log('✅ Active battles:', activeBattles);
+      } catch (err) {
+        console.error('❌ Error fetching active battles:', err);
+      }
+
+      try {
+        const result = await db.execute('SELECT COUNT(*) as count FROM survival_tournaments WHERE status IN (\'open\', \'active\')');
+        activeSurvivalTournaments = Number(result.rows[0]?.count || 0);
+        console.log('✅ Active survival tournaments:', activeSurvivalTournaments);
+      } catch (err) {
+        console.error('❌ Error fetching active survival tournaments:', err);
       }
 
       // Calculate basic stakes

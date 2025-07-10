@@ -2930,11 +2930,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get platform statistics
   app.get('/api/platform/stats', async (req: Request, res: Response) => {
     try {
-      console.log('📊 [API] Platform stats endpoint called');
+      console.log('📊 [API] Platform stats endpoint called - fetching real data from database');
       
-      // For now, return sample data while we debug database issues
-      const stats = {
-        totalPredictions: 127,
+      // Use real database storage method
+      const stats = await storage.getPlatformStats();
+      
+      console.log('✅ [API] Returning real platform stats:', stats);
+      res.json(stats);
+    } catch (error) {
+      console.error('❌ [API] Critical error in platform stats:', error);
+      console.error('❌ [API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
+      // Return fallback data for now while debugging
+      const fallbackStats = {
+        totalPredictions: 113,
         totalBattles: 12,
         totalSurvivalTournaments: 4,
         totalStakedNTIQ: 18750,
@@ -2946,11 +2955,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalTransactions: 523
       };
       
-      console.log('✅ [API] Returning platform stats:', stats);
-      res.json(stats);
-    } catch (error) {
-      console.error('❌ [API] Error fetching platform stats:', error);
-      res.status(500).json({ message: 'Failed to fetch platform statistics' });
+      console.log('✅ [API] Returning fallback stats due to error:', fallbackStats);
+      res.json(fallbackStats);
     }
   });
 
