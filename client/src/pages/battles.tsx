@@ -585,12 +585,12 @@ export default function BattlesPage() {
         {/* Page Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <Swords className="h-10 w-10 text-gray-800 dark:text-white" />
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-white">
+            <Swords className="h-10 w-10 text-white dark:text-white" />
+            <h1 className="text-4xl font-bold text-white dark:text-white">
               Prediction Battles
             </h1>
           </div>
-          <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg text-white dark:text-white max-w-3xl mx-auto leading-relaxed">
             Challenge other users in cryptocurrency price predictions and win rewards!
             Create a battle or join existing battles to compete in real-time.
           </p>
@@ -646,7 +646,7 @@ export default function BattlesPage() {
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-white" />
                 <Input
                   placeholder="Search battles by crypto or username..."
                   value={searchQuery}
@@ -975,7 +975,7 @@ export default function BattlesPage() {
               {battlesLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-gray-600 dark:text-gray-400 mt-4">Loading active battles...</p>
+                  <p className="text-white dark:text-white mt-4">Loading active battles...</p>
                 </div>
               ) : activeBattles.length === 0 ? (
                 <Card>
@@ -1010,7 +1010,7 @@ export default function BattlesPage() {
                             />
                             <div>
                               <CardTitle className="text-lg capitalize">{getCryptoDisplayInfo(battle.cryptocurrency).name}</CardTitle>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-2 text-sm text-white dark:text-white">
                                 <Clock className="w-4 h-4" />
                                 {battle.stakeAmount} NTIQ • <CountdownTimer targetTime={battle.targetTime} />
                               </div>
@@ -1036,10 +1036,10 @@ export default function BattlesPage() {
                                   maximumFractionDigits: 2
                                 })}`
                               ) : (
-                                <div className="text-sm text-gray-500 dark:text-gray-400">🔒 Hidden</div>
+                                <div className="text-sm text-white dark:text-white">🔒 Hidden</div>
                               )}
                             </div>
-                            <div className="text-xs text-muted-foreground">Challenger</div>
+                            <div className="text-xs text-white dark:text-white font-medium">Challenger</div>
                           </div>
                           
                           <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
@@ -1053,12 +1053,12 @@ export default function BattlesPage() {
                                   maximumFractionDigits: 2
                                 })}`
                               ) : battle.challengedPrediction ? (
-                                <div className="text-sm text-gray-500 dark:text-gray-400">🔒 Hidden</div>
+                                <div className="text-sm text-white dark:text-white">🔒 Hidden</div>
                               ) : (
                                 '---'
                               )}
                             </div>
-                            <div className="text-xs text-muted-foreground">Opponent</div>
+                            <div className="text-xs text-white dark:text-white font-medium">Opponent</div>
                           </div>
                         </div>
 
@@ -1099,7 +1099,7 @@ export default function BattlesPage() {
                                 </div>
                                 
                                 {/* Probability bar */}
-                                <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="relative h-6 bg-white dark:bg-gray-700 rounded-full overflow-hidden">
                                   <div 
                                     className="absolute left-0 top-0 h-full bg-blue-500 transition-all duration-500"
                                     style={{ width: `${challengerWinProb}%` }}
@@ -1109,7 +1109,7 @@ export default function BattlesPage() {
                                     style={{ width: `${challengedWinProb}%` }}
                                   />
                                   <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-0.5 h-4 bg-gray-800 dark:bg-gray-200"></div>
+                                    <div className="w-0.5 h-4 bg-gray-800 dark:bg-white"></div>
                                   </div>
                                 </div>
                                 
@@ -1124,7 +1124,7 @@ export default function BattlesPage() {
                                 </div>
                                 
                                 {/* Accuracy details */}
-                                <div className="flex justify-between text-xs text-gray-800 dark:text-gray-200 font-medium">
+                                <div className="flex justify-between text-xs text-white dark:text-white font-medium">
                                   <span>Error: {challengerAccuracy.toFixed(2)}%</span>
                                   <span>Error: {challengedAccuracy.toFixed(2)}%</span>
                                 </div>
