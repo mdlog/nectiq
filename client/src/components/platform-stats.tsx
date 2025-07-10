@@ -151,7 +151,7 @@ export function PlatformStats() {
             </Badge>
           </CardTitle>
           <p className="text-slate-300 text-sm">
-            Real-time data dari seluruh aktivitas platform Nectiq
+            Real-time data from all Nectiq platform activities
           </p>
         </CardHeader>
         <CardContent>
@@ -188,7 +188,7 @@ export function PlatformStats() {
           {/* Additional real-time indicator */}
           <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span>Data update setiap 3 detik</span>
+            <span>Data updates every 3 seconds</span>
           </div>
         </CardContent>
       </Card>
