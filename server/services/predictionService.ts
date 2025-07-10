@@ -53,8 +53,20 @@ export class PredictionService {
         await storage.updateUserBalance(prediction.userId, newBalance);
         await storage.updateUserStats(prediction.userId, newTotalPredictions, newCorrectPredictions, newTotalRewards);
 
-        // Create reward record
+        // CRITICAL: Log transaction for prediction reward to ensure balance consistency
         if (rewardAmount > 0) {
+          // Create transaction log for prediction reward
+          await storage.createTransaction({
+            userId: prediction.userId,
+            type: 'prediction_reward',
+            amount: rewardAmount,
+            token: 'NTIQ',
+            status: 'completed',
+            relatedId: predictionId,
+            description: `${prediction.cryptocurrency.toUpperCase()} Prediction Reward (${accuracy.toFixed(2)}% accuracy)`
+          });
+
+          // Also create reward record for backwards compatibility
           await storage.createReward({
             userId: prediction.userId,
             predictionId: predictionId,

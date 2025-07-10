@@ -4294,6 +4294,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+  // SYSTEM AUDIT APIs - Critical for preventing balance/reward inconsistencies
+  app.post("/api/admin/audit/prediction-rewards", requireAdmin, async (req, res) => {
+    auditLog("ADMIN_AUDIT_PREDICTION_REWARDS", { 
+      clientIP: req.ip, 
+      userId: req.session.userId,
+      walletAddress: req.session.walletAddress,
+      endpoint: req.originalUrl 
+    }, req);
+    
+    try {
+      const { auditService } = await import('./services/auditService');
+      const results = await auditService.auditAndRepairPredictionRewards();
+      
+      await storage.createAdminLog({
+        adminId: req.session.userId!,
+        action: 'Prediction Rewards Audit',
+        targetType: 'system',
+        targetId: null,
+        details: JSON.stringify(results),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+      });
+
+      res.json({ success: true, results });
+    } catch (error) {
+      console.error("Error running prediction rewards audit:", error);
+      res.status(500).json({ message: "Failed to run prediction rewards audit" });
+    }
+  });
+
+  app.post("/api/admin/audit/balance-consistency", requireAdmin, async (req, res) => {
+    auditLog("ADMIN_AUDIT_BALANCE_CONSISTENCY", { 
+      clientIP: req.ip, 
+      userId: req.session.userId,
+      walletAddress: req.session.walletAddress,
+      endpoint: req.originalUrl 
+    }, req);
+    
+    try {
+      const { auditService } = await import('./services/auditService');
+      const results = await auditService.verifyBalanceConsistency();
+      
+      await storage.createAdminLog({
+        adminId: req.session.userId!,
+        action: 'Balance Consistency Check',
+        targetType: 'system',
+        targetId: null,
+        details: JSON.stringify(results),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+      });
+
+      res.json({ success: true, results });
+    } catch (error) {
+      console.error("Error running balance consistency check:", error);
+      res.status(500).json({ message: "Failed to run balance consistency check" });
+    }
+  });
+
+  app.post("/api/admin/audit/comprehensive", requireAdmin, async (req, res) => {
+    auditLog("ADMIN_COMPREHENSIVE_AUDIT", { 
+      clientIP: req.ip, 
+      userId: req.session.userId,
+      walletAddress: req.session.walletAddress,
+      endpoint: req.originalUrl 
+    }, req);
+    
+    try {
+      const { auditService } = await import('./services/auditService');
+      await auditService.runComprehensiveAudit();
+      
+      await storage.createAdminLog({
+        adminId: req.session.userId!,
+        action: 'Comprehensive System Audit',
+        targetType: 'system',
+        targetId: null,
+        details: 'Full system audit completed',
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+      });
+
+      res.json({ success: true, message: "Comprehensive audit completed successfully" });
+    } catch (error) {
+      console.error("Error running comprehensive audit:", error);
+      res.status(500).json({ message: "Failed to run comprehensive audit" });
+    }
+  });
+
   // Admin Logs API
   app.get("/api/admin/logs", requireAdmin, async (req, res) => {
     try {
