@@ -605,7 +605,7 @@ export default function BattlesPage() {
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.totalBattles}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Total Battles</div>
+                <div className="text-sm text-gray-900 dark:text-white font-medium">Total Battles</div>
               </CardContent>
             </Card>
             
@@ -615,7 +615,7 @@ export default function BattlesPage() {
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.activeBattles}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Active</div>
+                <div className="text-sm text-gray-900 dark:text-white font-medium">Active</div>
               </CardContent>
             </Card>
             
@@ -625,7 +625,7 @@ export default function BattlesPage() {
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.openBattles}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Open</div>
+                <div className="text-sm text-gray-900 dark:text-white font-medium">Open</div>
               </CardContent>
             </Card>
             
@@ -635,7 +635,7 @@ export default function BattlesPage() {
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.totalStaked.toLocaleString()}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Total Staked NTIQ</div>
+                <div className="text-sm text-gray-900 dark:text-white font-medium">Total Staked NTIQ</div>
               </CardContent>
             </Card>
           </div>
