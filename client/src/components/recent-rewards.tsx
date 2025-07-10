@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Gift, Check, X, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { RecentReward } from "@/types";
+import { EngagementPlaceholder } from "@/components/engagement-placeholder";
+import { EnhancedSkeleton } from "@/components/enhanced-skeleton";
 
 // Dynamic function to get crypto image from live API data
 function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
@@ -83,16 +85,11 @@ export function RecentRewards() {
     return (
       <div className="bg-surface rounded-xl p-6 border border-surface-light">
         <h3 className="text-lg font-bold mb-4 flex items-center">
-          <Gift className="text-primary mr-2" size={18} />
+          <Gift className="text-primary mr-2 animate-pulse" size={18} />
           Recent Rewards
+          <div className="ml-2 w-2 h-2 bg-primary rounded-full animate-pulse"></div>
         </h3>
-        <div className="space-y-3">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="p-3 bg-surface-light rounded-lg animate-pulse">
-              <div className="h-12 bg-slate-600 rounded"></div>
-            </div>
-          ))}
-        </div>
+        <EnhancedSkeleton type="reward" count={3} />
       </div>
     );
   }
@@ -104,11 +101,7 @@ export function RecentRewards() {
           <Gift className="text-primary mr-2" size={18} />
           Recent Rewards
         </h3>
-        <div className="text-center py-8 text-slate-400">
-          <Gift className="mx-auto mb-2" size={32} />
-          <p>No predictions yet</p>
-          <p className="text-sm">Make predictions to see your results here!</p>
-        </div>
+        <EngagementPlaceholder type="rewards" />
       </div>
     );
   }

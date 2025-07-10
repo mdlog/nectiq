@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, TrendingUp, Swords, Crown, Zap, Clock, CheckCircle2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { EnhancedSkeleton } from "@/components/enhanced-skeleton";
 
 interface ActivityItem {
   id: string;
@@ -64,22 +65,23 @@ export function LiveActivityFeed() {
         <div className="flex items-center justify-center mb-6">
           <Activity className="text-primary mr-2 animate-pulse" size={18} />
           <h3 className="text-lg font-bold">Live Activity Feed</h3>
+          <div className="ml-2 w-2 h-2 bg-primary rounded-full animate-pulse"></div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Loading state for both columns */}
-          {[1, 2].map((col) => (
-            <div key={col} className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center space-x-3 animate-pulse">
-                  <div className="w-8 h-8 bg-slate-700 rounded-full"></div>
-                  <div className="flex-1">
-                    <div className="h-4 bg-slate-700 rounded w-3/4 mb-1"></div>
-                    <div className="h-3 bg-slate-800 rounded w-1/2"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-slate-200 mb-3 flex items-center">
+              <CheckCircle2 className="text-green-500 mr-2 animate-pulse" size={16} />
+              Completed Activities
+            </h4>
+            <EnhancedSkeleton type="activity" count={3} />
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-semibold text-slate-200 mb-3 flex items-center">
+              <Clock className="text-orange-500 mr-2 animate-pulse" size={16} />
+              Ongoing Activities
+            </h4>
+            <EnhancedSkeleton type="activity" count={3} />
+          </div>
         </div>
       </div>
     );
@@ -118,9 +120,15 @@ export function LiveActivityFeed() {
           
           <div className="max-h-80 overflow-hidden relative">
             {activities.length === 0 ? (
-              <div className="text-center py-6 text-slate-400">
-                <CheckCircle2 className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No completed activities</p>
+              <div className="text-center py-4">
+                <div className="relative mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl mx-auto flex items-center justify-center shadow-lg">
+                    <CheckCircle2 className="text-white" size={20} />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-md"></div>
+                </div>
+                <p className="text-sm font-medium text-white mb-2">Ready for Action!</p>
+                <p className="text-xs text-slate-400">Completed rewards appear here</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -182,9 +190,15 @@ export function LiveActivityFeed() {
           
           <div className="max-h-80 overflow-hidden relative">
             {activePredictions.length === 0 ? (
-              <div className="text-center py-6 text-slate-400">
-                <Clock className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No ongoing activities</p>
+              <div className="text-center py-4">
+                <div className="relative mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl mx-auto flex items-center justify-center shadow-lg">
+                    <Clock className="text-white" size={20} />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-400 rounded-full animate-pulse shadow-md"></div>
+                </div>
+                <p className="text-sm font-medium text-white mb-2">Quiet Moment</p>
+                <p className="text-xs text-slate-400">Active predictions will show here</p>
               </div>
             ) : (
               <div className="space-y-3">

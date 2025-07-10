@@ -4,6 +4,8 @@ import { useState } from "react";
 import type { ActivePrediction } from "@/types";
 import type { User } from "@shared/schema";
 import { CountdownTimer } from "@/components/countdown-timer";
+import { EngagementPlaceholder } from "@/components/engagement-placeholder";
+import { EnhancedSkeleton } from "@/components/enhanced-skeleton";
 
 // Dynamic function to get crypto image from live API data
 function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
@@ -149,18 +151,13 @@ export function ActivePredictions() {
 
   if (isLoading) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
-        <h3 className="text-lg font-bold mb-4 flex items-center">
-          <Clock className="text-warning mr-2" size={18} />
+      <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light">
+        <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center">
+          <Clock className="text-warning mr-2 animate-pulse" size={16} />
           Active Predictions
+          <div className="ml-2 w-2 h-2 bg-warning rounded-full animate-pulse"></div>
         </h3>
-        <div className="space-y-4">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="bg-surface-light rounded-lg p-4 border border-slate-600 animate-pulse">
-              <div className="h-16 bg-slate-600 rounded"></div>
-            </div>
-          ))}
-        </div>
+        <EnhancedSkeleton type="prediction" count={2} />
       </div>
     );
   }
@@ -172,11 +169,7 @@ export function ActivePredictions() {
           <Clock className="text-warning mr-2" size={16} />
           Active Predictions
         </h3>
-        <div className="text-center py-6 sm:py-8 text-slate-400">
-          <Clock className="mx-auto mb-2" size={24} />
-          <p className="text-sm sm:text-base">No active predictions</p>
-          <p className="text-xs sm:text-sm">Make your first prediction above!</p>
-        </div>
+        <EngagementPlaceholder type="predictions" />
       </div>
     );
   }
