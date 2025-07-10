@@ -5,7 +5,7 @@
 
 interface BalanceTransactionData {
   userId: number;
-  type: 'prediction_stake' | 'prediction_reward' | 'battle_create' | 'battle_reward' | 'battle_refund' | 'survival_entry' | 'survival_reward' | 'achievement_reward' | 'daily_challenge_reward' | 'crypto_purchase' | 'withdrawal';
+  type: 'prediction_stake' | 'prediction_reward' | 'battle_create' | 'battle_reward' | 'battle_refund' | 'survival_entry' | 'survival_tournament_reward' | 'achievement_reward' | 'daily_challenge_reward' | 'crypto_purchase' | 'withdrawal';
   amount: number;
   description?: string;
   relatedId?: number | string;
@@ -46,6 +46,7 @@ export class BalanceService {
         case 'battle_reward':
         case 'battle_refund':
         case 'survival_reward':
+        case 'survival_tournament_reward':
         case 'achievement_reward':
         case 'daily_challenge_reward':
         case 'crypto_purchase':
@@ -76,6 +77,7 @@ export class BalanceService {
         userId,
         type,
         amount: transactionAmount,
+        token: 'NTIQ',
         description: finalDescription,
         relatedId,
         metadata: metadata ? JSON.stringify(metadata) : null

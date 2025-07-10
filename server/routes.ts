@@ -4222,6 +4222,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual endpoint to award specific survival tournament prize (for debugging)
+  app.post('/api/admin/award-survival-prize', async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Check if user is admin
+      const user = await storage.getUser(userId);
+      if (!user.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { tournamentId, winnerId, prizeAmount } = req.body;
+      
+      if (!tournamentId || !winnerId || !prizeAmount) {
+        return res.status(400).json({ message: 'Missing required fields: tournamentId, winnerId, prizeAmount' });
+      }
+
+      // Award the prize using BalanceService
+      const result = await BalanceService.processTransaction({
+        userId: winnerId,
+        type: 'survival_tournament_reward',
+        amount: prizeAmount,
+        description: `Survival tournament prize: Tournament ${tournamentId}`,
+        relatedId: tournamentId
+      }, storage);
+
+      console.log(`🏆 Manual survival tournament prize awarded: ${prizeAmount} NTIQ to user ${winnerId}`);
+
+      res.json({ 
+        message: 'Survival tournament prize awarded successfully',
+        result
+      });
+      
+    } catch (error) {
+      console.error('Error awarding survival tournament prize:', error);
+      res.status(500).json({ 
+        message: 'Failed to award survival tournament prize',
+        error: error.message 
+      });
+    }
+  });
+
   // Enhanced Transaction Logs API
   app.get("/api/admin/transaction-stats", requireAdmin, async (req, res) => {
     auditLog("ADMIN_ACCESS_GRANTED", { 
