@@ -236,40 +236,35 @@ export function RecentRewards() {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="mt-6 pt-4 border-t border-surface-light">
-          <div className="flex items-center justify-between">
-            {/* Pagination Info */}
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {startIndex + 1} to {Math.min(endIndex, rewards.length)} of {rewards.length} rewards
-            </div>
-
+        <div className="mt-4 pt-3 border-t border-surface-light">
+          <div className="flex items-center justify-center">
             {/* Pagination Controls */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               {/* Previous Button */}
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
                   currentPage === 1
                     ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                    : 'bg-surface hover:bg-surface-light text-gray-700 dark:text-gray-300 hover:text-primary shadow-sm hover:shadow-md'
+                    : 'bg-surface hover:bg-surface-light text-gray-700 dark:text-gray-300 hover:text-primary'
                 }`}
               >
-                <ChevronLeft size={16} className="mr-1" />
+                <ChevronLeft size={14} className="mr-1" />
                 Previous
               </button>
 
               {/* Page Numbers */}
-              <div className="flex space-x-1">
+              <div className="flex mx-2">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
                   if (totalPages <= 5 || pageNum === 1 || pageNum === totalPages || Math.abs(pageNum - currentPage) <= 1) {
                     return (
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        className={`w-6 h-6 mx-0.5 rounded-md text-xs font-medium transition-all duration-200 ${
                           currentPage === pageNum
-                            ? 'bg-primary text-white shadow-lg'
+                            ? 'bg-primary text-white'
                             : 'bg-surface hover:bg-surface-light text-gray-700 dark:text-gray-300 hover:text-primary'
                         }`}
                       >
@@ -278,7 +273,7 @@ export function RecentRewards() {
                     );
                   } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
                     return (
-                      <span key={pageNum} className="w-8 h-8 flex items-center justify-center text-gray-400">
+                      <span key={pageNum} className="w-6 h-6 flex items-center justify-center text-gray-400 text-xs">
                         ...
                       </span>
                     );
@@ -291,15 +286,22 @@ export function RecentRewards() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
                   currentPage === totalPages
                     ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                    : 'bg-surface hover:bg-surface-light text-gray-700 dark:text-gray-300 hover:text-primary shadow-sm hover:shadow-md'
+                    : 'bg-surface hover:bg-surface-light text-gray-700 dark:text-gray-300 hover:text-primary'
                 }`}
               >
                 Next
-                <ChevronRight size={16} className="ml-1" />
+                <ChevronRight size={14} className="ml-1" />
               </button>
+            </div>
+          </div>
+          
+          {/* Pagination Info - Compact version */}
+          <div className="text-center mt-2">
+            <div className="text-xs text-gray-500 dark:text-gray-500">
+              {startIndex + 1}-{Math.min(endIndex, rewards.length)} of {rewards.length} rewards
             </div>
           </div>
         </div>
