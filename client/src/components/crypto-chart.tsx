@@ -178,21 +178,25 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const paddedMaxValue = maxValue + valuePadding;
     const paddedValueRange = paddedMaxValue - paddedMinValue;
 
+    // Add consistent padding for grid lines
+    const chartAreaPadding = chartWidth * 0.05;
+    const usableWidth = chartWidth - (chartAreaPadding * 2);
+    
     // Draw premium grid lines
     ctx.strokeStyle = 'rgba(100, 116, 139, 0.15)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
       const y = topPadding + (chartHeight * i) / 5;
       ctx.beginPath();
-      ctx.moveTo(leftPadding, y);
-      ctx.lineTo(leftPadding + chartWidth, y);
+      ctx.moveTo(leftPadding + chartAreaPadding, y);
+      ctx.lineTo(leftPadding + chartAreaPadding + usableWidth, y);
       ctx.stroke();
     }
 
-    // Draw vertical grid lines
+    // Draw vertical grid lines with consistent padding
     ctx.strokeStyle = 'rgba(100, 116, 139, 0.1)';
     for (let i = 0; i <= 10; i++) {
-      const x = leftPadding + (chartWidth * i) / 10;
+      const x = leftPadding + chartAreaPadding + (usableWidth * i) / 10;
       ctx.beginPath();
       ctx.moveTo(x, topPadding);
       ctx.lineTo(x, topPadding + chartHeight);
@@ -248,8 +252,6 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     
     ctx.fillStyle = areaGradient;
     ctx.beginPath();
-    const chartAreaPadding = chartWidth * 0.05; // Match the line padding
-    const usableWidth = chartWidth - (chartAreaPadding * 2);
     ctx.moveTo(leftPadding + chartAreaPadding, topPadding + chartHeight);
     chartData.forEach((point, index) => {
       const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
@@ -409,30 +411,31 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const paddedMaxValue = maxValue + valuePadding;
     const paddedValueRange = paddedMaxValue - paddedMinValue;
 
-    // Draw premium grid lines
+    // Add consistent padding for candlestick chart
+    const chartAreaPadding = chartWidth * 0.05;
+    const usableWidth = chartWidth - (chartAreaPadding * 2);
+    
+    // Draw premium grid lines with padding
     ctx.strokeStyle = 'rgba(100, 116, 139, 0.15)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
       const y = topPadding + (chartHeight * i) / 5;
       ctx.beginPath();
-      ctx.moveTo(leftPadding, y);
-      ctx.lineTo(leftPadding + chartWidth, y);
+      ctx.moveTo(leftPadding + chartAreaPadding, y);
+      ctx.lineTo(leftPadding + chartAreaPadding + usableWidth, y);
       ctx.stroke();
     }
 
-    // Draw vertical grid lines
+    // Draw vertical grid lines with padding
     ctx.strokeStyle = 'rgba(100, 116, 139, 0.1)';
     for (let i = 0; i <= 10; i++) {
-      const x = leftPadding + (chartWidth * i) / 10;
+      const x = leftPadding + chartAreaPadding + (usableWidth * i) / 10;
       ctx.beginPath();
       ctx.moveTo(x, topPadding);
       ctx.lineTo(x, topPadding + chartHeight);
       ctx.stroke();
     }
 
-    // Add consistent padding for candlestick chart
-    const chartAreaPadding = chartWidth * 0.05;
-    const usableWidth = chartWidth - (chartAreaPadding * 2);
     const candleWidth = usableWidth / chartData.length * 0.6;
 
     chartData.forEach((candle, index) => {
