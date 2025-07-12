@@ -464,959 +464,78 @@ export default function UserDashboard() {
           </Card>
         </div>
 
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
-          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-3 sm:p-6 shadow-2xl">
-            {/* First Row */}
-            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-1 sm:gap-2 h-auto p-1 sm:p-2 rounded-xl mb-2 sm:mb-4 backdrop-blur-sm">
-              <TabsTrigger value="profile" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50">
-                <UserCircle className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Profile</span>
-              </TabsTrigger>
-              <TabsTrigger value="predictions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50">
-                <Clock className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">My Predictions</span>
-              </TabsTrigger>
-              <TabsTrigger value="achievements" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50">
-                <Award className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Achievements</span>
-              </TabsTrigger>
-              <TabsTrigger value="challenges" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50">
-                <Calendar className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Daily Challenges</span>
-              </TabsTrigger>
-              <TabsTrigger value="loyalty" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50">
-                <Shield className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Loyalty</span>
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* Second Row */}
-            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-1 sm:gap-2 h-auto p-1 sm:p-2 rounded-xl backdrop-blur-sm">
-              <TabsTrigger value="market" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50">
-                <Eye className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Market Watch</span>
-              </TabsTrigger>
-              <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50">
-                <Activity className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Performance</span>
-              </TabsTrigger>
-              <TabsTrigger value="battles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50">
-                <Swords className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Battles</span>
-              </TabsTrigger>
-              <TabsTrigger value="financial" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50">
-                <Wallet className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Financial</span>
-              </TabsTrigger>
-              <TabsTrigger value="rewards" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-indigo-400/50">
-                <History className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Reward History</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          {/* Profile Tab */}
-          <TabsContent value="profile">
-            <UserProfile />
-          </TabsContent>
-
-          {/* Active Predictions Tab */}
-          <TabsContent value="predictions">
-            <Card className="bg-surface border-surface-light">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="mr-2" size={20} />
-                  Active Predictions ({activePredictions.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {activePredictions.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <Clock className="mx-auto mb-2" size={32} />
-                    <p>No active predictions</p>
-                    <p className="text-sm">Start making predictions to see them here!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {activePredictions.map((prediction) => {
-                      // Calculate accuracy using the new formula: (1 - |Predicted - Current| / Current) × 100
-                      const predictedPrice = parseFloat(prediction.predictedPrice);
-                      const currentPrice = parseFloat(prediction.currentPrice);
-                      const accuracyDecimal = 1 - (Math.abs(predictedPrice - currentPrice) / currentPrice);
-                      const accuracy = accuracyDecimal * 100;
-                      const isPositive = accuracy >= 0;
-                      const isExpired = prediction.timeLeft <= 0;
-                      
-                      // Format time left properly
-                      const formatTimeLeft = (timeLeft: number): string => {
-                        if (timeLeft <= 0) return "Expired";
-                        
-                        const hours = Math.floor(timeLeft / 3600);
-                        const minutes = Math.floor((timeLeft % 3600) / 60);
-                        const seconds = timeLeft % 60;
-                        
-                        if (hours > 0) {
-                          return `${hours}h ${minutes}m`;
-                        } else if (minutes > 0) {
-                          return `${minutes}m ${seconds}s`;
-                        } else {
-                          return `${seconds}s`;
-                        }
-                      };
-                      
-                      return (
-                        <div key={prediction.id} className="p-4 bg-surface-light rounded-lg border border-slate-600">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center space-x-3">
-                              <div className="relative w-10 h-10 flex-shrink-0">
-                                <img 
-                                  src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || [])}
-                                  alt={prediction.cryptocurrency}
-                                  className="w-10 h-10 rounded-full object-cover"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    const fallback = target.nextElementSibling as HTMLElement;
-                                    if (fallback) {
-                                      target.style.display = 'none';
-                                      fallback.style.display = 'flex';
-                                    }
-                                  }}
-                                />
-                                <div className={`w-10 h-10 ${getCryptoColor(prediction.cryptocurrency)} rounded-full hidden items-center justify-center text-white font-bold`}>
-                                  {getCryptoIcon(prediction.cryptocurrency)}
-                                </div>
-                              </div>
-                              <div>
-                                <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
-                                <p className="text-sm text-slate-400">{prediction.timeframe} prediction</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className={`text-sm font-medium ${isExpired ? "text-error" : "text-success"}`}>
-                                {formatTimeLeft(prediction.timeLeft)}
-                              </p>
-                              <p className="text-xs text-slate-400">Stake: {prediction.stakeAmount} NTIQ</p>
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4 mb-3">
-                            <div>
-                              <p className="text-xs text-slate-400">Predicted Price</p>
-                              <p className="font-semibold">${predictedPrice.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-slate-400">Current Price</p>
-                              <p className={`font-semibold ${currentPrice >= predictedPrice ? "text-success" : "text-error"}`}>
-                                ${currentPrice.toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${accuracy >= 90 ? "bg-success" : accuracy >= 70 ? "bg-warning" : "bg-error"}`}></div>
-                              <span className={`text-sm font-medium ${accuracy >= 90 ? "text-success" : accuracy >= 70 ? "text-warning" : "text-error"}`}>
-                                {accuracy.toFixed(2)}% accuracy
-                              </span>
-                            </div>
-                            <Progress 
-                              value={Math.min(Math.abs(accuracy), 100)} 
-                              className="w-20 h-2"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Achievements Tab */}
-          <TabsContent value="achievements">
-            <Achievements />
-          </TabsContent>
-
-          {/* Daily Challenges Tab */}
-          <TabsContent value="challenges">
-            <DailyChallenges />
-          </TabsContent>
-
-          {/* Loyalty Tab */}
-          <TabsContent value="loyalty">
-            <LoyaltyTier />
-          </TabsContent>
-
-          {/* Rewards Tab */}
-          <TabsContent value="rewards">
-            <Card className="bg-surface border-surface-light">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Gift className="mr-2" size={20} />
-                  Recent Rewards
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {recentRewards.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <Gift className="mx-auto mb-2" size={32} />
-                    <p>No rewards yet</p>
-                    <p className="text-sm">Make accurate predictions to earn rewards!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {recentRewards.map((reward) => {
-                      const isWin = reward.amount > 0;
-                      
-                      // Determine source type and display text
-                      let sourceText = '';
-                      let sourceIcon = <Gift size={16} />;
-                      
-                      switch (reward.type) {
-                        case 'prediction':
-                          sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
-                          sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
-                          break;
-                        case 'battle':
-                          // Parse battle description to extract opponent name
-                          const battleDescription = reward.description || '';
-                          const opponentMatch = battleDescription.match(/vs (.+?) -/);
-                          const opponentName = opponentMatch ? opponentMatch[1] : 'Opponent';
-                          sourceText = `Battle vs ${opponentName}`;
-                          sourceIcon = <TrendingUp size={16} />;
-                          break;
-                        case 'survival':
-                          sourceText = `Survival Tournament`;
-                          sourceIcon = <TrendingUp size={16} />;
-                          break;
-                        case 'achievement':
-                          sourceText = 'Achievement Reward';
-                          sourceIcon = <Check size={16} />;
-                          break;
-                        case 'daily_challenge':
-                          sourceText = 'Daily Challenge';
-                          sourceIcon = <Gift size={16} />;
-                          break;
-                        default:
-                          sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
-                          sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
-                      }
-                      
-                      return (
-                        <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="relative w-8 h-8 flex-shrink-0">
-                              {/* Activity Type Badge */}
-                              <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${
-                                reward.type === 'battle' ? 'bg-purple-500' :
-                                reward.type === 'survival' ? 'bg-orange-500' :
-                                reward.type === 'achievement' ? 'bg-yellow-500' :
-                                reward.type === 'daily_challenge' ? 'bg-blue-500' :
-                                'bg-green-500'
-                              }`}>
-                                {reward.type === 'battle' ? '⚔' : 
-                                 reward.type === 'survival' ? '🏆' : 
-                                 reward.type === 'achievement' ? '🎯' :
-                                 reward.type === 'daily_challenge' ? '📅' :
-                                 '📈'}
-                              </div>
-                              
-                              {/* Main Icon */}
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${reward.amount > 0 ? 'bg-green-600' : 'bg-red-600'}`}>
-                                {sourceIcon}
-                              </div>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                                {sourceText}
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                {formatTimeAgo(reward.createdAt)}{reward.accuracy ? ` • ${parseFloat(reward.accuracy).toFixed(1)}% accuracy` : ''}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className={`text-sm font-semibold ${reward.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                              {reward.amount > 0 ? '+' : ''}{reward.amount} NTIQ
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Market Watch Tab */}
-          <TabsContent value="market">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Live Prices - Interactive */}
-              <div className="space-y-4">
-                <LivePrices onCryptoSelect={handleCryptoSelect} />
-                
-                {/* Selected Crypto Info */}
-                {selectedCrypto && showChart && (
-                  <Card className="bg-surface border-surface-light">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center">
-                          <BarChart3 className="mr-2" size={20} />
-                          Selected: {selectedCrypto.name} ({selectedCrypto.symbol})
-                        </CardTitle>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setShowChart(false);
-                            setSelectedCrypto(null);
-                          }}
-                        >
-                          Close Chart
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <img 
-                            src={selectedCrypto.image} 
-                            alt={selectedCrypto.name}
-                            className="w-10 h-10 rounded-full"
-                          />
-                          <div>
-                            <p className="font-semibold">{selectedCrypto.symbol}</p>
-                            <p className="text-sm text-slate-400">{selectedCrypto.name}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold">
-                            ${selectedCrypto.current_price.toLocaleString(undefined, { 
-                              minimumFractionDigits: 2, 
-                              maximumFractionDigits: 6 
-                            })}
-                          </p>
-                          <p className={`text-sm ${selectedCrypto.price_change_percentage_24h >= 0 ? 'text-success' : 'text-error'}`}>
-                            {selectedCrypto.price_change_percentage_24h >= 0 ? '+' : ''}
-                            {selectedCrypto.price_change_percentage_24h.toFixed(2)}% (24h)
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-4">
-                        <Button 
-                          className="w-full"
-                          onClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
-                        >
-                          <Target className="mr-2" size={16} />
-                          Make Prediction for {selectedCrypto.symbol}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+        {/* Main Content with Sidebar Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Sidebar Navigation */}
+          <div className="lg:w-80 w-full">
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl sticky top-6">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center">
+                <Star className="mr-2" size={20} />
+                Dashboard Menu
+              </h3>
               
-              {/* Interactive Chart */}
-              <div className="space-y-4">
-                {selectedCrypto && showChart ? (
-                  <CryptoChart
-                    cryptoId={selectedCrypto.id}
-                    symbol={selectedCrypto.symbol}
-                    name={selectedCrypto.name}
-                    currentPrice={selectedCrypto.current_price}
-                    priceChange24h={selectedCrypto.price_change_percentage_24h}
-                  />
-                ) : (
-                  <Card className="bg-surface border-surface-light">
-                    <CardContent className="text-center py-12">
-                      <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
-                      <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
-                      <p className="text-slate-400 mb-4">
-                        Click on any cryptocurrency from the Live Prices panel to view its interactive price chart
-                      </p>
-                      <div className="text-sm text-slate-500">
-                        <p>• Real-time price data from CoinGecko</p>
-                        <p>• Multiple timeframe analysis</p>
-                        <p>• Direct prediction integration</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+              <div className="space-y-2">
+                <button className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-blue-400/50">
+                  <UserCircle className="h-5 w-5" />
+                  Profile
+                </button>
                 
-                {/* Quick Stats */}
-                <Card className="bg-surface border-surface-light">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <TrendingUp className="mr-2" size={20} />
-                      Market Statistics
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Total Cryptocurrencies</span>
-                        <span className="font-semibold">{prices.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Gainers (24h)</span>
-                        <span className="font-semibold text-success">
-                          {prices.filter(p => p.price_change_percentage_24h > 0).length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Losers (24h)</span>
-                        <span className="font-semibold text-error">
-                          {prices.filter(p => p.price_change_percentage_24h < 0).length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Top Performer</span>
-                        <span className="font-semibold text-success">
-                          {prices.length > 0 ? 
-                            prices.reduce((prev, current) => 
-                              prev.price_change_percentage_24h > current.price_change_percentage_24h ? prev : current
-                            ).symbol : 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                  <Clock className="h-5 w-5" />
+                  My Predictions
+                </button>
+                
+                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                  <Award className="h-5 w-5" />
+                  Achievements
+                </button>
+                
+                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                  <Calendar className="h-5 w-5" />
+                  Daily Challenges
+                </button>
+                
+                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                  <Shield className="h-5 w-5" />
+                  Loyalty
+                </button>
+                
+                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                  <Eye className="h-5 w-5" />
+                  Market Watch
+                </button>
+                
+                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                  <Activity className="h-5 w-5" />
+                  Performance
+                </button>
+                
+                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                  <Swords className="h-5 w-5" />
+                  Battles
+                </button>
+                
+                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                  <Wallet className="h-5 w-5" />
+                  Financial
+                </button>
+                
+                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                  <History className="h-5 w-5" />
+                  Reward History
+                </button>
               </div>
             </div>
-          </TabsContent>
-
-          {/* Performance Tab */}
-          <TabsContent value="performance">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle>Performance Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Accuracy Level</span>
-                    <span className={`font-semibold ${accuracyLevel.color}`}>{accuracyLevel.label}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Success Rate</span>
-                    <span className="font-semibold">{stats?.accuracy || 0}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Total Predictions</span>
-                    <span className="font-semibold">{stats?.totalPredictions || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Earnings</span>
-                    <span className="font-semibold text-success">{stats?.totalRewards || 0} NTIQ</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Global Rank</span>
-                    <span className="font-semibold text-warning">
-                      {stats?.rank ? `#${stats.rank}` : "Unranked"}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle>Next Level Progress</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Predictions Progress</span>
-                      <span>{stats?.totalPredictions || 0}/10</span>
-                    </div>
-                    <Progress value={Math.min(((stats?.totalPredictions || 0) / 10) * 100, 100)} />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Accuracy Goal</span>
-                      <span>{stats?.accuracy || 0}%/75%</span>
-                    </div>
-                    <Progress value={Math.min(((stats?.accuracy || 0) / 75) * 100, 100)} />
-                  </div>
-                  <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <p className="text-sm text-primary">
-                      💡 Keep making accurate predictions to climb the leaderboard and unlock achievement badges!
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+          </div>
+          
+          {/* Right Content Area */}
+          <div className="flex-1">
+            <div className="space-y-6">
+              {/* Default Profile Content */}
+              <UserProfile />
             </div>
-          </TabsContent>
-
-          {/* Financial Tab - Combined Withdraw, Buy NTIQ, and Wallet */}
-          <TabsContent value="financial">
-            {/* Financial Actions Navigation */}
-            <div className="mb-6">
-              <div className="flex space-x-4 bg-surface border border-surface-light rounded-lg p-2">
-                <Button
-                  variant={selectedFinancialAction === "withdraw" ? "default" : "ghost"}
-                  onClick={() => setSelectedFinancialAction("withdraw")}
-                  className="flex-1"
-                >
-                  <DollarSign className="mr-2" size={16} />
-                  Withdraw
-                </Button>
-                <Button
-                  variant={selectedFinancialAction === "buy" ? "default" : "ghost"}
-                  onClick={() => setSelectedFinancialAction("buy")}
-                  className="flex-1"
-                >
-                  <CreditCard className="mr-2" size={16} />
-                  Buy NTIQ
-                </Button>
-                <Button
-                  variant={selectedFinancialAction === "wallet" ? "default" : "ghost"}
-                  onClick={() => setSelectedFinancialAction("wallet")}
-                  className="flex-1"
-                >
-                  <Wallet className="mr-2" size={16} />
-                  Wallet
-                </Button>
-              </div>
-            </div>
-
-            {/* Withdraw Section */}
-            {selectedFinancialAction === "withdraw" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Withdrawal Form */}
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Wallet className="mr-2" size={20} />
-                    Withdraw NTIQ to Crypto
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                  {/* Balance Overview */}
-                  <div className="p-4 bg-surface-light rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-slate-400">Available Balance</span>
-                      <div className="flex items-center space-x-2">
-                        <Coins className="text-warning" size={16} />
-                        <span className="font-bold text-lg">{user?.balance?.toLocaleString() || "0"}</span>
-                        <span className="text-xs text-slate-400">NTIQ</span>
-                      </div>
-                    </div>
-                    <div className="text-xs text-slate-400">
-                      Exchange Rate: 1 NTIQ = 0.01 USDT/USDC
-                    </div>
-                  </div>
-
-                  {/* Token Selection */}
-                  <div className="space-y-2">
-                    <Label htmlFor="token">Choose Token</Label>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant={selectedToken === "USDT" ? "default" : "outline"}
-                        onClick={() => setSelectedToken("USDT")}
-                        className="flex-1"
-                      >
-                        <DollarSign className="mr-2" size={16} />
-                        USDT
-                      </Button>
-                      <Button
-                        variant={selectedToken === "USDC" ? "default" : "outline"}
-                        onClick={() => setSelectedToken("USDC")}
-                        className="flex-1"
-                      >
-                        <DollarSign className="mr-2" size={16} />
-                        USDC
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Amount Input */}
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount to Withdraw (NTIQ)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      placeholder="Enter NTIQ amount"
-                      value={withdrawAmount}
-                      onChange={(e) => setWithdrawAmount(e.target.value)}
-                      min="1000"
-                      max={user?.balance || 0}
-                    />
-                    <div className="flex justify-between text-xs text-slate-400">
-                      <span>Min: 1000 NTIQ</span>
-                      <span>Max: {user?.balance?.toLocaleString() || "0"} NTIQ</span>
-                    </div>
-                  </div>
-
-                  {/* Conversion Preview */}
-                  {withdrawAmount && parseFloat(withdrawAmount) > 0 && (
-                    <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-                      <div className="flex justify-between items-center text-sm">
-                        <span>You will receive:</span>
-                        <span className="font-semibold text-primary">
-                          {(parseFloat(withdrawAmount) * 0.01).toFixed(2)} {selectedToken}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Withdraw Button */}
-                  <Button
-                    onClick={() => {
-                      const amount = parseFloat(withdrawAmount);
-                      if (amount >= 1000 && amount <= (user?.balance || 0)) {
-                        withdrawMutation.mutate({ amount, token: selectedToken });
-                      }
-                    }}
-                    disabled={
-                      !withdrawAmount ||
-                      parseFloat(withdrawAmount) < 1000 ||
-                      parseFloat(withdrawAmount) > (user?.balance || 0) ||
-                      withdrawMutation.isPending
-                    }
-                    className="w-full"
-                  >
-                    {withdrawMutation.isPending ? (
-                      <>Processing...</>
-                    ) : (
-                      <>
-                        <Wallet className="mr-2" size={16} />
-                        Withdraw to Wallet
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Info */}
-                  <div className="text-xs text-slate-400 space-y-1">
-                    <p>• Withdrawals are processed instantly</p>
-                    <p>• Tokens will be sent to your connected wallet</p>
-                    <p>• Minimum withdrawal: 1000 NTIQ (10.00 {selectedToken})</p>
-                    <p>• No withdrawal fees applied</p>
-                  </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Withdrawal History */}
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Clock className="mr-2" size={20} />
-                    Withdrawal History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <WithdrawalHistory />
-                </CardContent>
-              </Card>
-            </div>
-            )}
-
-            {/* Buy NTIQ Section */}
-            {selectedFinancialAction === "buy" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Buy NTIQ Form */}
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Coins className="mr-2" size={20} />
-                    Buy NTIQ with Crypto
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {/* Current Balance */}
-                    <div className="p-4 bg-surface-light rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-slate-400">Current NTIQ Balance</span>
-                        <div className="flex items-center space-x-2">
-                          <Coins className="text-warning" size={16} />
-                          <span className="font-bold text-lg">{user?.balance?.toLocaleString() || "0"}</span>
-                          <span className="text-xs text-slate-400">NTIQ</span>
-                        </div>
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        Use NTIQ to make predictions and earn rewards
-                      </div>
-                    </div>
-
-                    {/* Payment Token Selection */}
-                    <div className="space-y-2">
-                      <Label htmlFor="paymentToken">Choose Payment Method</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        <Button
-                          variant={selectedPaymentToken === "ETH" ? "default" : "outline"}
-                          onClick={() => setSelectedPaymentToken("ETH")}
-                          className="flex flex-col items-center p-4 h-auto"
-                        >
-                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mb-1">
-                            Ξ
-                          </div>
-                          <span className="text-xs">ETH</span>
-                        </Button>
-                        <Button
-                          variant={selectedPaymentToken === "USDT" ? "default" : "outline"}
-                          onClick={() => setSelectedPaymentToken("USDT")}
-                          className="flex flex-col items-center p-4 h-auto"
-                        >
-                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold mb-1">
-                            $
-                          </div>
-                          <span className="text-xs">USDT</span>
-                        </Button>
-                        <Button
-                          variant={selectedPaymentToken === "USDC" ? "default" : "outline"}
-                          onClick={() => setSelectedPaymentToken("USDC")}
-                          className="flex flex-col items-center p-4 h-auto"
-                        >
-                          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mb-1">
-                            $
-                          </div>
-                          <span className="text-xs">USDC</span>
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Amount Input */}
-                    <div className="space-y-2">
-                      <Label htmlFor="buyAmount">Amount to Purchase (NTIQ)</Label>
-                      <Input
-                        id="buyAmount"
-                        type="number"
-                        placeholder="Enter NTIQ amount"
-                        value={buyAmount}
-                        onChange={(e) => setBuyAmount(e.target.value)}
-                        min="100"
-                        step="1"
-                      />
-                      <div className="text-xs text-slate-400">
-                        Exchange Rate: {selectedPaymentToken === "ETH" ? "1 ETH = 300,000 NTIQ" : `1 ${selectedPaymentToken} = 100 NTIQ`}
-                      </div>
-                    </div>
-
-                    {/* Conversion Preview */}
-                    {buyAmount && parseFloat(buyAmount) > 0 && (
-                      <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-                        <div className="flex justify-between items-center text-sm">
-                          <span>You will pay:</span>
-                          <span className="font-semibold text-primary">
-                            {selectedPaymentToken === "ETH" 
-                              ? (parseFloat(buyAmount) / 300000).toFixed(6)
-                              : (parseFloat(buyAmount) / 100).toFixed(2)
-                            } {selectedPaymentToken}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Buy Button */}
-                    <Button
-                      onClick={() => {
-                        const amount = parseFloat(buyAmount);
-                        if (amount >= 100 && Number.isInteger(amount)) {
-                          buyNTIQMutation.mutate({ 
-                            ntiqAmount: amount, 
-                            paymentToken: selectedPaymentToken 
-                          });
-                        }
-                      }}
-                      disabled={
-                        !buyAmount || 
-                        parseFloat(buyAmount) < 100 || 
-                        !Number.isInteger(parseFloat(buyAmount)) ||
-                        buyNTIQMutation.isPending
-                      }
-                      className="w-full"
-                    >
-                      {buyNTIQMutation.isPending ? (
-                        <>Processing...</>
-                      ) : (
-                        <>
-                          <Coins className="mr-2" size={16} />
-                          Buy NTIQ
-                        </>
-                      )}
-                    </Button>
-
-                    {/* Info */}
-                    <div className="text-xs text-slate-400 space-y-1">
-                      <p>• Payments are processed instantly via smart contracts</p>
-                      <p>• NTIQ will be credited to your account immediately</p>
-                      <p>• Minimum purchase: 100 NTIQ (whole numbers only)</p>
-                      <p>• Supported tokens: ETH, USDT, USDC</p>
-                      <p>• Exchange rates: 1 ETH = 300,000 NTIQ | 1 USDT/USDC = 100 NTIQ</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Purchase History */}
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Clock className="mr-2" size={20} />
-                    Purchase History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <PurchaseHistory />
-                </CardContent>
-              </Card>
-            </div>
-            )}
-
-            {/* Wallet Section */}
-            {selectedFinancialAction === "wallet" && (
-              <FinancialWallet />
-            )}
-            {selectedFinancialAction === "old-wallet" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Wallet className="mr-2" size={20} />
-                    Wallet Connection
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {user?.walletAddress ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle className="text-green-500" size={20} />
-                        <span className="font-medium text-white">Wallet Connected</span>
-                      </div>
-                      
-                      <div className="p-4 bg-surface-light rounded-lg space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-400">Address:</span>
-                          <div className="flex items-center space-x-2">
-                            <code className="text-sm bg-surface px-2 py-1 rounded text-white">
-                              {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
-                            </code>
-                            <Button
-                              onClick={() => {
-                                navigator.clipboard.writeText(user.walletAddress);
-                                setWalletCopied(true);
-                                setTimeout(() => setWalletCopied(false), 2000);
-                                toast({
-                                  title: "Address Copied",
-                                  description: "Wallet address copied to clipboard",
-                                });
-                              }}
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                            >
-                              {walletCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-400">NTIQ Balance:</span>
-                          <div className="flex items-center space-x-1">
-                            <Coins className="text-warning" size={16} />
-                            <span className="font-bold text-lg text-white">{user.balance?.toLocaleString() || "0"}</span>
-                            <span className="text-xs text-slate-400">NTIQ</span>
-                          </div>
-                        </div>
-
-                        {/* Wallet Token Balances */}
-                        <div className="mt-3 space-y-2">
-                          <div className="text-xs text-white font-medium mb-2">Wallet Token Balances:</div>
-                          <WalletBalances walletAddress={user.walletAddress} />
-                        </div>
-                      </div>
-
-                      <div className="text-xs text-slate-500 space-y-1">
-                        <p className="flex items-center">
-                          <CheckCircle className="mr-1 text-green-500" size={12} />
-                          Wallet securely connected via Dynamic SDK
-                        </p>
-                        <p>• Balance updates automatically</p>
-                        <p>• You can now make predictions and earn rewards</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <p className="text-sm text-slate-400">
-                        Connect your wallet to start making predictions and earning rewards
-                      </p>
-                      
-                      <Button
-                        onClick={() => setLocation('/wallet-login')}
-                        className="w-full"
-                      >
-                        <Wallet className="mr-2" size={16} />
-                        Connect Wallet
-                      </Button>
-
-                      <div className="text-xs text-slate-500 space-y-1">
-                        <p className="flex items-center">
-                          <AlertCircle className="mr-1" size={12} />
-                          Make sure you have a Web3 wallet installed
-                        </p>
-                        <p>• MetaMask, WalletConnect, and other wallets supported</p>
-                        <p>• Your wallet will open for connection approval</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle>Wallet Features</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-success rounded-full mt-2"></div>
-                      <div>
-                        <p className="font-medium text-slate-300">Secure Connection</p>
-                        <p className="text-xs text-slate-400">Your wallet is connected via Dynamic SDK</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-warning rounded-full mt-2"></div>
-                      <div>
-                        <p className="font-medium text-slate-300">Balance Sync</p>
-                        <p className="text-xs text-slate-400">Real-time balance updates from platform</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                      <div>
-                        <p className="font-medium text-slate-300">Multi-Chain Support</p>
-                        <p className="text-xs text-slate-400">Supports Ethereum, Solana, and other networks</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-2">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                      <div>
-                        <p className="font-medium text-slate-300">Anti-Abuse Protection</p>
-                        <p className="text-xs text-slate-400">Advanced security against multiple wallet usage</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            )}
-          </TabsContent>
-
-          {/* Battles Tab */}
-          <TabsContent value="battles">
-            <BattlesSection />
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </main>
       
       <Footer />
@@ -1424,706 +543,123 @@ export default function UserDashboard() {
   );
 }
 
-// Battles Section Component
-function BattlesSection() {
-  const { data: battleData, isLoading: battlesLoading } = useQuery({
-    queryKey: ["/api/user/battles"],
-    retry: false,
-  });
-
-  const { data: cryptoPrices } = useQuery<CryptoPrice[]>({
-    queryKey: ["/api/crypto/prices"],
-    refetchInterval: 30000,
-  });
-
-  if (battlesLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <RefreshCw className="animate-spin mr-2" size={20} />
-        <span>Loading battle data...</span>
-      </div>
-    );
-  }
-
-  const battles = (battleData as any)?.battles || [];
-  const stats = (battleData as any)?.stats || {
-    totalBattles: 0,
-    wonBattles: 0,
-    lostBattles: 0,
-    activeBattles: 0,
-    pendingBattles: 0,
-    totalBattleRewards: 0
-  };
-
-  const winRate = stats.totalBattles > 0 ? ((stats.wonBattles / stats.totalBattles) * 100).toFixed(1) : "0";
-
-  return (
-    <div className="space-y-6">
-      {/* Battle Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="bg-surface border-surface-light">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Total Battles</CardTitle>
-            <Swords className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalBattles}</div>
-            <div className="text-xs text-slate-400 mt-1">All time battles participated</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-surface border-surface-light">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Battles Won</CardTitle>
-            <Trophy className="h-4 w-4 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">{stats.wonBattles}</div>
-            <div className="text-xs text-slate-400 mt-1">Win Rate: {winRate}%</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-surface border-surface-light">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Battle Rewards</CardTitle>
-            <Coins className="h-4 w-4 text-warning" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-warning">{stats.totalBattleRewards.toLocaleString()}</div>
-            <div className="text-xs text-slate-400 mt-1">NTIQ earned from battles</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-surface border-surface-light">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Active Battles</CardTitle>
-            <Activity className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">{stats.activeBattles}</div>
-            <div className="text-xs text-slate-400 mt-1">Currently ongoing</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-surface border-surface-light">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Pending Battles</CardTitle>
-            <Clock className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-500">{stats.pendingBattles}</div>
-            <div className="text-xs text-slate-400 mt-1">Waiting for opponent</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-surface border-surface-light">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Battles Lost</CardTitle>
-            <Target className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{stats.lostBattles}</div>
-            <div className="text-xs text-slate-400 mt-1">Learn and improve</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Battle History */}
-      <Card className="bg-surface border-surface-light">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <History className="mr-2" size={20} />
-            Battle History ({battles.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {battles.length === 0 ? (
-            <div className="text-center py-8">
-              <Swords className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-              <p className="text-slate-400">No battles found</p>
-              <p className="text-sm text-slate-500 mt-2">Start your first battle to see it here</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {battles.map((battle: any) => (
-                <div key={battle.id} className="border border-surface-light rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      {/* Cryptocurrency Logo */}
-                      <img
-                        src={getCryptoImageUrl(battle.cryptocurrency, cryptoPrices || [])}
-                        alt={battle.cryptocurrency}
-                        className="w-8 h-8 rounded-full"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <div>
-                        <div className="font-semibold text-slate-200">
-                          {battle.cryptocurrency?.toUpperCase()} Battle
-                        </div>
-                        <div className="text-xs text-slate-400">
-                          {battle.isUserChallenger ? 'You challenged' : 'You were challenged by'} {' '}
-                          {battle.isUserChallenger ? battle.challengedUsername || 'Open' : battle.challengerUsername}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Battle Status */}
-                    <div className="flex items-center space-x-2">
-                      <Badge 
-                        variant={
-                          battle.status === 'completed' ? 'default' : 
-                          battle.status === 'active' ? 'secondary' : 
-                          'outline'
-                        }
-                        className={
-                          battle.status === 'completed' ? 'bg-success text-white' :
-                          battle.status === 'active' ? 'bg-primary text-white' :
-                          'bg-orange-500 text-white'
-                        }
-                      >
-                        {battle.status === 'completed' ? 'Completed' :
-                         battle.status === 'active' ? 'Active' : 'Pending'}
-                      </Badge>
-
-                      {/* Win/Loss Indicator */}
-                      {battle.status === 'completed' && battle.winnerId && (
-                        <Badge 
-                          variant={battle.winnerId === battle.challengerId && battle.isUserChallenger || 
-                                  battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'default' : 'destructive'}
-                          className={
-                            battle.winnerId === battle.challengerId && battle.isUserChallenger || 
-                            battle.winnerId === battle.challengedId && !battle.isUserChallenger
-                              ? 'bg-success text-white' : 'bg-red-500 text-white'
-                          }
-                        >
-                          {battle.winnerId === battle.challengerId && battle.isUserChallenger || 
-                           battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'Won' : 'Lost'}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Battle Details */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <div className="text-slate-400">Stake Amount</div>
-                      <div className="font-semibold text-warning">
-                        {parseFloat(battle.stakeAmount || '0').toLocaleString()} NTIQ
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-slate-400">Target Time</div>
-                      <div className="font-semibold">
-                        {new Date(battle.targetTime).toLocaleDateString()}
-                      </div>
-                    </div>
-
-                    {battle.status === 'active' && (
-                      <div>
-                        <div className="text-slate-400">Time Left</div>
-                        <div className="font-semibold text-primary">
-                          {Math.floor(battle.timeLeft / (1000 * 60 * 60))}h {Math.floor((battle.timeLeft % (1000 * 60 * 60)) / (1000 * 60))}m
-                        </div>
-                      </div>
-                    )}
-
-                    {battle.winnerReward && battle.status === 'completed' && (
-                      <div>
-                        <div className="text-slate-400">Reward</div>
-                        <div className="font-semibold text-success">
-                          +{parseFloat(battle.winnerReward).toLocaleString()} NTIQ
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Predictions Display */}
-                  {(battle.challengerPrediction || battle.challengedPrediction) && (
-                    <div className="mt-3 pt-3 border-t border-surface-light">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        {battle.challengerPrediction && (
-                          <div className="flex justify-between">
-                            <span className="text-slate-400">
-                              {battle.isUserChallenger ? 'Your' : battle.challengerUsername + "'s"} Prediction:
-                            </span>
-                            <span className="font-semibold">
-                              ${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 6
-                              })}
-                            </span>
-                          </div>
-                        )}
-                        
-                        {battle.challengedPrediction && (
-                          <div className="flex justify-between">
-                            <span className="text-slate-400">
-                              {!battle.isUserChallenger ? 'Your' : battle.challengedUsername + "'s"} Prediction:
-                            </span>
-                            <span className="font-semibold">
-                              ${parseFloat(battle.challengedPrediction).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 6
-                              })}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// User Profile Component
+// UserProfile Component - moved down to keep main component clean
 function UserProfile() {
-  const [isEditingUsername, setIsEditingUsername] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [walletCopied, setWalletCopied] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const { data: user } = useQuery<User>({
+  const { data: user, isLoading } = useQuery({
     queryKey: ["/api/user"],
     retry: false,
   });
 
-  // Fetch user tier information
-  const { data: userTier } = useQuery({
-    queryKey: ["/api/user/tier"],
-    retry: false,
-  });
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
 
-  // Function to get tier icon based on tier level
-  const getTierIcon = (tier: string) => {
-    switch (tier?.toLowerCase()) {
-      case 'platinum':
-        return <Crown className="w-5 h-5 text-purple-400" />;
-      case 'gold':
-        return <Trophy className="w-5 h-5 text-yellow-400" />;
-      case 'silver':
-        return <Award className="w-5 h-5 text-gray-400" />;
-      case 'bronze':
-        return <Gem className="w-5 h-5 text-orange-400" />;
-      default:
-        return null;
-    }
-  };
-
-  // Copy wallet address function
-  const copyWalletAddress = async () => {
-    if (user?.walletAddress) {
-      try {
-        await navigator.clipboard.writeText(user.walletAddress);
-        setWalletCopied(true);
-        toast({
-          title: "Wallet Address Copied",
-          description: "Wallet address successfully copied to clipboard",
-        });
-        setTimeout(() => setWalletCopied(false), 2000);
-      } catch (error) {
-        toast({
-          title: "Copy Failed",
-          description: "Unable to copy wallet address",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  // Update username mutation
-  const updateUsernameMutation = useMutation({
-    mutationFn: async (username: string) => {
-      const response = await fetch('/api/user/update-username', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ username }),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update username');
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Username Updated",
-        description: "Your username has been successfully updated.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      setIsEditingUsername(false);
-      setNewUsername("");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update username",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Upload profile photo mutation
-  const uploadPhotoMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('profilePhoto', file);
-      
-      const response = await fetch('/api/user/upload-profile-photo', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to upload photo');
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Profile Photo Updated",
-        description: "Your profile photo has been successfully updated.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      setSelectedFile(null);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload profile photo",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          title: "Invalid File Type",
-          description: "Only JPEG, PNG, and GIF files are allowed.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File Too Large",
-          description: "File size must be less than 5MB.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setSelectedFile(file);
-    }
-  };
-
-  const handlePhotoUpload = () => {
-    if (selectedFile) {
-      uploadPhotoMutation.mutate(selectedFile);
-    }
-  };
-
-  const handlePhotoCancel = () => {
-    setSelectedFile(null);
-  };
-
-  const handleUsernameEdit = () => {
-    setNewUsername(user?.username || "");
-    setIsEditingUsername(true);
-  };
-
-  const handleUsernameCancel = () => {
-    setIsEditingUsername(false);
-    setNewUsername("");
-  };
-
-  const handleUsernameSubmit = () => {
-    if (!newUsername.trim()) {
-      toast({
-        title: "Invalid Username",
-        description: "Username cannot be empty",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newUsername.length < 3) {
-      toast({
-        title: "Invalid Username",
-        description: "Username must be at least 3 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newUsername === user?.username) {
-      setIsEditingUsername(false);
-      return;
-    }
-
-    updateUsernameMutation.mutate(newUsername.trim());
-  };
-
-  if (!user) {
+  if (isLoading) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
-        <h3 className="text-lg font-bold mb-4">Profile</h3>
-        <div className="text-center py-8 text-slate-400">
-          <UserCircle className="mx-auto mb-2" size={32} />
-          <p>Please connect your wallet to view profile</p>
-        </div>
+      <div className="flex items-center justify-center p-8">
+        <RefreshCw className="animate-spin mr-2" size={20} />
+        <span>Loading user profile...</span>
       </div>
     );
   }
 
+  if (!user) {
+    return (
+      <Card className="bg-surface border-surface-light">
+        <CardContent className="text-center py-8">
+          <AlertCircle className="mx-auto mb-2 text-error" size={32} />
+          <p className="text-error">Failed to load user profile</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Profile Header */}
-      <Card className="bg-surface border-surface-light">
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="relative">
-              {user?.profilePhoto ? (
-                <img
-                  src={user.profilePhoto}
-                  alt="Profile"
-                  className="w-16 h-16 rounded-full object-cover border-2 border-primary"
-                />
-              ) : (
-                <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                  <UserCircle className="text-white" size={32} />
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-                id="photo-upload"
-              />
-              <label
-                htmlFor="photo-upload"
-                className="absolute -bottom-1 -right-1 bg-primary hover:bg-primary/80 text-white rounded-full p-1 cursor-pointer transition-colors"
-              >
-                <Upload size={12} />
-              </label>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-bold text-white">{user.username}</h2>
-                {userTier?.currentTier && getTierIcon(userTier.currentTier)}
-              </div>
-              <p className="text-slate-400">Active Member</p>
-            </div>
+    <Card className="bg-surface border-surface-light">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <UserCircle className="mr-2" size={20} />
+          User Profile
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* User Avatar & Basic Info */}
+        <div className="text-center">
+          <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+            {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
           </div>
+          <h3 className="text-xl font-bold">{user.username}</h3>
+          <p className="text-slate-400">UID: {user.uid}</p>
+        </div>
 
-          {/* Photo upload preview and controls */}
-          {selectedFile && (
-            <div className="mb-4 p-4 bg-surface-light rounded-lg border border-primary/20">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden">
-                  <img
-                    src={URL.createObjectURL(selectedFile)}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="text-white font-medium">{selectedFile.name}</p>
-                  <p className="text-slate-400 text-sm">
-                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    size="sm"
-                    onClick={handlePhotoUpload}
-                    disabled={uploadPhotoMutation.isPending}
-                    className="h-8 px-3"
-                  >
-                    {uploadPhotoMutation.isPending ? (
-                      <RefreshCw className="w-3 h-3 animate-spin" />
-                    ) : (
-                      "Upload"
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handlePhotoCancel}
-                    className="h-8 px-3"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+        {/* Account Information */}
+        <div className="space-y-4">
+          <h4 className="text-lg font-semibold">Account Information</h4>
           
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-primary">{user.balance}</div>
-              <div className="text-sm text-slate-400">NTIQ Balance</div>
-            </div>
-            <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-green-400">{user.totalPredictions || 0}</div>
-              <div className="text-sm text-slate-400">Total Predictions</div>
-            </div>
-            <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-blue-400">{user.correctPredictions && user.totalPredictions ? `${((user.correctPredictions / user.totalPredictions) * 100).toFixed(1)}%` : '0%'}</div>
-              <div className="text-sm text-slate-400">Accuracy Rate</div>
-            </div>
-            <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-purple-400">{user.totalRewards || 0}</div>
-              <div className="text-sm text-slate-400">Total Rewards</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Account Information */}
-      <Card className="bg-surface border-surface-light">
-        <CardHeader>
-          <CardTitle className="text-white">Account Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between items-center py-3 border-b border-surface-light">
-            <span className="text-slate-300">Username</span>
-            <div className="flex items-center space-x-2">
-              {isEditingUsername ? (
-                <div className="flex items-center space-x-2">
-                  <Input
-                    value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value)}
-                    className="w-40 h-8 text-sm bg-surface-light border-surface-light"
-                    placeholder="Enter new username"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleUsernameSubmit();
-                      } else if (e.key === 'Escape') {
-                        handleUsernameCancel();
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleUsernameSubmit}
-                    disabled={updateUsernameMutation.isPending}
-                    className="h-8 px-2"
-                  >
-                    {updateUsernameMutation.isPending ? (
-                      <RefreshCw className="w-3 h-3 animate-spin" />
-                    ) : (
-                      "Save"
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleUsernameCancel}
-                    className="h-8 px-2"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <span className="text-white font-medium">{user.username}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleUsernameEdit}
-                    className="h-6 w-6 p-0 text-slate-400 hover:text-white"
-                  >
-                    <RefreshCw size={12} />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex justify-between items-center py-3 border-b border-surface-light">
-            <span className="text-slate-300">Wallet Address</span>
-            <div className="flex items-center space-x-2">
-              <span className="text-white font-mono text-sm">
-                {user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 'Not connected'}
-              </span>
-              {user.walletAddress && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-400">Username</label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={isEditingUsername ? newUsername : user.username}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  disabled={!isEditingUsername}
+                  className="flex-1"
+                />
                 <Button
+                  variant="outline"
                   size="sm"
-                  variant="ghost"
-                  onClick={copyWalletAddress}
-                  className="h-6 w-6 p-0 text-slate-400 hover:text-white"
-                  title="Copy wallet address"
+                  onClick={() => {
+                    if (isEditingUsername) {
+                      // Save username logic would go here
+                      setIsEditingUsername(false);
+                    } else {
+                      setNewUsername(user.username);
+                      setIsEditingUsername(true);
+                    }
+                  }}
                 >
-                  {walletCopied ? <Check size={12} /> : <Copy size={12} />}
+                  {isEditingUsername ? <Check size={16} /> : <Edit size={16} />}
                 </Button>
-              )}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-400">Balance</label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={`${user.balance?.toLocaleString() || 0} NTIQ`}
+                  disabled
+                  className="flex-1"
+                />
+                <Coins className="text-warning" size={20} />
+              </div>
             </div>
           </div>
-          <div className="flex justify-between items-center py-3 border-b border-surface-light">
-            <span className="text-slate-300">Account Type</span>
-            <span className="text-white font-medium">{user.isAdmin ? 'Administrator' : 'Standard User'}</span>
-          </div>
-          <div className="flex justify-between items-center py-3">
-            <span className="text-slate-300">Member Status</span>
-            <span className="text-green-400 font-medium">Active</span>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Quick Actions */}
-      <Card className="bg-surface border-surface-light">
-        <CardHeader>
-          <CardTitle className="text-white">Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
-              <Clock className="mr-2" size={16} />
-              View Predictions
-            </Button>
-            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
-              <Award className="mr-2" size={16} />
-              Check Achievements
-            </Button>
-            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
-              <History className="mr-2" size={16} />
-              Reward History
-            </Button>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-400">Wallet Address</label>
+            <div className="flex items-center space-x-2">
+              <Input
+                value={user.walletAddress || "No wallet connected"}
+                disabled
+                className="flex-1 font-mono text-sm"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (user.walletAddress) {
+                    navigator.clipboard.writeText(user.walletAddress);
+                  }
+                }}
+                title="Copy wallet address"
+              >
+                <Copy size={16} />
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Survival Tournament Status */}
-      <SurvivalStatus />
-
-      {/* Referral Section */}
-      <ReferralSection />
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
