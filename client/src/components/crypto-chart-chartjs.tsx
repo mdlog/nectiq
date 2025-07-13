@@ -286,10 +286,6 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
         pointBorderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 6,
-        shadowColor: priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)',
-        shadowBlur: 10,
-        shadowOffsetX: 0,
-        shadowOffsetY: 2,
       }
     ]
   };
