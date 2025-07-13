@@ -119,12 +119,12 @@ export function Header() {
   return (
     <header className="bg-surface border-surface-light border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-24 py-4">
-          <div className="flex items-center space-x-6">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center space-x-3">
             <img 
               src={nectiqLogo} 
               alt="Nectiq - Tactics. Timing. Triumph." 
-              className="h-16 rounded-lg p-1" 
+              className="h-12 rounded-lg p-1" 
               style={{ 
                 backgroundColor: 'var(--surface)',
                 filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
@@ -133,51 +133,51 @@ export function Header() {
             />
           </div>
           
-          <nav className="hidden md:flex space-x-8 flex-1 justify-center max-w-4xl mx-8">
+          <nav className="hidden md:flex space-x-8">
             <button 
               onClick={() => setLocation('/')} 
-              className={`transition-colors text-base font-medium px-4 py-3 rounded-lg ${
-                location === '/' ? "text-white font-bold bg-primary/10" : "text-slate-300 hover:text-white hover:bg-surface-light/50"
+              className={`transition-colors ${
+                location === '/' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               Home
             </button>
             <button 
               onClick={() => setLocation('/dashboard')} 
-              className={`transition-colors text-base font-medium px-4 py-3 rounded-lg ${
-                location === '/dashboard' ? "text-white font-bold bg-primary/10" : "text-slate-300 hover:text-white hover:bg-surface-light/50"
+              className={`transition-colors ${
+                location === '/dashboard' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               My Dashboard
             </button>
             <button 
               onClick={() => setLocation('/battles')} 
-              className={`transition-colors text-base font-medium px-4 py-3 rounded-lg ${
-                location === '/battles' ? "text-white font-bold bg-primary/10" : "text-slate-300 hover:text-white hover:bg-surface-light/50"
+              className={`transition-colors ${
+                location === '/battles' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               Battles
             </button>
             <button 
               onClick={() => setLocation('/survival')} 
-              className={`transition-colors text-base font-medium px-4 py-3 rounded-lg ${
-                location === '/survival' ? "text-white font-bold bg-primary/10" : "text-slate-300 hover:text-white hover:bg-surface-light/50"
+              className={`transition-colors ${
+                location === '/survival' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               Survival
             </button>
             <button 
               onClick={() => setLocation('/leaderboard')} 
-              className={`transition-colors text-base font-medium px-4 py-3 rounded-lg ${
-                location === '/leaderboard' ? "text-white font-bold bg-primary/10" : "text-slate-300 hover:text-white hover:bg-surface-light/50"
+              className={`transition-colors ${
+                location === '/leaderboard' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               Leaderboard
             </button>
             <button 
               onClick={() => setLocation('/how-to-play')} 
-              className={`transition-colors text-base font-medium px-4 py-3 rounded-lg ${
-                location === '/how-to-play' ? "text-white font-bold bg-primary/10" : "text-slate-300 hover:text-white hover:bg-surface-light/50"
+              className={`transition-colors ${
+                location === '/how-to-play' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               How to Play
@@ -186,8 +186,8 @@ export function Header() {
             {user?.isAdmin && (
               <button 
                 onClick={() => setLocation('/admin')} 
-                className={`transition-colors text-base font-medium px-4 py-3 rounded-lg ${
-                  location === '/admin' ? "text-white font-bold bg-primary/10" : "text-primary hover:text-primary/80 hover:bg-primary/5"
+                className={`transition-colors font-semibold ${
+                  location === '/admin' ? "text-white font-bold" : "text-primary hover:text-primary/80"
                 }`}
               >
                 Admin
@@ -208,29 +208,29 @@ export function Header() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <div className="flex items-center space-x-3 bg-surface-light px-5 py-3 rounded-lg border border-surface-light/50">
-              <Coins className="text-warning" size={20} />
-              <span className="font-semibold text-lg">{user?.balance?.toLocaleString() || "0"}</span>
-              <span className="text-base text-slate-400 font-medium">NTIQ</span>
+            <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
+              <Coins className="text-warning" size={16} />
+              <span className="font-semibold text-sm md:text-base">{user?.balance?.toLocaleString() || "0"}</span>
+              <span className="text-xs text-slate-400">NTIQ</span>
             </div>
             
             {isConnected && address ? (
-              <div className="flex items-center space-x-3">
-                <div className="hidden sm:flex items-center space-x-3 bg-green-100 dark:bg-green-900/20 px-5 py-3 rounded-lg border border-green-200 dark:border-green-800">
-                  <Wallet className="text-green-600 dark:text-green-400" size={20} />
-                  <span className="text-base font-mono text-green-700 dark:text-green-300 font-medium">
+              <div className="flex items-center space-x-2">
+                <div className="hidden sm:flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-3 py-1 rounded-lg border border-green-200 dark:border-green-800">
+                  <Wallet className="text-green-600 dark:text-green-400" size={16} />
+                  <span className="text-xs font-mono text-green-700 dark:text-green-300">
                     {address.slice(0, 6)}...{address.slice(-4)}
                   </span>
                 </div>
                 <Button
                   variant="ghost"
-                  size="lg"
+                  size="sm"
                   onClick={handleDisconnect}
                   disabled={logoutMutation.isPending}
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 px-4 py-3"
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                   title="Disconnect wallet"
                 >
-                  <LogOut size={20} />
+                  <LogOut size={16} />
                 </Button>
                 
                 {/* User Profile Dropdown */}
@@ -238,10 +238,10 @@ export function Header() {
                   <DropdownMenuTrigger asChild>
                     <Button 
                       variant="ghost" 
-                      size="lg" 
-                      className="w-12 h-12 bg-primary rounded-full flex items-center justify-center p-0 hover:bg-primary/80"
+                      size="sm" 
+                      className="w-8 h-8 bg-primary rounded-full flex items-center justify-center p-0 hover:bg-primary/80"
                     >
-                      <User className="text-white" size={20} />
+                      <User className="text-white" size={16} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64">
