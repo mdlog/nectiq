@@ -11,7 +11,7 @@ import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
 import { SimpleActivityFeed } from "@/components/simple-activity-feed";
-import CryptoChart from "@/components/crypto-chart";
+import CryptoChart from "@/components/crypto-chart-chartjs";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -16,7 +16,7 @@ import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
-import CryptoChart from "@/components/crypto-chart";
+import CryptoChart from "@/components/crypto-chart-chartjs";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
