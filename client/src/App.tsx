@@ -56,9 +56,7 @@ function Router() {
   return (
     <Switch>
       {/* Landing page - no authentication required */}
-      <Route path="/">
-        <LandingPage />
-      </Route>
+      <Route path="/" component={LandingPage} />
       
       {/* Protected routes - require authentication */}
       <Route path="/home">

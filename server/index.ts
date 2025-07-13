@@ -230,7 +230,41 @@ console.log('🔧 Initializing Survival Round Service...');
 survivalRoundService;
 
 // Initialize automated audit system to prevent reward/balance inconsistencies
-console.log('🔧 Audit System temporarily disabled for debugging...');
+console.log('🔧 Initializing Automated Audit System...');
+(async () => {
+  try {
+    const { auditService } = await import('./services/auditService');
+    
+    // Run audit on startup
+    console.log('🚀 [STARTUP AUDIT] Running comprehensive audit on server startup...');
+    setTimeout(async () => {
+      try {
+        await auditService.runComprehensiveAudit();
+        console.log('✅ [STARTUP AUDIT] Startup audit completed successfully');
+      } catch (error) {
+        console.error('❌ [STARTUP AUDIT] Failed:', error);
+      }
+    }, 5000); // Wait 5 seconds for server to fully initialize
+    
+    // Run audit every 6 hours to catch any new issues
+    setInterval(async () => {
+      try {
+        console.log('🔄 [SCHEDULED AUDIT] Running scheduled prediction rewards audit...');
+        const results = await auditService.auditAndRepairPredictionRewards();
+        
+        if (results.missingRewards > 0) {
+          console.log(`⚠️ [SCHEDULED AUDIT] Fixed ${results.missingRewards} missing rewards for ${results.repairedUsers.length} users`);
+        } else {
+          console.log('✅ [SCHEDULED AUDIT] No issues found - all prediction rewards consistent');
+        }
+      } catch (error) {
+        console.error('❌ [SCHEDULED AUDIT] Failed:', error);
+      }
+    }, 6 * 60 * 60 * 1000); // Every 6 hours
+  } catch (error) {
+    console.error('❌ [AUDIT INIT] Failed to initialize audit system:', error);
+  }
+})();
 
 (async () => {
   const server = await registerRoutes(app);

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Target, BarChart3, LineChart, Activity, Layers, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, BarChart3 } from 'lucide-react';
 
 interface CryptoChartProps {
   cryptoId: string;
@@ -21,7 +21,7 @@ interface ChartData {
   close?: number;
 }
 
-type ChartType = 'line' | 'candlestick' | 'area' | 'bar' | 'bubble';
+type ChartType = 'line' | 'candlestick';
 
 export default function CryptoChart({ cryptoId, symbol, name, currentPrice, priceChange24h, onPredictClick }: CryptoChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -159,21 +159,10 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     const chartWidth = width - leftPadding - rightPadding;
     const chartHeight = height - topPadding - bottomPadding;
 
-    switch (chartType) {
-      case 'candlestick':
-        drawCandlestickChart(ctx, chartWidth, chartHeight, leftPadding, topPadding);
-        break;
-      case 'area':
-        drawAreaChart(ctx, chartWidth, chartHeight, leftPadding, topPadding);
-        break;
-      case 'bar':
-        drawBarChart(ctx, chartWidth, chartHeight, leftPadding, topPadding);
-        break;
-      case 'bubble':
-        drawBubbleChart(ctx, chartWidth, chartHeight, leftPadding, topPadding);
-        break;
-      default:
-        drawLineChart(ctx, chartWidth, chartHeight, leftPadding, topPadding);
+    if (chartType === 'candlestick') {
+      drawCandlestickChart(ctx, chartWidth, chartHeight, leftPadding, topPadding);
+    } else {
+      drawLineChart(ctx, chartWidth, chartHeight, leftPadding, topPadding);
     }
   };
 
@@ -602,379 +591,6 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     }
   };
 
-  const drawAreaChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, leftPadding: number, topPadding: number) => {
-    const values = chartData.map(d => d.value);
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-    const valueRange = maxValue - minValue || 1;
-    
-    // Add padding to prevent area from touching chart edges
-    const valuePadding = valueRange * 0.1;
-    const paddedMinValue = minValue - valuePadding;
-    const paddedMaxValue = maxValue + valuePadding;
-    const paddedValueRange = paddedMaxValue - paddedMinValue;
-
-    // Add consistent padding for area chart
-    const chartAreaPadding = chartWidth * 0.05;
-    const usableWidth = chartWidth - (chartAreaPadding * 2);
-    
-    // Draw premium grid lines
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.08)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 5; i++) {
-      const y = topPadding + (chartHeight * i) / 5;
-      ctx.beginPath();
-      ctx.moveTo(leftPadding + chartAreaPadding, y);
-      ctx.lineTo(leftPadding + chartAreaPadding + usableWidth, y);
-      ctx.stroke();
-    }
-
-    // Draw vertical grid lines
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.04)';
-    for (let i = 0; i <= 10; i++) {
-      const x = leftPadding + chartAreaPadding + (usableWidth * i) / 10;
-      ctx.beginPath();
-      ctx.moveTo(x, topPadding);
-      ctx.lineTo(x, topPadding + chartHeight);
-      ctx.stroke();
-    }
-
-    // Create gradient for area fill
-    const areaGradient = ctx.createLinearGradient(0, topPadding, 0, topPadding + chartHeight);
-    areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
-    areaGradient.addColorStop(0.3, 'rgba(16, 185, 129, 0.25)');
-    areaGradient.addColorStop(0.6, 'rgba(16, 185, 129, 0.15)');
-    areaGradient.addColorStop(0.8, 'rgba(16, 185, 129, 0.05)');
-    areaGradient.addColorStop(1, 'rgba(16, 185, 129, 0.01)');
-
-    // Draw area path
-    ctx.beginPath();
-    chartData.forEach((point, index) => {
-      const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
-      const y = topPadding + chartHeight - ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
-      
-      if (index === 0) {
-        ctx.moveTo(x, topPadding + chartHeight);
-        ctx.lineTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-    
-    // Close area path
-    const lastX = leftPadding + chartAreaPadding + usableWidth;
-    ctx.lineTo(lastX, topPadding + chartHeight);
-    ctx.closePath();
-    
-    // Fill area
-    ctx.fillStyle = areaGradient;
-    ctx.fill();
-
-    // Draw area border line with glow effect
-    ctx.beginPath();
-    chartData.forEach((point, index) => {
-      const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
-      const y = topPadding + chartHeight - ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
-      
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-    
-    // Outer glow
-    ctx.shadowColor = '#10b981';
-    ctx.shadowBlur = 15;
-    ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
-    ctx.lineWidth = 8;
-    ctx.stroke();
-    
-    // Main line
-    ctx.shadowBlur = 6;
-    ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-
-    // Draw price labels
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
-    ctx.textAlign = 'right';
-    
-    for (let i = 0; i <= 5; i++) {
-      const value = paddedMaxValue - (paddedValueRange * i) / 5;
-      const y = topPadding + (chartHeight * i) / 5;
-      const formattedValue = value >= 1000 
-        ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-        : value >= 1
-        ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })
-        : value.toLocaleString(undefined, { minimumFractionDigits: 6, maximumFractionDigits: 8 });
-      
-      ctx.fillText(`$${formattedValue}`, leftPadding - 15, y + 4);
-    }
-
-    // Date labels
-    ctx.fillStyle = '#cbd5e1';
-    ctx.textAlign = 'center';
-    chartData.forEach((point, index) => {
-      const dateLabel = formatDateLabel(point.time, index, chartData.length);
-      if (dateLabel) {
-        const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
-        const y = topPadding + chartHeight + 25;
-        ctx.fillText(dateLabel, x, y);
-      }
-    });
-
-    // Real-time price indicator
-    if (chartData.length > 0) {
-      const currentPriceY = topPadding + chartHeight - ((currentPrice - paddedMinValue) / paddedValueRange) * chartHeight;
-      const rightEdge = leftPadding + chartWidth - chartAreaPadding;
-
-      // Price line
-      ctx.strokeStyle = priceChange24h >= 0 ? '#10b981' : '#ef4444';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 3]);
-      ctx.shadowBlur = 3;
-      ctx.beginPath();
-      ctx.moveTo(rightEdge - 50, currentPriceY);
-      ctx.lineTo(rightEdge, currentPriceY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Price label
-      const priceText = `$${currentPrice.toFixed(2)}`;
-      ctx.font = 'bold 14px sans-serif';
-      ctx.textAlign = 'left';
-      const textWidth = ctx.measureText(priceText).width;
-      
-      const labelGradient = ctx.createLinearGradient(0, 0, textWidth, 0);
-      if (priceChange24h >= 0) {
-        labelGradient.addColorStop(0, '#10b981');
-        labelGradient.addColorStop(1, '#059669');
-      } else {
-        labelGradient.addColorStop(0, '#dc2626');
-        labelGradient.addColorStop(1, '#b91c1c');
-      }
-      
-      ctx.fillStyle = labelGradient;
-      ctx.shadowBlur = 6;
-      ctx.fillRect(rightEdge + 15, currentPriceY - 12, textWidth + 16, 24);
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowBlur = 2;
-      ctx.fillText(priceText, rightEdge + 23, currentPriceY + 5);
-      
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-    }
-  };
-
-  const drawBarChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, leftPadding: number, topPadding: number) => {
-    const values = chartData.map(d => d.value);
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-    const valueRange = maxValue - minValue || 1;
-    
-    const valuePadding = valueRange * 0.1;
-    const paddedMinValue = minValue - valuePadding;
-    const paddedMaxValue = maxValue + valuePadding;
-    const paddedValueRange = paddedMaxValue - paddedMinValue;
-
-    const chartAreaPadding = chartWidth * 0.05;
-    const usableWidth = chartWidth - (chartAreaPadding * 2);
-    
-    // Draw grid lines
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.08)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 5; i++) {
-      const y = topPadding + (chartHeight * i) / 5;
-      ctx.beginPath();
-      ctx.moveTo(leftPadding + chartAreaPadding, y);
-      ctx.lineTo(leftPadding + chartAreaPadding + usableWidth, y);
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.04)';
-    for (let i = 0; i <= 10; i++) {
-      const x = leftPadding + chartAreaPadding + (usableWidth * i) / 10;
-      ctx.beginPath();
-      ctx.moveTo(x, topPadding);
-      ctx.lineTo(x, topPadding + chartHeight);
-      ctx.stroke();
-    }
-
-    const barWidth = usableWidth / chartData.length * 0.7;
-
-    chartData.forEach((point, index) => {
-      const x = leftPadding + chartAreaPadding + (usableWidth * (index + 0.5)) / chartData.length;
-      const barHeight = ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
-      const barY = topPadding + chartHeight - barHeight;
-      
-      // Create gradient for bars
-      const barGradient = ctx.createLinearGradient(0, barY, 0, barY + barHeight);
-      if (index === 0 || point.value >= chartData[index - 1]?.value) {
-        barGradient.addColorStop(0, '#10b981');
-        barGradient.addColorStop(1, '#047857');
-      } else {
-        barGradient.addColorStop(0, '#ef4444');
-        barGradient.addColorStop(1, '#b91c1c');
-      }
-
-      // Draw bar with glow effect
-      ctx.fillStyle = barGradient;
-      ctx.shadowColor = index === 0 || point.value >= chartData[index - 1]?.value ? '#10b981' : '#ef4444';
-      ctx.shadowBlur = 8;
-      ctx.fillRect(x - barWidth / 2, barY, barWidth, barHeight);
-      
-      // Draw bar border
-      ctx.strokeStyle = index === 0 || point.value >= chartData[index - 1]?.value ? '#10b981' : '#ef4444';
-      ctx.lineWidth = 2;
-      ctx.shadowBlur = 0;
-      ctx.strokeRect(x - barWidth / 2, barY, barWidth, barHeight);
-    });
-    
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-
-    // Price and date labels
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
-    ctx.textAlign = 'right';
-    
-    for (let i = 0; i <= 5; i++) {
-      const value = paddedMaxValue - (paddedValueRange * i) / 5;
-      const y = topPadding + (chartHeight * i) / 5;
-      const formattedValue = value >= 1000 
-        ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-        : value >= 1
-        ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })
-        : value.toLocaleString(undefined, { minimumFractionDigits: 6, maximumFractionDigits: 8 });
-      
-      ctx.fillText(`$${formattedValue}`, leftPadding - 15, y + 4);
-    }
-
-    ctx.fillStyle = '#cbd5e1';
-    ctx.textAlign = 'center';
-    chartData.forEach((point, index) => {
-      const dateLabel = formatDateLabel(point.time, index, chartData.length);
-      if (dateLabel) {
-        const x = leftPadding + chartAreaPadding + (usableWidth * (index + 0.5)) / chartData.length;
-        const y = topPadding + chartHeight + 25;
-        ctx.fillText(dateLabel, x, y);
-      }
-    });
-  };
-
-  const drawBubbleChart = (ctx: CanvasRenderingContext2D, chartWidth: number, chartHeight: number, leftPadding: number, topPadding: number) => {
-    const values = chartData.map(d => d.value);
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-    const valueRange = maxValue - minValue || 1;
-    
-    const valuePadding = valueRange * 0.1;
-    const paddedMinValue = minValue - valuePadding;
-    const paddedMaxValue = maxValue + valuePadding;
-    const paddedValueRange = paddedMaxValue - paddedMinValue;
-
-    const chartAreaPadding = chartWidth * 0.05;
-    const usableWidth = chartWidth - (chartAreaPadding * 2);
-    
-    // Draw grid lines
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.08)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 5; i++) {
-      const y = topPadding + (chartHeight * i) / 5;
-      ctx.beginPath();
-      ctx.moveTo(leftPadding + chartAreaPadding, y);
-      ctx.lineTo(leftPadding + chartAreaPadding + usableWidth, y);
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.04)';
-    for (let i = 0; i <= 10; i++) {
-      const x = leftPadding + chartAreaPadding + (usableWidth * i) / 10;
-      ctx.beginPath();
-      ctx.moveTo(x, topPadding);
-      ctx.lineTo(x, topPadding + chartHeight);
-      ctx.stroke();
-    }
-
-    chartData.forEach((point, index) => {
-      const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
-      const y = topPadding + chartHeight - ((point.value - paddedMinValue) / paddedValueRange) * chartHeight;
-      
-      // Calculate bubble size based on value relative to range
-      const normalizedValue = (point.value - minValue) / valueRange;
-      const bubbleRadius = 8 + (normalizedValue * 15); // 8-23px radius
-      
-      // Create radial gradient for bubble
-      const bubbleGradient = ctx.createRadialGradient(x, y, 0, x, y, bubbleRadius);
-      if (index === 0 || point.value >= chartData[index - 1]?.value) {
-        bubbleGradient.addColorStop(0, 'rgba(16, 185, 129, 0.8)');
-        bubbleGradient.addColorStop(0.7, 'rgba(16, 185, 129, 0.4)');
-        bubbleGradient.addColorStop(1, 'rgba(16, 185, 129, 0.1)');
-      } else {
-        bubbleGradient.addColorStop(0, 'rgba(239, 68, 68, 0.8)');
-        bubbleGradient.addColorStop(0.7, 'rgba(239, 68, 68, 0.4)');
-        bubbleGradient.addColorStop(1, 'rgba(239, 68, 68, 0.1)');
-      }
-
-      // Draw bubble with glow effect
-      ctx.fillStyle = bubbleGradient;
-      ctx.shadowColor = index === 0 || point.value >= chartData[index - 1]?.value ? '#10b981' : '#ef4444';
-      ctx.shadowBlur = 12;
-      ctx.beginPath();
-      ctx.arc(x, y, bubbleRadius, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Draw bubble border
-      ctx.strokeStyle = index === 0 || point.value >= chartData[index - 1]?.value ? '#10b981' : '#ef4444';
-      ctx.lineWidth = 2;
-      ctx.shadowBlur = 0;
-      ctx.stroke();
-      
-      // Add inner highlight
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.beginPath();
-      ctx.arc(x - bubbleRadius * 0.3, y - bubbleRadius * 0.3, bubbleRadius * 0.4, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-
-    // Price and date labels
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
-    ctx.textAlign = 'right';
-    
-    for (let i = 0; i <= 5; i++) {
-      const value = paddedMaxValue - (paddedValueRange * i) / 5;
-      const y = topPadding + (chartHeight * i) / 5;
-      const formattedValue = value >= 1000 
-        ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-        : value >= 1
-        ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })
-        : value.toLocaleString(undefined, { minimumFractionDigits: 6, maximumFractionDigits: 8 });
-      
-      ctx.fillText(`$${formattedValue}`, leftPadding - 15, y + 4);
-    }
-
-    ctx.fillStyle = '#cbd5e1';
-    ctx.textAlign = 'center';
-    chartData.forEach((point, index) => {
-      const dateLabel = formatDateLabel(point.time, index, chartData.length);
-      if (dateLabel) {
-        const x = leftPadding + chartAreaPadding + (usableWidth * index) / (chartData.length - 1);
-        const y = topPadding + chartHeight + 25;
-        ctx.fillText(dateLabel, x, y);
-      }
-    });
-  };
-
   useEffect(() => {
     fetchChartData(timeframe);
   }, [cryptoId, timeframe, chartType]);
@@ -1088,70 +704,29 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
           </div>
           
           {/* Chart Type Selector - Premium styling */}
-          <div className="flex gap-1 bg-slate-800/50 rounded-xl p-1 border border-slate-600/30 flex-wrap">
+          <div className="flex gap-1 bg-slate-800/50 rounded-xl p-1 border border-slate-600/30">
             <Button
               variant={chartType === 'line' ? "default" : "ghost"}
               size="sm"
               onClick={() => setChartType('line')}
-              className={`h-9 px-3 text-xs font-bold transition-all duration-200 ${
+              className={`h-9 px-5 text-sm font-bold transition-all duration-200 ${
                 chartType === 'line' 
                   ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
               }`}
             >
-              <LineChart className="h-3 w-3 mr-1" />
               Line
-            </Button>
-            <Button
-              variant={chartType === 'area' ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setChartType('area')}
-              className={`h-9 px-3 text-xs font-bold transition-all duration-200 ${
-                chartType === 'area' 
-                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg' 
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              <Activity className="h-3 w-3 mr-1" />
-              Area
-            </Button>
-            <Button
-              variant={chartType === 'bar' ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setChartType('bar')}
-              className={`h-9 px-3 text-xs font-bold transition-all duration-200 ${
-                chartType === 'bar' 
-                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg' 
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              <BarChart3 className="h-3 w-3 mr-1" />
-              Bar
-            </Button>
-            <Button
-              variant={chartType === 'bubble' ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setChartType('bubble')}
-              className={`h-9 px-3 text-xs font-bold transition-all duration-200 ${
-                chartType === 'bubble' 
-                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg' 
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              <Zap className="h-3 w-3 mr-1" />
-              Bubble
             </Button>
             <Button
               variant={chartType === 'candlestick' ? "default" : "ghost"}
               size="sm"
               onClick={() => setChartType('candlestick')}
-              className={`h-9 px-3 text-xs font-bold transition-all duration-200 ${
+              className={`h-9 px-5 text-sm font-bold transition-all duration-200 ${
                 chartType === 'candlestick' 
                   ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg' 
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
               }`}
             >
-              <Layers className="h-3 w-3 mr-1" />
               Candles
             </Button>
           </div>
