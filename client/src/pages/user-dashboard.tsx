@@ -14,8 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
-import { Achievements } from "@/components/achievements";
-import { DailyChallenges } from "@/components/daily-challenges";
 import CryptoChart from "@/components/crypto-chart-chartjs";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
@@ -23,7 +21,6 @@ import { WalletBalances } from "@/components/wallet-balances";
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 import { ReferralSection } from "@/components/referral-section";
 import { LoyaltyTier } from "@/components/loyalty-tier";
-import { FinancialWallet } from "@/components/financial-wallet";
 import { SurvivalStatus } from "@/components/survival-status";
 
 
@@ -139,6 +136,387 @@ function WithdrawalHistory() {
   );
 }
 
+// Predictions Section Component
+function PredictionsSection() {
+  const { data: activePredictions = [] } = useQuery<ActivePrediction[]>({
+    queryKey: ["/api/predictions/active"],
+    refetchInterval: 2000,
+  });
+
+  const { data: cryptoPrices = [] } = useQuery<any[]>({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 15000,
+  });
+
+  return (
+    <Card className="bg-surface border-surface-light">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          My Active Predictions
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {activePredictions.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="text-slate-400 mb-2">No active predictions</div>
+            <div className="text-sm text-slate-500">Make your first prediction to see it here</div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {activePredictions.map((prediction) => (
+              <div key={prediction.id} className="p-4 bg-surface-light rounded-lg border">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <img 
+                        src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices)}
+                        alt={prediction.cryptocurrency}
+                        className="w-6 h-6 rounded-full"
+                      />
+                      <span className="font-medium">{prediction.cryptocurrency.toUpperCase()}</span>
+                    </div>
+                    <div className="text-sm text-slate-400">
+                      Predicted: ${prediction.predictedPrice.toLocaleString()} • Stake: {prediction.stakeAmount} NTIQ
+                    </div>
+                  </div>
+                  <Badge variant="outline">Active</Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Market Watch Section Component  
+function MarketWatchSection() {
+  const { data: prices = [] } = useQuery<CryptoPrice[]>({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 1000,
+  });
+
+  return (
+    <Card className="bg-surface border-surface-light">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Eye className="h-5 w-5" />
+          Live Market Prices
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-2">
+          {prices.slice(0, 6).map((crypto) => (
+            <div key={crypto.id} className="p-4 bg-surface-light rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img src={crypto.image} alt={crypto.name} className="w-8 h-8 rounded-full" />
+                  <div>
+                    <div className="font-medium">{crypto.symbol.toUpperCase()}</div>
+                    <div className="text-sm text-slate-400">{crypto.name}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold">${crypto.current_price.toLocaleString()}</div>
+                  <div className={`text-sm ${crypto.price_change_percentage_24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {crypto.price_change_percentage_24h >= 0 ? '+' : ''}{crypto.price_change_percentage_24h.toFixed(2)}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Performance Section Component
+function PerformanceSection() {
+  const { data: stats } = useQuery<UserStats>({
+    queryKey: ["/api/user/stats"],
+  });
+
+  return (
+    <Card className="bg-surface border-surface-light">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-5 w-5" />
+          Performance Analytics
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm text-slate-400 mb-1">Total Predictions</div>
+              <div className="text-2xl font-bold">{stats?.totalPredictions || 0}</div>
+            </div>
+            <div>
+              <div className="text-sm text-slate-400 mb-1">Accuracy Rate</div>
+              <div className="text-2xl font-bold text-green-500">{stats?.accuracy || 0}%</div>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm text-slate-400 mb-1">Global Rank</div>
+              <div className="text-2xl font-bold text-yellow-500">#{stats?.rank || 'N/A'}</div>
+            </div>
+            <div>
+              <div className="text-sm text-slate-400 mb-1">Total Rewards</div>
+              <div className="text-2xl font-bold text-blue-500">{stats?.totalRewards || 0} NTIQ</div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Battles Section Component
+function BattlesSection() {
+  return (
+    <Card className="bg-surface border-surface-light">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Swords className="h-5 w-5" />
+          Prediction Battles
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-center py-8">
+          <Swords className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <div className="text-slate-400 mb-2">No battle history yet</div>
+          <div className="text-sm text-slate-500">Your battle results will appear here</div>
+          <Button className="mt-4" onClick={() => window.location.href = '/battles'}>
+            Join Battles
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Rewards Section Component
+function RewardsSection() {
+  const { data: recentRewards = [] } = useQuery<RecentReward[]>({
+    queryKey: ["/api/rewards/recent"],
+    refetchInterval: 2000,
+  });
+
+  return (
+    <Card className="bg-surface border-surface-light">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <History className="h-5 w-5" />
+          Recent Rewards
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {recentRewards.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="text-slate-400 mb-2">No rewards yet</div>
+            <div className="text-sm text-slate-500">Start predicting to earn rewards</div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {recentRewards.slice(0, 10).map((reward) => (
+              <div key={reward.id} className="p-4 bg-surface-light rounded-lg border">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-medium">{reward.type}</div>
+                    <div className="text-sm text-slate-400">{new Date(reward.date).toLocaleDateString()}</div>
+                  </div>
+                  <div className={`font-bold ${reward.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {reward.amount >= 0 ? '+' : ''}{reward.amount} NTIQ
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Achievements Component
+function Achievements() {
+  return (
+    <Card className="bg-surface border-surface-light">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Award className="h-5 w-5" />
+          My Achievements
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="p-4 bg-surface-light rounded-lg border">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                <Award className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <div className="font-medium">First Prediction</div>
+                <div className="text-sm text-slate-400">Make your first prediction</div>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-xs">Not completed</Badge>
+          </div>
+          
+          <div className="p-4 bg-surface-light rounded-lg border">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <div className="font-medium">Perfect Prediction</div>
+                <div className="text-sm text-slate-400">Get 100% accuracy</div>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-xs">Not completed</Badge>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Daily Challenges Component
+function DailyChallenges() {
+  return (
+    <Card className="bg-surface border-surface-light">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Daily Challenges
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="p-4 bg-surface-light rounded-lg border">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <div className="font-medium">Make 3 Predictions</div>
+                <div className="text-sm text-slate-400">Progress: 0/3</div>
+              </div>
+              <Badge variant="outline">0/3</Badge>
+            </div>
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+              <div className="bg-blue-500 h-2 rounded-full" style={{ width: '0%' }}></div>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-surface-light rounded-lg border">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <div className="font-medium">Win a Battle</div>
+                <div className="text-sm text-slate-400">Progress: 0/1</div>
+              </div>
+              <Badge variant="outline">0/1</Badge>
+            </div>
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+              <div className="bg-blue-500 h-2 rounded-full" style={{ width: '0%' }}></div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Financial Wallet Component
+function FinancialWallet() {
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [selectedToken, setSelectedToken] = useState("USDT");
+  const [buyAmount, setBuyAmount] = useState("");
+
+  return (
+    <Card className="bg-surface border-surface-light">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Wallet className="h-5 w-5" />
+          Financial Management
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Withdraw Section */}
+          <div className="space-y-4">
+            <h3 className="font-medium flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Withdraw NTIQ
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm text-slate-400">Amount (NTIQ)</label>
+                <input
+                  type="number"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  className="w-full p-2 bg-surface-light border border-surface-light rounded-lg"
+                  placeholder="Enter amount..."
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-400">Receive as</label>
+                <select
+                  value={selectedToken}
+                  onChange={(e) => setSelectedToken(e.target.value)}
+                  className="w-full p-2 bg-surface-light border border-surface-light rounded-lg"
+                >
+                  <option value="USDT">USDT</option>
+                  <option value="USDC">USDC</option>
+                  <option value="ETH">ETH</option>
+                </select>
+              </div>
+              <Button className="w-full">Request Withdrawal</Button>
+            </div>
+          </div>
+
+          {/* Buy Section */}
+          <div className="space-y-4">
+            <h3 className="font-medium flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Buy NTIQ
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm text-slate-400">Amount (NTIQ)</label>
+                <input
+                  type="number"
+                  value={buyAmount}
+                  onChange={(e) => setBuyAmount(e.target.value)}
+                  className="w-full p-2 bg-surface-light border border-surface-light rounded-lg"
+                  placeholder="Enter amount..."
+                />
+              </div>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="text-sm text-blue-600 dark:text-blue-400">
+                  Exchange Rate: 1 ETH = 1000 NTIQ
+                </div>
+              </div>
+              <Button className="w-full">Buy NTIQ</Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Transactions */}
+        <div className="mt-6">
+          <h3 className="font-medium mb-4">Recent Transactions</h3>
+          <div className="text-center py-8">
+            <div className="text-slate-400 mb-2">No transactions yet</div>
+            <div className="text-sm text-slate-500">Your transaction history will appear here</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function UserDashboard() {
   const { data: user } = useQuery<User>({
     queryKey: ["/api/user"],
@@ -158,6 +536,7 @@ export default function UserDashboard() {
   const [walletCopied, setWalletCopied] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [editedUsername, setEditedUsername] = useState("");
+  const [activeTab, setActiveTab] = useState("profile");
 
   // Manual refresh function for Market Overview
   const handleManualRefresh = async () => {
@@ -475,52 +854,110 @@ export default function UserDashboard() {
               </h3>
               
               <div className="space-y-2">
-                <button className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-blue-400/50">
+                <button 
+                  onClick={() => setActiveTab("profile")}
+                  className={`w-full justify-start transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeTab === "profile" 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border border-blue-400/50" 
+                      : "hover:bg-slate-700/50 text-slate-300"
+                  }`}
+                >
                   <UserCircle className="h-5 w-5" />
                   Profile
                 </button>
                 
-                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                <button 
+                  onClick={() => setActiveTab("predictions")}
+                  className={`w-full justify-start transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeTab === "predictions" 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border border-blue-400/50" 
+                      : "hover:bg-slate-700/50 text-slate-300"
+                  }`}
+                >
                   <Clock className="h-5 w-5" />
                   My Predictions
                 </button>
                 
-                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                <button 
+                  onClick={() => setActiveTab("achievements")}
+                  className={`w-full justify-start transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeTab === "achievements" 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border border-blue-400/50" 
+                      : "hover:bg-slate-700/50 text-slate-300"
+                  }`}
+                >
                   <Award className="h-5 w-5" />
                   Achievements
                 </button>
                 
-                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                <button 
+                  onClick={() => setActiveTab("challenges")}
+                  className={`w-full justify-start transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeTab === "challenges" 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border border-blue-400/50" 
+                      : "hover:bg-slate-700/50 text-slate-300"
+                  }`}
+                >
                   <Calendar className="h-5 w-5" />
                   Daily Challenges
                 </button>
                 
-                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
-                  <Shield className="h-5 w-5" />
-                  Loyalty
-                </button>
-                
-                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                <button 
+                  onClick={() => setActiveTab("market")}
+                  className={`w-full justify-start transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeTab === "market" 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border border-blue-400/50" 
+                      : "hover:bg-slate-700/50 text-slate-300"
+                  }`}
+                >
                   <Eye className="h-5 w-5" />
                   Market Watch
                 </button>
                 
-                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                <button 
+                  onClick={() => setActiveTab("performance")}
+                  className={`w-full justify-start transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeTab === "performance" 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border border-blue-400/50" 
+                      : "hover:bg-slate-700/50 text-slate-300"
+                  }`}
+                >
                   <Activity className="h-5 w-5" />
                   Performance
                 </button>
                 
-                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                <button 
+                  onClick={() => setActiveTab("battles")}
+                  className={`w-full justify-start transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeTab === "battles" 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border border-blue-400/50" 
+                      : "hover:bg-slate-700/50 text-slate-300"
+                  }`}
+                >
                   <Swords className="h-5 w-5" />
                   Battles
                 </button>
                 
-                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                <button 
+                  onClick={() => setActiveTab("financial")}
+                  className={`w-full justify-start transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeTab === "financial" 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border border-blue-400/50" 
+                      : "hover:bg-slate-700/50 text-slate-300"
+                  }`}
+                >
                   <Wallet className="h-5 w-5" />
                   Financial
                 </button>
                 
-                <button className="w-full justify-start hover:bg-slate-700/50 text-slate-300 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+                <button 
+                  onClick={() => setActiveTab("rewards")}
+                  className={`w-full justify-start transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeTab === "rewards" 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg border border-blue-400/50" 
+                      : "hover:bg-slate-700/50 text-slate-300"
+                  }`}
+                >
                   <History className="h-5 w-5" />
                   Reward History
                 </button>
@@ -531,8 +968,16 @@ export default function UserDashboard() {
           {/* Right Content Area */}
           <div className="flex-1">
             <div className="space-y-6">
-              {/* Default Profile Content */}
-              <UserProfile />
+              {/* Dynamic Content Based on Active Tab */}
+              {activeTab === "profile" && <UserProfile />}
+              {activeTab === "predictions" && <PredictionsSection />}
+              {activeTab === "achievements" && <Achievements />}
+              {activeTab === "challenges" && <DailyChallenges />}
+              {activeTab === "market" && <MarketWatchSection />}
+              {activeTab === "performance" && <PerformanceSection />}
+              {activeTab === "battles" && <BattlesSection />}
+              {activeTab === "financial" && <FinancialWallet />}
+              {activeTab === "rewards" && <RewardsSection />}
             </div>
           </div>
         </div>
