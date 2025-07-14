@@ -17,6 +17,7 @@ import HowToPlay from "@/pages/how-to-play";
 import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import WalletLoginPage from "@/pages/wallet-login";
+import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
 
 
 // Suppress wallet extension conflicts in console
@@ -127,12 +128,15 @@ function Router() {
 }
 
 function App() {
+  const { showWarning, dismissWarning } = useMobileDetection();
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="min-h-screen bg-background text-foreground">
           <Toaster />
           <Router />
+          <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
         </div>
       </TooltipProvider>
     </QueryClientProvider>
