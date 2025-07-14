@@ -135,7 +135,7 @@ export function ActivePredictions() {
   // Show authentication message if not logged in
   if (!isAuthenticated) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
+      <div className="bg-surface rounded-xl p-6 border border-surface-light min-h-[500px]">
         <h3 className="text-lg font-bold mb-4 flex items-center">
           <Clock className="text-warning mr-2" size={18} />
           Active Predictions
@@ -151,7 +151,7 @@ export function ActivePredictions() {
 
   if (isLoading) {
     return (
-      <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light">
+      <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light min-h-[500px]">
         <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center">
           <Clock className="text-warning mr-2 animate-pulse" size={16} />
           Active Predictions
@@ -164,7 +164,7 @@ export function ActivePredictions() {
 
   if (predictions.length === 0) {
     return (
-      <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light">
+      <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light min-h-[500px]">
         <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center">
           <Clock className="text-warning mr-2" size={16} />
           Active Predictions
@@ -175,7 +175,7 @@ export function ActivePredictions() {
   }
 
   return (
-    <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light">
+    <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light min-h-[500px]">
       <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center">
         <Clock className="text-warning mr-2" size={16} />
         Active Predictions

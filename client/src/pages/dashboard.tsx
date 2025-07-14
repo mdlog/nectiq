@@ -76,7 +76,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
           {/* Left Sidebar - Live Prices */}
           <div className="lg:col-span-1">
-            <div className="flex flex-col space-y-6 h-full">
+            <div className="flex flex-col space-y-6 h-full sticky top-4">
               <div className="flex-1">
                 <LivePrices 
                   onCryptoSelect={handleCryptoSelect}
@@ -84,7 +84,7 @@ export default function Dashboard() {
                 />
               </div>
               
-              {/* Banner Section - Below Live Prices */}
+              {/* Banner Section - Below Live Prices with Fixed Position */}
               <div className="flex-shrink-0">
                 <BannerSection position="below_live_prices" />
               </div>
@@ -132,7 +132,7 @@ export default function Dashboard() {
           
           {/* Right Sidebar */}
           <div className="lg:col-span-1">
-            <div className="flex flex-col space-y-6 h-full min-h-[600px]">
+            <div className="flex flex-col space-y-6 h-full min-h-[600px] sticky top-4">
               <div className="flex-1">
                 <TopPredictors />
               </div>
