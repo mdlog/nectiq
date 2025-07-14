@@ -1453,9 +1453,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid cryptocurrency" });
       }
 
-      // Get current price for the cryptocurrency
-      const crypto = await storage.getCryptocurrency(cryptoId);
-      const currentPrice = crypto ? parseFloat(crypto.currentPrice) : 50000; // Default fallback
+      // Get current price for the cryptocurrency from real-time data
+      const realTimePrices = await cryptoService.getCurrentPrices();
+      const cryptoPrice = realTimePrices.find(p => p.id === cryptoId);
+      const currentPrice = cryptoPrice ? cryptoPrice.current_price : 50000; // Use real-time price
 
       // Generate realistic historical data
       const numDays = parseInt(days as string) || 7;
@@ -1465,14 +1466,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const date = new Date();
         date.setDate(date.getDate() - i);
         
-        // Generate realistic price variations based on current price
-        const variation = (Math.random() - 0.5) * 0.08; // ±4% daily variation
-        const timeDecay = i / numDays; // More variation for older data
-        const dayPrice = currentPrice * (1 + variation * timeDecay);
+        let dayPrice;
+        if (i === 0) {
+          // Use real-time current price for the most recent point (today)
+          dayPrice = currentPrice;
+        } else {
+          // Generate realistic price variations based on current price for historical data
+          const variation = (Math.random() - 0.5) * 0.08; // ±4% daily variation
+          const timeDecay = i / numDays; // More variation for older data
+          dayPrice = currentPrice * (1 + variation * timeDecay);
+        }
         
         if (type === 'candlestick') {
           const open = dayPrice * (1 + (Math.random() - 0.5) * 0.02);
-          const close = dayPrice * (1 + (Math.random() - 0.5) * 0.02);
+          const close = i === 0 ? currentPrice : dayPrice * (1 + (Math.random() - 0.5) * 0.02); // Use exact current price for today's close
           const high = Math.max(open, close) * (1 + Math.random() * 0.015);
           const low = Math.min(open, close) * (1 - Math.random() * 0.015);
           

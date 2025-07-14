@@ -119,18 +119,23 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     // Use actual days to generate data based on timeframe
     const actualDays = parseInt(getActualDaysToFetch(timeframe));
     const data: ChartData[] = [];
-    const basePrice = currentPrice;
+    const basePrice = currentPrice; // Use current live price as base
     
     for (let i = actualDays; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       
-      // Generate realistic price variation based on 24h change and timeframe
-      const dayVariation = (Math.random() - 0.5) * 0.1; // ±5% daily variation
-      const trendFactor = (priceChange24h / 100) * (i / actualDays); // Apply trend over time
-      const priceMultiplier = 1 + dayVariation + trendFactor;
-      
-      const value = basePrice * priceMultiplier;
+      let value;
+      if (i === 0) {
+        // Use exact current live price for the most recent point
+        value = currentPrice;
+      } else {
+        // Generate realistic price variation based on 24h change and timeframe for historical data
+        const dayVariation = (Math.random() - 0.5) * 0.1; // ±5% daily variation
+        const trendFactor = (priceChange24h / 100) * (i / actualDays); // Apply trend over time
+        const priceMultiplier = 1 + dayVariation + trendFactor;
+        value = basePrice * priceMultiplier;
+      }
       
       data.push({
         time: date.toISOString(),
@@ -149,6 +154,15 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     fetchChartData(timeframe);
     fetchCryptoLogo();
   }, [cryptoId, timeframe, chartType]);
+
+  // Auto-refresh chart data every 30 seconds to sync with live prices
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchChartData(timeframe);
+    }, 30000); // 30 seconds interval
+
+    return () => clearInterval(interval);
+  }, [timeframe, cryptoId]);
 
   // Prepare Chart.js data
   const chartJsData = {
