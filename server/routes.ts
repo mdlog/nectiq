@@ -1457,6 +1457,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const realTimePrices = await cryptoService.getCurrentPrices();
       const cryptoPrice = realTimePrices.find(p => p.id === cryptoId);
       const currentPrice = cryptoPrice ? cryptoPrice.current_price : 50000; // Use real-time price
+      
+      // Chart now uses real-time price data for synchronization with live prices
 
       // Generate realistic historical data
       const numDays = parseInt(days as string) || 7;
@@ -1489,13 +1491,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             open: parseFloat(open.toFixed(2)),
             high: parseFloat(high.toFixed(2)),
             low: parseFloat(low.toFixed(2)),
-            close: parseFloat(close.toFixed(2)),
+            close: i === 0 ? currentPrice : parseFloat(close.toFixed(2)), // Use exact current price for today's close
           });
         } else {
+          const finalValue = i === 0 ? currentPrice : parseFloat(dayPrice.toFixed(2));
           chartData.push({
             time: date.toISOString().split('T')[0],
-            value: parseFloat(dayPrice.toFixed(2)),
+            value: finalValue, // Use exact current price for today
           });
+          
+          // Current day (i === 0) uses exact real-time price for synchronization
         }
       }
 
