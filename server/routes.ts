@@ -1425,6 +1425,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get financial metrics for cryptocurrency (volume, market cap)
+  app.get("/api/crypto/metrics/:cryptoId", async (req, res) => {
+    try {
+      const { cryptoId } = req.params;
+      
+      // Get detailed data from CoinGecko including market data
+      const response = await cryptoService.getCryptoMetrics(cryptoId);
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching crypto metrics:", error);
+      res.status(500).json({ message: "Failed to get crypto metrics" });
+    }
+  });
+
   // Get historical chart data for cryptocurrency
   app.get("/api/crypto/chart/:cryptoId", async (req, res) => {
     try {

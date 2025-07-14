@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Target, BarChart3 } from 'lucide-react';
+import FinancialMetrics from '@/components/financial-metrics';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -383,6 +384,9 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
             <Line data={chartJsData} options={chartOptions} />
           )}
         </div>
+
+        {/* Financial Metrics Section */}
+        <FinancialMetrics cryptoId={cryptoId} symbol={symbol} />
         
         {onPredictClick && (
           <Button 
