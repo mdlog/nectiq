@@ -27,7 +27,7 @@ const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 export class CryptoService {
   private lastFetchTime = 0;
   private cachedRealPrices: CryptoPrice[] = [];
-  private readonly CACHE_DURATION = 30000; // Cache real prices for 30 seconds (more frequent updates)
+  private readonly CACHE_DURATION = 45000; // Cache real prices for 45 seconds (balance between updates and rate limits)
   private fetchPromise: Promise<CryptoPrice[]> | null = null; // Prevent concurrent fetches
 
   // Method to clear cache when cryptocurrencies are deleted
@@ -94,7 +94,9 @@ export class CryptoService {
     } catch (error: any) {
       this.fetchPromise = null;
       if (error.response?.status === 429) {
-        console.log('⏳ CoinGecko rate limit reached, using cached data');
+        console.log('⏳ CoinGecko rate limit reached, extending cache duration');
+        // Extend cache duration when rate limited to avoid repeated hits
+        this.lastFetchTime = now + 60000; // Add extra 60 seconds
       } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
         console.log('🌐 Network connection issue, using fallback data');
         console.log('Error details:', error.code, error.address, error.port);
@@ -115,7 +117,7 @@ export class CryptoService {
       return this.fetchPromise;
     }
     
-    // Try to fetch real prices every 30 seconds to avoid rate limits while keeping prices more current
+    // Try to fetch real prices every 45 seconds to avoid rate limits while keeping prices current
     if (now - this.lastFetchTime > this.CACHE_DURATION) {
       // Create and store the fetch promise to prevent concurrent fetches
       this.fetchPromise = this.fetchFreshPrices();
@@ -152,13 +154,19 @@ export class CryptoService {
         // Start with database prices
         allPrices = [...dbPrices];
         
-        // Update with CoinGecko prices where available
+        // Update with CoinGecko prices where available, adding slight real-time variation
+        const now = Date.now();
+        const fastVariation = Math.sin(now / 3000) * 0.0015; // Faster micro-fluctuations every 3 seconds
+        const slowVariation = Math.cos(now / 8000) * 0.0008; // Slower background movement
+        const microVariation = fastVariation + slowVariation;
+        
         allPrices = allPrices.map(dbPrice => {
           const coinGeckoPrice = coinGeckoMap.get(dbPrice.id);
           if (coinGeckoPrice) {
-            // Use CoinGecko data but keep our custom image
+            // Use CoinGecko data but add micro-variations for live feeling
             return {
               ...coinGeckoPrice,
+              current_price: coinGeckoPrice.current_price * (1 + microVariation),
               image: this.getCryptoImageUrl(dbPrice.id)
             };
           }
@@ -171,13 +179,22 @@ export class CryptoService {
           if (!existsInDb) {
             allPrices.push({
               ...cgPrice,
+              current_price: cgPrice.current_price * (1 + microVariation),
               image: this.getCryptoImageUrl(cgPrice.id)
             });
           }
         }
       } else {
-        // Use database prices
-        allPrices = dbPrices;
+        // Use database prices with real-time variations
+        const now = Date.now();
+        const fastVariation = Math.sin(now / 2500) * 0.003; // Even faster variations when no fresh data
+        const slowVariation = Math.cos(now / 7000) * 0.0015;
+        const microVariation = fastVariation + slowVariation;
+        
+        allPrices = dbPrices.map(price => ({
+          ...price,
+          current_price: price.current_price * (1 + microVariation)
+        }));
       }
     } catch (error) {
       console.error('Error merging price data:', error);
@@ -349,9 +366,9 @@ export class CryptoService {
 
   private getFallbackPrices(): CryptoPrice[] {
     const now = Date.now();
-    // Create smooth, realistic price movement using sine waves and time
-    const timeVariation = Math.sin(now / 30000) * 0.1 + Math.cos(now / 20000) * 0.05;
-    const microVariation = (Math.random() - 0.5) * 0.0008; // Very small random fluctuation
+    // Create more realistic price movement with faster changes
+    const timeVariation = Math.sin(now / 10000) * 0.02 + Math.cos(now / 15000) * 0.015; // Faster oscillation
+    const microVariation = (Math.random() - 0.5) * 0.005; // Slightly larger random fluctuation for noticeable changes
     
     // Updated with more current cryptocurrency prices (June 2025)
     return [
