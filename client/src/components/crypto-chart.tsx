@@ -164,6 +164,27 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     return () => clearInterval(interval);
   }, [timeframe, cryptoId]);
 
+  // Real-time price update for chart endpoint - update only the last point automatically
+  useEffect(() => {
+    if (chartData.length > 0 && currentPrice > 0) {
+      setChartData(prevData => {
+        const newData = [...prevData];
+        const lastIndex = newData.length - 1;
+        if (lastIndex >= 0) {
+          // Update only the last data point with current live price for real-time movement
+          newData[lastIndex] = {
+            ...newData[lastIndex],
+            value: currentPrice,
+            close: currentPrice,
+            high: Math.max(newData[lastIndex].high || currentPrice, currentPrice),
+            low: Math.min(newData[lastIndex].low || currentPrice, currentPrice)
+          };
+        }
+        return newData;
+      });
+    }
+  }, [currentPrice]); // Triggers every time currentPrice changes (every 1-2 seconds)
+
   // Prepare Chart.js data
   const chartJsData = {
     labels: chartData.map(item => {
