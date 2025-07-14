@@ -63,25 +63,25 @@ export function EngagementPlaceholder({ type, className = "" }: EngagementPlaceh
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Main icon and title */}
-      <div className="text-center py-4">
-        <div className="relative mb-4">
-          <div className={`w-12 h-12 bg-gradient-to-br ${content.gradient} rounded-xl mx-auto flex items-center justify-center shadow-lg`}>
-            <IconComponent className="text-white" size={24} />
+      <div className="text-center py-2">
+        <div className="relative mb-3">
+          <div className={`w-10 h-10 bg-gradient-to-br ${content.gradient} rounded-xl mx-auto flex items-center justify-center shadow-lg`}>
+            <IconComponent className="text-white" size={20} />
           </div>
-          <div className={`absolute -top-1 -right-1 w-4 h-4 bg-${content.accentColor} rounded-full animate-pulse shadow-md`}></div>
+          <div className={`absolute -top-1 -right-1 w-3 h-3 bg-${content.accentColor} rounded-full animate-pulse shadow-md`}></div>
         </div>
-        <h4 className="text-base font-semibold text-white mb-2">{content.title}</h4>
-        <p className="text-sm text-slate-400 mb-4">{content.subtitle}</p>
+        <h4 className="text-sm font-semibold text-white mb-1">{content.title}</h4>
+        <p className="text-xs text-slate-400 mb-3">{content.subtitle}</p>
       </div>
       
       {/* Feature tips */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {content.tips.map((tip, index) => {
           const TipIcon = tip.icon;
           return (
-            <div key={index} className="flex items-center space-x-3 p-2 rounded-lg bg-slate-800/30 border border-slate-700/30">
-              <div className={`w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0`}>
-                <TipIcon className={tip.color} size={12} />
+            <div key={index} className="flex items-center space-x-2 p-1.5 rounded-lg bg-slate-800/30 border border-slate-700/30">
+              <div className={`w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0`}>
+                <TipIcon className={tip.color} size={10} />
               </div>
               <p className="text-xs text-slate-300">{tip.text}</p>
             </div>
@@ -90,7 +90,7 @@ export function EngagementPlaceholder({ type, className = "" }: EngagementPlaceh
       </div>
       
       {/* CTA hint */}
-      <div className="text-center pt-2">
+      <div className="text-center pt-1">
         <p className="text-xs text-slate-500">
           {type === 'predictions' && "Select a cryptocurrency above to get started"}
           {type === 'rewards' && "Make predictions to start earning rewards"}

@@ -120,12 +120,12 @@ export default function Dashboard() {
             )}
             
             {/* Active Predictions */}
-            <div className="mt-8">
+            <div className="mt-4">
               <ActivePredictions />
             </div>
             
             {/* Events Section */}
-            <div className="mt-8">
+            <div className="mt-4">
               <EventsSection />
             </div>
           </div>
