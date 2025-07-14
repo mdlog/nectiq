@@ -155,14 +155,12 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
     fetchCryptoLogo();
   }, [cryptoId, timeframe, chartType]);
 
-  // Auto-refresh chart data every 30 seconds to sync with live prices
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchChartData(timeframe);
-    }, 30000); // 30 seconds interval
-
-    return () => clearInterval(interval);
-  }, [timeframe, cryptoId]);
+  // Removed auto-refresh to prevent unwanted chart refreshes
+  // Chart data will only refresh when:
+  // 1. User changes timeframe
+  // 2. User selects different cryptocurrency  
+  // 3. User changes chart type
+  // Real-time price updates happen via the endpoint update below
 
   // Real-time price update for chart endpoint - update only the last point automatically
   useEffect(() => {
