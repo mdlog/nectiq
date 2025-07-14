@@ -3787,17 +3787,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Cryptocurrency ID is required" });
       }
 
-      // Fetch data from CoinGecko API
-      const response = await fetch(`https://api.coingecko.com/api/v3/coins/${cryptoId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          return res.status(404).json({ message: "Cryptocurrency not found on CoinGecko. Please check the ID." });
+      // Retry mechanism for CoinGecko API with exponential backoff
+      const retryFetch = async (url: string, maxRetries = 3, delayMs = 2000): Promise<any> => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const response = await fetch(url, {
+              headers: {
+                'User-Agent': 'Nectiq-Crypto-App/1.0',
+                'Accept': 'application/json'
+              }
+            });
+            
+            if (response.ok) {
+              return await response.json();
+            }
+            
+            if (response.status === 404) {
+              throw new Error("Cryptocurrency not found on CoinGecko. Please check the ID.");
+            }
+            
+            if (response.status === 429 && attempt < maxRetries) {
+              console.log(`Rate limit hit, retrying in ${delayMs}ms (attempt ${attempt}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, delayMs));
+              delayMs *= 2; // Exponential backoff
+              continue;
+            }
+            
+            throw new Error(`CoinGecko API error: ${response.status}`);
+          } catch (fetchError) {
+            if (attempt === maxRetries) {
+              throw fetchError;
+            }
+            console.log(`Fetch attempt ${attempt} failed, retrying in ${delayMs}ms`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+            delayMs *= 2;
+          }
         }
-        throw new Error(`CoinGecko API error: ${response.status}`);
-      }
+      };
 
-      const coinData = await response.json();
+      // Fetch data from CoinGecko API with retry logic
+      const coinData = await retryFetch(
+        `https://api.coingecko.com/api/v3/coins/${cryptoId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
+      );
       
       // Extract relevant data
       const cryptoData = {
@@ -3810,6 +3841,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newCrypto = await storage.upsertCryptocurrency(cryptoData);
       
+      // Clear crypto service cache so new cryptocurrency appears immediately
+      const { cryptoService } = await import('../services/cryptoService');
+      cryptoService.clearCache();
+      
       auditLog('admin_crypto_added', { 
         cryptoId: newCrypto.id, 
         name: newCrypto.name,
@@ -3820,6 +3855,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(newCrypto);
     } catch (error) {
       console.error("Error adding cryptocurrency:", error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes("not found on CoinGecko")) {
+          return res.status(404).json({ message: error.message });
+        }
+        if (error.message.includes("429")) {
+          return res.status(503).json({ 
+            message: "CoinGecko API rate limit reached. The system will retry automatically in a few seconds. You can also wait and try again later." 
+          });
+        }
+      }
+      
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid cryptocurrency data", errors: error.errors });
       } else {

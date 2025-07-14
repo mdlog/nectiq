@@ -35,6 +35,7 @@ export class CryptoService {
     this.lastFetchTime = 0;
     this.cachedRealPrices = [];
     this.fetchPromise = null;
+    console.log("🔄 [CRYPTO] Cache cleared - fresh data will be fetched on next request");
   }
 
   private async fetchFreshPrices(): Promise<CryptoPrice[]> {
