@@ -46,7 +46,7 @@ export function TopPredictors() {
           Top Predictors
         </h3>
         <div className="space-y-3 flex-1">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="p-3 bg-surface-light rounded-lg animate-pulse">
               <div className="h-12 bg-slate-600 rounded"></div>
             </div>
@@ -72,8 +72,8 @@ export function TopPredictors() {
     );
   }
 
-  // Limit to top 5 predictors only
-  const topFivePredictors = leaderboard.slice(0, 5);
+  // Limit to top 6 predictors only
+  const topSixPredictors = leaderboard.slice(0, 6);
 
   return (
     <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
@@ -83,7 +83,7 @@ export function TopPredictors() {
       </h3>
       
       <div className="space-y-3 flex-1">
-        {topFivePredictors.map((user, index) => {
+        {topSixPredictors.map((user, index) => {
           const rank = index + 1;
           
           return (
@@ -107,10 +107,10 @@ export function TopPredictors() {
           );
         })}
         
-        {/* Fill remaining space if less than 5 predictors */}
-        {topFivePredictors.length < 5 && (
+        {/* Fill remaining space if less than 6 predictors */}
+        {topSixPredictors.length < 6 && (
           <div className="flex-1 flex flex-col justify-center items-center text-slate-400 text-sm">
-            <p>{5 - topFivePredictors.length} more slots available</p>
+            <p>{6 - topSixPredictors.length} more slots available</p>
           </div>
         )}
       </div>
