@@ -82,7 +82,7 @@ export default function FinancialMetrics({ cryptoId, symbol }: FinancialMetricsP
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <BarChart3 className="h-4 w-4 text-blue-400" />
-            <h3 className="text-sm font-medium text-gray-300">Volume Harian</h3>
+            <h3 className="text-sm font-medium text-gray-300">Daily Volume</h3>
           </div>
           <div className="text-xl font-bold text-white mb-1">
             {formatNumber(metrics.volume_24h)}
@@ -105,13 +105,13 @@ export default function FinancialMetrics({ cryptoId, symbol }: FinancialMetricsP
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <BarChart3 className="h-4 w-4 text-green-400" />
-            <h3 className="text-sm font-medium text-gray-300">Volume Bulanan</h3>
+            <h3 className="text-sm font-medium text-gray-300">Monthly Volume</h3>
           </div>
           <div className="text-xl font-bold text-white mb-1">
             {formatNumber(monthlyVolume)}
           </div>
           <div className="text-xs text-gray-400">
-            Estimasi 30 hari
+            30 days estimate
           </div>
         </CardContent>
       </Card>
