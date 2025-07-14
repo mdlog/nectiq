@@ -76,14 +76,20 @@ export class CryptoService {
         }
       });
 
-      this.cachedRealPrices = response.data.map((coin: any) => ({
-        id: coin.id,
-        symbol: coin.symbol.toUpperCase(),
-        name: coin.name,
-        current_price: coin.current_price,
-        price_change_percentage_24h: coin.price_change_percentage_24h || 0,
-        image: coin.id === 'solana' ? '/attached_assets/solana_1750613756851.png' : coin.image
-      }));
+      this.cachedRealPrices = response.data.map((coin: any) => {
+        const imageUrl = coin.id === 'solana' ? '/attached_assets/solana_1750613756851.png' : this.getCryptoImageUrl(coin.id);
+        if (coin.id === 'aave') {
+          console.log(`🔍 [DEBUG] AAVE image mapping: coin.image=${coin.image}, mapped=${imageUrl}`);
+        }
+        return {
+          id: coin.id,
+          symbol: coin.symbol.toUpperCase(),
+          name: coin.name,
+          current_price: coin.current_price,
+          price_change_percentage_24h: coin.price_change_percentage_24h || 0,
+          image: imageUrl
+        };
+      });
       
       this.lastFetchTime = now;
       this.fetchPromise = null;
@@ -359,10 +365,37 @@ export class CryptoService {
       'stellar': 'https://coin-images.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png',
       'tron': 'https://coin-images.coingecko.com/coins/images/1094/large/tron-logo.png',
       'sui': 'https://coin-images.coingecko.com/coins/images/26375/large/sui_asset.jpeg',
-      'sahara': 'https://coin-images.coingecko.com/coins/images/66681/large/sahara.png'
+      'sahara': 'https://coin-images.coingecko.com/coins/images/66681/large/sahara.png',
+      'aave': 'https://coin-images.coingecko.com/coins/images/12645/large/AAVE.png'
     };
     
-    return imageMapping[coinId] || `https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png`;
+    // Generate unique fallback URL based on coin ID to avoid duplicate images
+    const fallbackId = this.getCoinGeckoImageId(coinId);
+    return imageMapping[coinId] || `https://coin-images.coingecko.com/coins/images/${fallbackId}/large/${coinId}.png`;
+  }
+
+  private getCoinGeckoImageId(coinId: string): string {
+    // Map coin IDs to their correct CoinGecko image IDs
+    const idMapping: { [key: string]: string } = {
+      'bitcoin': '1',
+      'ethereum': '279',
+      'binancecoin': '825',
+      'cardano': '975',
+      'solana': '4128',
+      'chainlink': '877',
+      'polkadot': '12171',
+      'litecoin': '2',
+      'matic-network': '4713',
+      'hyperliquid': '44077',
+      'avalanche-2': '12559',
+      'stellar': '100',
+      'tron': '1094',
+      'sui': '26375',
+      'sahara': '66681',
+      'aave': '12645'
+    };
+    
+    return idMapping[coinId] || '1'; // Default to Bitcoin if unknown
   }
 
   private getFallbackPrices(): CryptoPrice[] {

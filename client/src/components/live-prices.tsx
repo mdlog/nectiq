@@ -11,8 +11,13 @@ function getCryptoIcon(id: string): string {
     binancecoin: "BNB",
     cardano: "ADA",
     solana: "SOL",
+    aave: "AAVE",
+    litecoin: "LTC",
+    hyperliquid: "HYPE",
+    "avalanche-2": "AVAX",
+    "matic-network": "MATIC",
   };
-  return icons[id] || id.toUpperCase();
+  return icons[id] || id.toUpperCase().slice(0, 4);
 }
 
 function getCryptoColor(id: string): string {
@@ -22,6 +27,11 @@ function getCryptoColor(id: string): string {
     binancecoin: "bg-yellow-500",
     cardano: "bg-blue-600",
     solana: "bg-purple-500",
+    aave: "bg-purple-600",
+    litecoin: "bg-gray-500",
+    hyperliquid: "bg-green-500",
+    "avalanche-2": "bg-red-500",
+    "matic-network": "bg-purple-700",
   };
   return colors[id] || "bg-gray-500";
 }
@@ -100,7 +110,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                 <div className="flex items-center space-x-3">
                   <div className="relative w-8 h-8 flex-shrink-0">
                     <img 
-                      src={crypto.image || `https://coin-images.coingecko.com/coins/images/${crypto.id === 'bitcoin' ? '1' : crypto.id === 'ethereum' ? '279' : crypto.id === 'binancecoin' ? '825' : crypto.id === 'cardano' ? '975' : crypto.id === 'solana' ? '4128' : '1'}/large/${crypto.id}.png`} 
+                      src={crypto.image} 
                       alt={crypto.name}
                       className="w-8 h-8 rounded-full object-cover"
                       onError={(e) => {
