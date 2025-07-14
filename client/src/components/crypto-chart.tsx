@@ -39,6 +39,13 @@ interface CryptoChartProps {
   onPredictClick?: (cryptoId: string) => void;
 }
 
+interface CryptoData {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string;
+}
+
 interface ChartData {
   time: string;
   value: number;
@@ -55,6 +62,23 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
   const [chartType, setChartType] = useState<ChartType>('line');
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [cryptoLogo, setCryptoLogo] = useState<string>('');
+
+  // Fetch cryptocurrency logo from crypto prices API
+  const fetchCryptoLogo = async () => {
+    try {
+      const response = await fetch('/api/crypto/prices');
+      if (response.ok) {
+        const cryptos = await response.json();
+        const crypto = cryptos.find((c: CryptoData) => c.id === cryptoId);
+        if (crypto && crypto.image) {
+          setCryptoLogo(crypto.image);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching crypto logo:', error);
+    }
+  };
 
   const fetchChartData = async (days: string) => {
     setLoading(true);
@@ -123,6 +147,7 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
 
   useEffect(() => {
     fetchChartData(timeframe);
+    fetchCryptoLogo();
   }, [cryptoId, timeframe, chartType]);
 
   // Prepare Chart.js data
@@ -322,8 +347,23 @@ export default function CryptoChart({ cryptoId, symbol, name, currentPrice, pric
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">{symbol}</span>
+            <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+              {cryptoLogo ? (
+                <>
+                  <img 
+                    src={cryptoLogo} 
+                    alt={`${name} logo`} 
+                    className="w-8 h-8 object-cover"
+                    onError={(e) => {
+                      setCryptoLogo('');
+                    }}
+                  />
+                </>
+              ) : (
+                <span className="text-gray-800 dark:text-white font-bold text-sm">
+                  {symbol}
+                </span>
+              )}
             </div>
             <div>
               <CardTitle className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
