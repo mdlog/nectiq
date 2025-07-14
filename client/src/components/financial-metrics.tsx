@@ -76,7 +76,7 @@ export default function FinancialMetrics({ cryptoId, symbol }: FinancialMetricsP
   const volumeChange = metrics.volume_change_24h || 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 mb-8">
       {/* Volume Harian */}
       <Card className="bg-gradient-to-br from-blue-500/20 to-purple-600/20 backdrop-blur-sm border-white/20 hover:border-blue-400/40 transition-all duration-300">
         <CardContent className="p-4">
