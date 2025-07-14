@@ -27,76 +27,106 @@ const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 export class CryptoService {
   private lastFetchTime = 0;
   private cachedRealPrices: CryptoPrice[] = [];
-  private readonly CACHE_DURATION = 60000; // Cache real prices for 1 minute
+  private readonly CACHE_DURATION = 30000; // Cache real prices for 30 seconds (more frequent updates)
+  private fetchPromise: Promise<CryptoPrice[]> | null = null; // Prevent concurrent fetches
 
   // Method to clear cache when cryptocurrencies are deleted
   clearCache() {
     this.lastFetchTime = 0;
     this.cachedRealPrices = [];
+    this.fetchPromise = null;
+  }
+
+  private async fetchFreshPrices(): Promise<CryptoPrice[]> {
+    const now = Date.now();
+    
+    try {
+      // Get cryptocurrency list from database instead of hardcoded list
+      const supportedCryptos = await storage.getAllCryptocurrencies();
+      const cryptoIds = supportedCryptos.map(crypto => crypto.id);
+      
+      if (cryptoIds.length === 0) {
+        this.cachedRealPrices = [];
+        this.lastFetchTime = now;
+        this.fetchPromise = null;
+        return [];
+      }
+
+      const response = await axios.get(`${COINGECKO_API_BASE}/coins/markets`, {
+        params: {
+          ids: cryptoIds.join(','),
+          vs_currency: 'usd',
+          order: 'market_cap_desc',
+          per_page: 20,
+          page: 1,
+          sparkline: false
+        },
+        timeout: 15000,
+        headers: {
+          'User-Agent': 'Nectiq-Crypto-App/1.0',
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip, deflate'
+        },
+        // Disable proxy for Ubuntu localhost
+        proxy: false,
+        // Add retry configuration
+        validateStatus: function (status) {
+          return status >= 200 && status < 300;
+        }
+      });
+
+      this.cachedRealPrices = response.data.map((coin: any) => ({
+        id: coin.id,
+        symbol: coin.symbol.toUpperCase(),
+        name: coin.name,
+        current_price: coin.current_price,
+        price_change_percentage_24h: coin.price_change_percentage_24h || 0,
+        image: coin.id === 'solana' ? '/attached_assets/solana_1750613756851.png' : coin.image
+      }));
+      
+      this.lastFetchTime = now;
+      this.fetchPromise = null;
+      console.log('✅ Successfully fetched real crypto prices from CoinGecko');
+      
+      // Return the merged data from all sources
+      return this.getMergedPriceData();
+      
+    } catch (error: any) {
+      this.fetchPromise = null;
+      if (error.response?.status === 429) {
+        console.log('⏳ CoinGecko rate limit reached, using cached data');
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        console.log('🌐 Network connection issue, using fallback data');
+        console.log('Error details:', error.code, error.address, error.port);
+      } else {
+        console.error('❌ Error fetching crypto prices:', error.message);
+      }
+      
+      // Return the merged data from all sources (cached + DB)
+      return this.getMergedPriceData();
+    }
   }
 
   async getCurrentPrices(): Promise<CryptoPrice[]> {
     const now = Date.now();
     
-    // Try to fetch real prices every minute to avoid rate limits
-    if (now - this.lastFetchTime > this.CACHE_DURATION) {
-      try {
-        // Get cryptocurrency list from database instead of hardcoded list
-        const supportedCryptos = await storage.getAllCryptocurrencies();
-        const cryptoIds = supportedCryptos.map(crypto => crypto.id);
-        
-        if (cryptoIds.length === 0) {
-          this.cachedRealPrices = [];
-          this.lastFetchTime = now;
-          return [];
-        }
-
-        const response = await axios.get(`${COINGECKO_API_BASE}/coins/markets`, {
-          params: {
-            ids: cryptoIds.join(','),
-            vs_currency: 'usd',
-            order: 'market_cap_desc',
-            per_page: 20,
-            page: 1,
-            sparkline: false
-          },
-          timeout: 15000,
-          headers: {
-            'User-Agent': 'Nectiq-Crypto-App/1.0',
-            'Accept': 'application/json',
-            'Accept-Encoding': 'gzip, deflate'
-          },
-          // Disable proxy for Ubuntu localhost
-          proxy: false,
-          // Add retry configuration
-          validateStatus: function (status) {
-            return status >= 200 && status < 300;
-          }
-        });
-
-        this.cachedRealPrices = response.data.map((coin: any) => ({
-          id: coin.id,
-          symbol: coin.symbol.toUpperCase(),
-          name: coin.name,
-          current_price: coin.current_price,
-          price_change_percentage_24h: coin.price_change_percentage_24h || 0,
-          image: coin.id === 'solana' ? '/attached_assets/solana_1750613756851.png' : coin.image
-        }));
-        
-        this.lastFetchTime = now;
-        console.log('✅ Successfully fetched real crypto prices from CoinGecko');
-      } catch (error: any) {
-        if (error.response?.status === 429) {
-          console.log('⏳ CoinGecko rate limit reached, using cached data');
-        } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-          console.log('🌐 Network connection issue, using fallback data');
-          console.log('Error details:', error.code, error.address, error.port);
-        } else {
-          console.error('❌ Error fetching crypto prices:', error.message);
-        }
-      }
+    // If there's already a fetch in progress, wait for it
+    if (this.fetchPromise) {
+      return this.fetchPromise;
     }
     
+    // Try to fetch real prices every 30 seconds to avoid rate limits while keeping prices more current
+    if (now - this.lastFetchTime > this.CACHE_DURATION) {
+      // Create and store the fetch promise to prevent concurrent fetches
+      this.fetchPromise = this.fetchFreshPrices();
+      return this.fetchPromise;
+    }
+    
+    // Return cached data
+    return this.getMergedPriceData();
+  }
+  
+  private async getMergedPriceData(): Promise<CryptoPrice[]> {
     // Get database cryptocurrencies and merge with CoinGecko data
     let allPrices: CryptoPrice[] = [];
     
@@ -122,58 +152,54 @@ export class CryptoService {
         // Start with database prices
         allPrices = [...dbPrices];
         
-        // Add/update with CoinGecko data (CoinGecko data takes precedence for real-time prices)
+        // Update with CoinGecko prices where available
+        allPrices = allPrices.map(dbPrice => {
+          const coinGeckoPrice = coinGeckoMap.get(dbPrice.id);
+          if (coinGeckoPrice) {
+            // Use CoinGecko data but keep our custom image
+            return {
+              ...coinGeckoPrice,
+              image: this.getCryptoImageUrl(dbPrice.id)
+            };
+          }
+          return dbPrice;
+        });
+        
+        // Add any CoinGecko prices that aren't in database yet
         for (const cgPrice of this.cachedRealPrices) {
-          const existingIndex = allPrices.findIndex(p => p.id === cgPrice.id);
-          if (existingIndex >= 0) {
-            // Update existing with real-time CoinGecko data
-            allPrices[existingIndex] = cgPrice;
-          } else {
-            // Add new CoinGecko crypto
-            allPrices.push(cgPrice);
+          const existsInDb = allPrices.find(p => p.id === cgPrice.id);
+          if (!existsInDb) {
+            allPrices.push({
+              ...cgPrice,
+              image: this.getCryptoImageUrl(cgPrice.id)
+            });
           }
         }
-        
-        return this.addRealtimeFluctuations(allPrices);
-      }
-      
-      // If no CoinGecko data but we have database cryptos, add fluctuations to them
-      if (dbPrices.length > 0) {
-        return this.addRealtimeFluctuations(dbPrices);
+      } else {
+        // Use database prices
+        allPrices = dbPrices;
       }
     } catch (error) {
-      console.error('Error fetching database cryptocurrencies:', error);
+      console.error('Error merging price data:', error);
+      // Return cached real prices or fallback if no DB data available
+      allPrices = this.cachedRealPrices.length > 0 ? this.cachedRealPrices : this.getFallbackPrices();
     }
     
-    // Only use fallback if no real data available
-    return this.getFallbackPrices();
-  }
-
-  private addRealtimeFluctuations(basePrices: CryptoPrice[]): CryptoPrice[] {
-    const microVariation = (Math.random() - 0.5) * 0.0008; // Very small fluctuation (0.08%)
+    // If no data available from any source, use fallback
+    if (allPrices.length === 0) {
+      allPrices = this.getFallbackPrices();
+    }
     
-    return basePrices.map(crypto => ({
-      ...crypto,
-      current_price: crypto.current_price * (1 + microVariation)
-    }));
+    return allPrices;
   }
 
   async getCryptoPrice(coinId: string): Promise<number> {
     try {
-      const response = await axios.get(`${COINGECKO_API_BASE}/simple/price`, {
-        params: {
-          ids: coinId,
-          vs_currencies: 'usd'
-        },
-        timeout: 10000,
-        headers: {
-          'User-Agent': 'Nectiq-Crypto-App/1.0'
-        }
-      });
-
-      return response.data[coinId]?.usd || 0;
+      const prices = await this.getCurrentPrices();
+      const crypto = prices.find(p => p.id === coinId || p.symbol.toLowerCase() === coinId.toLowerCase());
+      return crypto ? crypto.current_price : 0;
     } catch (error) {
-      console.error(`Error fetching price for ${coinId}:`, error);
+      console.error(`Error getting price for ${coinId}:`, error);
       return 0;
     }
   }
@@ -189,162 +215,136 @@ export class CryptoService {
           developer_data: false,
           sparkline: false
         },
-        timeout: 15000,
+        timeout: 10000,
         headers: {
-          'User-Agent': 'Nectiq-Crypto-App/1.0',
-          'Accept': 'application/json'
+          'User-Agent': 'Nectiq-Crypto-App/1.0'
         },
         proxy: false
       });
 
-      const data = response.data;
-      const marketData = data.market_data;
-
+      const coin = response.data;
       return {
-        id: data.id,
-        symbol: data.symbol.toUpperCase(),
-        name: data.name,
-        current_price: marketData.current_price?.usd || 0,
-        market_cap: marketData.market_cap?.usd || 0,
-        market_cap_rank: marketData.market_cap_rank || 0,
-        total_volume_24h: marketData.total_volume?.usd || 0,
-        price_change_24h: marketData.price_change_percentage_24h || 0,
-        price_change_7d: marketData.price_change_percentage_7d || 0,
-        price_change_30d: marketData.price_change_percentage_30d || 0,
-        volume_24h: marketData.total_volume?.usd || 0,
-        volume_change_24h: marketData.volume_change_24h || 0,
-        circulating_supply: marketData.circulating_supply || 0,
-        total_supply: marketData.total_supply || 0,
-        ath: marketData.ath?.usd || 0,
-        ath_change_percentage: marketData.ath_change_percentage?.usd || 0,
-        atl: marketData.atl?.usd || 0,
-        atl_change_percentage: marketData.atl_change_percentage?.usd || 0
+        id: coin.id,
+        symbol: coin.symbol?.toUpperCase() || '',
+        name: coin.name || '',
+        current_price: coin.market_data?.current_price?.usd || 0,
+        market_cap: coin.market_data?.market_cap?.usd || 0,
+        total_volume: coin.market_data?.total_volume?.usd || 0,
+        circulating_supply: coin.market_data?.circulating_supply || 0,
+        total_supply: coin.market_data?.total_supply || 0,
+        max_supply: coin.market_data?.max_supply || 0,
+        price_change_percentage_24h: coin.market_data?.price_change_percentage_24h || 0,
+        volume_24h: coin.market_data?.total_volume?.usd || 0,
+        volume_30d_estimate: (coin.market_data?.total_volume?.usd || 0) * 30,
+        image: this.getCryptoImageUrl(coin.id)
       };
     } catch (error) {
       console.error(`Error fetching metrics for ${coinId}:`, error);
-      
-      // Return fallback data with realistic metrics based on cryptocurrency
       return this.getFallbackMetrics(coinId);
     }
   }
 
   private getFallbackMetrics(coinId: string): any {
-    const fallbackData: { [key: string]: any } = {
-      'bitcoin': {
-        id: 'bitcoin',
-        symbol: 'BTC',
-        name: 'Bitcoin',
-        current_price: 67500,
-        market_cap: 1340000000000,
-        market_cap_rank: 1,
-        total_volume_24h: 28500000000,
-        price_change_24h: 1.85,
-        price_change_7d: -2.1,
-        price_change_30d: 8.4,
-        volume_24h: 28500000000,
-        volume_change_24h: 12.5,
-        circulating_supply: 19700000,
-        total_supply: 21000000
-      },
-      'ethereum': {
-        id: 'ethereum',
-        symbol: 'ETH',
-        name: 'Ethereum',
-        current_price: 3850,
-        market_cap: 463000000000,
-        market_cap_rank: 2,
-        total_volume_24h: 15800000000,
-        price_change_24h: -0.75,
-        price_change_7d: 3.2,
-        price_change_30d: 12.1,
-        volume_24h: 15800000000,
-        volume_change_24h: 8.3,
-        circulating_supply: 120300000,
-        total_supply: 120300000
-      },
-      'solana': {
-        id: 'solana',
-        symbol: 'SOL',
-        name: 'Solana',
-        current_price: 168,
-        market_cap: 79500000000,
-        market_cap_rank: 5,
-        total_volume_24h: 3200000000,
-        price_change_24h: 2.45,
-        price_change_7d: 5.8,
-        price_change_30d: 18.7,
-        volume_24h: 3200000000,
-        volume_change_24h: 15.2,
-        circulating_supply: 473200000,
-        total_supply: 588000000
-      }
-    };
+    const prices = this.getFallbackPrices();
+    const crypto = prices.find(p => p.id === coinId);
+    
+    if (!crypto) {
+      return {
+        id: coinId,
+        symbol: coinId.toUpperCase(),
+        name: this.getNameFromId(coinId),
+        current_price: 0,
+        market_cap: 0,
+        total_volume: 0,
+        circulating_supply: 0,
+        total_supply: 0,
+        max_supply: 0,
+        price_change_percentage_24h: 0,
+        volume_24h: 0,
+        volume_30d_estimate: 0,
+        image: this.getCryptoImageUrl(coinId)
+      };
+    }
 
-    return fallbackData[coinId] || {
-      id: coinId,
-      symbol: coinId.toUpperCase(),
-      name: coinId,
-      current_price: 100,
-      market_cap: 1000000000,
-      market_cap_rank: 50,
-      total_volume_24h: 50000000,
-      price_change_24h: 0,
-      price_change_7d: 0,
-      price_change_30d: 0,
-      volume_24h: 50000000,
-      volume_change_24h: 0,
-      circulating_supply: 1000000,
-      total_supply: 1000000
+    return {
+      id: crypto.id,
+      symbol: crypto.symbol,
+      name: crypto.name,
+      current_price: crypto.current_price,
+      market_cap: crypto.current_price * 19000000,
+      total_volume: crypto.current_price * 500000,
+      circulating_supply: 19000000,
+      total_supply: 21000000,
+      max_supply: 21000000,
+      price_change_percentage_24h: crypto.price_change_percentage_24h,
+      volume_24h: crypto.current_price * 500000,
+      volume_30d_estimate: crypto.current_price * 500000 * 30,
+      image: this.getCryptoImageUrl(crypto.id)
     };
   }
 
   private getSymbolFromId(id: string): string {
-    const mapping: Record<string, string> = {
+    const mapping: { [key: string]: string } = {
       'bitcoin': 'BTC',
       'ethereum': 'ETH',
       'binancecoin': 'BNB',
       'cardano': 'ADA',
-      'solana': 'SOL'
+      'solana': 'SOL',
+      'chainlink': 'LINK',
+      'polkadot': 'DOT',
+      'litecoin': 'LTC',
+      'matic-network': 'MATIC',
+      'hyperliquid': 'HYPE',
+      'avalanche-2': 'AVAX',
+      'stellar': 'XLM',
+      'tron': 'TRX',
+      'sui': 'SUI',
+      'sahara': 'SAHARA'
     };
     return mapping[id] || id.toUpperCase();
   }
 
   private getNameFromId(id: string): string {
-    const mapping: Record<string, string> = {
+    const mapping: { [key: string]: string } = {
       'bitcoin': 'Bitcoin',
       'ethereum': 'Ethereum',
       'binancecoin': 'Binance Coin',
       'cardano': 'Cardano',
-      'solana': 'Solana'
+      'solana': 'Solana',
+      'chainlink': 'Chainlink',
+      'polkadot': 'Polkadot',
+      'litecoin': 'Litecoin',
+      'matic-network': 'Polygon',
+      'hyperliquid': 'Hyperliquid',
+      'avalanche-2': 'Avalanche',
+      'stellar': 'Stellar',
+      'tron': 'TRON',
+      'sui': 'Sui',
+      'sahara': 'Sahara AI'
     };
     return mapping[id] || id;
   }
 
   private getCryptoImageUrl(coinId: string): string {
-    // Special case for Solana - use custom gradient logo
-    if (coinId === 'solana') {
-      return '/attached_assets/solana_1750613756851.png';
-    }
-    
-    // Map of CoinGecko IDs to their image IDs for accurate logo fetching
-    const imageIdMap: { [key: string]: string } = {
-      'bitcoin': '1',
-      'ethereum': '279', 
-      'binancecoin': '825',
-      'cardano': '975',
-      'solana': '4128',
-      'avalanche-2': '12559',
-      'ripple': '44',
-      'dogecoin': '5',
-      'polygon': '4713',
-      'chainlink': '877',
-      'litecoin': '2',
-      'shiba-inu': '11939',
-      'tron': '1094'
+    const imageMapping: { [key: string]: string } = {
+      'bitcoin': 'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png',
+      'ethereum': 'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png',
+      'binancecoin': 'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
+      'cardano': 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png',
+      'solana': '/attached_assets/solana_1750613756851.png',
+      'chainlink': 'https://coin-images.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
+      'polkadot': 'https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png',
+      'litecoin': 'https://coin-images.coingecko.com/coins/images/2/large/litecoin.png',
+      'matic-network': 'https://coin-images.coingecko.com/coins/images/4713/large/matic-token-icon.png',
+      'hyperliquid': 'https://coin-images.coingecko.com/coins/images/44077/large/hyperliquid.png',
+      'avalanche-2': 'https://coin-images.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
+      'stellar': 'https://coin-images.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png',
+      'tron': 'https://coin-images.coingecko.com/coins/images/1094/large/tron-logo.png',
+      'sui': 'https://coin-images.coingecko.com/coins/images/26375/large/sui_asset.jpeg',
+      'sahara': 'https://coin-images.coingecko.com/coins/images/66681/large/sahara.png'
     };
     
-    const imageId = imageIdMap[coinId] || '1'; // Default to Bitcoin if not found
-    return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${coinId}.png`;
+    return imageMapping[coinId] || `https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png`;
   }
 
   private getFallbackPrices(): CryptoPrice[] {
@@ -383,17 +383,17 @@ export class CryptoService {
         id: 'cardano',
         symbol: 'ADA',
         name: 'Cardano',
-        current_price: 0.48 + (timeVariation * 0.01) + (microVariation * 0.48),
-        price_change_percentage_24h: -1.12 + (timeVariation * 0.6),
+        current_price: 0.55 + (timeVariation * 0.02) + (microVariation * 0.55),
+        price_change_percentage_24h: -1.2 + (timeVariation * 0.2),
         image: 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png'
       },
       {
         id: 'solana',
         symbol: 'SOL',
         name: 'Solana',
-        current_price: 168 + (timeVariation * 8) + (microVariation * 168),
-        price_change_percentage_24h: 2.45 + (timeVariation * 0.7),
-        image: 'https://coin-images.coingecko.com/coins/images/4128/large/solana.png'
+        current_price: 185 + (timeVariation * 8) + (microVariation * 185),
+        price_change_percentage_24h: 2.1 + (timeVariation * 0.6),
+        image: '/attached_assets/solana_1750613756851.png'
       }
     ];
   }
