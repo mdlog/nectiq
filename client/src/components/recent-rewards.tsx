@@ -83,37 +83,41 @@ export function RecentRewards() {
 
   if (isLoading) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
+      <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
         <h3 className="text-lg font-bold mb-4 flex items-center">
           <Gift className="text-primary mr-2 animate-pulse" size={18} />
           Recent Rewards
           <div className="ml-2 w-2 h-2 bg-primary rounded-full animate-pulse"></div>
         </h3>
-        <EnhancedSkeleton type="reward" count={3} />
+        <div className="flex-1">
+          <EnhancedSkeleton type="reward" count={3} />
+        </div>
       </div>
     );
   }
 
   if (rewards.length === 0) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
+      <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
         <h3 className="text-lg font-bold mb-4 flex items-center">
           <Gift className="text-primary mr-2" size={18} />
           Recent Rewards
         </h3>
-        <EngagementPlaceholder type="rewards" />
+        <div className="flex-1 flex items-center justify-center">
+          <EngagementPlaceholder type="rewards" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl p-6 border border-surface-light">
+    <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
       <h3 className="text-lg font-bold mb-4 flex items-center">
         <Gift className="text-primary mr-2" size={18} />
         Recent Rewards
       </h3>
       
-      <div className="space-y-3">
+      <div className="space-y-3 flex-1">
         {currentRewards.map((reward) => {
           const isWin = reward.amount > 0;
           
@@ -229,7 +233,7 @@ export function RecentRewards() {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="mt-4 pt-3 border-t border-surface-light">
+        <div className="mt-auto pt-3 border-t border-surface-light">
           <div className="flex items-center justify-center">
             {/* Pagination Controls */}
             <div className="flex items-center space-x-1">

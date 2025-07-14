@@ -40,12 +40,12 @@ export function TopPredictors() {
 
   if (isLoading) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
+      <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
         <h3 className="text-lg font-bold mb-4 flex items-center">
           <Medal className="text-warning mr-2" size={18} />
           Top Predictors
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-3 flex-1">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="p-3 bg-surface-light rounded-lg animate-pulse">
               <div className="h-12 bg-slate-600 rounded"></div>
@@ -58,12 +58,12 @@ export function TopPredictors() {
 
   if (leaderboard.length === 0) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
+      <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
         <h3 className="text-lg font-bold mb-4 flex items-center">
           <Medal className="text-warning mr-2" size={18} />
           Top Predictors
         </h3>
-        <div className="text-center py-8 text-slate-400">
+        <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
           <Medal className="mx-auto mb-2" size={32} />
           <p>No predictors yet</p>
           <p className="text-sm">Be the first to make predictions!</p>
@@ -72,15 +72,18 @@ export function TopPredictors() {
     );
   }
 
+  // Limit to top 5 predictors only
+  const topFivePredictors = leaderboard.slice(0, 5);
+
   return (
-    <div className="bg-surface rounded-xl p-6 border border-surface-light">
+    <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
       <h3 className="text-lg font-bold mb-4 flex items-center">
         <Medal className="text-warning mr-2" size={18} />
         Top Predictors
       </h3>
       
-      <div className="space-y-3">
-        {leaderboard.slice(0, 5).map((user, index) => {
+      <div className="space-y-3 flex-1">
+        {topFivePredictors.map((user, index) => {
           const rank = index + 1;
           
           return (
@@ -103,18 +106,27 @@ export function TopPredictors() {
             </div>
           );
         })}
+        
+        {/* Fill remaining space if less than 5 predictors */}
+        {topFivePredictors.length < 5 && (
+          <div className="flex-1 flex flex-col justify-center items-center text-slate-400 text-sm">
+            <p>{5 - topFivePredictors.length} more slots available</p>
+          </div>
+        )}
       </div>
       
-      <Link href="/leaderboard">
-        <Button
-          variant="outline"
-          className="w-full mt-4 bg-primary/20 hover:bg-primary/30 text-primary border-primary/20 group transition-all duration-200 hover:scale-[1.02]"
-        >
-          <Eye className="mr-2 group-hover:mr-3 transition-all duration-200" size={16} />
-          View Full Leaderboard
-          <ExternalLink className="ml-2 group-hover:ml-3 transition-all duration-200" size={14} />
-        </Button>
-      </Link>
+      <div className="mt-4">
+        <Link href="/leaderboard">
+          <Button
+            variant="outline"
+            className="w-full bg-primary/20 hover:bg-primary/30 text-primary border-primary/20 group transition-all duration-200 hover:scale-[1.02]"
+          >
+            <Eye className="mr-2 group-hover:mr-3 transition-all duration-200" size={16} />
+            View Full Leaderboard
+            <ExternalLink className="ml-2 group-hover:ml-3 transition-all duration-200" size={14} />
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

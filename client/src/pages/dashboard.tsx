@@ -75,14 +75,20 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 md:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
           {/* Left Sidebar - Live Prices */}
-          <div className="lg:col-span-1 space-y-6">
-            <LivePrices 
-              onCryptoSelect={handleCryptoSelect}
-              onPredictClick={handlePredictClick}
-            />
-            
-            {/* Banner Section - Below Live Prices */}
-            <BannerSection position="below_live_prices" />
+          <div className="lg:col-span-1">
+            <div className="flex flex-col space-y-6 h-full">
+              <div className="flex-1">
+                <LivePrices 
+                  onCryptoSelect={handleCryptoSelect}
+                  onPredictClick={handlePredictClick}
+                />
+              </div>
+              
+              {/* Banner Section - Below Live Prices */}
+              <div className="flex-shrink-0">
+                <BannerSection position="below_live_prices" />
+              </div>
+            </div>
           </div>
 
           {/* Main Content - Center */}
@@ -125,9 +131,15 @@ export default function Dashboard() {
           </div>
           
           {/* Right Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            <TopPredictors />
-            <RecentRewards />
+          <div className="lg:col-span-1">
+            <div className="flex flex-col space-y-6 h-full min-h-[600px]">
+              <div className="flex-1">
+                <TopPredictors />
+              </div>
+              <div className="flex-1">
+                <RecentRewards />
+              </div>
+            </div>
           </div>
         </div>
         
