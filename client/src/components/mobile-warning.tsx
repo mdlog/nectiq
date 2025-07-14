@@ -17,17 +17,17 @@ export function MobileWarning({ isOpen, onClose }: MobileWarningProps) {
             <AlertTriangle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
           </div>
           <DialogTitle className="text-xl font-bold text-orange-900 dark:text-orange-100">
-            Peringatan: Device Mobile Terdeteksi
+            Warning: Mobile Device Detected
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
           <div className="text-center space-y-3">
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              Platform Nectiq dioptimalkan untuk pengalaman terbaik di komputer desktop atau laptop.
+              Nectiq platform is optimized for the best experience on desktop computers or laptops.
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Fitur-fitur seperti chart interaktif, prediction battles, dan survival tournaments akan bekerja lebih baik di layar yang lebih besar.
+              Features like interactive charts, prediction battles, and survival tournaments work much better on larger screens.
             </p>
           </div>
 
@@ -35,22 +35,22 @@ export function MobileWarning({ isOpen, onClose }: MobileWarningProps) {
             <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-orange-200 dark:border-orange-700">
               <Smartphone className="h-8 w-8 text-red-500 mx-auto mb-2" />
               <p className="text-sm font-medium text-red-700 dark:text-red-400">Mobile</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Pengalaman Terbatas</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Limited Experience</p>
             </div>
             <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
               <Monitor className="h-8 w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
               <p className="text-sm font-medium text-green-700 dark:text-green-400">Desktop/PC</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Pengalaman Optimal</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Optimal Experience</p>
             </div>
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-            <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Rekomendasi:</h4>
+            <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Recommendations:</h4>
             <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-              <li>• Gunakan komputer atau laptop untuk trading yang optimal</li>
-              <li>• Chart crypto akan lebih responsif di layar besar</li>
-              <li>• Fitur battle prediction lebih mudah digunakan</li>
-              <li>• Dashboard analytics lebih detail dan informatif</li>
+              <li>• Use computer or laptop for optimal trading experience</li>
+              <li>• Crypto charts are more responsive on larger screens</li>
+              <li>• Prediction battle features are easier to use</li>
+              <li>• Dashboard analytics are more detailed and informative</li>
             </ul>
           </div>
 
@@ -60,13 +60,13 @@ export function MobileWarning({ isOpen, onClose }: MobileWarningProps) {
               variant="outline" 
               className="flex-1 border-orange-200 dark:border-orange-700 text-orange-700 dark:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20"
             >
-              Lanjutkan di Mobile
+              Continue on Mobile
             </Button>
             <Button 
               onClick={() => window.close()}
               className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold"
             >
-              Buka di PC/Desktop
+              Open on PC/Desktop
             </Button>
           </div>
         </div>
