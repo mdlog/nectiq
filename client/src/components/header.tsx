@@ -143,14 +143,6 @@ export function Header() {
               Home
             </button>
             <button 
-              onClick={() => setLocation('/dashboard')} 
-              className={`transition-colors ${
-                location === '/dashboard' ? "text-white font-bold" : "text-slate-300 hover:text-white"
-              }`}
-            >
-              My Dashboard
-            </button>
-            <button 
               onClick={() => setLocation('/battles')} 
               className={`transition-colors ${
                 location === '/battles' ? "text-white font-bold" : "text-slate-300 hover:text-white"
@@ -418,17 +410,6 @@ export function Header() {
                   }`}
                 >
                   Home
-                </button>
-                <button 
-                  onClick={() => {
-                    setLocation('/dashboard');
-                    setIsMobileMenuOpen(false);
-                  }} 
-                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    location === '/dashboard' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
-                  }`}
-                >
-                  My Dashboard
                 </button>
                 <button 
                   onClick={() => {
