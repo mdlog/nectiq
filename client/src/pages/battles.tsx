@@ -863,7 +863,7 @@ export default function BattlesPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {openBattles.map((battle: Battle) => (
                     <Card key={battle.id} className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
@@ -894,12 +894,69 @@ export default function BattlesPage() {
                           </div>
                         </div>
                         
-                        {/* Battle Layout - 3 columns for desktop, stacked for mobile */}
-                        <div className="space-y-4 md:space-y-0">
-                          {/* Mobile: Current Price First */}
-                          <div className="md:hidden">
-                            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-center">
-                              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        {/* Battle Layout - 2x2 Layout */}
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          {/* Left Column - Participants */}
+                          <div className="space-y-3">
+                            {/* Challenger */}
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center">
+                              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                Challenger
+                              </h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                {battle.challengerUsername}
+                              </p>
+                              <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                                {user && user.id === battle.challengerId ? (
+                                  `$${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 6
+                                  })}`
+                                ) : (
+                                  "🔒 Hidden"
+                                )}
+                              </p>
+                            </div>
+
+                            {/* Opponent */}
+                            <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg text-center">
+                              <h4 className="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">
+                                {battle.challenged?.username || 'Opponent'}
+                              </h4>
+                              {battle.challenged?.username ? (
+                                <>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                    {battle.challenged.username}
+                                  </p>
+                                  <p className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                                    ${parseFloat(battle.challengedPrediction || '0').toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 6
+                                    })}
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                                    Waiting...
+                                  </p>
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                                    onClick={() => handleJoinBattle(battle)}
+                                  >
+                                    Join Battle
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right Column - Current Price & Time */}
+                          <div className="space-y-3">
+                            {/* Current Price */}
+                            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
                                 Current Price
                               </h4>
                               <p className="text-lg font-bold text-gray-900 dark:text-white">
@@ -911,85 +968,40 @@ export default function BattlesPage() {
                                   'Loading...'
                                 }
                               </p>
+                              <p className="text-sm text-gray-900 dark:text-white font-medium">
+                                Live Price
+                              </p>
+                            </div>
+
+                            {/* Time Remaining */}
+                            <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg text-center">
+                              <h4 className="text-sm font-medium text-orange-900 dark:text-orange-100 mb-1">
+                                Time Remaining
+                              </h4>
+                              <p className="text-lg font-bold text-orange-900 dark:text-orange-100">
+                                <CountdownTimer targetTime={battle.targetTime} />
+                              </p>
+                              <p className="text-sm text-gray-900 dark:text-white font-medium">
+                                {battle.timeframe}
+                              </p>
                             </div>
                           </div>
+                        </div>
 
-                          {/* Desktop/Mobile: Participants Grid */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Challenger */}
-                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                              <div className="text-center">
-                                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                                  Challenger
-                                </h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                  {battle.challengerUsername}
-                                </p>
-                                <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                                  {user && user.id === battle.challengerId ? (
-                                    `$${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 6
-                                    })}`
-                                  ) : (
-                                    "🔒 Hidden"
-                                  )}
-                                </p>
-                              </div>
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex items-center text-sm text-gray-900 dark:text-white font-medium">
+                              <DollarSign className="w-4 h-4 mr-1" />
+                              Stake: {battle.stakeAmount} NTIQ
                             </div>
-                            
-                            {/* Current Price - Desktop Only */}
-                            <div className="hidden md:block bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                              <div className="text-center">
-                                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                  Current Price
-                                </h4>
-                                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                  {battle.currentPrice ? 
-                                    `$${battle.currentPrice.toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 6
-                                    })}` : 
-                                    'Loading...'
-                                  }
-                                </p>
-                              </div>
+                            <div className="text-sm text-gray-900 dark:text-white font-medium">
+                              Duration: {battle.timeframe}
                             </div>
-                            
-                            {/* Opponent */}
-                            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                              <div className="text-center">
-                                <h4 className="font-medium text-purple-900 dark:text-purple-100 mb-2">
-                                  {battle.challenged?.username || 'Opponent'}
-                                </h4>
-                                {battle.challenged?.username ? (
-                                  <>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                      {battle.challenged.username}
-                                    </p>
-                                    <p className="text-lg font-semibold text-purple-900 dark:text-purple-100">
-                                      ${parseFloat(battle.challengedPrediction || '0').toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 6
-                                      })}
-                                    </p>
-                                  </>
-                                ) : (
-                                  <>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                                      Waiting...
-                                    </p>
-                                    <Button 
-                                      size="sm" 
-                                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                                      onClick={() => handleJoinBattle(battle)}
-                                    >
-                                      Join Battle
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
+                          </div>
+                          
+                          <div className="flex items-center text-sm font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-3 py-1 rounded-full">
+                            <Clock className="w-4 h-4 mr-1" />
+                            Open for Join
                           </div>
                         </div>
                       </CardContent>
