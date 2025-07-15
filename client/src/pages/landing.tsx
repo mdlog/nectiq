@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 import { PlatformStats } from "@/components/platform-stats";
 
@@ -141,6 +142,33 @@ function LandingHeader() {
 
 export default function LandingPage() {
   const [, setLocation] = useLocation();
+  
+  // Check if user is authenticated and auto-redirect to dashboard
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["/api/user"],
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    // If user is authenticated, automatically redirect to dashboard
+    if (!isLoading && user) {
+      console.log('🚀 User is authenticated on landing page, redirecting to dashboard...');
+      setLocation('/home');
+    }
+  }, [user, isLoading, setLocation]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-background text-foreground pb-16">

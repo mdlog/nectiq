@@ -138,8 +138,14 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                   await queryClient.invalidateQueries();
                   console.log('🔐 Queries invalidated');
                   
-                  // No automatic redirect - let user stay on current page
-                  console.log('🔐 Authentication completed, staying on current page');
+                  // Redirect to dashboard after successful authentication
+                  console.log('🔐 Authentication completed, redirecting to dashboard...');
+                  
+                  // Add a small delay to ensure query invalidation completes
+                  setTimeout(() => {
+                    navigate('/home');
+                    console.log('🔐 Redirected to /home dashboard');
+                  }, 1000);
                 } else {
                   try {
                     const errorData = await response.json();
