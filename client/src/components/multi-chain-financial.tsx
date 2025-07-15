@@ -170,6 +170,7 @@ export function MultiChainFinancial() {
   const [fixedEthAmount, setFixedEthAmount] = useState<string>("0");
   const [confirmationEthAmount, setConfirmationEthAmount] = useState<string>("0");
   const [expandedDeposits, setExpandedDeposits] = useState<Set<number>>(new Set());
+  const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   // Query to get user data
@@ -232,6 +233,51 @@ export function MultiChainFinancial() {
       newExpanded.add(depositId);
     }
     setExpandedDeposits(newExpanded);
+  };
+
+  const checkBlockchainStatus = async (depositId: number) => {
+    setIsCheckingStatus(true);
+    try {
+      const response = await apiRequest(`/api/deposits/${depositId}/check-blockchain-status`, {
+        method: 'POST',
+      });
+
+      if (response.success) {
+        if (response.status === 'completed') {
+          toast({
+            title: "Deposit Completed!",
+            description: response.message,
+          });
+          
+          // Refresh deposit and user data
+          queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        } else if (response.status === 'failed') {
+          toast({
+            title: "Transaction Failed",
+            description: response.message,
+            variant: "destructive",
+          });
+          
+          // Refresh deposit data
+          queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+        } else {
+          toast({
+            title: "Still Processing",
+            description: response.message,
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error('Error checking blockchain status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check transaction status",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingStatus(false);
+    }
   };
 
   // Effect to calculate fixed ETH amount when deposit amount changes for ETH deposits
@@ -492,13 +538,13 @@ export function MultiChainFinancial() {
 
       console.log('Transaction sent:', txHash);
 
-      // Update deposit with transaction hash and mark as completed
+      // Update deposit with transaction hash (keep as pending until blockchain confirmation)
       try {
         await apiRequest(`/api/deposits/${deposit.id}/update-transaction`, {
           method: 'POST',
           body: JSON.stringify({
             transactionHash: txHash,
-            status: 'completed'
+            status: 'processing' // Change to processing instead of completed
           }),
         });
 
@@ -506,8 +552,8 @@ export function MultiChainFinancial() {
         queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
         
         toast({
-          title: "Deposit Updated",
-          description: "Transaction hash saved and status updated to completed",
+          title: "Transaction Submitted",
+          description: "Transaction hash saved. Waiting for blockchain confirmation...",
         });
       } catch (updateError: any) {
         console.error('Failed to update deposit:', updateError);
@@ -541,7 +587,8 @@ export function MultiChainFinancial() {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { color: "bg-yellow-500", text: "Pending" },
-      confirmed: { color: "bg-blue-500", text: "Confirmed" },
+      processing: { color: "bg-blue-500", text: "Processing" },
+      confirmed: { color: "bg-blue-600", text: "Confirmed" },
       processed: { color: "bg-green-500", text: "Processed" },
       completed: { color: "bg-green-600", text: "Completed" },
       approved: { color: "bg-blue-600", text: "Approved" },
@@ -827,6 +874,18 @@ export function MultiChainFinancial() {
                             >
                               <Eye className="w-3 h-3 mr-1" />
                               {expandedDeposits.has(deposit.id) ? 'Hide Action' : 'Action View'}
+                            </Button>
+                          )}
+                          {deposit.status === 'processing' && deposit.transactionHash && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="mt-2 bg-blue-600 hover:bg-blue-700"
+                              onClick={() => checkBlockchainStatus(deposit.id)}
+                              disabled={isCheckingStatus}
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              {isCheckingStatus ? 'Checking...' : 'Check Status'}
                             </Button>
                           )}
                         </div>

@@ -5161,6 +5161,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check blockchain transaction status and update deposit
+  app.post("/api/deposits/:id/check-blockchain-status", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const depositId = parseInt(req.params.id);
+      
+      // Get deposit details
+      const userDeposits = await storage.getUserDeposits(session.userId, 100);
+      const deposit = userDeposits.find(d => d.id === depositId);
+      
+      if (!deposit) {
+        return res.status(404).json({ error: "Deposit not found or unauthorized" });
+      }
+
+      if (!deposit.transactionHash) {
+        return res.status(400).json({ error: "No transaction hash found for this deposit" });
+      }
+
+      // Check blockchain status based on chain
+      const chainConfig = {
+        'eth': { explorerApi: 'https://api.etherscan.io/api', apiKey: process.env.ETHERSCAN_API_KEY },
+        'bsc': { explorerApi: 'https://api.bscscan.com/api', apiKey: process.env.BSCSCAN_API_KEY },
+        'base': { explorerApi: 'https://api.basescan.org/api', apiKey: process.env.BASESCAN_API_KEY },
+        'optimism': { explorerApi: 'https://api-optimistic.etherscan.io/api', apiKey: process.env.OPTIMISM_API_KEY },
+        'arbitrum': { explorerApi: 'https://api.arbiscan.io/api', apiKey: process.env.ARBISCAN_API_KEY },
+        'sepolia': { explorerApi: 'https://api-sepolia.etherscan.io/api', apiKey: process.env.ETHERSCAN_API_KEY },
+        'holesky': { explorerApi: 'https://api-holesky.etherscan.io/api', apiKey: process.env.ETHERSCAN_API_KEY }
+      };
+
+      const chain = chainConfig[deposit.chainName as keyof typeof chainConfig];
+      if (!chain) {
+        return res.status(400).json({ error: "Unsupported blockchain" });
+      }
+
+      // Check transaction status
+      try {
+        const response = await fetch(`${chain.explorerApi}?module=transaction&action=gettxreceiptstatus&txhash=${deposit.transactionHash}&apikey=${chain.apiKey}`);
+        const data = await response.json();
+        
+        if (data.status === "1" && data.result?.status === "1") {
+          // Transaction successful, update deposit to completed and add NTIQ balance
+          await storage.updateDepositStatus(depositId, 'completed');
+          
+          // Add NTIQ balance to user using BalanceService
+          const balanceService = new BalanceService(storage);
+          await balanceService.processTransaction(
+            session.userId,
+            'deposit_credit',
+            deposit.ntiqAmount,
+            `Deposit completed - ${deposit.chainName.toUpperCase()} transaction ${deposit.transactionHash}`,
+            { 
+              depositId: depositId,
+              transactionHash: deposit.transactionHash,
+              chainName: deposit.chainName,
+              tokenType: deposit.tokenType,
+              amountUSD: deposit.amountUSD
+            }
+          );
+
+          console.log(`✅ Deposit ${depositId} completed successfully. Added ${deposit.ntiqAmount} NTIQ to user ${session.userId}`);
+          
+          return res.json({ 
+            success: true, 
+            status: 'completed',
+            message: `Deposit completed! ${deposit.ntiqAmount} NTIQ added to your balance.`
+          });
+        } else if (data.status === "1" && data.result?.status === "0") {
+          // Transaction failed
+          await storage.updateDepositStatus(depositId, 'failed');
+          
+          console.log(`❌ Deposit ${depositId} failed on blockchain`);
+          
+          return res.json({ 
+            success: true, 
+            status: 'failed',
+            message: 'Transaction failed on blockchain'
+          });
+        } else {
+          // Still pending
+          return res.json({ 
+            success: true, 
+            status: 'processing',
+            message: 'Transaction still pending on blockchain'
+          });
+        }
+      } catch (blockchainError: any) {
+        console.error('Blockchain API error:', blockchainError);
+        return res.json({ 
+          success: true, 
+          status: 'processing',
+          message: 'Unable to check blockchain status, will retry later'
+        });
+      }
+    } catch (error: any) {
+      console.error("Error checking blockchain status:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Create withdrawal request
   app.post("/api/withdrawals/create", async (req, res) => {
     try {
