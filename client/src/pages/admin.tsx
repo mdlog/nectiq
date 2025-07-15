@@ -304,7 +304,7 @@ export default function AdminPanel() {
   const [leaderboardSortOrder, setLeaderboardSortOrder] = useState<"asc" | "desc">("desc");
   
   // Transaction monitoring enhancements state
-  const [transactionTypeFilter, setTransactionTypeFilter] = useState<"all" | "purchase" | "withdrawal">("all");
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<"all" | "purchase" | "withdrawal" | "deposit">("all");
   const [transactionTokenFilter, setTransactionTokenFilter] = useState<"all" | "ETH" | "USDT" | "USDC">("all");
   const [transactionStatusFilter, setTransactionStatusFilter] = useState<"all" | "pending" | "completed" | "failed">("all");
   const [transactionAmountFilter, setTransactionAmountFilter] = useState<"all" | "0-1000" | "1000-10000" | "10000-100000" | "100000+">("all");
@@ -487,6 +487,15 @@ export default function AdminPanel() {
 
   const { data: transactionWithdrawals = [] } = useQuery({
     queryKey: ["/api/admin/withdrawals"], 
+    retry: 2,
+    retryDelay: 1000,
+    refetchInterval: 1000, // Ultra-fast updates every 1 second
+    refetchIntervalInBackground: true,
+    staleTime: 30000, // 30 seconds
+  });
+
+  const { data: transactionDeposits = [] } = useQuery({
+    queryKey: ["/api/admin/deposits"], 
     retry: 2,
     retryDelay: 1000,
     refetchInterval: 1000, // Ultra-fast updates every 1 second
@@ -1161,6 +1170,18 @@ export default function AdminPanel() {
       amount: w.ptsAmount,
       hash: w.txHash || null,
       timestamp: w.createdAt
+    })) : []),
+    ...(Array.isArray(transactionDeposits) ? transactionDeposits.map((d: any) => ({
+      ...d,
+      type: 'deposit' as const,
+      token: d.tokenType || 'ETH',
+      status: d.status || 'pending',
+      amount: d.ntiqAmount,
+      hash: d.txHash || null,
+      timestamp: d.createdAt,
+      paymentAmount: d.amountUSD,
+      paymentToken: d.tokenType,
+      networkName: d.networkName
     })) : [])
   ];
 
@@ -4244,7 +4265,7 @@ export default function AdminPanel() {
                         {/* Transaction Type Filter */}
                         <div>
                           <label className="text-sm font-medium text-slate-300 mb-1 block">Jenis Transaksi</label>
-                          <Select value={transactionTypeFilter} onValueChange={(value) => setTransactionTypeFilter(value as "all" | "purchase" | "withdrawal")}>
+                          <Select value={transactionTypeFilter} onValueChange={(value) => setTransactionTypeFilter(value as "all" | "purchase" | "withdrawal" | "deposit")}>
                             <SelectTrigger className="bg-surface border-slate-600">
                               <SelectValue placeholder="Pilih jenis" />
                             </SelectTrigger>
@@ -4252,6 +4273,7 @@ export default function AdminPanel() {
                               <SelectItem value="all">Semua</SelectItem>
                               <SelectItem value="purchase">Purchase</SelectItem>
                               <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                              <SelectItem value="deposit">Deposit</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -4323,6 +4345,10 @@ export default function AdminPanel() {
                             <div className="text-slate-400">Withdrawal</div>
                           </div>
                           <div className="text-center">
+                            <div className="text-orange-400 font-bold text-lg">{filteredTransactions.filter(t => t.type === 'deposit').length}</div>
+                            <div className="text-slate-400">Deposit</div>
+                          </div>
+                          <div className="text-center">
                             <div className="text-yellow-400 font-bold text-lg">{filteredTransactions.filter(t => t.status === 'pending').length}</div>
                             <div className="text-slate-400">Pending</div>
                           </div>
@@ -4358,12 +4384,15 @@ export default function AdminPanel() {
                               <TableCell>
                                 <Badge 
                                   variant="outline" 
-                                  className={transaction.type === 'purchase' 
-                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" 
-                                    : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                                  className={
+                                    transaction.type === 'purchase' 
+                                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                      : transaction.type === 'withdrawal'
+                                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                                        : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
                                   }
                                 >
-                                  {transaction.type === 'purchase' ? 'Purchase' : 'Withdrawal'}
+                                  {transaction.type === 'purchase' ? 'Purchase' : transaction.type === 'withdrawal' ? 'Withdrawal' : 'Deposit'}
                                 </Badge>
                               </TableCell>
                               <TableCell className="font-medium">{transaction.username || `User ${transaction.userId}`}</TableCell>
@@ -4380,6 +4409,9 @@ export default function AdminPanel() {
                                   )}
                                   {transaction.type === 'purchase' && (
                                     <div className="text-xs text-slate-500">← {transaction.paymentAmount || 'N/A'} {transaction.token}</div>
+                                  )}
+                                  {transaction.type === 'deposit' && (
+                                    <div className="text-xs text-slate-500">← {transaction.paymentAmount || 'N/A'} {transaction.token} • {transaction.networkName || 'Network'}</div>
                                   )}
                                 </div>
                               </TableCell>
@@ -4461,7 +4493,7 @@ export default function AdminPanel() {
                                 <div className="flex flex-col items-center">
                                   <FileText className="mb-2" size={32} />
                                   <p>Tidak ada transaksi ditemukan</p>
-                                  <p className="text-sm">History transaksi purchase dan withdrawal akan muncul di sini</p>
+                                  <p className="text-sm">History transaksi purchase, withdrawal, dan deposit akan muncul di sini</p>
                                 </div>
                               </TableCell>
                             </TableRow>
