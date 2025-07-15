@@ -441,7 +441,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         finalAddress: finalAddress ? finalAddress.slice(0, 6) + '...' : null,
         userEmail: userEmail ? userEmail.substring(0, 3) + '***' : null,
         dynamicUserId,
-        hasUser: !!user 
+        hasUser: !!user,
+        hasExistingSession: !!req.session.userId,
+        sessionUserId: req.session.userId || null
       });
       
       // Check if we have either wallet address, email, or user ID
@@ -451,8 +453,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let dbUser;
       
-      // Handle wallet-based authentication
-      if (finalAddress) {
+      // PRIORITY 1: Check if user is already logged in via session
+      if (req.session.userId) {
+        dbUser = await storage.getUser(req.session.userId);
+        console.log(`Found existing session user: ${dbUser?.username}`);
+        
+        // If user has session but now connecting wallet, update existing user
+        if (dbUser && finalAddress && !dbUser.walletAddress) {
+          const normalizedAddress = normalizeWalletAddress(finalAddress);
+          
+          // Security check for wallet
+          const { WalletSecurityService } = await import('./walletSecurity');
+          const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
+          
+          if (!securityCheck.success) {
+            return res.status(403).json({ 
+              message: securityCheck.message,
+              securityBlock: true 
+            });
+          }
+          
+          // Check if this wallet is already used by another user
+          const existingWalletUser = await storage.getUserByWalletAddress(normalizedAddress);
+          if (existingWalletUser && existingWalletUser.id !== dbUser.id) {
+            return res.status(400).json({ 
+              message: "This wallet is already connected to another account. Please use a different wallet or login with the existing account." 
+            });
+          }
+          
+          // Update existing user with wallet address
+          await storage.updateUser(dbUser.id, { 
+            walletAddress: normalizedAddress,
+            authMethod: "both" // User now has both email and wallet auth
+          });
+          
+          dbUser.walletAddress = normalizedAddress;
+          dbUser.authMethod = "both";
+          
+          console.log(`Updated existing user ${dbUser.username} with wallet address: ${normalizedAddress.slice(0, 6)}...`);
+        }
+      }
+      
+      // PRIORITY 2: Handle wallet-based authentication (if no existing session)
+      if (!dbUser && finalAddress) {
         const normalizedAddress = normalizeWalletAddress(finalAddress);
         
         // Check security for wallet login
@@ -483,8 +526,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Auto-registered wallet user: ${username}, admin: ${isAdmin}`);
         }
       }
-      // Handle email-based authentication  
-      else if (userEmail || dynamicUserId) {
+      
+      // PRIORITY 3: Handle email-based authentication (if no existing session and no wallet)
+      if (!dbUser && (userEmail || dynamicUserId)) {
         // Try to find existing user by email first
         if (userEmail) {
           try {
