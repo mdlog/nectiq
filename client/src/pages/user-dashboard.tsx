@@ -25,6 +25,7 @@ import { ReferralSection } from "@/components/referral-section";
 import { LoyaltyTier } from "@/components/loyalty-tier";
 import { FinancialWallet } from "@/components/financial-wallet";
 import { SurvivalStatus } from "@/components/survival-status";
+import { MultiChainFinancial } from "@/components/multi-chain-financial";
 
 
 // Dynamic function to get crypto image from live API data
@@ -153,7 +154,7 @@ export default function UserDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(null);
   const [showChart, setShowChart] = useState(false);
-  const [selectedFinancialAction, setSelectedFinancialAction] = useState("withdraw");
+  const [selectedFinancialAction, setSelectedFinancialAction] = useState("deposit");
   const [, setLocation] = useLocation();
   const [walletCopied, setWalletCopied] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -990,6 +991,11 @@ export default function UserDashboard() {
                 </Button>
               </div>
             </div>
+
+            {/* Deposit Section */}
+            {selectedFinancialAction === "deposit" && (
+              <MultiChainFinancial />
+            )}
 
             {/* Withdraw Section */}
             {selectedFinancialAction === "withdraw" && (
