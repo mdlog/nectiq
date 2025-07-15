@@ -111,8 +111,8 @@ export function ActivePredictions() {
   });
 
   // Filter predictions based on search query
-  const filteredPredictions = predictions.filter(prediction =>
-    prediction.cryptocurrency.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredPredictions = (predictions || []).filter(prediction =>
+    prediction?.cryptocurrency?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Calculate pagination

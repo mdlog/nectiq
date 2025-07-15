@@ -4441,12 +4441,47 @@ export default function AdminPanel() {
                               <TableCell>
                                 <div className="text-xs font-mono">
                                   {transaction.hash ? (
-                                    <span 
-                                      className="text-primary hover:underline cursor-pointer"
-                                      title={`Full hash: ${transaction.hash}`}
-                                    >
-                                      {transaction.hash.slice(0, 10)}...
-                                    </span>
+                                    <div className="flex flex-col space-y-1">
+                                      <a
+                                        href={(() => {
+                                          const hash = transaction.hash;
+                                          const networkName = transaction.networkName?.toLowerCase() || 'ethereum';
+                                          
+                                          switch (networkName) {
+                                            case 'ethereum':
+                                            case 'mainnet':
+                                              return `https://etherscan.io/tx/${hash}`;
+                                            case 'base':
+                                              return `https://basescan.org/tx/${hash}`;
+                                            case 'bsc':
+                                            case 'binance':
+                                              return `https://bscscan.com/tx/${hash}`;
+                                            case 'optimism':
+                                              return `https://optimistic.etherscan.io/tx/${hash}`;
+                                            case 'arbitrum':
+                                              return `https://arbiscan.io/tx/${hash}`;
+                                            case 'sepolia':
+                                              return `https://sepolia.etherscan.io/tx/${hash}`;
+                                            case 'holesky':
+                                              return `https://holesky.etherscan.io/tx/${hash}`;
+                                            default:
+                                              return `https://etherscan.io/tx/${hash}`;
+                                          }
+                                        })()}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:underline cursor-pointer flex items-center"
+                                        title={`View on ${transaction.networkName || 'Ethereum'} Explorer: ${transaction.hash}`}
+                                      >
+                                        {transaction.hash.slice(0, 10)}...
+                                        <svg className="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                      </a>
+                                      {transaction.type === 'deposit' && transaction.networkName && (
+                                        <span className="text-xs text-slate-500 font-medium">{transaction.networkName}</span>
+                                      )}
+                                    </div>
                                   ) : (
                                     <span className="text-slate-400">Internal</span>
                                   )}
