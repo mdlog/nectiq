@@ -20,6 +20,7 @@ import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } fro
 import { calculateAntiGamingMetrics, getPredictionDeadline, formatCountdown } from "./antiGamingUtils.js";
 import { SurvivalRoundService } from "./services/survivalRoundService.js";
 import { BalanceService } from "./services/balanceService.js";
+import { getTransactionHistory, getTransactionStats } from "./api/admin/transactions.js";
 
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
@@ -2848,6 +2849,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ COMPREHENSIVE TRANSACTION HISTORY ENDPOINTS ============
+  
+  // Admin: Get comprehensive transaction history (deposits + withdrawals)
+  app.get("/api/admin/transactions/history", requireAdmin, async (req, res) => {
+    try {
+      const { getTransactionHistory } = await import('./api/admin/transactions.js');
+      await getTransactionHistory(req, res);
+    } catch (error) {
+      console.error("Error fetching transaction history:", error);
+      res.status(500).json({ error: "Failed to fetch transaction history" });
+    }
+  });
+
+  // Admin: Get transaction statistics
+  app.get("/api/admin/transactions/stats", requireAdmin, async (req, res) => {
+    try {
+      const { getTransactionStats } = await import('./api/admin/transactions.js');
+      await getTransactionStats(req, res);
+    } catch (error) {
+      console.error("Error fetching transaction stats:", error);
+      res.status(500).json({ error: "Failed to fetch transaction statistics" });
+    }
+  });
+
   // ============ AUTOMATED WITHDRAWAL ENDPOINTS ============
   
   // Admin: Get automated withdrawal settings
@@ -4614,6 +4639,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch transaction stats" });
     }
   });
+
+  // Comprehensive Transaction History API
+  app.get("/api/admin/transaction-history", requireAdmin, getTransactionHistory);
+  
+  // New Transaction Statistics API
+  app.get("/api/admin/transaction-statistics", requireAdmin, getTransactionStats);
 
   app.get("/api/admin/transaction-logs", requireAdmin, async (req, res) => {
     try {
