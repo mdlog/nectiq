@@ -26,7 +26,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-// Konfigurasi chain yang didukung
+// Supported chain configuration
 const SUPPORTED_CHAINS = [
   {
     chainId: 1,
@@ -154,25 +154,25 @@ export function MultiChainFinancial() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const queryClient = useQueryClient();
 
-  // Query untuk mendapatkan data user
+  // Query to get user data
   const { data: user } = useQuery({
     queryKey: ["/api/user"],
     staleTime: 30000,
   });
 
-  // Query untuk mendapatkan riwayat deposit
+  // Query to get deposit history
   const { data: deposits, isLoading: depositsLoading } = useQuery({
     queryKey: ["/api/user/deposits"],
     refetchInterval: 10000,
   });
 
-  // Query untuk mendapatkan riwayat withdrawal
+  // Query to get withdrawal history
   const { data: withdrawals, isLoading: withdrawalsLoading } = useQuery({
     queryKey: ["/api/user/withdrawals"],
     refetchInterval: 10000,
   });
 
-  // Mutation untuk create deposit request
+  // Mutation to create deposit request
   const createDepositMutation = useMutation({
     mutationFn: async (depositData: {
       chainName: string;
@@ -194,20 +194,20 @@ export function MultiChainFinancial() {
       setShowDepositModal(false);
       setDepositAmount("");
       toast({
-        title: "Permintaan Deposit Dibuat",
-        description: "Silakan transfer ke alamat yang ditampilkan untuk menyelesaikan deposit",
+        title: "Deposit Request Created",
+        description: "Please transfer to the displayed address to complete deposit",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Gagal membuat permintaan deposit",
+        description: error.message || "Failed to create deposit request",
         variant: "destructive",
       });
     },
   });
 
-  // Mutation untuk create withdrawal request
+  // Mutation to create withdrawal request
   const createWithdrawalMutation = useMutation({
     mutationFn: async (withdrawalData: {
       ntiqAmount: number;
@@ -227,14 +227,14 @@ export function MultiChainFinancial() {
       setShowWithdrawModal(false);
       setWithdrawAmount("");
       toast({
-        title: "Permintaan Withdrawal Dibuat",
-        description: "Permintaan withdrawal Anda sedang menunggu persetujuan admin",
+        title: "Withdrawal Request Created",
+        description: "Your withdrawal request is pending admin approval",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Gagal membuat permintaan withdrawal",
+        description: error.message || "Failed to create withdrawal request",
         variant: "destructive",
       });
     },
@@ -244,7 +244,7 @@ export function MultiChainFinancial() {
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
       toast({
         title: "Error",
-        description: "Jumlah deposit harus lebih dari 0",
+        description: "Deposit amount must be greater than 0",
         variant: "destructive",
       });
       return;
@@ -267,7 +267,7 @@ export function MultiChainFinancial() {
     if (!withdrawAmount || parseInt(withdrawAmount) <= 0) {
       toast({
         title: "Error",
-        description: "Jumlah withdrawal harus lebih dari 0 NTIQ",
+        description: "Withdrawal amount must be greater than 0 NTIQ",
         variant: "destructive",
       });
       return;
@@ -277,7 +277,7 @@ export function MultiChainFinancial() {
     if (user && ntiqAmount > user.balance) {
       toast({
         title: "Error",
-        description: "Saldo NTIQ tidak mencukupi",
+        description: "Insufficient NTIQ balance",
         variant: "destructive",
       });
       return;
@@ -294,8 +294,8 @@ export function MultiChainFinancial() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Disalin",
-      description: "Alamat wallet telah disalin ke clipboard",
+      title: "Copied",
+      description: "Wallet address copied to clipboard",
     });
   };
 
@@ -306,13 +306,13 @@ export function MultiChainFinancial() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { color: "bg-yellow-500", text: "Menunggu" },
-      confirmed: { color: "bg-blue-500", text: "Terkonfirmasi" },
-      processed: { color: "bg-green-500", text: "Diproses" },
-      completed: { color: "bg-green-600", text: "Selesai" },
-      approved: { color: "bg-blue-600", text: "Disetujui" },
-      rejected: { color: "bg-red-500", text: "Ditolak" },
-      failed: { color: "bg-red-600", text: "Gagal" },
+      pending: { color: "bg-yellow-500", text: "Pending" },
+      confirmed: { color: "bg-blue-500", text: "Confirmed" },
+      processed: { color: "bg-green-500", text: "Processed" },
+      completed: { color: "bg-green-600", text: "Completed" },
+      approved: { color: "bg-blue-600", text: "Approved" },
+      rejected: { color: "bg-red-500", text: "Rejected" },
+      failed: { color: "bg-red-600", text: "Failed" },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -326,7 +326,7 @@ export function MultiChainFinancial() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium opacity-90">Saldo NTIQ Anda</h3>
+              <h3 className="text-lg font-medium opacity-90">Your NTIQ Balance</h3>
               <div className="flex items-center space-x-2 mt-2">
                 <Coins className="w-6 h-6" />
                 <span className="text-3xl font-bold">{user?.balance?.toLocaleString() || "0"}</span>
@@ -362,7 +362,7 @@ export function MultiChainFinancial() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <ArrowDownCircle className="w-5 h-5 text-green-600" />
-                <span>Deposit USDC/USDT ke NTIQ</span>
+                <span>Deposit USDC/USDT to NTIQ</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -407,10 +407,10 @@ export function MultiChainFinancial() {
 
               {/* Deposit Amount */}
               <div>
-                <Label>Jumlah Deposit (USD)</Label>
+                <Label>Deposit Amount (USD)</Label>
                 <Input
                   type="number"
-                  placeholder="Masukkan jumlah dalam USD"
+                  placeholder="Enter amount in USD"
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   min="1"
@@ -418,7 +418,7 @@ export function MultiChainFinancial() {
                 />
                 {depositAmount && (
                   <p className="text-sm text-gray-600 mt-1">
-                    Akan mendapatkan: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 100).toLocaleString()} NTIQ</span>
+                    You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 100).toLocaleString()} NTIQ</span>
                   </p>
                 )}
               </div>
@@ -430,12 +430,12 @@ export function MultiChainFinancial() {
                     disabled={!depositAmount || parseFloat(depositAmount) <= 0}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Buat Permintaan Deposit
+                    Create Deposit Request
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Konfirmasi Deposit</DialogTitle>
+                    <DialogTitle>Confirm Deposit</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-lg space-y-2">
@@ -448,17 +448,17 @@ export function MultiChainFinancial() {
                         <span className="font-medium">{selectedToken}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Jumlah:</span>
+                        <span>Amount:</span>
                         <span className="font-medium">${depositAmount} USD</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>NTIQ yang didapat:</span>
+                        <span>NTIQ received:</span>
                         <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 100).toLocaleString()} NTIQ</span>
                       </div>
                     </div>
 
                     <div className="p-4 bg-blue-50 rounded-lg">
-                      <h4 className="font-medium text-blue-800 mb-2">Alamat Tujuan Deposit:</h4>
+                      <h4 className="font-medium text-blue-800 mb-2">Deposit Destination Address:</h4>
                       <div className="flex items-center space-x-2 p-2 bg-white rounded border">
                         <code className="flex-1 text-sm">{selectedChain.adminWallet}</code>
                         <Button
@@ -470,7 +470,7 @@ export function MultiChainFinancial() {
                         </Button>
                       </div>
                       <p className="text-xs text-blue-600 mt-2">
-                        ⚠️ Pastikan melakukan transfer dari wallet yang sama dengan wallet login Anda
+                        ⚠️ Make sure to transfer from the same wallet as your login wallet
                       </p>
                     </div>
 
@@ -480,14 +480,14 @@ export function MultiChainFinancial() {
                         className="flex-1"
                         onClick={() => setShowDepositModal(false)}
                       >
-                        Batal
+                        Cancel
                       </Button>
                       <Button
                         className="flex-1 bg-green-600 hover:bg-green-700"
                         onClick={handleDeposit}
                         disabled={createDepositMutation.isPending}
                       >
-                        {createDepositMutation.isPending ? "Memproses..." : "Konfirmasi"}
+                        {createDepositMutation.isPending ? "Processing..." : "Confirm"}
                       </Button>
                     </div>
                   </div>
@@ -501,7 +501,7 @@ export function MultiChainFinancial() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Clock className="w-5 h-5" />
-                <span>Riwayat Deposit</span>
+                <span>Deposit History</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -544,7 +544,7 @@ export function MultiChainFinancial() {
                       <div className="text-right space-y-1">
                         {getStatusBadge(deposit.status)}
                         <div className="text-xs text-gray-500">
-                          {new Date(deposit.createdAt).toLocaleDateString('id-ID')}
+                          {new Date(deposit.createdAt).toLocaleDateString('en-US')}
                         </div>
                       </div>
                     </div>
@@ -553,7 +553,7 @@ export function MultiChainFinancial() {
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <ArrowDownCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Belum ada riwayat deposit</p>
+                  <p>No deposit history yet</p>
                 </div>
               )}
             </CardContent>
@@ -566,7 +566,7 @@ export function MultiChainFinancial() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <ArrowUpCircle className="w-5 h-5 text-blue-600" />
-                <span>Withdraw NTIQ ke USDC/USDT</span>
+                <span>Withdraw NTIQ to USDC/USDT</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -611,10 +611,10 @@ export function MultiChainFinancial() {
 
               {/* Withdraw Amount */}
               <div>
-                <Label>Jumlah Withdrawal (NTIQ)</Label>
+                <Label>Withdrawal Amount (NTIQ)</Label>
                 <Input
                   type="number"
-                  placeholder="Masukkan jumlah NTIQ"
+                  placeholder="Enter NTIQ amount"
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   min="1"
@@ -622,11 +622,11 @@ export function MultiChainFinancial() {
                 />
                 {withdrawAmount && (
                   <p className="text-sm text-gray-600 mt-1">
-                    Akan menerima: <span className="font-bold text-blue-600">${(parseInt(withdrawAmount) * 0.01).toFixed(2)} {selectedToken}</span>
+                    You will receive: <span className="font-bold text-blue-600">${(parseInt(withdrawAmount) * 0.01).toFixed(2)} {selectedToken}</span>
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  Saldo tersedia: {user?.balance?.toLocaleString() || "0"} NTIQ
+                  Available balance: {user?.balance?.toLocaleString() || "0"} NTIQ
                 </p>
               </div>
 
@@ -637,12 +637,12 @@ export function MultiChainFinancial() {
                     disabled={!withdrawAmount || parseInt(withdrawAmount) <= 0 || parseInt(withdrawAmount) > (user?.balance || 0)}
                   >
                     <Send className="w-4 h-4 mr-2" />
-                    Buat Permintaan Withdrawal
+                    Create Withdrawal Request
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Konfirmasi Withdrawal</DialogTitle>
+                    <DialogTitle>Confirm Withdrawal</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-lg space-y-2">
@@ -659,13 +659,13 @@ export function MultiChainFinancial() {
                         <span className="font-medium">{parseInt(withdrawAmount || "0").toLocaleString()} NTIQ</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>USD yang diterima:</span>
+                        <span>USD received:</span>
                         <span className="font-bold text-blue-600">${(parseInt(withdrawAmount || "0") * 0.01).toFixed(2)} {selectedToken}</span>
                       </div>
                     </div>
 
                     <div className="p-4 bg-yellow-50 rounded-lg">
-                      <h4 className="font-medium text-yellow-800 mb-2">Alamat Tujuan:</h4>
+                      <h4 className="font-medium text-yellow-800 mb-2">Destination Address:</h4>
                       <div className="flex items-center space-x-2 p-2 bg-white rounded border">
                         <code className="flex-1 text-sm">{formatAddress(user?.walletAddress || "")}</code>
                         <Button
@@ -677,7 +677,7 @@ export function MultiChainFinancial() {
                         </Button>
                       </div>
                       <p className="text-xs text-yellow-600 mt-2">
-                        ⚠️ Withdrawal akan dikirim ke wallet address yang digunakan untuk login
+                        ⚠️ Withdrawal will be sent to the wallet address used for login
                       </p>
                     </div>
 
@@ -687,14 +687,14 @@ export function MultiChainFinancial() {
                         className="flex-1"
                         onClick={() => setShowWithdrawModal(false)}
                       >
-                        Batal
+                        Cancel
                       </Button>
                       <Button
                         className="flex-1 bg-blue-600 hover:bg-blue-700"
                         onClick={handleWithdraw}
                         disabled={createWithdrawalMutation.isPending}
                       >
-                        {createWithdrawalMutation.isPending ? "Memproses..." : "Konfirmasi"}
+                        {createWithdrawalMutation.isPending ? "Processing..." : "Confirm"}
                       </Button>
                     </div>
                   </div>
@@ -708,7 +708,7 @@ export function MultiChainFinancial() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Clock className="w-5 h-5" />
-                <span>Riwayat Withdrawal</span>
+                <span>Withdrawal History</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -754,7 +754,7 @@ export function MultiChainFinancial() {
                       <div className="text-right space-y-1">
                         {getStatusBadge(withdrawal.status)}
                         <div className="text-xs text-gray-500">
-                          {new Date(withdrawal.createdAt).toLocaleDateString('id-ID')}
+                          {new Date(withdrawal.createdAt).toLocaleDateString('en-US')}
                         </div>
                       </div>
                     </div>
@@ -763,7 +763,7 @@ export function MultiChainFinancial() {
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <ArrowUpCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Belum ada riwayat withdrawal</p>
+                  <p>No withdrawal history yet</p>
                 </div>
               )}
             </CardContent>
