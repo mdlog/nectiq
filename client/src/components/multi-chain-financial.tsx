@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -159,6 +159,7 @@ export function MultiChainFinancial() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [fixedEthAmount, setFixedEthAmount] = useState<string>("0");
   const queryClient = useQueryClient();
 
   // Query to get user data
@@ -185,6 +186,25 @@ export function MultiChainFinancial() {
     refetchInterval: 5000,
     staleTime: 0,
   });
+
+  // Effect to calculate fixed ETH amount when deposit amount changes for ETH deposits
+  useEffect(() => {
+    if (selectedToken === "ETH" && depositAmount && cryptoPrices) {
+      const usd = parseFloat(depositAmount);
+      if (!isNaN(usd) && usd > 0) {
+        const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === "ethereum")?.current_price;
+        if (ethPrice) {
+          const baseEthAmount = usd / ethPrice;
+          const ethAmountWithFee = baseEthAmount * 1.02; // Add 2% fee
+          setFixedEthAmount(ethAmountWithFee.toFixed(6));
+        }
+      } else {
+        setFixedEthAmount("0");
+      }
+    } else {
+      setFixedEthAmount("0");
+    }
+  }, [depositAmount, selectedToken, cryptoPrices]);
 
   // Mutation to create deposit request
   const createDepositMutation = useMutation({
@@ -318,19 +338,9 @@ export function MultiChainFinancial() {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  // Function to calculate ETH amount for deposit conversion
-  const calculateETHAmount = (usdAmount: string): string => {
-    if (!usdAmount || !cryptoPrices) return "0";
-    
-    const usd = parseFloat(usdAmount);
-    if (isNaN(usd) || usd <= 0) return "0";
-
-    const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === "ethereum")?.current_price;
-    
-    if (!ethPrice) return "0";
-
-    const ethAmount = usd / ethPrice;
-    return ethAmount.toFixed(6); // Show 6 decimal places for ETH
+  // Function to get fixed ETH amount (already calculated with 2% fee)
+  const getFixedETHAmount = (): string => {
+    return fixedEthAmount;
   };
 
   const getStatusBadge = (status: string) => {
@@ -451,10 +461,13 @@ export function MultiChainFinancial() {
                     <p className="text-gray-600">
                       You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 100).toLocaleString()} NTIQ</span>
                     </p>
-                    {selectedToken === "ETH" && cryptoPrices && (
-                      <p className="text-orange-600">
-                        Send: <span className="font-bold">{calculateETHAmount(depositAmount)} ETH</span>
-                      </p>
+                    {selectedToken === "ETH" && fixedEthAmount !== "0" && (
+                      <div className="text-orange-600 space-y-1">
+                        <p>Send: <span className="font-bold">{getFixedETHAmount()} ETH</span></p>
+                        <p className="text-xs text-orange-500">
+                          (Includes 2% processing fee)
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -492,10 +505,15 @@ export function MultiChainFinancial() {
                         <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
                         <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 100).toLocaleString()} NTIQ</span>
                       </div>
-                      {selectedToken === "ETH" && depositAmount && cryptoPrices && (
-                        <div className="flex justify-between border-t pt-2 mt-2">
-                          <span className="text-gray-700 dark:text-gray-300">ETH to send:</span>
-                          <span className="font-bold text-orange-600">{calculateETHAmount(depositAmount)} ETH</span>
+                      {selectedToken === "ETH" && depositAmount && fixedEthAmount !== "0" && (
+                        <div className="border-t pt-2 mt-2 space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-gray-700 dark:text-gray-300">ETH to send:</span>
+                            <span className="font-bold text-orange-600">{getFixedETHAmount()} ETH</span>
+                          </div>
+                          <div className="text-xs text-orange-500 text-right">
+                            (Includes 2% processing fee)
+                          </div>
                         </div>
                       )}
                     </div>
@@ -512,11 +530,11 @@ export function MultiChainFinancial() {
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
-                      {selectedToken === "ETH" && depositAmount && cryptoPrices ? (
+                      {selectedToken === "ETH" && depositAmount && fixedEthAmount !== "0" ? (
                         <div className="text-xs text-blue-600 dark:text-blue-300 mt-2 space-y-1">
                           <p>⚠️ Make sure to transfer from the same wallet as your login wallet</p>
                           <p className="font-bold bg-orange-100 dark:bg-orange-900/30 p-2 rounded border-orange-300 border">
-                            📤 Send exactly <span className="text-orange-700 dark:text-orange-300">{calculateETHAmount(depositAmount)} ETH</span> to the address above
+                            📤 Send exactly <span className="text-orange-700 dark:text-orange-300">{getFixedETHAmount()} ETH</span> to the address above
                           </p>
                         </div>
                       ) : (
