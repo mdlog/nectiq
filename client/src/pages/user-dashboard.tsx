@@ -154,6 +154,7 @@ export default function UserDashboard() {
   const [walletCopied, setWalletCopied] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [editedUsername, setEditedUsername] = useState("");
+  const [activeTab, setActiveTab] = useState("profile");
 
   // Manual refresh function for Market Overview
   const handleManualRefresh = async () => {
@@ -399,7 +400,7 @@ export default function UserDashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-3 sm:p-6 shadow-2xl">
             {/* First Row */}
             <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-1 sm:gap-2 h-auto p-1 sm:p-2 rounded-xl mb-2 sm:mb-4 backdrop-blur-sm">
