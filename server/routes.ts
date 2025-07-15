@@ -533,9 +533,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Try to find existing user by email first
         if (userEmail) {
           try {
-            dbUser = await storage.getUserByEmail(userEmail);
+            // Check all users with this email address
+            const [existingUser] = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
+            if (existingUser) {
+              dbUser = existingUser;
+              console.log(`Found existing email user: ${dbUser.username} with email: ${userEmail.substring(0, 3)}***`);
+            }
           } catch (error) {
-            // getUserByEmail method may not exist, we'll create user instead
+            console.error('Error finding user by email:', error);
           }
         }
         
@@ -552,8 +557,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
           console.log(`Auto-registered email user: ${username} with email: ${userEmail ? userEmail.substring(0, 3) + '***' : 'N/A'}`);
-        } else {
-          console.log(`Found existing email user: ${dbUser.username} with email: ${userEmail ? userEmail.substring(0, 3) + '***' : 'N/A'}`);
         }
       }
 
