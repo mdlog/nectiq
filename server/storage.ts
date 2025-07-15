@@ -3196,7 +3196,17 @@ export class MemStorage implements IStorage {
 
       // Calculate stake amounts
       const totalPredictionStakes = allPredictions.reduce((sum, p) => sum + (Number(p.stakeAmount) || 0), 0);
-      const totalBattleStakes = allBattles.reduce((sum, b) => sum + (Number(b.stakeAmount) || 0), 0) * 2; // 2 participants per battle
+      console.log(`📊 [PLATFORM STATS] Total Prediction Stakes: ${totalPredictionStakes} NTIQ`);
+      
+      const totalBattleStakes = allBattles.reduce((sum, battle) => {
+        const stakeAmount = Number(battle.stakeAmount) || 0;
+        // Only multiply by 2 if battle has 2 participants (active or completed)
+        // For open battles, only count the challenger's stake (x1)
+        const multiplier = (battle.status === 'open') ? 1 : 2;
+        console.log(`📊 [PLATFORM STATS] Battle ID ${battle.id}: stake=${stakeAmount}, status=${battle.status}, multiplier=${multiplier}, total=${stakeAmount * multiplier}`);
+        return sum + (stakeAmount * multiplier);
+      }, 0);
+      console.log(`📊 [PLATFORM STATS] Total Battle Stakes: ${totalBattleStakes} NTIQ`);
 
       // Calculate total rewards from transaction logs
       const rewardTransactions = allTransactions.filter(t => 
