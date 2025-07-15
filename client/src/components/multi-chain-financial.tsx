@@ -33,6 +33,97 @@ declare global {
   }
 }
 
+// Blockchain Logo Components
+const EthereumLogo = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M12 2L4 12.5L12 17L20 12.5L12 2Z"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth="0.5"
+    />
+    <path
+      d="M4 12.5L12 22L20 12.5L12 17L4 12.5Z"
+      fill="currentColor"
+      opacity="0.6"
+    />
+  </svg>
+);
+
+const BaseLogo = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+      fill="currentColor"
+    />
+    <path
+      d="M12 6v12M6 12h12"
+      stroke="white"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const BSCLogo = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" fill="currentColor"/>
+    <path
+      d="M8 12h8M12 8v8M9.5 9.5l5 5M14.5 9.5l-5 5"
+      stroke="white"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const OptimismLogo = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" fill="currentColor"/>
+    <path
+      d="M8 10c0-1.1.9-2 2-2s2 .9 2 2v4c0 1.1-.9 2-2 2s-2-.9-2-2v-4zM14 10c0-1.1.9-2 2-2s2 .9 2 2v4c0 1.1-.9 2-2 2s-2-.9-2-2v-4z"
+      fill="white"
+    />
+  </svg>
+);
+
+const ArbitrumLogo = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M12 2L3 12L12 22L21 12L12 2Z"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth="0.5"
+    />
+    <path
+      d="M8 12L12 6L16 12L12 18L8 12Z"
+      fill="white"
+    />
+  </svg>
+);
+
+const SepoliaLogo = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" fill="currentColor"/>
+    <path
+      d="M12 7v10M7 12h10M9 9l6 6M15 9l-6 6"
+      stroke="white"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const HoleskyLogo = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" fill="currentColor"/>
+    <circle cx="12" cy="12" r="4" fill="white"/>
+    <circle cx="12" cy="12" r="2" fill="currentColor"/>
+  </svg>
+);
+
 // Supported chain configuration
 const SUPPORTED_CHAINS = [
   {
@@ -40,7 +131,8 @@ const SUPPORTED_CHAINS = [
     name: "Ethereum",
     symbol: "ETH",
     shortName: "eth",
-    icon: "🔷",
+    color: "text-blue-600",
+    logo: EthereumLogo,
     explorerUrl: "https://etherscan.io",
     adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
@@ -54,7 +146,8 @@ const SUPPORTED_CHAINS = [
     name: "Base",
     symbol: "ETH",
     shortName: "base",
-    icon: "🔵",
+    color: "text-blue-500",
+    logo: BaseLogo,
     explorerUrl: "https://basescan.org",
     adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
@@ -68,7 +161,8 @@ const SUPPORTED_CHAINS = [
     name: "BSC",
     symbol: "BNB",
     shortName: "bsc",
-    icon: "🟡",
+    color: "text-yellow-600",
+    logo: BSCLogo,
     explorerUrl: "https://bscscan.com",
     adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
@@ -82,7 +176,8 @@ const SUPPORTED_CHAINS = [
     name: "Optimism",
     symbol: "ETH",
     shortName: "optimism",
-    icon: "🔴",
+    color: "text-red-600",
+    logo: OptimismLogo,
     explorerUrl: "https://optimistic.etherscan.io",
     adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
@@ -96,7 +191,8 @@ const SUPPORTED_CHAINS = [
     name: "Arbitrum",
     symbol: "ETH",
     shortName: "arbitrum",
-    icon: "🟦",
+    color: "text-indigo-600",
+    logo: ArbitrumLogo,
     explorerUrl: "https://arbiscan.io",
     adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
@@ -110,7 +206,8 @@ const SUPPORTED_CHAINS = [
     name: "Sepolia",
     symbol: "ETH",
     shortName: "sepolia",
-    icon: "🧪",
+    color: "text-purple-600",
+    logo: SepoliaLogo,
     explorerUrl: "https://sepolia.etherscan.io",
     adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
@@ -124,7 +221,8 @@ const SUPPORTED_CHAINS = [
     name: "Holesky",
     symbol: "ETH",
     shortName: "holesky",
-    icon: "🕳️",
+    color: "text-gray-600",
+    logo: HoleskyLogo,
     explorerUrl: "https://holesky.etherscan.io",
     adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
@@ -656,13 +754,16 @@ export function MultiChainFinancial() {
                     if (chain) setSelectedChain(chain);
                   }}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <div className="flex items-center space-x-2">
+                        <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                        <span>{selectedChain.name}</span>
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       {SUPPORTED_CHAINS.map((chain) => (
                         <SelectItem key={chain.chainId} value={chain.shortName}>
                           <div className="flex items-center space-x-2">
-                            <span>{chain.icon}</span>
+                            <chain.logo className={`w-5 h-5 ${chain.color}`} />
                             <span>{chain.name}</span>
                           </div>
                         </SelectItem>
@@ -739,7 +840,10 @@ export function MultiChainFinancial() {
                     <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-700 dark:text-gray-300">Chain:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{selectedChain.icon} {selectedChain.name}</span>
+                        <div className="flex items-center space-x-2">
+                          <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                          <span className="font-medium text-gray-900 dark:text-white">{selectedChain.name}</span>
+                        </div>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-700 dark:text-gray-300">Token:</span>
@@ -841,8 +945,17 @@ export function MultiChainFinancial() {
                             <span className="font-bold text-blue-600">{deposit.ntiqAmount.toLocaleString()} NTIQ</span>
                           </div>
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
-                            <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.icon}</span>
-                            <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}</span>
+                            <div className="flex items-center space-x-1">
+                              {(() => {
+                                const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                if (chain) {
+                                  const LogoComponent = chain.logo;
+                                  return <LogoComponent className={`w-4 h-4 ${chain.color}`} />;
+                                }
+                                return null;
+                              })()}
+                              <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}</span>
+                            </div>
                             {deposit.transactionHash && (
                               <Button
                                 size="sm"
@@ -941,9 +1054,19 @@ export function MultiChainFinancial() {
                             <div className="p-3 bg-white dark:bg-gray-800 rounded border">
                               <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-600 dark:text-gray-400">Network:</span>
-                                <span className="font-medium">
-                                  {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.icon} {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}
-                                </span>
+                                <div className="flex items-center space-x-2">
+                                  {(() => {
+                                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                    if (chain) {
+                                      const LogoComponent = chain.logo;
+                                      return <LogoComponent className={`w-5 h-5 ${chain.color}`} />;
+                                    }
+                                    return null;
+                                  })()}
+                                  <span className="font-medium">
+                                    {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             
@@ -1034,13 +1157,16 @@ export function MultiChainFinancial() {
                     if (chain) setSelectedChain(chain);
                   }}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <div className="flex items-center space-x-2">
+                        <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                        <span>{selectedChain.name}</span>
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       {SUPPORTED_CHAINS.map((chain) => (
                         <SelectItem key={chain.chainId} value={chain.shortName}>
                           <div className="flex items-center space-x-2">
-                            <span>{chain.icon}</span>
+                            <chain.logo className={`w-5 h-5 ${chain.color}`} />
                             <span>{chain.name}</span>
                           </div>
                         </SelectItem>
@@ -1104,7 +1230,10 @@ export function MultiChainFinancial() {
                     <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-700 dark:text-gray-300">Chain:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{selectedChain.icon} {selectedChain.name}</span>
+                        <div className="flex items-center space-x-2">
+                          <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                          <span className="font-medium text-gray-900 dark:text-white">{selectedChain.name}</span>
+                        </div>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-700 dark:text-gray-300">Token:</span>
@@ -1185,8 +1314,17 @@ export function MultiChainFinancial() {
                           <span className="font-bold text-blue-600">${withdrawal.usdAmount} {withdrawal.tokenType}</span>
                         </div>
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <span>{SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName)?.icon}</span>
-                          <span>{SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName)?.name}</span>
+                          <div className="flex items-center space-x-1">
+                            {(() => {
+                              const chain = SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName);
+                              if (chain) {
+                                const LogoComponent = chain.logo;
+                                return <LogoComponent className={`w-4 h-4 ${chain.color}`} />;
+                              }
+                              return null;
+                            })()}
+                            <span>{SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName)?.name}</span>
+                          </div>
                           {withdrawal.transactionHash && (
                             <Button
                               size="sm"
