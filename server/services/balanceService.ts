@@ -63,12 +63,19 @@ export class BalanceService {
           finalDescription = description || 'Withdrawal processed';
           break;
           
+        case 'withdrawal_pending':
+          // Deduct withdrawal amount for pending withdrawal
+          newBalance = user.balance - Math.abs(amount);
+          transactionAmount = -Math.abs(amount);
+          finalDescription = description || 'Withdrawal pending approval';
+          break;
+          
         default:
           throw new Error(`Unknown transaction type: ${type}`);
       }
       
       // Validate balance won't go negative (except for specific cases)
-      if (newBalance < 0 && !['withdrawal'].includes(type)) {
+      if (newBalance < 0 && !['withdrawal', 'withdrawal_pending'].includes(type)) {
         throw new Error(`Insufficient balance. Required: ${Math.abs(amount)} NTIQ, Available: ${user.balance} NTIQ`);
       }
       
