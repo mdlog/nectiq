@@ -200,6 +200,34 @@ export function MultiChainFinancial() {
     staleTime: 0,
   });
 
+  // Function to validate transaction hash (check if it's a real blockchain transaction)
+  const isValidTransactionHash = (hash: string): boolean => {
+    // Known test/demo hashes that don't exist on blockchain
+    const testHashes = [
+      '0x8dd45fdd7dcd7d939041880f56b3590f57e3a31d81785bbf3dfb78ea5ec35fd9',
+      '0x3cc45fdd7dcd7d939041880f56b3590f57e3a31d81785bbf3dfb78ea5ec35fd7',
+      '0x2bb45fdd7dcd7d939041880f56b3590f57e3a31d81785bbf3dfb78ea5ec35fd6',
+      '0x1aa45fdd7dcd7d939041880f56b3590f57e3a31d81785bbf3dfb78ea5ec35fd5',
+      '0x374bbd1ac514e9305ace4eff3938ea1498a5fbb48cfdf27c9dbf5ec8fd1af083',
+      '0x1987c6c8bd9db54cac5214e46125a4f99c2ec21404d51718563ea9bb333ba685',
+      '0x433f98ca7fbf1fb4fbd75d448fe228ce25342a49a90bd91d8391586ef523fd69',
+      '0x74fda31275153e0e42f62f4a9350b9cb0b501a5a0e76391e0197908ae38e3ae8'
+    ];
+    
+    // Check if hash is in test hash list
+    if (testHashes.includes(hash)) {
+      return false;
+    }
+    
+    // Basic validation: should be 66 chars, start with 0x
+    if (!hash || !hash.startsWith('0x') || hash.length !== 66) {
+      return false;
+    }
+    
+    // For now, assume other hashes are valid (in real implementation, you'd verify with blockchain)
+    return true;
+  };
+
   // Function to calculate token amount from USD for deposit history action view
   const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string, ethPriceSnapshot?: string): string => {
     if (tokenType === 'USDC' || tokenType === 'USDT') {
@@ -908,7 +936,7 @@ export function MultiChainFinancial() {
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.icon}</span>
                             <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}</span>
-                            {deposit.transactionHash && (
+                            {deposit.transactionHash && isValidTransactionHash(deposit.transactionHash) && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -919,9 +947,13 @@ export function MultiChainFinancial() {
                                     window.open(`${chain.explorerUrl}/tx/${deposit.transactionHash}`, '_blank');
                                   }
                                 }}
+                                title="View transaction on blockchain explorer"
                               >
                                 <ExternalLink className="w-3 h-3" />
                               </Button>
+                            )}
+                            {deposit.transactionHash && !isValidTransactionHash(deposit.transactionHash) && (
+                              <span className="text-xs text-gray-400 italic">Demo Hash</span>
                             )}
                           </div>
                         </div>
