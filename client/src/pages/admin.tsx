@@ -47,6 +47,26 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "reject" | "complete">("approve");
 
+  // Function to format withdrawal display - show proper token amount instead of USD amount
+  const formatWithdrawalDisplay = (withdrawal: any): string => {
+    if (withdrawal.tokenType === 'USDC' || withdrawal.tokenType === 'USDT') {
+      // For stablecoins, use usdAmount directly (1:1 ratio)
+      return `${parseFloat(withdrawal.usdAmount || 0).toFixed(2)} ${withdrawal.tokenType}`;
+    }
+    
+    if (withdrawal.tokenType === 'ETH') {
+      // For ETH, calculate token amount from USD amount using stored price snapshot if available
+      // or use the netAmount if available (which should be the actual token amount)
+      if (withdrawal.netAmount) {
+        return `${parseFloat(withdrawal.netAmount).toFixed(6)} ETH`;
+      }
+      // If no netAmount, fallback to showing USD equivalent with clear label
+      return `$${parseFloat(withdrawal.usdAmount || 0).toFixed(2)} (ETH)`;
+    }
+    
+    return `${parseFloat(withdrawal.usdAmount || 0).toFixed(2)} ${withdrawal.tokenType || 'N/A'}`;
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -121,7 +141,7 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
           <div>
             <p className="font-medium">{withdrawal.username}</p>
             <p className="text-sm text-slate-400">
-              {withdrawal.ntiqAmount ? withdrawal.ntiqAmount.toLocaleString() : 0} NTIQ → {withdrawal.usdAmount || 0} {withdrawal.tokenType || 'N/A'}
+              {withdrawal.ntiqAmount ? withdrawal.ntiqAmount.toLocaleString() : 0} NTIQ → {formatWithdrawalDisplay(withdrawal)}
             </p>
             <p className="text-xs text-slate-500">
               {new Date(withdrawal.createdAt).toLocaleString()}
@@ -4489,7 +4509,7 @@ export default function AdminPanel() {
                                 <div className="text-sm">
                                   <div className="font-medium">{transaction.amount ? transaction.amount.toLocaleString() : 0} NTIQ</div>
                                   {transaction.type === 'withdrawal' && (
-                                    <div className="text-xs text-slate-500">→ {transaction.tokenAmount || 'N/A'} {transaction.token}</div>
+                                    <div className="text-xs text-slate-500">→ {formatWithdrawalDisplay(transaction)}</div>
                                   )}
                                   {transaction.type === 'purchase' && (
                                     <div className="text-xs text-slate-500">← {transaction.paymentAmount || 'N/A'} {transaction.token}</div>

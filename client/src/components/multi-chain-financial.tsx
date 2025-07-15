@@ -405,6 +405,36 @@ export function MultiChainFinancial() {
     return `${parseFloat(deposit.amountUSD).toFixed(2)} ${deposit.tokenType}`;
   };
 
+  // Function to format withdrawal display - show proper token amount instead of USD amount
+  const formatWithdrawalDisplay = (withdrawal: WithdrawalData): string => {
+    if (withdrawal.tokenType === 'USDC' || withdrawal.tokenType === 'USDT') {
+      // For stablecoins, use usdAmount directly (1:1 ratio)
+      return `${parseFloat(withdrawal.usdAmount).toFixed(2)} ${withdrawal.tokenType}`;
+    }
+    
+    if (withdrawal.tokenType === 'ETH') {
+      // For ETH, try to calculate actual token amount from USD amount
+      // Use netAmount if available (which should be the actual token amount after fees)
+      if (withdrawal.netAmount) {
+        return `${parseFloat(withdrawal.netAmount).toFixed(6)} ETH`;
+      }
+      
+      // If no netAmount, calculate from USD amount using current ETH price
+      if (cryptoPrices && cryptoPrices.length > 0) {
+        const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
+        if (ethPrice?.current_price) {
+          const ethAmount = parseFloat(withdrawal.usdAmount) / ethPrice.current_price;
+          return `${ethAmount.toFixed(6)} ETH`;
+        }
+      }
+      
+      // Fallback to showing USD equivalent with clear label
+      return `$${parseFloat(withdrawal.usdAmount).toFixed(2)} (ETH)`;
+    }
+    
+    return `${parseFloat(withdrawal.usdAmount).toFixed(2)} ${withdrawal.tokenType}`;
+  };
+
   // Function to calculate withdrawal amount for different tokens
   const calculateWithdrawalAmount = (ntiqAmount: number, tokenType: string): string => {
     const usdAmount = ntiqAmount * 0.01; // 1 NTIQ = $0.01
@@ -1705,7 +1735,7 @@ export function MultiChainFinancial() {
                         <div className="flex items-center space-x-2">
                           <span className="font-medium">{withdrawal.ntiqAmount.toLocaleString()} NTIQ</span>
                           <span>→</span>
-                          <span className="font-bold text-blue-600">${withdrawal.usdAmount} {withdrawal.tokenType}</span>
+                          <span className="font-bold text-blue-600">{formatWithdrawalDisplay(withdrawal)}</span>
                         </div>
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                           <div className="flex items-center space-x-1">
