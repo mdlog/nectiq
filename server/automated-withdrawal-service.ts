@@ -382,9 +382,9 @@ export const defaultAutoWithdrawalConfig: AutoWithdrawalConfig = {
       }
     },
     'sepolia': {
-      rpcUrl: 'https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY',
+      rpcUrl: process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
       chainId: 11155111,
-      gasLimit: '100000',
+      gasLimit: '21000',
       maxGasPrice: '50',
       tokenContracts: {
         USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
