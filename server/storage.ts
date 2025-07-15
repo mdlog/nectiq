@@ -76,6 +76,8 @@ export interface IStorage {
   getUserDeposits(userId: number, limit?: number): Promise<any[]>;
   updateDepositStatus(id: number, status: string, transactionHash?: string, blockNumber?: number): Promise<void>;
   getDepositByTransactionHash(hash: string): Promise<any>;
+  getCompletedDepositsWithoutCredit(): Promise<any[]>;
+  getTransactionLogsByDepositId(depositId: number): Promise<any[]>;
 
   // Multi-chain Withdrawal operations
   createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
@@ -655,6 +657,25 @@ export class DatabaseStorage implements IStorage {
       .where(eq(deposits.transactionHash, hash))
       .limit(1);
     return result[0];
+  }
+
+  async getCompletedDepositsWithoutCredit(): Promise<any[]> {
+    // Get all completed deposits
+    const completedDeposits = await db.select().from(deposits).where(eq(deposits.status, 'completed'));
+    return completedDeposits;
+  }
+
+  async getTransactionLogsByDepositId(depositId: number): Promise<any[]> {
+    // Get transaction logs that reference this deposit
+    const logs = await db.select()
+      .from(transactionLogs)
+      .where(
+        and(
+          eq(transactionLogs.type, 'deposit_credit'),
+          like(transactionLogs.description, `%deposit_${depositId}%`)
+        )
+      );
+    return logs;
   }
 
   // Multi-chain Withdrawal operations
