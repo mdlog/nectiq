@@ -171,6 +171,8 @@ export function MultiChainFinancial() {
   const [confirmationEthAmount, setConfirmationEthAmount] = useState<string>("0");
   const [expandedDeposits, setExpandedDeposits] = useState<Set<number>>(new Set());
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
+  const [transactionHashInput, setTransactionHashInput] = useState("");
+  const [depositIdForHash, setDepositIdForHash] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   // Query to get user data
@@ -368,6 +370,33 @@ export function MultiChainFinancial() {
     },
   });
 
+  // Mutation to update deposit transaction hash
+  const updateDepositHashMutation = useMutation({
+    mutationFn: async (data: { depositId: number; transactionHash: string }) => {
+      const response = await apiRequest(`/api/deposits/${data.depositId}/update-hash`, {
+        method: "POST",
+        body: JSON.stringify({ transactionHash: data.transactionHash }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+      setTransactionHashInput("");
+      setDepositIdForHash(null);
+      toast({
+        title: "Transaction Hash Updated",
+        description: "Deposit monitoring will begin automatically",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update transaction hash",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeposit = () => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
       toast({
@@ -426,6 +455,42 @@ export function MultiChainFinancial() {
       title: "Copied",
       description: "Wallet address copied to clipboard",
     });
+  };
+
+  const handleUpdateTransactionHash = () => {
+    if (!transactionHashInput || !depositIdForHash) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid transaction hash",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate transaction hash format
+    if (!transactionHashInput.startsWith('0x') || transactionHashInput.length !== 66) {
+      toast({
+        title: "Invalid Hash Format",
+        description: "Transaction hash must be 66 characters starting with 0x",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateDepositHashMutation.mutate({
+      depositId: depositIdForHash,
+      transactionHash: transactionHashInput,
+    });
+  };
+
+  const startHashInput = (depositId: number) => {
+    setDepositIdForHash(depositId);
+    setTransactionHashInput("");
+  };
+
+  const cancelHashInput = () => {
+    setDepositIdForHash(null);
+    setTransactionHashInput("");
   };
 
   // MetaMask transaction function
@@ -866,15 +931,27 @@ export function MultiChainFinancial() {
                             {new Date(deposit.createdAt).toLocaleDateString('en-US')}
                           </div>
                           {deposit.status === 'pending' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="mt-2"
-                              onClick={() => toggleDepositExpanded(deposit.id)}
-                            >
-                              <Eye className="w-3 h-3 mr-1" />
-                              {expandedDeposits.has(deposit.id) ? 'Hide Action' : 'Action View'}
-                            </Button>
+                            <div className="space-y-2 mt-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => toggleDepositExpanded(deposit.id)}
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                {expandedDeposits.has(deposit.id) ? 'Hide Action' : 'Action View'}
+                              </Button>
+                              {!deposit.transactionHash && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                                  onClick={() => startHashInput(deposit.id)}
+                                >
+                                  <Plus className="w-3 h-3 mr-1" />
+                                  Add Tx Hash
+                                </Button>
+                              )}
+                            </div>
                           )}
                           {deposit.status === 'processing' && deposit.transactionHash && (
                             <Button
@@ -1226,6 +1303,53 @@ export function MultiChainFinancial() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Transaction Hash Input Modal */}
+      <Dialog open={depositIdForHash !== null} onOpenChange={(open) => !open && cancelHashInput()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Plus className="w-5 h-5" />
+              <span>Add Transaction Hash</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="txHash">Transaction Hash</Label>
+              <Input
+                id="txHash"
+                type="text"
+                placeholder="0x1234567890abcdef..."
+                value={transactionHashInput}
+                onChange={(e) => setTransactionHashInput(e.target.value)}
+                disabled={updateDepositHashMutation.isPending}
+              />
+              <p className="text-xs text-gray-500">
+                Enter the transaction hash from your blockchain transaction (66 characters starting with 0x)
+              </p>
+            </div>
+            
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={cancelHashInput}
+                disabled={updateDepositHashMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={handleUpdateTransactionHash}
+                disabled={updateDepositHashMutation.isPending || !transactionHashInput.trim()}
+              >
+                {updateDepositHashMutation.isPending ? "Updating..." : "Update Hash"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

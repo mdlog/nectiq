@@ -5162,6 +5162,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple endpoint to update deposit hash only (for pending deposits)
+  app.post("/api/deposits/:id/update-hash", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const depositId = parseInt(req.params.id);
+      const { transactionHash } = req.body;
+
+      if (!transactionHash) {
+        return res.status(400).json({ error: "Transaction hash is required" });
+      }
+
+      // Verify that the deposit belongs to the authenticated user
+      const userDeposits = await storage.getUserDeposits(session.userId, 100);
+      const deposit = userDeposits.find(d => d.id === depositId);
+      
+      if (!deposit) {
+        return res.status(404).json({ error: "Deposit not found or unauthorized" });
+      }
+
+      if (deposit.status !== 'pending') {
+        return res.status(400).json({ error: "Can only update pending deposits" });
+      }
+
+      // Update the deposit hash using the new method
+      await storage.updateDepositHash(depositId, transactionHash);
+
+      console.log(`✅ Deposit ${depositId} hash updated: ${transactionHash}, status changed to processing`);
+      res.json({ 
+        success: true, 
+        message: "Transaction hash updated. Monitoring will begin automatically." 
+      });
+    } catch (error: any) {
+      console.error("Error updating deposit hash:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Check blockchain transaction status and update deposit
   app.post("/api/deposits/:id/check-blockchain-status", async (req, res) => {
     try {

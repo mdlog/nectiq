@@ -75,7 +75,9 @@ export interface IStorage {
   createDeposit(deposit: any): Promise<any>;
   getUserDeposits(userId: number, limit?: number): Promise<any[]>;
   updateDepositStatus(id: number, status: string, transactionHash?: string, blockNumber?: number): Promise<void>;
+  updateDepositHash(id: number, transactionHash: string): Promise<void>;
   getDepositByTransactionHash(hash: string): Promise<any>;
+  getAllDeposits(): Promise<any[]>;
   getCompletedDepositsWithoutCredit(): Promise<any[]>;
   getTransactionLogsByDepositId(depositId: number): Promise<any[]>;
 
@@ -648,6 +650,21 @@ export class DatabaseStorage implements IStorage {
 
     await db.update(deposits)
       .set(updateData)
+      .where(eq(deposits.id, id));
+  }
+
+  async updateDepositHash(id: number, transactionHash: string): Promise<void> {
+    // Validate transaction hash format (should be 66 characters with 0x prefix)
+    if (!transactionHash.startsWith('0x') || transactionHash.length !== 66) {
+      throw new Error('Invalid transaction hash format. Must be 66 characters starting with 0x');
+    }
+
+    await db.update(deposits)
+      .set({ 
+        transactionHash,
+        status: 'processing',
+        updatedAt: new Date()
+      })
       .where(eq(deposits.id, id));
   }
 

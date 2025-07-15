@@ -76,6 +76,12 @@ class DepositService {
     try {
       console.log(`🔍 [DEPOSIT SERVICE] Checking deposit ${deposit.id} (${deposit.chainName}) - Hash: ${deposit.transactionHash}`);
 
+      // Validate transaction hash format
+      if (!deposit.transactionHash || deposit.transactionHash.length !== 66) {
+        console.log(`❌ [DEPOSIT SERVICE] Invalid transaction hash format for deposit ${deposit.id}: ${deposit.transactionHash}`);
+        return;
+      }
+
       // Chain configurations
       const chainConfig = {
         'eth': { explorerApi: 'https://api.etherscan.io/api', apiKey: process.env.ETHERSCAN_API_KEY },
@@ -88,40 +94,93 @@ class DepositService {
       };
 
       const chain = chainConfig[deposit.chainName as keyof typeof chainConfig];
-      if (!chain) {
-        console.log(`❌ [DEPOSIT SERVICE] Unsupported chain: ${deposit.chainName}`);
+      if (!chain || !chain.apiKey) {
+        console.log(`❌ [DEPOSIT SERVICE] Unsupported chain or missing API key: ${deposit.chainName}`);
         return;
       }
 
-      // Check transaction status
-      const apiUrl = `${chain.explorerApi}?module=transaction&action=gettxreceiptstatus&txhash=${deposit.transactionHash}&apikey=${chain.apiKey}`;
-      
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-      
-      console.log(`📊 [DEPOSIT SERVICE] Blockchain API response for deposit ${deposit.id}:`, JSON.stringify(data, null, 2));
-      
-      if (data.status === "1" && data.result?.status === "1") {
-        // Transaction successful - process deposit completion
-        await this.processCompletedDeposit(deposit);
-      } else if (data.status === "1" && data.result?.status === "0") {
-        // Transaction failed
-        await storage.updateDepositStatus(deposit.id, 'failed');
-        console.log(`❌ [DEPOSIT SERVICE] Deposit ${deposit.id} failed on blockchain`);
+      // Try multiple API methods for better reliability
+      let transactionFound = false;
+      let transactionStatus = false;
+
+      // Method 1: Get transaction receipt (most reliable)
+      try {
+        const receiptUrl = `${chain.explorerApi}?module=proxy&action=eth_getTransactionReceipt&txhash=${deposit.transactionHash}&apikey=${chain.apiKey}`;
+        const receiptResponse = await fetch(receiptUrl);
+        const receiptData = await receiptResponse.json();
+        
+        console.log(`📊 [DEPOSIT SERVICE] Receipt API response for deposit ${deposit.id}:`, JSON.stringify(receiptData, null, 2));
+        
+        if (receiptData.result && receiptData.result.status) {
+          transactionFound = true;
+          transactionStatus = receiptData.result.status === "0x1";
+        }
+      } catch (receiptError) {
+        console.log(`⚠️ [DEPOSIT SERVICE] Receipt method failed for deposit ${deposit.id}:`, receiptError);
+      }
+
+      // Method 2: Get transaction status (fallback)
+      if (!transactionFound) {
+        try {
+          const statusUrl = `${chain.explorerApi}?module=transaction&action=gettxreceiptstatus&txhash=${deposit.transactionHash}&apikey=${chain.apiKey}`;
+          const statusResponse = await fetch(statusUrl);
+          const statusData = await statusResponse.json();
+          
+          console.log(`📊 [DEPOSIT SERVICE] Status API response for deposit ${deposit.id}:`, JSON.stringify(statusData, null, 2));
+          
+          if (statusData.status === "1" && statusData.result && statusData.result.status !== "") {
+            transactionFound = true;
+            transactionStatus = statusData.result.status === "1";
+          }
+        } catch (statusError) {
+          console.log(`⚠️ [DEPOSIT SERVICE] Status method failed for deposit ${deposit.id}:`, statusError);
+        }
+      }
+
+      // Method 3: Simple transaction lookup (final fallback)
+      if (!transactionFound) {
+        try {
+          const txUrl = `${chain.explorerApi}?module=proxy&action=eth_getTransactionByHash&txhash=${deposit.transactionHash}&apikey=${chain.apiKey}`;
+          const txResponse = await fetch(txUrl);
+          const txData = await txResponse.json();
+          
+          console.log(`📊 [DEPOSIT SERVICE] Transaction lookup for deposit ${deposit.id}:`, JSON.stringify(txData, null, 2));
+          
+          if (txData.result && txData.result.blockNumber) {
+            // Transaction exists and is mined - assume successful for deposits
+            transactionFound = true;
+            transactionStatus = true; // Assume success if mined and no explicit failure
+            console.log(`✅ [DEPOSIT SERVICE] Transaction found in block ${txData.result.blockNumber} - assuming success`);
+          }
+        } catch (txError) {
+          console.log(`⚠️ [DEPOSIT SERVICE] Transaction lookup failed for deposit ${deposit.id}:`, txError);
+        }
+      }
+
+      // Process based on results
+      if (transactionFound) {
+        if (transactionStatus) {
+          // Transaction successful - process deposit completion
+          await this.processCompletedDeposit(deposit);
+        } else {
+          // Transaction failed
+          await storage.updateDepositStatus(deposit.id, 'failed');
+          console.log(`❌ [DEPOSIT SERVICE] Deposit ${deposit.id} failed on blockchain`);
+        }
       } else {
-        // Still pending - update status to processing if not already
+        // Transaction not found or API issues - keep as processing
+        console.log(`⏳ [DEPOSIT SERVICE] Transaction not found yet for deposit ${deposit.id}, keeping as processing`);
         if (deposit.status === 'pending') {
           await storage.updateDepositStatus(deposit.id, 'processing');
-          console.log(`⏳ [DEPOSIT SERVICE] Deposit ${deposit.id} updated to processing`);
         }
       }
 
     } catch (error: any) {
-      console.error(`❌ [DEPOSIT SERVICE] Error checking deposit ${deposit.id}:`, error?.response?.data || error.message);
+      console.error(`❌ [DEPOSIT SERVICE] Error checking deposit ${deposit.id}:`, error?.message || error);
       
-      // Log API key issues for debugging
-      if (error?.response?.data?.message) {
-        console.error('🔑 [DEPOSIT SERVICE] API KEY ISSUE:', error.response.data.message);
+      // Log detailed error information
+      if (error?.response?.data) {
+        console.error('🔑 [DEPOSIT SERVICE] API ERROR DETAILS:', JSON.stringify(error.response.data, null, 2));
       }
     }
   }
