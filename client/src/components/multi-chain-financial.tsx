@@ -369,7 +369,7 @@ export function MultiChainFinancial() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Chain Selection */}
                 <div>
-                  <Label>Pilih Blockchain</Label>
+                  <Label>Select Blockchain</Label>
                   <Select value={selectedChain.shortName} onValueChange={(value) => {
                     const chain = SUPPORTED_CHAINS.find(c => c.shortName === value);
                     if (chain) setSelectedChain(chain);
@@ -392,7 +392,7 @@ export function MultiChainFinancial() {
 
                 {/* Token Selection */}
                 <div>
-                  <Label>Pilih Token</Label>
+                  <Label>Select Token</Label>
                   <Select value={selectedToken} onValueChange={(value) => setSelectedToken(value as "USDC" | "USDT")}>
                     <SelectTrigger>
                       <SelectValue />
@@ -573,7 +573,7 @@ export function MultiChainFinancial() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Chain Selection */}
                 <div>
-                  <Label>Pilih Blockchain</Label>
+                  <Label>Select Blockchain</Label>
                   <Select value={selectedChain.shortName} onValueChange={(value) => {
                     const chain = SUPPORTED_CHAINS.find(c => c.shortName === value);
                     if (chain) setSelectedChain(chain);
@@ -596,7 +596,7 @@ export function MultiChainFinancial() {
 
                 {/* Token Selection */}
                 <div>
-                  <Label>Pilih Token</Label>
+                  <Label>Select Token</Label>
                   <Select value={selectedToken} onValueChange={(value) => setSelectedToken(value as "USDC" | "USDT")}>
                     <SelectTrigger>
                       <SelectValue />
