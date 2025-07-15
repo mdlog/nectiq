@@ -390,6 +390,28 @@ export function MultiChainFinancial() {
     return "0.000000";
   };
 
+  // Function to calculate withdrawal amount for different tokens
+  const calculateWithdrawalAmount = (ntiqAmount: number, tokenType: string): string => {
+    const usdAmount = ntiqAmount * 0.01; // 1 NTIQ = $0.01
+    
+    if (tokenType === 'USDC' || tokenType === 'USDT') {
+      return usdAmount.toFixed(2); // 1:1 ratio for stablecoins
+    }
+    
+    if (tokenType === 'ETH') {
+      if (cryptoPrices && cryptoPrices.length > 0) {
+        const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
+        if (ethPrice?.current_price) {
+          const ethAmount = usdAmount / ethPrice.current_price;
+          return ethAmount.toFixed(6);
+        }
+      }
+      return "0.000000";
+    }
+    
+    return "0.000000";
+  };
+
   // Toggle function for expanding deposit action view
   const toggleDepositExpanded = (depositId: number) => {
     const newExpanded = new Set(expandedDeposits);
@@ -1298,7 +1320,7 @@ export function MultiChainFinancial() {
                 />
                 {withdrawAmount && (
                   <p className="text-sm text-gray-600 mt-1">
-                    You will receive: <span className="font-bold text-blue-600">${(parseInt(withdrawAmount) * 0.01).toFixed(2)} {selectedToken}</span>
+                    You will receive: <span className="font-bold text-blue-600">{calculateWithdrawalAmount(parseInt(withdrawAmount), selectedToken)} {selectedToken}</span>
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
@@ -1338,8 +1360,8 @@ export function MultiChainFinancial() {
                         <span className="font-medium text-gray-900 dark:text-white">{parseInt(withdrawAmount || "0").toLocaleString()} NTIQ</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">USD received:</span>
-                        <span className="font-bold text-blue-600">${(parseInt(withdrawAmount || "0") * 0.01).toFixed(2)} {selectedToken}</span>
+                        <span className="text-gray-700 dark:text-gray-300">You will receive:</span>
+                        <span className="font-bold text-blue-600">{calculateWithdrawalAmount(parseInt(withdrawAmount || "0"), selectedToken)} {selectedToken}</span>
                       </div>
                     </div>
 
