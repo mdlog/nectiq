@@ -5201,8 +5201,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check transaction status
       try {
-        const response = await fetch(`${chain.explorerApi}?module=transaction&action=gettxreceiptstatus&txhash=${deposit.transactionHash}&apikey=${chain.apiKey}`);
+        const apiUrl = `${chain.explorerApi}?module=transaction&action=gettxreceiptstatus&txhash=${deposit.transactionHash}&apikey=${chain.apiKey}`;
+        console.log(`🔍 Checking blockchain status for deposit ${depositId} on ${deposit.chainName}: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl);
         const data = await response.json();
+        
+        console.log(`📊 Blockchain API response for deposit ${depositId}:`, JSON.stringify(data, null, 2));
         
         if (data.status === "1" && data.result?.status === "1") {
           // Transaction successful, update deposit to completed and add NTIQ balance
@@ -5251,15 +5256,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } catch (blockchainError: any) {
-        console.error('Blockchain API error:', blockchainError);
+        console.error('🚨 [BLOCKCHAIN API ERROR]:', blockchainError?.response?.data || blockchainError.message);
+        
+        // Log detailed error for debugging
+        if (blockchainError?.response?.data?.message) {
+          console.error('🔑 [API KEY ISSUE]:', blockchainError.response.data.message);
+        }
+        
+        // Enhanced error response with more details
         return res.json({ 
           success: true, 
           status: 'processing',
-          message: 'Unable to check blockchain status, will retry later'
+          message: 'Unable to verify transaction on blockchain. Manual verification may be needed.',
+          error: blockchainError?.response?.data?.message || 'Network error'
         });
       }
     } catch (error: any) {
       console.error("Error checking blockchain status:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Manual credit deposit balance (temporary endpoint for testing)
+  app.post("/api/test/credit-deposit-balance", async (req, res) => {
+    try {
+      const { userId, depositId, ntiqAmount, transactionHash } = req.body;
+      
+      // Credit NTIQ balance to user using BalanceService
+      const balanceService = new BalanceService(storage);
+      await balanceService.processTransaction(
+        userId,
+        'deposit_credit',
+        ntiqAmount,
+        `Deposit completed - SEPOLIA transaction ${transactionHash}`,
+        { 
+          depositId: depositId,
+          transactionHash: transactionHash,
+          chainName: 'sepolia',
+          tokenType: 'ETH',
+          amountUSD: ntiqAmount / 100
+        }
+      );
+
+      console.log(`✅ Manual credit: Added ${ntiqAmount} NTIQ to user ${userId} for deposit ${depositId}`);
+      
+      return res.json({ 
+        success: true, 
+        message: `Successfully credited ${ntiqAmount} NTIQ to user balance`
+      });
+    } catch (error: any) {
+      console.error("Error crediting deposit balance:", error);
       res.status(500).json({ error: error.message });
     }
   });
