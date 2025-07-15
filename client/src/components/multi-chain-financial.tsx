@@ -1705,7 +1705,26 @@ export function MultiChainFinancial() {
                         <div className="flex items-center space-x-2">
                           <span className="font-medium">{withdrawal.ntiqAmount.toLocaleString()} NTIQ</span>
                           <span>→</span>
-                          <span className="font-bold text-blue-600">${withdrawal.usdAmount} {withdrawal.tokenType}</span>
+                          <span className="font-bold text-blue-600">{(() => {
+                            // Calculate the actual token amount based on NTIQ amount and token type
+                            const ntiqAmount = withdrawal.ntiqAmount || 0;
+                            let tokenAmount = 'N/A';
+                            const tokenType = withdrawal.tokenType || 'N/A';
+                            
+                            if (tokenType === 'USDC' || tokenType === 'USDT') {
+                              // USDC/USDT: 1 NTIQ = $0.01, so 1:1 ratio with USD
+                              tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                            } else if (tokenType === 'ETH') {
+                              // ETH: calculate based on current price
+                              const ethPrice = 2300; // You can update this with real-time price
+                              const usdValue = ntiqAmount * 0.01;
+                              tokenAmount = (usdValue / ethPrice).toFixed(6);
+                            } else {
+                              tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                            }
+                            
+                            return `${tokenAmount} ${tokenType}`;
+                          })()}</span>
                         </div>
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                           <div className="flex items-center space-x-1">
