@@ -3,10 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 import { PlatformStats } from "@/components/platform-stats";
-import { queryClient } from "@/lib/queryClient";
 
 interface CryptoPrice {
   id: string;
@@ -144,33 +142,6 @@ function LandingHeader() {
 export default function LandingPage() {
   const [, setLocation] = useLocation();
   
-  // Check if user is authenticated and auto-redirect to dashboard
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["/api/user"],
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
-  useEffect(() => {
-    // If user is authenticated, automatically redirect to dashboard
-    if (!isLoading && user) {
-      console.log('🚀 User is authenticated on landing page, redirecting to dashboard...');
-      setLocation('/home');
-    }
-  }, [user, isLoading, setLocation]);
-
-  // Show loading while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400 mx-auto mb-4"></div>
-          <p className="text-white text-lg">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
-  
   return (
     <div className="min-h-screen bg-background text-foreground pb-16">
       {/* Header */}
@@ -242,70 +213,6 @@ export default function LandingPage() {
               </p>
             </div>
             <PlatformStats />
-          </div>
-
-          {/* Demo Login Section - For Testing Redirect */}
-          <div className="mb-16 text-center">
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg p-6 max-w-2xl mx-auto">
-              <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-3">
-                Demo Login - Test Redirect System
-              </h3>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
-                Click button di bawah untuk test apakah sistem redirect ke dashboard berfungsi setelah login
-              </p>
-              <div className="space-y-3">
-                <Button 
-                  onClick={async () => {
-                    try {
-                      console.log('🔄 Testing demo login...');
-                      const response = await fetch('/api/auth/wallet-login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                          address: '0x3c884236f8a049501cce5408cbba2b3ef5b43f55'
-                        }),
-                      });
-                      
-                      console.log('Demo login response:', response.status);
-                      
-                      if (response.ok) {
-                        const data = await response.json();
-                        console.log('Demo login successful:', data);
-                        
-                        // Invalidate user query to update authentication state
-                        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-                        
-                        // Small delay to ensure query invalidation completes
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        
-                        // Test redirect to dashboard
-                        console.log('🚀 Demo login successful, redirecting to dashboard...');
-                        setLocation('/home');
-                      } else {
-                        console.error('Demo login failed:', response.status);
-                      }
-                    } catch (error) {
-                      console.error('Demo login error:', error);
-                    }
-                  }}
-                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium px-6 py-2"
-                >
-                  Test Demo Login & Redirect
-                </Button>
-                
-                <Button 
-                  onClick={() => {
-                    console.log('🔐 Manual force redirect to dashboard...');
-                    window.location.href = '/home';
-                  }}
-                  variant="outline"
-                  className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:border-yellow-600 dark:hover:bg-yellow-900/20"
-                >
-                  Manual Force Redirect to Dashboard
-                </Button>
-              </div>
-            </div>
           </div>
 
           {/* About Section */}

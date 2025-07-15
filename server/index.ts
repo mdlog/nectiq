@@ -131,34 +131,10 @@ app.use(session({
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Whitelist specific Dynamic Labs domains + local development
-  const allowedOrigins = [
-    'https://app.dynamic.xyz',
-    'https://static.dynamic.xyz',
-    'https://api.dynamic.xyz',
-    'https://connect.dynamic.xyz',
-    'https://embedded-wallet.dynamic.xyz',
-    'http://localhost:5173',
-    'http://localhost:5000',
-    'http://localhost:3000',
-    'https://*.replit.dev',
-    'https://*.repl.co'
-  ];
-  
-  // Check if origin is allowed or if it's a dynamic subdomain
-  const isAllowedOrigin = origin && (
-    allowedOrigins.includes(origin) ||
-    origin.includes('dynamic.xyz') ||
-    origin.includes('localhost') ||
-    origin.includes('replit')
-  );
-  
-  if (isAllowedOrigin || !origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  }
-  
+  // Allow all origins for development, especially Dynamic authentication domains
+  res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since, Upgrade, Connection, Sec-WebSocket-Key, Sec-WebSocket-Version, Sec-WebSocket-Protocol');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
@@ -167,12 +143,6 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  
-  // WebSocket upgrade support
-  if (req.headers.upgrade === 'websocket') {
-    res.setHeader('Upgrade', 'websocket');
-    res.setHeader('Connection', 'Upgrade');
-  }
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();

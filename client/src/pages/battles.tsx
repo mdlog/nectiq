@@ -68,15 +68,10 @@ export default function BattlesPage() {
   // Wallet requirement system
   const { isModalOpen, actionType, checkWalletRequired, onWalletConnected, closeModal } = useWalletRequired();
 
-  // Check user authentication - consistent with ProtectedRoute
+  // Check user authentication
   const { data: user } = useQuery({
     queryKey: ['/api/user'],
-    retry: 3,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 3000),
-    staleTime: 30 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true
+    retry: false
   });
 
   // Fetch battles data

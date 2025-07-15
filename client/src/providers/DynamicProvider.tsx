@@ -6,26 +6,24 @@ import { StarknetWalletConnectors } from '@dynamic-labs/starknet';
 import { ReactNode } from 'react';
 import { useLocation } from 'wouter';
 import { queryClient } from '@/lib/queryClient';
+import { useAuthenticationHandler } from '@/hooks/useAuthenticationHandler';
+
 interface DynamicProviderProps {
   children: ReactNode;
+}
+
+function DynamicContent({ children }: { children: ReactNode }) {
+  useAuthenticationHandler();
+  return <>{children}</>;
 }
 
 export default function DynamicProvider({ children }: DynamicProviderProps) {
   const [, navigate] = useLocation();
   
-  // Check if environment ID is available
-  const environmentId = import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID;
-  console.log('🔐 Dynamic Environment ID check:', environmentId ? 'Available' : 'Missing');
-  
-  if (!environmentId) {
-    console.error('🔐 VITE_DYNAMIC_ENVIRONMENT_ID is not set in environment variables!');
-    // Still render children but show warning in console
-  }
-  
   return (
     <DynamicContextProvider
       settings={{
-        environmentId: import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID,
+        environmentId: import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID || 'live_default',
         walletConnectors: [
           EthereumWalletConnectors,
           SolanaWalletConnectors,
@@ -33,11 +31,9 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
           StarknetWalletConnectors,
         ],
         appName: 'Nectiq',
-        // appLogoUrl: '/src/assets/nectiq-logo.png',
-        initialAuthenticationMode: 'connect-only',
+        appLogoUrl: 'https://nectiq.app/logo.png',
+        initialAuthenticationMode: 'connect-and-sign',
         enableVisitTrackingOnConnectOnly: false,
-        apiBaseUrl: undefined, // Let Dynamic use default URLs
-        websocketUrl: undefined, // Let Dynamic use default WebSocket URLs
         cssOverrides: `
           .dynamic-modal {
             z-index: 9999;
@@ -82,7 +78,6 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         events: {
           onAuthInit: (args) => {
             console.log('🔐 Dynamic: Auth initialized', args);
-            console.log('🔐 Environment ID being used:', import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID);
           },
           onAuthFlowOpen: () => {
             console.log('🔐 Dynamic: Auth flow opened');
@@ -145,22 +140,41 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                   const responseData = await response.json();
                   console.log('🔐 Backend authentication successful:', responseData);
                   
+                  // Check if user is admin for different redirect
+                  if (responseData.user?.isAdmin) {
+                    console.log('🔐 Admin user detected, redirecting to home with admin context');
+                  }
+                  
                   // Invalidate all queries to refresh authentication state
                   console.log('🔐 Invalidating queries...');
                   await queryClient.invalidateQueries();
                   console.log('🔐 Queries invalidated');
                   
-                  // Redirect to dashboard after successful authentication
-                  console.log('🔐 Authentication completed, redirecting to dashboard...');
-                  
-                  // Add a small delay to ensure query invalidation completes
+                  // Try multiple redirect approaches
                   setTimeout(() => {
-                    console.log('🔐 Navigating to /home dashboard...');
-                    navigate('/home');
-                    console.log('🔐 Navigation to /home completed');
-                    // Force page reload to ensure proper state update
-                    window.location.reload();
-                  }, 500);
+                    console.log('🔐 Attempting redirect to /home...');
+                    console.log('🔐 Current location before redirect:', window.location.href);
+                    
+                    // Try different redirect methods
+                    try {
+                      // Method 1: Use navigate function
+                      navigate('/home');
+                      console.log('🔐 Navigate function executed');
+                      
+                      // Method 2: Fallback to window.location
+                      setTimeout(() => {
+                        if (window.location.pathname !== '/home') {
+                          console.log('🔐 Navigate failed, using window.location fallback');
+                          window.location.href = '/home';
+                        }
+                      }, 500);
+                    } catch (error) {
+                      console.error('🔐 Navigate failed:', error);
+                      window.location.href = '/home';
+                    }
+                    
+                    console.log('🔐 Redirect command executed');
+                  }, 1500);
                 } else {
                   try {
                     const errorData = await response.json();
@@ -170,13 +184,6 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                     const errorText = await response.text();
                     console.error('🔐 Backend authentication failed (non-JSON response):', response.status, errorText);
                   }
-                  
-                  // Even if backend fails, still try to redirect if we have user data
-                  console.log('🔐 Backend authentication failed, but still redirecting...');
-                  setTimeout(() => {
-                    navigate('/home');
-                    console.log('🔐 Force redirected to /home after backend failure');
-                  }, 1000);
                 }
               } catch (error) {
                 console.error('🔐 Authentication request failed:', error);
@@ -190,9 +197,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
             }
           },
           onAuthFailure: (error) => {
-            console.error('🔐 Dynamic: Authentication failed', error);
-            console.error('🔐 Environment ID:', import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID);
-            console.error('🔐 Full error details:', JSON.stringify(error, null, 2));
+            console.error('Dynamic: Authentication failed', error);
           },
           onLogout: () => {
             console.log('Dynamic: User logged out');
@@ -202,7 +207,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         },
       }}
     >
-{children}
+      <DynamicContent>{children}</DynamicContent>
     </DynamicContextProvider>
   );
 }

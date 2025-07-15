@@ -52,8 +52,25 @@ export function useAuthenticationHandler() {
             await queryClient.invalidateQueries();
             console.log('🔐 [HOOK] Queries invalidated');
             
-            // No automatic redirect - let user stay on current page
-            console.log('🔐 [HOOK] Authentication completed, staying on current page');
+            // Redirect to home
+            setTimeout(() => {
+              console.log('🔐 [HOOK] Redirecting to /home...');
+              try {
+                navigate('/home');
+                console.log('🔐 [HOOK] Navigate function executed');
+                
+                // Fallback redirect
+                setTimeout(() => {
+                  if (window.location.pathname !== '/home') {
+                    console.log('🔐 [HOOK] Navigate failed, using window.location fallback');
+                    window.location.href = '/home';
+                  }
+                }, 500);
+              } catch (error) {
+                console.error('🔐 [HOOK] Navigate failed:', error);
+                window.location.href = '/home';
+              }
+            }, 1000);
           } else {
             console.error('🔐 [HOOK] Backend authentication failed:', response.status);
           }
