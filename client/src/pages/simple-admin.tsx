@@ -1,8 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, TrendingUp, Award, Activity } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { Users, TrendingUp, Award, Activity, Target, DollarSign, Trash2 } from "lucide-react";
 
 interface AdminStats {
   totalUsers: number;
@@ -14,6 +17,9 @@ interface AdminStats {
 }
 
 export default function SimpleAdminPanel() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: stats, isLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     refetchInterval: 5000,
@@ -22,6 +28,39 @@ export default function SimpleAdminPanel() {
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/users"],
     refetchInterval: 5000,
+  });
+
+  const { data: predictions = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/predictions"],
+    refetchInterval: 5000,
+  });
+
+  const { data: transactions = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/transactions"],
+    refetchInterval: 1000,
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      return await apiRequest(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    }
   });
 
   if (isLoading) {
@@ -104,42 +143,155 @@ export default function SimpleAdminPanel() {
           </Card>
         </div>
 
-        {/* Users Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Users ({users.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-800">
-                    <th className="border border-gray-300 px-4 py-2 text-left">Username</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left">Balance</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left">Predictions</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left">Admin</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.slice(0, 10).map((user: any) => (
-                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="border border-gray-300 px-4 py-2">{user.username}</td>
-                      <td className="border border-gray-300 px-4 py-2">{user.balance || 0} NTIQ</td>
-                      <td className="border border-gray-300 px-4 py-2">{user.totalPredictions || 0}</td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {user.isAdmin ? (
-                          <Badge className="bg-purple-100 text-purple-700">Admin</Badge>
-                        ) : (
-                          <Badge variant="outline">User</Badge>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Admin Tabs */}
+        <Tabs defaultValue="users" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="predictions" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Predictions
+            </TabsTrigger>
+            <TabsTrigger value="transactions" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Transactions
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Users Tab */}
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Management ({users.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-gray-800">
+                        <th className="border border-gray-300 px-4 py-2 text-left">Username</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Balance</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Predictions</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Admin</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.slice(0, 15).map((user: any) => (
+                        <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <td className="border border-gray-300 px-4 py-2">{user.username}</td>
+                          <td className="border border-gray-300 px-4 py-2">{user.balance || 0} NTIQ</td>
+                          <td className="border border-gray-300 px-4 py-2">{user.totalPredictions || 0}</td>
+                          <td className="border border-gray-300 px-4 py-2">
+                            {user.isAdmin ? (
+                              <Badge className="bg-purple-100 text-purple-700">Admin</Badge>
+                            ) : (
+                              <Badge variant="outline">User</Badge>
+                            )}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-2">
+                            {!user.isAdmin && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteUserMutation.mutate(user.id)}
+                                disabled={deleteUserMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Predictions Tab */}
+          <TabsContent value="predictions">
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Predictions ({predictions.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-gray-800">
+                        <th className="border border-gray-300 px-4 py-2 text-left">User</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Crypto</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Prediction</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Stake</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {predictions.slice(0, 15).map((prediction: any) => (
+                        <tr key={prediction.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <td className="border border-gray-300 px-4 py-2">{prediction.username}</td>
+                          <td className="border border-gray-300 px-4 py-2">{prediction.cryptoSymbol}</td>
+                          <td className="border border-gray-300 px-4 py-2">
+                            ${parseFloat(prediction.predictedPrice || 0).toFixed(2)}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-2">{prediction.stakeAmount} NTIQ</td>
+                          <td className="border border-gray-300 px-4 py-2">
+                            <Badge variant={prediction.status === 'active' ? 'default' : 'secondary'}>
+                              {prediction.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Transactions Tab */}
+          <TabsContent value="transactions">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Transactions ({transactions.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-gray-800">
+                        <th className="border border-gray-300 px-4 py-2 text-left">User</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Type</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Amount</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.slice(0, 15).map((transaction: any) => (
+                        <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <td className="border border-gray-300 px-4 py-2">{transaction.username}</td>
+                          <td className="border border-gray-300 px-4 py-2">
+                            <Badge variant="outline">{transaction.type}</Badge>
+                          </td>
+                          <td className="border border-gray-300 px-4 py-2">
+                            {transaction.amount > 0 ? '+' : ''}{transaction.amount} NTIQ
+                          </td>
+                          <td className="border border-gray-300 px-4 py-2">
+                            {new Date(transaction.createdAt).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
