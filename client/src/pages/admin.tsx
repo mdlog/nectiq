@@ -4413,32 +4413,32 @@ export default function AdminPanel() {
                         </div>
                       </div>
 
-                      {/* Transaction Summary Stats */}
-                      <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                          <div className="text-center">
-                            <div className="text-primary font-bold text-lg">{filteredTransactions.length}</div>
-                            <div className="text-slate-400">Total Transaksi</div>
+                      {/* Transaction Summary Stats - Modern Design */}
+                      <div className="mt-6 p-6 bg-gradient-to-r from-slate-800/50 to-slate-700/50 rounded-xl border border-slate-600/50 backdrop-blur-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                          <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-600/30 hover:border-primary/50 transition-all duration-300">
+                            <div className="text-primary font-black text-2xl mb-2">{filteredTransactions.length}</div>
+                            <div className="text-slate-300 font-semibold text-sm">Total Transaksi</div>
                           </div>
-                          <div className="text-center">
-                            <div className="text-blue-400 font-bold text-lg">{filteredTransactions.filter(t => t.type === 'purchase').length}</div>
-                            <div className="text-slate-400">Purchase</div>
+                          <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-600/30 hover:border-blue-400/50 transition-all duration-300">
+                            <div className="text-blue-400 font-black text-2xl mb-2">{filteredTransactions.filter(t => t.type === 'purchase').length}</div>
+                            <div className="text-slate-300 font-semibold text-sm">Purchase</div>
                           </div>
-                          <div className="text-center">
-                            <div className="text-purple-400 font-bold text-lg">{filteredTransactions.filter(t => t.type === 'withdrawal').length}</div>
-                            <div className="text-slate-400">Withdrawal</div>
+                          <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-600/30 hover:border-purple-400/50 transition-all duration-300">
+                            <div className="text-purple-400 font-black text-2xl mb-2">{filteredTransactions.filter(t => t.type === 'withdrawal').length}</div>
+                            <div className="text-slate-300 font-semibold text-sm">Withdrawal</div>
                           </div>
-                          <div className="text-center">
-                            <div className="text-orange-400 font-bold text-lg">{filteredTransactions.filter(t => t.type === 'deposit').length}</div>
-                            <div className="text-slate-400">Deposit</div>
+                          <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-600/30 hover:border-orange-400/50 transition-all duration-300">
+                            <div className="text-orange-400 font-black text-2xl mb-2">{filteredTransactions.filter(t => t.type === 'deposit').length}</div>
+                            <div className="text-slate-300 font-semibold text-sm">Deposit</div>
                           </div>
-                          <div className="text-center">
-                            <div className="text-yellow-400 font-bold text-lg">{filteredTransactions.filter(t => t.status === 'pending').length}</div>
-                            <div className="text-slate-400">Pending</div>
+                          <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-600/30 hover:border-yellow-400/50 transition-all duration-300">
+                            <div className="text-yellow-400 font-black text-2xl mb-2">{filteredTransactions.filter(t => t.status === 'pending').length}</div>
+                            <div className="text-slate-300 font-semibold text-sm">Pending</div>
                           </div>
-                          <div className="text-center">
-                            <div className="text-green-400 font-bold text-lg">{filteredTransactions.filter(t => t.status === 'completed').length}</div>
-                            <div className="text-slate-400">Completed</div>
+                          <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-600/30 hover:border-green-400/50 transition-all duration-300">
+                            <div className="text-green-400 font-black text-2xl mb-2">{filteredTransactions.filter(t => t.status === 'completed').length}</div>
+                            <div className="text-slate-300 font-semibold text-sm">Completed</div>
                           </div>
                         </div>
                       </div>
