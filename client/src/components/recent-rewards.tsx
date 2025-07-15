@@ -68,18 +68,21 @@ export function RecentRewards() {
     staleTime: 30000, // 30 seconds
   });
 
+  // Safety check for rewards array
+  const safeRewards = Array.isArray(rewards) ? rewards : [];
+  
   // Calculate pagination
-  const totalPages = Math.ceil(rewards.length / itemsPerPage);
+  const totalPages = Math.ceil(safeRewards.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentRewards = rewards.slice(startIndex, endIndex);
+  const currentRewards = safeRewards.slice(startIndex, endIndex);
 
   // Reset to first page when rewards change
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
     }
-  }, [rewards.length, currentPage, totalPages]);
+  }, [safeRewards.length, currentPage, totalPages]);
 
   if (isLoading) {
     return (
@@ -96,7 +99,7 @@ export function RecentRewards() {
     );
   }
 
-  if (rewards.length === 0) {
+  if (safeRewards.length === 0) {
     return (
       <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
         <h3 className="text-lg font-bold mb-4 flex items-center">

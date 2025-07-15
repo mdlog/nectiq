@@ -5027,7 +5027,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const depositSchema = insertDepositSchema.extend({
+      // Custom validation schema for frontend data only (excluding server-calculated fields)
+      const depositSchema = z.object({
         chainName: z.string().min(1),
         chainId: z.number(),
         tokenType: z.enum(["ETH", "USDC", "USDT"]),
