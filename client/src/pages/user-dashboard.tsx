@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem, Plus } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -955,7 +955,15 @@ export default function UserDashboard() {
           <TabsContent value="financial">
             {/* Financial Actions Navigation */}
             <div className="mb-6">
-              <div className="flex space-x-4 bg-surface border border-surface-light rounded-lg p-2">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 bg-surface border border-surface-light rounded-lg p-2">
+                <Button
+                  variant={selectedFinancialAction === "deposit" ? "default" : "ghost"}
+                  onClick={() => setSelectedFinancialAction("deposit")}
+                  className="flex-1"
+                >
+                  <Plus className="mr-2" size={16} />
+                  Deposit
+                </Button>
                 <Button
                   variant={selectedFinancialAction === "withdraw" ? "default" : "ghost"}
                   onClick={() => setSelectedFinancialAction("withdraw")}
