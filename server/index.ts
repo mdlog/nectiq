@@ -23,6 +23,7 @@ declare module 'express-session' {
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { survivalRoundService } from "./services/survivalRoundService";
+import { depositService } from "./services/depositService";
 import { storage } from "./storage";
 
 const app = express();
@@ -245,6 +246,10 @@ app.use((req, res, next) => {
 // Initialize survival round service for automatic elimination
 console.log('🔧 Initializing Survival Round Service...');
 survivalRoundService;
+
+// Initialize deposit service for automatic processing
+console.log('🔧 Initializing Deposit Service...');
+depositService.startAutomaticMonitoring();
 
 // Initialize automated audit system to prevent reward/balance inconsistencies
 console.log('🔧 Audit system temporarily disabled for debugging...');

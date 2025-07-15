@@ -20,6 +20,7 @@ import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } fro
 import { calculateAntiGamingMetrics, getPredictionDeadline, formatCountdown } from "./antiGamingUtils.js";
 import { SurvivalRoundService } from "./services/survivalRoundService.js";
 import { BalanceService } from "./services/balanceService.js";
+import { depositService } from "./services/depositService";
 
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
@@ -5280,78 +5281,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auto-fix completed deposits without balance credit (admin only)
   app.post("/api/admin/deposits/auto-fix", requireAdmin, async (req, res) => {
     try {
-      console.log('🔧 [ADMIN] Starting deposit auto-fix audit...');
+      console.log('🔧 [ADMIN] Running deposit auto-fix using DepositService...');
       
-      // Get all completed deposits
-      const completedDeposits = await storage.getCompletedDepositsWithoutCredit();
-      console.log(`📊 Found ${completedDeposits.length} completed deposits to audit`);
+      // Use the depositService auto-fix method
+      const result = await depositService.autoFixUnpaidDeposits();
       
-      let fixedCount = 0;
-      const fixResults = [];
-      
-      for (const deposit of completedDeposits) {
-        try {
-          // Check if transaction log already exists for this deposit
-          const existingLogs = await storage.getTransactionLogsByDepositId(deposit.id);
-          
-          if (existingLogs.length === 0) {
-            // No transaction log found, credit the balance
-            const balanceService = new BalanceService(storage);
-            await balanceService.processTransaction(
-              deposit.userId,
-              'deposit_credit',
-              deposit.ntiqAmount,
-              `Deposit auto-fix: ${deposit.chainName.toUpperCase()} transaction ${deposit.transactionHash}`,
-              { 
-                depositId: deposit.id,
-                transactionHash: deposit.transactionHash,
-                chainName: deposit.chainName,
-                tokenType: deposit.tokenType,
-                amountUSD: deposit.amountUSD
-              }
-            );
-            
-            fixedCount++;
-            fixResults.push({
-              depositId: deposit.id,
-              userId: deposit.userId,
-              amount: deposit.ntiqAmount,
-              status: 'fixed'
-            });
-            
-            console.log(`✅ Fixed deposit ${deposit.id}: Added ${deposit.ntiqAmount} NTIQ to user ${deposit.userId}`);
-          } else {
-            fixResults.push({
-              depositId: deposit.id,
-              userId: deposit.userId,
-              amount: deposit.ntiqAmount,
-              status: 'already_credited'
-            });
-          }
-        } catch (error) {
-          console.error(`❌ Error fixing deposit ${deposit.id}:`, error);
-          fixResults.push({
-            depositId: deposit.id,
-            userId: deposit.userId,
-            amount: deposit.ntiqAmount,
-            status: 'error',
-            error: error.message
-          });
-        }
-      }
-      
-      console.log(`🎯 [ADMIN] Auto-fix completed: ${fixedCount} deposits fixed`);
+      console.log(`🎯 [ADMIN] DepositService auto-fix completed: ${result.fixedCount} deposits fixed`);
       
       return res.json({ 
         success: true, 
-        message: `Auto-fix completed: ${fixedCount} deposits fixed out of ${completedDeposits.length} checked`,
-        fixedCount,
-        totalChecked: completedDeposits.length,
-        results: fixResults
+        message: `Auto-fix completed: ${result.fixedCount} deposits fixed out of ${result.totalChecked} checked`,
+        fixedCount: result.fixedCount,
+        totalChecked: result.totalChecked
       });
     } catch (error: any) {
-      console.error("Error in deposit auto-fix:", error);
-      res.status(500).json({ error: error.message });
+      console.error('❌ [ADMIN] Auto-fix error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Auto-fix failed',
+        error: error.toString()
+      });
     }
   });
 

@@ -672,10 +672,22 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(transactionLogs.type, 'deposit_credit'),
-          like(transactionLogs.description, `%deposit_${depositId}%`)
+          like(transactionLogs.hash, `%deposit_${depositId}%`)
         )
       );
     return logs;
+  }
+
+  async getAllDeposits(): Promise<any[]> {
+    // Get all deposits for monitoring
+    const allDeposits = await db.select().from(deposits).orderBy(desc(deposits.createdAt));
+    return allDeposits;
+  }
+
+  async updateDepositStatus(depositId: number, status: string): Promise<void> {
+    await db.update(deposits)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(deposits.id, depositId));
   }
 
   // Multi-chain Withdrawal operations
