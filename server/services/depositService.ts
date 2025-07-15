@@ -51,6 +51,19 @@ class DepositService {
         return;
       }
 
+      // Check how many have transaction hashes
+      const depositsWithHash = pendingDeposits.filter(d => d.transactionHash);
+      const depositsWithoutHash = pendingDeposits.filter(d => !d.transactionHash);
+      
+      if (depositsWithoutHash.length > 0) {
+        console.log(`⏸️ [DEPOSIT SERVICE] ${depositsWithoutHash.length} deposits waiting for transaction hash (IDs: ${depositsWithoutHash.map(d => d.id).join(', ')})`);
+      }
+      
+      if (depositsWithHash.length === 0) {
+        console.log('⏸️ [DEPOSIT SERVICE] No deposits with transaction hash to verify');
+        return;
+      }
+
       console.log(`🔄 [DEPOSIT SERVICE] Found ${pendingDeposits.length} pending deposits to check`);
 
       for (const deposit of pendingDeposits) {
