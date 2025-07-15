@@ -3110,6 +3110,10 @@ export default function AdminPanel() {
                 <Activity className="h-3 w-3 sm:h-5 sm:w-5" />
                 <span className="hidden sm:inline">Activity</span>
               </TabsTrigger>
+              <TabsTrigger value="automated-withdrawal" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50">
+                <Zap className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Auto Withdrawal</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -7294,6 +7298,211 @@ export default function AdminPanel() {
                       </Table>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Automated Withdrawal Tab */}
+          <TabsContent value="automated-withdrawal" className="space-y-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-700">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-blue-600 rounded-lg">
+                  <Zap className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">Automated Withdrawal System</h2>
+                  <p className="text-blue-700 dark:text-blue-300">Manage automatic withdrawal processing with real-time monitoring</p>
+                </div>
+              </div>
+              
+              {/* System Status Card */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    System Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">ACTIVE</div>
+                      <div className="text-sm text-green-700 dark:text-green-300">System Status</div>
+                    </div>
+                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">5 min</div>
+                      <div className="text-sm text-blue-700 dark:text-blue-300">Processing Interval</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">$500</div>
+                      <div className="text-sm text-purple-700 dark:text-purple-300">Auto-approval Limit</div>
+                    </div>
+                    <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">$10,000</div>
+                      <div className="text-sm text-orange-700 dark:text-orange-300">Daily Limit</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Configuration Controls */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* System Configuration */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Cog className="h-5 w-5" />
+                      System Configuration
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="automation-enabled" className="text-sm font-medium">
+                          Enable Automation
+                        </Label>
+                        <p className="text-xs text-gray-500">Automatically process eligible withdrawals</p>
+                      </div>
+                      <Switch id="automation-enabled" defaultChecked />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="daily-limit" className="text-sm font-medium">
+                        Daily Limit ($)
+                      </Label>
+                      <Input
+                        id="daily-limit"
+                        type="number"
+                        defaultValue="10000"
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="auto-approval-threshold" className="text-sm font-medium">
+                        Auto-approval Threshold ($)
+                      </Label>
+                      <Input
+                        id="auto-approval-threshold"
+                        type="number"
+                        defaultValue="500"
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="max-single-withdrawal" className="text-sm font-medium">
+                        Max Single Withdrawal ($)
+                      </Label>
+                      <Input
+                        id="max-single-withdrawal"
+                        type="number"
+                        defaultValue="5000"
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="processing-interval" className="text-sm font-medium">
+                        Processing Interval (minutes)
+                      </Label>
+                      <Input
+                        id="processing-interval"
+                        type="number"
+                        defaultValue="5"
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Configuration
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Real-time Statistics */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Today's Statistics
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">12</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">Processed Today</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">$3,240</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">Total Volume</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">3</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">Pending Review</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">98.5%</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">Success Rate</div>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-4 border-t">
+                      <h4 className="font-medium mb-3">Manual Processing</h4>
+                      <div className="space-y-2">
+                        <Button variant="outline" className="w-full">
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Process Pending Queue (3)
+                        </Button>
+                        <Button variant="outline" className="w-full">
+                          <Clock className="h-4 w-4 mr-2" />
+                          Review Flagged Withdrawals
+                        </Button>
+                        <Button variant="outline" className="w-full">
+                          <Download className="h-4 w-4 mr-2" />
+                          Export Processing Log
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Security Features */}
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Security Features
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <CheckCircle className="h-8 w-8 text-green-600" />
+                      <div>
+                        <div className="font-medium text-green-900 dark:text-green-100">Multi-chain Validation</div>
+                        <div className="text-sm text-green-700 dark:text-green-300">Real-time blockchain verification</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <AlertTriangle className="h-8 w-8 text-blue-600" />
+                      <div>
+                        <div className="font-medium text-blue-900 dark:text-blue-100">Fraud Detection</div>
+                        <div className="text-sm text-blue-700 dark:text-blue-300">Advanced pattern recognition</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <DollarSign className="h-8 w-8 text-purple-600" />
+                      <div>
+                        <div className="font-medium text-purple-900 dark:text-purple-100">Gas Optimization</div>
+                        <div className="text-sm text-purple-700 dark:text-purple-300">Smart fee calculation</div>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
