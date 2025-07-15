@@ -235,7 +235,7 @@ export class AutomatedWithdrawalService {
     const updateData: any = {
       status,
       processedAt: new Date(),
-      processedBy: 1, // System user ID
+      processedBy: 50, // Admin user ID (system automated processing)
     };
     
     if (txHash) updateData.transactionHash = txHash;
@@ -382,7 +382,7 @@ export const defaultAutoWithdrawalConfig: AutoWithdrawalConfig = {
       }
     },
     'sepolia': {
-      rpcUrl: process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
+      rpcUrl: process.env.SEPOLIA_RPC_URL || 'https://eth-sepolia.public.blastapi.io',
       chainId: 11155111,
       gasLimit: '21000',
       maxGasPrice: '50',

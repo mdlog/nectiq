@@ -11,9 +11,30 @@ export class WithdrawalScheduler {
   private isRunning: boolean = false;
 
   constructor(storage: IStorage) {
+    // Create dynamic config using environment variables
+    const dynamicConfig = {
+      ...defaultAutoWithdrawalConfig,
+      adminPrivateKey: process.env.ADMIN_PRIVATE_KEY || '',
+      networks: {
+        ...defaultAutoWithdrawalConfig.networks,
+        'sepolia': {
+          rpcUrl: 'https://eth-sepolia.public.blastapi.io',
+          chainId: 11155111,
+          gasLimit: '21000',
+          maxGasPrice: '50',
+          tokenContracts: {
+            USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+            USDT: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
+          }
+        }
+      }
+    };
+    
+    console.log(`🌐 [SCHEDULER] Using Sepolia RPC: ${dynamicConfig.networks.sepolia.rpcUrl}`);
+    
     // Initialize automated withdrawal service dengan konfigurasi
     this.autoWithdrawalService = new AutomatedWithdrawalService(
-      defaultAutoWithdrawalConfig,
+      dynamicConfig,
       storage
     );
   }
