@@ -473,7 +473,7 @@ export default function BattlesPage() {
           </h3>
         </div>
         
-        <div className="grid gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {paginatedBattles.map((battle: any) => (
             <Card key={battle.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
@@ -510,107 +510,91 @@ export default function BattlesPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                  {/* Challenger */}
-                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">Challenger</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{battle.challenger.username}</p>
-                    <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                      ${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 6
-                      })}
-                    </p>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {/* Left Column - Participants */}
+                  <div className="space-y-3">
+                    {/* Challenger */}
+                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">Challenger</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{battle.challenger.username}</p>
+                      <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                        ${parseFloat(battle.challengerPrediction).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 6
+                        })}
+                      </p>
+                    </div>
+
+                    {/* Opponent */}
+                    <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                      <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">Opponent</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{battle.challenged?.username || 'N/A'}</p>
+                      <p className="text-lg font-bold text-red-900 dark:text-red-100">
+                        {battle.challengedPrediction ? `$${parseFloat(battle.challengedPrediction).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 6
+                        })}` : 'N/A'}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Actual Price */}
-                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Final Price</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">
-                      ${battle.actualPrice ? parseFloat(battle.actualPrice).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 6
-                      }) : 'N/A'}
-                    </p>
-                    <p className="text-sm text-gray-900 dark:text-white font-medium">
-                      {new Date(battle.targetTime).toLocaleTimeString()}
-                    </p>
-                  </div>
+                  {/* Right Column - Results & Analytics */}
+                  <div className="space-y-3">
+                    {/* Final Price */}
+                    <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Final Price</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">
+                        ${battle.actualPrice ? parseFloat(battle.actualPrice).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 6
+                        }) : 'N/A'}
+                      </p>
+                      <p className="text-sm text-gray-900 dark:text-white font-medium">
+                        {new Date(battle.targetTime).toLocaleTimeString()}
+                      </p>
+                    </div>
 
-                  {/* Opponent */}
-                  <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">Opponent</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{battle.challenged?.username || 'N/A'}</p>
-                    <p className="text-lg font-bold text-red-900 dark:text-red-100">
-                      {battle.challengedPrediction ? `$${parseFloat(battle.challengedPrediction).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 6
-                      })}` : 'N/A'}
-                    </p>
+                    {/* Win Accuracy */}
+                    <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">Win Accuracy</p>
+                      {battle.winner && battle.actualPrice ? (() => {
+                        const actualPrice = parseFloat(battle.actualPrice);
+                        const winnerPrediction = battle.winner.id === battle.challengerId ? 
+                          parseFloat(battle.challengerPrediction) : 
+                          parseFloat(battle.challengedPrediction || '0');
+                        const accuracy = Math.abs(winnerPrediction - actualPrice) / actualPrice * 100;
+                        return (
+                          <>
+                            <p className="font-semibold text-gray-900 dark:text-white">{battle.winner.username}</p>
+                            <p className="text-lg font-bold text-green-900 dark:text-green-100">
+                              {accuracy.toFixed(2)}%
+                            </p>
+                          </>
+                        );
+                      })() : (
+                        <p className="text-gray-500 dark:text-gray-400">N/A</p>
+                      )}
+                    </div>
                   </div>
-
-                  {/* Win Accuracy */}
-                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">Win Accuracy</p>
-                    {battle.winner && battle.actualPrice ? (() => {
-                      const actualPrice = parseFloat(battle.actualPrice);
-                      const winnerPrediction = battle.winner.id === battle.challengerId ? 
-                        parseFloat(battle.challengerPrediction) : 
-                        parseFloat(battle.challengedPrediction || '0');
-                      const accuracy = Math.abs(winnerPrediction - actualPrice) / actualPrice * 100;
-                      return (
-                        <>
-                          <p className="font-semibold text-gray-900 dark:text-white">{battle.winner.username}</p>
-                          <p className="text-lg font-bold text-green-900 dark:text-green-100">
-                            {accuracy.toFixed(2)}%
-                          </p>
-                        </>
-                      );
-                    })() : (
-                      <p className="text-gray-500 dark:text-gray-400">N/A</p>
-                    )}
-                  </div>
-
-                  {/* Timeframe Duration */}
-                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <p className="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">Duration</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{battle.timeframe}</p>
-                    <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
-                      {(() => {
-                        const createdAt = new Date(battle.createdAt);
-                        const targetTime = new Date(battle.targetTime);
-                        const durationMs = targetTime.getTime() - createdAt.getTime();
-                        const hours = Math.floor(durationMs / (1000 * 60 * 60));
-                        const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-                        
-                        if (hours > 0) {
-                          return `${hours}h ${minutes}m`;
-                        } else {
-                          return `${minutes}m`;
-                        }
-                      })()}
-                    </p>
-                  </div>
-                </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-4">
                     <div className="flex items-center text-sm text-gray-900 dark:text-white font-medium">
                       <DollarSign className="w-4 h-4 mr-1" />
                       Stake: {battle.stakeAmount} NTIQ
                     </div>
-                    {(battle.winnerReward || battle.winner) && (
-                      <div className="flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
-                        <Award className="w-4 h-4 mr-1" />
-                        Reward: {battle.winnerReward || (battle.stakeAmount * 2)} NTIQ
-                      </div>
-                    )}
+                    <div className="text-sm text-gray-900 dark:text-white font-medium">
+                      Duration: {battle.timeframe}
+                    </div>
                   </div>
                   
-                  <div className="text-sm text-gray-900 dark:text-white font-medium">
-                    Duration: {battle.timeframe}
-                  </div>
+                  {(battle.winnerReward || battle.winner) && (
+                    <div className="flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
+                      <Award className="w-4 h-4 mr-1" />
+                      Reward: {battle.winnerReward || (battle.stakeAmount * 2)} NTIQ
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
