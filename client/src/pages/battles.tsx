@@ -14,6 +14,8 @@ import { PredictionBattles } from '@/components/prediction-battles';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { CountdownTimer } from '@/components/countdown-timer';
+import { WalletRequiredModal } from '@/components/WalletRequiredModal';
+import { useWalletRequired } from '@/hooks/useWalletRequired';
 import { Swords, Plus, Search, Filter, Trophy, Clock, Users, DollarSign, Award } from 'lucide-react';
 
 interface Battle {
@@ -62,6 +64,9 @@ export default function BattlesPage() {
   });
 
   const { toast } = useToast();
+  
+  // Wallet requirement system
+  const { isModalOpen, actionType, checkWalletRequired, onWalletConnected, closeModal } = useWalletRequired();
 
   // Check user authentication
   const { data: user } = useQuery({
@@ -169,18 +174,12 @@ export default function BattlesPage() {
   });
 
   const handleJoinBattle = (battle: Battle) => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in first to join the battle.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setSelectedBattle(battle);
-    setPredictionPrice('');
-    setJoinDialogOpen(true);
+    // Check wallet requirement before allowing battle join
+    checkWalletRequired(() => {
+      setSelectedBattle(battle);
+      setPredictionPrice('');
+      setJoinDialogOpen(true);
+    }, 'battle');
   };
 
   const submitJoinBattle = async () => {
@@ -287,7 +286,10 @@ export default function BattlesPage() {
       return;
     }
 
-    createBattleMutation.mutate(createBattleForm);
+    // Check wallet requirement before allowing battle creation
+    checkWalletRequired(() => {
+      createBattleMutation.mutate(createBattleForm);
+    }, 'battle');
   };
 
   // Battle History Section Component
@@ -1205,6 +1207,14 @@ export default function BattlesPage() {
       </Dialog>
       
       <Footer />
+      
+      {/* Wallet Required Modal */}
+      <WalletRequiredModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onWalletConnected={onWalletConnected}
+        actionType={actionType}
+      />
     </div>
   );
 }

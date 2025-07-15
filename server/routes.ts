@@ -6765,6 +6765,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Temporary test endpoint for deleteUser function
+  // Link wallet to existing email user account
+  app.post('/api/user/link-wallet', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { walletAddress } = req.body;
+      const userId = req.session.userId;
+
+      if (!walletAddress) {
+        return res.status(400).json({ message: "Wallet address is required" });
+      }
+
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const normalizedAddress = normalizeWalletAddress(walletAddress);
+
+      // Check if wallet is already used by another user
+      const existingWalletUser = await storage.getUserByWalletAddress(normalizedAddress);
+      if (existingWalletUser && existingWalletUser.id !== userId) {
+        return res.status(400).json({ 
+          message: "This wallet address is already linked to another account" 
+        });
+      }
+
+      // Check security for wallet linking
+      const { WalletSecurityService } = await import('./walletSecurity');
+      const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
+      
+      if (!securityCheck.success) {
+        return res.status(403).json({ 
+          message: securityCheck.message,
+          securityBlock: true 
+        });
+      }
+
+      // Update user with wallet address
+      await storage.updateUser(userId, {
+        walletAddress: normalizedAddress,
+        authMethod: "wallet" // Update auth method to wallet
+      });
+
+      console.log(`Wallet ${normalizedAddress.slice(0, 6)}...${normalizedAddress.slice(-4)} linked to user ID ${userId}`);
+
+      // Return updated user data
+      const updatedUser = await storage.getUserById(userId);
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to retrieve updated user data" });
+      }
+
+      res.json({
+        success: true,
+        message: "Wallet successfully linked to your account",
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          walletAddress: updatedUser.walletAddress,
+          balance: updatedUser.balance,
+          isAdmin: updatedUser.isAdmin,
+          authMethod: updatedUser.authMethod
+        }
+      });
+
+    } catch (error) {
+      console.error("Error linking wallet:", error);
+      res.status(500).json({ message: "Failed to link wallet to account" });
+    }
+  });
+
   app.post('/api/test/delete-user', async (req: Request, res: Response) => {
     try {
       const { userId } = req.body;

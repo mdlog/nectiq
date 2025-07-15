@@ -6,6 +6,8 @@ import { ActivePredictions } from "@/components/active-predictions";
 import { LivePrices } from "@/components/live-prices";
 import { TopPredictors } from "@/components/top-predictors";
 import { RecentRewards } from "@/components/recent-rewards";
+import { WalletRequiredModal } from "@/components/WalletRequiredModal";
+import { useWalletRequired } from "@/hooks/useWalletRequired";
 
 import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
@@ -26,6 +28,9 @@ export default function Dashboard() {
   const [showChart, setShowChart] = useState(false);
   const [showPredictionForm, setShowPredictionForm] = useState(false);
   const [preSelectedForPrediction, setPreSelectedForPrediction] = useState<string | undefined>(undefined);
+  
+  // Wallet requirement system
+  const { isModalOpen, actionType, checkWalletRequired, onWalletConnected, closeModal } = useWalletRequired();
 
   // Fetch live prices for real-time updates
   const { data: livePrices = [] } = useQuery<CryptoPrice[]>({
@@ -57,15 +62,18 @@ export default function Dashboard() {
   };
 
   const handlePredictClick = (cryptoId: string) => {
-    setPreSelectedForPrediction(cryptoId);
-    setShowPredictionForm(true);
-    // Scroll to prediction form
-    setTimeout(() => {
-      const form = document.querySelector('[data-prediction-form]');
-      if (form) {
-        form.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
+    // Check if wallet is required before allowing prediction
+    checkWalletRequired(() => {
+      setPreSelectedForPrediction(cryptoId);
+      setShowPredictionForm(true);
+      // Scroll to prediction form
+      setTimeout(() => {
+        const form = document.querySelector('[data-prediction-form]');
+        if (form) {
+          form.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }, 'prediction');
   };
 
   return (
@@ -179,6 +187,14 @@ export default function Dashboard() {
       )}
       
       <Footer />
+      
+      {/* Wallet Required Modal */}
+      <WalletRequiredModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onWalletConnected={onWalletConnected}
+        actionType={actionType}
+      />
     </div>
   );
 }

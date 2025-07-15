@@ -10,6 +10,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { format } from 'date-fns';
 import { CountdownTimer } from '@/components/countdown-timer';
 import PredictionTimingIndicator from '@/components/prediction-timing-indicator';
+import { useWalletRequired } from '@/hooks/useWalletRequired';
 
 // Types
 interface SurvivalTournament {
@@ -64,13 +65,17 @@ interface TournamentCardProps {
   tournament: SurvivalTournament;
   user: any;
   cryptoPrices: CryptoPrice[];
+  onWalletRequired?: (callback: () => void, actionType: string) => void;
 }
 
 
 
-export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCardProps) => {
+export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequired }: TournamentCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Wallet requirement system
+  const { checkWalletRequired } = useWalletRequired();
 
   // Early return with error card if props are invalid
   if (!tournament) {
@@ -439,7 +444,11 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
             <p className="text-center text-gray-400">Please login to participate</p>
           ) : tournament.status === 'open' && !hasJoined ? (
             <Button
-              onClick={() => joinTournamentMutation.mutate()}
+              onClick={() => {
+                checkWalletRequired(() => {
+                  joinTournamentMutation.mutate();
+                }, 'tournament');
+              }}
               disabled={joinTournamentMutation.isPending}
               className="w-full bg-green-600 hover:bg-green-700"
             >
@@ -468,7 +477,11 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
               </div>
               <div className="flex gap-2">
                 <Button
-                  onClick={() => predictUpMutation.mutate()}
+                  onClick={() => {
+                    checkWalletRequired(() => {
+                      predictUpMutation.mutate();
+                    }, 'tournament');
+                  }}
                   disabled={predictUpMutation.isPending}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
@@ -477,7 +490,11 @@ export const TournamentCard = ({ tournament, user, cryptoPrices }: TournamentCar
                   {tournament.entryFee > 0 && <span className="ml-2">(-{tournament.entryFee} NTIQ)</span>}
                 </Button>
                 <Button
-                  onClick={() => predictDownMutation.mutate()}
+                  onClick={() => {
+                    checkWalletRequired(() => {
+                      predictDownMutation.mutate();
+                    }, 'tournament');
+                  }}
                   disabled={predictDownMutation.isPending}
                   className="flex-1 bg-red-600 hover:bg-red-700"
                 >

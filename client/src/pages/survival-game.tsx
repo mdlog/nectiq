@@ -6,6 +6,8 @@ import { Footer } from '@/components/footer';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { WalletRequiredModal } from '@/components/WalletRequiredModal';
+import { useWalletRequired } from '@/hooks/useWalletRequired';
 import { Search, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
 
 // Types
@@ -63,6 +65,9 @@ const SurvivalGame = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const tournamentsPerPage = 4; // 4 tournaments per page
+  
+  // Wallet requirement system
+  const { isModalOpen, actionType, checkWalletRequired, onWalletConnected, closeModal } = useWalletRequired();
 
   // Fetch semua tournament (open dan active)
   const { data: tournaments = [], isLoading: tournamentLoading, error: tournamentError } = useQuery<SurvivalTournament[]>({
@@ -279,6 +284,7 @@ const SurvivalGame = () => {
                   tournament={tournament}
                   user={user}
                   cryptoPrices={cryptoPrices}
+                  onWalletRequired={checkWalletRequired}
                 />
               ))}
             </div>
@@ -427,6 +433,14 @@ const SurvivalGame = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Wallet Required Modal */}
+      <WalletRequiredModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onWalletConnected={onWalletConnected}
+        actionType={actionType}
+      />
     </>
   );
 
