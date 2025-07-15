@@ -5030,7 +5030,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const depositSchema = insertDepositSchema.extend({
         chainName: z.string().min(1),
         chainId: z.number(),
-        tokenType: z.enum(["USDC", "USDT"]),
+        tokenType: z.enum(["ETH", "USDC", "USDT"]),
         tokenAddress: z.string().min(1),
         amountUSD: z.string().min(1),
         toWalletAddress: z.string().min(1),
@@ -5120,7 +5120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const withdrawalSchema = insertWithdrawalSchema.extend({
         ntiqAmount: z.number().min(1),
         chainName: z.string().min(1),
-        tokenType: z.enum(["USDC", "USDT"]),
+        tokenType: z.enum(["ETH", "USDC", "USDT"]),
         toWalletAddress: z.string().min(1),
       });
 

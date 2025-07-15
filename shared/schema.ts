@@ -73,7 +73,7 @@ export const deposits = pgTable("deposits", {
   toWalletAddress: varchar("to_wallet_address", { length: 42 }).notNull(), // Admin wallet address
   chainName: varchar("chain_name", { length: 20 }).notNull(), // eth, base, bsc, optimism, arbitrum, sepolia, holesky
   chainId: integer("chain_id").notNull(), // Chain ID for verification
-  tokenType: varchar("token_type", { length: 10 }).notNull(), // USDC or USDT
+  tokenType: varchar("token_type", { length: 10 }).notNull(), // ETH, USDC, or USDT
   tokenAddress: varchar("token_address", { length: 42 }).notNull(), // Token contract address
   amountUSD: numeric("amount_usd", { precision: 18, scale: 6 }).notNull(), // USD amount deposited
   ntiqAmount: integer("ntiq_amount").notNull(), // NTIQ amount to credit (amountUSD * 100)
@@ -90,7 +90,7 @@ export const withdrawals = pgTable("withdrawals", {
   ntiqAmount: integer("ntiq_amount").notNull(), // NTIQ amount to withdraw
   usdAmount: numeric("usd_amount", { precision: 18, scale: 6 }).notNull(), // USD equivalent (ntiqAmount * 0.01)
   chainName: varchar("chain_name", { length: 20 }).notNull(), // Target chain for withdrawal
-  tokenType: varchar("token_type", { length: 10 }).notNull(), // USDC or USDT
+  tokenType: varchar("token_type", { length: 10 }).notNull(), // ETH, USDC, or USDT
   toWalletAddress: varchar("to_wallet_address", { length: 42 }).notNull(), // User's wallet address
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, approved, processing, completed, rejected
   transactionHash: varchar("transaction_hash", { length: 66 }),
