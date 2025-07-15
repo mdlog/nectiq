@@ -384,7 +384,7 @@ export const defaultAutoWithdrawalConfig: AutoWithdrawalConfig = {
     'sepolia': {
       rpcUrl: process.env.SEPOLIA_RPC_URL || 'https://eth-sepolia.public.blastapi.io',
       chainId: 11155111,
-      gasLimit: '150000', // Increased for ERC-20 token transfers (USDC/USDT)
+      gasLimit: '21000',
       maxGasPrice: '50',
       tokenContracts: {
         USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
