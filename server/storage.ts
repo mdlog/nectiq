@@ -527,8 +527,7 @@ export class DatabaseStorage implements IStorage {
       // Get battle statistics
       const battleStatsQuery = await db.select({
         totalBattles: sql<number>`COUNT(*)`,
-        wonBattles: sql<number>`SUM(CASE WHEN ${predictionBattles.winnerId} = ${user.id} THEN 1 ELSE 0 END)`,
-        battleRewards: sql<number>`SUM(CASE WHEN ${predictionBattles.winnerId} = ${user.id} THEN ${predictionBattles.winnerReward} ELSE 0 END)`
+        wonBattles: sql<number>`SUM(CASE WHEN ${predictionBattles.winnerId} = ${user.id} THEN 1 ELSE 0 END)`
       }).from(predictionBattles)
       .where(
         and(
@@ -540,9 +539,24 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
+      // Get battle rewards from transaction_logs instead of battles table
+      const battleRewardsQuery = await db.select({
+        battleRewards: sql<number>`COALESCE(SUM(${transactionLogs.amount}), 0)`
+      }).from(transactionLogs)
+      .where(
+        and(
+          eq(transactionLogs.userId, user.id),
+          eq(transactionLogs.type, 'battle_reward'),
+          eq(transactionLogs.status, 'completed')
+        )
+      );
+
       const battleStats = battleStatsQuery[0] || {
         totalBattles: 0,
-        wonBattles: 0,
+        wonBattles: 0
+      };
+
+      const battleRewardsStats = battleRewardsQuery[0] || {
         battleRewards: 0
       };
 
@@ -574,7 +588,7 @@ export class DatabaseStorage implements IStorage {
         totalBattles: battleStats.totalBattles,
         wonBattles: battleStats.wonBattles,
         battleWinRate: battleWinRate,
-        battleRewards: battleStats.battleRewards || 0,
+        battleRewards: battleRewardsStats.battleRewards || 0,
         // Survival stats
         totalSurvivalTournaments: survivalStats.totalTournaments,
         wonSurvivalTournaments: survivalStats.wonTournaments,
