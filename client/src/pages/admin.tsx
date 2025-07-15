@@ -128,13 +128,25 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
                 const tokenType = withdrawal.tokenType || 'N/A';
                 
                 if (tokenType === 'USDC' || tokenType === 'USDT') {
-                  // USDC/USDT: 1 NTIQ = $0.01, so 1:1 ratio with USD
-                  tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                  // USDC/USDT: use stored net_amount if available, otherwise calculate
+                  if (withdrawal.netAmount) {
+                    // Use pre-calculated net amount from database (already includes fee deduction)
+                    tokenAmount = parseFloat(withdrawal.netAmount).toFixed(2);
+                  } else {
+                    // Fallback calculation for older withdrawals
+                    tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                  }
                 } else if (tokenType === 'ETH') {
-                  // ETH: calculate based on current price
-                  const ethPrice = 2300; // You can update this with real-time price
-                  const usdValue = ntiqAmount * 0.01;
-                  tokenAmount = (usdValue / ethPrice).toFixed(6);
+                  // ETH: use stored net_amount if available, otherwise calculate from snapshot
+                  if (withdrawal.netAmount) {
+                    // Use pre-calculated net amount from database (already includes fee deduction)
+                    tokenAmount = parseFloat(withdrawal.netAmount).toFixed(6);
+                  } else {
+                    // Fallback calculation for older withdrawals
+                    const ethPrice = withdrawal.ethPriceSnapshot ? parseFloat(withdrawal.ethPriceSnapshot) : 2300;
+                    const usdValue = ntiqAmount * 0.01;
+                    tokenAmount = (usdValue / ethPrice).toFixed(6);
+                  }
                 } else {
                   tokenAmount = (ntiqAmount * 0.01).toFixed(2);
                 }
@@ -209,13 +221,25 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
                   const tokenType = withdrawal.tokenType || withdrawal.token || 'N/A';
                   
                   if (tokenType === 'USDC' || tokenType === 'USDT') {
-                    // USDC/USDT: 1 NTIQ = $0.01, so 1:1 ratio with USD
-                    tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                    // USDC/USDT: use stored net_amount if available, otherwise calculate
+                    if (withdrawal.netAmount) {
+                      // Use pre-calculated net amount from database (already includes fee deduction)
+                      tokenAmount = parseFloat(withdrawal.netAmount).toFixed(2);
+                    } else {
+                      // Fallback calculation for older withdrawals
+                      tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                    }
                   } else if (tokenType === 'ETH') {
-                    // ETH: calculate based on current price
-                    const ethPrice = 2300; // You can update this with real-time price
-                    const usdValue = ntiqAmount * 0.01;
-                    tokenAmount = (usdValue / ethPrice).toFixed(6);
+                    // ETH: use stored net_amount if available, otherwise calculate from snapshot
+                    if (withdrawal.netAmount) {
+                      // Use pre-calculated net amount from database (already includes fee deduction)
+                      tokenAmount = parseFloat(withdrawal.netAmount).toFixed(6);
+                    } else {
+                      // Fallback calculation for older withdrawals
+                      const ethPrice = withdrawal.ethPriceSnapshot ? parseFloat(withdrawal.ethPriceSnapshot) : 2300;
+                      const usdValue = ntiqAmount * 0.01;
+                      tokenAmount = (usdValue / ethPrice).toFixed(6);
+                    }
                   } else {
                     tokenAmount = (ntiqAmount * 0.01).toFixed(2);
                   }

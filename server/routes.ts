@@ -2713,27 +2713,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Get all withdrawals (transaction monitoring)
   app.get("/api/admin/withdrawals", requireAdmin, async (req, res) => {
     try {
-      // Get all users to map userId to username
-      const users = await storage.getTopPredictors(1000);
-      const userMap = new Map(users.map(user => [user.id, user]));
+      // Get withdrawals directly from database with user information
+      const allWithdrawals = await db
+        .select({
+          id: withdrawals.id,
+          userId: withdrawals.userId,
+          ntiqAmount: withdrawals.ntiqAmount,
+          usdAmount: withdrawals.usdAmount,
+          feeAmount: withdrawals.feeAmount,
+          netAmount: withdrawals.netAmount,
+          ethPriceSnapshot: withdrawals.ethPriceSnapshot,
+          chainName: withdrawals.chainName,
+          tokenType: withdrawals.tokenType,
+          toWalletAddress: withdrawals.toWalletAddress,
+          status: withdrawals.status,
+          transactionHash: withdrawals.transactionHash,
+          adminNote: withdrawals.adminNote,
+          processedBy: withdrawals.processedBy,
+          processedAt: withdrawals.processedAt,
+          createdAt: withdrawals.createdAt,
+          username: users.username,
+          uid: users.uid,
+          walletAddress: users.walletAddress,
+        })
+        .from(withdrawals)
+        .leftJoin(users, eq(withdrawals.userId, users.id))
+        .orderBy(desc(withdrawals.createdAt))
+        .limit(100);
       
-      // Get recent withdrawals for all users
-      const allWithdrawals = [];
-      for (const user of users) {
-        const userWithdrawals = await storage.getUserWithdrawals(user.id, 50);
-        const enrichedWithdrawals = userWithdrawals.map(withdrawal => ({
-          ...withdrawal,
-          username: user.username,
-          uid: user.uid,
-          walletAddress: user.walletAddress
-        }));
-        allWithdrawals.push(...enrichedWithdrawals);
-      }
-      
-      // Sort by creation date (newest first)
-      allWithdrawals.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
-      res.json(allWithdrawals.slice(0, 100)); // Return latest 100 withdrawals
+      res.json(allWithdrawals);
     } catch (error) {
       console.error("Error fetching admin withdrawals:", error);
       res.status(500).json({ message: "Failed to get withdrawals" });
