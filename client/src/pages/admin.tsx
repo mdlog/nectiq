@@ -366,7 +366,7 @@ export default function AdminPanel() {
   const [leaderboardSortOrder, setLeaderboardSortOrder] = useState<"asc" | "desc">("desc");
   
   // Transaction monitoring enhancements state
-  const [transactionTypeFilter, setTransactionTypeFilter] = useState<"all" | "deposit" | "withdrawal">("all");
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<"all" | "purchase" | "withdrawal" | "deposit">("all");
   const [transactionTokenFilter, setTransactionTokenFilter] = useState<"all" | "ETH" | "USDT" | "USDC">("all");
   const [transactionStatusFilter, setTransactionStatusFilter] = useState<"all" | "pending" | "completed" | "failed">("all");
   const [transactionAmountFilter, setTransactionAmountFilter] = useState<"all" | "0-1000" | "1000-10000" | "10000-100000" | "100000+">("all");
@@ -612,29 +612,6 @@ export default function AdminPanel() {
     refetchInterval: 5000, // Auto-refresh every 5 seconds
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-  });
-
-  // Enhanced Transaction History Query using new API endpoint
-  const { data: enhancedTransactionHistory = [], isLoading: transactionHistoryLoading } = useQuery<any[]>({
-    queryKey: ["/api/admin/transaction-history", transactionTypeFilter, transactionPage],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (transactionTypeFilter !== "all") params.append("type", transactionTypeFilter);
-      params.append("page", transactionPage.toString());
-      params.append("limit", transactionsPerPage.toString());
-      
-      const response = await fetch(`/api/admin/transaction-history?${params}`, {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" }
-      });
-      if (!response.ok) throw new Error("Failed to fetch transaction history");
-      return response.json();
-    },
-    retry: 2,
-    retryDelay: 1000,
-    refetchInterval: 3000, // Auto-refresh every 3 seconds for real-time updates
-    refetchIntervalInBackground: true,
-    staleTime: 1000, // 1 second stale time for fresh data
   });
 
   // Battles data queries
@@ -2177,24 +2154,6 @@ export default function AdminPanel() {
   const { data: transactionStats } = useQuery<any>({
     queryKey: ["/api/admin/transaction-stats"],
     retry: false,
-  });
-
-  // Comprehensive Transaction History Query
-  const { data: transactionHistory, isLoading: isLoadingTransactionHistory } = useQuery({
-    queryKey: ["/api/admin/transactions/history", {
-      type: transactionTypeFilter,
-      status: transactionStatusFilter,
-      search: "",
-      page: 1,
-      limit: 50
-    }],
-    refetchInterval: 3000, // Auto-refresh every 3 seconds for real-time updates
-  });
-
-  // New Transaction Statistics Query
-  const { data: newTransactionStats } = useQuery({
-    queryKey: ["/api/admin/transactions/stats"],
-    refetchInterval: 5000,
   });
 
   // Security monitoring queries
@@ -4339,13 +4298,12 @@ export default function AdminPanel() {
           {/* Enhanced Transactions Tab */}
           <TabsContent value="transactions">
             <div className="space-y-6">
-              {/* Comprehensive Transaction History */}
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center">
                       <DollarSign className="mr-2" size={20} />
-                      Comprehensive Transaction History
+                      Transaction Monitoring
                       <div className={`ml-3 flex items-center px-2 py-1 rounded-full text-xs ${
                         wsConnected ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                       }`}>
@@ -4354,37 +4312,6 @@ export default function AdminPanel() {
                       </div>
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.location.reload()}
-                        className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"
-                      >
-                        <RefreshCw className="mr-2" size={16} />
-                        Refresh
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          // Export transactions as CSV
-                          const csvData = [
-                            ['Type', 'User', 'Amount', 'Token', 'Chain', 'Status', 'Hash', 'Date'].join(','),
-                            // Add transaction data here when implemented
-                          ].join('\\n');
-                          const blob = new Blob([csvData], { type: 'text/csv' });
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
-                          a.click();
-                          window.URL.revokeObjectURL(url);
-                        }}
-                        className="bg-green-100 hover:bg-green-200 text-green-700 border-green-200"
-                      >
-                        <Download className="mr-2" size={16} />
-                        Export CSV
-                      </Button>
                       {lastTransaction && (
                         <div className="text-xs text-slate-500 mr-2">
                           Last: {lastTransaction.user.username} - {lastTransaction.type}
@@ -4460,235 +4387,13 @@ export default function AdminPanel() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {/* New Enhanced Statistics Grid */}
+                  {/* Enhanced Statistics Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <Card className="bg-surface-light">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-slate-400">Total Deposits</p>
-                            <p className="text-2xl font-bold">{newTransactionStats?.deposits?.totalDeposits || 0}</p>
-                            <p className="text-xs text-slate-500">{newTransactionStats?.deposits?.totalDepositAmount ? newTransactionStats.deposits.totalDepositAmount.toLocaleString() : 0} NTIQ</p>
-                          </div>
-                          <TrendingUp className="h-8 w-8 text-blue-500" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-surface-light">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-400">Total Withdrawals</p>
-                            <p className="text-2xl font-bold">{newTransactionStats?.withdrawals?.totalWithdrawals || 0}</p>
-                            <p className="text-xs text-slate-500">{newTransactionStats?.withdrawals?.totalWithdrawalAmount ? newTransactionStats.withdrawals.totalWithdrawalAmount.toLocaleString() : 0} NTIQ</p>
-                          </div>
-                          <TrendingUp className="h-8 w-8 text-green-500" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-surface-light">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-400">Pending Deposits</p>
-                            <p className="text-2xl font-bold">{newTransactionStats?.deposits?.pendingDeposits || 0}</p>
-                            <p className="text-xs text-slate-500">Awaiting Processing</p>
-                          </div>
-                          <Clock className="h-8 w-8 text-orange-500" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-surface-light">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-400">Pending Withdrawals</p>
-                            <p className="text-2xl font-bold">{newTransactionStats?.withdrawals?.pendingWithdrawals || 0}</p>
-                            <p className="text-xs text-slate-500">Awaiting Processing</p>
-                          </div>
-                          <Clock className="h-8 w-8 text-purple-500" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Comprehensive Transaction History Table */}
-                  <div className="bg-surface-light rounded-lg border border-surface-light p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-white">Transaction History with Blockchain Explorer Links</h3>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          {enhancedTransactionHistory?.length || 0} Total Transactions
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Transaction History Filters */}
-                    <div className="flex flex-wrap items-center gap-4 mb-6 p-4 bg-surface/50 rounded-lg border border-surface">
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="transactionTypeFilter" className="text-sm font-medium text-white">Transaction Type:</Label>
-                        <Select value={transactionTypeFilter} onValueChange={setTransactionTypeFilter}>
-                          <SelectTrigger className="w-40 bg-surface border-surface-light text-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Types</SelectItem>
-                            <SelectItem value="deposit">Deposits</SelectItem>
-                            <SelectItem value="withdrawal">Withdrawals</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="transactionStatusFilter" className="text-sm font-medium text-white">Status:</Label>
-                        <Select value={transactionStatusFilter} onValueChange={setTransactionStatusFilter}>
-                          <SelectTrigger className="w-40 bg-surface border-surface-light text-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="failed">Failed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="transactionTokenFilter" className="text-sm font-medium text-white">Token:</Label>
-                        <Select value={transactionTokenFilter} onValueChange={setTransactionTokenFilter}>
-                          <SelectTrigger className="w-32 bg-surface border-surface-light text-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Tokens</SelectItem>
-                            <SelectItem value="ETH">ETH</SelectItem>
-                            <SelectItem value="USDT">USDT</SelectItem>
-                            <SelectItem value="USDC">USDC</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => {
-                          setTransactionTypeFilter("all");
-                          setTransactionStatusFilter("all");
-                          setTransactionTokenFilter("all");
-                        }}
-                        className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"
-                      >
-                        <RotateCcw className="mr-2" size={16} />
-                        Reset Filters
-                      </Button>
-                    </div>
-
-                    {transactionHistoryLoading ? (
-                      <div className="space-y-4">
-                        {[...Array(5)].map((_, i) => (
-                          <div key={i} className="animate-pulse bg-surface rounded-lg p-4 h-16"></div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {enhancedTransactionHistory?.map((transaction: any) => (
-                          <div key={`${transaction.type}-${transaction.id}`} className="bg-surface rounded-lg p-4 border border-surface-light hover:border-primary/30 transition-all duration-200">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${transaction.type === 'deposit' ? 'bg-blue-600' : 'bg-green-600'}`}>
-                                  {transaction.type === 'deposit' ? 'D' : 'W'}
-                                </div>
-                                <div>
-                                  <div className="flex items-center space-x-2">
-                                    <p className="font-medium text-white">{transaction.username || 'Unknown User'}</p>
-                                    <Badge className={`${transaction.type === 'deposit' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
-                                      {transaction.type.toUpperCase()}
-                                    </Badge>
-                                    <Badge className={`${transaction.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                      {transaction.status.toUpperCase()}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center space-x-4 mt-1 text-sm text-slate-400">
-                                    <span>Amount: {transaction.amount?.toLocaleString()} NTIQ</span>
-                                    <span>Token: {transaction.tokenType}</span>
-                                    <span>Chain: {transaction.chainName}</span>
-                                    <span>Date: {new Date(transaction.createdAt).toLocaleDateString()}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                {transaction.transactionHash && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      const getExplorerUrl = (hash: string, chain: string) => {
-                                        switch (chain.toLowerCase()) {
-                                          case 'sepolia':
-                                            return `https://sepolia.etherscan.io/tx/${hash}`;
-                                          case 'holesky':
-                                            return `https://holesky.etherscan.io/tx/${hash}`;
-                                          case 'ethereum':
-                                            return `https://etherscan.io/tx/${hash}`;
-                                          case 'base':
-                                            return `https://basescan.org/tx/${hash}`;
-                                          case 'bsc':
-                                            return `https://bscscan.com/tx/${hash}`;
-                                          case 'optimism':
-                                            return `https://optimistic.etherscan.io/tx/${hash}`;
-                                          case 'arbitrum':
-                                            return `https://arbiscan.io/tx/${hash}`;
-                                          default:
-                                            return `https://etherscan.io/tx/${hash}`;
-                                        }
-                                      };
-                                      window.open(getExplorerUrl(transaction.transactionHash, transaction.chainName), '_blank');
-                                    }}
-                                    className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"
-                                  >
-                                    <ExternalLink className="mr-2" size={16} />
-                                    View on Explorer
-                                  </Button>
-                                )}
-                                <div className="text-xs text-slate-500 font-mono">
-                                  {transaction.transactionHash ? 
-                                    `${transaction.transactionHash.slice(0, 8)}...${transaction.transactionHash.slice(-6)}` : 
-                                    'No Hash'
-                                  }
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Pagination for Transaction History */}
-                    {transactionHistory?.totalPages > 1 && (
-                      <div className="flex items-center justify-between mt-6">
-                        <div className="text-sm text-slate-400">
-                          Showing page {transactionHistory.currentPage} of {transactionHistory.totalPages}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" disabled={transactionHistory.currentPage === 1}>
-                            Previous
-                          </Button>
-                          <Button variant="outline" size="sm" disabled={transactionHistory.currentPage === transactionHistory.totalPages}>
-                            Next
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Legacy Statistics Grid for Reference */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 mt-6">
-                    <Card className="bg-surface-light">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-400">NTIQ Purchases (Legacy)</p>
+                            <p className="text-sm text-slate-400">NTIQ Purchases</p>
                             <p className="text-2xl font-bold">{transactionStats?.totalPurchases || 0}</p>
                             <p className="text-xs text-slate-500">{transactionStats?.totalPTSPurchased ? transactionStats.totalPTSPurchased.toLocaleString() : 0} NTIQ</p>
                           </div>
@@ -4700,7 +4405,7 @@ export default function AdminPanel() {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-slate-400">Withdrawals (Legacy)</p>
+                            <p className="text-sm text-slate-400">Withdrawals</p>
                             <p className="text-2xl font-bold">{transactionStats?.totalWithdrawals || 0}</p>
                             <p className="text-xs text-slate-500">{transactionStats?.totalPTSWithdrawn ? transactionStats.totalPTSWithdrawn.toLocaleString() : 0} NTIQ</p>
                           </div>
@@ -4712,7 +4417,7 @@ export default function AdminPanel() {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-slate-400">Total Volume (Legacy)</p>
+                            <p className="text-sm text-slate-400">Total Volume</p>
                             <p className="text-2xl font-bold">
                               {transactionStats ? `${transactionStats.totalVolumeETH} ETH` : '0 ETH'}
                             </p>
