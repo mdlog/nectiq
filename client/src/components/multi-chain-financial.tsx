@@ -160,6 +160,7 @@ export function MultiChainFinancial() {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [fixedEthAmount, setFixedEthAmount] = useState<string>("0");
+  const [confirmationEthAmount, setConfirmationEthAmount] = useState<string>("0");
   const queryClient = useQueryClient();
 
   // Query to get user data
@@ -480,6 +481,12 @@ export function MultiChainFinancial() {
                   <Button 
                     className="w-full bg-green-600 hover:bg-green-700"
                     disabled={!depositAmount || parseFloat(depositAmount) <= 0}
+                    onClick={() => {
+                      // Capture fixed ETH amount when dialog opens
+                      if (selectedToken === "ETH" && fixedEthAmount !== "0") {
+                        setConfirmationEthAmount(fixedEthAmount);
+                      }
+                    }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Create Deposit Request
@@ -507,11 +514,11 @@ export function MultiChainFinancial() {
                         <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
                         <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 100).toLocaleString()} NTIQ</span>
                       </div>
-                      {selectedToken === "ETH" && depositAmount && fixedEthAmount !== "0" && (
+                      {selectedToken === "ETH" && depositAmount && confirmationEthAmount !== "0" && (
                         <div className="border-t pt-2 mt-2 space-y-1">
                           <div className="flex justify-between">
                             <span className="text-gray-700 dark:text-gray-300">ETH to send:</span>
-                            <span className="font-bold text-orange-600">{getFixedETHAmount()} ETH</span>
+                            <span className="font-bold text-orange-600">{confirmationEthAmount} ETH</span>
                           </div>
                           <div className="text-xs text-orange-500 text-right">
                             (Includes 2% processing fee)
@@ -532,11 +539,11 @@ export function MultiChainFinancial() {
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
-                      {selectedToken === "ETH" && depositAmount && fixedEthAmount !== "0" ? (
+                      {selectedToken === "ETH" && depositAmount && confirmationEthAmount !== "0" ? (
                         <div className="text-xs text-blue-600 dark:text-blue-300 mt-2 space-y-1">
                           <p>⚠️ Make sure to transfer from the same wallet as your login wallet</p>
                           <p className="font-bold bg-orange-100 dark:bg-orange-900/30 p-2 rounded border-orange-300 border">
-                            📤 Send exactly <span className="text-orange-700 dark:text-orange-300">{getFixedETHAmount()} ETH</span> to the address above
+                            📤 Send exactly <span className="text-orange-700 dark:text-orange-300">{confirmationEthAmount} ETH</span> to the address above
                           </p>
                         </div>
                       ) : (
