@@ -438,7 +438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userEmail = email || user?.email;
       const dynamicUserId = userId || user?.userId;
       
-      console.log('Dynamic auth request:', { 
+      console.log('🔐 [SERVER] Dynamic auth request received:', { 
         finalAddress: finalAddress ? finalAddress.slice(0, 6) + '...' : null,
         userEmail: userEmail ? userEmail.substring(0, 3) + '***' : null,
         dynamicUserId,
@@ -524,7 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isAdmin
           });
           
-          console.log(`Auto-registered wallet user: ${username}, admin: ${isAdmin}`);
+          console.log(`🔐 [SERVER] Auto-registered wallet user: ${username}, admin: ${isAdmin}, wallet: ${normalizedAddress.slice(0, 6)}...`);
         }
       }
       
@@ -568,6 +568,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = dbUser.id;
       req.session.isAdmin = dbUser.isAdmin || false;
       
+      console.log(`🔐 [SERVER] Session created - userId: ${dbUser.id}, isAdmin: ${dbUser.isAdmin}, username: ${dbUser.username}`);
+      
       const responseUser = {
         id: dbUser.id,
         username: dbUser.username,
@@ -576,7 +578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isAdmin: dbUser.isAdmin || false
       };
       
-      console.log('Dynamic auth successful for user:', responseUser.username);
+      console.log(`🔐 [SERVER] Sending response for user: ${responseUser.username}, isAdmin: ${responseUser.isAdmin}`);
       
       res.json({ 
         success: true, 
