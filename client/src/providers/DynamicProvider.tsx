@@ -13,10 +13,19 @@ interface DynamicProviderProps {
 export default function DynamicProvider({ children }: DynamicProviderProps) {
   const [, navigate] = useLocation();
   
+  // Check if environment ID is available
+  const environmentId = import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID;
+  console.log('🔐 Dynamic Environment ID check:', environmentId ? 'Available' : 'Missing');
+  
+  if (!environmentId) {
+    console.error('🔐 VITE_DYNAMIC_ENVIRONMENT_ID is not set in environment variables!');
+    // Still render children but show warning in console
+  }
+  
   return (
     <DynamicContextProvider
       settings={{
-        environmentId: import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID || 'live_default',
+        environmentId: import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID,
         walletConnectors: [
           EthereumWalletConnectors,
           SolanaWalletConnectors,
@@ -24,9 +33,11 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
           StarknetWalletConnectors,
         ],
         appName: 'Nectiq',
-        appLogoUrl: 'https://nectiq.app/logo.png',
-        initialAuthenticationMode: 'connect-and-sign',
+        // appLogoUrl: '/src/assets/nectiq-logo.png',
+        initialAuthenticationMode: 'connect-only',
         enableVisitTrackingOnConnectOnly: false,
+        apiBaseUrl: undefined, // Let Dynamic use default URLs
+        websocketUrl: undefined, // Let Dynamic use default WebSocket URLs
         cssOverrides: `
           .dynamic-modal {
             z-index: 9999;
@@ -71,6 +82,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         events: {
           onAuthInit: (args) => {
             console.log('🔐 Dynamic: Auth initialized', args);
+            console.log('🔐 Environment ID being used:', import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID);
           },
           onAuthFlowOpen: () => {
             console.log('🔐 Dynamic: Auth flow opened');
@@ -168,7 +180,9 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
             }
           },
           onAuthFailure: (error) => {
-            console.error('Dynamic: Authentication failed', error);
+            console.error('🔐 Dynamic: Authentication failed', error);
+            console.error('🔐 Environment ID:', import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID);
+            console.error('🔐 Full error details:', JSON.stringify(error, null, 2));
           },
           onLogout: () => {
             console.log('Dynamic: User logged out');
