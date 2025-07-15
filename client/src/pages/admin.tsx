@@ -4489,13 +4489,52 @@ export default function AdminPanel() {
                                 <div className="text-sm">
                                   <div className="font-medium text-gray-900 dark:text-white">{transaction.amount ? transaction.amount.toLocaleString() : 0} NTIQ</div>
                                   {transaction.type === 'withdrawal' && (
-                                    <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">→ {transaction.tokenAmount || 'N/A'} {transaction.token}</div>
+                                    <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">→ {(() => {
+                                      // For withdrawals, calculate the actual token amount based on NTIQ amount and token type
+                                      const ntiqAmount = transaction.amount || 0;
+                                      let tokenAmount = 'N/A';
+                                      
+                                      if (transaction.token === 'USDC' || transaction.token === 'USDT') {
+                                        // USDC/USDT: 1 NTIQ = $0.01, so 1:1 ratio with USD
+                                        tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                                      } else if (transaction.token === 'ETH') {
+                                        // ETH: calculate based on current price
+                                        const ethPrice = 2300; // You can update this with real-time price
+                                        const usdValue = ntiqAmount * 0.01;
+                                        tokenAmount = (usdValue / ethPrice).toFixed(6);
+                                      } else {
+                                        tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                                      }
+                                      
+                                      return tokenAmount;
+                                    })()} {transaction.token}</div>
                                   )}
                                   {transaction.type === 'purchase' && (
-                                    <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">← {transaction.paymentAmount || 'N/A'} {transaction.token}</div>
+                                    <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">← {(() => {
+                                      // For purchases, display the payment amount directly
+                                      return transaction.paymentAmount || 'N/A';
+                                    })()} {transaction.token}</div>
                                   )}
                                   {transaction.type === 'deposit' && (
-                                    <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">← {transaction.paymentAmount || 'N/A'} {transaction.token} • {transaction.networkName || 'Network'}</div>
+                                    <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">← {(() => {
+                                      // For deposits, calculate the actual token amount based on USD amount and token type
+                                      const usdAmount = transaction.paymentAmount || 0;
+                                      let tokenAmount = 'N/A';
+                                      
+                                      if (transaction.token === 'USDC' || transaction.token === 'USDT') {
+                                        // USDC/USDT: 1:1 ratio with USD
+                                        tokenAmount = usdAmount.toString();
+                                      } else if (transaction.token === 'ETH') {
+                                        // ETH: calculate based on current price or use a reasonable estimate
+                                        // For display purposes, assume ETH price around $2200-$2500
+                                        const ethPrice = 2300; // You can update this with real-time price
+                                        tokenAmount = (usdAmount / ethPrice).toFixed(6);
+                                      } else {
+                                        tokenAmount = usdAmount.toString();
+                                      }
+                                      
+                                      return tokenAmount;
+                                    })()} {transaction.token} • {transaction.networkName || 'Network'}</div>
                                   )}
                                 </div>
                               </TableCell>
