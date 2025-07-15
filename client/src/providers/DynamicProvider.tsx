@@ -6,15 +6,8 @@ import { StarknetWalletConnectors } from '@dynamic-labs/starknet';
 import { ReactNode } from 'react';
 import { useLocation } from 'wouter';
 import { queryClient } from '@/lib/queryClient';
-import { useAuthenticationHandler } from '@/hooks/useAuthenticationHandler';
-
 interface DynamicProviderProps {
   children: ReactNode;
-}
-
-function DynamicContent({ children }: { children: ReactNode }) {
-  useAuthenticationHandler();
-  return <>{children}</>;
 }
 
 export default function DynamicProvider({ children }: DynamicProviderProps) {
@@ -179,7 +172,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         },
       }}
     >
-      <DynamicContent>{children}</DynamicContent>
+{children}
     </DynamicContextProvider>
   );
 }
