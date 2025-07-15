@@ -574,11 +574,22 @@ export function MultiChainFinancial() {
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create withdrawal request",
-        variant: "destructive",
-      });
+      console.error('Withdrawal error:', error);
+      
+      // Check if it's an authentication error
+      if (error.message?.includes('401') || error.message?.toLowerCase().includes('authentication')) {
+        toast({
+          title: "Authentication Required",
+          description: "Please connect your wallet to create withdrawal requests",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create withdrawal request",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -607,6 +618,16 @@ export function MultiChainFinancial() {
   };
 
   const handleWithdraw = () => {
+    // Check if user is authenticated first
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please connect your wallet and login to access withdrawal features",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!withdrawAmount || parseInt(withdrawAmount) <= 0) {
       toast({
         title: "Error",
@@ -617,7 +638,7 @@ export function MultiChainFinancial() {
     }
 
     const ntiqAmount = parseInt(withdrawAmount);
-    if (user && ntiqAmount > user.balance) {
+    if (ntiqAmount > user.balance) {
       toast({
         title: "Error",
         description: "Insufficient NTIQ balance",
@@ -630,7 +651,7 @@ export function MultiChainFinancial() {
       ntiqAmount,
       chainName: selectedChain.shortName,
       tokenType: selectedToken,
-      toWalletAddress: user?.walletAddress || "",
+      toWalletAddress: user.walletAddress || "",
     });
   };
 
@@ -1290,6 +1311,20 @@ export function MultiChainFinancial() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Authentication Warning */}
+                {!user && (
+                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-yellow-800 dark:text-yellow-200">Authentication Required</h4>
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                          Please connect your wallet and login to access withdrawal features. All withdrawal requests require user authentication for security.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Chain Selection */}
                 <div>
