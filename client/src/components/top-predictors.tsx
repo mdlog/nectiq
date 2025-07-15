@@ -93,9 +93,15 @@ export function TopPredictors() {
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-sm">{user.username}</p>
-                <p className="text-xs text-slate-400">
-                  Accuracy: {user.accuracy}%
-                </p>
+                <div className="flex items-center space-x-2 text-xs text-slate-400">
+                  <span>Accuracy: {user.accuracy}%</span>
+                  {(user.totalBattles || 0) > 0 && (
+                    <span className="text-blue-400">⚔{user.wonBattles || 0}/{user.totalBattles || 0}</span>
+                  )}
+                  {(user.totalSurvivalTournaments || 0) > 0 && (
+                    <span className="text-orange-400">🏆{user.wonSurvivalTournaments || 0}/{user.totalSurvivalTournaments || 0}</span>
+                  )}
+                </div>
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-success">

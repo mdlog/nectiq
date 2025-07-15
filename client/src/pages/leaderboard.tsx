@@ -22,6 +22,15 @@ interface LeaderboardUser {
   weeklyPoints?: number;
   monthlyPoints?: number;
   profilePhoto?: string | null;
+  // Battle data
+  totalBattles?: number;
+  wonBattles?: number;
+  battleWinRate?: number;
+  battleRewards?: number;
+  // Survival data
+  totalSurvivalTournaments?: number;
+  wonSurvivalTournaments?: number;
+  survivalRewards?: number;
 }
 
 type FilterType = 'weekly' | 'monthly' | 'alltime';
@@ -318,6 +327,18 @@ export default function Leaderboard() {
                                 {user.winRate.toFixed(1)}% win rate
                               </span>
                             </div>
+                            {(user.totalBattles || 0) > 0 && (
+                              <div className="flex items-center space-x-1">
+                                <span className="text-blue-400">⚔</span>
+                                <span className="text-blue-400">{user.wonBattles || 0}/{user.totalBattles || 0} battles</span>
+                              </div>
+                            )}
+                            {(user.totalSurvivalTournaments || 0) > 0 && (
+                              <div className="flex items-center space-x-1">
+                                <span className="text-orange-400">🏆</span>
+                                <span className="text-orange-400">{user.wonSurvivalTournaments || 0}/{user.totalSurvivalTournaments || 0} survival</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -338,23 +359,38 @@ export default function Leaderboard() {
                       </div>
                     </div>
 
-                    {/* Additional Stats for Top 3 */}
+                    {/* Enhanced Stats for Top 3 with Battle and Survival Data */}
                     {actualRank <= 3 && (
                       <div className="mt-3 pt-3 border-t border-surface-light/50">
-                        <div className="grid grid-cols-3 gap-4 text-xs">
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-xs">
+                          {/* Prediction Stats */}
                           <div className="text-center">
-                            <p className="text-slate-400">Correct</p>
-                            <p className="font-semibold text-success">{user.correctPredictions}</p>
+                            <p className="text-slate-400">Predictions</p>
+                            <p className="font-semibold text-success">{user.correctPredictions}/{user.totalPredictions}</p>
                           </div>
                           <div className="text-center">
-                            <p className="text-slate-400">Total Rewards</p>
-                            <p className="font-semibold text-primary">{formatPoints(user.totalRewards)}</p>
+                            <p className="text-slate-400">Pred Rewards</p>
+                            <p className="font-semibold text-primary">{formatPoints(user.totalRewards - (user.battleRewards || 0) - (user.survivalRewards || 0))}</p>
+                          </div>
+                          
+                          {/* Battle Stats */}
+                          <div className="text-center">
+                            <p className="text-slate-400">Battles</p>
+                            <p className="font-semibold text-blue-400">{user.wonBattles || 0}/{user.totalBattles || 0}</p>
                           </div>
                           <div className="text-center">
-                            <p className="text-slate-400">Accuracy</p>
-                            <p className={`font-semibold ${getWinRateColor(user.winRate)}`}>
-                              {user.winRate.toFixed(1)}%
-                            </p>
+                            <p className="text-slate-400">Battle Rewards</p>
+                            <p className="font-semibold text-blue-400">{formatPoints(user.battleRewards || 0)}</p>
+                          </div>
+                          
+                          {/* Survival Stats */}
+                          <div className="text-center">
+                            <p className="text-slate-400">Survival</p>
+                            <p className="font-semibold text-orange-400">{user.wonSurvivalTournaments || 0}/{user.totalSurvivalTournaments || 0}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-slate-400">Survival Rewards</p>
+                            <p className="font-semibold text-orange-400">{formatPoints(user.survivalRewards || 0)}</p>
                           </div>
                         </div>
                       </div>

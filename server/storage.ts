@@ -44,6 +44,7 @@ export interface IStorage {
   updateProfilePhoto(id: number, profilePhoto: string): Promise<void>;
   getAllUsers(): Promise<User[]>;
   getTopPredictors(limit?: number): Promise<User[]>;
+  getEnhancedLeaderboard(limit?: number): Promise<any[]>;
 
   // Prediction operations
   createPrediction(prediction: any): Promise<Prediction>;
@@ -507,6 +508,90 @@ export class DatabaseStorage implements IStorage {
       emailVerified: users.emailVerified,
       twitterVerified: users.twitterVerified
     }).from(users).where(eq(users.isAdmin, false)).orderBy(desc(users.totalRewards)).limit(limit);
+  }
+
+  async getEnhancedLeaderboard(limit: number = 10): Promise<any[]> {
+    // Get users with basic data
+    const usersData = await db.select({
+      id: users.id,
+      uid: users.uid,
+      username: users.username,
+      totalPredictions: users.totalPredictions,
+      correctPredictions: users.correctPredictions,
+      totalRewards: users.totalRewards,
+      profilePhoto: users.profilePhoto,
+    }).from(users).where(eq(users.isAdmin, false));
+
+    // Enhance with battle and survival data
+    const enhancedUsers = await Promise.all(usersData.map(async (user) => {
+      // Get battle statistics
+      const battleStatsQuery = await db.select({
+        totalBattles: sql<number>`COUNT(*)`,
+        wonBattles: sql<number>`SUM(CASE WHEN ${predictionBattles.winnerId} = ${user.id} THEN 1 ELSE 0 END)`,
+        battleRewards: sql<number>`SUM(CASE WHEN ${predictionBattles.winnerId} = ${user.id} THEN ${predictionBattles.winnerReward} ELSE 0 END)`
+      }).from(predictionBattles)
+      .where(
+        and(
+          or(
+            eq(predictionBattles.challengerId, user.id),
+            eq(predictionBattles.challengedId, user.id)
+          ),
+          eq(predictionBattles.status, 'completed')
+        )
+      );
+
+      const battleStats = battleStatsQuery[0] || {
+        totalBattles: 0,
+        wonBattles: 0,
+        battleRewards: 0
+      };
+
+      // Get survival tournament statistics
+      const survivalStatsQuery = await db.select({
+        totalTournaments: sql<number>`COUNT(DISTINCT ${survivalParticipants.tournamentId})`,
+        wonTournaments: sql<number>`COUNT(DISTINCT CASE WHEN ${survivalTournaments.winnerId} = ${user.id} THEN ${survivalParticipants.tournamentId} END)`,
+        survivalRewards: sql<number>`SUM(CASE WHEN ${survivalTournaments.winnerId} = ${user.id} THEN ${survivalTournaments.prizePool} ELSE 0 END)`
+      }).from(survivalParticipants)
+      .leftJoin(survivalTournaments, eq(survivalParticipants.tournamentId, survivalTournaments.id))
+      .where(eq(survivalParticipants.userId, user.id));
+
+      const survivalStats = survivalStatsQuery[0] || {
+        totalTournaments: 0,
+        wonTournaments: 0,
+        survivalRewards: 0
+      };
+
+      // Calculate win rates
+      const predictionWinRate = user.totalPredictions > 0 ? 
+        (user.correctPredictions / user.totalPredictions) * 100 : 0;
+      const battleWinRate = battleStats.totalBattles > 0 ? 
+        (battleStats.wonBattles / battleStats.totalBattles) * 100 : 0;
+
+      return {
+        ...user,
+        winRate: predictionWinRate,
+        // Battle stats
+        totalBattles: battleStats.totalBattles,
+        wonBattles: battleStats.wonBattles,
+        battleWinRate: battleWinRate,
+        battleRewards: battleStats.battleRewards || 0,
+        // Survival stats
+        totalSurvivalTournaments: survivalStats.totalTournaments,
+        wonSurvivalTournaments: survivalStats.wonTournaments,
+        survivalRewards: survivalStats.survivalRewards || 0,
+        // Combined rewards (this should match totalRewards but let's calculate to be sure)
+        combinedRewards: user.totalRewards
+      };
+    }));
+
+    // Sort by total rewards and apply limit
+    return enhancedUsers
+      .sort((a, b) => b.totalRewards - a.totalRewards)
+      .slice(0, limit)
+      .map((user, index) => ({
+        ...user,
+        rank: index + 1
+      }));
   }
 
   async resetLeaderboard(): Promise<void> {

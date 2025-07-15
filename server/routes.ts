@@ -2280,20 +2280,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get top predictors (leaderboard) with filter support
+  // Get enhanced leaderboard with battle and survival data
   app.get("/api/leaderboard", async (req, res) => {
     try {
       const filter = req.query.filter as string || 'alltime';
       const limit = parseInt(req.query.limit as string) || 50;
       
-      const topPredictors = await storage.getTopPredictors(limit);
+      // Use enhanced leaderboard that includes battle and survival data
+      const enhancedLeaderboard = await storage.getEnhancedLeaderboard(limit);
       
-      const leaderboard = topPredictors.map(user => {
-        // Calculate win rate
-        const winRate = user.totalPredictions > 0 
-          ? parseFloat(((user.correctPredictions / user.totalPredictions) * 100).toFixed(1))
-          : 0;
-
+      const leaderboard = enhancedLeaderboard.map(user => {
         // For now, we'll use the same data for all filters since we don't have time-based tracking yet
         // In a real implementation, you'd calculate these based on the time period
         const weeklyPoints = Math.floor(user.totalRewards * 0.3); // Simulated weekly points
@@ -2303,21 +2299,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: user.id,
           username: user.username,
           uid: user.uid,
+          rank: user.rank,
           totalPredictions: user.totalPredictions,
           correctPredictions: user.correctPredictions,
-          winRate,
+          winRate: user.winRate,
           totalRewards: user.totalRewards,
+          // Battle data
+          totalBattles: user.totalBattles,
+          wonBattles: user.wonBattles,
+          battleWinRate: user.battleWinRate,
+          battleRewards: user.battleRewards,
+          // Survival data
+          totalSurvivalTournaments: user.totalSurvivalTournaments,
+          wonSurvivalTournaments: user.wonSurvivalTournaments,
+          survivalRewards: user.survivalRewards,
+          // Legacy fields for backward compatibility
           weeklyPoints,
           monthlyPoints,
           profilePhoto: user.profilePhoto,
-          // Legacy field for backward compatibility
-          accuracy: winRate
+          accuracy: user.winRate
         };
       });
 
       res.json(leaderboard);
     } catch (error) {
-      console.error("Error fetching leaderboard:", error);
+      console.error("Error fetching enhanced leaderboard:", error);
       res.status(500).json({ message: "Failed to get leaderboard" });
     }
   });

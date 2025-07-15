@@ -34,6 +34,15 @@ export interface LeaderboardEntry {
   correctPredictions: number;
   accuracy: number;
   totalRewards: number;
+  // Battle data
+  totalBattles?: number;
+  wonBattles?: number;
+  battleWinRate?: number;
+  battleRewards?: number;
+  // Survival data
+  totalSurvivalTournaments?: number;
+  wonSurvivalTournaments?: number;
+  survivalRewards?: number;
 }
 
 export interface RecentReward {
