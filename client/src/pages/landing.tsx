@@ -243,6 +243,51 @@ export default function LandingPage() {
             <PlatformStats />
           </div>
 
+          {/* Demo Login Section - For Testing Redirect */}
+          <div className="mb-16 text-center">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg p-6 max-w-2xl mx-auto">
+              <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-3">
+                Demo Login - Test Redirect System
+              </h3>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
+                Click button di bawah untuk test apakah sistem redirect ke dashboard berfungsi setelah login
+              </p>
+              <Button 
+                onClick={async () => {
+                  try {
+                    console.log('🔄 Testing demo login...');
+                    const response = await fetch('/api/auth/wallet-login', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        address: '0x3c884236f8a049501cce5408cbba2b3ef5b43f55'
+                      }),
+                    });
+                    
+                    console.log('Demo login response:', response.status);
+                    
+                    if (response.ok) {
+                      const data = await response.json();
+                      console.log('Demo login successful:', data);
+                      
+                      // Test redirect to dashboard
+                      console.log('🚀 Demo login successful, redirecting to dashboard...');
+                      setLocation('/home');
+                    } else {
+                      console.error('Demo login failed:', response.status);
+                    }
+                  } catch (error) {
+                    console.error('Demo login error:', error);
+                  }
+                }}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium px-6 py-2"
+              >
+                Test Demo Login & Redirect
+              </Button>
+            </div>
+          </div>
+
           {/* About Section */}
           <div id="about" className="mb-16">
             <div className="text-center mb-8">
