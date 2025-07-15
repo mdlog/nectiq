@@ -179,6 +179,13 @@ export function MultiChainFinancial() {
     refetchInterval: 10000,
   });
 
+  // Query to get crypto prices for ETH conversion
+  const { data: cryptoPrices } = useQuery({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 5000,
+    staleTime: 0,
+  });
+
   // Mutation to create deposit request
   const createDepositMutation = useMutation({
     mutationFn: async (depositData: {
@@ -311,6 +318,20 @@ export function MultiChainFinancial() {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  // Function to calculate ETH amount for deposit conversion
+  const calculateETHAmount = (usdAmount: string): string => {
+    if (!usdAmount || !cryptoPrices) return "0";
+    
+    const usd = parseFloat(usdAmount);
+    if (isNaN(usd) || usd <= 0) return "0";
+
+    const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === "ethereum")?.currentPrice;
+    if (!ethPrice) return "0";
+
+    const ethAmount = usd / ethPrice;
+    return ethAmount.toFixed(6); // Show 6 decimal places for ETH
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { color: "bg-yellow-500", text: "Pending" },
@@ -425,9 +446,16 @@ export function MultiChainFinancial() {
                   step="0.01"
                 />
                 {depositAmount && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 100).toLocaleString()} NTIQ</span>
-                  </p>
+                  <div className="text-sm mt-1 space-y-1">
+                    <p className="text-gray-600">
+                      You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 100).toLocaleString()} NTIQ</span>
+                    </p>
+                    {selectedToken === "ETH" && cryptoPrices && (
+                      <p className="text-orange-600">
+                        Send: <span className="font-bold">{calculateETHAmount(depositAmount)} ETH</span>
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -463,6 +491,12 @@ export function MultiChainFinancial() {
                         <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
                         <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 100).toLocaleString()} NTIQ</span>
                       </div>
+                      {selectedToken === "ETH" && depositAmount && cryptoPrices && (
+                        <div className="flex justify-between border-t pt-2 mt-2">
+                          <span className="text-gray-700 dark:text-gray-300">ETH to send:</span>
+                          <span className="font-bold text-orange-600">{calculateETHAmount(depositAmount)} ETH</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
@@ -477,9 +511,18 @@ export function MultiChainFinancial() {
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
-                      <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
-                        ⚠️ Make sure to transfer from the same wallet as your login wallet
-                      </p>
+                      {selectedToken === "ETH" && depositAmount && cryptoPrices ? (
+                        <div className="text-xs text-blue-600 dark:text-blue-300 mt-2 space-y-1">
+                          <p>⚠️ Make sure to transfer from the same wallet as your login wallet</p>
+                          <p className="font-bold bg-orange-100 dark:bg-orange-900/30 p-2 rounded border-orange-300 border">
+                            📤 Send exactly <span className="text-orange-700 dark:text-orange-300">{calculateETHAmount(depositAmount)} ETH</span> to the address above
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
+                          ⚠️ Make sure to transfer from the same wallet as your login wallet
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex space-x-2">
