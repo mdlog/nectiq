@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import { useEffect } from "react";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 import { PlatformStats } from "@/components/platform-stats";
+import { queryClient } from "@/lib/queryClient";
 
 interface CryptoPrice {
   id: string;
@@ -270,6 +271,12 @@ export default function LandingPage() {
                     if (response.ok) {
                       const data = await response.json();
                       console.log('Demo login successful:', data);
+                      
+                      // Invalidate user query to update authentication state
+                      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+                      
+                      // Small delay to ensure query invalidation completes
+                      await new Promise(resolve => setTimeout(resolve, 100));
                       
                       // Test redirect to dashboard
                       console.log('🚀 Demo login successful, redirecting to dashboard...');
