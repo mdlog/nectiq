@@ -466,7 +466,7 @@ export default function AdminPanel() {
     retry: 2,
     retryDelay: 1000,
     refetchInterval: 1000,
-    enabled: !!currentUser?.isAdmin,
+    enabled: true, // Always enabled to prevent hook order changes
   });
 
   const { data: users = [], error: usersError } = useQuery<User[]>({
@@ -474,7 +474,7 @@ export default function AdminPanel() {
     retry: 2,
     retryDelay: 1000,
     refetchInterval: 1500,
-    enabled: !!currentUser?.isAdmin,
+    enabled: true, // Always enabled to prevent hook order changes
   });
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
@@ -482,7 +482,7 @@ export default function AdminPanel() {
     retry: 2,
     retryDelay: 1000,
     refetchInterval: 1000,
-    enabled: !!currentUser?.isAdmin,
+    enabled: true, // Always enabled to prevent hook order changes
   });
 
   // Get crypto prices for logos

@@ -8,7 +8,7 @@ import ProtectedRoute from "@/components/protected-route";
 import AdminProtectedRoute from "@/components/admin-protected-route";
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
-import AdminPanel from "@/pages/admin";
+import SimpleAdminPanel from "@/pages/simple-admin";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
 
@@ -112,7 +112,7 @@ function Router() {
       
       <Route path="/admin">
         <AdminProtectedRoute>
-          <AdminPanel />
+          <SimpleAdminPanel />
         </AdminProtectedRoute>
       </Route>
       
