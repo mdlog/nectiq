@@ -60,8 +60,8 @@ class DepositService {
         }
 
         await this.checkSingleDeposit(deposit);
-        // Add small delay between checks to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Add longer delay between checks for free API tier (3 seconds)
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
 
     } catch (error) {
