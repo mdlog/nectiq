@@ -5350,10 +5350,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create withdrawal request
   app.post("/api/withdrawals/create", async (req, res) => {
     try {
+      console.log('🔥 [WITHDRAWAL] Request received:', req.body);
+      
       const session = req.session as any;
       if (!session?.userId) {
+        console.log('❌ [WITHDRAWAL] No session userId');
         return res.status(401).json({ message: "Authentication required" });
       }
+
+      console.log('✅ [WITHDRAWAL] Session found, userId:', session.userId);
 
       const withdrawalSchema = z.object({
         ntiqAmount: z.number().min(1),
@@ -5362,15 +5367,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         toWalletAddress: z.string().min(1),
       });
 
+      console.log('🔍 [WITHDRAWAL] Validating data:', req.body);
       const validatedData = withdrawalSchema.parse(req.body);
+      console.log('✅ [WITHDRAWAL] Data validated:', validatedData);
       
       // Check user balance
+      console.log('🔍 [WITHDRAWAL] Getting user info for userId:', session.userId);
       const user = await storage.getUser(session.userId);
+      console.log('📊 [WITHDRAWAL] User balance:', user?.balance, 'Required:', validatedData.ntiqAmount);
+      
       if (!user || user.balance < validatedData.ntiqAmount) {
+        console.log('❌ [WITHDRAWAL] Insufficient balance');
         return res.status(400).json({ message: "Insufficient NTIQ balance" });
       }
 
       // Calculate USD amount (100 NTIQ = 1 USD)
+      console.log('💰 [WITHDRAWAL] Calculating amounts...');
       const usdAmount = validatedData.ntiqAmount * 0.01;
       
       // Calculate 2.5% fee and net amount
@@ -5384,24 +5396,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let finalFeeAmount = feeAmount;
       
       if (validatedData.tokenType === 'ETH') {
+        console.log('⚡ [WITHDRAWAL] ETH withdrawal - getting current price...');
         // Get current ETH price
         const cryptoService = CryptoService.getInstance();
         const prices = await cryptoService.getCurrentPrices();
         const ethPrice = prices.find(coin => coin.symbol === 'ETH')?.current_price || 3500; // fallback price
+        console.log('💵 [WITHDRAWAL] ETH price:', ethPrice);
         
         finalNetAmount = netAmount / ethPrice;
         finalFeeAmount = feeAmount / ethPrice;
       }
+      
+      console.log('🧮 [WITHDRAWAL] Final amounts:', {
+        usdAmount,
+        finalNetAmount,
+        finalFeeAmount
+      });
 
       // Deduct balance using BalanceService
+      console.log('💳 [WITHDRAWAL] Processing balance transaction...');
       await BalanceService.processTransaction({
         userId: session.userId,
         type: 'withdrawal_pending',
         amount: -validatedData.ntiqAmount,
         description: `Withdrawal request for ${usdAmount.toFixed(2)} USD (${finalNetAmount.toFixed(6)} ${validatedData.tokenType} after 2.5% fee) on ${validatedData.chainName}`,
       }, storage);
+      console.log('✅ [WITHDRAWAL] Balance transaction processed');
 
-      const withdrawal = await storage.createWithdrawal({
+      console.log('📝 [WITHDRAWAL] Creating withdrawal record...');
+      const withdrawalData = {
         userId: session.userId,
         ntiqAmount: validatedData.ntiqAmount,
         usdAmount: usdAmount.toString(),
@@ -5411,7 +5434,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tokenType: validatedData.tokenType,
         toWalletAddress: validatedData.toWalletAddress,
         status: 'pending',
-      });
+      };
+      console.log('📋 [WITHDRAWAL] Withdrawal data:', withdrawalData);
+      
+      const withdrawal = await storage.createWithdrawal(withdrawalData);
+      console.log('✅ [WITHDRAWAL] Withdrawal record created:', withdrawal.id);
 
       // Broadcast to admin for real-time notifications
       try {
