@@ -5127,6 +5127,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update deposit with transaction hash
+  app.post("/api/deposits/:id/update-transaction", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const depositId = parseInt(req.params.id);
+      const { transactionHash, status } = req.body;
+
+      if (!transactionHash || !status) {
+        return res.status(400).json({ error: "Transaction hash and status are required" });
+      }
+
+      // Verify that the deposit belongs to the authenticated user
+      const userDeposits = await storage.getUserDeposits(session.userId, 100);
+      const deposit = userDeposits.find(d => d.id === depositId);
+      
+      if (!deposit) {
+        return res.status(404).json({ error: "Deposit not found or unauthorized" });
+      }
+
+      // Update the deposit
+      await storage.updateDepositStatus(depositId, status, transactionHash);
+
+      console.log(`✅ Deposit ${depositId} updated with transaction hash: ${transactionHash}, status: ${status}`);
+      res.json({ success: true, message: "Deposit updated successfully" });
+    } catch (error: any) {
+      console.error("Error updating deposit:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Create withdrawal request
   app.post("/api/withdrawals/create", async (req, res) => {
     try {

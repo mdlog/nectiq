@@ -492,6 +492,32 @@ export function MultiChainFinancial() {
 
       console.log('Transaction sent:', txHash);
 
+      // Update deposit with transaction hash and mark as completed
+      try {
+        await apiRequest(`/api/deposits/${deposit.id}/update-transaction`, {
+          method: 'POST',
+          body: JSON.stringify({
+            transactionHash: txHash,
+            status: 'completed'
+          }),
+        });
+
+        // Refresh deposit data
+        queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+        
+        toast({
+          title: "Deposit Updated",
+          description: "Transaction hash saved and status updated to completed",
+        });
+      } catch (updateError: any) {
+        console.error('Failed to update deposit:', updateError);
+        toast({
+          title: "Warning",
+          description: "Transaction sent but failed to update deposit status",
+          variant: "destructive",
+        });
+      }
+
     } catch (error: any) {
       console.error('MetaMask transaction error:', error);
       toast({
