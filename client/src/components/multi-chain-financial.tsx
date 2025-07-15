@@ -325,7 +325,8 @@ export function MultiChainFinancial() {
     const usd = parseFloat(usdAmount);
     if (isNaN(usd) || usd <= 0) return "0";
 
-    const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === "ethereum")?.currentPrice;
+    const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === "ethereum")?.current_price;
+    
     if (!ethPrice) return "0";
 
     const ethAmount = usd / ethPrice;
