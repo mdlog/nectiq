@@ -2848,6 +2848,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ AUTOMATED WITHDRAWAL ENDPOINTS ============
+  
+  // Admin: Get automated withdrawal settings
+  app.get("/api/admin/auto-withdrawal/status", requireAdmin, async (req, res) => {
+    try {
+      const { getWithdrawalScheduler } = await import('./withdrawal-scheduler.js');
+      const scheduler = getWithdrawalScheduler(storage);
+      const status = scheduler.getStatus();
+      
+      const settings = {
+        enabled: process.env.ENABLE_AUTO_WITHDRAWALS === 'true',
+        interval: parseInt(process.env.WITHDRAWAL_CHECK_INTERVAL || '5'),
+        maxDailyWithdrawal: 10000,
+        maxSingleWithdrawal: 1000,
+        autoApprovalThreshold: 500,
+        hasPrivateKey: !!process.env.ADMIN_PRIVATE_KEY,
+        ...status
+      };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error getting auto-withdrawal status:", error);
+      res.status(500).json({ message: "Failed to get status" });
+    }
+  });
+
+  // Admin: Enable/Disable automated withdrawals
+  app.post("/api/admin/auto-withdrawal/toggle", requireAdmin, async (req, res) => {
+    try {
+      const { enabled } = req.body;
+      const { getWithdrawalScheduler } = await import('./withdrawal-scheduler.js');
+      const scheduler = getWithdrawalScheduler(storage);
+      
+      if (enabled) {
+        if (!process.env.ADMIN_PRIVATE_KEY) {
+          return res.status(400).json({ message: "ADMIN_PRIVATE_KEY not configured" });
+        }
+        scheduler.startScheduler(parseInt(process.env.WITHDRAWAL_CHECK_INTERVAL || '5'));
+      } else {
+        scheduler.stopScheduler();
+      }
+      
+      auditLog('auto_withdrawal_toggled', { enabled }, req);
+      res.json({ message: `Automated withdrawals ${enabled ? 'enabled' : 'disabled'}` });
+    } catch (error) {
+      console.error("Error toggling auto-withdrawal:", error);
+      res.status(500).json({ message: "Failed to toggle automation" });
+    }
+  });
+
+  // Admin: Manual trigger withdrawal processing
+  app.post("/api/admin/auto-withdrawal/process", requireAdmin, async (req, res) => {
+    try {
+      const { getWithdrawalScheduler } = await import('./withdrawal-scheduler.js');
+      const scheduler = getWithdrawalScheduler(storage);
+      
+      await scheduler.processWithdrawalsManually();
+      
+      auditLog('manual_withdrawal_process', {}, req);
+      res.json({ message: "Manual withdrawal processing completed" });
+    } catch (error) {
+      console.error("Error in manual withdrawal processing:", error);
+      res.status(500).json({ message: "Failed to process withdrawals" });
+    }
+  });
+
+  // Admin: Update automated withdrawal configuration
+  app.post("/api/admin/auto-withdrawal/config", requireAdmin, async (req, res) => {
+    try {
+      const { maxDailyWithdrawal, maxSingleWithdrawal, autoApprovalThreshold } = req.body;
+      
+      // Validate input
+      if (maxDailyWithdrawal < 100 || maxSingleWithdrawal < 10 || autoApprovalThreshold < 10) {
+        return res.status(400).json({ message: "Invalid configuration values" });
+      }
+      
+      // Import default config
+      const { defaultAutoWithdrawalConfig } = await import('./automated-withdrawal-service.js');
+      
+      // Update configuration (dalam implementasi production, simpan ke database)
+      const newConfig = {
+        ...defaultAutoWithdrawalConfig,
+        maxDailyWithdrawal,
+        maxSingleWithdrawal,
+        autoApprovalThreshold
+      };
+      
+      const { getWithdrawalScheduler } = await import('./withdrawal-scheduler.js');
+      const scheduler = getWithdrawalScheduler(storage);
+      scheduler.updateConfig(newConfig);
+      
+      auditLog('auto_withdrawal_config_updated', {
+        maxDailyWithdrawal,
+        maxSingleWithdrawal,
+        autoApprovalThreshold
+      }, req);
+      
+      res.json({ message: "Configuration updated successfully" });
+    } catch (error) {
+      console.error("Error updating auto-withdrawal config:", error);
+      res.status(500).json({ message: "Failed to update configuration" });
+    }
+  });
+
+  // ============ END AUTOMATED WITHDRAWAL ENDPOINTS ============
+
   // Admin: Get transaction stats
   app.get("/api/admin/transaction-stats", requireAdmin, async (req, res) => {
     try {

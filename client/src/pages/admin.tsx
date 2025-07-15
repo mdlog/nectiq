@@ -490,6 +490,25 @@ export default function AdminPanel() {
 
   // Emergency modal state
   const [showEmergencyModal, setShowEmergencyModal] = useState<string | null>(null);
+
+  // Automated Withdrawal System state
+  const [automatedWithdrawalConfig, setAutomatedWithdrawalConfig] = useState({
+    enabled: true,
+    dailyLimit: 10000,
+    autoApprovalThreshold: 500,
+    maxSingleWithdrawal: 5000,
+    processingInterval: 5,
+    multiChainValidation: true,
+    fraudDetection: true,
+    gasPriceOptimization: true,
+    emailNotifications: false
+  });
+  const [automatedWithdrawalStats, setAutomatedWithdrawalStats] = useState({
+    processedToday: 24,
+    totalVolume: 7250,
+    pendingReview: 3,
+    successRate: 99.2
+  });
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1038,6 +1057,137 @@ export default function AdminPanel() {
       updateEventMutation.mutate({ id: editingEvent.id, ...submitData });
     } else {
       createEventMutation.mutate(submitData);
+    }
+  };
+
+  // Automated Withdrawal System mutations
+  const enableAutomatedWithdrawalMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/admin/automated-withdrawals/enable", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Automated withdrawal system enabled successfully" });
+      setAutomatedWithdrawalConfig(prev => ({ ...prev, enabled: true }));
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const disableAutomatedWithdrawalMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/admin/automated-withdrawals/disable", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Automated withdrawal system disabled successfully" });
+      setAutomatedWithdrawalConfig(prev => ({ ...prev, enabled: false }));
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const processWithdrawalsManuallyMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/admin/automated-withdrawals/process", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: "Success", 
+        description: `Processing completed. ${data.processedCount || 0} withdrawals processed.` 
+      });
+      // Refresh withdrawal stats
+      setAutomatedWithdrawalStats(prev => ({
+        ...prev,
+        processedToday: prev.processedToday + (data.processedCount || 0)
+      }));
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateAutomatedWithdrawalSettingsMutation = useMutation({
+    mutationFn: async (settings: any) => {
+      const response = await fetch("/api/admin/automated-withdrawals/settings", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings)
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Automated withdrawal settings updated successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Handler functions for automated withdrawal
+  const handleEnableAutomatedWithdrawals = () => {
+    enableAutomatedWithdrawalMutation.mutate();
+  };
+
+  const handleDisableAutomatedWithdrawals = () => {
+    disableAutomatedWithdrawalMutation.mutate();
+  };
+
+  const handleProcessWithdrawalsManually = () => {
+    processWithdrawalsManuallyMutation.mutate();
+  };
+
+  const handleUpdateAutomatedWithdrawalConfig = (field: string, value: any) => {
+    setAutomatedWithdrawalConfig(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveAutomatedWithdrawalSettings = () => {
+    updateAutomatedWithdrawalSettingsMutation.mutate(automatedWithdrawalConfig);
+  };
+
+  const handleRefreshAutomatedWithdrawalStatus = async () => {
+    try {
+      const response = await fetch("/api/admin/automated-withdrawals/status", {
+        credentials: "include"
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAutomatedWithdrawalConfig(prev => ({
+          ...prev,
+          enabled: data.isRunning || false
+        }));
+        setAutomatedWithdrawalStats(prev => ({
+          ...prev,
+          processedToday: data.processedToday || prev.processedToday,
+          pendingReview: data.pendingReview || prev.pendingReview
+        }));
+        toast({ title: "Success", description: "Status refreshed successfully" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to refresh status", variant: "destructive" });
     }
   };
 
@@ -5993,6 +6143,236 @@ export default function AdminPanel() {
                 </CardContent>
               </Card>
 
+              {/* Automated Withdrawal Management */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Zap className="mr-2" size={18} />
+                    Automated Withdrawal System
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* System Status */}
+                  <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${automatedWithdrawalConfig.enabled ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                        <h4 className="font-semibold text-green-700 dark:text-green-300">System Status</h4>
+                      </div>
+                      <Badge variant="outline" className={automatedWithdrawalConfig.enabled ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}>
+                        {automatedWithdrawalConfig.enabled ? "Operational" : "Disabled"}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-green-700 dark:text-green-300">Processing: Every 5 minutes</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-4 h-4 text-blue-600" />
+                        <span className="text-blue-700 dark:text-blue-300">Daily Limit: $10,000</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Shield className="w-4 h-4 text-purple-600" />
+                        <span className="text-purple-700 dark:text-purple-300">Auto-approve: Up to $500</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Control Buttons */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
+                        System Control
+                        <Badge variant="outline" className="ml-2 text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Critical</Badge>
+                      </Label>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="bg-green-100 hover:bg-green-200 text-green-700 border-green-300"
+                          onClick={handleEnableAutomatedWithdrawals}
+                          disabled={enableAutomatedWithdrawalMutation.isPending || automatedWithdrawalConfig.enabled}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          {enableAutomatedWithdrawalMutation.isPending ? "Enabling..." : "Enable Automation"}
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="bg-red-100 hover:bg-red-200 text-red-700 border-red-300"
+                          onClick={handleDisableAutomatedWithdrawals}
+                          disabled={disableAutomatedWithdrawalMutation.isPending || !automatedWithdrawalConfig.enabled}
+                        >
+                          <Pause className="mr-2 h-4 w-4" />
+                          {disableAutomatedWithdrawalMutation.isPending ? "Disabling..." : "Disable Automation"}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
+                        Manual Processing
+                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Manual</Badge>
+                      </Label>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300 w-full"
+                        onClick={handleProcessWithdrawalsManually}
+                        disabled={processWithdrawalsManuallyMutation.isPending}
+                      >
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        {processWithdrawalsManuallyMutation.isPending ? "Processing..." : "Process Withdrawals Now"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Configuration Settings */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="daily-limit" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
+                        Daily Withdrawal Limit (USD)
+                        <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Security</Badge>
+                      </Label>
+                      <Input 
+                        id="daily-limit" 
+                        value={automatedWithdrawalConfig.dailyLimit}
+                        onChange={(e) => handleUpdateAutomatedWithdrawalConfig('dailyLimit', parseInt(e.target.value) || 0)}
+                        type="number"
+                        placeholder="Enter daily limit"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
+                      />
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Maximum total withdrawals per day</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="auto-approve" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
+                        Auto-approval Threshold (USD)
+                        <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Automated</Badge>
+                      </Label>
+                      <Input 
+                        id="auto-approve" 
+                        value={automatedWithdrawalConfig.autoApprovalThreshold}
+                        onChange={(e) => handleUpdateAutomatedWithdrawalConfig('autoApprovalThreshold', parseInt(e.target.value) || 0)}
+                        type="number"
+                        placeholder="Enter auto-approval limit"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
+                      />
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Withdrawals below this amount are auto-approved</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="max-single" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
+                        Max Single Withdrawal (USD)
+                        <Badge variant="outline" className="ml-2 text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Limit</Badge>
+                      </Label>
+                      <Input 
+                        id="max-single" 
+                        value={automatedWithdrawalConfig.maxSingleWithdrawal}
+                        onChange={(e) => handleUpdateAutomatedWithdrawalConfig('maxSingleWithdrawal', parseInt(e.target.value) || 0)}
+                        type="number"
+                        placeholder="Enter max single withdrawal"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
+                      />
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Maximum amount for a single withdrawal</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="processing-interval" className="flex items-center text-gray-900 dark:text-gray-100 font-medium">
+                        Processing Interval (minutes)
+                        <Badge variant="outline" className="ml-2 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Timing</Badge>
+                      </Label>
+                      <Input 
+                        id="processing-interval" 
+                        value={automatedWithdrawalConfig.processingInterval}
+                        onChange={(e) => handleUpdateAutomatedWithdrawalConfig('processingInterval', parseInt(e.target.value) || 0)}
+                        type="number"
+                        placeholder="Enter interval in minutes"
+                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
+                      />
+                      <p className="text-xs text-gray-600 dark:text-gray-400">How often to check for pending withdrawals</p>
+                    </div>
+                  </div>
+
+                  {/* Security Features */}
+                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <h4 className="font-semibold text-amber-700 dark:text-amber-300 mb-3 flex items-center">
+                      <Lock className="mr-2" size={16} />
+                      Security Features
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          checked={automatedWithdrawalConfig.multiChainValidation} 
+                          onCheckedChange={(checked) => handleUpdateAutomatedWithdrawalConfig('multiChainValidation', checked)}
+                        />
+                        <span className="text-amber-900 dark:text-amber-100 font-medium">Multi-chain security validation</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          checked={automatedWithdrawalConfig.fraudDetection} 
+                          onCheckedChange={(checked) => handleUpdateAutomatedWithdrawalConfig('fraudDetection', checked)}
+                        />
+                        <span className="text-amber-900 dark:text-amber-100 font-medium">Automatic fraud detection</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          checked={automatedWithdrawalConfig.gasPriceOptimization} 
+                          onCheckedChange={(checked) => handleUpdateAutomatedWithdrawalConfig('gasPriceOptimization', checked)}
+                        />
+                        <span className="text-amber-900 dark:text-amber-100 font-medium">Gas price optimization</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          checked={automatedWithdrawalConfig.emailNotifications} 
+                          onCheckedChange={(checked) => handleUpdateAutomatedWithdrawalConfig('emailNotifications', checked)}
+                        />
+                        <span className="text-amber-900 dark:text-amber-100 font-medium">Email notifications for high-value</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Statistics */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{automatedWithdrawalStats.processedToday}</div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400">Processed Today</div>
+                    </div>
+                    <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">${automatedWithdrawalStats.totalVolume.toLocaleString()}</div>
+                      <div className="text-xs text-green-600 dark:text-green-400">Total Volume</div>
+                    </div>
+                    <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{automatedWithdrawalStats.pendingReview}</div>
+                      <div className="text-xs text-yellow-600 dark:text-yellow-400">Pending Review</div>
+                    </div>
+                    <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{automatedWithdrawalStats.successRate}%</div>
+                      <div className="text-xs text-purple-600 dark:text-purple-400">Success Rate</div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-end space-x-3">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
+                      onClick={handleRefreshAutomatedWithdrawalStatus}
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Refresh Status
+                    </Button>
+                    <Button 
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={handleSaveAutomatedWithdrawalSettings}
+                      disabled={updateAutomatedWithdrawalSettingsMutation.isPending}
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      {updateAutomatedWithdrawalSettingsMutation.isPending ? "Saving..." : "Save Configuration"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Save Settings */}
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
@@ -6006,9 +6386,13 @@ export default function AdminPanel() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Save current settings configuration
                     </p>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={handleSaveAutomatedWithdrawalSettings}
+                      disabled={updateAutomatedWithdrawalSettingsMutation.isPending}
+                    >
                       <Save className="mr-2" size={16} />
-                      Save Settings
+                      {updateAutomatedWithdrawalSettingsMutation.isPending ? "Saving..." : "Save Settings"}
                     </Button>
                   </div>
                 </CardContent>

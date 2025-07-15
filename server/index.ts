@@ -256,6 +256,15 @@ survivalRoundService;
 // Initialize automated audit system to prevent reward/balance inconsistencies
 console.log('🔧 Audit system temporarily disabled for debugging...');
 
+// Initialize automated withdrawal system if enabled
+console.log('🔧 Initializing Automated Withdrawal System...');
+try {
+  const { setupAutomatedWithdrawals } = await import('./withdrawal-scheduler.js');
+  setupAutomatedWithdrawals(storage);
+} catch (error) {
+  console.error('❌ Failed to initialize automated withdrawal system:', error);
+}
+
 (async () => {
   const server = await registerRoutes(app);
 
