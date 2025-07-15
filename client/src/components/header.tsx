@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChartLine, Coins, User, Wallet, LogOut, Menu, X, ChevronDown, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-// Removed Dynamic Labs import - using native wallet detection
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
@@ -20,6 +20,9 @@ export function Header() {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
+  
+  // Dynamic Labs context for proper wallet management
+  const { handleLogOut } = useDynamicContext();
   
   // Native wallet detection - check if user is authenticated
   const isConnected = !!user;
@@ -81,38 +84,68 @@ export function Header() {
 
   const handleDisconnect = async () => {
     try {
-      // First logout from server
+      console.log("🔌 Starting wallet disconnect process...");
+      
+      // Show loading state
+      toast({
+        title: "Disconnecting...",
+        description: "Logging out and disconnecting wallet",
+      });
+
+      // Step 1: Logout from server
+      console.log("📤 Logging out from server...");
       await logoutMutation.mutateAsync();
       
-      // Clear localStorage (native wallet data)
+      // Step 2: Use Dynamic Labs handleLogOut for proper wallet disconnection
+      console.log("🔗 Disconnecting from Dynamic Labs...");
+      handleLogOut();
+      
+      // Step 3: Clear localStorage (native wallet data)
+      console.log("🧹 Clearing local storage...");
       localStorage.removeItem('wallet_address');
       localStorage.removeItem('auth_token');
       
+      // Step 4: Clear React Query cache
+      console.log("🗑️ Clearing query cache...");
+      queryClient.clear();
+      
+      // Step 5: Success notification
       toast({
-        title: "Disconnected",
-        description: "Wallet disconnected successfully",
+        title: "Wallet Disconnected",
+        description: "Successfully logged out and disconnected wallet",
       });
       
-      // Navigate to landing page
+      // Step 6: Navigate to landing page
+      console.log("🏠 Redirecting to landing page...");
       setLocation('/');
       
+      // Step 7: Force page reload to clear all state
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
     } catch (error) {
-      console.error("Disconnect error:", error);
-      // Still clear local data even if server call fails
+      console.error("❌ Disconnect error:", error);
+      
+      // Still perform cleanup even if server call fails
+      handleLogOut(); // Force Dynamic Labs logout
       localStorage.removeItem('wallet_address');
       localStorage.removeItem('auth_token');
-      
-      // Clear React Query cache
       queryClient.clear();
       
       toast({
-        title: "Disconnect failed",
-        description: "Could not disconnect, but local data cleared",
+        title: "Disconnected",
+        description: "Wallet disconnected (with some errors)",
         variant: "destructive",
       });
       
       // Navigate to landing page anyway
       setLocation('/');
+      
+      // Force page reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     }
   };
 
