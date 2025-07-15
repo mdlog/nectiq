@@ -121,7 +121,7 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
           <div>
             <p className="font-medium">{withdrawal.username}</p>
             <p className="text-sm text-slate-400">
-              {withdrawal.ptsAmount.toLocaleString()} NTIQ → {withdrawal.tokenAmount} {withdrawal.token}
+              {withdrawal.ptsAmount ? withdrawal.ptsAmount.toLocaleString() : 0} NTIQ → {withdrawal.tokenAmount || 0} {withdrawal.token || 'N/A'}
             </p>
             <p className="text-xs text-slate-500">
               {new Date(withdrawal.createdAt).toLocaleString()}
@@ -183,7 +183,7 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
             <div>
               <p className="font-medium">{withdrawal.username}</p>
               <p className="text-sm text-slate-600">
-                {withdrawal.ptsAmount.toLocaleString()} NTIQ → {withdrawal.tokenAmount} {withdrawal.token}
+                {withdrawal.ptsAmount ? withdrawal.ptsAmount.toLocaleString() : 0} NTIQ → {withdrawal.tokenAmount || 0} {withdrawal.token || 'N/A'}
               </p>
             </div>
             
@@ -449,7 +449,7 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only run if user is admin
+    enabled: true, // Always enabled to prevent hook order changes
   });
 
   const { data: users = [], error: usersError } = useQuery<User[]>({
@@ -459,7 +459,7 @@ export default function AdminPanel() {
     refetchInterval: 1500, // Ultra-fast updates every 1.5 seconds  
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only run if user is admin
+    enabled: true, // Always enabled to prevent hook order changes
   });
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
@@ -469,7 +469,7 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only run if user is admin
+    enabled: true, // Always enabled to prevent hook order changes
   });
 
   // Get crypto prices for logos
