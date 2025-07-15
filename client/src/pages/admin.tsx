@@ -121,7 +121,26 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
           <div>
             <p className="font-medium">{withdrawal.username}</p>
             <p className="text-sm text-slate-400">
-              {withdrawal.ntiqAmount ? withdrawal.ntiqAmount.toLocaleString() : 0} NTIQ → {withdrawal.usdAmount || 0} {withdrawal.tokenType || 'N/A'}
+              {withdrawal.ntiqAmount ? withdrawal.ntiqAmount.toLocaleString() : 0} NTIQ → {(() => {
+                // Calculate the actual token amount based on NTIQ amount and token type
+                const ntiqAmount = withdrawal.ntiqAmount || 0;
+                let tokenAmount = 'N/A';
+                const tokenType = withdrawal.tokenType || 'N/A';
+                
+                if (tokenType === 'USDC' || tokenType === 'USDT') {
+                  // USDC/USDT: 1 NTIQ = $0.01, so 1:1 ratio with USD
+                  tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                } else if (tokenType === 'ETH') {
+                  // ETH: calculate based on current price
+                  const ethPrice = 2300; // You can update this with real-time price
+                  const usdValue = ntiqAmount * 0.01;
+                  tokenAmount = (usdValue / ethPrice).toFixed(6);
+                } else {
+                  tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                }
+                
+                return tokenAmount;
+              })()} {withdrawal.tokenType || 'N/A'}
             </p>
             <p className="text-xs text-slate-500">
               {new Date(withdrawal.createdAt).toLocaleString()}
@@ -183,7 +202,26 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
             <div>
               <p className="font-medium">{withdrawal.username}</p>
               <p className="text-sm text-slate-600">
-                {withdrawal.ptsAmount ? withdrawal.ptsAmount.toLocaleString() : 0} NTIQ → {withdrawal.tokenAmount || 0} {withdrawal.token || 'N/A'}
+                {(withdrawal.ntiqAmount || withdrawal.ptsAmount) ? (withdrawal.ntiqAmount || withdrawal.ptsAmount).toLocaleString() : 0} NTIQ → {(() => {
+                  // Calculate the actual token amount based on NTIQ amount and token type
+                  const ntiqAmount = withdrawal.ntiqAmount || withdrawal.ptsAmount || 0;
+                  let tokenAmount = 'N/A';
+                  const tokenType = withdrawal.tokenType || withdrawal.token || 'N/A';
+                  
+                  if (tokenType === 'USDC' || tokenType === 'USDT') {
+                    // USDC/USDT: 1 NTIQ = $0.01, so 1:1 ratio with USD
+                    tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                  } else if (tokenType === 'ETH') {
+                    // ETH: calculate based on current price
+                    const ethPrice = 2300; // You can update this with real-time price
+                    const usdValue = ntiqAmount * 0.01;
+                    tokenAmount = (usdValue / ethPrice).toFixed(6);
+                  } else {
+                    tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                  }
+                  
+                  return tokenAmount;
+                })()} {withdrawal.tokenType || withdrawal.token || 'N/A'}
               </p>
             </div>
             
