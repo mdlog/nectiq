@@ -155,9 +155,12 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                   
                   // Add a small delay to ensure query invalidation completes
                   setTimeout(() => {
+                    console.log('🔐 Navigating to /home dashboard...');
                     navigate('/home');
-                    console.log('🔐 Redirected to /home dashboard');
-                  }, 1000);
+                    console.log('🔐 Navigation to /home completed');
+                    // Force page reload to ensure proper state update
+                    window.location.reload();
+                  }, 500);
                 } else {
                   try {
                     const errorData = await response.json();
@@ -167,6 +170,13 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                     const errorText = await response.text();
                     console.error('🔐 Backend authentication failed (non-JSON response):', response.status, errorText);
                   }
+                  
+                  // Even if backend fails, still try to redirect if we have user data
+                  console.log('🔐 Backend authentication failed, but still redirecting...');
+                  setTimeout(() => {
+                    navigate('/home');
+                    console.log('🔐 Force redirected to /home after backend failure');
+                  }, 1000);
                 }
               } catch (error) {
                 console.error('🔐 Authentication request failed:', error);
