@@ -5355,7 +5355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const withdrawalSchema = insertWithdrawalSchema.extend({
+      const withdrawalSchema = z.object({
         ntiqAmount: z.number().min(1),
         chainName: z.string().min(1),
         tokenType: z.enum(["ETH", "USDC", "USDT"]),
