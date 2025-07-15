@@ -140,41 +140,13 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                   const responseData = await response.json();
                   console.log('🔐 Backend authentication successful:', responseData);
                   
-                  // Check if user is admin for different redirect
-                  if (responseData.user?.isAdmin) {
-                    console.log('🔐 Admin user detected, redirecting to home with admin context');
-                  }
-                  
                   // Invalidate all queries to refresh authentication state
                   console.log('🔐 Invalidating queries...');
                   await queryClient.invalidateQueries();
                   console.log('🔐 Queries invalidated');
                   
-                  // Try multiple redirect approaches
-                  setTimeout(() => {
-                    console.log('🔐 Attempting redirect to /home...');
-                    console.log('🔐 Current location before redirect:', window.location.href);
-                    
-                    // Try different redirect methods
-                    try {
-                      // Method 1: Use navigate function
-                      navigate('/home');
-                      console.log('🔐 Navigate function executed');
-                      
-                      // Method 2: Fallback to window.location
-                      setTimeout(() => {
-                        if (window.location.pathname !== '/home') {
-                          console.log('🔐 Navigate failed, using window.location fallback');
-                          window.location.href = '/home';
-                        }
-                      }, 500);
-                    } catch (error) {
-                      console.error('🔐 Navigate failed:', error);
-                      window.location.href = '/home';
-                    }
-                    
-                    console.log('🔐 Redirect command executed');
-                  }, 1500);
+                  // No automatic redirect - let user stay on current page
+                  console.log('🔐 Authentication completed, staying on current page');
                 } else {
                   try {
                     const errorData = await response.json();

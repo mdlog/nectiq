@@ -530,7 +530,7 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: true, // Always enabled to prevent hook order changes
+    enabled: !!currentUser?.isAdmin, // Only enabled when user is admin
   });
 
   const { data: users = [], error: usersError } = useQuery<User[]>({
@@ -540,7 +540,7 @@ export default function AdminPanel() {
     refetchInterval: 1500, // Ultra-fast updates every 1.5 seconds  
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: true, // Always enabled to prevent hook order changes
+    enabled: !!currentUser?.isAdmin, // Only enabled when user is admin
   });
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
@@ -550,7 +550,7 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: true, // Always enabled to prevent hook order changes
+    enabled: !!currentUser?.isAdmin, // Only enabled when user is admin
   });
 
   // Get crypto prices for logos
@@ -577,6 +577,7 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
+    enabled: !!currentUser?.isAdmin, // Only enabled when user is admin
   });
 
   const { data: transactionWithdrawals = [] } = useQuery({
@@ -586,6 +587,7 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
+    enabled: !!currentUser?.isAdmin, // Only enabled when user is admin
   });
 
   const { data: transactionDeposits = [] } = useQuery({
@@ -595,6 +597,7 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
+    enabled: !!currentUser?.isAdmin, // Only enabled when user is admin
   });
 
   const { data: events = [] } = useQuery<any[]>({
@@ -602,6 +605,7 @@ export default function AdminPanel() {
     retry: 2,
     retryDelay: 1000,
     refetchInterval: 7000, // Auto-refresh every 7 seconds
+    enabled: !!currentUser?.isAdmin, // Only enabled when user is admin
   });
 
   // Leaderboard data query
@@ -1737,7 +1741,7 @@ export default function AdminPanel() {
               <h2 className="text-lg font-semibold text-blue-800 mb-2">Login Required</h2>
               <p className="text-blue-600">You need to login first to access the admin panel.</p>
               <button 
-                onClick={() => window.location.href = '/home'}
+                onClick={() => setLocation('/home')}
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 Go to Login
@@ -1758,7 +1762,7 @@ export default function AdminPanel() {
               <h2 className="text-lg font-semibold text-red-800 mb-2">Access Denied</h2>
               <p className="text-red-600">You need admin privileges to access this panel.</p>
               <button 
-                onClick={() => window.location.href = '/home'}
+                onClick={() => setLocation('/home')}
                 className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
                 Back to Home
