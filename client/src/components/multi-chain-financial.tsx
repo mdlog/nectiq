@@ -1715,20 +1715,29 @@ export function MultiChainFinancial() {
                             const tokenType = withdrawal.tokenType || 'N/A';
                             
                             if (tokenType === 'USDC' || tokenType === 'USDT') {
-                              // USDC/USDT: 1 NTIQ = $0.01, with 2.5% fee deduction
-                              const usdValue = ntiqAmount * 0.01; // Total USD value
-                              const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction  
-                              tokenAmount = netUsdValue.toFixed(2);
+                              // USDC/USDT: use stored net_amount if available, otherwise calculate
+                              if (withdrawal.netAmount) {
+                                // Use pre-calculated net amount from database (already includes fee deduction)
+                                tokenAmount = parseFloat(withdrawal.netAmount).toFixed(2);
+                              } else {
+                                // Fallback calculation for older withdrawals
+                                const usdValue = ntiqAmount * 0.01; // Total USD value
+                                const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction  
+                                tokenAmount = netUsdValue.toFixed(2);
+                              }
                             } else if (tokenType === 'ETH') {
-                              // ETH: calculate based on stored ETH price snapshot for accurate historical display
-                              if (withdrawal.ethPriceSnapshot) {
-                                // Use stored ETH price snapshot from when withdrawal was created
+                              // ETH: use stored net_amount if available, otherwise calculate from snapshot
+                              if (withdrawal.netAmount) {
+                                // Use pre-calculated net amount from database (already includes fee deduction)
+                                tokenAmount = parseFloat(withdrawal.netAmount).toFixed(6);
+                              } else if (withdrawal.ethPriceSnapshot) {
+                                // Calculate from stored ETH price snapshot
                                 const ethPrice = parseFloat(withdrawal.ethPriceSnapshot);
                                 const usdValue = ntiqAmount * 0.01; // Total USD value
                                 const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
                                 tokenAmount = (netUsdValue / ethPrice).toFixed(6);
                               } else {
-                                // Fallback for older withdrawals without price snapshot
+                                // Fallback for older withdrawals without net amount or price snapshot
                                 const usdValue = ntiqAmount * 0.01; // Total USD value
                                 const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
                                 
