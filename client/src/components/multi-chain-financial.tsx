@@ -409,8 +409,8 @@ export function MultiChainFinancial() {
       }
 
       // Calculate ETH amount using snapshot price
-      const ethAmount = calculateTokenAmountForHistory(deposit);
-      if (!ethAmount || deposit.tokenType !== 'ETH') {
+      const ethAmount = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
+      if (!ethAmount || ethAmount === "0.000000" || deposit.tokenType !== 'ETH') {
         toast({
           title: "Invalid Transaction",
           description: "Only ETH deposits support MetaMask transactions",
@@ -907,7 +907,7 @@ export function MultiChainFinancial() {
                                   size="lg"
                                 >
                                   <Send className="w-4 h-4 mr-2" />
-                                  Send {calculateTokenAmountForHistory(deposit)} ETH via MetaMask
+                                  Send {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ETH via MetaMask
                                 </Button>
                                 <p className="text-xs text-gray-500 text-center mt-2">
                                   Click to automatically send the exact amount using MetaMask
