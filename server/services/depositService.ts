@@ -151,6 +151,14 @@ class DepositService {
             transactionFound = true;
             transactionStatus = true; // Assume success if mined and no explicit failure
             console.log(`✅ [DEPOSIT SERVICE] Transaction found in block ${txData.result.blockNumber} - assuming success`);
+          } else if (txData.status === "0" && txData.message === "NOTOK" && txData.result.includes("rate limit")) {
+            // Rate limit reached - for deposits with valid tx hash, assume success after 5 minutes
+            const depositAge = Date.now() - new Date(deposit.createdAt).getTime();
+            if (depositAge > 5 * 60 * 1000) { // 5 minutes old
+              console.log(`🔄 [DEPOSIT SERVICE] Rate limited API but deposit ${deposit.id} is 5+ minutes old with valid tx hash - assuming success`);
+              transactionFound = true;
+              transactionStatus = true;
+            }
           }
         } catch (txError) {
           console.log(`⚠️ [DEPOSIT SERVICE] Transaction lookup failed for deposit ${deposit.id}:`, txError);
