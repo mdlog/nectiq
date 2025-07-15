@@ -6,9 +6,15 @@ import { StarknetWalletConnectors } from '@dynamic-labs/starknet';
 import { ReactNode } from 'react';
 import { useLocation } from 'wouter';
 import { queryClient } from '@/lib/queryClient';
+import { useAuthenticationHandler } from '@/hooks/useAuthenticationHandler';
 
 interface DynamicProviderProps {
   children: ReactNode;
+}
+
+function DynamicContent({ children }: { children: ReactNode }) {
+  useAuthenticationHandler();
+  return <>{children}</>;
 }
 
 export default function DynamicProvider({ children }: DynamicProviderProps) {
@@ -93,7 +99,12 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
             console.log('🔐 User object:', args.user);
             console.log('🔐 Auth args complete:', JSON.stringify(args, null, 2));
             
-            // Support both wallet and email authentication
+            // Add immediate debug log
+            console.log('🔐 onAuthSuccess TRIGGERED - Processing authentication...');
+            
+            // Try-catch to handle any errors in this callback
+            try {
+              // Support both wallet and email authentication
             const walletAddress = args.user?.verifiedCredentials?.[0]?.address;
             const email = args.user?.email;
             const userId = args.user?.userId;
@@ -181,6 +192,9 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
               console.warn('🔐 No wallet address, email, or userId found in authentication response');
               console.warn('🔐 Available user properties:', Object.keys(args.user || {}));
             }
+            } catch (callbackError) {
+              console.error('🔐 Error in onAuthSuccess callback:', callbackError);
+            }
           },
           onAuthFailure: (error) => {
             console.error('Dynamic: Authentication failed', error);
@@ -193,7 +207,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         },
       }}
     >
-      {children}
+      <DynamicContent>{children}</DynamicContent>
     </DynamicContextProvider>
   );
 }
