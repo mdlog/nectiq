@@ -279,24 +279,6 @@ export function MultiChainFinancial() {
   
   const queryClient = useQueryClient();
 
-  // Calculate pagination for deposits
-  const getPaginatedDeposits = () => {
-    if (!deposits) return [];
-    const startIndex = (depositPage - 1) * itemsPerPage;
-    return deposits.slice(startIndex, startIndex + itemsPerPage);
-  };
-
-  // Calculate pagination for withdrawals
-  const getPaginatedWithdrawals = () => {
-    if (!withdrawals) return [];
-    const startIndex = (withdrawalPage - 1) * itemsPerPage;
-    return withdrawals.slice(startIndex, startIndex + itemsPerPage);
-  };
-
-  // Calculate total pages
-  const totalDepositPages = Math.ceil((deposits?.length || 0) / itemsPerPage);
-  const totalWithdrawalPages = Math.ceil((withdrawals?.length || 0) / itemsPerPage);
-
   // Pagination component
   const PaginationControls = ({ 
     currentPage, 
@@ -361,6 +343,24 @@ export function MultiChainFinancial() {
     refetchInterval: 5000,
     staleTime: 0,
   });
+
+  // Calculate pagination for deposits
+  const getPaginatedDeposits = () => {
+    if (!deposits) return [];
+    const startIndex = (depositPage - 1) * itemsPerPage;
+    return deposits.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  // Calculate pagination for withdrawals
+  const getPaginatedWithdrawals = () => {
+    if (!withdrawals) return [];
+    const startIndex = (withdrawalPage - 1) * itemsPerPage;
+    return withdrawals.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  // Calculate total pages
+  const totalDepositPages = Math.ceil((deposits?.length || 0) / itemsPerPage);
+  const totalWithdrawalPages = Math.ceil((withdrawals?.length || 0) / itemsPerPage);
 
   // Function to calculate token amount from USD for deposit history action view
   const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string, ethPriceSnapshot?: string): string => {
