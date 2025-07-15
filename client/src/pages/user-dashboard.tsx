@@ -888,7 +888,47 @@ export default function UserDashboard() {
 
           {/* Financial Tab - Deposit Only */}
           <TabsContent value="financial">
-            <MultiChainFinancial />
+            <div className="space-y-6">
+              <div className="text-center p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2">Multi-Chain Financial System</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Deposit and withdrawal system for multiple blockchains
+                </p>
+              </div>
+              {/* Temporarily simplified to test */}
+              <Card className="bg-surface border-surface-light">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Wallet className="mr-2" size={20} />
+                    Financial Operations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Deposit</h3>
+                      <p className="text-slate-600 dark:text-slate-300">
+                        Deposit cryptocurrencies to your account
+                      </p>
+                      <Button className="w-full">
+                        <Plus className="mr-2" size={16} />
+                        Create Deposit
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Withdrawal</h3>
+                      <p className="text-slate-600 dark:text-slate-300">
+                        Withdraw your cryptocurrencies
+                      </p>
+                      <Button variant="outline" className="w-full">
+                        <Send className="mr-2" size={16} />
+                        Create Withdrawal
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Battles Tab */}
