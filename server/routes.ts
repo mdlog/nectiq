@@ -11,7 +11,7 @@ import { cryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
-import { insertPredictionSchema, insertCryptocurrencySchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions } from "@shared/schema";
+import { insertPredictionSchema, insertCryptocurrencySchema, insertDepositSchema, insertWithdrawalSchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions, deposits, withdrawals } from "@shared/schema";
 import { eq, and, or, desc } from "drizzle-orm";
 import { z } from "zod";
 import { ethers } from "ethers";
@@ -5012,6 +5012,305 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error cancelling battle:', error);
       res.status(500).json({ message: 'Failed to cancel battle' });
+    }
+  });
+
+  // =============================================
+  // MULTI-CHAIN DEPOSIT & WITHDRAWAL ENDPOINTS
+  // =============================================
+
+  // Create deposit request
+  app.post("/api/deposits/create", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const depositSchema = insertDepositSchema.extend({
+        chainName: z.string().min(1),
+        chainId: z.number(),
+        tokenType: z.enum(["USDC", "USDT"]),
+        tokenAddress: z.string().min(1),
+        amountUSD: z.string().min(1),
+        toWalletAddress: z.string().min(1),
+      });
+
+      const validatedData = depositSchema.parse(req.body);
+      const amountUSD = parseFloat(validatedData.amountUSD);
+      
+      if (amountUSD <= 0) {
+        return res.status(400).json({ message: "Invalid deposit amount" });
+      }
+
+      // Calculate NTIQ amount (1 USD = 100 NTIQ)
+      const ntiqAmount = Math.floor(amountUSD * 100);
+
+      const deposit = await storage.createDeposit({
+        userId: session.userId,
+        chainName: validatedData.chainName,
+        chainId: validatedData.chainId,
+        tokenType: validatedData.tokenType,
+        tokenAddress: validatedData.tokenAddress,
+        amountUSD: validatedData.amountUSD,
+        ntiqAmount,
+        toWalletAddress: validatedData.toWalletAddress,
+        status: 'pending',
+      });
+
+      // Broadcast to admin for real-time notifications
+      try {
+        broadcastToAdmins({
+          type: 'new_deposit',
+          data: { 
+            depositId: deposit.id,
+            userId: session.userId,
+            amount: validatedData.amountUSD,
+            token: validatedData.tokenType,
+            chain: validatedData.chainName,
+            ntiqAmount,
+            timestamp: new Date().toISOString()
+          }
+        });
+      } catch (broadcastError) {
+        console.log('Broadcast notification failed:', broadcastError);
+      }
+
+      res.status(201).json({ 
+        message: "Deposit request created successfully",
+        deposit: {
+          ...deposit,
+          adminWallet: validatedData.toWalletAddress
+        }
+      });
+    } catch (error) {
+      console.error("Error creating deposit:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid deposit data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create deposit request" });
+      }
+    }
+  });
+
+  // Get user deposits
+  app.get("/api/user/deposits", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const deposits = await storage.getUserDeposits(session.userId, 20);
+      res.json(deposits);
+    } catch (error) {
+      console.error("Error fetching user deposits:", error);
+      res.status(500).json({ message: "Failed to fetch deposits" });
+    }
+  });
+
+  // Create withdrawal request
+  app.post("/api/withdrawals/create", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const withdrawalSchema = insertWithdrawalSchema.extend({
+        ntiqAmount: z.number().min(1),
+        chainName: z.string().min(1),
+        tokenType: z.enum(["USDC", "USDT"]),
+        toWalletAddress: z.string().min(1),
+      });
+
+      const validatedData = withdrawalSchema.parse(req.body);
+      
+      // Check user balance
+      const user = await storage.getUser(session.userId);
+      if (!user || user.balance < validatedData.ntiqAmount) {
+        return res.status(400).json({ message: "Insufficient NTIQ balance" });
+      }
+
+      // Calculate USD amount (100 NTIQ = 1 USD)
+      const usdAmount = (validatedData.ntiqAmount * 0.01).toFixed(2);
+
+      // Deduct balance using BalanceService
+      await BalanceService.processTransaction({
+        userId: session.userId,
+        type: 'withdrawal_pending',
+        amount: -validatedData.ntiqAmount,
+        description: `Withdrawal request for ${usdAmount} ${validatedData.tokenType} on ${validatedData.chainName}`,
+      }, storage);
+
+      const withdrawal = await storage.createWithdrawal({
+        userId: session.userId,
+        ntiqAmount: validatedData.ntiqAmount,
+        usdAmount,
+        chainName: validatedData.chainName,
+        tokenType: validatedData.tokenType,
+        toWalletAddress: validatedData.toWalletAddress,
+        status: 'pending',
+      });
+
+      // Broadcast to admin for real-time notifications
+      try {
+        broadcastToAdmins({
+          type: 'new_withdrawal',
+          data: { 
+            withdrawalId: withdrawal.id,
+            userId: session.userId,
+            ntiqAmount: validatedData.ntiqAmount,
+            usdAmount,
+            token: validatedData.tokenType,
+            chain: validatedData.chainName,
+            toAddress: validatedData.toWalletAddress,
+            timestamp: new Date().toISOString()
+          }
+        });
+      } catch (broadcastError) {
+        console.log('Broadcast notification failed:', broadcastError);
+      }
+
+      res.status(201).json({ 
+        message: "Withdrawal request created successfully",
+        withdrawal
+      });
+    } catch (error) {
+      console.error("Error creating withdrawal:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid withdrawal data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create withdrawal request" });
+      }
+    }
+  });
+
+  // Get user withdrawals
+  app.get("/api/user/withdrawals", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const withdrawals = await storage.getUserWithdrawals(session.userId, 20);
+      res.json(withdrawals);
+    } catch (error) {
+      console.error("Error fetching user withdrawals:", error);
+      res.status(500).json({ message: "Failed to fetch withdrawals" });
+    }
+  });
+
+  // Admin endpoints for deposit management
+  app.get("/api/admin/deposits", requireAdmin, async (req, res) => {
+    try {
+      const allDeposits = await db
+        .select({
+          id: deposits.id,
+          userId: deposits.userId,
+          chainName: deposits.chainName,
+          tokenType: deposits.tokenType,
+          amountUSD: deposits.amountUSD,
+          ntiqAmount: deposits.ntiqAmount,
+          status: deposits.status,
+          transactionHash: deposits.transactionHash,
+          blockNumber: deposits.blockNumber,
+          createdAt: deposits.createdAt,
+          processedAt: deposits.processedAt,
+          username: users.username,
+        })
+        .from(deposits)
+        .leftJoin(users, eq(deposits.userId, users.id))
+        .orderBy(desc(deposits.createdAt));
+
+      auditLog('admin_deposits_viewed', { count: allDeposits.length }, req);
+      res.json(allDeposits);
+    } catch (error) {
+      console.error("Error fetching admin deposits:", error);
+      res.status(500).json({ message: "Failed to fetch deposits" });
+    }
+  });
+
+  // Admin approve/process deposit
+  app.post("/api/admin/deposits/:id/process", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { transactionHash, blockNumber, status } = req.body;
+
+      const [deposit] = await db.select().from(deposits).where(eq(deposits.id, parseInt(id)));
+      
+      if (!deposit) {
+        return res.status(404).json({ message: "Deposit not found" });
+      }
+
+      // Update deposit status
+      await storage.updateDepositStatus(parseInt(id), status, transactionHash, blockNumber);
+
+      // If confirmed, credit user with NTIQ
+      if (status === 'confirmed') {
+        await BalanceService.processTransaction({
+          userId: deposit.userId,
+          type: 'deposit_confirmed',
+          amount: deposit.ntiqAmount,
+          description: `Deposit confirmed: ${deposit.amountUSD} ${deposit.tokenType} -> ${deposit.ntiqAmount} NTIQ`,
+          relatedId: deposit.id
+        }, storage);
+      }
+
+      auditLog('admin_deposit_processed', { 
+        depositId: parseInt(id), 
+        status, 
+        transactionHash, 
+        blockNumber 
+      }, req);
+
+      res.json({ message: "Deposit processed successfully" });
+    } catch (error) {
+      console.error("Error processing deposit:", error);
+      res.status(500).json({ message: "Failed to process deposit" });
+    }
+  });
+
+  // Admin manage withdrawal
+  app.post("/api/admin/withdrawals/:id/process", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, transactionHash, adminNote } = req.body;
+      const adminId = (req as any).session?.userId;
+
+      const [withdrawal] = await db.select().from(withdrawals).where(eq(withdrawals.id, parseInt(id)));
+      
+      if (!withdrawal) {
+        return res.status(404).json({ message: "Withdrawal not found" });
+      }
+
+      // Update withdrawal status
+      await storage.updateWithdrawalStatus(parseInt(id), status, transactionHash, adminNote, adminId);
+
+      // If rejected, refund user balance
+      if (status === 'rejected') {
+        await BalanceService.processTransaction({
+          userId: withdrawal.userId,
+          type: 'withdrawal_refund',
+          amount: withdrawal.ntiqAmount,
+          description: `Withdrawal refund: ${adminNote || 'Withdrawal rejected'}`,
+          relatedId: withdrawal.id
+        }, storage);
+      }
+
+      auditLog('admin_withdrawal_processed', { 
+        withdrawalId: parseInt(id), 
+        status, 
+        transactionHash,
+        adminNote,
+        adminId 
+      }, req);
+
+      res.json({ message: "Withdrawal processed successfully" });
+    } catch (error) {
+      console.error("Error processing withdrawal:", error);
+      res.status(500).json({ message: "Failed to process withdrawal" });
     }
   });
 

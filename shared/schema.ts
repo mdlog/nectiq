@@ -65,14 +65,35 @@ export const rewards = pgTable("rewards", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Multi-Chain Deposits Table
+export const deposits = pgTable("deposits", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  fromWalletAddress: varchar("from_wallet_address", { length: 42 }).notNull(), // User's wallet address
+  toWalletAddress: varchar("to_wallet_address", { length: 42 }).notNull(), // Admin wallet address
+  chainName: varchar("chain_name", { length: 20 }).notNull(), // eth, base, bsc, optimism, arbitrum, sepolia, holesky
+  chainId: integer("chain_id").notNull(), // Chain ID for verification
+  tokenType: varchar("token_type", { length: 10 }).notNull(), // USDC or USDT
+  tokenAddress: varchar("token_address", { length: 42 }).notNull(), // Token contract address
+  amountUSD: numeric("amount_usd", { precision: 18, scale: 6 }).notNull(), // USD amount deposited
+  ntiqAmount: integer("ntiq_amount").notNull(), // NTIQ amount to credit (amountUSD * 100)
+  transactionHash: varchar("transaction_hash", { length: 66 }).unique(),
+  blockNumber: integer("block_number"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, confirmed, processed, failed
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const withdrawals = pgTable("withdrawals", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  ptsAmount: integer("pts_amount").notNull(),
-  tokenAmount: varchar("token_amount", { length: 50 }).notNull(),
-  token: varchar("token", { length: 10 }).notNull(),
-  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
-  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, processing, completed, rejected
+  ntiqAmount: integer("ntiq_amount").notNull(), // NTIQ amount to withdraw
+  usdAmount: numeric("usd_amount", { precision: 18, scale: 6 }).notNull(), // USD equivalent (ntiqAmount * 0.01)
+  chainName: varchar("chain_name", { length: 20 }).notNull(), // Target chain for withdrawal
+  tokenType: varchar("token_type", { length: 10 }).notNull(), // USDC or USDT
+  toWalletAddress: varchar("to_wallet_address", { length: 42 }).notNull(), // User's wallet address
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, approved, processing, completed, rejected
+  transactionHash: varchar("transaction_hash", { length: 66 }),
   adminNote: text("admin_note"), // Admin note for approval/rejection
   processedBy: integer("processed_by").references(() => users.id), // Admin who processed it
   processedAt: timestamp("processed_at"), // When it was processed
@@ -792,6 +813,22 @@ export const insertUserSchema = createInsertSchema(users).omit({
   totalRewards: true,
 });
 
+// Deposits Relations
+export const depositsRelations = relations(deposits, ({ one }) => ({
+  user: one(users, {
+    fields: [deposits.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertDepositSchema = createInsertSchema(deposits).omit({
+  id: true,
+  blockNumber: true,
+  status: true,
+  processedAt: true,
+  createdAt: true,
+});
+
 export const insertPredictionSchema = createInsertSchema(predictions).omit({
   id: true,
   userId: true,
@@ -815,6 +852,11 @@ export const insertRewardSchema = createInsertSchema(rewards).omit({
 
 export const insertWithdrawalSchema = createInsertSchema(withdrawals).omit({
   id: true,
+  status: true,
+  transactionHash: true,
+  adminNote: true,
+  processedBy: true,
+  processedAt: true,
   createdAt: true,
 });
 

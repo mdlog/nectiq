@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleComments, battleReactions, battleSpectators, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, monthlyTierRewards, tierPromotions, predictionReactions, predictionComments, userVerifications, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, deposits, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleComments, battleReactions, battleSpectators, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, monthlyTierRewards, tierPromotions, predictionReactions, predictionComments, userVerifications, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 import { BalanceService } from "./services/balanceService";
@@ -71,9 +71,16 @@ export interface IStorage {
   getTopPredictors(limit?: number): Promise<User[]>;
   resetLeaderboard(): Promise<void>;
 
-  // Withdrawal operations
+  // Multi-chain Deposit operations
+  createDeposit(deposit: any): Promise<any>;
+  getUserDeposits(userId: number, limit?: number): Promise<any[]>;
+  updateDepositStatus(id: number, status: string, transactionHash?: string, blockNumber?: number): Promise<void>;
+  getDepositByTransactionHash(hash: string): Promise<any>;
+
+  // Multi-chain Withdrawal operations
   createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
   getUserWithdrawals(userId: number, limit?: number): Promise<Withdrawal[]>;
+  updateWithdrawalStatus(id: number, status: string, transactionHash?: string, adminNote?: string, processedBy?: number): Promise<void>;
 
   // Purchase operations
   createPurchase(purchase: InsertPurchase): Promise<Purchase>;
@@ -617,6 +624,40 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  // Multi-chain Deposit operations  
+  async createDeposit(deposit: any): Promise<any> {
+    const [newDeposit] = await db.insert(deposits).values(deposit).returning();
+    return newDeposit;
+  }
+
+  async getUserDeposits(userId: number, limit: number = 10): Promise<any[]> {
+    return await db.select()
+      .from(deposits)
+      .where(eq(deposits.userId, userId))
+      .orderBy(desc(deposits.createdAt))
+      .limit(limit);
+  }
+
+  async updateDepositStatus(id: number, status: string, transactionHash?: string, blockNumber?: number): Promise<void> {
+    const updateData: any = { status };
+    if (transactionHash) updateData.transactionHash = transactionHash;
+    if (blockNumber) updateData.blockNumber = blockNumber;
+    if (status === 'confirmed') updateData.processedAt = new Date();
+
+    await db.update(deposits)
+      .set(updateData)
+      .where(eq(deposits.id, id));
+  }
+
+  async getDepositByTransactionHash(hash: string): Promise<any> {
+    const result = await db.select()
+      .from(deposits)
+      .where(eq(deposits.transactionHash, hash))
+      .limit(1);
+    return result[0];
+  }
+
+  // Multi-chain Withdrawal operations
   async createWithdrawal(insertWithdrawal: InsertWithdrawal): Promise<Withdrawal> {
     const [withdrawal] = await db
       .insert(withdrawals)
@@ -627,6 +668,20 @@ export class DatabaseStorage implements IStorage {
 
   async getUserWithdrawals(userId: number, limit: number = 10): Promise<Withdrawal[]> {
     return await db.select().from(withdrawals).where(eq(withdrawals.userId, userId)).orderBy(desc(withdrawals.createdAt)).limit(limit);
+  }
+
+  async updateWithdrawalStatus(id: number, status: string, transactionHash?: string, adminNote?: string, processedBy?: number): Promise<void> {
+    const updateData: any = { status };
+    if (transactionHash) updateData.transactionHash = transactionHash;
+    if (adminNote) updateData.adminNote = adminNote;
+    if (processedBy) updateData.processedBy = processedBy;
+    if (status === 'completed' || status === 'approved' || status === 'rejected') {
+      updateData.processedAt = new Date();
+    }
+
+    await db.update(withdrawals)
+      .set(updateData)
+      .where(eq(withdrawals.id, id));
   }
 
   // Admin withdrawal approval methods
@@ -2882,11 +2937,52 @@ export class MemStorage implements IStorage {
     this.cryptocurrencies.delete(id);
   }
 
+  // Multi-chain Deposit operations
+  async createDeposit(deposit: any): Promise<any> {
+    const id = this.currentWithdrawalId++; // Reuse counter
+    const newDeposit = {
+      id,
+      ...deposit,
+      createdAt: new Date(),
+    };
+    // Note: Using a simple Map for deposits (in real scenario would be separate)
+    this.withdrawals.set(`deposit_${id}`, newDeposit); 
+    return newDeposit;
+  }
+
+  async getUserDeposits(userId: number, limit: number = 10): Promise<any[]> {
+    // Simple implementation - in real scenario would have separate deposits Map
+    return Array.from(this.withdrawals.values())
+      .filter((item: any) => item.userId === userId && item.amountUSD)
+      .sort((a: any, b: any) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async updateDepositStatus(id: number, status: string, transactionHash?: string, blockNumber?: number): Promise<void> {
+    const deposit = this.withdrawals.get(`deposit_${id}`);
+    if (deposit) {
+      const updated = { 
+        ...deposit, 
+        status,
+        ...(transactionHash && { transactionHash }),
+        ...(blockNumber && { blockNumber }),
+        ...(status === 'confirmed' && { processedAt: new Date() })
+      };
+      this.withdrawals.set(`deposit_${id}`, updated);
+    }
+  }
+
+  async getDepositByTransactionHash(hash: string): Promise<any> {
+    return Array.from(this.withdrawals.values())
+      .find((item: any) => item.transactionHash === hash && item.amountUSD);
+  }
+
+  // Multi-chain Withdrawal operations
   async createWithdrawal(insertWithdrawal: InsertWithdrawal): Promise<Withdrawal> {
     const withdrawal: Withdrawal = {
       id: this.currentWithdrawalId++,
       ...insertWithdrawal,
-      status: insertWithdrawal.status || "completed",
+      status: insertWithdrawal.status || "pending",
       createdAt: new Date(),
     };
     this.withdrawals.set(withdrawal.id, withdrawal);
@@ -2895,9 +2991,24 @@ export class MemStorage implements IStorage {
 
   async getUserWithdrawals(userId: number, limit: number = 10): Promise<Withdrawal[]> {
     return Array.from(this.withdrawals.values())
-      .filter(w => w.userId === userId)
+      .filter((w: any) => w.userId === userId && !w.amountUSD) // Exclude deposits
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
+  }
+
+  async updateWithdrawalStatus(id: number, status: string, transactionHash?: string, adminNote?: string, processedBy?: number): Promise<void> {
+    const withdrawal = this.withdrawals.get(id);
+    if (withdrawal) {
+      const updated = { 
+        ...withdrawal, 
+        status,
+        ...(transactionHash && { transactionHash }),
+        ...(adminNote && { adminNote }),
+        ...(processedBy && { processedBy }),
+        ...((status === 'completed' || status === 'approved' || status === 'rejected') && { processedAt: new Date() })
+      };
+      this.withdrawals.set(id, updated);
+    }
   }
 
   async createPurchase(insertPurchase: InsertPurchase): Promise<Purchase> {
