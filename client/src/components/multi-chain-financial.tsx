@@ -820,6 +820,181 @@ export function MultiChainFinancial() {
     }
   };
 
+  // Function to send USDC/USDT via MetaMask
+  const sendStablecoinViaMetaMask = async (deposit: any) => {
+    try {
+      if (!window.ethereum) {
+        toast({
+          title: "MetaMask Required",
+          description: "Please install MetaMask to use this feature",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Request account access
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+      // Get chain configuration
+      const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+      if (!chain) {
+        toast({
+          title: "Chain Not Supported",
+          description: "This chain is not supported for MetaMask transactions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get token configuration
+      const tokenConfig = chain.tokens[deposit.tokenType as keyof typeof chain.tokens];
+      if (!tokenConfig || !tokenConfig.address || tokenConfig.address === 'native') {
+        toast({
+          title: "Token Not Supported",
+          description: "This token is not supported for MetaMask transactions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Calculate stablecoin amount
+      const tokenAmount = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
+      if (!tokenAmount || tokenAmount === "0.00") {
+        toast({
+          title: "Invalid Amount",
+          description: "Invalid token amount calculated",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Convert to wei using token decimals
+      const decimals = tokenConfig.decimals || 18;
+      const weiAmount = '0x' + (BigInt(Math.floor(parseFloat(tokenAmount) * Math.pow(10, decimals)))).toString(16);
+
+      // Chain ID mapping
+      const chainIdMap: { [key: string]: string } = {
+        'eth': '0x1',
+        'base': '0x2105',
+        'bsc': '0x38',
+        'optimism': '0xa',
+        'arbitrum': '0xa4b1',
+        'sepolia': '0xaa36a7',
+        'holesky': '0x4268'
+      };
+
+      const targetChainId = chainIdMap[deposit.chainName];
+      if (!targetChainId) {
+        toast({
+          title: "Chain Not Supported",
+          description: "This chain is not supported for MetaMask transactions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Switch to target network if needed
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: targetChainId }],
+        });
+      } catch (error: any) {
+        if (error.code === 4902) {
+          toast({
+            title: "Network Not Added",
+            description: "Please add this network to MetaMask manually",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Get current account
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (!accounts || accounts.length === 0) {
+        toast({
+          title: "No Account Connected",
+          description: "Please connect your MetaMask wallet first",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get secure admin wallet address
+      const secureAdminWallet = adminWalletData?.adminWallet;
+      if (!secureAdminWallet) {
+        toast({
+          title: "Security Error",
+          description: "Cannot retrieve secure admin wallet address",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Prepare ERC-20 transfer transaction
+      const transferFunction = "0xa9059cbb"; // transfer(address,uint256)
+      const toAddress = secureAdminWallet.replace("0x", "").padStart(64, "0");
+      const amount = weiAmount.replace("0x", "").padStart(64, "0");
+      const data = transferFunction + toAddress + amount;
+
+      const transactionParameters = {
+        from: accounts[0],
+        to: tokenConfig.address,
+        value: "0x0",
+        data: data,
+        gas: '0x15F90', // 90000 gas limit for ERC-20 transfer
+      };
+
+      // Send transaction
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParameters],
+      });
+
+      toast({
+        title: "Transaction Sent",
+        description: `Transaction hash: ${txHash}`,
+      });
+
+      console.log('Stablecoin transaction sent:', txHash);
+
+      // Update deposit with transaction hash
+      try {
+        await apiRequest(`/api/deposits/${deposit.id}/update-transaction`, {
+          method: 'POST',
+          body: JSON.stringify({
+            transactionHash: txHash,
+            status: 'processing'
+          }),
+        });
+
+        // Refresh deposit data
+        queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+        
+        toast({
+          title: "Transaction Submitted",
+          description: "Transaction hash saved. Waiting for blockchain confirmation...",
+        });
+      } catch (updateError: any) {
+        console.error('Failed to update deposit:', updateError);
+        toast({
+          title: "Warning",
+          description: "Transaction sent but failed to update deposit status",
+          variant: "destructive",
+        });
+      }
+
+    } catch (error: any) {
+      console.error('MetaMask stablecoin transaction error:', error);
+      toast({
+        title: "Transaction Failed",
+        description: error.message || "Failed to send stablecoin transaction",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatAddress = (address: string) => {
     if (!address) return "";
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -1185,7 +1360,7 @@ export function MultiChainFinancial() {
                             {/* Destination Address */}
                             <div className="p-3 bg-white dark:bg-gray-800 rounded border">
                               <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Send To Address:</span>
+                                <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Send To Address:</span>
                                 <Button
                                   size="sm"
                                   variant="ghost"
@@ -1199,7 +1374,7 @@ export function MultiChainFinancial() {
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
-                              <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all">
+                              <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all text-gray-900 dark:text-gray-100">
                                 {adminWalletLoading ? "Loading secure address..." : adminWalletData?.adminWallet || "Loading..."}
                               </code>
                             </div>
@@ -1207,7 +1382,7 @@ export function MultiChainFinancial() {
                             {/* Network Info */}
                             <div className="p-3 bg-white dark:bg-gray-800 rounded border">
                               <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Network:</span>
+                                <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Network:</span>
                                 <div className="flex items-center space-x-2">
                                   {(() => {
                                     const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
@@ -1217,7 +1392,7 @@ export function MultiChainFinancial() {
                                     }
                                     return null;
                                   })()}
-                                  <span className="font-medium">
+                                  <span className="font-medium text-gray-900 dark:text-gray-100">
                                     {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}
                                   </span>
                                 </div>
@@ -1228,7 +1403,7 @@ export function MultiChainFinancial() {
                             {(deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') && (
                               <div className="p-3 bg-white dark:bg-gray-800 rounded border">
                                 <div className="flex justify-between items-center mb-2">
-                                  <span className="text-sm text-gray-600 dark:text-gray-400">{deposit.tokenType} Contract:</span>
+                                  <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{deposit.tokenType} Contract:</span>
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -1243,7 +1418,7 @@ export function MultiChainFinancial() {
                                     <Copy className="w-3 h-3" />
                                   </Button>
                                 </div>
-                                <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all">
+                                <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all text-gray-900 dark:text-gray-100">
                                   {(() => {
                                     const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
                                     const tokenAddress = chain?.tokens[deposit.tokenType as keyof typeof chain.tokens]?.address;
@@ -1270,6 +1445,23 @@ export function MultiChainFinancial() {
                                 >
                                   <Send className="w-4 h-4 mr-2" />
                                   Send {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ETH via MetaMask
+                                </Button>
+                                <p className="text-xs text-gray-500 text-center mt-2">
+                                  Click to automatically send the exact amount using MetaMask
+                                </p>
+                              </div>
+                            )}
+                            
+                            {/* MetaMask Send Button (for USDC/USDT deposits) */}
+                            {(deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') && (
+                              <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+                                <Button
+                                  onClick={() => sendStablecoinViaMetaMask(deposit)}
+                                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium"
+                                  size="lg"
+                                >
+                                  <Send className="w-4 h-4 mr-2" />
+                                  Send {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} {deposit.tokenType} via MetaMask
                                 </Button>
                                 <p className="text-xs text-gray-500 text-center mt-2">
                                   Click to automatically send the exact amount using MetaMask
