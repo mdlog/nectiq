@@ -21,7 +21,9 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Eye,
-  CreditCard
+  CreditCard,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -269,7 +271,71 @@ export function MultiChainFinancial() {
   const [confirmationEthAmount, setConfirmationEthAmount] = useState<string>("0");
   const [expandedDeposits, setExpandedDeposits] = useState<Set<number>>(new Set());
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
+  
+  // Pagination states
+  const [depositPage, setDepositPage] = useState(1);
+  const [withdrawalPage, setWithdrawalPage] = useState(1);
+  const itemsPerPage = 5;
+  
   const queryClient = useQueryClient();
+
+  // Calculate pagination for deposits
+  const getPaginatedDeposits = () => {
+    if (!deposits) return [];
+    const startIndex = (depositPage - 1) * itemsPerPage;
+    return deposits.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  // Calculate pagination for withdrawals
+  const getPaginatedWithdrawals = () => {
+    if (!withdrawals) return [];
+    const startIndex = (withdrawalPage - 1) * itemsPerPage;
+    return withdrawals.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  // Calculate total pages
+  const totalDepositPages = Math.ceil((deposits?.length || 0) / itemsPerPage);
+  const totalWithdrawalPages = Math.ceil((withdrawals?.length || 0) / itemsPerPage);
+
+  // Pagination component
+  const PaginationControls = ({ 
+    currentPage, 
+    totalPages, 
+    onPageChange 
+  }: { 
+    currentPage: number; 
+    totalPages: number; 
+    onPageChange: (page: number) => void; 
+  }) => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-between mt-4">
+        <div className="text-sm text-gray-500">
+          Page {currentPage} of {totalPages}
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm font-medium">{currentPage}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   // Query to get user data
   const { data: user } = useQuery({
@@ -936,8 +1002,9 @@ export function MultiChainFinancial() {
                   ))}
                 </div>
               ) : deposits?.length ? (
+                <>
                 <div className="space-y-3">
-                  {deposits.map((deposit: DepositData) => (
+                  {getPaginatedDeposits().map((deposit: DepositData) => (
                     <div key={deposit.id} className="border rounded-lg">
                       <div className="flex items-center justify-between p-3">
                         <div className="space-y-1">
@@ -1130,6 +1197,12 @@ export function MultiChainFinancial() {
                     </div>
                   ))}
                 </div>
+                <PaginationControls
+                  currentPage={depositPage}
+                  totalPages={totalDepositPages}
+                  onPageChange={setDepositPage}
+                />
+                </>
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <ArrowDownCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -1143,14 +1216,16 @@ export function MultiChainFinancial() {
 
         {/* Withdraw Tab */}
         <TabsContent value="withdraw" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <ArrowUpCircle className="w-5 h-5 text-blue-600" />
-                <span>Withdraw NTIQ to ETH/USDC/USDT</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Withdrawal Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <ArrowUpCircle className="w-5 h-5 text-blue-600" />
+                  <span>Withdraw NTIQ to ETH/USDC/USDT</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Chain Selection */}
                 <div>
@@ -1307,8 +1382,9 @@ export function MultiChainFinancial() {
                   ))}
                 </div>
               ) : withdrawals?.length ? (
+                <>
                 <div className="space-y-3">
-                  {withdrawals.map((withdrawal: WithdrawalData) => (
+                  {getPaginatedWithdrawals().map((withdrawal: WithdrawalData) => (
                     <div key={withdrawal.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
@@ -1357,6 +1433,12 @@ export function MultiChainFinancial() {
                     </div>
                   ))}
                 </div>
+                <PaginationControls
+                  currentPage={withdrawalPage}
+                  totalPages={totalWithdrawalPages}
+                  onPageChange={setWithdrawalPage}
+                />
+                </>
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <ArrowUpCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -1365,6 +1447,7 @@ export function MultiChainFinancial() {
               )}
             </CardContent>
           </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
