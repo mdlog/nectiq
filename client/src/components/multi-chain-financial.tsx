@@ -438,29 +438,29 @@ export function MultiChainFinancial() {
                     <DialogTitle>Confirm Deposit</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div className="p-4 bg-gray-50 rounded-lg space-y-2">
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
                       <div className="flex justify-between">
-                        <span>Chain:</span>
-                        <span className="font-medium">{selectedChain.icon} {selectedChain.name}</span>
+                        <span className="text-gray-700 dark:text-gray-300">Chain:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedChain.icon} {selectedChain.name}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Token:</span>
-                        <span className="font-medium">{selectedToken}</span>
+                        <span className="text-gray-700 dark:text-gray-300">Token:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedToken}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Amount:</span>
-                        <span className="font-medium">${depositAmount} USD</span>
+                        <span className="text-gray-700 dark:text-gray-300">Amount:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">${depositAmount} USD</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>NTIQ received:</span>
+                        <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
                         <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 100).toLocaleString()} NTIQ</span>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <h4 className="font-medium text-blue-800 mb-2">Deposit Destination Address:</h4>
-                      <div className="flex items-center space-x-2 p-2 bg-white rounded border">
-                        <code className="flex-1 text-sm">{selectedChain.adminWallet}</code>
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                      <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Deposit Destination Address:</h4>
+                      <div className="flex items-center space-x-2 p-2 bg-white dark:bg-gray-700 rounded border">
+                        <code className="flex-1 text-sm text-gray-900 dark:text-gray-100">{selectedChain.adminWallet}</code>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -469,7 +469,7 @@ export function MultiChainFinancial() {
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
-                      <p className="text-xs text-blue-600 mt-2">
+                      <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
                         ⚠️ Make sure to transfer from the same wallet as your login wallet
                       </p>
                     </div>
@@ -645,29 +645,29 @@ export function MultiChainFinancial() {
                     <DialogTitle>Confirm Withdrawal</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div className="p-4 bg-gray-50 rounded-lg space-y-2">
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
                       <div className="flex justify-between">
-                        <span>Chain:</span>
-                        <span className="font-medium">{selectedChain.icon} {selectedChain.name}</span>
+                        <span className="text-gray-700 dark:text-gray-300">Chain:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedChain.icon} {selectedChain.name}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Token:</span>
-                        <span className="font-medium">{selectedToken}</span>
+                        <span className="text-gray-700 dark:text-gray-300">Token:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedToken}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>NTIQ:</span>
-                        <span className="font-medium">{parseInt(withdrawAmount || "0").toLocaleString()} NTIQ</span>
+                        <span className="text-gray-700 dark:text-gray-300">NTIQ:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{parseInt(withdrawAmount || "0").toLocaleString()} NTIQ</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>USD received:</span>
+                        <span className="text-gray-700 dark:text-gray-300">USD received:</span>
                         <span className="font-bold text-blue-600">${(parseInt(withdrawAmount || "0") * 0.01).toFixed(2)} {selectedToken}</span>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-yellow-50 rounded-lg">
-                      <h4 className="font-medium text-yellow-800 mb-2">Destination Address:</h4>
-                      <div className="flex items-center space-x-2 p-2 bg-white rounded border">
-                        <code className="flex-1 text-sm">{formatAddress(user?.walletAddress || "")}</code>
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
+                      <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Destination Address:</h4>
+                      <div className="flex items-center space-x-2 p-2 bg-white dark:bg-gray-700 rounded border">
+                        <code className="flex-1 text-sm text-gray-900 dark:text-gray-100">{formatAddress(user?.walletAddress || "")}</code>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -676,7 +676,7 @@ export function MultiChainFinancial() {
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
-                      <p className="text-xs text-yellow-600 mt-2">
+                      <p className="text-xs text-yellow-600 dark:text-yellow-300 mt-2">
                         ⚠️ Withdrawal will be sent to the wallet address used for login
                       </p>
                     </div>
