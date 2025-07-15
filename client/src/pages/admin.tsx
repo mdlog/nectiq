@@ -455,41 +455,34 @@ export default function AdminPanel() {
   // Real-time WebSocket connection for transaction updates
   const { isConnected: wsConnected, lastTransaction } = useAdminWebSocket();
 
-  // Add user authentication check first
-  const { data: currentUser, isLoading: userLoading } = useQuery({
+  // Admin queries - authentication is handled by AdminProtectedRoute
+  const { data: currentUser } = useQuery({
     queryKey: ["/api/user"],
-    retry: 1,
-    refetchInterval: 30000,
+    staleTime: 60 * 1000,
   });
 
   const { data: stats, error: statsError, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 1000, // Ultra-fast updates every 1 second
-    refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
-    enabled: true, // Always enabled to prevent hook order changes
+    refetchInterval: 1000,
+    enabled: !!currentUser?.isAdmin,
   });
 
   const { data: users = [], error: usersError } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 1500, // Ultra-fast updates every 1.5 seconds  
-    refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
-    enabled: true, // Always enabled to prevent hook order changes
+    refetchInterval: 1500,
+    enabled: !!currentUser?.isAdmin,
   });
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
     queryKey: ["/api/admin/predictions"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 1000, // Ultra-fast updates every 1 second
-    refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
-    enabled: true, // Always enabled to prevent hook order changes
+    refetchInterval: 1000,
+    enabled: !!currentUser?.isAdmin,
   });
 
   // Get crypto prices for logos
@@ -1498,71 +1491,14 @@ export default function AdminPanel() {
     }
   };
 
-  // Early return for loading states and authentication check
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-lg">Loading user authentication...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Check authentication status and admin privileges
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
-              <h2 className="text-lg font-semibold text-blue-800 mb-2">Login Required</h2>
-              <p className="text-blue-600">You need to login first to access the admin panel.</p>
-              <button 
-                onClick={() => window.location.href = '/home'}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Go to Login
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  if (!currentUser?.isAdmin) {
-    return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
-              <h2 className="text-lg font-semibold text-red-800 mb-2">Access Denied</h2>
-              <p className="text-red-600">You need admin privileges to access this panel.</p>
-              <button 
-                onClick={() => window.location.href = '/home'}
-                className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Back to Home
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Early return for loading states to prevent null pointer exceptions
-  if (statsLoading || !stats || !users || !predictions) {
+  if (statsLoading || !stats) {
     return (
       <div className="min-h-screen bg-background p-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-lg">Loading admin panel...</p>
+            <p className="mt-4 text-lg">Loading admin data...</p>
           </div>
         </div>
       </div>

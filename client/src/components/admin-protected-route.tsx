@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useEffect, useState, useRef } from "react";
 
 interface AdminProtectedRouteProps {
   children: React.ReactNode;
@@ -8,54 +7,18 @@ interface AdminProtectedRouteProps {
 
 export default function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
   const [, setLocation] = useLocation();
-  const [authState, setAuthState] = useState<'loading' | 'authenticated' | 'unauthorized' | 'not-admin'>('loading');
-  const redirectTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const { data: user, isLoading, error } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: ["/api/user"],
-    retry: 2,
-    staleTime: 60 * 1000, // 60 seconds
-    refetchOnWindowFocus: false,
+    retry: 1,
+    staleTime: 30 * 1000, // 30 seconds
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    refetchInterval: 10000, // Check every 10 seconds for admin access
   });
 
-  useEffect(() => {
-    // Clear any existing timeout
-    if (redirectTimeoutRef.current) {
-      clearTimeout(redirectTimeoutRef.current);
-    }
-
-    if (isLoading) {
-      setAuthState('loading');
-    } else if (user) {
-      if (user.isAdmin) {
-        setAuthState('authenticated');
-      } else {
-        setAuthState('not-admin');
-      }
-    } else {
-      // User is not authenticated
-      setAuthState('unauthorized');
-      
-      // Set a timeout to redirect only if still unauthorized
-      redirectTimeoutRef.current = setTimeout(() => {
-        if (authState === 'unauthorized') {
-          setLocation("/");
-        }
-      }, 3000); // Give 3 seconds for authentication to complete
-    }
-
-    return () => {
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current);
-      }
-    };
-  }, [user, isLoading, authState, setLocation]);
-
-  // Show loading state
-  if (authState === 'loading') {
+  // Show loading state while checking authentication
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center">
@@ -67,8 +30,8 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
     );
   }
 
-  // Show unauthorized state
-  if (authState === 'unauthorized') {
+  // Show login required if no user
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-yellow-900 to-orange-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
@@ -86,8 +49,8 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
     );
   }
 
-  // Show not admin state
-  if (authState === 'not-admin') {
+  // Show access denied if not admin
+  if (!user.isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900 to-purple-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
