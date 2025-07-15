@@ -121,7 +121,7 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
           <div>
             <p className="font-medium">{withdrawal.username}</p>
             <p className="text-sm text-slate-400">
-              {withdrawal.ptsAmount ? withdrawal.ptsAmount.toLocaleString() : 0} NTIQ → {withdrawal.tokenAmount || 0} {withdrawal.token || 'N/A'}
+              {withdrawal.ntiqAmount ? withdrawal.ntiqAmount.toLocaleString() : 0} NTIQ → {withdrawal.usdAmount || 0} {withdrawal.tokenType || 'N/A'}
             </p>
             <p className="text-xs text-slate-500">
               {new Date(withdrawal.createdAt).toLocaleString()}
