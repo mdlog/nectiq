@@ -5,10 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import LandingPage from "@/pages/landing";
 import ProtectedRoute from "@/components/protected-route";
-import AdminProtectedRoute from "@/components/admin-protected-route";
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
-import SimpleAdminPanel from "@/pages/simple-admin";
+import AdminPanel from "@/pages/admin";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
 
@@ -111,9 +110,9 @@ function Router() {
       </Route>
       
       <Route path="/admin">
-        <AdminProtectedRoute>
-          <SimpleAdminPanel />
-        </AdminProtectedRoute>
+        <ProtectedRoute>
+          <AdminPanel />
+        </ProtectedRoute>
       </Route>
       
 

@@ -47,26 +47,6 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "reject" | "complete">("approve");
 
-  // Function to format withdrawal display - show proper token amount instead of USD amount
-  const formatWithdrawalDisplay = (withdrawal: any): string => {
-    if (withdrawal.tokenType === 'USDC' || withdrawal.tokenType === 'USDT') {
-      // For stablecoins, use usdAmount directly (1:1 ratio)
-      return `${parseFloat(withdrawal.usdAmount || 0).toFixed(2)} ${withdrawal.tokenType}`;
-    }
-    
-    if (withdrawal.tokenType === 'ETH') {
-      // For ETH, calculate token amount from USD amount using stored price snapshot if available
-      // or use the netAmount if available (which should be the actual token amount)
-      if (withdrawal.netAmount) {
-        return `${parseFloat(withdrawal.netAmount).toFixed(6)} ETH`;
-      }
-      // If no netAmount, fallback to showing USD equivalent with clear label
-      return `$${parseFloat(withdrawal.usdAmount || 0).toFixed(2)} (ETH)`;
-    }
-    
-    return `${parseFloat(withdrawal.usdAmount || 0).toFixed(2)} ${withdrawal.tokenType || 'N/A'}`;
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -141,7 +121,7 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
           <div>
             <p className="font-medium">{withdrawal.username}</p>
             <p className="text-sm text-slate-400">
-              {withdrawal.ntiqAmount ? withdrawal.ntiqAmount.toLocaleString() : 0} NTIQ → {formatWithdrawalDisplay(withdrawal)}
+              {withdrawal.ntiqAmount ? withdrawal.ntiqAmount.toLocaleString() : 0} NTIQ → {withdrawal.usdAmount || 0} {withdrawal.tokenType || 'N/A'}
             </p>
             <p className="text-xs text-slate-500">
               {new Date(withdrawal.createdAt).toLocaleString()}
@@ -455,17 +435,20 @@ export default function AdminPanel() {
   // Real-time WebSocket connection for transaction updates
   const { isConnected: wsConnected, lastTransaction } = useAdminWebSocket();
 
-  // Admin queries - authentication is handled by AdminProtectedRoute
-  const { data: currentUser } = useQuery({
+  // Add user authentication check first
+  const { data: currentUser, isLoading: userLoading } = useQuery({
     queryKey: ["/api/user"],
-    staleTime: 60 * 1000,
+    retry: 1,
+    refetchInterval: 30000,
   });
 
   const { data: stats, error: statsError, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 1000,
+    refetchInterval: 1000, // Ultra-fast updates every 1 second
+    refetchIntervalInBackground: true,
+    staleTime: 30000, // 30 seconds
     enabled: true, // Always enabled to prevent hook order changes
   });
 
@@ -473,7 +456,9 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/users"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 1500,
+    refetchInterval: 1500, // Ultra-fast updates every 1.5 seconds  
+    refetchIntervalInBackground: true,
+    staleTime: 30000, // 30 seconds
     enabled: true, // Always enabled to prevent hook order changes
   });
 
@@ -481,7 +466,9 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/predictions"],
     retry: 2,
     retryDelay: 1000,
-    refetchInterval: 1000,
+    refetchInterval: 1000, // Ultra-fast updates every 1 second
+    refetchIntervalInBackground: true,
+    staleTime: 30000, // 30 seconds
     enabled: true, // Always enabled to prevent hook order changes
   });
 
@@ -1491,14 +1478,71 @@ export default function AdminPanel() {
     }
   };
 
-  // Early return for loading states to prevent null pointer exceptions
-  if (statsLoading || !stats) {
+  // Early return for loading states and authentication check
+  if (userLoading) {
     return (
       <div className="min-h-screen bg-background p-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-lg">Loading admin data...</p>
+            <p className="mt-4 text-lg">Loading user authentication...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Check authentication status and admin privileges
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
+              <h2 className="text-lg font-semibold text-blue-800 mb-2">Login Required</h2>
+              <p className="text-blue-600">You need to login first to access the admin panel.</p>
+              <button 
+                onClick={() => window.location.href = '/home'}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Go to Login
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!currentUser?.isAdmin) {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+              <h2 className="text-lg font-semibold text-red-800 mb-2">Access Denied</h2>
+              <p className="text-red-600">You need admin privileges to access this panel.</p>
+              <button 
+                onClick={() => window.location.href = '/home'}
+                className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Early return for loading states to prevent null pointer exceptions
+  if (statsLoading || !stats || !users || !predictions) {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-lg">Loading admin panel...</p>
           </div>
         </div>
       </div>
@@ -4445,7 +4489,7 @@ export default function AdminPanel() {
                                 <div className="text-sm">
                                   <div className="font-medium">{transaction.amount ? transaction.amount.toLocaleString() : 0} NTIQ</div>
                                   {transaction.type === 'withdrawal' && (
-                                    <div className="text-xs text-slate-500">→ {formatWithdrawalDisplay(transaction)}</div>
+                                    <div className="text-xs text-slate-500">→ {transaction.tokenAmount || 'N/A'} {transaction.token}</div>
                                   )}
                                   {transaction.type === 'purchase' && (
                                     <div className="text-xs text-slate-500">← {transaction.paymentAmount || 'N/A'} {transaction.token}</div>
