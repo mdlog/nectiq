@@ -136,6 +136,7 @@ interface DepositData {
   ntiqAmount: number;
   status: string;
   transactionHash?: string;
+  ethPriceSnapshot?: string;
   createdAt: string;
 }
 
@@ -190,21 +191,29 @@ export function MultiChainFinancial() {
   });
 
   // Function to calculate token amount from USD for deposit history action view
-  const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string): string => {
-    if (!cryptoPrices || cryptoPrices.length === 0) return "0.000000";
-    
-    let price = 0;
-    if (tokenType === 'ETH') {
-      const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
-      price = ethPrice?.current_price || 0;
-    } else if (tokenType === 'USDC' || tokenType === 'USDT') {
+  const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string, ethPriceSnapshot?: string): string => {
+    if (tokenType === 'USDC' || tokenType === 'USDT') {
       return usdAmount.toFixed(2); // 1:1 ratio for stablecoins
     }
     
-    if (price === 0) return "0.000000";
+    if (tokenType === 'ETH') {
+      // For ETH deposits, use snapshot price if available, otherwise use current price
+      let price = 0;
+      
+      if (ethPriceSnapshot) {
+        price = parseFloat(ethPriceSnapshot);
+      } else if (cryptoPrices && cryptoPrices.length > 0) {
+        const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
+        price = ethPrice?.current_price || 0;
+      }
+      
+      if (price === 0) return "0.000000";
+      
+      const tokenAmount = usdAmount / price;
+      return tokenAmount.toFixed(6);
+    }
     
-    const tokenAmount = usdAmount / price;
-    return tokenAmount.toFixed(6);
+    return "0.000000";
   };
 
   // Toggle function for expanding deposit action view
@@ -685,7 +694,7 @@ export function MultiChainFinancial() {
                                 <span className="text-sm text-gray-600 dark:text-gray-400">{deposit.tokenType} Amount to Send:</span>
                                 <div className="text-right">
                                   <span className="font-bold text-lg text-blue-600">
-                                    {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType)} {deposit.tokenType}
+                                    {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} {deposit.tokenType}
                                   </span>
                                   <div className="text-xs text-gray-500">
                                     (≈ ${deposit.amountUSD} USD)

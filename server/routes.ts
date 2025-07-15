@@ -5048,6 +5048,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate NTIQ amount (1 USD = 100 NTIQ)
       const ntiqAmount = Math.floor(amountUSD * 100);
 
+      // Get current ETH price for snapshot if deposit is ETH
+      let ethPriceSnapshot = null;
+      if (validatedData.tokenType === 'ETH') {
+        try {
+          const cryptoPrices = await cryptoService.getCurrentPrices();
+          const ethPrice = cryptoPrices.find(crypto => crypto.id === 'ethereum');
+          if (ethPrice) {
+            ethPriceSnapshot = ethPrice.current_price.toString();
+          }
+        } catch (error) {
+          console.error('Failed to fetch ETH price for snapshot:', error);
+        }
+      }
+
       const deposit = await storage.createDeposit({
         userId: session.userId,
         fromWalletAddress: validatedData.fromWalletAddress,
@@ -5058,6 +5072,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tokenAddress: validatedData.tokenAddress,
         amountUSD: validatedData.amountUSD,
         ntiqAmount,
+        ethPriceSnapshot,
         status: 'pending',
       });
 

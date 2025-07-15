@@ -77,6 +77,7 @@ export const deposits = pgTable("deposits", {
   tokenAddress: varchar("token_address", { length: 42 }).notNull(), // Token contract address
   amountUSD: numeric("amount_usd", { precision: 18, scale: 6 }).notNull(), // USD amount deposited
   ntiqAmount: integer("ntiq_amount").notNull(), // NTIQ amount to credit (amountUSD * 100)
+  ethPriceSnapshot: numeric("eth_price_snapshot", { precision: 20, scale: 8 }), // ETH price at deposit creation time
   transactionHash: varchar("transaction_hash", { length: 66 }).unique(),
   blockNumber: integer("block_number"),
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, confirmed, processed, failed
