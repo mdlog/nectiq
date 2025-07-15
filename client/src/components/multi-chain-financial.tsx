@@ -126,7 +126,7 @@ const HoleskyLogo = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
-// Supported chain configuration
+// Supported chain configuration (adminWallet removed for security - fetched from server)
 const SUPPORTED_CHAINS = [
   {
     chainId: 1,
@@ -136,7 +136,6 @@ const SUPPORTED_CHAINS = [
     color: "text-blue-600",
     logo: EthereumLogo,
     explorerUrl: "https://etherscan.io",
-    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       ETH: { address: "native", decimals: 18 },
       USDC: { address: "0xA0b86a33E6b4A3C6d4b1B4BcF8F7f8d7C6cC9c9e", decimals: 6 },
@@ -151,7 +150,6 @@ const SUPPORTED_CHAINS = [
     color: "text-blue-500",
     logo: BaseLogo,
     explorerUrl: "https://basescan.org",
-    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       ETH: { address: "native", decimals: 18 },
       USDC: { address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", decimals: 6 },
@@ -166,7 +164,6 @@ const SUPPORTED_CHAINS = [
     color: "text-yellow-600",
     logo: BSCLogo,
     explorerUrl: "https://bscscan.com",
-    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       ETH: { address: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8", decimals: 18 },
       USDC: { address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", decimals: 18 },
@@ -181,7 +178,6 @@ const SUPPORTED_CHAINS = [
     color: "text-red-600",
     logo: OptimismLogo,
     explorerUrl: "https://optimistic.etherscan.io",
-    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       ETH: { address: "native", decimals: 18 },
       USDC: { address: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607", decimals: 6 },
@@ -196,7 +192,6 @@ const SUPPORTED_CHAINS = [
     color: "text-indigo-600",
     logo: ArbitrumLogo,
     explorerUrl: "https://arbiscan.io",
-    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       ETH: { address: "native", decimals: 18 },
       USDC: { address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", decimals: 6 },
@@ -278,6 +273,13 @@ export function MultiChainFinancial() {
   const itemsPerPage = 5;
   
   const queryClient = useQueryClient();
+
+  // Secure query to get admin wallet address from server
+  const { data: adminWalletData, isLoading: adminWalletLoading } = useQuery({
+    queryKey: ["/api/deposit/admin-wallet"],
+    staleTime: 300000, // Cache for 5 minutes
+    retry: 3,
+  });
 
   // Pagination component
   const PaginationControls = ({ 
@@ -681,10 +683,21 @@ export function MultiChainFinancial() {
         return;
       }
 
+      // Get secure admin wallet address
+      const secureAdminWallet = adminWalletData?.adminWallet;
+      if (!secureAdminWallet) {
+        toast({
+          title: "Security Error",
+          description: "Cannot retrieve secure admin wallet address",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Prepare transaction
       const transactionParameters = {
         from: accounts[0],
-        to: chain.adminWallet,
+        to: secureAdminWallet,
         value: weiAmount,
         gas: '0x5208', // 21000 gas limit for ETH transfer
       };
@@ -941,11 +954,14 @@ export function MultiChainFinancial() {
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                       <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Deposit Destination Address:</h4>
                       <div className="flex items-center space-x-2 p-2 bg-white dark:bg-gray-700 rounded border">
-                        <code className="flex-1 text-sm text-gray-900 dark:text-gray-100">{selectedChain.adminWallet}</code>
+                        <code className="flex-1 text-sm text-gray-900 dark:text-gray-100">
+                          {adminWalletLoading ? "Loading secure address..." : adminWalletData?.adminWallet || "Loading..."}
+                        </code>
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => copyToClipboard(selectedChain.adminWallet)}
+                          onClick={() => copyToClipboard(adminWalletData?.adminWallet || "")}
+                          disabled={adminWalletLoading || !adminWalletData?.adminWallet}
                         >
                           <Copy className="w-4 h-4" />
                         </Button>
@@ -1105,17 +1121,17 @@ export function MultiChainFinancial() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => {
-                                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
-                                    if (chain?.adminWallet) {
-                                      copyToClipboard(chain.adminWallet);
+                                    if (adminWalletData?.adminWallet) {
+                                      copyToClipboard(adminWalletData.adminWallet);
                                     }
                                   }}
+                                  disabled={adminWalletLoading || !adminWalletData?.adminWallet}
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                               </div>
                               <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all">
-                                {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.adminWallet}
+                                {adminWalletLoading ? "Loading secure address..." : adminWalletData?.adminWallet || "Loading..."}
                               </code>
                             </div>
                             

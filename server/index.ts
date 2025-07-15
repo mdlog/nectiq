@@ -131,17 +131,18 @@ app.use(session({
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Allow all origins for development
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Allow all origins for development, especially Dynamic authentication domains
+  res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
   
-  // Enhanced security for Dynamic SDK
+  // Enhanced security for Dynamic SDK and WebSocket connections
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -153,23 +154,25 @@ app.use((req, res, next) => {
 
 // Enhanced security headers middleware for Dynamic SDK
 app.use((req, res, next) => {
-  // Security headers to prevent common attacks
+  // Relaxed security headers for development and Dynamic SDK
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Changed from DENY to SAMEORIGIN for Dynamic SDK
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Allow all frames for Dynamic SDK
+  res.setHeader('X-XSS-Protection', '0'); // Disable XSS protection to avoid conflicts
+  res.setHeader('Referrer-Policy', 'unsafe-url'); // Allow full referrer for Dynamic SDK
   
-  // Relaxed CSP for Dynamic SDK compatibility
+  // Ultra-permissive CSP for Dynamic SDK and wallet authentication
   res.setHeader('Content-Security-Policy', [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob: *.dynamic.xyz *.dynamicauth.com",
-    "style-src 'self' 'unsafe-inline' https: data: *.dynamic.xyz *.dynamicauth.com",
-    "font-src 'self' https: data: *.dynamic.xyz *.dynamicauth.com",
-    "img-src 'self' data: https: blob: *.dynamic.xyz *.dynamicauth.com",
-    "connect-src 'self' https: wss: ws: data: blob: *.dynamic.xyz *.dynamicauth.com *.coingecko.com",
-    "frame-src 'self' https: data: *.dynamic.xyz *.dynamicauth.com",
+    "default-src 'self' 'unsafe-inline' 'unsafe-eval' *",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' * data: blob:",
+    "style-src 'self' 'unsafe-inline' * data:",
+    "font-src 'self' * data:",
+    "img-src 'self' * data: blob:",
+    "connect-src 'self' * data: blob: ws: wss:",
+    "frame-src 'self' *",
+    "child-src 'self' *",
+    "worker-src 'self' * blob:",
     "object-src 'none'",
-    "media-src 'self' https: data: blob:"
+    "media-src 'self' * data: blob:"
   ].join('; '));
   
   // HSTS for HTTPS

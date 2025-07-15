@@ -67,6 +67,18 @@ const auditLog = (event: string, details: any, req: Request) => {
   });
 };
 
+// Get admin wallet address from secure environment variable (not frontend)
+const getAdminDepositWallet = (): string => {
+  const adminWallets = process.env.ADMIN_WALLETS || "";
+  const firstAdminWallet = adminWallets.split(',')[0]?.trim();
+  
+  if (!firstAdminWallet) {
+    throw new Error("Admin deposit wallet not configured in environment variables");
+  }
+  
+  return firstAdminWallet;
+};
+
 // Generate random username for new wallet connections
 const generateRandomUsername = (): string => {
   const adjectives = [
@@ -96,6 +108,8 @@ function getAdminWalletAddresses(): string[] {
     .map(addr => addr.trim().toLowerCase())
     .filter(addr => addr.length > 0);
 }
+
+
 
 // Admin IP whitelist for bypassing rate limiting
 const ADMIN_IP_WHITELIST = new Set([
@@ -3750,6 +3764,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: error.message || "Failed to reset user",
         details: error.stack
+      });
+    }
+  });
+
+  // Secure API endpoint to get admin wallet address
+  app.get("/api/deposit/admin-wallet", async (req, res) => {
+    try {
+      const adminWallet = getAdminDepositWallet();
+      
+      auditLog("ADMIN_WALLET_REQUEST", { 
+        ip: req.ip,
+        requestedBy: req.session?.userId || 'anonymous'
+      }, req);
+      
+      res.json({ 
+        adminWallet: adminWallet,
+        message: "Admin deposit wallet retrieved securely from server"
+      });
+    } catch (error) {
+      console.error("❌ Error getting admin wallet:", error);
+      res.status(500).json({ 
+        message: "Failed to get admin wallet address" 
       });
     }
   });
