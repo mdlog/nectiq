@@ -171,8 +171,6 @@ export function MultiChainFinancial() {
   const [confirmationEthAmount, setConfirmationEthAmount] = useState<string>("0");
   const [expandedDeposits, setExpandedDeposits] = useState<Set<number>>(new Set());
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
-  const [transactionHashInput, setTransactionHashInput] = useState("");
-  const [depositIdForHash, setDepositIdForHash] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   // Query to get user data
@@ -199,34 +197,6 @@ export function MultiChainFinancial() {
     refetchInterval: 5000,
     staleTime: 0,
   });
-
-  // Function to validate transaction hash (check if it's a real blockchain transaction)
-  const isValidTransactionHash = (hash: string): boolean => {
-    // Known test/demo hashes that don't exist on blockchain
-    const testHashes = [
-      '0x8dd45fdd7dcd7d939041880f56b3590f57e3a31d81785bbf3dfb78ea5ec35fd9',
-      '0x3cc45fdd7dcd7d939041880f56b3590f57e3a31d81785bbf3dfb78ea5ec35fd7',
-      '0x2bb45fdd7dcd7d939041880f56b3590f57e3a31d81785bbf3dfb78ea5ec35fd6',
-      '0x1aa45fdd7dcd7d939041880f56b3590f57e3a31d81785bbf3dfb78ea5ec35fd5',
-      '0x374bbd1ac514e9305ace4eff3938ea1498a5fbb48cfdf27c9dbf5ec8fd1af083',
-      '0x1987c6c8bd9db54cac5214e46125a4f99c2ec21404d51718563ea9bb333ba685',
-      '0x433f98ca7fbf1fb4fbd75d448fe228ce25342a49a90bd91d8391586ef523fd69',
-      '0x74fda31275153e0e42f62f4a9350b9cb0b501a5a0e76391e0197908ae38e3ae8'
-    ];
-    
-    // Check if hash is in test hash list
-    if (testHashes.includes(hash)) {
-      return false;
-    }
-    
-    // Basic validation: should be 66 chars, start with 0x
-    if (!hash || !hash.startsWith('0x') || hash.length !== 66) {
-      return false;
-    }
-    
-    // For now, assume other hashes are valid (in real implementation, you'd verify with blockchain)
-    return true;
-  };
 
   // Function to calculate token amount from USD for deposit history action view
   const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string, ethPriceSnapshot?: string): string => {
@@ -398,33 +368,6 @@ export function MultiChainFinancial() {
     },
   });
 
-  // Mutation to update deposit transaction hash
-  const updateDepositHashMutation = useMutation({
-    mutationFn: async (data: { depositId: number; transactionHash: string }) => {
-      const response = await apiRequest(`/api/deposits/${data.depositId}/update-hash`, {
-        method: "POST",
-        body: JSON.stringify({ transactionHash: data.transactionHash }),
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
-      setTransactionHashInput("");
-      setDepositIdForHash(null);
-      toast({
-        title: "Transaction Hash Updated",
-        description: "Deposit monitoring will begin automatically",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update transaction hash",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleDeposit = () => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
       toast({
@@ -483,42 +426,6 @@ export function MultiChainFinancial() {
       title: "Copied",
       description: "Wallet address copied to clipboard",
     });
-  };
-
-  const handleUpdateTransactionHash = () => {
-    if (!transactionHashInput || !depositIdForHash) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid transaction hash",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate transaction hash format
-    if (!transactionHashInput.startsWith('0x') || transactionHashInput.length !== 66) {
-      toast({
-        title: "Invalid Hash Format",
-        description: "Transaction hash must be 66 characters starting with 0x",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    updateDepositHashMutation.mutate({
-      depositId: depositIdForHash,
-      transactionHash: transactionHashInput,
-    });
-  };
-
-  const startHashInput = (depositId: number) => {
-    setDepositIdForHash(depositId);
-    setTransactionHashInput("");
-  };
-
-  const cancelHashInput = () => {
-    setDepositIdForHash(null);
-    setTransactionHashInput("");
   };
 
   // MetaMask transaction function
@@ -936,7 +843,7 @@ export function MultiChainFinancial() {
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.icon}</span>
                             <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}</span>
-                            {deposit.transactionHash && isValidTransactionHash(deposit.transactionHash) && (
+                            {deposit.transactionHash && (
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -947,13 +854,9 @@ export function MultiChainFinancial() {
                                     window.open(`${chain.explorerUrl}/tx/${deposit.transactionHash}`, '_blank');
                                   }
                                 }}
-                                title="View transaction on blockchain explorer"
                               >
                                 <ExternalLink className="w-3 h-3" />
                               </Button>
-                            )}
-                            {deposit.transactionHash && !isValidTransactionHash(deposit.transactionHash) && (
-                              <span className="text-xs text-gray-400 italic">Demo Hash</span>
                             )}
                           </div>
                         </div>
@@ -963,27 +866,15 @@ export function MultiChainFinancial() {
                             {new Date(deposit.createdAt).toLocaleDateString('en-US')}
                           </div>
                           {deposit.status === 'pending' && (
-                            <div className="space-y-2 mt-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => toggleDepositExpanded(deposit.id)}
-                              >
-                                <Eye className="w-3 h-3 mr-1" />
-                                {expandedDeposits.has(deposit.id) ? 'Hide Action' : 'Action View'}
-                              </Button>
-                              {!deposit.transactionHash && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                                  onClick={() => startHashInput(deposit.id)}
-                                >
-                                  <Plus className="w-3 h-3 mr-1" />
-                                  Add Tx Hash
-                                </Button>
-                              )}
-                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="mt-2"
+                              onClick={() => toggleDepositExpanded(deposit.id)}
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              {expandedDeposits.has(deposit.id) ? 'Hide Action' : 'Action View'}
+                            </Button>
                           )}
                           {deposit.status === 'processing' && deposit.transactionHash && (
                             <Button
@@ -1335,53 +1226,6 @@ export function MultiChainFinancial() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Transaction Hash Input Modal */}
-      <Dialog open={depositIdForHash !== null} onOpenChange={(open) => !open && cancelHashInput()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <Plus className="w-5 h-5" />
-              <span>Add Transaction Hash</span>
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="txHash">Transaction Hash</Label>
-              <Input
-                id="txHash"
-                type="text"
-                placeholder="0x1234567890abcdef..."
-                value={transactionHashInput}
-                onChange={(e) => setTransactionHashInput(e.target.value)}
-                disabled={updateDepositHashMutation.isPending}
-              />
-              <p className="text-xs text-gray-500">
-                Enter the transaction hash from your blockchain transaction (66 characters starting with 0x)
-              </p>
-            </div>
-            
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={cancelHashInput}
-                disabled={updateDepositHashMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-                onClick={handleUpdateTransactionHash}
-                disabled={updateDepositHashMutation.isPending || !transactionHashInput.trim()}
-              >
-                {updateDepositHashMutation.isPending ? "Updating..." : "Update Hash"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
