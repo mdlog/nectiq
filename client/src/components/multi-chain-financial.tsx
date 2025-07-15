@@ -215,6 +215,7 @@ export function MultiChainFinancial() {
       tokenAddress: string;
       amountUSD: string;
       toWalletAddress: string;
+      fromWalletAddress: string;
     }) => {
       const response = await apiRequest("/api/deposits/create", {
         method: "POST",
@@ -294,6 +295,7 @@ export function MultiChainFinancial() {
       tokenAddress: tokenConfig.address,
       amountUSD: depositAmount,
       toWalletAddress: selectedChain.adminWallet,
+      fromWalletAddress: user?.walletAddress || "0x0000000000000000000000000000000000000000", // Use authenticated user's wallet address
     });
   };
 

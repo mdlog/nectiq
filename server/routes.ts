@@ -5034,6 +5034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tokenAddress: z.string().min(1),
         amountUSD: z.string().min(1),
         toWalletAddress: z.string().min(1),
+        fromWalletAddress: z.string().min(1),
       });
 
       const validatedData = depositSchema.parse(req.body);
@@ -5048,13 +5049,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const deposit = await storage.createDeposit({
         userId: session.userId,
+        fromWalletAddress: validatedData.fromWalletAddress,
+        toWalletAddress: validatedData.toWalletAddress,
         chainName: validatedData.chainName,
         chainId: validatedData.chainId,
         tokenType: validatedData.tokenType,
         tokenAddress: validatedData.tokenAddress,
         amountUSD: validatedData.amountUSD,
         ntiqAmount,
-        toWalletAddress: validatedData.toWalletAddress,
         status: 'pending',
       });
 

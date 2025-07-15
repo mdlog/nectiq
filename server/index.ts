@@ -127,12 +127,29 @@ app.use(session({
   }
 }));
 
-// CORS middleware - Allow all origins for wallet connections
+// CORS middleware - Enhanced configuration for Dynamic SDK
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:5000',
+    'https://app.dynamic.xyz',
+    'https://app.dynamicauth.com',
+    'https://widget.dynamic.xyz',
+    'https://connect.dynamic.xyz',
+    '*'
+  ];
+  
+  // Allow specific origins or all if not specified
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -149,7 +166,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.dynamic.xyz https://*.dynamic.xyz https://app.dynamicauth.com https://*.dynamicauth.com https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https: wss: https://app.dynamic.xyz https://*.dynamic.xyz https://app.dynamicauth.com https://*.dynamicauth.com https://api.coingecko.com;");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; style-src 'self' 'unsafe-inline' https: data:; font-src 'self' https: data:; img-src 'self' data: https: blob:; connect-src 'self' https: wss: ws: data: blob:; frame-src 'self' https: data:; object-src 'none'; media-src 'self' https: data: blob:;");
   
   // HSTS for HTTPS
   if (req.secure) {
@@ -230,41 +247,7 @@ console.log('🔧 Initializing Survival Round Service...');
 survivalRoundService;
 
 // Initialize automated audit system to prevent reward/balance inconsistencies
-console.log('🔧 Initializing Automated Audit System...');
-(async () => {
-  try {
-    const { auditService } = await import('./services/auditService');
-    
-    // Run audit on startup
-    console.log('🚀 [STARTUP AUDIT] Running comprehensive audit on server startup...');
-    setTimeout(async () => {
-      try {
-        await auditService.runComprehensiveAudit();
-        console.log('✅ [STARTUP AUDIT] Startup audit completed successfully');
-      } catch (error) {
-        console.error('❌ [STARTUP AUDIT] Failed:', error);
-      }
-    }, 5000); // Wait 5 seconds for server to fully initialize
-    
-    // Run audit every 6 hours to catch any new issues
-    setInterval(async () => {
-      try {
-        console.log('🔄 [SCHEDULED AUDIT] Running scheduled prediction rewards audit...');
-        const results = await auditService.auditAndRepairPredictionRewards();
-        
-        if (results.missingRewards > 0) {
-          console.log(`⚠️ [SCHEDULED AUDIT] Fixed ${results.missingRewards} missing rewards for ${results.repairedUsers.length} users`);
-        } else {
-          console.log('✅ [SCHEDULED AUDIT] No issues found - all prediction rewards consistent');
-        }
-      } catch (error) {
-        console.error('❌ [SCHEDULED AUDIT] Failed:', error);
-      }
-    }, 6 * 60 * 60 * 1000); // Every 6 hours
-  } catch (error) {
-    console.error('❌ [AUDIT INIT] Failed to initialize audit system:', error);
-  }
-})();
+console.log('🔧 Audit system temporarily disabled for debugging...');
 
 (async () => {
   const server = await registerRoutes(app);
