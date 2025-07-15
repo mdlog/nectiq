@@ -11,10 +11,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/user"],
-    retry: 3, // Increased retry for session establishment
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 3000),
-    staleTime: 30 * 1000, // 30 seconds - shorter to check auth more frequently
-    refetchOnWindowFocus: true,
+    retry: 1, // Consistent with queryClient default
+    retryDelay: 1000,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false, // Consistent with queryClient default
     refetchOnMount: true,
     refetchOnReconnect: true
   });
