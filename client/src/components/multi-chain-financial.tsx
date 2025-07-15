@@ -161,6 +161,7 @@ export function MultiChainFinancial() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [fixedEthAmount, setFixedEthAmount] = useState<string>("0");
   const [confirmationEthAmount, setConfirmationEthAmount] = useState<string>("0");
+  const [expandedDeposits, setExpandedDeposits] = useState<Set<number>>(new Set());
   const queryClient = useQueryClient();
 
   // Query to get user data
@@ -187,6 +188,35 @@ export function MultiChainFinancial() {
     refetchInterval: 5000,
     staleTime: 0,
   });
+
+  // Function to calculate token amount from USD for deposit history action view
+  const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string): string => {
+    if (!cryptoPrices || cryptoPrices.length === 0) return "0.000000";
+    
+    let price = 0;
+    if (tokenType === 'ETH') {
+      const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
+      price = ethPrice?.current_price || 0;
+    } else if (tokenType === 'USDC' || tokenType === 'USDT') {
+      return usdAmount.toFixed(2); // 1:1 ratio for stablecoins
+    }
+    
+    if (price === 0) return "0.000000";
+    
+    const tokenAmount = usdAmount / price;
+    return tokenAmount.toFixed(6);
+  };
+
+  // Toggle function for expanding deposit action view
+  const toggleDepositExpanded = (depositId: number) => {
+    const newExpanded = new Set(expandedDeposits);
+    if (newExpanded.has(depositId)) {
+      newExpanded.delete(depositId);
+    } else {
+      newExpanded.add(depositId);
+    }
+    setExpandedDeposits(newExpanded);
+  };
 
   // Effect to calculate fixed ETH amount when deposit amount changes for ETH deposits
   useEffect(() => {
@@ -593,39 +623,147 @@ export function MultiChainFinancial() {
               ) : deposits?.length ? (
                 <div className="space-y-3">
                   {deposits.map((deposit: DepositData) => (
-                    <div key={deposit.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium">${deposit.amountUSD} {deposit.tokenType}</span>
-                          <span>→</span>
-                          <span className="font-bold text-blue-600">{deposit.ntiqAmount.toLocaleString()} NTIQ</span>
+                    <div key={deposit.id} className="border rounded-lg">
+                      <div className="flex items-center justify-between p-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">${deposit.amountUSD} {deposit.tokenType}</span>
+                            <span>→</span>
+                            <span className="font-bold text-blue-600">{deposit.ntiqAmount.toLocaleString()} NTIQ</span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.icon}</span>
+                            <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}</span>
+                            {deposit.transactionHash && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-auto p-1"
+                                onClick={() => {
+                                  const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                  if (chain) {
+                                    window.open(`${chain.explorerUrl}/tx/${deposit.transactionHash}`, '_blank');
+                                  }
+                                }}
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.icon}</span>
-                          <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}</span>
-                          {deposit.transactionHash && (
+                        <div className="text-right space-y-1">
+                          {getStatusBadge(deposit.status)}
+                          <div className="text-xs text-gray-500">
+                            {new Date(deposit.createdAt).toLocaleDateString('en-US')}
+                          </div>
+                          {deposit.status === 'pending' && (
                             <Button
                               size="sm"
-                              variant="ghost"
-                              className="h-auto p-1"
-                              onClick={() => {
-                                const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
-                                if (chain) {
-                                  window.open(`${chain.explorerUrl}/tx/${deposit.transactionHash}`, '_blank');
-                                }
-                              }}
+                              variant="outline"
+                              className="mt-2"
+                              onClick={() => toggleDepositExpanded(deposit.id)}
                             >
-                              <ExternalLink className="w-3 h-3" />
+                              <Eye className="w-3 h-3 mr-1" />
+                              {expandedDeposits.has(deposit.id) ? 'Hide Action' : 'Action View'}
                             </Button>
                           )}
                         </div>
                       </div>
-                      <div className="text-right space-y-1">
-                        {getStatusBadge(deposit.status)}
-                        <div className="text-xs text-gray-500">
-                          {new Date(deposit.createdAt).toLocaleDateString('en-US')}
+                      
+                      {/* Action View for Pending Deposits */}
+                      {deposit.status === 'pending' && expandedDeposits.has(deposit.id) && (
+                        <div className="border-t bg-orange-50 dark:bg-orange-900/20 p-4">
+                          <h4 className="font-medium text-orange-800 dark:text-orange-200 mb-3 flex items-center">
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Transfer Details for Completion
+                          </h4>
+                          
+                          <div className="space-y-3">
+                            {/* Token Amount to Transfer */}
+                            <div className="p-3 bg-white dark:bg-gray-800 rounded border">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">{deposit.tokenType} Amount to Send:</span>
+                                <div className="text-right">
+                                  <span className="font-bold text-lg text-blue-600">
+                                    {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType)} {deposit.tokenType}
+                                  </span>
+                                  <div className="text-xs text-gray-500">
+                                    (≈ ${deposit.amountUSD} USD)
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Destination Address */}
+                            <div className="p-3 bg-white dark:bg-gray-800 rounded border">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Send To Address:</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                    if (chain?.adminWallet) {
+                                      copyToClipboard(chain.adminWallet);
+                                    }
+                                  }}
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all">
+                                {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.adminWallet}
+                              </code>
+                            </div>
+                            
+                            {/* Network Info */}
+                            <div className="p-3 bg-white dark:bg-gray-800 rounded border">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Network:</span>
+                                <span className="font-medium">
+                                  {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.icon} {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            {/* Token Contract Address (for USDC/USDT) */}
+                            {(deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') && (
+                              <div className="p-3 bg-white dark:bg-gray-800 rounded border">
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">{deposit.tokenType} Contract:</span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                      const tokenAddress = chain?.tokens[deposit.tokenType as keyof typeof chain.tokens]?.address;
+                                      if (tokenAddress && tokenAddress !== 'native') {
+                                        copyToClipboard(tokenAddress);
+                                      }
+                                    }}
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                                <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all">
+                                  {(() => {
+                                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                    const tokenAddress = chain?.tokens[deposit.tokenType as keyof typeof chain.tokens]?.address;
+                                    return tokenAddress !== 'native' ? tokenAddress : 'Native Token';
+                                  })()}
+                                </code>
+                              </div>
+                            )}
+                            
+                            {/* Warning */}
+                            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded border border-yellow-200 dark:border-yellow-800">
+                              <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                                ⚠️ Make sure to transfer the exact amount to complete your deposit. Status will automatically update to "completed" once the transaction is confirmed.
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
