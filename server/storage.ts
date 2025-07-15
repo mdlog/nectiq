@@ -1930,7 +1930,13 @@ export class DatabaseStorage implements IStorage {
     const completedBattles = battles.filter(b => b.status === 'completed').length;
     const openBattles = battles.filter(b => b.status === 'open').length;
 
-    const totalStaked = battles.reduce((sum, battle) => sum + (parseFloat(battle.stakeAmount?.toString() || '0') * 2), 0);
+    const totalStaked = battles.reduce((sum, battle) => {
+      const stakeAmount = parseFloat(battle.stakeAmount?.toString() || '0');
+      // Only multiply by 2 if battle has 2 participants (active or completed)
+      // For open battles, only count the challenger's stake (x1)
+      const multiplier = (battle.status === 'open') ? 1 : 2;
+      return sum + (stakeAmount * multiplier);
+    }, 0);
     
     // Calculate average battle duration
     const completedBattlesWithDuration = battles.filter(b => b.status === 'completed' && b.targetTime && b.createdAt);
