@@ -31,7 +31,8 @@ export default function FinancialMetrics({ cryptoId, symbol }: FinancialMetricsP
     staleTime: 20000
   });
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | undefined | null) => {
+    if (num === undefined || num === null || isNaN(num)) return '$0.00';
     if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
     if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
     if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
@@ -39,7 +40,8 @@ export default function FinancialMetrics({ cryptoId, symbol }: FinancialMetricsP
     return `$${num.toFixed(2)}`;
   };
 
-  const formatSupply = (num: number) => {
+  const formatSupply = (num: number | undefined | null) => {
+    if (num === undefined || num === null || isNaN(num)) return '0';
     if (num >= 1e12) return `${(num / 1e12).toFixed(2)}T`;
     if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
     if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
@@ -47,7 +49,8 @@ export default function FinancialMetrics({ cryptoId, symbol }: FinancialMetricsP
     return num.toLocaleString();
   };
 
-  const calculateMonthlyVolume = (dailyVolume: number) => {
+  const calculateMonthlyVolume = (dailyVolume: number | undefined | null) => {
+    if (dailyVolume === undefined || dailyVolume === null || isNaN(dailyVolume)) return 0;
     // Estimate monthly volume (30 days average)
     return dailyVolume * 30;
   };
