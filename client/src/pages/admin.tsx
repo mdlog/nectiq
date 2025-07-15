@@ -313,7 +313,7 @@ export default function AdminPanel() {
     endDate: ""
   });
   const [transactionPage, setTransactionPage] = useState(1);
-  const [transactionsPerPage] = useState(15);
+  const [transactionsPerPage] = useState(10);
 
   // Modal and state management
   const [showBattleDetailsModal, setShowBattleDetailsModal] = useState(false);
