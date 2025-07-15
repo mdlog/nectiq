@@ -4479,7 +4479,7 @@ export default function AdminPanel() {
                                   {transaction.type === 'purchase' ? 'Purchase' : transaction.type === 'withdrawal' ? 'Withdrawal' : 'Deposit'}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="font-medium">{transaction.username || `User ${transaction.userId}`}</TableCell>
+                              <TableCell className="font-medium text-gray-900 dark:text-white">{transaction.username || `User ${transaction.userId}`}</TableCell>
                               <TableCell>
                                 <Badge variant="outline" className="font-mono text-xs">
                                   {transaction.uid || transaction.userId}
@@ -4487,15 +4487,15 @@ export default function AdminPanel() {
                               </TableCell>
                               <TableCell>
                                 <div className="text-sm">
-                                  <div className="font-medium">{transaction.amount ? transaction.amount.toLocaleString() : 0} NTIQ</div>
+                                  <div className="font-medium text-gray-900 dark:text-white">{transaction.amount ? transaction.amount.toLocaleString() : 0} NTIQ</div>
                                   {transaction.type === 'withdrawal' && (
-                                    <div className="text-xs text-slate-500">→ {transaction.tokenAmount || 'N/A'} {transaction.token}</div>
+                                    <div className="text-xs text-gray-700 dark:text-gray-300 font-medium">→ {transaction.tokenAmount || 'N/A'} {transaction.token}</div>
                                   )}
                                   {transaction.type === 'purchase' && (
-                                    <div className="text-xs text-slate-500">← {transaction.paymentAmount || 'N/A'} {transaction.token}</div>
+                                    <div className="text-xs text-gray-700 dark:text-gray-300 font-medium">← {transaction.paymentAmount || 'N/A'} {transaction.token}</div>
                                   )}
                                   {transaction.type === 'deposit' && (
-                                    <div className="text-xs text-slate-500">← {transaction.paymentAmount || 'N/A'} {transaction.token} • {transaction.networkName || 'Network'}</div>
+                                    <div className="text-xs text-gray-700 dark:text-gray-300 font-medium">← {transaction.paymentAmount || 'N/A'} {transaction.token} • {transaction.networkName || 'Network'}</div>
                                   )}
                                 </div>
                               </TableCell>
@@ -4563,15 +4563,15 @@ export default function AdminPanel() {
                                         </svg>
                                       </a>
                                       {transaction.type === 'deposit' && (transaction.networkName || transaction.chainName) && (
-                                        <span className="text-xs text-slate-500 font-medium">{transaction.networkName || transaction.chainName}</span>
+                                        <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">{transaction.networkName || transaction.chainName}</span>
                                       )}
                                     </div>
                                   ) : (
-                                    <span className="text-slate-400">Internal</span>
+                                    <span className="text-gray-700 dark:text-gray-300 font-medium">Internal</span>
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-sm text-slate-500">
+                              <TableCell className="text-sm text-gray-900 dark:text-white font-medium">
                                 {new Date(transaction.timestamp).toLocaleDateString('id-ID', {
                                   year: 'numeric',
                                   month: 'short',
@@ -4608,11 +4608,11 @@ export default function AdminPanel() {
                           ))}
                           {filteredTransactions.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={9} className="text-center py-8 text-slate-400">
+                              <TableCell colSpan={9} className="text-center py-8 text-gray-900 dark:text-white">
                                 <div className="flex flex-col items-center">
                                   <FileText className="mb-2" size={32} />
-                                  <p>Tidak ada transaksi ditemukan</p>
-                                  <p className="text-sm">History transaksi purchase, withdrawal, dan deposit akan muncul di sini</p>
+                                  <p className="font-medium">Tidak ada transaksi ditemukan</p>
+                                  <p className="text-sm text-gray-700 dark:text-gray-300">History transaksi purchase, withdrawal, dan deposit akan muncul di sini</p>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -4643,7 +4643,7 @@ export default function AdminPanel() {
                           </div>
                           
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm text-slate-400">
+                            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
                               Menampilkan {Math.min((transactionPage - 1) * transactionsPerPage + 1, filteredTransactions.length)} sampai {Math.min(transactionPage * transactionsPerPage, filteredTransactions.length)} dari {filteredTransactions.length} transaksi
                             </span>
                           </div>
