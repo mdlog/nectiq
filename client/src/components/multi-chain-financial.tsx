@@ -395,7 +395,9 @@ export function MultiChainFinancial() {
     const usdAmount = ntiqAmount * 0.01; // 1 NTIQ = $0.01
     
     if (tokenType === 'USDC' || tokenType === 'USDT') {
-      return usdAmount.toFixed(2); // 1:1 ratio for stablecoins
+      // Apply 2.5% fee for stablecoins too
+      const netAmount = usdAmount * 0.975; // 97.5% after 2.5% fee
+      return netAmount.toFixed(2);
     }
     
     if (tokenType === 'ETH') {
@@ -403,7 +405,31 @@ export function MultiChainFinancial() {
         const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
         if (ethPrice?.current_price) {
           const ethAmount = usdAmount / ethPrice.current_price;
-          return ethAmount.toFixed(6);
+          const netEthAmount = ethAmount * 0.975; // 97.5% after 2.5% fee
+          return netEthAmount.toFixed(6);
+        }
+      }
+      return "0.000000";
+    }
+    
+    return "0.000000";
+  };
+
+  // Function to calculate fee amount for withdrawal
+  const calculateWithdrawalFee = (ntiqAmount: number, tokenType: string): string => {
+    const usdAmount = ntiqAmount * 0.01; // 1 NTIQ = $0.01
+    const feeUsd = usdAmount * 0.025; // 2.5% fee
+    
+    if (tokenType === 'USDC' || tokenType === 'USDT') {
+      return feeUsd.toFixed(2);
+    }
+    
+    if (tokenType === 'ETH') {
+      if (cryptoPrices && cryptoPrices.length > 0) {
+        const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
+        if (ethPrice?.current_price) {
+          const feeEthAmount = feeUsd / ethPrice.current_price;
+          return feeEthAmount.toFixed(6);
         }
       }
       return "0.000000";
@@ -1319,9 +1345,14 @@ export function MultiChainFinancial() {
                   max={user?.balance || 0}
                 />
                 {withdrawAmount && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    You will receive: <span className="font-bold text-blue-600">{calculateWithdrawalAmount(parseInt(withdrawAmount), selectedToken)} {selectedToken}</span>
-                  </p>
+                  <div className="text-sm mt-1 space-y-1">
+                    <p className="text-gray-600">
+                      You will receive: <span className="font-bold text-blue-600">{calculateWithdrawalAmount(parseInt(withdrawAmount), selectedToken)} {selectedToken}</span>
+                    </p>
+                    <p className="text-orange-600 text-xs">
+                      Fee (2.5%): <span className="font-medium">{calculateWithdrawalFee(parseInt(withdrawAmount), selectedToken)} {selectedToken}</span>
+                    </p>
+                  </div>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
                   Available balance: {user?.balance?.toLocaleString() || "0"} NTIQ
@@ -1362,6 +1393,10 @@ export function MultiChainFinancial() {
                       <div className="flex justify-between">
                         <span className="text-gray-700 dark:text-gray-300">You will receive:</span>
                         <span className="font-bold text-blue-600">{calculateWithdrawalAmount(parseInt(withdrawAmount || "0"), selectedToken)} {selectedToken}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">Processing fee (2.5%):</span>
+                        <span className="font-medium text-orange-600">{calculateWithdrawalFee(parseInt(withdrawAmount || "0"), selectedToken)} {selectedToken}</span>
                       </div>
                     </div>
 

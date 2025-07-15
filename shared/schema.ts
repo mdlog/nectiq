@@ -90,6 +90,8 @@ export const withdrawals = pgTable("withdrawals", {
   userId: integer("user_id").notNull().references(() => users.id),
   ntiqAmount: integer("ntiq_amount").notNull(), // NTIQ amount to withdraw
   usdAmount: numeric("usd_amount", { precision: 18, scale: 6 }).notNull(), // USD equivalent (ntiqAmount * 0.01)
+  feeAmount: numeric("fee_amount", { precision: 18, scale: 6 }).default("0"), // 2.5% processing fee amount in token
+  netAmount: numeric("net_amount", { precision: 18, scale: 6 }).notNull(), // Amount user receives after fee (97.5% of total)
   chainName: varchar("chain_name", { length: 20 }).notNull(), // Target chain for withdrawal
   tokenType: varchar("token_type", { length: 10 }).notNull(), // ETH, USDC, or USDT
   toWalletAddress: varchar("to_wallet_address", { length: 42 }).notNull(), // User's wallet address

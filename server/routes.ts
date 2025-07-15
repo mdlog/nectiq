@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
 import { db } from "./db";
-import { cryptoService } from "./services/cryptoService";
+import { cryptoService, CryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
@@ -5371,20 +5371,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Calculate USD amount (100 NTIQ = 1 USD)
-      const usdAmount = (validatedData.ntiqAmount * 0.01).toFixed(2);
+      const usdAmount = validatedData.ntiqAmount * 0.01;
+      
+      // Calculate 2.5% fee and net amount
+      const feePercentage = 0.025;
+      const grossTokenAmount = usdAmount;
+      const feeAmount = grossTokenAmount * feePercentage;
+      const netAmount = grossTokenAmount - feeAmount;
+
+      // For ETH withdrawals, we need to convert USD to ETH using current price
+      let finalNetAmount = netAmount;
+      let finalFeeAmount = feeAmount;
+      
+      if (validatedData.tokenType === 'ETH') {
+        // Get current ETH price
+        const cryptoService = CryptoService.getInstance();
+        const prices = await cryptoService.getCurrentPrices();
+        const ethPrice = prices.find(coin => coin.symbol === 'ETH')?.current_price || 3500; // fallback price
+        
+        finalNetAmount = netAmount / ethPrice;
+        finalFeeAmount = feeAmount / ethPrice;
+      }
 
       // Deduct balance using BalanceService
       await BalanceService.processTransaction({
         userId: session.userId,
         type: 'withdrawal_pending',
         amount: -validatedData.ntiqAmount,
-        description: `Withdrawal request for ${usdAmount} ${validatedData.tokenType} on ${validatedData.chainName}`,
+        description: `Withdrawal request for ${usdAmount.toFixed(2)} USD (${finalNetAmount.toFixed(6)} ${validatedData.tokenType} after 2.5% fee) on ${validatedData.chainName}`,
       }, storage);
 
       const withdrawal = await storage.createWithdrawal({
         userId: session.userId,
         ntiqAmount: validatedData.ntiqAmount,
-        usdAmount,
+        usdAmount: usdAmount.toString(),
+        feeAmount: finalFeeAmount.toString(),
+        netAmount: finalNetAmount.toString(),
         chainName: validatedData.chainName,
         tokenType: validatedData.tokenType,
         toWalletAddress: validatedData.toWalletAddress,
