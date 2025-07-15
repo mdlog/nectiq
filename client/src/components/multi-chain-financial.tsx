@@ -35,7 +35,7 @@ const SUPPORTED_CHAINS = [
     shortName: "eth",
     icon: "🔷",
     explorerUrl: "https://etherscan.io",
-    adminWallet: "0x742d35cC6765C88Ed8C7fe6B4e7F96c0C5A3d6E2", // Contoh wallet admin
+    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       USDC: { address: "0xA0b86a33E6b4A3C6d4b1B4BcF8F7f8d7C6cC9c9e", decimals: 6 },
       USDT: { address: "0xdac17f958d2ee523a2206206994597c13d831ec7", decimals: 6 }
@@ -48,7 +48,7 @@ const SUPPORTED_CHAINS = [
     shortName: "base",
     icon: "🔵",
     explorerUrl: "https://basescan.org",
-    adminWallet: "0x742d35cC6765C88Ed8C7fe6B4e7F96c0C5A3d6E2",
+    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       USDC: { address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", decimals: 6 },
       USDT: { address: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2", decimals: 6 }
@@ -61,7 +61,7 @@ const SUPPORTED_CHAINS = [
     shortName: "bsc",
     icon: "🟡",
     explorerUrl: "https://bscscan.com",
-    adminWallet: "0x742d35cC6765C88Ed8C7fe6B4e7F96c0C5A3d6E2",
+    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       USDC: { address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", decimals: 18 },
       USDT: { address: "0x55d398326f99059fF775485246999027B3197955", decimals: 18 }
@@ -74,7 +74,7 @@ const SUPPORTED_CHAINS = [
     shortName: "optimism",
     icon: "🔴",
     explorerUrl: "https://optimistic.etherscan.io",
-    adminWallet: "0x742d35cC6765C88Ed8C7fe6B4e7F96c0C5A3d6E2",
+    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       USDC: { address: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607", decimals: 6 },
       USDT: { address: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58", decimals: 6 }
@@ -87,7 +87,7 @@ const SUPPORTED_CHAINS = [
     shortName: "arbitrum",
     icon: "🟦",
     explorerUrl: "https://arbiscan.io",
-    adminWallet: "0x742d35cC6765C88Ed8C7fe6B4e7F96c0C5A3d6E2",
+    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       USDC: { address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", decimals: 6 },
       USDT: { address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", decimals: 6 }
@@ -100,7 +100,7 @@ const SUPPORTED_CHAINS = [
     shortName: "sepolia",
     icon: "🧪",
     explorerUrl: "https://sepolia.etherscan.io",
-    adminWallet: "0x742d35cC6765C88Ed8C7fe6B4e7F96c0C5A3d6E2",
+    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       USDC: { address: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8", decimals: 6 },
       USDT: { address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", decimals: 6 }
@@ -113,7 +113,7 @@ const SUPPORTED_CHAINS = [
     shortName: "holesky",
     icon: "🕳️",
     explorerUrl: "https://holesky.etherscan.io",
-    adminWallet: "0x742d35cC6765C88Ed8C7fe6B4e7F96c0C5A3d6E2",
+    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       USDC: { address: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8", decimals: 6 },
       USDT: { address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", decimals: 6 }
