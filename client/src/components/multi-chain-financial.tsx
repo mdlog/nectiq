@@ -460,11 +460,23 @@ export function MultiChainFinancial() {
         }
       }
 
+      // Get current account
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (!accounts || accounts.length === 0) {
+        toast({
+          title: "No Account Connected",
+          description: "Please connect your MetaMask wallet first",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Prepare transaction
       const transactionParameters = {
+        from: accounts[0],
         to: chain.adminWallet,
         value: weiAmount,
-        gasLimit: '0x5208', // 21000 gas limit for ETH transfer
+        gas: '0x5208', // 21000 gas limit for ETH transfer
       };
 
       // Send transaction
