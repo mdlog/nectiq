@@ -26,6 +26,13 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+// Extend Window interface for MetaMask
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 // Supported chain configuration
 const SUPPORTED_CHAINS = [
   {
@@ -373,6 +380,114 @@ export function MultiChainFinancial() {
       title: "Copied",
       description: "Wallet address copied to clipboard",
     });
+  };
+
+  // MetaMask transaction function
+  const sendViaMetaMask = async (deposit: any) => {
+    try {
+      if (!window.ethereum) {
+        toast({
+          title: "MetaMask Required",
+          description: "Please install MetaMask to use this feature",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Request account access
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+      // Get chain configuration
+      const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+      if (!chain) {
+        toast({
+          title: "Chain Not Supported",
+          description: "This chain is not supported for MetaMask transactions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Calculate ETH amount using snapshot price
+      const ethAmount = calculateTokenAmountForHistory(deposit);
+      if (!ethAmount || deposit.tokenType !== 'ETH') {
+        toast({
+          title: "Invalid Transaction",
+          description: "Only ETH deposits support MetaMask transactions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Convert ETH amount to Wei (18 decimals)
+      const weiAmount = '0x' + (BigInt(Math.floor(parseFloat(ethAmount) * 1e18))).toString(16);
+
+      // Chain ID mapping
+      const chainIdMap: { [key: string]: string } = {
+        'eth': '0x1', // Ethereum Mainnet
+        'base': '0x2105', // Base
+        'bsc': '0x38', // BSC
+        'optimism': '0xa', // Optimism
+        'arbitrum': '0xa4b1', // Arbitrum
+        'sepolia': '0xaa36a7', // Sepolia Testnet
+        'holesky': '0x4268' // Holesky Testnet
+      };
+
+      const targetChainId = chainIdMap[deposit.chainName];
+      if (!targetChainId) {
+        toast({
+          title: "Chain Not Supported",
+          description: "This chain is not supported for MetaMask transactions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Switch to target network if needed
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: targetChainId }],
+        });
+      } catch (error: any) {
+        if (error.code === 4902) {
+          toast({
+            title: "Network Not Added",
+            description: "Please add this network to MetaMask manually",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Prepare transaction
+      const transactionParameters = {
+        to: chain.adminWallet,
+        value: weiAmount,
+        gasLimit: '0x5208', // 21000 gas limit for ETH transfer
+      };
+
+      // Send transaction
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParameters],
+      });
+
+      toast({
+        title: "Transaction Sent",
+        description: `Transaction hash: ${txHash}`,
+      });
+
+      console.log('Transaction sent:', txHash);
+
+    } catch (error: any) {
+      console.error('MetaMask transaction error:', error);
+      toast({
+        title: "Transaction Failed",
+        description: error.message || "Failed to send transaction",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatAddress = (address: string) => {
@@ -770,6 +885,23 @@ export function MultiChainFinancial() {
                                 ⚠️ Make sure to transfer the exact amount to complete your deposit. Status will automatically update to "completed" once the transaction is confirmed.
                               </p>
                             </div>
+                            
+                            {/* MetaMask Send Button (for ETH deposits only) */}
+                            {deposit.tokenType === 'ETH' && (
+                              <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+                                <Button
+                                  onClick={() => sendViaMetaMask(deposit)}
+                                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-medium"
+                                  size="lg"
+                                >
+                                  <Send className="w-4 h-4 mr-2" />
+                                  Send {calculateTokenAmountForHistory(deposit)} ETH via MetaMask
+                                </Button>
+                                <p className="text-xs text-gray-500 text-center mt-2">
+                                  Click to automatically send the exact amount using MetaMask
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
