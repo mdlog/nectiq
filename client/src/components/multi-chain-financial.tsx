@@ -390,6 +390,21 @@ export function MultiChainFinancial() {
     return "0.000000";
   };
 
+  // Function to format deposit history display - show token amount instead of confusing USD amount
+  const formatDepositDisplay = (deposit: DepositData): string => {
+    if (deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') {
+      return `${parseFloat(deposit.amountUSD).toFixed(2)} ${deposit.tokenType}`;
+    }
+    
+    if (deposit.tokenType === 'ETH') {
+      // Calculate ETH amount from USD amount
+      const ethAmount = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
+      return `${ethAmount} ETH`;
+    }
+    
+    return `${parseFloat(deposit.amountUSD).toFixed(2)} ${deposit.tokenType}`;
+  };
+
   // Function to calculate withdrawal amount for different tokens
   const calculateWithdrawalAmount = (ntiqAmount: number, tokenType: string): string => {
     const usdAmount = ntiqAmount * 0.01; // 1 NTIQ = $0.01
@@ -1269,7 +1284,7 @@ export function MultiChainFinancial() {
                       <div className="flex items-center justify-between p-3">
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
-                            <span className="font-medium">${deposit.amountUSD} {deposit.tokenType}</span>
+                            <span className="font-medium">{formatDepositDisplay(deposit)}</span>
                             <span>→</span>
                             <span className="font-bold text-blue-600">{deposit.ntiqAmount.toLocaleString()} NTIQ</span>
                           </div>
