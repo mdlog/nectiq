@@ -70,17 +70,46 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
           }
         `,
         events: {
+          onAuthInit: (args) => {
+            console.log('🔐 Dynamic: Auth initialized', args);
+          },
+          onAuthFlowOpen: () => {
+            console.log('🔐 Dynamic: Auth flow opened');
+          },
+          onAuthFlowClose: () => {
+            console.log('🔐 Dynamic: Auth flow closed');
+          },
+          onAuthFlowCancel: () => {
+            console.log('🔐 Dynamic: Auth flow cancelled');
+          },
+          onEmailVerificationSent: (args) => {
+            console.log('🔐 Dynamic: Email verification sent', args);
+          },
+          onEmailVerificationCompleted: (args) => {
+            console.log('🔐 Dynamic: Email verification completed', args);
+          },
           onAuthSuccess: async (args) => {
-            console.log('Dynamic: Authentication successful', args);
+            console.log('🔐 Dynamic: Authentication successful', args);
+            console.log('🔐 User object:', args.user);
+            console.log('🔐 Auth args complete:', JSON.stringify(args, null, 2));
             
             // Support both wallet and email authentication
             const walletAddress = args.user?.verifiedCredentials?.[0]?.address;
             const email = args.user?.email;
             const userId = args.user?.userId;
             
+            console.log('🔐 Extracted data:', {
+              walletAddress,
+              email,
+              userId,
+              hasVerifiedCredentials: !!args.user?.verifiedCredentials?.length,
+              verifiedCredentials: args.user?.verifiedCredentials
+            });
+            
             // Check if user has wallet or email
             if (walletAddress || email || userId) {
               try {
+                console.log('🔐 Sending authentication to backend...');
                 const response = await fetch('/api/auth/dynamic', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -94,32 +123,36 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                   }),
                 });
 
+                console.log('🔐 Backend response status:', response.status);
+                
                 if (response.ok) {
-                  console.log('Backend authentication successful, response status:', response.status);
+                  const responseData = await response.json();
+                  console.log('🔐 Backend authentication successful:', responseData);
                   
                   // Invalidate all queries to refresh authentication state
                   await queryClient.invalidateQueries();
                   
                   // Add small delay to ensure state is updated
                   setTimeout(() => {
-                    console.log('Redirecting to /home after authentication');
+                    console.log('🔐 Redirecting to /home after authentication');
                     window.location.href = '/home';
-                  }, 500);
+                  }, 1000);
                 } else {
                   try {
                     const errorData = await response.json();
-                    console.error('Backend authentication failed:', response.status, errorData);
+                    console.error('🔐 Backend authentication failed:', response.status, errorData);
                   } catch (jsonError) {
                     // If JSON parsing fails, get response as text
                     const errorText = await response.text();
-                    console.error('Backend authentication failed (non-JSON response):', response.status, errorText);
+                    console.error('🔐 Backend authentication failed (non-JSON response):', response.status, errorText);
                   }
                 }
               } catch (error) {
-                console.error('Authentication request failed:', error);
+                console.error('🔐 Authentication request failed:', error);
               }
             } else {
-              console.warn('No wallet address, email, or userId found in authentication response');
+              console.warn('🔐 No wallet address, email, or userId found in authentication response');
+              console.warn('🔐 Available user properties:', Object.keys(args.user || {}));
             }
           },
           onAuthFailure: (error) => {
