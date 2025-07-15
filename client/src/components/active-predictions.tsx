@@ -102,7 +102,7 @@ export function ActivePredictions() {
     staleTime: 30000, // 30 seconds
   });
 
-  const { data: predictions = [], isLoading } = useQuery<ActivePrediction[]>({
+  const { data: predictions, isLoading, error } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
     refetchInterval: isAuthenticated ? 1000 : false, // Only refetch if authenticated
     refetchIntervalInBackground: isAuthenticated,
@@ -110,16 +110,29 @@ export function ActivePredictions() {
     enabled: isAuthenticated, // Only enable query if authenticated
   });
 
-  // Filter predictions based on search query
-  const filteredPredictions = (predictions || []).filter(prediction =>
-    prediction?.cryptocurrency?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Safely handle predictions array with comprehensive null checking
+  const safePredictions = Array.isArray(predictions) ? predictions : [];
+  
+  // Filter predictions based on search query with enhanced null safety
+  const filteredPredictions = safePredictions.filter(prediction => {
+    try {
+      return prediction && 
+             prediction.cryptocurrency && 
+             typeof prediction.cryptocurrency === 'string' &&
+             prediction.cryptocurrency.toLowerCase().includes(searchQuery.toLowerCase());
+    } catch (err) {
+      console.warn('Error filtering prediction:', err, prediction);
+      return false;
+    }
+  });
 
-  // Calculate pagination
-  const totalItems = filteredPredictions.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  // Calculate pagination with safe length access
+  const totalItems = filteredPredictions ? filteredPredictions.length : 0;
+  const totalPages = totalItems > 0 ? Math.ceil(totalItems / itemsPerPage) : 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedPredictions = filteredPredictions.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedPredictions = filteredPredictions && filteredPredictions.length > 0 
+    ? filteredPredictions.slice(startIndex, startIndex + itemsPerPage) 
+    : [];
 
   // Reset to page 1 when search query changes
   const handleSearchChange = (query: string) => {
@@ -162,7 +175,7 @@ export function ActivePredictions() {
     );
   }
 
-  if (predictions.length === 0) {
+  if (safePredictions.length === 0) {
     return (
       <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light min-h-[500px]">
         <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center">
@@ -187,7 +200,7 @@ export function ActivePredictions() {
       </h3>
 
       {/* Search Bar */}
-      {predictions.length > 0 && (
+      {safePredictions.length > 0 && (
         <div className="mb-3 sm:mb-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={14} />
