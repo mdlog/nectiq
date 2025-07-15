@@ -1712,13 +1712,28 @@ export function MultiChainFinancial() {
                             const tokenType = withdrawal.tokenType || 'N/A';
                             
                             if (tokenType === 'USDC' || tokenType === 'USDT') {
-                              // USDC/USDT: 1 NTIQ = $0.01, so 1:1 ratio with USD
-                              tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                              // USDC/USDT: 1 NTIQ = $0.01, with 2.5% fee deduction
+                              const usdValue = ntiqAmount * 0.01; // Total USD value
+                              const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction  
+                              tokenAmount = netUsdValue.toFixed(2);
                             } else if (tokenType === 'ETH') {
-                              // ETH: calculate based on current price
-                              const ethPrice = 2300; // You can update this with real-time price
-                              const usdValue = ntiqAmount * 0.01;
-                              tokenAmount = (usdValue / ethPrice).toFixed(6);
+                              // ETH: calculate based on real-time price with fee deduction
+                              const usdValue = ntiqAmount * 0.01; // Total USD value
+                              const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
+                              
+                              // Use real-time ETH price from cryptoPrices
+                              if (cryptoPrices && cryptoPrices.length > 0) {
+                                const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
+                                if (ethPrice?.current_price) {
+                                  tokenAmount = (netUsdValue / ethPrice.current_price).toFixed(6);
+                                } else {
+                                  // Fallback to estimated price if real-time not available
+                                  tokenAmount = (netUsdValue / 2300).toFixed(6);
+                                }
+                              } else {
+                                // Fallback to estimated price
+                                tokenAmount = (netUsdValue / 2300).toFixed(6);
+                              }
                             } else {
                               tokenAmount = (ntiqAmount * 0.01).toFixed(2);
                             }
