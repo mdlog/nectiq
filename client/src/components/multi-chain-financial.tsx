@@ -737,14 +737,16 @@ export function MultiChainFinancial() {
 
         {/* Deposit Tab */}
         <TabsContent value="deposit" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <ArrowDownCircle className="w-5 h-5 text-green-600" />
-                <span>Deposit ETH/USDC/USDT to NTIQ</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Deposit Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <ArrowDownCircle className="w-5 h-5 text-green-600" />
+                  <span>Deposit ETH/USDC/USDT to NTIQ</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Chain Selection */}
                 <div>
@@ -1136,6 +1138,7 @@ export function MultiChainFinancial() {
               )}
             </CardContent>
           </Card>
+          </div>
         </TabsContent>
 
         {/* Withdraw Tab */}
