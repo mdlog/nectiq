@@ -248,6 +248,9 @@ interface WithdrawalData {
   tokenType: string;
   ntiqAmount: number;
   usdAmount: string;
+  feeAmount?: string;
+  netAmount?: string;
+  ethPriceSnapshot?: string;
   status: string;
   transactionHash?: string;
   adminNote?: string;
@@ -1717,22 +1720,31 @@ export function MultiChainFinancial() {
                               const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction  
                               tokenAmount = netUsdValue.toFixed(2);
                             } else if (tokenType === 'ETH') {
-                              // ETH: calculate based on real-time price with fee deduction
-                              const usdValue = ntiqAmount * 0.01; // Total USD value
-                              const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
-                              
-                              // Use real-time ETH price from cryptoPrices
-                              if (cryptoPrices && cryptoPrices.length > 0) {
-                                const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
-                                if (ethPrice?.current_price) {
-                                  tokenAmount = (netUsdValue / ethPrice.current_price).toFixed(6);
+                              // ETH: calculate based on stored ETH price snapshot for accurate historical display
+                              if (withdrawal.ethPriceSnapshot) {
+                                // Use stored ETH price snapshot from when withdrawal was created
+                                const ethPrice = parseFloat(withdrawal.ethPriceSnapshot);
+                                const usdValue = ntiqAmount * 0.01; // Total USD value
+                                const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
+                                tokenAmount = (netUsdValue / ethPrice).toFixed(6);
+                              } else {
+                                // Fallback for older withdrawals without price snapshot
+                                const usdValue = ntiqAmount * 0.01; // Total USD value
+                                const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
+                                
+                                // Use real-time ETH price from cryptoPrices as fallback only
+                                if (cryptoPrices && cryptoPrices.length > 0) {
+                                  const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
+                                  if (ethPrice?.current_price) {
+                                    tokenAmount = (netUsdValue / ethPrice.current_price).toFixed(6);
+                                  } else {
+                                    // Final fallback to estimated price if real-time not available
+                                    tokenAmount = (netUsdValue / 2300).toFixed(6);
+                                  }
                                 } else {
-                                  // Fallback to estimated price if real-time not available
+                                  // Final fallback to estimated price
                                   tokenAmount = (netUsdValue / 2300).toFixed(6);
                                 }
-                              } else {
-                                // Fallback to estimated price
-                                tokenAmount = (netUsdValue / 2300).toFixed(6);
                               }
                             } else {
                               tokenAmount = (ntiqAmount * 0.01).toFixed(2);

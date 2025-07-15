@@ -5394,6 +5394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For ETH withdrawals, we need to convert USD to ETH using current price
       let finalNetAmount = netAmount;
       let finalFeeAmount = feeAmount;
+      let ethPriceSnapshot = null;
       
       if (validatedData.tokenType === 'ETH') {
         console.log('⚡ [WITHDRAWAL] ETH withdrawal - getting current price...');
@@ -5402,6 +5403,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const ethPrice = prices.find(coin => coin.symbol === 'ETH')?.current_price || 3500; // fallback price
         console.log('💵 [WITHDRAWAL] ETH price:', ethPrice);
         
+        // Store ETH price snapshot for historical accuracy
+        ethPriceSnapshot = ethPrice;
         finalNetAmount = netAmount / ethPrice;
         finalFeeAmount = feeAmount / ethPrice;
       }
@@ -5429,6 +5432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         usdAmount: usdAmount.toString(),
         feeAmount: finalFeeAmount.toString(),
         netAmount: finalNetAmount.toString(),
+        ethPriceSnapshot: ethPriceSnapshot ? ethPriceSnapshot.toString() : null,
         chainName: validatedData.chainName,
         tokenType: validatedData.tokenType,
         toWalletAddress: validatedData.toWalletAddress,
