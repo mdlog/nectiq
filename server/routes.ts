@@ -5505,6 +5505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdAt: deposits.createdAt,
           processedAt: deposits.processedAt,
           username: users.username,
+          uid: users.uid,
         })
         .from(deposits)
         .leftJoin(users, eq(deposits.userId, users.id))
