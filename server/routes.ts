@@ -432,54 +432,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dynamic SDK Authentication endpoint
   app.post("/api/auth/dynamic", async (req, res) => {
     try {
-      const { user, walletAddress, address } = req.body;
-      const finalAddress = normalizeWalletAddress(walletAddress || address || user?.verifiedCredentials?.[0]?.address);
+      const { user, walletAddress, address, email, userId } = req.body;
+      const finalAddress = walletAddress || address || user?.verifiedCredentials?.[0]?.address;
+      const userEmail = email || user?.email;
+      const dynamicUserId = userId || user?.userId;
       
-      console.log('Dynamic auth request:', { finalAddress, hasUser: !!user });
+      console.log('Dynamic auth request:', { 
+        finalAddress: finalAddress ? finalAddress.slice(0, 6) + '...' : null,
+        userEmail: userEmail ? userEmail.substring(0, 3) + '***' : null,
+        dynamicUserId,
+        hasUser: !!user 
+      });
       
-      if (!finalAddress) {
-        return res.status(400).json({ message: "Missing wallet address" });
+      // Check if we have either wallet address, email, or user ID
+      if (!finalAddress && !userEmail && !dynamicUserId) {
+        return res.status(400).json({ message: "Missing authentication credentials (wallet, email, or user ID)" });
       }
 
-      // Check security
-      const { WalletSecurityService } = await import('./walletSecurity');
-      const securityCheck = await WalletSecurityService.validateWalletLogin(finalAddress, req);
+      let dbUser;
       
-      if (!securityCheck.success) {
-        return res.status(403).json({ 
-          message: securityCheck.message,
-          securityBlock: true 
-        });
+      // Handle wallet-based authentication
+      if (finalAddress) {
+        const normalizedAddress = normalizeWalletAddress(finalAddress);
+        
+        // Check security for wallet login
+        const { WalletSecurityService } = await import('./walletSecurity');
+        const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
+        
+        if (!securityCheck.success) {
+          return res.status(403).json({ 
+            message: securityCheck.message,
+            securityBlock: true 
+          });
+        }
+
+        // Find or create user by wallet
+        dbUser = await storage.getUserByWalletAddress(normalizedAddress);
+        if (!dbUser) {
+          const adminWallets = getAdminWalletAddresses();
+          const isAdmin = adminWallets.includes(normalizedAddress);
+          const username = isAdmin ? `Admin_${normalizedAddress.slice(-6)}` : generateRandomUsername();
+          
+          dbUser = await storage.createUser({
+            username,
+            walletAddress: normalizedAddress,
+            authMethod: "wallet",
+            isAdmin
+          });
+          
+          console.log(`Auto-registered wallet user: ${username}, admin: ${isAdmin}`);
+        }
+      }
+      // Handle email-based authentication  
+      else if (userEmail || dynamicUserId) {
+        // Try to find existing user by email first
+        if (userEmail) {
+          try {
+            dbUser = await storage.getUserByEmail(userEmail);
+          } catch (error) {
+            // getUserByEmail method may not exist, we'll create user instead
+          }
+        }
+        
+        // If user doesn't exist, create new user
+        if (!dbUser) {
+          const username = generateRandomUsername();
+          
+          dbUser = await storage.createUser({
+            username,
+            walletAddress: null, // No wallet for email users initially
+            authMethod: "email",
+            isAdmin: false, // Email users are not admin by default
+            email: userEmail // Store email if available
+          });
+          
+          console.log(`Auto-registered email user: ${username} with email: ${userEmail ? userEmail.substring(0, 3) + '***' : 'N/A'}`);
+        } else {
+          console.log(`Found existing email user: ${dbUser.username} with email: ${userEmail ? userEmail.substring(0, 3) + '***' : 'N/A'}`);
+        }
       }
 
-      // Find or create user
-      let dbUser = await storage.getUserByWalletAddress(finalAddress);
       if (!dbUser) {
-        const adminWallets = getAdminWalletAddresses();
-        const isAdmin = adminWallets.includes(finalAddress);
-        const username = isAdmin ? `Admin_${finalAddress.slice(-6)}` : generateRandomUsername();
-        
-        dbUser = await storage.createUser({
-          username,
-          walletAddress: finalAddress,
-          authMethod: "wallet",
-          isAdmin
-        });
-        
-        console.log(`Auto-registered: ${username}, admin: ${isAdmin}`);
+        return res.status(400).json({ message: "Failed to create or find user" });
       }
 
       // Set session
       req.session.userId = dbUser.id;
-      req.session.isAdmin = dbUser.isAdmin;
+      req.session.isAdmin = dbUser.isAdmin || false;
       
       const responseUser = {
         id: dbUser.id,
         username: dbUser.username,
         walletAddress: dbUser.walletAddress,
         balance: dbUser.balance,
-        isAdmin: dbUser.isAdmin
+        isAdmin: dbUser.isAdmin || false
       };
+      
+      console.log('Dynamic auth successful for user:', responseUser.username);
       
       res.json({ 
         success: true, 

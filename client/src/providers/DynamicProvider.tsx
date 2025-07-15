@@ -72,17 +72,24 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         events: {
           onAuthSuccess: async (args) => {
             console.log('Dynamic: Authentication successful', args);
-            const walletAddress = args.user?.verifiedCredentials?.[0]?.address;
             
-            if (walletAddress) {
+            // Support both wallet and email authentication
+            const walletAddress = args.user?.verifiedCredentials?.[0]?.address;
+            const email = args.user?.email;
+            const userId = args.user?.userId;
+            
+            // Check if user has wallet or email
+            if (walletAddress || email || userId) {
               try {
                 const response = await fetch('/api/auth/dynamic', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   credentials: 'include',
                   body: JSON.stringify({
-                    walletAddress: walletAddress,
-                    address: walletAddress,
+                    walletAddress: walletAddress || null,
+                    address: walletAddress || null,
+                    email: email || null,
+                    userId: userId || null,
                     user: args.user
                   }),
                 });
@@ -111,6 +118,8 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
               } catch (error) {
                 console.error('Authentication request failed:', error);
               }
+            } else {
+              console.warn('No wallet address, email, or userId found in authentication response');
             }
           },
           onAuthFailure: (error) => {
