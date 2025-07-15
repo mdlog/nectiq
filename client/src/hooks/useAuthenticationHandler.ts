@@ -16,8 +16,10 @@ export function useAuthenticationHandler() {
       email: user?.email
     });
 
-    if (isAuthenticated && user) {
+    // Process authentication if user exists (don't rely on isAuthenticated flag)
+    if (user && (user.verifiedCredentials?.length > 0 || user.email || user.userId)) {
       console.log('🔐 [HOOK] User authenticated, processing...');
+      console.log('🔐 [HOOK] User object details:', JSON.stringify(user, null, 2));
       
       const walletAddress = user.verifiedCredentials?.[0]?.address;
       const email = user.email;
@@ -78,5 +80,5 @@ export function useAuthenticationHandler() {
         });
       }
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user?.userId, user?.verifiedCredentials?.[0]?.address, navigate]);
 }
