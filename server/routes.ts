@@ -106,6 +106,7 @@ const ADMIN_IP_WHITELIST = new Set([
   '172.31.128.40', // Main admin IP that was getting blacklisted
   '172.31.128.38', // Current admin IP being blacklisted
   '172.31.128.107', // Current admin IP being blocked
+  '172.31.128.96', // New admin IP causing unauthorized access attempts
   '125.162.228.143', // Admin user's real IP from X-Forwarded-For
   'localhost',
   '172.31.128.20', // Current admin mobile IP
@@ -5214,20 +5215,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateDepositStatus(depositId, 'completed');
           
           // Add NTIQ balance to user using BalanceService
-          const balanceService = new BalanceService(storage);
-          await balanceService.processTransaction(
-            session.userId,
-            'deposit_credit',
-            deposit.ntiqAmount,
-            `Deposit completed - ${deposit.chainName.toUpperCase()} transaction ${deposit.transactionHash}`,
-            { 
+          await BalanceService.processTransaction({
+            userId: session.userId,
+            type: 'crypto_purchase',
+            amount: deposit.ntiqAmount,
+            description: `Deposit completed - ${deposit.chainName.toUpperCase()} transaction ${deposit.transactionHash}`,
+            relatedId: depositId,
+            metadata: { 
               depositId: depositId,
               transactionHash: deposit.transactionHash,
               chainName: deposit.chainName,
               tokenType: deposit.tokenType,
               amountUSD: deposit.amountUSD
             }
-          );
+          }, storage);
 
           console.log(`✅ Deposit ${depositId} completed successfully. Added ${deposit.ntiqAmount} NTIQ to user ${session.userId}`);
           
@@ -5283,20 +5284,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId, depositId, ntiqAmount, transactionHash } = req.body;
       
       // Credit NTIQ balance to user using BalanceService
-      const balanceService = new BalanceService(storage);
-      await balanceService.processTransaction(
-        userId,
-        'deposit_credit',
-        ntiqAmount,
-        `Deposit completed - SEPOLIA transaction ${transactionHash}`,
-        { 
+      await BalanceService.processTransaction({
+        userId: userId,
+        type: 'crypto_purchase',
+        amount: ntiqAmount,
+        description: `Deposit completed - SEPOLIA transaction ${transactionHash}`,
+        relatedId: depositId,
+        metadata: { 
           depositId: depositId,
           transactionHash: transactionHash,
           chainName: 'sepolia',
           tokenType: 'ETH',
           amountUSD: ntiqAmount / 100
         }
-      );
+      }, storage);
 
       console.log(`✅ Manual credit: Added ${ntiqAmount} NTIQ to user ${userId} for deposit ${depositId}`);
       

@@ -127,29 +127,21 @@ app.use(session({
   }
 }));
 
-// CORS middleware - Enhanced configuration for Dynamic SDK
+// Enhanced CORS middleware - Complete Dynamic SDK support
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'http://localhost:5000',
-    'https://app.dynamic.xyz',
-    'https://app.dynamicauth.com',
-    'https://widget.dynamic.xyz',
-    'https://connect.dynamic.xyz',
-    '*'
-  ];
   
-  // Allow specific origins or all if not specified
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  
+  // Allow all origins for development
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
+  
+  // Enhanced security for Dynamic SDK
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -159,14 +151,26 @@ app.use((req, res, next) => {
   next();
 });
 
-// Enhanced security headers middleware
+// Enhanced security headers middleware for Dynamic SDK
 app.use((req, res, next) => {
   // Security headers to prevent common attacks
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Changed from DENY to SAMEORIGIN for Dynamic SDK
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; style-src 'self' 'unsafe-inline' https: data:; font-src 'self' https: data:; img-src 'self' data: https: blob:; connect-src 'self' https: wss: ws: data: blob:; frame-src 'self' https: data:; object-src 'none'; media-src 'self' https: data: blob:;");
+  
+  // Relaxed CSP for Dynamic SDK compatibility
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob: *.dynamic.xyz *.dynamicauth.com",
+    "style-src 'self' 'unsafe-inline' https: data: *.dynamic.xyz *.dynamicauth.com",
+    "font-src 'self' https: data: *.dynamic.xyz *.dynamicauth.com",
+    "img-src 'self' data: https: blob: *.dynamic.xyz *.dynamicauth.com",
+    "connect-src 'self' https: wss: ws: data: blob: *.dynamic.xyz *.dynamicauth.com *.coingecko.com",
+    "frame-src 'self' https: data: *.dynamic.xyz *.dynamicauth.com",
+    "object-src 'none'",
+    "media-src 'self' https: data: blob:"
+  ].join('; '));
   
   // HSTS for HTTPS
   if (req.secure) {

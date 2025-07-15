@@ -968,7 +968,7 @@ export default function AdminPanel() {
   }) : [];
 
   // Filter predictions based on asset, status, date range, and search term
-  const filteredPredictions = predictions.filter(prediction => {
+  const filteredPredictions = (predictions || []).filter(prediction => {
     const assetMatch = predictionsAssetFilter === "all" || prediction.cryptocurrency === predictionsAssetFilter;
     const statusMatch = predictionsStatusFilter === "all" || prediction.status === predictionsStatusFilter;
     
@@ -1038,7 +1038,7 @@ export default function AdminPanel() {
   const handleExportPredictions = () => {
     const csvContent = [
       ["User", "Cryptocurrency", "Prediction", "Actual", "Stake", "Reward", "Accuracy", "Status", "Date"].join(","),
-      ...sortedPredictions.map(prediction => [
+      ...(sortedPredictions || []).map(prediction => [
         `User ${prediction.userId}`,
         prediction.cryptocurrency,
         prediction.predictedPrice,
@@ -1062,7 +1062,7 @@ export default function AdminPanel() {
 
   // Enhanced leaderboard filtering and sorting using real leaderboard data
   const filteredAndSortedLeaderboard = (leaderboardData || [])
-    .filter(user => user.totalPredictions > 0) // Only users with predictions
+    .filter(user => user && user.totalPredictions > 0) // Only users with predictions
     .map(user => {
       const accuracy = user.totalPredictions > 0 ? (user.correctPredictions / user.totalPredictions) * 100 : 0;
       // Calculate streak based on win rate (simplified calculation)
@@ -1120,7 +1120,7 @@ export default function AdminPanel() {
   const handleExportLeaderboard = () => {
     const csvContent = [
       ["Rank", "Username", "UID", "Accuracy", "Total Predictions", "Correct Predictions", "Total Rewards", "Streak", "Avg Multiplier"].join(","),
-      ...filteredAndSortedLeaderboard.map((user, index) => [
+      ...(filteredAndSortedLeaderboard || []).map((user, index) => [
         index + 1,
         user.username,
         user.uid,
@@ -1164,7 +1164,7 @@ export default function AdminPanel() {
     })) : [])
   ];
 
-  const filteredTransactions = allTransactions.filter(tx => {
+  const filteredTransactions = (allTransactions || []).filter(tx => {
     // Type filter
     if (transactionTypeFilter !== "all" && tx.type !== transactionTypeFilter) {
       return false;
@@ -1215,17 +1215,17 @@ export default function AdminPanel() {
     return true;
   }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  const paginatedTransactions = filteredTransactions.slice(
+  const paginatedTransactions = (filteredTransactions || []).slice(
     (transactionPage - 1) * transactionsPerPage,
     transactionPage * transactionsPerPage
   );
 
   // Calculate additional statistics
-  const uniqueWallets = new Set(allTransactions.map(tx => tx.walletAddress || tx.userId)).size;
+  const uniqueWallets = new Set((allTransactions || []).map(tx => tx.walletAddress || tx.userId)).size;
   const avgPurchaseAmount = Array.isArray(transactionPurchases) && transactionPurchases.length > 0 
     ? transactionPurchases.reduce((sum: number, p: any) => sum + (p.ptsAmount || 0), 0) / transactionPurchases.length 
     : 0;
-  const failedTransactions = allTransactions.filter(tx => tx.status === 'failed').length;
+  const failedTransactions = (allTransactions || []).filter(tx => tx.status === 'failed').length;
   const ntiqTurnoverRate = Array.isArray(transactionPurchases) && Array.isArray(transactionWithdrawals) && transactionPurchases.length > 0 && transactionWithdrawals.length > 0 
     ? (transactionWithdrawals.reduce((sum: number, w: any) => sum + (w.ptsAmount || 0), 0) / transactionPurchases.reduce((sum: number, p: any) => sum + (p.ptsAmount || 0), 0)) * 100
     : 0;
@@ -1234,7 +1234,7 @@ export default function AdminPanel() {
   const handleExportTransactions = () => {
     const csvContent = [
       ["Type", "User", "Token", "Amount", "Status", "Hash", "Date", "Payment Address"].join(","),
-      ...filteredTransactions.map(tx => [
+      ...(filteredTransactions || []).map(tx => [
         tx.type,
         tx.username || `User ${tx.userId}`,
         tx.token,
@@ -1260,7 +1260,7 @@ export default function AdminPanel() {
     const headers = ['Type', 'User', 'UID', 'Amount', 'Token', 'Status', 'Hash', 'Date'];
     const csvData = [
       headers.join(','),
-      ...filteredTransactions.map(tx => [
+      ...(filteredTransactions || []).map(tx => [
         tx.type,
         tx.username || `User ${tx.userId}`,
         tx.uid || tx.userId,
@@ -1286,7 +1286,7 @@ export default function AdminPanel() {
     const headers = ['Timestamp', 'Severity', 'Event', 'Details', 'Wallet', 'IP', 'Country', 'Status', 'Resolved'];
     const csvData = [
       headers.join(','),
-      ...filteredSecurityEvents.map(event => [
+      ...(filteredSecurityEvents || []).map(event => [
         event.timestamp.toISOString(),
         event.severity,
         `"${event.event}"`,
@@ -1898,7 +1898,7 @@ export default function AdminPanel() {
   ];
 
   // Enhanced security event filtering and processing
-  const filteredSecurityEvents = mockSecurityEvents.filter(event => {
+  const filteredSecurityEvents = (mockSecurityEvents || []).filter(event => {
     // Severity filter
     if (securityEventFilter !== "all" && event.severity !== securityEventFilter) {
       return false;
@@ -1940,19 +1940,19 @@ export default function AdminPanel() {
     return true;
   }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  const paginatedSecurityEvents = filteredSecurityEvents.slice(
+  const paginatedSecurityEvents = (filteredSecurityEvents || []).slice(
     (securityPage - 1) * securityEventsPerPage,
     securityPage * securityEventsPerPage
   );
 
   // Security statistics
   const securityStats = {
-    totalEvents: filteredSecurityEvents.length,
-    criticalEvents: filteredSecurityEvents.filter(e => e.severity === 'critical').length,
-    highEvents: filteredSecurityEvents.filter(e => e.severity === 'high').length,
-    mediumEvents: filteredSecurityEvents.filter(e => e.severity === 'medium').length,
-    unresolvedEvents: filteredSecurityEvents.filter(e => !e.resolved).length,
-    autoBlockedIps: filteredSecurityEvents.filter(e => e.status === 'auto-blocked').length
+    totalEvents: (filteredSecurityEvents || []).length,
+    criticalEvents: (filteredSecurityEvents || []).filter(e => e.severity === 'critical').length,
+    highEvents: (filteredSecurityEvents || []).filter(e => e.severity === 'high').length,
+    mediumEvents: (filteredSecurityEvents || []).filter(e => e.severity === 'medium').length,
+    unresolvedEvents: (filteredSecurityEvents || []).filter(e => !e.resolved).length,
+    autoBlockedIps: (filteredSecurityEvents || []).filter(e => e.status === 'auto-blocked').length
   };
 
   // System settings queries
@@ -4818,10 +4818,10 @@ export default function AdminPanel() {
                             <TableHead className="w-12">
                               <input 
                                 type="checkbox" 
-                                checked={selectedSecurityEvents.length === paginatedSecurityEvents.length && paginatedSecurityEvents.length > 0}
+                                checked={selectedSecurityEvents.length === (paginatedSecurityEvents || []).length && (paginatedSecurityEvents || []).length > 0}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setSelectedSecurityEvents(paginatedSecurityEvents.map(event => event.id));
+                                    setSelectedSecurityEvents((paginatedSecurityEvents || []).map(event => event.id));
                                   } else {
                                     setSelectedSecurityEvents([]);
                                   }
@@ -4840,7 +4840,7 @@ export default function AdminPanel() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {paginatedSecurityEvents.map((event) => (
+                          {(paginatedSecurityEvents || []).map((event) => (
                             <TableRow 
                               key={event.id}
                               className={`hover:bg-surface/50 transition-colors cursor-pointer ${
