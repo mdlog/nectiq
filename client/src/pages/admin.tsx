@@ -482,7 +482,10 @@ export default function AdminPanel() {
 
   // Helper function to get cryptocurrency image URL
   const getCryptoImageUrl = (cryptoId: string) => {
-    const crypto = cryptoPrices.find(c => c.id === cryptoId);
+    if (!cryptoPrices || cryptoPrices.length === 0) {
+      return `https://assets.coingecko.com/coins/images/1/large/${cryptoId}.png`;
+    }
+    const crypto = cryptoPrices.find(c => c && c.id === cryptoId);
     return crypto?.image || `https://assets.coingecko.com/coins/images/1/large/${cryptoId}.png`;
   };
 
@@ -2799,7 +2802,7 @@ export default function AdminPanel() {
               <Award className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalRewards?.toLocaleString() || 0}</div>
+              <div className="text-2xl font-bold">{stats?.totalRewards ? stats.totalRewards.toLocaleString() : 0}</div>
             </CardContent>
           </Card>
 
@@ -2829,7 +2832,7 @@ export default function AdminPanel() {
               <TrendingUp className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalStaked?.toLocaleString() || 0}</div>
+              <div className="text-2xl font-bold">{stats?.totalStaked ? stats.totalStaked.toLocaleString() : 0}</div>
             </CardContent>
           </Card>
         </div>
@@ -3140,7 +3143,7 @@ export default function AdminPanel() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <span className="font-semibold">{user.balance?.toLocaleString() || 0} NTIQ</span>
+                              <span className="font-semibold">{user.balance ? user.balance.toLocaleString() : 0} NTIQ</span>
                             </TableCell>
                             <TableCell>{user.totalPredictions}</TableCell>
                             <TableCell>
@@ -3153,7 +3156,7 @@ export default function AdminPanel() {
                             </TableCell>
                             <TableCell>
                               <span className="font-semibold text-orange-600">
-                                {user.totalRewards?.toLocaleString() || 0}
+                                {user.totalRewards ? user.totalRewards.toLocaleString() : 0}
                               </span>
                             </TableCell>
                             <TableCell>
@@ -3363,7 +3366,7 @@ export default function AdminPanel() {
                         <div className="flex items-center space-x-6">
                           <div className="text-center">
                             <p className="text-sm text-slate-400">Current Price</p>
-                            <p className="font-semibold">${crypto.currentPrice?.toLocaleString() || 'N/A'}</p>
+                            <p className="font-semibold">${crypto.currentPrice ? crypto.currentPrice.toLocaleString() : 'N/A'}</p>
                           </div>
                           <div className="text-center">
                             <p className="text-sm text-slate-400">24h Change</p>
@@ -3663,7 +3666,7 @@ export default function AdminPanel() {
                             <div className="flex items-center space-x-6">
                               <div className="text-center">
                                 <p className="text-sm text-slate-400">Predicted</p>
-                                <p className="font-semibold">${parseFloat(prediction.predictedPrice).toLocaleString()}</p>
+                                <p className="font-semibold">${prediction.predictedPrice ? parseFloat(prediction.predictedPrice).toLocaleString() : 'N/A'}</p>
                               </div>
                               <div className="text-center">
                                 <p className="text-sm text-slate-400">Actual</p>
@@ -4012,7 +4015,7 @@ export default function AdminPanel() {
 
                         {/* Rewards */}
                         <div className="col-span-1 text-center">
-                          <p className="font-semibold text-primary">{(user.totalRewards || 0).toLocaleString()}</p>
+                          <p className="font-semibold text-primary">{user.totalRewards ? user.totalRewards.toLocaleString() : 0}</p>
                           <p className="text-xs text-slate-400">NTIQ</p>
                         </div>
 
@@ -4176,7 +4179,7 @@ export default function AdminPanel() {
                           <div>
                             <p className="text-sm text-slate-400">NTIQ Purchases</p>
                             <p className="text-2xl font-bold">{transactionStats?.totalPurchases || 0}</p>
-                            <p className="text-xs text-slate-500">{(transactionStats?.totalPTSPurchased || 0).toLocaleString()} NTIQ</p>
+                            <p className="text-xs text-slate-500">{transactionStats?.totalPTSPurchased ? transactionStats.totalPTSPurchased.toLocaleString() : 0} NTIQ</p>
                           </div>
                           <Coins className="h-8 w-8 text-blue-500" />
                         </div>
@@ -4188,7 +4191,7 @@ export default function AdminPanel() {
                           <div>
                             <p className="text-sm text-slate-400">Withdrawals</p>
                             <p className="text-2xl font-bold">{transactionStats?.totalWithdrawals || 0}</p>
-                            <p className="text-xs text-slate-500">{(transactionStats?.totalPTSWithdrawn || 0).toLocaleString()} NTIQ</p>
+                            <p className="text-xs text-slate-500">{transactionStats?.totalPTSWithdrawn ? transactionStats.totalPTSWithdrawn.toLocaleString() : 0} NTIQ</p>
                           </div>
                           <TrendingUp className="h-8 w-8 text-green-500" />
                         </div>
@@ -4484,7 +4487,7 @@ export default function AdminPanel() {
                               </TableCell>
                               <TableCell>
                                 <div className="text-sm">
-                                  <div className="font-medium">{transaction.amount.toLocaleString()} NTIQ</div>
+                                  <div className="font-medium">{transaction.amount ? transaction.amount.toLocaleString() : 0} NTIQ</div>
                                   {transaction.type === 'withdrawal' && (
                                     <div className="text-xs text-slate-500">→ {transaction.tokenAmount || 'N/A'} {transaction.token}</div>
                                   )}
@@ -5732,7 +5735,7 @@ export default function AdminPanel() {
                         placeholder="Enter ETH rate"
                         className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400"
                       />
-                      <p className="text-xs text-gray-600 dark:text-gray-400">1 ETH = {settingsForm.exchangeRates.ethToPts.toLocaleString()} NTIQ</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">1 ETH = {settingsForm.exchangeRates.ethToPts ? settingsForm.exchangeRates.ethToPts.toLocaleString() : 300000} NTIQ</p>
                       <p className="text-xs text-green-600 dark:text-green-400">Last updated: 2 minutes ago</p>
                     </div>
                     <div className="space-y-2">
