@@ -5397,8 +5397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (validatedData.tokenType === 'ETH') {
         console.log('⚡ [WITHDRAWAL] ETH withdrawal - getting current price...');
-        // Get current ETH price
-        const cryptoService = CryptoService.getInstance();
+        // Get current ETH price using existing cryptoService instance
         const prices = await cryptoService.getCurrentPrices();
         const ethPrice = prices.find(coin => coin.symbol === 'ETH')?.current_price || 3500; // fallback price
         console.log('💵 [WITHDRAWAL] ETH price:', ethPrice);
