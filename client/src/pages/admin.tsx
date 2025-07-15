@@ -1177,11 +1177,11 @@ export default function AdminPanel() {
       token: d.tokenType || 'ETH',
       status: d.status || 'pending',
       amount: d.ntiqAmount,
-      hash: d.txHash || null,
+      hash: d.transactionHash || null,
       timestamp: d.createdAt,
       paymentAmount: d.amountUSD,
       paymentToken: d.tokenType,
-      networkName: d.networkName
+      networkName: d.chainName
     })) : [])
   ];
 
@@ -1465,17 +1465,31 @@ export default function AdminPanel() {
     }
   };
 
+  // Early return for loading states to prevent null pointer exceptions
+  if (statsLoading || !stats || !users || !predictions) {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-lg">Loading admin panel...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Reset pagination when filters change
   useEffect(() => {
     setPredictionsPage(1);
   }, [predictionsAssetFilter, predictionsStatusFilter, predictionsSearchTerm]);
 
   // Get unique assets and statuses for filter options
-  const uniqueAssets = Array.from(new Set(predictions.map(p => p.cryptocurrency)));
-  const uniqueStatuses = Array.from(new Set(predictions.map(p => p.status)));
+  const uniqueAssets = Array.from(new Set((predictions || []).map(p => p.cryptocurrency)));
+  const uniqueStatuses = Array.from(new Set((predictions || []).map(p => p.status)));
 
   // Filter users based on selected criteria and search term
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = (users || []).filter(user => {
     // Filter by category
     let categoryMatch = true;
     switch (userFilter) {
@@ -1620,15 +1634,15 @@ export default function AdminPanel() {
   };
 
   const handleSelectAllBattles = () => {
-    if (selectedBattles.length === filteredBattles.length) {
+    if (selectedBattles.length === (filteredBattles || []).length) {
       setSelectedBattles([]);
     } else {
-      setSelectedBattles(filteredBattles.map(battle => battle.id));
+      setSelectedBattles((filteredBattles || []).map(battle => battle.id));
     }
   };
 
   // Filter and sort battles
-  const filteredBattles = battles.filter(battle => {
+  const filteredBattles = (battles || []).filter(battle => {
     const statusMatch = battlesStatusFilter === "all" || battle.status === battlesStatusFilter;
     const cryptoMatch = battlesCryptoFilter === "all" || battle.cryptocurrency === battlesCryptoFilter;
     const searchMatch = battlesSearchQuery === "" || 
@@ -1679,7 +1693,7 @@ export default function AdminPanel() {
   const exportBattlesToCSV = () => {
     const csvData = [
       ['ID', 'Challenger', 'Challenged', 'Cryptocurrency', 'Stake', 'Status', 'Created', 'Target Time'].join(','),
-      ...sortedBattles.map(battle => [
+      ...(sortedBattles || []).map(battle => [
         battle.id,
         battle.challengerUsername || 'N/A',
         battle.challengedUsername || 'N/A',
@@ -1710,10 +1724,10 @@ export default function AdminPanel() {
   };
 
   const handleSelectAllUsers = () => {
-    if (selectedUsers.length === sortedUsers.length) {
+    if (selectedUsers.length === (sortedUsers || []).length) {
       setSelectedUsers([]);
     } else {
-      setSelectedUsers(sortedUsers.map(user => user.id));
+      setSelectedUsers((sortedUsers || []).map(user => user.id));
     }
   };
 
@@ -1731,7 +1745,7 @@ export default function AdminPanel() {
     }
 
     // Confirm bulk deletion with more detailed dialog
-    const usernames = sortedUsers
+    const usernames = (sortedUsers || [])
       .filter(u => selectedUsers.includes(u.id))
       .map(u => u.username)
       .join(', ');
@@ -3858,7 +3872,7 @@ export default function AdminPanel() {
 
                 {/* Enhanced Leaderboard Content */}
                 <div className="space-y-3">
-                  {filteredAndSortedLeaderboard.map((user, index) => {
+                  {(filteredAndSortedLeaderboard || []).map((user, index) => {
                     const rank = index + 1;
                     const getRankColor = () => {
                       switch (rank) {
@@ -4445,7 +4459,7 @@ export default function AdminPanel() {
                                       <a
                                         href={(() => {
                                           const hash = transaction.hash;
-                                          const networkName = transaction.networkName?.toLowerCase() || 'ethereum';
+                                          const networkName = (transaction.networkName || transaction.chainName)?.toLowerCase() || 'ethereum';
                                           
                                           switch (networkName) {
                                             case 'ethereum':
@@ -4471,15 +4485,15 @@ export default function AdminPanel() {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-primary hover:underline cursor-pointer flex items-center"
-                                        title={`View on ${transaction.networkName || 'Ethereum'} Explorer: ${transaction.hash}`}
+                                        title={`View on ${transaction.networkName || transaction.chainName || 'Ethereum'} Explorer: ${transaction.hash}`}
                                       >
                                         {transaction.hash.slice(0, 10)}...
                                         <svg className="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                         </svg>
                                       </a>
-                                      {transaction.type === 'deposit' && transaction.networkName && (
-                                        <span className="text-xs text-slate-500 font-medium">{transaction.networkName}</span>
+                                      {transaction.type === 'deposit' && (transaction.networkName || transaction.chainName) && (
+                                        <span className="text-xs text-slate-500 font-medium">{transaction.networkName || transaction.chainName}</span>
                                       )}
                                     </div>
                                   ) : (
