@@ -20,7 +20,7 @@ export class WithdrawalScheduler {
         'sepolia': {
           rpcUrl: 'https://eth-sepolia.public.blastapi.io',
           chainId: 11155111,
-          gasLimit: '21000',
+          gasLimit: '150000', // Fixed: Increased for ERC-20 token transfers (USDC/USDT)
           maxGasPrice: '50',
           tokenContracts: {
             USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
