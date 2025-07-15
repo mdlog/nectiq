@@ -4489,13 +4489,13 @@ export default function AdminPanel() {
                                 <div className="text-sm">
                                   <div className="font-medium text-gray-900 dark:text-white">{transaction.amount ? transaction.amount.toLocaleString() : 0} NTIQ</div>
                                   {transaction.type === 'withdrawal' && (
-                                    <div className="text-xs text-gray-700 dark:text-gray-300 font-medium">→ {transaction.tokenAmount || 'N/A'} {transaction.token}</div>
+                                    <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">→ {transaction.tokenAmount || 'N/A'} {transaction.token}</div>
                                   )}
                                   {transaction.type === 'purchase' && (
-                                    <div className="text-xs text-gray-700 dark:text-gray-300 font-medium">← {transaction.paymentAmount || 'N/A'} {transaction.token}</div>
+                                    <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">← {transaction.paymentAmount || 'N/A'} {transaction.token}</div>
                                   )}
                                   {transaction.type === 'deposit' && (
-                                    <div className="text-xs text-gray-700 dark:text-gray-300 font-medium">← {transaction.paymentAmount || 'N/A'} {transaction.token} • {transaction.networkName || 'Network'}</div>
+                                    <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">← {transaction.paymentAmount || 'N/A'} {transaction.token} • {transaction.networkName || 'Network'}</div>
                                   )}
                                 </div>
                               </TableCell>
@@ -4563,11 +4563,11 @@ export default function AdminPanel() {
                                         </svg>
                                       </a>
                                       {transaction.type === 'deposit' && (transaction.networkName || transaction.chainName) && (
-                                        <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">{transaction.networkName || transaction.chainName}</span>
+                                        <span className="text-xs text-gray-900 dark:text-gray-100 font-semibold">{transaction.networkName || transaction.chainName}</span>
                                       )}
                                     </div>
                                   ) : (
-                                    <span className="text-gray-700 dark:text-gray-300 font-medium">Internal</span>
+                                    <span className="text-gray-900 dark:text-gray-100 font-semibold">Internal</span>
                                   )}
                                 </div>
                               </TableCell>
