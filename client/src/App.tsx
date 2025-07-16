@@ -109,11 +109,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
-      <Route path="/admin">
-        <ProtectedRoute>
-          <AdminPanel />
-        </ProtectedRoute>
-      </Route>
+      <Route path="/admin" component={AdminPanel} />
       
 
       
