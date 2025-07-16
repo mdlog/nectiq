@@ -1409,10 +1409,10 @@ export default function AdminPanel() {
     ...(Array.isArray(transactionWithdrawals) ? transactionWithdrawals.map((w: any) => ({
       ...w,
       type: 'withdrawal' as const,
-      token: w.paymentToken || 'ETH',
+      token: w.tokenType || 'ETH', // Fix: use tokenType instead of paymentToken
       status: w.status || 'pending',
-      amount: w.ptsAmount,
-      hash: w.txHash || null,
+      amount: w.ntiqAmount, // Fix: use ntiqAmount instead of ptsAmount
+      hash: w.transactionHash || null, // Fix: use transactionHash instead of txHash
       timestamp: w.createdAt
     })) : []),
     ...(Array.isArray(transactionDeposits) ? transactionDeposits.map((d: any) => ({
