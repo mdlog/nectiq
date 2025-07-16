@@ -220,7 +220,7 @@ export class AutomatedWithdrawalService {
     const amount = ethers.parseUnits(withdrawal.netAmount.toString(), decimals);
     
     const tx = await tokenContract.transfer(withdrawal.toWalletAddress, amount, {
-      gasLimit: networkConfig.gasLimit,
+      gasLimit: '65000', // Higher gas limit for ERC-20 transfers
       maxFeePerGas: ethers.parseUnits(networkConfig.maxGasPrice, 'gwei'),
     });
     

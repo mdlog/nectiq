@@ -125,6 +125,79 @@ async function processWithdrawalManually() {
             await storage.updateWithdrawalStatus(withdrawal.id, 'rejected', transaction.hash, 'Blockchain transaction failed');
           }
           
+        } else if (withdrawal.tokenType === 'USDC' && withdrawal.chainName === 'sepolia') {
+          // USDC Sepolia Token Contract
+          const USDC_CONTRACT = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
+          const ERC20_ABI = [
+            "function transfer(address to, uint256 amount) returns (bool)",
+            "function decimals() view returns (uint8)",
+            "function balanceOf(address account) view returns (uint256)"
+          ];
+          
+          const usdAmount = withdrawal.ntiqAmount * 0.01; // 1 NTIQ = $0.01
+          const netUsdAmount = usdAmount * 0.975; // Deduct 2.5% fee
+          
+          console.log(`💱 [MANUAL] Conversion: ${withdrawal.ntiqAmount} NTIQ = $${usdAmount} = ${netUsdAmount.toFixed(2)} USDC`);
+          console.log(`💰 [MANUAL] Net amount after 2.5% fee: ${netUsdAmount.toFixed(2)} USDC`);
+          
+          // Create contract instance
+          const usdcContract = new ethers.Contract(USDC_CONTRACT, ERC20_ABI, wallet);
+          
+          // Check token decimals
+          const decimals = await usdcContract.decimals();
+          console.log(`🔢 [MANUAL] USDC decimals: ${decimals}`);
+          
+          // Check admin wallet USDC balance
+          const usdcBalance = await usdcContract.balanceOf(wallet.address);
+          const usdcBalanceFormatted = ethers.formatUnits(usdcBalance, decimals);
+          
+          console.log(`💳 [MANUAL] Admin wallet USDC balance: ${usdcBalanceFormatted} USDC`);
+          
+          if (parseFloat(usdcBalanceFormatted) < netUsdAmount) {
+            console.log(`❌ [MANUAL] Insufficient USDC balance for withdrawal ID ${withdrawal.id}`);
+            await storage.updateWithdrawalStatus(withdrawal.id, 'rejected', null, 'Insufficient admin wallet USDC balance');
+            continue;
+          }
+          
+          // Convert amount to token units
+          const tokenAmount = ethers.parseUnits(netUsdAmount.toFixed(6), decimals);
+          
+          console.log(`📤 [MANUAL] Sending USDC transaction...`);
+          
+          // Send USDC transaction
+          const transaction = await usdcContract.transfer(
+            withdrawal.toWalletAddress,
+            tokenAmount,
+            {
+              gasLimit: '65000',
+              gasPrice: ethers.parseUnits('20', 'gwei')
+            }
+          );
+          
+          console.log(`⏳ [MANUAL] Transaction sent: ${transaction.hash}`);
+          console.log(`🔍 [MANUAL] Waiting for confirmation...`);
+          
+          // Wait for confirmation
+          const receipt = await transaction.wait();
+          
+          if (receipt && receipt.status === 1) {
+            console.log(`✅ [MANUAL] Transaction confirmed! Block: ${receipt.blockNumber}`);
+            console.log(`🔗 [MANUAL] Sepolia Explorer: https://sepolia.etherscan.io/tx/${transaction.hash}`);
+            
+            // Update withdrawal status to completed
+            await storage.updateWithdrawalStatus(
+              withdrawal.id, 
+              'completed', 
+              transaction.hash, 
+              `Real USDC transaction sent to Sepolia testnet | Amount: ${netUsdAmount.toFixed(6)} USDC`
+            );
+            
+            console.log(`✅ [MANUAL] Withdrawal ID ${withdrawal.id} completed successfully`);
+          } else {
+            console.log(`❌ [MANUAL] Transaction failed for withdrawal ID ${withdrawal.id}`);
+            await storage.updateWithdrawalStatus(withdrawal.id, 'rejected', transaction.hash, 'USDC transaction failed');
+          }
+          
         } else {
           console.log(`❌ [MANUAL] Unsupported withdrawal type: ${withdrawal.tokenType} on ${withdrawal.chainName}`);
           await storage.updateWithdrawalStatus(withdrawal.id, 'rejected', null, 'Unsupported token/network combination');
