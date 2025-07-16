@@ -19,11 +19,21 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   });
 
   useEffect(() => {
+    // Debug logging untuk troubleshooting
+    console.log("🔐 [ProtectedRoute] Auth state:", { 
+      isLoading, 
+      hasUser: !!user, 
+      hasError: !!error, 
+      errorMessage: error?.message,
+      location: window.location.pathname 
+    });
+
     // Redirect to landing page after a reasonable timeout if not authenticated
     if (!isLoading && !user && error && error.message.includes("401")) {
+      console.log("🔐 [ProtectedRoute] Redirecting to / due to 401 error");
       const timer = setTimeout(() => {
         setLocation("/");
-      }, 500); // Short delay to prevent immediate redirect
+      }, 1000); // Increased delay untuk admin panel
       return () => clearTimeout(timer);
     }
   }, [user, isLoading, error, setLocation]);

@@ -517,11 +517,23 @@ export default function AdminPanel() {
   const { isConnected: wsConnected, lastTransaction } = useAdminWebSocket();
 
   // Add user authentication check first
-  const { data: currentUser, isLoading: userLoading } = useQuery({
+  const { data: currentUser, isLoading: userLoading, error: userError } = useQuery({
     queryKey: ["/api/user"],
     retry: 1,
     refetchInterval: 30000,
   });
+
+  // Debug logging untuk troubleshooting admin panel
+  useEffect(() => {
+    console.log("🔐 [AdminPanel] Auth state:", { 
+      userLoading, 
+      hasCurrentUser: !!currentUser, 
+      isAdmin: currentUser?.isAdmin,
+      hasUserError: !!userError,
+      userErrorMessage: userError?.message,
+      location: window.location.pathname 
+    });
+  }, [currentUser, userLoading, userError]);
 
   const { data: stats, error: statsError, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
