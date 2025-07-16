@@ -52,25 +52,31 @@ export function useAuthenticationHandler() {
             await queryClient.invalidateQueries();
             console.log('🔐 [HOOK] Queries invalidated');
             
-            // Redirect to home
-            setTimeout(() => {
-              console.log('🔐 [HOOK] Redirecting to /home...');
-              try {
-                navigate('/home');
-                console.log('🔐 [HOOK] Navigate function executed');
-                
-                // Fallback redirect
-                setTimeout(() => {
-                  if (window.location.pathname !== '/home') {
-                    console.log('🔐 [HOOK] Navigate failed, using window.location fallback');
-                    window.location.href = '/home';
-                  }
-                }, 500);
-              } catch (error) {
-                console.error('🔐 [HOOK] Navigate failed:', error);
-                window.location.href = '/home';
-              }
-            }, 1000);
+            // Check current location before redirecting
+            const currentPath = window.location.pathname;
+            console.log('🔐 [HOOK] Current path after authentication:', currentPath);
+            
+            // Don't redirect if user is on admin panel or other important pages
+            if (currentPath === '/admin' || currentPath.startsWith('/admin/')) {
+              console.log('🔐 [HOOK] User is on admin panel, skipping redirect to /home');
+              return; // Skip redirect
+            }
+            
+            // Only redirect to /home if user is on landing page or needs redirect
+            if (currentPath === '/' || currentPath === '/landing' || currentPath === '/wallet-login') {
+              setTimeout(() => {
+                console.log('🔐 [HOOK] Redirecting from landing page to /home...');
+                try {
+                  navigate('/home');
+                  console.log('🔐 [HOOK] Navigate function executed');
+                } catch (error) {
+                  console.error('🔐 [HOOK] Navigate failed:', error);
+                  window.location.href = '/home';
+                }
+              }, 1000);
+            } else {
+              console.log('🔐 [HOOK] User already on authenticated page, no redirect needed');
+            }
           } else {
             console.error('🔐 [HOOK] Backend authentication failed:', response.status);
           }

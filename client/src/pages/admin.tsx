@@ -4723,8 +4723,8 @@ export default function AdminPanel() {
                                   {transaction.type === 'withdrawal' && (
                                     <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">→ {(() => {
                                       // For withdrawals, use netAmount from database if available, otherwise calculate
-                                      if (transaction.netAmount) {
-                                        return transaction.netAmount.toFixed(6);
+                                      if (transaction.netAmount && !isNaN(parseFloat(transaction.netAmount))) {
+                                        return parseFloat(transaction.netAmount).toFixed(6);
                                       }
                                       
                                       const ntiqAmount = transaction.amount || 0;
