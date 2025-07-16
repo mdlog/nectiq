@@ -26,6 +26,16 @@ export class WithdrawalScheduler {
             USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
             USDT: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
           }
+        },
+        'holesky': {
+          rpcUrl: 'https://ethereum-holesky-rpc.publicnode.com',
+          chainId: 17000,
+          gasLimit: '21000',
+          maxGasPrice: '30',
+          tokenContracts: {
+            USDC: '0x449cde79f489e2ae32e6314d8d966ca64e040409', // Official Circle USDC on Holesky
+            USDT: '0x87350147a24099bf1e7e677576f01c1415857c75'  // Verified USDT on Holesky
+          }
         }
       }
     };

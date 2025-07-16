@@ -224,8 +224,8 @@ const SUPPORTED_CHAINS = [
     adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       ETH: { address: "native", decimals: 18 },
-      USDC: { address: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8", decimals: 6 },
-      USDT: { address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", decimals: 6 }
+      USDC: { address: "0x449cde79f489e2ae32e6314d8d966ca64e040409", decimals: 6 }, // Official Circle USDC on Holesky
+      USDT: { address: "0x87350147a24099bf1e7e677576f01c1415857c75", decimals: 6 }  // Verified USDT on Holesky
     }
   }
 ];
