@@ -4713,20 +4713,29 @@ export default function AdminPanel() {
                                   <div className="font-medium text-gray-900 dark:text-white">{transaction.amount ? transaction.amount.toLocaleString() : 0} NTIQ</div>
                                   {transaction.type === 'withdrawal' && (
                                     <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">→ {(() => {
-                                      // For withdrawals, calculate the actual token amount based on NTIQ amount and token type
+                                      // For withdrawals, use netAmount from database if available, otherwise calculate
+                                      if (transaction.netAmount) {
+                                        return transaction.netAmount.toFixed(6);
+                                      }
+                                      
                                       const ntiqAmount = transaction.amount || 0;
                                       let tokenAmount = 'N/A';
                                       
                                       if (transaction.token === 'USDC' || transaction.token === 'USDT') {
-                                        // USDC/USDT: 1 NTIQ = $0.01, so 1:1 ratio with USD
-                                        tokenAmount = (ntiqAmount * 0.01).toFixed(2);
-                                      } else if (transaction.token === 'ETH') {
-                                        // ETH: calculate based on current price
-                                        const ethPrice = 2300; // You can update this with real-time price
+                                        // USDC/USDT: 1 NTIQ = $0.01, apply 2.5% fee
                                         const usdValue = ntiqAmount * 0.01;
-                                        tokenAmount = (usdValue / ethPrice).toFixed(6);
+                                        const netValue = usdValue * 0.975; // 2.5% fee deduction
+                                        tokenAmount = netValue.toFixed(2);
+                                      } else if (transaction.token === 'ETH') {
+                                        // ETH: use ETH price snapshot if available, otherwise use current price
+                                        const ethPrice = transaction.ethPriceSnapshot || 3100; // Current ETH price
+                                        const usdValue = ntiqAmount * 0.01;
+                                        const netValue = usdValue * 0.975; // 2.5% fee deduction
+                                        tokenAmount = (netValue / ethPrice).toFixed(6);
                                       } else {
-                                        tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                                        const usdValue = ntiqAmount * 0.01;
+                                        const netValue = usdValue * 0.975; // 2.5% fee deduction
+                                        tokenAmount = netValue.toFixed(2);
                                       }
                                       
                                       return tokenAmount;
@@ -4740,24 +4749,24 @@ export default function AdminPanel() {
                                   )}
                                   {transaction.type === 'deposit' && (
                                     <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">← {(() => {
-                                      // For deposits, calculate the actual token amount based on USD amount and token type
-                                      const usdAmount = transaction.paymentAmount || 0;
+                                      // For deposits, calculate the actual token amount required to be sent
+                                      const ntiqAmount = transaction.amount || 0;
+                                      const usdValue = ntiqAmount * 0.01; // 1 NTIQ = $0.01
                                       let tokenAmount = 'N/A';
                                       
                                       if (transaction.token === 'USDC' || transaction.token === 'USDT') {
                                         // USDC/USDT: 1:1 ratio with USD
-                                        tokenAmount = usdAmount.toString();
+                                        tokenAmount = usdValue.toFixed(2);
                                       } else if (transaction.token === 'ETH') {
-                                        // ETH: calculate based on current price or use a reasonable estimate
-                                        // For display purposes, assume ETH price around $2200-$2500
-                                        const ethPrice = 2300; // You can update this with real-time price
-                                        tokenAmount = (usdAmount / ethPrice).toFixed(6);
+                                        // ETH: use ETH price snapshot if available, otherwise current price
+                                        const ethPrice = transaction.ethPriceSnapshot || 3100; // Current ETH price
+                                        tokenAmount = (usdValue / ethPrice).toFixed(6);
                                       } else {
-                                        tokenAmount = usdAmount.toString();
+                                        tokenAmount = usdValue.toFixed(2);
                                       }
                                       
                                       return tokenAmount;
-                                    })()} {transaction.token} • {transaction.networkName || 'Network'}</div>
+                                    })()} {transaction.token} • {transaction.chainName || transaction.networkName || 'Sepolia'}</div>
                                   )}
                                 </div>
                               </TableCell>

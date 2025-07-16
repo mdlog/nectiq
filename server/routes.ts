@@ -125,7 +125,8 @@ const ADMIN_IP_WHITELIST = new Set([
   'localhost',
   '172.31.128.20', // Current admin mobile IP
   '114.125.167.243', // External admin IP
-  '172.31.128.30' // Admin IP that is currently blacklisted - need to whitelist
+  '172.31.128.30', // Admin IP that is currently blacklisted - need to whitelist
+  '172.31.128.138' // Current admin IP to bypass rate limiting
 ]);
 
 // Rate limiting and IP blacklisting for admin endpoints
