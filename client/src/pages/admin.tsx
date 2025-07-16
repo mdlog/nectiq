@@ -1697,21 +1697,18 @@ export default function AdminPanel() {
     }
   };
 
-  // Early return for loading states and authentication check
+  // Check authentication status and admin privileges
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-lg">Loading user authentication...</p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading Admin Panel...</p>
         </div>
       </div>
     );
   }
 
-  // Check authentication status and admin privileges
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-background p-8">
@@ -1720,12 +1717,12 @@ export default function AdminPanel() {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
               <h2 className="text-lg font-semibold text-blue-800 mb-2">Login Required</h2>
               <p className="text-blue-600">You need to login first to access the admin panel.</p>
-              <button 
-                onClick={() => window.location.href = '/home'}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              <Button 
+                onClick={() => setLocation('/home')}
+                className="mt-4 bg-blue-600 text-white hover:bg-blue-700"
               >
                 Go to Login
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1741,12 +1738,12 @@ export default function AdminPanel() {
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
               <h2 className="text-lg font-semibold text-red-800 mb-2">Access Denied</h2>
               <p className="text-red-600">You need admin privileges to access this panel.</p>
-              <button 
-                onClick={() => window.location.href = '/home'}
-                className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              <Button 
+                onClick={() => setLocation('/home')}
+                className="mt-4 bg-red-600 text-white hover:bg-red-700"
               >
                 Back to Home
-              </button>
+              </Button>
             </div>
           </div>
         </div>
