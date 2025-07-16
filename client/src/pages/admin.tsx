@@ -4722,9 +4722,16 @@ export default function AdminPanel() {
                                   <div className="font-medium text-gray-900 dark:text-white">{transaction.amount ? transaction.amount.toLocaleString() : 0} NTIQ</div>
                                   {transaction.type === 'withdrawal' && (
                                     <div className="text-xs text-gray-900 dark:text-gray-100 font-semibold">→ {(() => {
-                                      // For withdrawals, use netAmount from database if available, otherwise calculate
+                                      // For withdrawals, use netAmount from database if available and reasonable, otherwise calculate
                                       if (transaction.netAmount && !isNaN(parseFloat(transaction.netAmount))) {
-                                        return parseFloat(transaction.netAmount).toFixed(6);
+                                        const netAmount = parseFloat(transaction.netAmount);
+                                        // Sanity check: for ETH, netAmount should be small (< 1 ETH for normal withdrawals)
+                                        if (transaction.token === 'ETH' && netAmount > 1) {
+                                          // This is clearly wrong data, fallback to calculation
+                                          console.warn('Invalid netAmount detected:', netAmount, 'for withdrawal ID:', transaction.id);
+                                        } else {
+                                          return netAmount.toFixed(6);
+                                        }
                                       }
                                       
                                       const ntiqAmount = transaction.amount || 0;
