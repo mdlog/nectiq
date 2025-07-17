@@ -4108,6 +4108,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // NTIQ Circulation Tracking endpoint
+  app.get("/api/admin/ntiq-circulation", requireAdmin, async (req, res) => {
+    try {
+      console.log('📊 [API] NTIQ circulation tracking endpoint called');
+      
+      // Get all users and their balances
+      const allUsers = await storage.getAllUsers();
+      const totalCirculation = allUsers.reduce((sum, user) => sum + user.balance, 0);
+      const totalDistributed = allUsers.length * 1000; // Expected distribution (1000 per user)
+      
+      // Get transaction statistics for complete tracking
+      const transactionStats = await storage.getTransactionStats();
+      
+      // Calculate circulation metrics
+      const circulationData = {
+        totalUsers: allUsers.length,
+        totalNTIQCirculation: totalCirculation,
+        expectedDistribution: totalDistributed,
+        distributionAccuracy: totalCirculation === totalDistributed ? 100 : ((totalCirculation / totalDistributed) * 100).toFixed(2),
+        averageBalancePerUser: allUsers.length > 0 ? (totalCirculation / allUsers.length).toFixed(0) : 0,
+        users: allUsers.map(user => ({
+          id: user.id,
+          username: user.username,
+          balance: user.balance,
+          walletAddress: user.walletAddress ? user.walletAddress.slice(0, 6) + '...' + user.walletAddress.slice(-4) : null,
+          isAdmin: user.isAdmin,
+          authMethod: user.authMethod,
+          totalRewards: user.totalRewards
+        })),
+        transactionSummary: {
+          totalTransactions: transactionStats.totalTransactions || 0,
+          totalRewardsDistributed: transactionStats.totalRewards || 0,
+          totalStaked: transactionStats.totalStaked || 0
+        },
+        systemHealth: {
+          autoDistributionWorking: totalCirculation >= (allUsers.length * 1000),
+          balanceConsistency: allUsers.every(user => user.balance >= 0),
+          schemaDefaultValue: 1000 // from schema.ts line 14
+        }
+      };
+      
+      console.log('✅ [API] NTIQ circulation data compiled:', {
+        totalUsers: circulationData.totalUsers,
+        totalCirculation: circulationData.totalNTIQCirculation,
+        distributionAccuracy: circulationData.distributionAccuracy + '%'
+      });
+      
+      res.json(circulationData);
+    } catch (error) {
+      console.error("Error fetching NTIQ circulation data:", error);
+      res.status(500).json({ message: "Failed to fetch NTIQ circulation data" });
+    }
+  });
+
   // Admin: Emergency stop
   app.post("/api/admin/emergency-stop", requireAdmin, async (req, res) => {
     try {
