@@ -1302,6 +1302,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
+      // Get updated user balance after withdrawal deduction
+      const updatedUser = await storage.getUser(userId);
+      const newBalance = updatedUser?.balance || 0;
+
       auditLog("user_withdrawal_request", {
         userId,
         withdrawalId: withdrawal.id,
