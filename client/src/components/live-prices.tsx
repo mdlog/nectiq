@@ -45,13 +45,18 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const { data: prices = [], isLoading } = useQuery<CryptoPrice[]>({
+  const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 5000, // Updated to 5 seconds for real-time updates
+    refetchInterval: 3000, // Faster updates every 3 seconds
     refetchIntervalInBackground: true, // Enable background updates for real-time feel
-    staleTime: 2000, // 2 seconds for fresh price data
-    retry: 2, // Increase retry attempts for reliability
+    staleTime: 1000, // Very fresh data - 1 second stale time
+    retry: 3, // More retry attempts for reliability
+    refetchOnWindowFocus: true, // Refresh when user focuses window
+    refetchOnMount: true, // Refresh on component mount
   });
+
+  // Add visual indicator for when data was last updated
+  const lastUpdate = new Date(dataUpdatedAt).toLocaleTimeString();
 
   // Sort prices by market cap (highest price first)
   const sortedPrices = prices.sort((a, b) => b.current_price - a.current_price);
@@ -93,6 +98,9 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
         <div className="ml-auto flex items-center text-xs text-green-400">
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-1"></div>
           REAL-TIME
+          <div className="ml-2 text-xs text-gray-400">
+            {lastUpdate}
+          </div>
         </div>
       </h3>
       

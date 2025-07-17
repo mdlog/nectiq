@@ -27,7 +27,7 @@ const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 export class CryptoService {
   private lastFetchTime = 0;
   private cachedRealPrices: CryptoPrice[] = [];
-  private readonly CACHE_DURATION = 15000; // Cache real prices for 15 seconds for better real-time experience
+  private readonly CACHE_DURATION = 10000; // Cache real prices for 10 seconds for better real-time experience
   private fetchPromise: Promise<CryptoPrice[]> | null = null; // Prevent concurrent fetches
 
   // Method to clear cache when cryptocurrencies are deleted
@@ -43,8 +43,8 @@ export class CryptoService {
     if (this.cachedRealPrices.length > 0) {
       this.cachedRealPrices = this.cachedRealPrices.map(crypto => ({
         ...crypto,
-        current_price: crypto.current_price * (1 + (Math.random() - 0.5) * 0.002), // ±0.1% variation
-        price_change_percentage_24h: crypto.price_change_percentage_24h + (Math.random() - 0.5) * 0.1 // Small change variation
+        current_price: crypto.current_price * (1 + (Math.random() - 0.5) * 0.005), // ±0.25% variation for more visible changes
+        price_change_percentage_24h: crypto.price_change_percentage_24h + (Math.random() - 0.5) * 0.2 // More noticeable change variation
       }));
       console.log('🎯 Generated micro-variations for real-time feeling during rate limit');
     }
@@ -177,17 +177,22 @@ export class CryptoService {
         
         // Update with CoinGecko prices where available, adding slight real-time variation
         const now = Date.now();
-        const fastVariation = Math.sin(now / 3000) * 0.0015; // Faster micro-fluctuations every 3 seconds
-        const slowVariation = Math.cos(now / 8000) * 0.0008; // Slower background movement
+        const fastVariation = Math.sin(now / 2000) * 0.003; // More visible fluctuations every 2 seconds
+        const slowVariation = Math.cos(now / 5000) * 0.002; // Stronger background movement
         const microVariation = fastVariation + slowVariation;
+        console.log(`🎯 [MICRO-VARIATION] Applied ${(microVariation * 100).toFixed(4)}% variation to prices`);
         
         allPrices = allPrices.map(dbPrice => {
           const coinGeckoPrice = coinGeckoMap.get(dbPrice.id);
           if (coinGeckoPrice) {
             // Use CoinGecko data but add micro-variations for live feeling
+            const newPrice = coinGeckoPrice.current_price * (1 + microVariation);
+            if (dbPrice.id === 'bitcoin') {
+              console.log(`🟠 [BTC] Original: $${coinGeckoPrice.current_price.toFixed(2)}, With variation: $${newPrice.toFixed(2)}`);
+            }
             return {
               ...coinGeckoPrice,
-              current_price: coinGeckoPrice.current_price * (1 + microVariation),
+              current_price: newPrice,
               image: this.getCryptoImageUrl(dbPrice.id)
             };
           }
