@@ -3577,7 +3577,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('📊 [RESET] Data counts before deletion:', beforeCounts);
       
-      // Use TRUNCATE CASCADE for more robust deletion handling foreign key constraints
+      // Disable foreign key constraints temporarily for complete reset
+      await db.execute(sql`SET session_replication_role = replica`);
+      console.log('🔓 [RESET] Foreign key constraints disabled');
+
+      // Use TRUNCATE CASCADE for more robust deletion
       const tablesToTruncate = [
         'user_achievements',
         'survival_participants', 
@@ -3601,7 +3605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await db.execute(sql`TRUNCATE TABLE ${sql.raw(tableName)} RESTART IDENTITY CASCADE`);
           console.log(`✅ [RESET] ${tableName} table truncated with CASCADE`);
         } catch (error) {
-          console.log(`⚠️ [RESET] Could not truncate ${tableName} - table may not exist`);
+          console.log(`⚠️ [RESET] Could not truncate ${tableName} - trying DELETE`);
           // Try fallback DELETE if TRUNCATE fails
           try {
             await db.execute(sql`DELETE FROM ${sql.raw(tableName)}`);
@@ -3611,6 +3615,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
+
+      // Re-enable foreign key constraints
+      await db.execute(sql`SET session_replication_role = DEFAULT`);
+      console.log('🔒 [RESET] Foreign key constraints re-enabled');
       
       const afterCounts = {
         users: await db.select().from(users).then(r => r.length),
