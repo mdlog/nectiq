@@ -2963,8 +2963,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: "Withdrawal rejected and balance refunded" });
     } catch (error) {
-      console.error("Error rejecting withdrawal:", error);
-      res.status(500).json({ message: "Failed to reject withdrawal" });
+      console.error("❌ [ERROR] Error rejecting withdrawal:", error);
+      console.error("❌ [ERROR] Stack trace:", error.stack);
+      res.status(500).json({ message: "Failed to reject withdrawal", error: error.message });
     }
   });
 

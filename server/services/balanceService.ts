@@ -5,7 +5,7 @@
 
 interface BalanceTransactionData {
   userId: number;
-  type: 'prediction_stake' | 'prediction_reward' | 'battle_create' | 'battle_reward' | 'battle_refund' | 'survival_entry' | 'survival_tournament_reward' | 'achievement_reward' | 'daily_challenge_reward' | 'crypto_purchase' | 'withdrawal';
+  type: 'prediction_stake' | 'prediction_reward' | 'battle_create' | 'battle_reward' | 'battle_refund' | 'survival_entry' | 'survival_tournament_reward' | 'achievement_reward' | 'daily_challenge_reward' | 'crypto_purchase' | 'withdrawal' | 'withdrawal_refund';
   amount: number;
   description?: string;
   relatedId?: number | string;
@@ -50,6 +50,7 @@ export class BalanceService {
         case 'achievement_reward':
         case 'daily_challenge_reward':
         case 'crypto_purchase':
+        case 'withdrawal_refund':
           // Add amounts
           newBalance = user.balance + Math.abs(amount);
           transactionAmount = Math.abs(amount);
