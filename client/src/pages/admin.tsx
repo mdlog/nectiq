@@ -41,6 +41,207 @@ interface NTIQCirculationData {
   circulatingSupply: number; // Total NTIQ in circulation
 }
 
+// ===== DATABASE RESET COMPONENT =====
+const DatabaseResetButton = () => {
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [confirmationCode, setConfirmationCode] = useState('');
+  const [isStep2, setIsStep2] = useState(false);
+  const [resetResults, setResetResults] = useState<any>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const resetMutation = useMutation({
+    mutationFn: async (confirmationCode: string) => {
+      return apiRequest('/api/admin/reset-database', {
+        method: 'POST',
+        body: JSON.stringify({ confirmationCode })
+      });
+    },
+    onSuccess: (data) => {
+      console.log('🎉 Database reset successful:', data);
+      setResetResults(data);
+      setIsResetDialogOpen(false);
+      setIsStep2(false);
+      setConfirmationCode('');
+      
+      // Refresh all admin data
+      queryClient.invalidateQueries();
+      
+      toast({
+        title: "Database Reset Berhasil!",
+        description: "Semua data telah dihapus dan ID direset ke 1",
+        variant: "default"
+      });
+    },
+    onError: (error: any) => {
+      console.error('❌ Database reset failed:', error);
+      toast({
+        title: "Reset Database Gagal",
+        description: error.message || "Terjadi kesalahan saat mereset database",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleResetClick = () => {
+    setIsResetDialogOpen(true);
+    setIsStep2(false);
+    setConfirmationCode('');
+  };
+
+  const handleStep1Confirm = () => {
+    setIsStep2(true);
+  };
+
+  const handleFinalReset = () => {
+    if (confirmationCode === 'RESET_ALL_DATA_CONFIRMED') {
+      resetMutation.mutate(confirmationCode);
+    } else {
+      toast({
+        title: "Kode Konfirmasi Salah",
+        description: "Masukkan kode konfirmasi yang benar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDialogClose = () => {
+    setIsResetDialogOpen(false);
+    setIsStep2(false);
+    setConfirmationCode('');
+  };
+
+  return (
+    <>
+      <Button
+        onClick={handleResetClick}
+        variant="destructive"
+        size="sm"
+        className="bg-red-600 hover:bg-red-700 text-white font-bold border-2 border-red-700 shadow-lg"
+        disabled={resetMutation.isPending}
+      >
+        <Trash2 className="mr-2" size={16} />
+        {resetMutation.isPending ? 'Mereset...' : 'Reset Database'}
+      </Button>
+
+      <Dialog open={isResetDialogOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-red-600">
+              <AlertTriangle className="mr-2" size={24} />
+              {!isStep2 ? 'Konfirmasi Reset Database' : 'Konfirmasi Akhir'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {!isStep2 ? (
+            <div className="space-y-4">
+              <Alert className="border-red-200 bg-red-50">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800 font-medium">
+                  <strong>PERINGATAN SERIUS!</strong>
+                  <br />
+                  Tindakan ini akan:
+                  <ul className="mt-2 list-disc list-inside space-y-1">
+                    <li>Menghapus SEMUA data di database</li>
+                    <li>Menghapus semua users, predictions, battles</li>
+                    <li>Menghapus semua transaksi, deposits, withdrawals</li>
+                    <li>Reset semua ID counter ke 1</li>
+                    <li><strong>TIDAK DAPAT DIBATALKAN!</strong></li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleDialogClose}
+                  className="border-gray-300"
+                >
+                  Batal
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleStep1Confirm}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Saya Mengerti, Lanjutkan
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Alert className="border-red-200 bg-red-50">
+                <Shield className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">
+                  <strong>Masukkan kode konfirmasi untuk melanjutkan:</strong>
+                  <br />
+                  <code className="text-sm bg-red-100 px-2 py-1 rounded mt-1 inline-block">
+                    RESET_ALL_DATA_CONFIRMED
+                  </code>
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmationCode" className="text-sm font-medium">
+                  Kode Konfirmasi:
+                </Label>
+                <Input
+                  id="confirmationCode"
+                  type="text"
+                  value={confirmationCode}
+                  onChange={(e) => setConfirmationCode(e.target.value)}
+                  placeholder="Masukkan kode konfirmasi..."
+                  className="border-red-300 focus:border-red-500"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleDialogClose}
+                  disabled={resetMutation.isPending}
+                >
+                  Batal
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleFinalReset}
+                  disabled={resetMutation.isPending || confirmationCode !== 'RESET_ALL_DATA_CONFIRMED'}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {resetMutation.isPending ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Mereset...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      RESET DATABASE
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Results Display */}
+      {resetResults && (
+        <Alert className="mt-4 border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            <strong>Database berhasil direset!</strong>
+            <br />
+            Reset dilakukan pada: {new Date(resetResults.resetDate).toLocaleString('id-ID')}
+          </AlertDescription>
+        </Alert>
+      )}
+    </>
+  );
+};
+
 const NTIQCirculationTracker = () => {
   const { data: circulationData, isLoading } = useQuery({
     queryKey: ['/api/ntiq-circulation'],
@@ -3093,16 +3294,20 @@ export default function AdminPanel() {
               </div>
               <h1 className="text-base sm:text-xl font-bold">Admin Panel</h1>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="bg-surface-light border-surface-light text-xs sm:text-sm" 
-              onClick={() => setLocation('/home')}
-            >
-              <Eye className="mr-1 sm:mr-2" size={14} />
-              <span className="hidden sm:inline">Back to App</span>
-              <span className="sm:hidden">Back</span>
-            </Button>
+            
+            <div className="flex items-center space-x-2">
+              <DatabaseResetButton />
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="bg-surface-light border-surface-light text-xs sm:text-sm" 
+                onClick={() => setLocation('/home')}
+              >
+                <Eye className="mr-1 sm:mr-2" size={14} />
+                <span className="hidden sm:inline">Back to App</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

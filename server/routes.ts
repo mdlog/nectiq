@@ -11,8 +11,8 @@ import { cryptoService, CryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
-import { insertPredictionSchema, insertCryptocurrencySchema, insertDepositSchema, insertWithdrawalSchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions, deposits, withdrawals } from "@shared/schema";
-import { eq, and, or, desc } from "drizzle-orm";
+import { insertPredictionSchema, insertCryptocurrencySchema, insertDepositSchema, insertWithdrawalSchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions, deposits, withdrawals, rewards, achievements, dailyChallenges, banners } from "@shared/schema";
+import { eq, and, or, desc, sql } from "drizzle-orm";
 import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
@@ -3539,6 +3539,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(500).json({ 
         error: 'Failed to fetch NTIQ circulation data',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // ===== DANGEROUS: DATABASE RESET ENDPOINT =====
+  app.post('/api/admin/reset-database', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { confirmationCode } = req.body;
+      
+      // Require special confirmation code for security
+      if (confirmationCode !== 'RESET_ALL_DATA_CONFIRMED') {
+        return res.status(400).json({ 
+          error: 'Invalid confirmation code',
+          message: 'Database reset requires proper confirmation code'
+        });
+      }
+      
+      console.log('🚨 [RESET] CRITICAL: Database reset initiated by admin user:', req.session.userId);
+      console.log('🚨 [RESET] This will DELETE ALL DATA from the database');
+      
+      // Get table counts before deletion for logging
+      const beforeCounts = {
+        users: await db.select().from(users).then(r => r.length),
+        predictions: await db.select().from(predictions).then(r => r.length),
+        predictionBattles: await db.select().from(predictionBattles).then(r => r.length),
+        transactionLogs: await db.select().from(transactionLogs).then(r => r.length),
+        deposits: await db.select().from(deposits).then(r => r.length),
+        withdrawals: await db.select().from(withdrawals).then(r => r.length),
+        rewards: await db.select().from(rewards).then(r => r.length),
+        achievements: await db.select().from(achievements).then(r => r.length),
+        dailyChallenges: await db.select().from(dailyChallenges).then(r => r.length),
+        survivalTournaments: await db.select().from(survivalTournaments).then(r => r.length),
+        banners: await db.select().from(banners).then(r => r.length)
+      };
+      
+      console.log('📊 [RESET] Data counts before deletion:', beforeCounts);
+      
+      // Delete all data in correct order (respecting foreign key constraints)
+      // Start with dependent tables first
+      await db.delete(transactionLogs);
+      await db.delete(rewards);
+      await db.delete(achievements);
+      await db.delete(dailyChallenges);
+      await db.delete(deposits);
+      await db.delete(withdrawals);
+      await db.delete(predictionBattles);
+      await db.delete(predictions);
+      await db.delete(survivalTournaments);
+      await db.delete(banners);
+      
+      // Finally delete users (main table)
+      await db.delete(users);
+      
+      // Reset sequences for auto-incrementing IDs
+      await db.execute(sql`ALTER SEQUENCE users_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE predictions_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE prediction_battles_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE transaction_logs_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE deposits_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE withdrawals_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE rewards_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE achievements_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE daily_challenges_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE survival_tournaments_id_seq RESTART WITH 1`);
+      await db.execute(sql`ALTER SEQUENCE banners_id_seq RESTART WITH 1`);
+      
+      const afterCounts = {
+        users: await db.select().from(users).then(r => r.length),
+        predictions: await db.select().from(predictions).then(r => r.length),
+        predictionBattles: await db.select().from(predictionBattles).then(r => r.length),
+        transactionLogs: await db.select().from(transactionLogs).then(r => r.length),
+        deposits: await db.select().from(deposits).then(r => r.length),
+        withdrawals: await db.select().from(withdrawals).then(r => r.length),
+        rewards: await db.select().from(rewards).then(r => r.length),
+        achievements: await db.select().from(achievements).then(r => r.length),
+        dailyChallenges: await db.select().from(dailyChallenges).then(r => r.length),
+        survivalTournaments: await db.select().from(survivalTournaments).then(r => r.length),
+        banners: await db.select().from(banners).then(r => r.length)
+      };
+      
+      console.log('✅ [RESET] Database reset completed successfully');
+      console.log('📊 [RESET] Data counts after deletion:', afterCounts);
+      console.log('🔄 [RESET] All ID sequences reset to start from 1');
+      
+      // Log this critical action for audit
+      console.log('🔐 [SECURITY] CRITICAL ACTION: Complete database reset performed by admin');
+      
+      res.json({
+        success: true,
+        message: 'Database reset completed successfully',
+        beforeCounts,
+        afterCounts,
+        resetDate: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error('❌ [RESET] Critical error during database reset:', error);
+      console.error('❌ [RESET] Error details:', error instanceof Error ? error.message : 'Unknown error');
+      
+      res.status(500).json({ 
+        error: 'Failed to reset database',
         message: error instanceof Error ? error.message : 'Unknown error'
       });
     }
