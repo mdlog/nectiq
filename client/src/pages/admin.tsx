@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, TrendingDown, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords, Play, RotateCcw } from "lucide-react";
+import { Users, TrendingUp, TrendingDown, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords, Play, RotateCcw, TestTube } from "lucide-react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -194,23 +194,65 @@ const DatabaseResetButton = () => {
 
   return (
     <>
-      <Button
-        onClick={handleResetClick}
-        variant="destructive"
-        size="sm"
-        className="bg-red-600 hover:bg-red-700 text-white font-bold border-2 border-red-700 shadow-lg"
-        disabled={resetMutation.isPending}
-      >
-        <Trash2 className="mr-2" size={16} />
-{resetMutation.isPending ? (
-          <>
-            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          'Reset Database'
-        )}
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          onClick={async () => {
+            try {
+              console.log('🧪 Testing database with simple test endpoint...');
+              const response = await fetch('/api/admin/test-reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              });
+              const result = await response.json();
+              console.log('🧪 Test result:', result);
+              if (result.success) {
+                toast({
+                  title: "Test Database Berhasil",
+                  description: `Users before: ${result.beforeCount}, after: ${result.afterCount}`,
+                  variant: "default"
+                });
+              } else {
+                toast({
+                  title: "Test Database Gagal",
+                  description: result.message,
+                  variant: "destructive"
+                });
+              }
+            } catch (error) {
+              console.error('🧪 Test error:', error);
+              toast({
+                title: "Test Error",
+                description: error.message,
+                variant: "destructive"
+              });
+            }
+          }}
+          variant="outline"
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold border-2 border-blue-700 shadow-lg"
+        >
+          <TestTube className="mr-2" size={16} />
+          Test DB
+        </Button>
+        
+        <Button
+          onClick={handleResetClick}
+          variant="destructive"
+          size="sm"
+          className="bg-red-600 hover:bg-red-700 text-white font-bold border-2 border-red-700 shadow-lg"
+          disabled={resetMutation.isPending}
+        >
+          <Trash2 className="mr-2" size={16} />
+  {resetMutation.isPending ? (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            'Reset Database'
+          )}
+        </Button>
+      </div>
 
       <Dialog open={isResetDialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-md">

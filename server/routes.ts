@@ -3544,6 +3544,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== TEST: SIMPLE DATABASE TEST ENDPOINT =====
+  app.post('/api/admin/test-reset', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      console.log('🧪 [TEST] Starting simple database test...');
+      
+      // Simple test: count users
+      const userCount = await db.select().from(users).then(r => r.length);
+      console.log('🧪 [TEST] Current user count:', userCount);
+      
+      // Simple test: try to disable foreign keys
+      await db.execute(sql`SET session_replication_role = REPLICA`);
+      console.log('🧪 [TEST] Foreign keys disabled successfully');
+      
+      // Simple test: try one delete operation  
+      const deletedUsers = await db.delete(users);
+      console.log('🧪 [TEST] Users table deletion attempted');
+      
+      // Check count after deletion
+      const newUserCount = await db.select().from(users).then(r => r.length);
+      console.log('🧪 [TEST] User count after deletion:', newUserCount);
+      
+      // Re-enable foreign keys
+      await db.execute(sql`SET session_replication_role = DEFAULT`);
+      console.log('🧪 [TEST] Foreign keys re-enabled successfully');
+      
+      res.json({
+        success: true,
+        message: 'Database test completed successfully',
+        beforeCount: userCount,
+        afterCount: newUserCount
+      });
+      
+    } catch (error) {
+      console.error('🧪 [TEST] Database test error:', {
+        message: error.message,
+        stack: error.stack,
+        code: error.code,
+        severity: error.severity
+      });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Database test failed',
+        message: error.message,
+        code: error.code
+      });
+    }
+  });
+
   // ===== DANGEROUS: DATABASE RESET ENDPOINT =====
   app.post('/api/admin/reset-database', async (req: Request, res: Response, next: NextFunction) => {
     try {
