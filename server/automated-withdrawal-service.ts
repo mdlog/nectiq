@@ -235,7 +235,7 @@ export class AutomatedWithdrawalService {
     const updateData: any = {
       status,
       processedAt: new Date(),
-      processedBy: 50, // Admin user ID (system automated processing)
+      processedBy: 1, // Admin user ID (system automated processing)
     };
     
     if (txHash) updateData.transactionHash = txHash;
