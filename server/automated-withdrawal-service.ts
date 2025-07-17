@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import { db } from './db.js';
 import { withdrawals, users } from '../shared/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNotNull } from 'drizzle-orm';
 import { IStorage } from './storage.js';
 
 interface AutoWithdrawalConfig {
@@ -45,11 +45,14 @@ export class AutomatedWithdrawalService {
   }
 
   /**
-   * Main function untuk memproses semua pending withdrawals
+   * Main function untuk memproses semua pending withdrawals dengan enhanced monitoring
    */
   async processAllPendingWithdrawals(): Promise<void> {
     try {
       console.log('🔄 [AUTO-WD] Starting automated withdrawal processing...');
+      
+      // PREVENTION: Check for suspicious withdrawals (rejected but with transaction hash)
+      await this.checkForSuspiciousWithdrawals();
       
       // Reset daily counter jika sudah lewat 24 jam
       this.resetDailyCounterIfNeeded();
@@ -64,6 +67,13 @@ export class AutomatedWithdrawalService {
       console.log(`📝 [AUTO-WD] Found ${pendingWithdrawals.length} pending withdrawals`);
 
       for (const withdrawal of pendingWithdrawals) {
+        // PREVENTION: Pre-flight validation before processing
+        const isValid = await this.preFlightValidation(withdrawal);
+        if (!isValid) {
+          console.log(`⚠️ [AUTO-WD] Pre-flight validation failed for withdrawal ${withdrawal.id}`);
+          continue;
+        }
+        
         await this.processSingleWithdrawal(withdrawal);
         
         // Delay 2 detik antar transaksi untuk menghindari network congestion
@@ -73,6 +83,79 @@ export class AutomatedWithdrawalService {
     } catch (error) {
       console.error('❌ [AUTO-WD] Error in processAllPendingWithdrawals:', error);
       await this.sendErrorNotification('Failed to process pending withdrawals', error);
+    }
+  }
+
+  /**
+   * PREVENTION: Check for suspicious withdrawals (rejected but with transaction hash)
+   */
+  private async checkForSuspiciousWithdrawals(): Promise<void> {
+    try {
+      const suspiciousWithdrawals = await db
+        .select()
+        .from(withdrawals)
+        .where(and(
+          eq(withdrawals.status, 'rejected'),
+          isNotNull(withdrawals.transactionHash)
+        ));
+
+      if (suspiciousWithdrawals.length > 0) {
+        const criticalMessage = `🚨 FINANCIAL INTEGRITY BREACH DETECTED!
+Found ${suspiciousWithdrawals.length} withdrawals marked as 'rejected' but with transaction hashes:
+${suspiciousWithdrawals.map(w => `ID: ${w.id}, TX: ${w.transactionHash}`).join('\n')}
+IMMEDIATE MANUAL REVIEW REQUIRED!`;
+
+        console.error(criticalMessage);
+        await this.sendCriticalErrorNotification({ id: 'SYSTEM_CHECK' }, 'MULTIPLE', { message: criticalMessage });
+      }
+    } catch (error) {
+      console.error('❌ [AUTO-WD] Error checking for suspicious withdrawals:', error);
+    }
+  }
+
+  /**
+   * PREVENTION: Pre-flight validation before withdrawal execution
+   */
+  private async preFlightValidation(withdrawal: any): Promise<boolean> {
+    try {
+      // 1. Check user balance sufficiency
+      const user = await db.select().from(users).where(eq(users.id, withdrawal.userId)).limit(1);
+      if (!user.length || user[0].balance < withdrawal.ntiqAmount) {
+        console.log(`❌ [AUTO-WD] Insufficient balance for withdrawal ${withdrawal.id}`);
+        return false;
+      }
+
+      // 2. Check network connectivity
+      const networkConfig = this.config.networks[withdrawal.chainName];
+      if (!networkConfig) {
+        console.log(`❌ [AUTO-WD] Unsupported network: ${withdrawal.chainName}`);
+        return false;
+      }
+
+      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+      try {
+        await provider.getBlockNumber();
+      } catch (error) {
+        console.log(`❌ [AUTO-WD] Network connectivity failed for ${withdrawal.chainName}`);
+        return false;
+      }
+
+      // 3. Check admin wallet balance
+      const signer = new ethers.Wallet(this.config.adminPrivateKey, provider);
+      const adminBalance = await provider.getBalance(signer.address);
+      const requiredAmount = ethers.parseEther(withdrawal.netAmount.toString());
+      
+      if (adminBalance < requiredAmount) {
+        console.log(`❌ [AUTO-WD] Insufficient admin wallet balance for withdrawal ${withdrawal.id}`);
+        return false;
+      }
+
+      console.log(`✅ [AUTO-WD] Pre-flight validation passed for withdrawal ${withdrawal.id}`);
+      return true;
+      
+    } catch (error) {
+      console.error(`❌ [AUTO-WD] Pre-flight validation error for withdrawal ${withdrawal.id}:`, error);
+      return false;
     }
   }
 
