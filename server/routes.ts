@@ -3578,10 +3578,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('📊 [RESET] Data counts before deletion:', beforeCounts);
       
       // Delete all data in correct order (respecting foreign key constraints)
-      // Start with dependent tables first
+      // Start with most dependent tables first
       await db.delete(transactionLogs);
       await db.delete(rewards);
-      await db.delete(achievements);
       await db.delete(dailyChallenges);
       await db.delete(deposits);
       await db.delete(withdrawals);
@@ -3589,6 +3588,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.delete(predictions);
       await db.delete(survivalTournaments);
       await db.delete(banners);
+      
+      // Delete junction tables and other dependent tables first
+      try {
+        await db.execute(sql`DELETE FROM user_achievements`);
+        console.log('✅ [RESET] user_achievements table cleared');
+      } catch (error) {
+        console.log('⚠️ [RESET] user_achievements table not found or already empty');
+      }
+
+      try {
+        await db.execute(sql`DELETE FROM survival_participants`);
+        console.log('✅ [RESET] survival_participants table cleared');
+      } catch (error) {
+        console.log('⚠️ [RESET] survival_participants table not found or already empty');
+      }
+
+      try {
+        await db.execute(sql`DELETE FROM survival_predictions`);
+        console.log('✅ [RESET] survival_predictions table cleared');
+      } catch (error) {
+        console.log('⚠️ [RESET] survival_predictions table not found or already empty');
+      }
+
+      try {
+        await db.execute(sql`DELETE FROM cryptocurrencies`);
+        console.log('✅ [RESET] cryptocurrencies table cleared');
+      } catch (error) {
+        console.log('⚠️ [RESET] cryptocurrencies table not found or already empty');
+      }
+      
+      // Delete achievements after user_achievements 
+      await db.delete(achievements);
       
       // Finally delete users (main table)
       await db.delete(users);
