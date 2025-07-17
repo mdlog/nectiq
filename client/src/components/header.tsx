@@ -11,13 +11,13 @@ import type { User as UserType } from "@shared/schema";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 
 export function Header() {
-  // REAL-TIME BALANCE UPDATES: Refresh balance every 1 second for instant updates
+  // OPTIMIZED BALANCE UPDATES: Reduced frequency to prevent rate limiting
   const { data: user } = useQuery<UserType>({
     queryKey: ["/api/user"],
-    refetchInterval: 1000, // Update every 1 second (1000ms)
-    staleTime: 0, // Always consider data stale for immediate refresh
+    refetchInterval: 10000, // Update every 10 seconds to reduce server load
+    staleTime: 5000, // Consider data fresh for 5 seconds
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // Disable to reduce unnecessary calls
     refetchOnReconnect: true,
   });
   

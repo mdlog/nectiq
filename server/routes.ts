@@ -164,7 +164,7 @@ const adminAttempts = new Map<string, {
   blacklistedUntil?: number;
 }>();
 const blacklistedIPs = new Set<string>();
-const ADMIN_RATE_LIMIT = 5; // Maximum attempts in window
+const ADMIN_RATE_LIMIT = 50; // Maximum attempts in window (increased for better UX)
 const ADMIN_RATE_WINDOW = 15 * 60 * 1000; // 15 minutes
 const BLACKLIST_THRESHOLD = 10; // Blacklist after 10 total failures
 const BLACKLIST_DURATION = 60 * 60 * 1000; // 1 hour blacklist

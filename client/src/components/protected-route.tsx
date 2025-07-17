@@ -12,10 +12,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/user"],
     retry: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - longer stale time
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: true
+    refetchOnMount: true, // Only on mount
+    refetchOnReconnect: false // Disable to reduce calls
   });
 
   useEffect(() => {

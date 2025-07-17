@@ -27,7 +27,7 @@ const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 export class CryptoService {
   private lastFetchTime = 0;
   private cachedRealPrices: CryptoPrice[] = [];
-  private readonly CACHE_DURATION = 45000; // Cache real prices for 45 seconds (balance between updates and rate limits)
+  private readonly CACHE_DURATION = 300000; // Cache real prices for 5 minutes to aggressively reduce rate limits
   private fetchPromise: Promise<CryptoPrice[]> | null = null; // Prevent concurrent fetches
 
   // Method to clear cache when cryptocurrencies are deleted

@@ -32,12 +32,12 @@ export default function Dashboard() {
   // Wallet requirement system
   const { isModalOpen, actionType, checkWalletRequired, onWalletConnected, closeModal } = useWalletRequired();
 
-  // Fetch live prices for real-time updates
+  // Fetch live prices with optimized intervals to prevent rate limiting
   const { data: livePrices = [] } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 500, // Ultra-fast updates every 0.5 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Reduced to 1 minute to prevent overwhelming server
+    refetchIntervalInBackground: false, // Disable background updates
+    staleTime: 45000, // 45 seconds stale time
   });
 
   // Auto-select Bitcoin as default when prices are loaded

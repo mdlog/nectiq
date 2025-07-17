@@ -252,7 +252,7 @@ export class AutomatedWithdrawalService {
    */
   private async deductUserBalance(withdrawal: any): Promise<void> {
     try {
-      const { BalanceService } = await import('./balanceService.js');
+      const { BalanceService } = await import('./services/balanceService.js');
       
       // Deduct withdrawal amount from user balance
       await BalanceService.processTransaction({
@@ -277,11 +277,24 @@ export class AutomatedWithdrawalService {
   private async rejectWithdrawal(id: number, reason: string): Promise<void> {
     await this.updateWithdrawalStatus(id, 'rejected', null, `Auto-rejected: ${reason}`);
     
-    // Refund user balance
+    // Refund user balance menggunakan BalanceService
     const withdrawal = await db.select().from(withdrawals).where(eq(withdrawals.id, id)).limit(1);
     if (withdrawal.length > 0) {
-      // Disini integrate dengan BalanceService untuk refund
-      console.log(`💰 [AUTO-WD] Refunding ${withdrawal[0].ntiqAmount} NTIQ to user ${withdrawal[0].userId}`);
+      try {
+        const { BalanceService } = await import('./services/balanceService.js');
+        
+        await BalanceService.processTransaction({
+          userId: withdrawal[0].userId,
+          type: 'withdrawal_refund',
+          amount: withdrawal[0].ntiqAmount,
+          description: `Withdrawal refund - Auto-rejected: ${reason}`,
+          relatedId: withdrawal[0].id
+        }, this.storage);
+        
+        console.log(`💰 [AUTO-WD] Refunded ${withdrawal[0].ntiqAmount} NTIQ to user ${withdrawal[0].userId}`);
+      } catch (error) {
+        console.error(`❌ [AUTO-WD] Failed to refund balance for withdrawal ${id}:`, error);
+      }
     }
   }
 

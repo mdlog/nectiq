@@ -95,18 +95,18 @@ export function ActivePredictions() {
 
   const isAuthenticated = !!user;
 
-  // Get real-time crypto prices for dynamic logo display
+  // OPTIMIZED: Reduced frequency to prevent rate limiting
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 1000,
-    staleTime: 30000, // 30 seconds
+    refetchInterval: false, // Disable auto-refresh
+    staleTime: 5 * 60 * 1000, // 5 minutes stale time
   });
 
   const { data: predictions = [], isLoading } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
-    refetchInterval: isAuthenticated ? 1000 : false, // Only refetch if authenticated
-    refetchIntervalInBackground: isAuthenticated,
-    staleTime: 30000, // 30 seconds
+    refetchInterval: false, // Disable auto-refresh to prevent rate limiting
+    refetchIntervalInBackground: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes stale time
     enabled: isAuthenticated, // Only enable query if authenticated
   });
 

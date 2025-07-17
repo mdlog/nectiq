@@ -56,16 +56,16 @@ export function RecentRewards() {
 
   const { data: rewards = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/rewards/recent"],
-    refetchInterval: 3000, // Auto-refresh every 3 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
+    refetchInterval: false, // DISABLED to prevent rate limiting
+    refetchIntervalInBackground: false,
+    staleTime: 10 * 60 * 1000, // 10 minutes stale time
   });
 
-  // Get real-time crypto prices for dynamic logo display
+  // OPTIMIZED: Crypto prices for dynamic logo display
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 1000,
-    staleTime: 30000, // 30 seconds
+    refetchInterval: false, // DISABLED to prevent rate limiting
+    staleTime: 10 * 60 * 1000, // 10 minutes stale time
   });
 
   // Safety check for rewards array
