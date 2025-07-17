@@ -3108,88 +3108,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('💰 [API] NTIQ circulation endpoint called - calculating circulation data');
       
-      // Get all deposits and withdrawals
-      const deposits = await storage.getAllDeposits();
-      const withdrawals = await storage.getAllWithdrawals();
+      // Get all users and their balances
+      const allUsers = await storage.getAllUsers();
+      const totalCirculation = allUsers.reduce((sum, user) => sum + user.balance, 0);
+      const totalDistributed = allUsers.length * 1000; // Expected distribution (1000 per user)
       
-      // Calculate NTIQ inflow from deposits (completed deposits only)
-      let ntiqInflow = 0;
-      let totalDeposits = 0;
-      let completedDeposits = 0;
+      // Get transaction statistics for complete tracking
+      const transactionStats = await storage.getTransactionStats();
       
-      deposits.forEach(deposit => {
-        totalDeposits++;
-        if (deposit.status === 'completed') {
-          completedDeposits++;
-          ntiqInflow += parseFloat(deposit.ntiqAmount.toString());
-        }
-      });
-      
-      // Calculate NTIQ outflow from withdrawals (completed withdrawals only)
-      let ntiqOutflow = 0;
-      let totalWithdrawals = 0;
-      let completedWithdrawals = 0;
-      
-      withdrawals.forEach(withdrawal => {
-        totalWithdrawals++;
-        if (withdrawal.status === 'completed') {
-          completedWithdrawals++;
-          ntiqOutflow += parseFloat(withdrawal.ntiqAmount.toString());
-        }
-      });
-      
-      // Calculate net circulation
-      const totalCirculating = ntiqInflow - ntiqOutflow;
-      
-      // Get additional transaction data from transaction_logs
-      const transactionLogs = await storage.getTransactionLogs(10000); // Get large number
-      let additionalNtiqIssued = 0;
-      
-      // Count NTIQ issued through rewards, achievements, etc.
-      transactionLogs.forEach(log => {
-        if (log.type === 'prediction_reward' || 
-            log.type === 'battle_reward' || 
-            log.type === 'achievement_reward' || 
-            log.type === 'daily_challenge_reward' ||
-            log.type === 'survival_tournament_reward' ||
-            log.type === 'deposit_credit') {
-          additionalNtiqIssued += log.amount;
-        }
-      });
-      
-      // Calculate total supply (deposits + rewards issued)
-      const totalSupply = ntiqInflow + additionalNtiqIssued;
-      const actualCirculating = totalSupply - ntiqOutflow;
-      
+      // Calculate circulation metrics matching frontend interface
       const circulationData = {
-        // NTIQ Flow
-        ntiqInflow: parseFloat(ntiqInflow.toFixed(2)),
-        ntiqOutflow: parseFloat(ntiqOutflow.toFixed(2)),
-        netFlow: parseFloat((ntiqInflow - ntiqOutflow).toFixed(2)),
-        
-        // Supply & Circulation
-        totalSupply: parseFloat(totalSupply.toFixed(2)),
-        totalCirculating: parseFloat(actualCirculating.toFixed(2)),
-        circulationRatio: totalSupply > 0 ? parseFloat(((actualCirculating / totalSupply) * 100).toFixed(2)) : 0,
-        
-        // Transaction Counts
-        totalDeposits,
-        completedDeposits,
-        totalWithdrawals,
-        completedWithdrawals,
-        
-        // Additional Sources
-        rewardsIssued: parseFloat(additionalNtiqIssued.toFixed(2)),
-        
-        // Breakdown by source
-        breakdown: {
-          deposits: parseFloat(ntiqInflow.toFixed(2)),
-          rewards: parseFloat(additionalNtiqIssued.toFixed(2)),
-          withdrawals: parseFloat(ntiqOutflow.toFixed(2))
+        totalUsers: allUsers.length,
+        totalNTIQCirculation: totalCirculation,
+        expectedDistribution: totalDistributed,
+        distributionAccuracy: totalCirculation === totalDistributed ? "100" : ((totalCirculation / totalDistributed) * 100).toFixed(2),
+        averageBalancePerUser: allUsers.length > 0 ? (totalCirculation / allUsers.length).toFixed(0) : "0",
+        users: allUsers.map(user => ({
+          id: user.id,
+          username: user.username,
+          balance: user.balance,
+          walletAddress: user.walletAddress ? user.walletAddress.slice(0, 6) + '...' + user.walletAddress.slice(-4) : null,
+          isAdmin: user.isAdmin,
+          authMethod: user.authMethod,
+          totalRewards: user.totalRewards
+        })),
+        transactionSummary: {
+          totalTransactions: transactionStats?.totalTransactions || 0,
+          totalRewardsDistributed: transactionStats?.totalRewards || 0,
+          totalStaked: transactionStats?.totalStaked || 0
+        },
+        systemHealth: {
+          autoDistributionWorking: totalCirculation >= (allUsers.length * 1000),
+          balanceConsistency: allUsers.every(user => user.balance >= 0),
+          schemaDefaultValue: 1000 // from schema.ts line 14
         }
       };
       
-      console.log('✅ [API] NTIQ circulation data calculated:', circulationData);
+      console.log('✅ [API] NTIQ circulation data compiled:', {
+        totalUsers: circulationData.totalUsers,
+        totalCirculation: circulationData.totalNTIQCirculation,
+        distributionAccuracy: circulationData.distributionAccuracy + '%'
+      });
+      
       res.json(circulationData);
       
     } catch (error) {
@@ -3495,54 +3455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ===== NTIQ CIRCULATION TRACKING API ENDPOINT =====
-  app.get('/api/ntiq-circulation', requireAdmin, async (req: Request, res: Response) => {
-    try {
-      console.log('📊 [NTIQ] NTIQ circulation tracking endpoint called');
-      
-      // Get all deposits - completed/credited deposits are NTIQ inflow 
-      const allDeposits = await db.select().from(deposits);
-      const completedDeposits = allDeposits.filter(d => d.status === 'completed');
-      
-      // Get all withdrawals - completed withdrawals are NTIQ outflow
-      const allWithdrawals = await db.select().from(withdrawals);
-      const completedWithdrawals = allWithdrawals.filter(w => w.status === 'completed');
-      
-      // Calculate total inflow (all completed deposits)
-      const totalInflow = completedDeposits.reduce((sum, deposit) => sum + Number(deposit.ntiqAmount || 0), 0);
-      
-      // Calculate total outflow (all completed withdrawals)
-      const totalOutflow = completedWithdrawals.reduce((sum, withdrawal) => sum + Number(withdrawal.ntiqAmount || 0), 0);
-      
-      // Calculate circulating supply (inflow - outflow)
-      const circulatingSupply = totalInflow - totalOutflow;
-      
-      const circulationData = {
-        totalInflow: Math.round(totalInflow),
-        totalOutflow: Math.round(totalOutflow),
-        circulatingSupply: Math.round(circulatingSupply)
-      };
-      
-      console.log('✅ [NTIQ] NTIQ circulation data calculated:', circulationData);
-      console.log(`✅ [NTIQ] Completed deposits: ${completedDeposits.length}, Total inflow: ${totalInflow} NTIQ`);
-      console.log(`✅ [NTIQ] Completed withdrawals: ${completedWithdrawals.length}, Total outflow: ${totalOutflow} NTIQ`);
-      
-      // Clear cache headers to ensure fresh data
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      
-      res.json(circulationData);
-    } catch (error) {
-      console.error('❌ [NTIQ] Critical error in NTIQ circulation tracking:', error);
-      console.error('❌ [NTIQ] Error details:', error instanceof Error ? error.message : 'Unknown error');
-      
-      res.status(500).json({ 
-        error: 'Failed to fetch NTIQ circulation data',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+
 
   // ===== TEST: SIMPLE DATABASE TEST ENDPOINT =====
   app.post('/api/admin/test-reset', requireAdmin, async (req: Request, res: Response) => {
@@ -4108,59 +4021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // NTIQ Circulation Tracking endpoint
-  app.get("/api/admin/ntiq-circulation", requireAdmin, async (req, res) => {
-    try {
-      console.log('📊 [API] NTIQ circulation tracking endpoint called');
-      
-      // Get all users and their balances
-      const allUsers = await storage.getAllUsers();
-      const totalCirculation = allUsers.reduce((sum, user) => sum + user.balance, 0);
-      const totalDistributed = allUsers.length * 1000; // Expected distribution (1000 per user)
-      
-      // Get transaction statistics for complete tracking
-      const transactionStats = await storage.getTransactionStats();
-      
-      // Calculate circulation metrics
-      const circulationData = {
-        totalUsers: allUsers.length,
-        totalNTIQCirculation: totalCirculation,
-        expectedDistribution: totalDistributed,
-        distributionAccuracy: totalCirculation === totalDistributed ? 100 : ((totalCirculation / totalDistributed) * 100).toFixed(2),
-        averageBalancePerUser: allUsers.length > 0 ? (totalCirculation / allUsers.length).toFixed(0) : 0,
-        users: allUsers.map(user => ({
-          id: user.id,
-          username: user.username,
-          balance: user.balance,
-          walletAddress: user.walletAddress ? user.walletAddress.slice(0, 6) + '...' + user.walletAddress.slice(-4) : null,
-          isAdmin: user.isAdmin,
-          authMethod: user.authMethod,
-          totalRewards: user.totalRewards
-        })),
-        transactionSummary: {
-          totalTransactions: transactionStats.totalTransactions || 0,
-          totalRewardsDistributed: transactionStats.totalRewards || 0,
-          totalStaked: transactionStats.totalStaked || 0
-        },
-        systemHealth: {
-          autoDistributionWorking: totalCirculation >= (allUsers.length * 1000),
-          balanceConsistency: allUsers.every(user => user.balance >= 0),
-          schemaDefaultValue: 1000 // from schema.ts line 14
-        }
-      };
-      
-      console.log('✅ [API] NTIQ circulation data compiled:', {
-        totalUsers: circulationData.totalUsers,
-        totalCirculation: circulationData.totalNTIQCirculation,
-        distributionAccuracy: circulationData.distributionAccuracy + '%'
-      });
-      
-      res.json(circulationData);
-    } catch (error) {
-      console.error("Error fetching NTIQ circulation data:", error);
-      res.status(500).json({ message: "Failed to fetch NTIQ circulation data" });
-    }
-  });
+
 
   // Admin: Emergency stop
   app.post("/api/admin/emergency-stop", requireAdmin, async (req, res) => {
