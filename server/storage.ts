@@ -716,13 +716,19 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(withdrawals.id, withdrawalId));
 
-    // Refund the user's balance
-    await db
-      .update(users)
-      .set({
-        balance: sql`${users.balance} + ${withdrawal.ptsAmount}`
-      })
-      .where(eq(users.id, withdrawal.userId));
+    // Refund the user's balance using BalanceService for proper audit trail
+    await BalanceService.processTransaction({
+      userId: withdrawal.userId,
+      type: 'withdrawal_refund',
+      amount: withdrawal.ntiqAmount, // Fixed: use ntiqAmount instead of ptsAmount
+      description: `Withdrawal refund - ${adminNote}`,
+      relatedId: withdrawal.id,
+      metadata: {
+        withdrawalId: withdrawal.id,
+        originalAmount: withdrawal.ntiqAmount,
+        adminNote
+      }
+    }, this);
   }
 
   async completeWithdrawal(withdrawalId: number, adminId: number, adminNote?: string, transactionHash?: string): Promise<void> {
