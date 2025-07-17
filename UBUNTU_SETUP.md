@@ -196,8 +196,8 @@ ls -la dist/
 
 ### Create PM2 Configuration
 ```bash
-# Create ecosystem file untuk PM2
-cat > ecosystem.config.js << 'EOF'
+# Create ecosystem file untuk PM2 (CommonJS format untuk compatibility)
+cat > ecosystem.config.cjs << 'EOF'
 module.exports = {
   apps: [{
     name: 'nectiq-app',
@@ -225,8 +225,8 @@ mkdir -p logs
 
 ### Start dengan PM2
 ```bash
-# Start application
-pm2 start ecosystem.config.js
+# Start application dengan .cjs file
+pm2 start ecosystem.config.cjs
 
 # Check status
 pm2 status
@@ -474,11 +474,11 @@ pm2 logs nectiq-app --lines 100
 
 # Stop dan start ulang
 pm2 stop nectiq-app
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 
 # Delete dan recreate
 pm2 delete nectiq-app
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 ```
 
 ### Memory dan Performance Issues
@@ -598,7 +598,7 @@ nano .env  # Edit with your configurations
 # Build dan deploy
 npm run build
 npm install -g pm2
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 pm2 startup
 pm2 save
 
