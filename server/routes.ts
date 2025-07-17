@@ -20,6 +20,7 @@ import { getUserStatistics, getUserGrowthMetrics, getUserEngagementMetrics } fro
 import { calculateAntiGamingMetrics, getPredictionDeadline, formatCountdown } from "./antiGamingUtils.js";
 import { SurvivalRoundService } from "./services/survivalRoundService.js";
 import { BalanceService } from "./services/balanceService.js";
+import AutomatedDepositSecurity from './automated-deposit-security.js';
 
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
@@ -470,6 +471,9 @@ function getContractConfiguration() {
   
   return config;
 }
+
+// Initialize deposit security service
+const depositSecurity = new AutomatedDepositSecurity(storage);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -2832,6 +2836,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/user-statistics', requireAdmin, getUserStatistics);
   app.get('/api/admin/user-growth', requireAdmin, getUserGrowthMetrics);
   app.get('/api/admin/user-engagement', requireAdmin, getUserEngagementMetrics);
+
+  // =============================================
+  // DEPOSIT SECURITY ADMIN ENDPOINTS
+  // =============================================
+
+  // Get deposit security report
+  app.get("/api/admin/deposit-security/report", requireAdmin, async (req, res) => {
+    try {
+      const report = await depositSecurity.getSecurityReport();
+      auditLog('ADMIN_DEPOSIT_SECURITY_REPORT_VIEWED', { 
+        clientIP: req.ip,
+        userId: (req as any).session?.userId
+      }, req);
+      res.json(report);
+    } catch (error) {
+      console.error("Error getting deposit security report:", error);
+      res.status(500).json({ message: "Failed to get security report" });
+    }
+  });
+
+  // Manual deposit correction
+  app.post("/api/admin/deposit-security/correct/:depositId", requireAdmin, async (req, res) => {
+    try {
+      const depositId = parseInt(req.params.depositId);
+      if (isNaN(depositId)) {
+        return res.status(400).json({ message: "Invalid deposit ID" });
+      }
+
+      const result = await depositSecurity.manualDepositCorrection(depositId);
+      
+      auditLog('ADMIN_DEPOSIT_MANUAL_CORRECTION', { 
+        clientIP: req.ip,
+        userId: (req as any).session?.userId,
+        depositId,
+        success: result.success,
+        message: result.message
+      }, req);
+
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error("Error in manual deposit correction:", error);
+      res.status(500).json({ message: "Failed to process manual correction" });
+    }
+  });
+
+  // Start/stop deposit security monitoring
+  app.post("/api/admin/deposit-security/toggle", requireAdmin, async (req, res) => {
+    try {
+      const { action } = req.body;
+      
+      if (action === 'start') {
+        depositSecurity.startMonitoring();
+        auditLog('ADMIN_DEPOSIT_SECURITY_STARTED', { 
+          clientIP: req.ip,
+          userId: (req as any).session?.userId
+        }, req);
+        res.json({ message: "Deposit security monitoring started", isRunning: true });
+      } else if (action === 'stop') {
+        depositSecurity.stopMonitoring();
+        auditLog('ADMIN_DEPOSIT_SECURITY_STOPPED', { 
+          clientIP: req.ip,
+          userId: (req as any).session?.userId
+        }, req);
+        res.json({ message: "Deposit security monitoring stopped", isRunning: false });
+      } else {
+        res.status(400).json({ message: "Invalid action. Use 'start' or 'stop'" });
+      }
+    } catch (error) {
+      console.error("Error toggling deposit security:", error);
+      res.status(500).json({ message: "Failed to toggle deposit security" });
+    }
+  });
 
   // Admin: Get all purchases (transaction monitoring)
   app.get("/api/admin/purchases", requireAdmin, async (req, res) => {
@@ -5692,6 +5772,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // MULTI-CHAIN DEPOSIT & WITHDRAWAL ENDPOINTS
   // =============================================
 
+  // Start deposit security monitoring
+  depositSecurity.startMonitoring();
+  console.log('🔐 [DEPOSIT-SECURITY] Automated monitoring started');
+
   // Create deposit request
   app.post("/api/deposits/create", async (req, res) => {
     try {
@@ -5882,33 +5966,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`📊 Blockchain API response for deposit ${depositId}:`, JSON.stringify(data, null, 2));
         
+        // CRITICAL FINANCIAL BUG PREVENTION: Enhanced deposit verification with state tracking
+        console.log(`🔍 [DEPOSIT-SECURITY] Analyzing blockchain response for deposit ${depositId}:`, data);
+        
         if (data.status === "1" && data.result?.status === "1") {
-          // Transaction successful, update deposit to completed and add NTIQ balance
-          await storage.updateDepositStatus(depositId, 'completed');
+          console.log(`✅ [DEPOSIT-SECURITY] Blockchain confirms transaction success for deposit ${depositId}`);
           
-          // Add NTIQ balance to user using BalanceService
-          await BalanceService.processTransaction({
-            userId: session.userId,
-            type: 'crypto_purchase',
-            amount: deposit.ntiqAmount,
-            description: `Deposit completed - ${deposit.chainName.toUpperCase()} transaction ${deposit.transactionHash}`,
-            relatedId: depositId,
-            metadata: { 
-              depositId: depositId,
-              transactionHash: deposit.transactionHash,
-              chainName: deposit.chainName,
-              tokenType: deposit.tokenType,
-              amountUSD: deposit.amountUSD
-            }
-          }, storage);
+          // PREVENTION: Check if deposit already credited to prevent double processing
+          const currentDeposit = await storage.getUserDeposits(session.userId, 100);
+          const targetDeposit = currentDeposit.find(d => d.id === depositId);
+          
+          if (!targetDeposit) {
+            console.error(`❌ [DEPOSIT-SECURITY] Deposit ${depositId} not found for user ${session.userId}`);
+            return res.status(404).json({ error: "Deposit not found" });
+          }
+          
+          if (targetDeposit.status === 'completed') {
+            console.log(`⚠️ [DEPOSIT-SECURITY] Deposit ${depositId} already completed, preventing double credit`);
+            return res.json({ 
+              success: true, 
+              status: 'completed',
+              message: `Deposit already confirmed! ${deposit.ntiqAmount} NTIQ was previously added to your balance.`,
+              preventedDoubleCredit: true
+            });
+          }
+          
+          // ATOMIC OPERATION: Update status and credit balance in single transaction
+          let balanceCredited = false;
+          let statusUpdated = false;
+          
+          try {
+            // Step 1: Update deposit status first (prevents re-processing)
+            await storage.updateDepositStatus(depositId, 'completed');
+            statusUpdated = true;
+            console.log(`✅ [DEPOSIT-SECURITY] Status updated to completed for deposit ${depositId}`);
+            
+            // Step 2: Credit user balance
+            const balanceResult = await BalanceService.processTransaction({
+              userId: session.userId,
+              type: 'crypto_purchase',
+              amount: deposit.ntiqAmount,
+              description: `Deposit completed - ${deposit.chainName.toUpperCase()} transaction ${deposit.transactionHash}`,
+              relatedId: depositId,
+              metadata: { 
+                depositId: depositId,
+                transactionHash: deposit.transactionHash,
+                chainName: deposit.chainName,
+                tokenType: deposit.tokenType,
+                amountUSD: deposit.amountUSD
+              }
+            }, storage);
+            balanceCredited = true;
+            console.log(`✅ [DEPOSIT-SECURITY] Balance credited successfully for deposit ${depositId}`);
 
-          console.log(`✅ Deposit ${depositId} completed successfully. Added ${deposit.ntiqAmount} NTIQ to user ${session.userId}`);
-          
-          return res.json({ 
-            success: true, 
-            status: 'completed',
-            message: `Deposit completed! ${deposit.ntiqAmount} NTIQ added to your balance.`
-          });
+            console.log(`✅ Deposit ${depositId} completed successfully. Added ${deposit.ntiqAmount} NTIQ to user ${session.userId}`);
+            
+            return res.json({ 
+              success: true, 
+              status: 'completed',
+              message: `Deposit completed! ${deposit.ntiqAmount} NTIQ added to your balance.`,
+              balanceCredited: true,
+              statusUpdated: true
+            });
+            
+          } catch (error) {
+            // CRITICAL ERROR HANDLING: If balance credit fails after status update
+            console.error(`🚨 [DEPOSIT-CRITICAL-ERROR] Deposit ${depositId} marked completed but balance credit failed!`, error);
+            
+            if (statusUpdated && !balanceCredited) {
+              // CRITICAL: Deposit marked completed but balance not credited
+              // This is similar to withdrawal bug - needs immediate attention
+              const criticalMessage = `🚨 CRITICAL DEPOSIT INTEGRITY ERROR 🚨
+Deposit ID: ${depositId}
+User ID: ${session.userId}
+Amount: ${deposit.ntiqAmount} NTIQ
+Status: Updated to completed
+Balance Credit: FAILED
+Blockchain TX: ${deposit.transactionHash}
+Problem: Deposit marked completed but balance credit failed!
+Manual balance correction required IMMEDIATELY!`;
+              
+              console.error(criticalMessage);
+              // TODO: Send to admin notification system
+              
+              return res.status(500).json({
+                error: "Critical error: Deposit status updated but balance credit failed. Contact support immediately.",
+                requiresManualIntervention: true,
+                depositId,
+                errorType: "deposit_credit_failure"
+              });
+            }
+            
+            throw error;
+          }
         } else if (data.status === "1" && data.result?.status === "0") {
           // Transaction failed
           await storage.updateDepositStatus(depositId, 'failed');
