@@ -3116,9 +3116,13 @@ export default function AdminPanel() {
       isUnauthorized,
       statsData: !!stats,
       usersData: users.length,
-      predictionsData: predictions.length
+      predictionsData: predictions.length,
+      statsLoading,
+      usersLoading, 
+      predictionsLoading,
+      componentReady: !statsLoading && !usersLoading && !predictionsLoading
     });
-  }, [statsError, usersError, predictionsError, activityError, isUnauthorized, stats, users, predictions]);
+  }, [statsError, usersError, predictionsError, activityError, isUnauthorized, stats, users, predictions, statsLoading, usersLoading, predictionsLoading]);
 
   // Temporarily disable authentication check for debugging
   if (false && isUnauthorized) {
@@ -3281,6 +3285,18 @@ export default function AdminPanel() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  // Loading state check
+  if (statsLoading || usersLoading || predictionsLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-gray-600">Loading Admin Panel...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
