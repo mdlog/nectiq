@@ -207,13 +207,13 @@ const DatabaseResetButton = () => {
               console.log('🧪 Test result:', result);
               if (result.success) {
                 toast({
-                  title: "Test Database Berhasil",
+                  title: "Test Database Success",
                   description: `Users before: ${result.beforeCount}, after: ${result.afterCount}`,
                   variant: "default"
                 });
               } else {
                 toast({
-                  title: "Test Database Gagal",
+                  title: "Test Database Failed",
                   description: result.message,
                   variant: "destructive"
                 });
@@ -259,7 +259,7 @@ const DatabaseResetButton = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center text-red-600">
               <AlertTriangle className="mr-2" size={24} />
-              {!isStep2 ? 'Konfirmasi Reset Database' : 'Konfirmasi Akhir'}
+              {!isStep2 ? 'Confirm Database Reset' : 'Final Confirmation'}
             </DialogTitle>
           </DialogHeader>
 
@@ -268,15 +268,15 @@ const DatabaseResetButton = () => {
               <Alert className="border-red-200 bg-red-50">
                 <AlertTriangle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-800 font-medium">
-                  <strong>PERINGATAN SERIUS!</strong>
+                  <strong>SERIOUS WARNING!</strong>
                   <br />
-                  Tindakan ini akan:
+                  This action will:
                   <ul className="mt-2 list-disc list-inside space-y-1">
-                    <li>Menghapus SEMUA data di database</li>
-                    <li>Menghapus semua users, predictions, battles</li>
-                    <li>Menghapus semua transaksi, deposits, withdrawals</li>
-                    <li>Reset semua ID counter ke 1</li>
-                    <li><strong>TIDAK DAPAT DIBATALKAN!</strong></li>
+                    <li>Delete ALL data in the database</li>
+                    <li>Delete all users, predictions, battles</li>
+                    <li>Delete all transactions, deposits, withdrawals</li>
+                    <li>Reset all ID counters to 1</li>
+                    <li><strong>CANNOT BE UNDONE!</strong></li>
                   </ul>
                 </AlertDescription>
               </Alert>
@@ -287,14 +287,14 @@ const DatabaseResetButton = () => {
                   onClick={handleDialogClose}
                   className="border-gray-300"
                 >
-                  Batal
+                  Cancel
                 </Button>
                 <Button 
                   variant="destructive" 
                   onClick={handleStep1Confirm}
                   className="bg-red-600 hover:bg-red-700"
                 >
-                  Saya Mengerti, Lanjutkan
+                  I Understand, Continue
                 </Button>
               </div>
             </div>
@@ -303,7 +303,7 @@ const DatabaseResetButton = () => {
               <Alert className="border-red-200 bg-red-50">
                 <Shield className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-800">
-                  <strong>Masukkan kode konfirmasi untuk melanjutkan:</strong>
+                  <strong>Enter confirmation code to proceed:</strong>
                   <br />
                   <code className="text-sm bg-red-100 px-2 py-1 rounded mt-1 inline-block">
                     RESET_ALL_DATA_CONFIRMED
@@ -316,22 +316,22 @@ const DatabaseResetButton = () => {
                   <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
                   <AlertDescription className="text-blue-700 dark:text-blue-300">
                     <strong>Processing Database Reset...</strong><br />
-                    Menghapus semua data dan mereset ID sequences. Proses ini mungkin memakan waktu beberapa menit.
-                    {resetMutation.isPending && <div className="mt-2 text-sm">Jika terjadi timeout, silakan coba lagi dalam beberapa saat.</div>}
+                    Deleting all data and resetting ID sequences. This process may take several minutes.
+                    {resetMutation.isPending && <div className="mt-2 text-sm">If timeout occurs, please try again in a few moments.</div>}
                   </AlertDescription>
                 </Alert>
               )}
 
               <div className="space-y-2">
                 <Label htmlFor="confirmationCode" className="text-sm font-medium">
-                  Kode Konfirmasi:
+                  Confirmation Code:
                 </Label>
                 <Input
                   id="confirmationCode"
                   type="text"
                   value={confirmationCode}
                   onChange={(e) => setConfirmationCode(e.target.value)}
-                  placeholder="Masukkan kode konfirmasi..."
+                  placeholder="Enter confirmation code..."
                   className="border-red-300 focus:border-red-500"
                   disabled={resetMutation.isPending}
                 />
@@ -343,7 +343,7 @@ const DatabaseResetButton = () => {
                   onClick={handleDialogClose}
                   disabled={resetMutation.isPending}
                 >
-                  Batal
+                  Cancel
                 </Button>
                 <Button 
                   variant="destructive" 
@@ -374,9 +374,9 @@ const DatabaseResetButton = () => {
         <Alert className="mt-4 border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            <strong>Database berhasil direset!</strong>
+            <strong>Database successfully reset!</strong>
             <br />
-            Reset dilakukan pada: {new Date(resetResults.resetDate).toLocaleString('id-ID')}
+            Reset performed on: {new Date(resetResults.resetDate).toLocaleString('en-US')}
           </AlertDescription>
         </Alert>
       )}
