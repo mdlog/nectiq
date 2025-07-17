@@ -3714,10 +3714,7 @@ export default function AdminPanel() {
                 <Zap className="h-3 w-3 sm:h-5 sm:w-5" />
                 <span className="hidden sm:inline">Auto Withdrawal</span>
               </TabsTrigger>
-              <TabsTrigger value="ntiq-circulation" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50">
-                <Coins className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">NTIQ Circulation</span>
-              </TabsTrigger>
+
             </TabsList>
           </div>
 
@@ -8070,10 +8067,7 @@ export default function AdminPanel() {
             </div>
           </TabsContent>
 
-          {/* NTIQ Circulation Tracking Content */}
-          <TabsContent value="ntiq-circulation" className="space-y-6">
-            <NTIQCirculationTracker />
-          </TabsContent>
+
         </Tabs>
       </main>
       
