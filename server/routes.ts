@@ -3553,21 +3553,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userCount = await db.select().from(users).then(r => r.length);
       console.log('🧪 [TEST] Current user count:', userCount);
       
-      // Simple test: try to disable foreign keys
-      await db.execute(sql`SET session_replication_role = REPLICA`);
-      console.log('🧪 [TEST] Foreign keys disabled successfully');
+      // Test alternative approach - delete with CASCADE
+      console.log('🧪 [TEST] Testing CASCADE deletion approach...');
       
-      // Simple test: try one delete operation  
-      const deletedUsers = await db.delete(users);
-      console.log('🧪 [TEST] Users table deletion attempted');
+      // Try TRUNCATE with CASCADE (PostgreSQL specific)
+      await db.execute(sql`TRUNCATE TABLE users CASCADE`);
+      console.log('🧪 [TEST] TRUNCATE CASCADE executed successfully');
       
       // Check count after deletion
       const newUserCount = await db.select().from(users).then(r => r.length);
-      console.log('🧪 [TEST] User count after deletion:', newUserCount);
-      
-      // Re-enable foreign keys
-      await db.execute(sql`SET session_replication_role = DEFAULT`);
-      console.log('🧪 [TEST] Foreign keys re-enabled successfully');
+      console.log('🧪 [TEST] User count after truncation:', newUserCount);
       
       res.json({
         success: true,
@@ -3741,13 +3736,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
 
-      // Disable foreign key constraints temporarily for complete reset
-      await retryOperation(async () => {
-        await db.execute(sql`SET session_replication_role = replica`);
-        console.log('🔓 [RESET] Foreign key constraints disabled');
-      }, 5, 'Disable Foreign Key Constraints');
-
-      // Use TRUNCATE CASCADE for more robust deletion with retry
+      // NEW APPROACH: Use TRUNCATE CASCADE (no session_replication_role needed)
+      console.log('🔧 [RESET] Using TRUNCATE CASCADE approach - no foreign key disabling required');
+      
+      // Use TRUNCATE CASCADE for complete database reset
       const tablesToTruncate = [
         'user_achievements',
         'survival_participants', 
@@ -3766,25 +3758,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'users'
       ];
 
+      let clearedTables = 0;
       for (const tableName of tablesToTruncate) {
         await retryOperation(async () => {
           try {
-            await db.execute(sql`TRUNCATE TABLE ${sql.raw(tableName)} RESTART IDENTITY CASCADE`);
-            console.log(`✅ [RESET] ${tableName} table truncated with CASCADE`);
-          } catch (error) {
-            console.log(`⚠️ [RESET] Could not truncate ${tableName} - trying DELETE`);
+            await db.execute(sql.raw(`TRUNCATE TABLE ${tableName} RESTART IDENTITY CASCADE`));
+            console.log(`✅ [RESET] ${tableName} table truncated with RESTART IDENTITY CASCADE`);
+            clearedTables++;
+          } catch (error: any) {
+            console.log(`⚠️ [RESET] Could not truncate ${tableName} (${error.message}) - trying DELETE`);
             // Try fallback DELETE if TRUNCATE fails
-            await db.execute(sql`DELETE FROM ${sql.raw(tableName)}`);
+            await db.execute(sql.raw(`DELETE FROM ${tableName}`));
             console.log(`✅ [RESET] ${tableName} table cleared with DELETE`);
+            clearedTables++;
           }
         }, 5, `Clear Table: ${tableName}`);
       }
-
-      // Re-enable foreign key constraints with retry
-      await retryOperation(async () => {
-        await db.execute(sql`SET session_replication_role = DEFAULT`);
-        console.log('🔒 [RESET] Foreign key constraints re-enabled');
-      }, 5, 'Re-enable Foreign Key Constraints');
+      
+      console.log(`✅ [RESET] Successfully cleared ${clearedTables} tables using TRUNCATE CASCADE approach`);
       
       const afterCounts = {
         users: await db.select().from(users).then(r => r.length),
