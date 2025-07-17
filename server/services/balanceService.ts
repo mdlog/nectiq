@@ -5,7 +5,7 @@
 
 interface BalanceTransactionData {
   userId: number;
-  type: 'prediction_stake' | 'prediction_reward' | 'battle_create' | 'battle_reward' | 'battle_refund' | 'survival_entry' | 'survival_tournament_reward' | 'achievement_reward' | 'daily_challenge_reward' | 'crypto_purchase' | 'withdrawal' | 'withdrawal_refund';
+  type: 'prediction_stake' | 'prediction_reward' | 'battle_create' | 'battle_reward' | 'battle_refund' | 'survival_entry' | 'survival_tournament_reward' | 'achievement_reward' | 'daily_challenge_reward' | 'crypto_purchase' | 'withdrawal' | 'withdrawal_pending' | 'withdrawal_completed' | 'withdrawal_refund';
   amount: number;
   description?: string;
   relatedId?: number | string;
@@ -69,6 +69,13 @@ export class BalanceService {
           newBalance = user.balance - Math.abs(amount);
           transactionAmount = -Math.abs(amount);
           finalDescription = description || 'Withdrawal pending approval';
+          break;
+          
+        case 'withdrawal_completed':
+          // Deduct withdrawal amount when completed
+          newBalance = user.balance - Math.abs(amount);
+          transactionAmount = -Math.abs(amount);
+          finalDescription = description || 'Withdrawal completed successfully';
           break;
           
         default:

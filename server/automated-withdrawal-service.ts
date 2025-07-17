@@ -174,6 +174,9 @@ export class AutomatedWithdrawalService {
       await this.updateWithdrawalStatus(withdrawal.id, 'completed', txHash);
       this.dailyWithdrawalTotal += parseFloat(withdrawal.usdAmount);
       
+      // CRITICAL: Deduct user balance after successful withdrawal
+      await this.deductUserBalance(withdrawal);
+      
       console.log(`✅ [AUTO-WD] Withdrawal ${withdrawal.id} completed with TX: ${txHash}`);
       
       // Send success notification
@@ -242,6 +245,30 @@ export class AutomatedWithdrawalService {
     if (adminNote) updateData.adminNote = adminNote;
     
     await db.update(withdrawals).set(updateData).where(eq(withdrawals.id, id));
+  }
+
+  /**
+   * Deduct user balance after successful withdrawal
+   */
+  private async deductUserBalance(withdrawal: any): Promise<void> {
+    try {
+      const { BalanceService } = await import('./balanceService.js');
+      
+      // Deduct withdrawal amount from user balance
+      await BalanceService.processTransaction({
+        userId: withdrawal.userId,
+        type: 'withdrawal_completed',
+        amount: withdrawal.ntiqAmount, // Positive amount, service will make it negative
+        description: `Withdrawal completed - TX: ${withdrawal.transactionHash || 'automated_withdrawal'}`,
+        relatedId: withdrawal.id
+      }, this.storage);
+      
+      console.log(`💰 [AUTO-WD] Deducted ${withdrawal.ntiqAmount} NTIQ from user ${withdrawal.userId} balance`);
+      
+    } catch (error) {
+      console.error(`❌ [AUTO-WD] Failed to deduct balance for withdrawal ${withdrawal.id}:`, error);
+      throw error;
+    }
   }
 
   /**
