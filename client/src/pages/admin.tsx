@@ -1093,7 +1093,6 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   const { data: users = [], error: usersError } = useQuery<User[]>({
@@ -1103,7 +1102,6 @@ export default function AdminPanel() {
     refetchInterval: 1500, // Ultra-fast updates every 1.5 seconds  
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   const { data: predictions = [], error: predictionsError } = useQuery<Prediction[]>({
@@ -1113,7 +1111,6 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   // Get crypto prices for logos
@@ -1140,7 +1137,6 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   const { data: transactionWithdrawals = [] } = useQuery({
@@ -1150,7 +1146,6 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   const { data: transactionDeposits = [] } = useQuery({
@@ -1160,7 +1155,6 @@ export default function AdminPanel() {
     refetchInterval: 1000, // Ultra-fast updates every 1 second
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   const { data: events = [] } = useQuery<any[]>({
@@ -1168,14 +1162,12 @@ export default function AdminPanel() {
     retry: 2,
     retryDelay: 1000,
     refetchInterval: 7000, // Auto-refresh every 7 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   // ===== REAL-TIME SECURITY MONITORING QUERIES =====
   const { data: userActivities, refetch: refetchUserActivities } = useQuery({
     queryKey: ["/api/admin/security/user-activities"],
     refetchInterval: 5000, // Update every 5 seconds
-    enabled: !!currentUser?.isAdmin
   });
 
 
@@ -1183,7 +1175,6 @@ export default function AdminPanel() {
   const { data: systemStatus, refetch: refetchSystemStatus } = useQuery({
     queryKey: ["/api/admin/security/system-status"],
     refetchInterval: 10000, // Update every 10 seconds
-    enabled: !!currentUser?.isAdmin
   });
 
   // Leaderboard data query
@@ -1212,7 +1203,6 @@ export default function AdminPanel() {
     retry: 2,
     retryDelay: 1000,
     refetchInterval: 4000, // Auto-refresh every 4 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   const { data: battleStats = {} } = useQuery<any>({
@@ -1220,7 +1210,6 @@ export default function AdminPanel() {
     retry: 2,
     retryDelay: 1000,
     refetchInterval: 5000, // Auto-refresh every 5 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   // Survival Tournament queries and mutations
@@ -1238,7 +1227,6 @@ export default function AdminPanel() {
     },
     retry: false,
     refetchInterval: 6000, // Auto-refresh every 6 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
   const createTournamentMutation = useMutation({
@@ -3119,10 +3107,6 @@ export default function AdminPanel() {
                          (activityError as any)?.message?.includes("401");
 
   // Show simplified authentication if unauthorized
-  if (isUnauthorized) {
-    return <SimpleAdminAuth onAuthSuccess={() => window.location.reload()} />;
-  }
-
   if (isUnauthorized) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
