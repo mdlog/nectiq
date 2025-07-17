@@ -50,13 +50,36 @@ function broadcastToAdmins(data: any) {
   });
 }
 
-// Security audit logging
+// Security audit logs storage in memory
+const securityAuditLogs: Array<{
+  timestamp: string;
+  event: string;
+  ip?: string;
+  userAgent?: string;
+  details: any;
+  headers?: any;
+}> = [];
+
+// Track online users with session management
+const onlineUsers = new Map<number, {
+  userId: number;
+  username: string;
+  lastActivity: Date;
+  ip: string;
+  userAgent: string;
+  isAdmin: boolean;
+}>();
+
+// Security audit logging with storage
 const auditLog = (event: string, details: any, req: Request) => {
   const timestamp = new Date().toISOString();
   const ip = req.ip || req.connection.remoteAddress;
   const userAgent = req.get('User-Agent');
   
-  console.log(`[SECURITY AUDIT] ${timestamp} - ${event}`, {
+  // Store in memory for security events API
+  const logEntry = {
+    timestamp,
+    event,
     ip,
     userAgent,
     details,
@@ -65,7 +88,46 @@ const auditLog = (event: string, details: any, req: Request) => {
       referer: req.get('Referer'),
       'x-forwarded-for': req.get('X-Forwarded-For')
     }
+  };
+  
+  securityAuditLogs.push(logEntry);
+  
+  // Keep only last 1000 entries to prevent memory overflow
+  if (securityAuditLogs.length > 1000) {
+    securityAuditLogs.shift();
+  }
+  
+  console.log(`[SECURITY AUDIT] ${timestamp} - ${event}`, {
+    ip,
+    userAgent,
+    details,
+    headers: logEntry.headers
   });
+  
+  // Track user activity for online status
+  if (details.userId) {
+    updateUserActivity(details.userId, ip, userAgent, details.username, details.isAdmin || false);
+  }
+};
+
+// Update user activity for online tracking
+const updateUserActivity = (userId: number, ip: string, userAgent: string, username?: string, isAdmin: boolean = false) => {
+  onlineUsers.set(userId, {
+    userId,
+    username: username || `User_${userId}`,
+    lastActivity: new Date(),
+    ip: ip || 'Unknown',
+    userAgent: userAgent || 'Unknown',
+    isAdmin
+  });
+  
+  // Clean up inactive users (older than 10 minutes)
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+  for (const [id, activity] of onlineUsers.entries()) {
+    if (activity.lastActivity < tenMinutesAgo) {
+      onlineUsers.delete(id);
+    }
+  }
 };
 
 // Get admin wallet address from secure environment variable (not frontend)
@@ -566,6 +628,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user.username = adminUsername;
       }
 
+      // Track user login for security monitoring
+      auditLog('WALLET_LOGIN_SUCCESS', {
+        userId: user.id,
+        username: user.username,
+        walletAddress: finalAddress,
+        isAdmin: user.isAdmin,
+        clientIP: req.ip
+      }, req);
+
       // Final response with updated user data
       const responseUser = {
         id: user.id,
@@ -660,6 +731,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dbUser.authMethod = "both";
           
           console.log(`Updated existing user ${dbUser.username} with wallet address: ${normalizedAddress.slice(0, 6)}...`);
+          
+          // Track wallet connection for existing user
+          auditLog('WALLET_CONNECTED_TO_EXISTING_USER', {
+            userId: dbUser.id,
+            username: dbUser.username,
+            walletAddress: normalizedAddress,
+            isAdmin: dbUser.isAdmin,
+            clientIP: req.ip
+          }, req);
         }
       }
       
@@ -2926,30 +3006,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all users for current status
       const users = await storage.getAllUsers();
       
-      // Check active sessions and last login times
+      // Check active sessions and last login times from actual activity tracking
       for (const user of users) {
+        const onlineActivity = onlineUsers.get(user.id);
+        
         const activity = {
           userId: user.id,
           username: user.username,
           walletAddress: user.walletAddress,
-          isOnline: false, // We'll determine this from session
-          lastLogin: null,
-          currentIP: null,
-          userAgent: null,
+          isOnline: !!onlineActivity, // Real online status from activity tracking
+          lastLogin: onlineActivity?.lastActivity || null,
+          currentIP: onlineActivity?.ip || null,
+          userAgent: onlineActivity?.userAgent || null,
           authMethod: user.authMethod,
           isAdmin: user.isAdmin,
           loginCount24h: 0,
           riskScore: 0
         };
 
-        // Add some mock recent activity data for demonstration
-        if (user.id === 1) {
-          activity.isOnline = true;
-          activity.lastLogin = new Date();
-          activity.currentIP = req.ip;
-          activity.userAgent = req.get('User-Agent');
-          activity.loginCount24h = 5;
-          activity.riskScore = 0;
+        // Calculate login count from audit logs in last 24 hours
+        const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const userLogins = securityAuditLogs.filter(log => 
+          log.details?.userId === user.id && 
+          (log.event.includes('LOGIN') || log.event.includes('ACCESS_GRANTED')) &&
+          new Date(log.timestamp) > last24Hours
+        );
+        activity.loginCount24h = userLogins.length;
+
+        // Calculate risk score based on activity patterns
+        if (activity.loginCount24h > 20) {
+          activity.riskScore = 3; // High activity
+        } else if (activity.loginCount24h > 10) {
+          activity.riskScore = 2; // Medium activity
+        } else if (activity.loginCount24h > 5) {
+          activity.riskScore = 1; // Normal activity
         }
         
         recentActivities.push(activity);
