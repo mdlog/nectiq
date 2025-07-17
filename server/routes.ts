@@ -69,13 +69,21 @@ const auditLog = (event: string, details: any, req: Request) => {
 
 // Get admin wallet address from secure environment variable (not frontend)
 const getAdminDepositWallet = (): string => {
-  const adminWallets = process.env.ADMIN_WALLETS || "";
+  const adminWallets = process.env.ADMIN_DEPOSIT_WALLET;
+  
+  if (!adminWallets) {
+    console.error('🚨 [SECURITY] ADMIN_DEPOSIT_WALLET environment variable not set!');
+    throw new Error("Admin deposit wallet not configured in environment variables. Please set ADMIN_DEPOSIT_WALLET.");
+  }
+  
   const firstAdminWallet = adminWallets.split(',')[0]?.trim();
   
   if (!firstAdminWallet) {
-    throw new Error("Admin deposit wallet not configured in environment variables");
+    console.error('🚨 [SECURITY] No valid admin deposit wallet found!');
+    throw new Error("No valid admin deposit wallet configured.");
   }
   
+  console.log(`🔐 [SECURITY] Using admin deposit wallet from environment (${firstAdminWallet.substring(0, 6)}...)`);
   return firstAdminWallet;
 };
 
@@ -102,32 +110,51 @@ const generateRandomUsername = (): string => {
 
 // Function to get admin wallet addresses - will be called when needed
 function getAdminWalletAddresses(): string[] {
-  const adminWalletEnv = process.env.ADMIN_WALLET_ADDRESSES || "0x4c6165286739696849fb3e77a16b0639d762c5b6";
-  return adminWalletEnv
+  const adminWalletEnv = process.env.ADMIN_WALLET_ADDRESSES;
+  
+  if (!adminWalletEnv) {
+    console.error('🚨 [SECURITY] ADMIN_WALLET_ADDRESSES environment variable not set!');
+    throw new Error('Admin wallet addresses not configured. Please set ADMIN_WALLET_ADDRESSES environment variable.');
+  }
+  
+  const addresses = adminWalletEnv
     .split(',')
     .map(addr => addr.trim().toLowerCase())
     .filter(addr => addr.length > 0);
+    
+  if (addresses.length === 0) {
+    console.error('🚨 [SECURITY] No valid admin wallet addresses found!');
+    throw new Error('No valid admin wallet addresses configured.');
+  }
+  
+  console.log(`🔐 [SECURITY] Loaded ${addresses.length} admin wallet address(es) from environment`);
+  return addresses;
 }
 
 
 
-// Admin IP whitelist for bypassing rate limiting
-const ADMIN_IP_WHITELIST = new Set([
-  '127.0.0.1',
-  '::1',
-  '172.31.128.86', // Current admin user IP
-  '172.31.128.118', // Admin user IP that was blacklisted
-  '172.31.128.40', // Main admin IP that was getting blacklisted
-  '172.31.128.38', // Current admin IP being blacklisted
-  '172.31.128.107', // Current admin IP being blocked
-  '172.31.128.96', // New admin IP causing unauthorized access attempts
-  '125.162.228.143', // Admin user's real IP from X-Forwarded-For
-  'localhost',
-  '172.31.128.20', // Current admin mobile IP
-  '114.125.167.243', // External admin IP
-  '172.31.128.30', // Admin IP that is currently blacklisted - need to whitelist
-  '172.31.128.138' // Current admin IP to bypass rate limiting
-]);
+// Admin IP whitelist for bypassing rate limiting - loaded from environment
+function getAdminIPWhitelist(): Set<string> {
+  const defaultIPs = ['127.0.0.1', '::1', 'localhost'];
+  const envIPs = process.env.ADMIN_IP_WHITELIST;
+  
+  if (!envIPs) {
+    console.log('🔐 [SECURITY] Using default admin IP whitelist (localhost only)');
+    return new Set(defaultIPs);
+  }
+  
+  const adminIPs = envIPs
+    .split(',')
+    .map(ip => ip.trim())
+    .filter(ip => ip.length > 0);
+    
+  const allIPs = [...defaultIPs, ...adminIPs];
+  console.log(`🔐 [SECURITY] Loaded ${allIPs.length} admin IP(s) from environment`);
+  
+  return new Set(allIPs);
+}
+
+const ADMIN_IP_WHITELIST = getAdminIPWhitelist();
 
 // Rate limiting and IP blacklisting for admin endpoints
 const adminAttempts = new Map<string, { 
@@ -322,6 +349,127 @@ const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     res.status(500).json({ message: "Authentication error" });
   }
 };
+
+// Secure contract address configuration from environment variables
+function getContractConfiguration() {
+  const config = {
+    networks: {
+      ethereum: {
+        chainId: 1,
+        name: "Ethereum Mainnet",
+        rpcUrl: process.env.ETHEREUM_RPC_URL || "https://eth-mainnet.g.alchemy.com/v2/demo",
+        tokens: {
+          USDC: { 
+            address: process.env.ETHEREUM_USDC_CONTRACT || "", 
+            decimals: 6 
+          },
+          USDT: { 
+            address: process.env.ETHEREUM_USDT_CONTRACT || "", 
+            decimals: 6 
+          }
+        }
+      },
+      base: {
+        chainId: 8453,
+        name: "Base",
+        rpcUrl: process.env.BASE_RPC_URL || "https://base-mainnet.g.alchemy.com/v2/demo",
+        tokens: {
+          USDC: { 
+            address: process.env.BASE_USDC_CONTRACT || "", 
+            decimals: 6 
+          },
+          USDT: { 
+            address: process.env.BASE_USDT_CONTRACT || "", 
+            decimals: 6 
+          }
+        }
+      },
+      bsc: {
+        chainId: 56,
+        name: "BSC",
+        rpcUrl: process.env.BSC_RPC_URL || "https://bsc-dataseed.binance.org/",
+        tokens: {
+          USDC: { 
+            address: process.env.BSC_USDC_CONTRACT || "", 
+            decimals: 18 
+          },
+          USDT: { 
+            address: process.env.BSC_USDT_CONTRACT || "", 
+            decimals: 18 
+          }
+        }
+      },
+      optimism: {
+        chainId: 10,
+        name: "Optimism",
+        rpcUrl: process.env.OPTIMISM_RPC_URL || "https://opt-mainnet.g.alchemy.com/v2/demo",
+        tokens: {
+          USDC: { 
+            address: process.env.OPTIMISM_USDC_CONTRACT || "", 
+            decimals: 6 
+          },
+          USDT: { 
+            address: process.env.OPTIMISM_USDT_CONTRACT || "", 
+            decimals: 6 
+          }
+        }
+      },
+      arbitrum: {
+        chainId: 42161,
+        name: "Arbitrum One",
+        rpcUrl: process.env.ARBITRUM_RPC_URL || "https://arb-mainnet.g.alchemy.com/v2/demo",
+        tokens: {
+          USDC: { 
+            address: process.env.ARBITRUM_USDC_CONTRACT || "", 
+            decimals: 6 
+          },
+          USDT: { 
+            address: process.env.ARBITRUM_USDT_CONTRACT || "", 
+            decimals: 6 
+          }
+        }
+      },
+      sepolia: {
+        chainId: 11155111,
+        name: "Sepolia Testnet",
+        rpcUrl: process.env.SEPOLIA_RPC_URL || "https://eth-sepolia.public.blastapi.io",
+        tokens: {
+          USDC: { 
+            address: process.env.SEPOLIA_USDC_CONTRACT || "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238", 
+            decimals: 6 
+          },
+          USDT: { 
+            address: process.env.SEPOLIA_USDT_CONTRACT || "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238", 
+            decimals: 6 
+          }
+        }
+      },
+      holesky: {
+        chainId: 17000,
+        name: "Holesky Testnet",
+        rpcUrl: process.env.HOLESKY_RPC_URL || "https://ethereum-holesky-rpc.publicnode.com",
+        tokens: {
+          USDC: { 
+            address: process.env.HOLESKY_USDC_CONTRACT || "0x449cde79f489e2ae32e6314d8d966ca64e040409", 
+            decimals: 6 
+          },
+          USDT: { 
+            address: process.env.HOLESKY_USDT_CONTRACT || "0x87350147a24099bf1e7e677576f01c1415857c75", 
+            decimals: 6 
+          }
+        }
+      }
+    }
+  };
+  
+  // Log which networks have contract addresses configured
+  Object.entries(config.networks).forEach(([network, netConfig]) => {
+    const hasTokens = Object.values(netConfig.tokens).some(token => token.address !== "");
+    console.log(`🔐 [SECURITY] ${network}: ${hasTokens ? 'Contract addresses configured' : 'Using fallback addresses'}`);
+  });
+  
+  return config;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -7613,6 +7761,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Delete user test failed", 
         error: error.message 
+      });
+    }
+  });
+
+  // Secure Contract Configuration API - provides contract addresses from environment
+  app.get("/api/config/contracts", (req, res) => {
+    try {
+      const config = getContractConfiguration();
+      console.log('🔐 [SECURITY] Contract configuration requested - serving from environment variables');
+      res.json(config);
+    } catch (error) {
+      console.error('🚨 [SECURITY] Error fetching contract configuration:', error);
+      res.status(500).json({ 
+        message: "Contract configuration not available",
+        error: "Environment variables not properly configured"
+      });
+    }
+  });
+
+  // Admin Deposit Wallet Configuration API - secure endpoint
+  app.get("/api/config/admin-wallet", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUserById(req.session.userId!);
+      if (!user || !user.isAdmin) {
+        auditLog("UNAUTHORIZED_ADMIN_WALLET_ACCESS", { 
+          userId: req.session.userId,
+          clientIP: req.ip 
+        }, req);
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const adminWallet = getAdminDepositWallet();
+      console.log('🔐 [SECURITY] Admin wallet address requested by authorized admin');
+      res.json({ adminWallet });
+    } catch (error) {
+      console.error('🚨 [SECURITY] Error fetching admin wallet:', error);
+      res.status(500).json({ 
+        message: "Admin wallet configuration not available",
+        error: "Environment variables not properly configured"
       });
     }
   });

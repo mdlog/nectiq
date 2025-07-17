@@ -326,59 +326,59 @@ export class AutomatedWithdrawalService {
   }
 }
 
-// Example configuration
+// Secure configuration using environment variables only
 export const defaultAutoWithdrawalConfig: AutoWithdrawalConfig = {
   adminPrivateKey: process.env.ADMIN_PRIVATE_KEY || '',
   
   networks: {
     'ethereum': {
-      rpcUrl: 'https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY',
+      rpcUrl: process.env.ETHEREUM_RPC_URL || '',
       chainId: 1,
       gasLimit: '100000',
       maxGasPrice: '50', // 50 gwei
       tokenContracts: {
-        USDC: '0xA0b86a33E6441d5d867b7a067e26fA9Cb9C48B07',
-        USDT: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+        USDC: process.env.ETHEREUM_USDC_CONTRACT || '',
+        USDT: process.env.ETHEREUM_USDT_CONTRACT || ''
       }
     },
     'base': {
-      rpcUrl: 'https://base-mainnet.g.alchemy.com/v2/YOUR_API_KEY',
+      rpcUrl: process.env.BASE_RPC_URL || '',
       chainId: 8453,
       gasLimit: '100000',
       maxGasPrice: '10',
       tokenContracts: {
-        USDC: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-        USDT: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2'
+        USDC: process.env.BASE_USDC_CONTRACT || '',
+        USDT: process.env.BASE_USDT_CONTRACT || ''
       }
     },
     'bsc': {
-      rpcUrl: 'https://bsc-dataseed.binance.org/',
+      rpcUrl: process.env.BSC_RPC_URL || 'https://bsc-dataseed.binance.org/',
       chainId: 56,
       gasLimit: '100000',
       maxGasPrice: '20',
       tokenContracts: {
-        USDC: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
-        USDT: '0x55d398326f99059fF775485246999027B3197955'
+        USDC: process.env.BSC_USDC_CONTRACT || '',
+        USDT: process.env.BSC_USDT_CONTRACT || ''
       }
     },
     'optimism': {
-      rpcUrl: 'https://opt-mainnet.g.alchemy.com/v2/YOUR_API_KEY',
+      rpcUrl: process.env.OPTIMISM_RPC_URL || '',
       chainId: 10,
       gasLimit: '100000',
       maxGasPrice: '5',
       tokenContracts: {
-        USDC: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
-        USDT: '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58'
+        USDC: process.env.OPTIMISM_USDC_CONTRACT || '',
+        USDT: process.env.OPTIMISM_USDT_CONTRACT || ''
       }
     },
     'arbitrum': {
-      rpcUrl: 'https://arb-mainnet.g.alchemy.com/v2/YOUR_API_KEY',
+      rpcUrl: process.env.ARBITRUM_RPC_URL || '',
       chainId: 42161,
       gasLimit: '100000',
       maxGasPrice: '5',
       tokenContracts: {
-        USDC: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-        USDT: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
+        USDC: process.env.ARBITRUM_USDC_CONTRACT || '',
+        USDT: process.env.ARBITRUM_USDT_CONTRACT || ''
       }
     },
     'sepolia': {
@@ -387,26 +387,36 @@ export const defaultAutoWithdrawalConfig: AutoWithdrawalConfig = {
       gasLimit: '21000',
       maxGasPrice: '50',
       tokenContracts: {
-        USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-        USDT: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
+        USDC: process.env.SEPOLIA_USDC_CONTRACT || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+        USDT: process.env.SEPOLIA_USDT_CONTRACT || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
       }
     },
     'holesky': {
-      rpcUrl: 'https://ethereum-holesky-rpc.publicnode.com',
+      rpcUrl: process.env.HOLESKY_RPC_URL || 'https://ethereum-holesky-rpc.publicnode.com',
       chainId: 17000,
       gasLimit: '21000',
       maxGasPrice: '30',
       tokenContracts: {
-        USDC: '0x449cde79f489e2ae32e6314d8d966ca64e040409', // Official Circle USDC on Holesky
-        USDT: '0x87350147a24099bf1e7e677576f01c1415857c75'  // Verified USDT on Holesky
+        USDC: process.env.HOLESKY_USDC_CONTRACT || '0x449cde79f489e2ae32e6314d8d966ca64e040409',
+        USDT: process.env.HOLESKY_USDT_CONTRACT || '0x87350147a24099bf1e7e677576f01c1415857c75'
       }
     }
   },
   
-  maxDailyWithdrawal: 10000, // $10,000 per hari
-  maxSingleWithdrawal: 1000, // $1,000 per transaksi
-  autoApprovalThreshold: 500, // Auto approve jika dibawah $500
+  maxDailyWithdrawal: parseInt(process.env.MAX_DAILY_WITHDRAWAL || '10000'), // $10,000 per hari
+  maxSingleWithdrawal: parseInt(process.env.MAX_SINGLE_WITHDRAWAL || '1000'), // $1,000 per transaksi
+  autoApprovalThreshold: parseInt(process.env.AUTO_APPROVAL_THRESHOLD || '500'), // Auto approve jika dibawah $500
   
   webhookUrl: process.env.WEBHOOK_URL,
   emailNotification: process.env.ADMIN_EMAIL
 };
+
+// Log configuration security status
+console.log('🔐 [SECURITY] Automated withdrawal service configuration loaded:');
+const configNetworks = Object.keys(defaultAutoWithdrawalConfig.networks);
+configNetworks.forEach(network => {
+  const config = defaultAutoWithdrawalConfig.networks[network];
+  const hasRPC = !!config.rpcUrl;
+  const hasContracts = Object.values(config.tokenContracts).some(addr => addr !== '');
+  console.log(`🔐 [SECURITY] ${network}: RPC=${hasRPC ? '✓' : '✗'}, Contracts=${hasContracts ? '✓' : '✗'}`);
+});
