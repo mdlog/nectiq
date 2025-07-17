@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords, Play, RotateCcw } from "lucide-react";
+import { Users, TrendingUp, TrendingDown, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords, Play, RotateCcw } from "lucide-react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +33,118 @@ interface AdminStats {
   accuracyAverage: number;
   totalStaked: number;
 }
+
+// ===== NTIQ CIRCULATION TRACKER COMPONENT =====
+interface NTIQCirculationData {
+  totalInflow: number; // Total NTIQ deposited
+  totalOutflow: number; // Total NTIQ withdrawn
+  circulatingSupply: number; // Total NTIQ in circulation
+}
+
+const NTIQCirculationTracker = () => {
+  const { data: circulationData, isLoading } = useQuery({
+    queryKey: ['/api/ntiq-circulation'],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  if (isLoading) {
+    return (
+      <div className="mb-6 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-purple-600 rounded-lg">
+            <RefreshCw className="h-6 w-6 text-white animate-spin" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-purple-900 dark:text-purple-100">NTIQ Circulation Tracking</h3>
+            <p className="text-purple-700 dark:text-purple-300">Loading circulation data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const data: NTIQCirculationData = circulationData || {
+    totalInflow: 0,
+    totalOutflow: 0,
+    circulatingSupply: 0
+  };
+
+  return (
+    <div className="mb-6 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-2 bg-purple-600 rounded-lg">
+          <BarChart3 className="h-6 w-6 text-white" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-purple-900 dark:text-purple-100">NTIQ Circulation Tracking</h3>
+          <p className="text-purple-700 dark:text-purple-300">Real-time monitoring of NTIQ token circulation</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Total Inflow */}
+        <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+          <div className="flex items-center justify-center mb-2">
+            <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400 mr-2" />
+            <span className="text-sm font-medium text-green-700 dark:text-green-300">NTIQ Inflow</span>
+          </div>
+          <div className="text-2xl font-bold text-green-800 dark:text-green-200">
+            {data.totalInflow.toLocaleString()} NTIQ
+          </div>
+          <div className="text-xs text-green-600 dark:text-green-400">Total Deposits</div>
+        </div>
+
+        {/* Total Outflow */}
+        <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700">
+          <div className="flex items-center justify-center mb-2">
+            <TrendingDown className="h-6 w-6 text-red-600 dark:text-red-400 mr-2" />
+            <span className="text-sm font-medium text-red-700 dark:text-red-300">NTIQ Outflow</span>
+          </div>
+          <div className="text-2xl font-bold text-red-800 dark:text-red-200">
+            {data.totalOutflow.toLocaleString()} NTIQ
+          </div>
+          <div className="text-xs text-red-600 dark:text-red-400">Total Withdrawals</div>
+        </div>
+
+        {/* Circulating Supply */}
+        <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+          <div className="flex items-center justify-center mb-2">
+            <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Circulating Supply</span>
+          </div>
+          <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">
+            {data.circulatingSupply.toLocaleString()} NTIQ
+          </div>
+          <div className="text-xs text-blue-600 dark:text-blue-400">Net Circulation</div>
+        </div>
+      </div>
+
+      {/* Additional Metrics */}
+      <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="flex items-center justify-center">
+            <span className="text-purple-600 dark:text-purple-400 mr-2">📊</span>
+            <span className="text-purple-800 dark:text-purple-200">
+              <strong>Flow Ratio:</strong> {data.totalInflow > 0 ? ((data.totalOutflow / data.totalInflow) * 100).toFixed(1) : 0}%
+            </span>
+          </div>
+          <div className="flex items-center justify-center">
+            <span className="text-purple-600 dark:text-purple-400 mr-2">🔄</span>
+            <span className="text-purple-800 dark:text-purple-200">
+              <strong>Net Flow:</strong> {(data.totalInflow - data.totalOutflow).toLocaleString()} NTIQ
+            </span>
+          </div>
+          <div className="flex items-center justify-center">
+            <span className="text-purple-600 dark:text-purple-400 mr-2">⚡</span>
+            <span className="text-purple-800 dark:text-purple-200">
+              <strong>Last Updated:</strong> {new Date().toLocaleTimeString()}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Withdrawal Approval Card Component
 interface WithdrawalApprovalCardProps {
@@ -4314,6 +4426,9 @@ export default function AdminPanel() {
           {/* Enhanced Transactions Tab */}
           <TabsContent value="transactions">
             <div className="space-y-6">
+              
+              {/* NTIQ Circulation Tracker */}
+              <NTIQCirculationTracker />
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -4458,6 +4573,9 @@ export default function AdminPanel() {
                       </CardContent>
                     </Card>
                   </div>
+
+                  {/* NTIQ Circulation Tracking Section */}
+                  <NTIQCirculationTracker />
 
                   {/* Additional Statistics Section */}
                   <div className="mb-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
