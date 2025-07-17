@@ -391,7 +391,7 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-// Basic authentication middleware for regular users
+// Basic authentication middleware for regular users with activity tracking
 const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).session?.userId;
@@ -406,6 +406,10 @@ const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
 
     // Add user to request object for easier access
     (req as any).user = user;
+    
+    // Track user activity for online status monitoring
+    updateUserActivity(user.id, req.ip, req.get('User-Agent'), user.username, user.isAdmin || false);
+    
     next();
   } catch (error) {
     console.error("Auth error:", error);
@@ -818,6 +822,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🔐 [SERVER] Session created - userId: ${dbUser.id}, isAdmin: ${dbUser.isAdmin}, username: ${dbUser.username}`);
       
+      // Track ALL user logins for security monitoring
+      auditLog('USER_LOGIN_SUCCESS', {
+        userId: dbUser.id,
+        username: dbUser.username,
+        walletAddress: dbUser.walletAddress,
+        authMethod: dbUser.authMethod,
+        isAdmin: dbUser.isAdmin || false,
+        clientIP: req.ip
+      }, req);
+      
       const responseUser = {
         id: dbUser.id,
         username: dbUser.username,
@@ -1129,7 +1143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get current user
+  // Get current user with activity tracking
   app.get("/api/user", async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
@@ -1141,6 +1155,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      
+      // Track user activity for real-time monitoring
+      updateUserActivity(user.id, req.ip, req.get('User-Agent'), user.username, user.isAdmin || false);
+      
       res.json(user);
     } catch (error) {
       res.status(500).json({ message: "Failed to get user" });
