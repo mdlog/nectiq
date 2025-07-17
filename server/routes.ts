@@ -2974,63 +2974,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get real-time security events
+  // Get real-time security events (from actual audit logs)
   app.get("/api/admin/security/events", requireAdmin, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
       
-      // Mock security events data - in real implementation this would come from security logs
-      const securityEvents = [
-        {
-          id: 1,
-          type: 'ADMIN_LOGIN',
-          severity: 'medium',
-          message: 'Admin login from new IP address',
-          ip: req.ip,
-          userAgent: req.get('User-Agent'),
-          userId: (req as any).session?.userId,
-          username: 'Admin_62c5b6',
-          timestamp: new Date(),
-          resolved: false,
-          details: {
-            location: 'Unknown',
-            riskScore: 3
-          }
-        },
-        {
-          id: 2,
-          type: 'DEPOSIT_COMPLETED',
-          severity: 'low',
-          message: 'Large deposit completed successfully',
-          ip: '172.31.128.54',
-          userId: 2,
-          username: 'GoldenShark9649',
-          timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-          resolved: true,
-          details: {
-            amount: '10000 NTIQ',
-            chain: 'Holesky'
-          }
+      // Get real security events from audit logs stored in memory
+      const realSecurityEvents = [];
+      let eventId = 1;
+      
+      // Convert security audit logs to security events format
+      securityAuditLogs.slice(-limit).forEach(log => {
+        let severity = 'low';
+        let resolved = true;
+        
+        // Determine severity based on event type
+        if (log.event.includes('FAILED') || log.event.includes('BLOCKED') || log.event.includes('CRITICAL')) {
+          severity = 'critical';
+          resolved = false;
+        } else if (log.event.includes('SUSPICIOUS') || log.event.includes('ALERT') || log.event.includes('WARNING')) {
+          severity = 'high';
+          resolved = false;
+        } else if (log.event.includes('LOGIN') || log.event.includes('ACCESS') || log.event.includes('ADMIN')) {
+          severity = 'medium';
         }
-      ];
+        
+        realSecurityEvents.push({
+          id: eventId++,
+          type: log.event,
+          severity: severity,
+          message: log.event.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+          ip: log.details?.clientIP || log.details?.ip || 'Unknown',
+          userAgent: log.userAgent || 'Unknown',
+          userId: log.details?.userId || null,
+          username: log.details?.username || 'Unknown',
+          timestamp: new Date(log.timestamp),
+          resolved: resolved,
+          details: log.details || {},
+          wallet: log.details?.walletAddress || null,
+          country: log.details?.country || 'Unknown'
+        });
+      });
+
+      // Calculate stats from real events
+      const stats = {
+        total: realSecurityEvents.length,
+        critical: realSecurityEvents.filter(e => e.severity === 'critical').length,
+        high: realSecurityEvents.filter(e => e.severity === 'high').length,
+        medium: realSecurityEvents.filter(e => e.severity === 'medium').length,
+        low: realSecurityEvents.filter(e => e.severity === 'low').length,
+        unresolved: realSecurityEvents.filter(e => !e.resolved).length
+      };
 
       auditLog('ADMIN_SECURITY_EVENTS_VIEWED', { 
         clientIP: req.ip,
         userId: (req as any).session?.userId,
-        eventsCount: securityEvents.length
+        eventsCount: realSecurityEvents.length
       }, req);
 
       res.json({
         success: true,
-        data: securityEvents,
-        stats: {
-          total: securityEvents.length,
-          critical: 0,
-          high: 0,
-          medium: 1,
-          low: 1,
-          unresolved: 1
-        }
+        data: realSecurityEvents.reverse(), // Show newest first
+        stats: stats
       });
     } catch (error) {
       console.error("Error getting security events:", error);
