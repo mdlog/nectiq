@@ -144,8 +144,8 @@ export function getWithdrawalScheduler(storage: IStorage): WithdrawalScheduler {
  * Setup automated withdrawal processing di server startup
  */
 export function setupAutomatedWithdrawals(storage: IStorage): void {
-  // Check environment variables
-  const enableAutomation = process.env.ENABLE_AUTO_WITHDRAWALS === 'true';
+  // Check environment variables - enable by default if ADMIN_PRIVATE_KEY is available
+  const enableAutomation = process.env.ENABLE_AUTO_WITHDRAWALS !== 'false'; // Enable by default
   const intervalMinutes = parseInt(process.env.WITHDRAWAL_CHECK_INTERVAL || '5');
   
   if (!enableAutomation) {
