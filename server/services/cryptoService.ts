@@ -29,6 +29,7 @@ export class CryptoService {
   private cachedRealPrices: CryptoPrice[] = [];
   private readonly CACHE_DURATION = 10000; // Cache real prices for 10 seconds for better real-time experience
   private fetchPromise: Promise<CryptoPrice[]> | null = null; // Prevent concurrent fetches
+  private priceVariationTime = 0; // Consistent variation time for all users
 
   // Method to clear cache when cryptocurrencies are deleted
   clearCache() {
@@ -41,12 +42,16 @@ export class CryptoService {
   // Generate micro-variations on cached data when rate limited
   private generateMicroVariations() {
     if (this.cachedRealPrices.length > 0) {
+      // Use a seed based on current time to ensure all users get the same variation
+      const seed = Math.floor(Date.now() / 3000) * 3000; // Round to 3-second intervals
+      const variation = Math.sin(seed / 10000) * 0.003; // Consistent variation for all users
+      
       this.cachedRealPrices = this.cachedRealPrices.map(crypto => ({
         ...crypto,
-        current_price: crypto.current_price * (1 + (Math.random() - 0.5) * 0.005), // ±0.25% variation for more visible changes
-        price_change_percentage_24h: crypto.price_change_percentage_24h + (Math.random() - 0.5) * 0.2 // More noticeable change variation
+        current_price: crypto.current_price * (1 + variation),
+        price_change_percentage_24h: crypto.price_change_percentage_24h + variation * 10
       }));
-      console.log('🎯 Generated micro-variations for real-time feeling during rate limit');
+      console.log(`🔄 Generated synchronized micro-variations: ${(variation * 100).toFixed(4)}% for all users`);
     }
   }
 
@@ -175,12 +180,13 @@ export class CryptoService {
         // Start with database prices
         allPrices = [...dbPrices];
         
-        // Update with CoinGecko prices where available, adding slight real-time variation
-        const now = Date.now();
-        const fastVariation = Math.sin(now / 2000) * 0.003; // More visible fluctuations every 2 seconds
-        const slowVariation = Math.cos(now / 5000) * 0.002; // Stronger background movement
+        // Update with CoinGecko prices where available, adding synchronized real-time variation
+        // Use time rounded to 3-second intervals so all users see identical prices
+        const syncTime = Math.floor(Date.now() / 3000) * 3000;
+        const fastVariation = Math.sin(syncTime / 2000) * 0.002; // Synchronized fluctuations
+        const slowVariation = Math.cos(syncTime / 5000) * 0.001; // Synchronized background movement
         const microVariation = fastVariation + slowVariation;
-        console.log(`🎯 [MICRO-VARIATION] Applied ${(microVariation * 100).toFixed(4)}% variation to prices`);
+        console.log(`🔄 [SYNCHRONIZED] Applied ${(microVariation * 100).toFixed(4)}% variation to prices (sync time: ${syncTime})`);
         
         allPrices = allPrices.map(dbPrice => {
           const coinGeckoPrice = coinGeckoMap.get(dbPrice.id);
