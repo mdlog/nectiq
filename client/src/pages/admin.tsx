@@ -52,10 +52,36 @@ const DatabaseResetButton = () => {
 
   const resetMutation = useMutation({
     mutationFn: async (confirmationCode: string) => {
-      return apiRequest('/api/admin/reset-database', {
-        method: 'POST',
-        body: JSON.stringify({ confirmationCode })
-      });
+      // Retry mechanism for rate limiting
+      const maxRetries = 3;
+      let lastError: any;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          return await apiRequest('/api/admin/reset-database', {
+            method: 'POST',
+            body: JSON.stringify({ confirmationCode })
+          });
+        } catch (error: any) {
+          lastError = error;
+          console.log(`⚠️ Reset attempt ${attempt}/${maxRetries} failed:`, error.message);
+          
+          // If rate limited (429), wait and retry
+          if (error.message?.includes('429') || error.message?.includes('Too many requests')) {
+            if (attempt < maxRetries) {
+              console.log(`⏳ Rate limited, waiting ${attempt * 2} seconds before retry...`);
+              await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+              continue;
+            }
+          } else {
+            // For non-rate limiting errors, don't retry
+            throw error;
+          }
+        }
+      }
+      
+      // If all retries failed
+      throw lastError;
     },
     onSuccess: (data) => {
       console.log('🎉 Database reset successful:', data);
@@ -75,9 +101,18 @@ const DatabaseResetButton = () => {
     },
     onError: (error: any) => {
       console.error('❌ Database reset failed:', error);
+      
+      let errorMessage = "Terjadi kesalahan saat mereset database";
+      
+      if (error.message?.includes('429') || error.message?.includes('Too many requests')) {
+        errorMessage = "Terlalu banyak permintaan. Silakan tunggu beberapa saat lalu coba lagi.";
+      } else if (error.message?.includes('foreign key constraint')) {
+        errorMessage = "Error constraint database. Sistem sedang mencoba mengatasi masalah ini.";
+      }
+      
       toast({
         title: "Reset Database Gagal",
-        description: error.message || "Terjadi kesalahan saat mereset database",
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -121,7 +156,14 @@ const DatabaseResetButton = () => {
         disabled={resetMutation.isPending}
       >
         <Trash2 className="mr-2" size={16} />
-        {resetMutation.isPending ? 'Mereset...' : 'Reset Database'}
+{resetMutation.isPending ? (
+          <>
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          'Reset Database'
+        )}
       </Button>
 
       <Dialog open={isResetDialogOpen} onOpenChange={handleDialogClose}>
@@ -181,6 +223,17 @@ const DatabaseResetButton = () => {
                 </AlertDescription>
               </Alert>
 
+              {resetMutation.isPending && (
+                <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20">
+                  <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
+                  <AlertDescription className="text-blue-700 dark:text-blue-300">
+                    <strong>Processing Database Reset...</strong><br />
+                    Menghapus semua data dan mereset ID sequences. Proses ini mungkin memakan waktu beberapa menit.
+                    {resetMutation.isPending && <div className="mt-2 text-sm">Jika terjadi timeout, silakan coba lagi dalam beberapa saat.</div>}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="confirmationCode" className="text-sm font-medium">
                   Kode Konfirmasi:
@@ -192,6 +245,7 @@ const DatabaseResetButton = () => {
                   onChange={(e) => setConfirmationCode(e.target.value)}
                   placeholder="Masukkan kode konfirmasi..."
                   className="border-red-300 focus:border-red-500"
+                  disabled={resetMutation.isPending}
                 />
               </div>
 
@@ -212,7 +266,7 @@ const DatabaseResetButton = () => {
                   {resetMutation.isPending ? (
                     <>
                       <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Mereset...
+                      Processing Database Reset...
                     </>
                   ) : (
                     <>

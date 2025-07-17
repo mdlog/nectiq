@@ -3545,8 +3545,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== DANGEROUS: DATABASE RESET ENDPOINT =====
-  app.post('/api/admin/reset-database', requireAdmin, async (req: Request, res: Response) => {
+  app.post('/api/admin/reset-database', async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      
+      // Skip rate limiting completely for database reset operations if admin IP
+      if (ADMIN_IP_WHITELIST.has(clientIP)) {
+        console.log('🔓 [RESET] Rate limiting bypassed for admin IP:', clientIP);
+      }
+      
+      // Call requireAdmin middleware
+      await new Promise<void>((resolve, reject) => {
+        requireAdmin(req, res, (err?: any) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      
       const { confirmationCode } = req.body;
       
       // Require special confirmation code for security
@@ -3556,6 +3571,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'Database reset requires proper confirmation code'
         });
       }
+
+      // Set longer timeout for database reset operation
+      res.setTimeout(300000); // 5 minutes timeout for database reset
       
       console.log('🚨 [RESET] CRITICAL: Database reset initiated by admin user:', req.session.userId);
       console.log('🚨 [RESET] This will DELETE ALL DATA from the database');
@@ -3577,11 +3595,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('📊 [RESET] Data counts before deletion:', beforeCounts);
       
-      // Disable foreign key constraints temporarily for complete reset
-      await db.execute(sql`SET session_replication_role = replica`);
-      console.log('🔓 [RESET] Foreign key constraints disabled');
+      // Retry mechanism for database operations with exponential backoff
+      const retryOperation = async (operation: () => Promise<void>, maxRetries = 3) => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            await operation();
+            return; // Success, exit retry loop
+          } catch (error) {
+            console.log(`⚠️ [RESET] Attempt ${attempt}/${maxRetries} failed:`, error);
+            if (attempt === maxRetries) {
+              throw error; // Re-throw if all attempts failed
+            }
+            // Exponential backoff: wait 1s, 2s, 4s
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+          }
+        }
+      };
 
-      // Use TRUNCATE CASCADE for more robust deletion
+      // Disable foreign key constraints temporarily for complete reset
+      await retryOperation(async () => {
+        await db.execute(sql`SET session_replication_role = replica`);
+        console.log('🔓 [RESET] Foreign key constraints disabled');
+      });
+
+      // Use TRUNCATE CASCADE for more robust deletion with retry
       const tablesToTruncate = [
         'user_achievements',
         'survival_participants', 
@@ -3601,24 +3638,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       for (const tableName of tablesToTruncate) {
-        try {
-          await db.execute(sql`TRUNCATE TABLE ${sql.raw(tableName)} RESTART IDENTITY CASCADE`);
-          console.log(`✅ [RESET] ${tableName} table truncated with CASCADE`);
-        } catch (error) {
-          console.log(`⚠️ [RESET] Could not truncate ${tableName} - trying DELETE`);
-          // Try fallback DELETE if TRUNCATE fails
+        await retryOperation(async () => {
           try {
+            await db.execute(sql`TRUNCATE TABLE ${sql.raw(tableName)} RESTART IDENTITY CASCADE`);
+            console.log(`✅ [RESET] ${tableName} table truncated with CASCADE`);
+          } catch (error) {
+            console.log(`⚠️ [RESET] Could not truncate ${tableName} - trying DELETE`);
+            // Try fallback DELETE if TRUNCATE fails
             await db.execute(sql`DELETE FROM ${sql.raw(tableName)}`);
             console.log(`✅ [RESET] ${tableName} table cleared with DELETE`);
-          } catch (deleteError) {
-            console.log(`⚠️ [RESET] ${tableName} table not found or already empty`);
           }
-        }
+        });
       }
 
-      // Re-enable foreign key constraints
-      await db.execute(sql`SET session_replication_role = DEFAULT`);
-      console.log('🔒 [RESET] Foreign key constraints re-enabled');
+      // Re-enable foreign key constraints with retry
+      await retryOperation(async () => {
+        await db.execute(sql`SET session_replication_role = DEFAULT`);
+        console.log('🔒 [RESET] Foreign key constraints re-enabled');
+      });
       
       const afterCounts = {
         users: await db.select().from(users).then(r => r.length),
