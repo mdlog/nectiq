@@ -3577,65 +3577,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('📊 [RESET] Data counts before deletion:', beforeCounts);
       
-      // Delete all data in correct order (respecting foreign key constraints)
-      // Start with most dependent tables first
-      await db.delete(transactionLogs);
-      await db.delete(rewards);
-      await db.delete(dailyChallenges);
-      await db.delete(deposits);
-      await db.delete(withdrawals);
-      await db.delete(predictionBattles);
-      await db.delete(predictions);
-      await db.delete(survivalTournaments);
-      await db.delete(banners);
-      
-      // Delete junction tables and other dependent tables first
-      try {
-        await db.execute(sql`DELETE FROM user_achievements`);
-        console.log('✅ [RESET] user_achievements table cleared');
-      } catch (error) {
-        console.log('⚠️ [RESET] user_achievements table not found or already empty');
-      }
+      // Use TRUNCATE CASCADE for more robust deletion handling foreign key constraints
+      const tablesToTruncate = [
+        'user_achievements',
+        'survival_participants', 
+        'survival_predictions',
+        'transaction_logs',
+        'rewards',
+        'daily_challenges', 
+        'deposits',
+        'withdrawals',
+        'prediction_battles',
+        'predictions',
+        'survival_tournaments',
+        'banners',
+        'achievements',
+        'cryptocurrencies',
+        'users'
+      ];
 
-      try {
-        await db.execute(sql`DELETE FROM survival_participants`);
-        console.log('✅ [RESET] survival_participants table cleared');
-      } catch (error) {
-        console.log('⚠️ [RESET] survival_participants table not found or already empty');
+      for (const tableName of tablesToTruncate) {
+        try {
+          await db.execute(sql`TRUNCATE TABLE ${sql.raw(tableName)} RESTART IDENTITY CASCADE`);
+          console.log(`✅ [RESET] ${tableName} table truncated with CASCADE`);
+        } catch (error) {
+          console.log(`⚠️ [RESET] Could not truncate ${tableName} - table may not exist`);
+          // Try fallback DELETE if TRUNCATE fails
+          try {
+            await db.execute(sql`DELETE FROM ${sql.raw(tableName)}`);
+            console.log(`✅ [RESET] ${tableName} table cleared with DELETE`);
+          } catch (deleteError) {
+            console.log(`⚠️ [RESET] ${tableName} table not found or already empty`);
+          }
+        }
       }
-
-      try {
-        await db.execute(sql`DELETE FROM survival_predictions`);
-        console.log('✅ [RESET] survival_predictions table cleared');
-      } catch (error) {
-        console.log('⚠️ [RESET] survival_predictions table not found or already empty');
-      }
-
-      try {
-        await db.execute(sql`DELETE FROM cryptocurrencies`);
-        console.log('✅ [RESET] cryptocurrencies table cleared');
-      } catch (error) {
-        console.log('⚠️ [RESET] cryptocurrencies table not found or already empty');
-      }
-      
-      // Delete achievements after user_achievements 
-      await db.delete(achievements);
-      
-      // Finally delete users (main table)
-      await db.delete(users);
-      
-      // Reset sequences for auto-incrementing IDs
-      await db.execute(sql`ALTER SEQUENCE users_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE predictions_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE prediction_battles_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE transaction_logs_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE deposits_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE withdrawals_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE rewards_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE achievements_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE daily_challenges_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE survival_tournaments_id_seq RESTART WITH 1`);
-      await db.execute(sql`ALTER SEQUENCE banners_id_seq RESTART WITH 1`);
       
       const afterCounts = {
         users: await db.select().from(users).then(r => r.length),
