@@ -151,6 +151,9 @@ export class AutomatedWithdrawalService {
    * Execute withdrawal ke blockchain
    */
   private async executeWithdrawal(withdrawal: any): Promise<void> {
+    let txHash: string | null = null;
+    let transactionSent = false;
+    
     try {
       // Update status ke processing
       await this.updateWithdrawalStatus(withdrawal.id, 'processing');
@@ -160,8 +163,6 @@ export class AutomatedWithdrawalService {
       const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
       const signer = new ethers.Wallet(this.config.adminPrivateKey, provider);
       
-      let txHash: string;
-      
       if (withdrawal.tokenType === 'ETH') {
         // ETH Transfer
         txHash = await this.sendETH(signer, withdrawal, networkConfig);
@@ -170,7 +171,11 @@ export class AutomatedWithdrawalService {
         txHash = await this.sendERC20Token(signer, withdrawal, networkConfig);
       }
       
-      // Update dengan transaction hash
+      // CRITICAL: Mark transaction as sent to prevent double rejection
+      transactionSent = true;
+      console.log(`🚀 [AUTO-WD] Blockchain transaction sent successfully: ${txHash}`);
+      
+      // Update dengan transaction hash IMMEDIATELY after sending
       await this.updateWithdrawalStatus(withdrawal.id, 'completed', txHash);
       this.dailyWithdrawalTotal += parseFloat(withdrawal.usdAmount);
       
@@ -184,7 +189,29 @@ export class AutomatedWithdrawalService {
       
     } catch (error) {
       console.error(`❌ [AUTO-WD] Failed to execute withdrawal ${withdrawal.id}:`, error);
-      await this.updateWithdrawalStatus(withdrawal.id, 'rejected', null, error.message);
+      
+      // CRITICAL FIX: Only reject if transaction was NOT sent to blockchain
+      if (!transactionSent) {
+        console.log(`🔄 [AUTO-WD] Transaction not sent to blockchain, safe to reject withdrawal ${withdrawal.id}`);
+        await this.updateWithdrawalStatus(withdrawal.id, 'rejected', null, error.message);
+        // Refund balance since no blockchain transaction occurred
+        await this.refundWithdrawalBalance(withdrawal);
+      } else {
+        console.error(`🚨 [AUTO-WD] CRITICAL: Transaction sent but post-processing failed for withdrawal ${withdrawal.id}!`);
+        console.error(`🚨 [AUTO-WD] Transaction Hash: ${txHash} - Manual intervention required!`);
+        // Transaction already sent to blockchain, mark as completed with error note
+        await this.updateWithdrawalStatus(withdrawal.id, 'completed', txHash, `Post-processing error: ${error.message}`);
+        
+        // Still try to deduct balance to maintain financial integrity
+        try {
+          await this.deductUserBalance(withdrawal);
+          console.log(`✅ [AUTO-WD] Balance deducted despite post-processing error`);
+        } catch (balanceError) {
+          console.error(`🚨 [AUTO-WD] FAILED TO DEDUCT BALANCE - MANUAL CORRECTION NEEDED!`, balanceError);
+          await this.sendCriticalErrorNotification(withdrawal, txHash, balanceError);
+        }
+      }
+      
       throw error;
     }
   }
@@ -272,28 +299,38 @@ export class AutomatedWithdrawalService {
   }
 
   /**
-   * Reject withdrawal dengan alasan
+   * Reject withdrawal dengan alasan (hanya untuk withdrawal yang belum dikirim ke blockchain)
    */
   private async rejectWithdrawal(id: number, reason: string): Promise<void> {
     await this.updateWithdrawalStatus(id, 'rejected', null, `Auto-rejected: ${reason}`);
     
     // Refund user balance menggunakan BalanceService
-    const withdrawal = await db.select().from(withdrawals).where(eq(withdrawals.id, id)).limit(1);
-    if (withdrawal.length > 0) {
+    await this.refundWithdrawalBalance({ id, userId: null, ntiqAmount: null });
+  }
+
+  /**
+   * Refund withdrawal balance (helper method)
+   */
+  private async refundWithdrawalBalance(withdrawal: any): Promise<void> {
+    const withdrawalData = withdrawal.userId ? 
+      [withdrawal] : 
+      await db.select().from(withdrawals).where(eq(withdrawals.id, withdrawal.id)).limit(1);
+    
+    if (withdrawalData.length > 0) {
       try {
         const { BalanceService } = await import('./services/balanceService.js');
         
         await BalanceService.processTransaction({
-          userId: withdrawal[0].userId,
+          userId: withdrawalData[0].userId,
           type: 'withdrawal_refund',
-          amount: withdrawal[0].ntiqAmount,
-          description: `Withdrawal refund - Auto-rejected: ${reason}`,
-          relatedId: withdrawal[0].id
+          amount: withdrawalData[0].ntiqAmount,
+          description: `Withdrawal refund - Processing error prevented blockchain transaction`,
+          relatedId: withdrawalData[0].id
         }, this.storage);
         
-        console.log(`💰 [AUTO-WD] Refunded ${withdrawal[0].ntiqAmount} NTIQ to user ${withdrawal[0].userId}`);
+        console.log(`💰 [AUTO-WD] Refunded ${withdrawalData[0].ntiqAmount} NTIQ to user ${withdrawalData[0].userId}`);
       } catch (error) {
-        console.error(`❌ [AUTO-WD] Failed to refund balance for withdrawal ${id}:`, error);
+        console.error(`❌ [AUTO-WD] Failed to refund balance for withdrawal ${withdrawal.id}:`, error);
       }
     }
   }
@@ -361,6 +398,31 @@ export class AutomatedWithdrawalService {
         });
       } catch (error) {
         console.error('Failed to send manual review notification:', error);
+      }
+    }
+  }
+
+  /**
+   * Send critical error notification for blockchain/balance mismatch
+   */
+  private async sendCriticalErrorNotification(withdrawal: any, txHash: string, error: any): Promise<void> {
+    const criticalMessage = `🚨 CRITICAL FINANCIAL ERROR 🚨
+Withdrawal ID: ${withdrawal.id}
+User ID: ${withdrawal.userId}
+Amount: ${withdrawal.ntiqAmount} NTIQ
+Blockchain TX: ${txHash}
+Problem: Transaction sent to blockchain but balance deduction failed!
+Manual correction required IMMEDIATELY!`;
+    
+    console.error(criticalMessage, error);
+    
+    if (this.config.webhookUrl) {
+      try {
+        await axios.post(this.config.webhookUrl, {
+          text: criticalMessage
+        });
+      } catch (notifError) {
+        console.error('Failed to send critical error notification:', notifError);
       }
     }
   }
