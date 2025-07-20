@@ -116,16 +116,18 @@ app.get('/api/activities/live', async (req, res) => {
   }
 });
 
-// Session configuration
+// Session configuration with enhanced debugging
 app.use(session({
   secret: process.env.SESSION_SECRET || 'crypto-predict-session-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: false, // Set to true in production with HTTPS
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+    httpOnly: false, // Allow frontend access to session
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // Allow cross-origin requests
+  },
+  name: 'nectiq.session' // Custom session name
 }));
 
 // Enhanced CORS middleware - Complete Dynamic SDK support

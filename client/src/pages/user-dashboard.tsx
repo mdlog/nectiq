@@ -407,7 +407,24 @@ export default function UserDashboard() {
 
   console.log("🎯 [USER-DASHBOARD] User authenticated successfully, rendering dashboard", { 
     userId: user.id, 
-    username: user.username 
+    username: user.username,
+    userLoading,
+    userError: userError?.message,
+    hasUser: !!user
+  });
+
+  // Add debugging for each query state
+  console.log("📊 [USER-DASHBOARD] Query states:", {
+    predictionsLoading,
+    predictionsError: predictionsError?.message,
+    statsLoading,
+    statsError: statsError?.message,
+    rewardsLoading,
+    rewardsError: rewardsError?.message,
+    leaderboardLoading,
+    leaderboardError: leaderboardError?.message,
+    liveFeedLoading,
+    liveFeedError: liveFeedError?.message
   });
 
   // Dashboard content for authenticated users

@@ -395,14 +395,34 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
 const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).session?.userId;
+    const sessionData = (req as any).session;
+    
+    // Enhanced debugging for session issues
+    console.log('🔍 [AUTH] Session debug:', {
+      hasSession: !!sessionData,
+      sessionId: sessionData?.id,
+      userId: userId,
+      isAdmin: sessionData?.isAdmin,
+      sessionCookie: req.headers.cookie ? 'present' : 'missing',
+      userAgent: req.get('User-Agent')?.substring(0, 50) + '...'
+    });
+    
     if (!userId) {
+      console.log('🔒 [AUTH] No userId in session - authentication required');
       return res.status(401).json({ message: "Authentication required" });
     }
 
     const user = await storage.getUser(userId);
     if (!user) {
+      console.log('🔒 [AUTH] User not found in database:', userId);
       return res.status(401).json({ message: "User not found" });
     }
+
+    console.log('✅ [AUTH] User authenticated:', {
+      id: user.id,
+      username: user.username,
+      walletAddress: user.walletAddress?.substring(0, 8) + '...'
+    });
 
     // Add user to request object for easier access
     (req as any).user = user;
@@ -412,7 +432,7 @@ const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     
     next();
   } catch (error) {
-    console.error("Auth error:", error);
+    console.error("🚨 [AUTH] Authentication error:", error);
     res.status(500).json({ message: "Authentication error" });
   }
 };
