@@ -143,6 +143,8 @@ function WithdrawalHistory() {
 export default function UserDashboard() {
   const { data: user } = useQuery<User>({
     queryKey: ["/api/user"],
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const queryClient = useQueryClient();
@@ -165,8 +167,13 @@ export default function UserDashboard() {
   // Manual refresh function for Market Overview
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refetchPrices();
-    setTimeout(() => setIsRefreshing(false), 500);
+    try {
+      await refetchPrices();
+    } catch (error) {
+      console.error('Manual refresh error:', error);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
   };
 
   // Copy wallet address function
@@ -181,6 +188,7 @@ export default function UserDashboard() {
         });
         setTimeout(() => setWalletCopied(false), 2000);
       } catch (error) {
+        console.error('Copy wallet address error:', error);
         toast({
           title: "Copy Failed",
           description: "Unable to copy wallet address",
@@ -192,34 +200,65 @@ export default function UserDashboard() {
 
   const { data: stats } = useQuery<UserStats>({
     queryKey: ["/api/user/stats"],
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 30000,
   });
 
   const { data: activePredictions = [] } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
-    refetchInterval: 2000, // Ultra-fast updates every 2 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
+    refetchInterval: 5000, // Reduced from 2 seconds to prevent overwhelming
+    refetchIntervalInBackground: false, // Disable background refetch
+    staleTime: 30000,
+    retry: 2,
+    retryDelay: 2000,
   });
 
   const { data: recentRewards = [] } = useQuery<RecentReward[]>({
     queryKey: ["/api/rewards/recent"],
-    refetchInterval: 2000, // Ultra-fast updates every 2 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
+    refetchInterval: 10000, // Reduced from 2 seconds
+    refetchIntervalInBackground: false,
+    staleTime: 30000,
+    retry: 2,
+    retryDelay: 2000,
   });
 
   const { data: prices = [], isLoading: pricesLoading, refetch: refetchPrices } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 15000, // Reduced to 15 seconds to prevent rate limiting
+    refetchInterval: 30000, // Increased to 30 seconds to prevent rate limiting
+    staleTime: 25000,
+    retry: 3,
+    retryDelay: 3000,
   });
 
   // Get real-time crypto prices for dynamic logo display in predictions
   const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
-    refetchInterval: 15000, // Reduced to 15 seconds to prevent rate limiting
-    staleTime: 10000, // 10 seconds
-    retry: 2, // Retry failed requests
+    refetchInterval: 30000, // Increased to 30 seconds
+    staleTime: 25000,
+    retry: 2,
+    retryDelay: 3000,
   });
+
+  // Global error handler for unhandled promise rejections
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection in UserDashboard:', event.reason);
+      event.preventDefault(); // Prevent the default console error
+    };
+
+    const handleError = (event: ErrorEvent) => {
+      console.error('Global error in UserDashboard:', event.error);
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
 
   // Auto-select Bitcoin as default when prices are loaded
   useEffect(() => {
@@ -1142,7 +1181,9 @@ export default function UserDashboard() {
 function BattlesSection() {
   const { data: battleData, isLoading: battlesLoading } = useQuery({
     queryKey: ["/api/user/battles"],
-    retry: false,
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 30000,
   });
 
   const { data: cryptoPrices } = useQuery<CryptoPrice[]>({
@@ -1409,13 +1450,17 @@ function UserProfile() {
 
   const { data: user } = useQuery<User>({
     queryKey: ["/api/user"],
-    retry: false,
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 30000,
   });
 
   // Fetch user tier information
   const { data: userTier } = useQuery({
     queryKey: ["/api/user/tier"],
-    retry: false,
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 30000,
   });
 
   // Function to get tier icon based on tier level
