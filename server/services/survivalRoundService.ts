@@ -111,7 +111,7 @@ export class SurvivalRoundService {
       const activeParticipants = await storage.getActiveParticipants(tournamentId);
       
       if (activeParticipants.length <= 1) {
-        // Tournament is finished
+        // Tournament is finished - Single winner
         await this.finishTournament(tournamentId, activeParticipants[0]?.userId || null);
         console.log(`🏆 Tournament ${tournamentId} finished! Winner: ${activeParticipants[0]?.username || 'No winner'}`);
       } else if (round.roundNumber < 3) {
@@ -119,9 +119,9 @@ export class SurvivalRoundService {
         await this.startNextRound(tournamentId, round.roundNumber + 1, currentPrice);
         console.log(`▶️ Started Round ${round.roundNumber + 1} for tournament ${tournamentId}`);
       } else {
-        // Tournament reached maximum rounds
-        await this.finishTournament(tournamentId, null);
-        console.log(`⏹️ Tournament ${tournamentId} finished after 3 rounds - No clear winner`);
+        // Tournament reached maximum rounds with multiple survivors - Prize Sharing
+        await this.finishTournamentWithPrizeSharing(tournamentId, activeParticipants);
+        console.log(`🏆 Tournament ${tournamentId} finished! Prize shared among ${activeParticipants.length} survivors`);
       }
     } catch (error) {
       console.error(`Error processing expired round:`, error);
@@ -328,6 +328,57 @@ export class SurvivalRoundService {
       }
     } catch (error) {
       console.error('Error finishing tournament:', error);
+    }
+  }
+
+  // NEW: Finish tournament with prize sharing for multiple survivors
+  private async finishTournamentWithPrizeSharing(tournamentId: number, survivors: any[]) {
+    try {
+      const tournament = await storage.getSurvivalTournament(tournamentId);
+      if (!tournament) {
+        console.error(`Tournament ${tournamentId} not found for prize sharing`);
+        return;
+      }
+
+      if (tournament.prizePool > 0 && survivors.length > 0) {
+        // Calculate prize per survivor (rounded down to avoid decimal issues)
+        const prizePerSurvivor = Math.floor(tournament.prizePool / survivors.length);
+        const remainingPrize = tournament.prizePool - (prizePerSurvivor * survivors.length);
+        
+        console.log(`💰 Sharing ${tournament.prizePool} NTIQ among ${survivors.length} survivors (${prizePerSurvivor} NTIQ each)`);
+        
+        // Award prize to each survivor
+        for (let i = 0; i < survivors.length; i++) {
+          const survivor = survivors[i];
+          // First survivor gets any remaining NTIQ from rounding
+          const finalAmount = i === 0 ? prizePerSurvivor + remainingPrize : prizePerSurvivor;
+          
+          await BalanceService.processTransaction({
+            userId: survivor.userId,
+            type: 'survival_tournament_shared_reward',
+            amount: finalAmount,
+            description: `Survival tournament shared prize (${survivors.length} survivors): ${tournament.title}`,
+            relatedId: tournamentId
+          }, storage);
+          
+          console.log(`✅ Awarded ${finalAmount} NTIQ to survivor ${survivor.username} (ID: ${survivor.userId})`);
+        }
+        
+        // Set first survivor as "winner" for display purposes, but mark as shared
+        await storage.setTournamentWinner(tournamentId, survivors[0].userId);
+      }
+      
+      await storage.updateTournamentStatus(tournamentId, 'completed');
+      
+      // Clear any interval for this tournament
+      if (this.roundCheckers.has(tournamentId)) {
+        clearTimeout(this.roundCheckers.get(tournamentId)!);
+        this.roundCheckers.delete(tournamentId);
+      }
+      
+      console.log(`🎉 Prize sharing completed for tournament ${tournamentId}`);
+    } catch (error) {
+      console.error('Error finishing tournament with prize sharing:', error);
     }
   }
 

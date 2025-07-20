@@ -636,7 +636,7 @@ export default function HowToPlay() {
                     <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">R3</div>
                     <div>
                       <p className="font-medium">Round 3 (1 hour)</p>
-                      <p className="text-sm text-muted-foreground">Final round determines the ultimate winner</p>
+                      <p className="text-sm text-muted-foreground">Final round - maximum 3 rounds total</p>
                     </div>
                   </div>
                   <div className="bg-yellow-100 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
@@ -682,8 +682,8 @@ export default function HowToPlay() {
                   <div className="flex items-start">
                     <div className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">4</div>
                     <div>
-                      <p className="font-medium">Win the Prize Pool</p>
-                      <p className="text-sm text-muted-foreground">Last survivor wins the accumulated prize pool</p>
+                      <p className="font-medium">Win Prize Rewards</p>
+                      <p className="text-sm text-muted-foreground">Single survivor wins all, multiple survivors share the prize pool equally</p>
                     </div>
                   </div>
                 </div>
@@ -711,30 +711,39 @@ export default function HowToPlay() {
                   <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mx-auto mb-2">
                     <Award className="w-6 h-6 text-green-500" />
                   </div>
-                  <h4 className="font-semibold text-sm">Winner Takes All</h4>
-                  <p className="text-xs text-muted-foreground">Last survivor wins entire pool</p>
+                  <h4 className="font-semibold text-sm">Single Winner</h4>
+                  <p className="text-xs text-muted-foreground">One survivor gets entire pool</p>
                 </div>
                 <div className="text-center">
                   <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mx-auto mb-2">
                     <Users className="w-6 h-6 text-blue-500" />
                   </div>
-                  <h4 className="font-semibold text-sm">More Players</h4>
-                  <p className="text-xs text-muted-foreground">Bigger prize pools with more participants</p>
+                  <h4 className="font-semibold text-sm">Prize Sharing</h4>
+                  <p className="text-xs text-muted-foreground">Multiple survivors split pool equally</p>
                 </div>
                 <div className="text-center">
                   <div className="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center mx-auto mb-2">
                     <Zap className="w-6 h-6 text-orange-500" />
                   </div>
-                  <h4 className="font-semibold text-sm">Quick Rounds</h4>
-                  <p className="text-xs text-muted-foreground">Fast-paced elimination gameplay</p>
+                  <h4 className="font-semibold text-sm">Max 3 Rounds</h4>
+                  <p className="text-xs text-muted-foreground">Tournament ends after Round 3</p>
                 </div>
               </div>
               
               <div className="mt-6 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-                <h4 className="font-semibold mb-2 text-center">Example Tournament Scenario</h4>
-                <div className="text-sm text-center space-y-1">
-                  <p>10 players × 100 NTIQ entry fee = 1,000 NTIQ prize pool</p>
-                  <p className="text-green-600 font-medium">Winner receives full 1,000 NTIQ reward!</p>
+                <h4 className="font-semibold mb-3 text-center">Prize Distribution Examples</h4>
+                <div className="text-sm space-y-3">
+                  <div className="text-center">
+                    <p className="font-medium text-green-600">Single Winner Scenario:</p>
+                    <p>10 players × 100 NTIQ = 1,000 NTIQ prize pool</p>
+                    <p className="text-green-600">1 survivor wins full 1,000 NTIQ</p>
+                  </div>
+                  <div className="h-px bg-gradient-to-r from-transparent via-purple-400/40 to-transparent"></div>
+                  <div className="text-center">
+                    <p className="font-medium text-blue-600">Prize Sharing Scenario:</p>
+                    <p>10 players × 100 NTIQ = 1,000 NTIQ prize pool</p>
+                    <p className="text-blue-600">3 survivors each get 333 NTIQ (shared equally)</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
