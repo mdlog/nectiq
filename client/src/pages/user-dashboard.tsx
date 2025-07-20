@@ -440,81 +440,81 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="predictions" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-emerald-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <Clock className="h-5 w-5" />
+                      <Clock className="h-4 w-4" />
                       <span>My Predictions</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="achievements" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-amber-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <Award className="h-5 w-5" />
+                      <Award className="h-4 w-4" />
                       <span>Achievements</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="challenges" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-purple-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <Calendar className="h-5 w-5" />
+                      <Calendar className="h-4 w-4" />
                       <span>Daily Challenges</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="loyalty" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-yellow-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <Shield className="h-5 w-5" />
+                      <Crown className="h-4 w-4" />
                       <span>Loyalty</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
-                      value="market" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50 text-slate-300"
+                      value="market-watch" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-teal-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <Eye className="h-5 w-5" />
+                      <Eye className="h-4 w-4" />
                       <span>Market Watch</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="performance" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-cyan-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <Activity className="h-5 w-5" />
+                      <Activity className="h-4 w-4" />
                       <span>Performance</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="battles" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-red-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <Swords className="h-5 w-5" />
+                      <Swords className="h-4 w-4" />
                       <span>Battles</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="financial" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-rose-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <Wallet className="h-5 w-5" />
+                      <Wallet className="h-4 w-4" />
                       <span>Financial</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="referral" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-pink-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-pink-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <Users className="h-5 w-5" />
+                      <Users className="h-4 w-4" />
                       <span>Referral Program</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="rewards" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-indigo-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-indigo-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <History className="h-5 w-5" />
+                      <History className="h-4 w-4" />
                       <span>Reward History</span>
                     </TabsTrigger>
                   </TabsList>
@@ -529,24 +529,32 @@ export default function UserDashboard() {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
-            <UserProfile />
+            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
+              <UserProfile />
+            </div>
           </TabsContent>
 
           {/* Active Predictions Tab */}
           <TabsContent value="predictions">
-            <Card className="bg-surface border-surface-light">
+            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-slate-900 dark:text-slate-100">
                   <Clock className="mr-2" size={20} />
                   Active Predictions ({activePredictions.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {activePredictions.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <Clock className="mx-auto mb-2" size={32} />
-                    <p>No active predictions</p>
-                    <p className="text-sm">Start making predictions to see them here!</p>
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Clock className="text-white" size={24} />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Active Predictions</h3>
+                    <p className="text-slate-600 dark:text-slate-400 mb-4">Start making predictions to track them here!</p>
+                    <Button onClick={() => setLocation('/home')} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Make Your First Prediction
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -577,7 +585,7 @@ export default function UserDashboard() {
                       };
                       
                       return (
-                        <div key={prediction.id} className="p-4 bg-surface-light rounded-lg border border-slate-600">
+                        <div key={prediction.id} className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-3">
                               <div className="relative w-10 h-10 flex-shrink-0">
@@ -599,26 +607,26 @@ export default function UserDashboard() {
                                 </div>
                               </div>
                               <div>
-                                <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
-                                <p className="text-sm text-slate-400">{prediction.timeframe} prediction</p>
+                                <p className="font-semibold capitalize text-slate-900 dark:text-slate-100">{prediction.cryptocurrency}</p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400">{prediction.timeframe} prediction</p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className={`text-sm font-medium ${isExpired ? "text-error" : "text-success"}`}>
+                              <p className={`text-sm font-medium ${isExpired ? "text-red-500" : "text-emerald-500"}`}>
                                 {formatTimeLeft(prediction.timeLeft)}
                               </p>
-                              <p className="text-xs text-slate-400">Stake: {prediction.stakeAmount} NTIQ</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">Stake: {prediction.stakeAmount} NTIQ</p>
                             </div>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-4 mb-3">
                             <div>
-                              <p className="text-xs text-slate-400">Predicted Price</p>
-                              <p className="font-semibold">${predictedPrice.toLocaleString()}</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">Predicted Price</p>
+                              <p className="font-semibold text-slate-900 dark:text-slate-100">${predictedPrice.toLocaleString()}</p>
                             </div>
                             <div>
-                              <p className="text-xs text-slate-400">Current Price</p>
-                              <p className={`font-semibold ${currentPrice >= predictedPrice ? "text-success" : "text-error"}`}>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">Current Price</p>
+                              <p className={`font-semibold ${currentPrice >= predictedPrice ? "text-emerald-500" : "text-red-500"}`}>
                                 ${currentPrice.toLocaleString()}
                               </p>
                             </div>
@@ -626,8 +634,8 @@ export default function UserDashboard() {
                           
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${accuracy >= 90 ? "bg-success" : accuracy >= 70 ? "bg-warning" : "bg-error"}`}></div>
-                              <span className={`text-sm font-medium ${accuracy >= 90 ? "text-success" : accuracy >= 70 ? "text-warning" : "text-error"}`}>
+                              <div className={`w-2 h-2 rounded-full ${accuracy >= 90 ? "bg-emerald-500" : accuracy >= 70 ? "bg-amber-500" : "bg-red-500"}`}></div>
+                              <span className={`text-sm font-medium ${accuracy >= 90 ? "text-emerald-500" : accuracy >= 70 ? "text-amber-500" : "text-red-500"}`}>
                                 {accuracy.toFixed(2)}% accuracy
                               </span>
                             </div>
@@ -647,39 +655,53 @@ export default function UserDashboard() {
 
           {/* Achievements Tab */}
           <TabsContent value="achievements">
-            <Achievements />
+            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
+              <Achievements />
+            </div>
           </TabsContent>
 
           {/* Daily Challenges Tab */}
           <TabsContent value="challenges">
-            <DailyChallenges />
+            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
+              <DailyChallenges />
+            </div>
           </TabsContent>
 
           {/* Loyalty Tab */}
           <TabsContent value="loyalty">
-            <LoyaltyTier />
+            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
+              <LoyaltyTier />
+            </div>
           </TabsContent>
 
           {/* Referral Program Tab */}
           <TabsContent value="referral">
-            <ReferralSection />
+            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
+              <ReferralSection />
+            </div>
           </TabsContent>
 
           {/* Rewards Tab */}
           <TabsContent value="rewards">
-            <Card className="bg-surface border-surface-light">
+            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-slate-900 dark:text-slate-100">
                   <Gift className="mr-2" size={20} />
                   Recent Rewards
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {recentRewards.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <Gift className="mx-auto mb-2" size={32} />
-                    <p>No rewards yet</p>
-                    <p className="text-sm">Make accurate predictions to earn rewards!</p>
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Gift className="text-white" size={24} />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Rewards Yet</h3>
+                    <p className="text-slate-600 dark:text-slate-400 mb-4">Make accurate predictions to earn rewards!</p>
+                    <Button onClick={() => setLocation('/home')} className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white">
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      Start Earning Rewards
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -721,7 +743,7 @@ export default function UserDashboard() {
                       }
                       
                       return (
-                        <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
+                        <div key={reward.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
                           <div className="flex items-center space-x-3">
                             <div className="relative w-8 h-8 flex-shrink-0">
                               {/* Activity Type Badge */}
