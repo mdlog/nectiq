@@ -8279,6 +8279,38 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
+  // Validate referral code and get referrer information
+  app.get('/api/referrals/validate/:code', async (req: Request, res: Response) => {
+    try {
+      const { code } = req.params;
+      
+      if (!code) {
+        return res.status(400).json({ message: 'Referral code is required' });
+      }
+
+      // Find the referrer by referral code
+      const referrer = await storage.getUserByReferralCode(code);
+      
+      if (!referrer) {
+        return res.status(400).json({ 
+          valid: false, 
+          message: 'Invalid referral code' 
+        });
+      }
+
+      res.json({ 
+        valid: true, 
+        referrer: {
+          id: referrer.id,
+          username: referrer.username
+        }
+      });
+    } catch (error) {
+      console.error('Error validating referral code:', error);
+      res.status(500).json({ message: 'Failed to validate referral code' });
+    }
+  });
+
   // Process referral registration (called during user registration)
   app.post('/api/auth/process-referral', async (req: Request, res: Response) => {
     try {
@@ -8289,9 +8321,9 @@ Manual balance correction required IMMEDIATELY!`;
       }
 
       // Process referral using storage function
-      const result = await storage.processReferral(referralCode, newUserId);
+      await storage.processReferral(referralCode, newUserId);
 
-      res.json({ success: true, referrerId: result.referrerId, reward: result.reward });
+      res.json({ success: true, message: 'Referral processed successfully' });
     } catch (error) {
       console.error('Error processing referral:', error);
       res.status(500).json({ message: 'Failed to process referral' });
