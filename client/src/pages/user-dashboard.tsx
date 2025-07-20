@@ -143,8 +143,12 @@ function WithdrawalHistory() {
 export default function UserDashboard() {
   const { data: user, isLoading: userLoading, error: userError } = useQuery<User>({
     queryKey: ["/api/user"],
-    retry: 2,
-    retryDelay: 1000,
+    retry: false, // Don't retry authentication requests
+    staleTime: 60000, // 1 minute
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: false,
+    throwOnError: false, // Don't throw errors
   });
 
   const queryClient = useQueryClient();
@@ -200,27 +204,28 @@ export default function UserDashboard() {
 
   const { data: stats } = useQuery<UserStats>({
     queryKey: ["/api/user/stats"],
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    staleTime: 30000,
+    enabled: !!user,
+    retry: false,
+    throwOnError: false,
+    staleTime: 60000,
   });
 
   const { data: activePredictions = [] } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
-    refetchInterval: 5000, // Reduced from 2 seconds to prevent overwhelming
-    refetchIntervalInBackground: false, // Disable background refetch
-    staleTime: 30000,
-    retry: 2,
-    retryDelay: 2000,
+    enabled: !!user,
+    retry: false,
+    throwOnError: false,
+    refetchInterval: false,
+    staleTime: 60000,
   });
 
   const { data: recentRewards = [] } = useQuery<RecentReward[]>({
     queryKey: ["/api/rewards/recent"],
-    refetchInterval: 10000, // Reduced from 2 seconds
-    refetchIntervalInBackground: false,
-    staleTime: 30000,
-    retry: 2,
-    retryDelay: 2000,
+    enabled: !!user,
+    retry: false,
+    throwOnError: false,
+    refetchInterval: false,
+    staleTime: 60000,
   });
 
   const { data: prices = [], isLoading: pricesLoading, refetch: refetchPrices } = useQuery<CryptoPrice[]>({

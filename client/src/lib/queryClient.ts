@@ -42,6 +42,29 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Add global error handler for unhandled promise rejections
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    console.warn('🔥 [GLOBAL] Unhandled promise rejection prevented:', event.reason);
+    
+    // Prevent default behavior (console error)
+    event.preventDefault();
+    
+    // Handle authentication errors gracefully
+    if (event.reason?.message?.includes('401') || 
+        event.reason?.message?.includes('Authentication required')) {
+      console.log('🔐 [GLOBAL] Authentication error handled globally');
+      return;
+    }
+    
+    // Handle other common errors
+    if (event.reason?.message?.includes('Failed to fetch')) {
+      console.log('🌐 [GLOBAL] Network error handled globally');
+      return;
+    }
+  });
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -52,6 +75,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false, // Don't refetch when window gains focus
       refetchOnReconnect: true, // Refresh when internet reconnects
       retry: 1, // Only retry once
+      throwOnError: false, // Don't throw errors globally
     },
     mutations: {
       retry: false,
