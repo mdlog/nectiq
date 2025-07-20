@@ -973,7 +973,7 @@ export default function UserDashboard() {
                   <div className="h-full">
             <div className="space-y-6">
               <div className="text-center p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Multi-Chain Financial System</h3>
+                <h3 className="text-lg font-bold mb-2 text-black dark:text-black">Multi-Chain Financial System</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   Deposit and withdrawal system for multiple blockchains
                 </p>
