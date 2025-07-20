@@ -400,10 +400,10 @@ export default function UserDashboard() {
         </div>
 
         {/* Main Content with Sidebar Layout */}
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
           {/* Sidebar Navigation */}
           <div className="lg:w-80 flex-shrink-0">
-            <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl sticky top-4">
+            <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl sticky top-4 h-fit">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-white mb-2">Dashboard Menu</h3>
                 <p className="text-sm text-slate-400">Manage your account and track your performance</p>
@@ -506,26 +506,30 @@ export default function UserDashboard() {
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <div className="flex-1 min-h-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+              <div className="flex flex-col h-full space-y-6">
 
-          {/* Profile Tab */}
-          <TabsContent value="profile">
-            <UserProfile />
-          </TabsContent>
+                {/* Profile Tab */}
+                <TabsContent value="profile" className="flex-1 h-full">
+                  <div className="h-full">
+                    <UserProfile />
+                  </div>
+                </TabsContent>
 
-          {/* Active Predictions Tab */}
-          <TabsContent value="predictions">
-            <Card className="bg-surface border-surface-light">
+                {/* Active Predictions Tab */}
+                <TabsContent value="predictions" className="flex-1 h-full">
+                  <div className="h-full">
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Clock className="mr-2" size={20} />
                   Active Predictions ({activePredictions.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1 flex flex-col">
                 {activePredictions.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
+                  <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
                     <Clock className="mx-auto mb-2" size={32} />
                     <p>No active predictions</p>
                     <p className="text-sm">Start making predictions to see them here!</p>
@@ -625,40 +629,50 @@ export default function UserDashboard() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+                  </div>
+                </TabsContent>
 
-          {/* Achievements Tab */}
-          <TabsContent value="achievements">
-            <Achievements />
-          </TabsContent>
+                {/* Achievements Tab */}
+                <TabsContent value="achievements" className="flex-1 h-full">
+                  <div className="h-full">
+                    <Achievements />
+                  </div>
+                </TabsContent>
 
-          {/* Daily Challenges Tab */}
-          <TabsContent value="challenges">
-            <DailyChallenges />
-          </TabsContent>
+                {/* Daily Challenges Tab */}
+                <TabsContent value="challenges" className="flex-1 h-full">
+                  <div className="h-full">
+                    <DailyChallenges />
+                  </div>
+                </TabsContent>
 
-          {/* Loyalty Tab */}
-          <TabsContent value="loyalty">
-            <LoyaltyTier />
-          </TabsContent>
+                {/* Loyalty Tab */}
+                <TabsContent value="loyalty" className="flex-1 h-full">
+                  <div className="h-full">
+                    <LoyaltyTier />
+                  </div>
+                </TabsContent>
 
-          {/* Referral Program Tab */}
-          <TabsContent value="referral">
-            <ReferralSection />
-          </TabsContent>
+                {/* Referral Program Tab */}
+                <TabsContent value="referral" className="flex-1 h-full">
+                  <div className="h-full">
+                    <ReferralSection />
+                  </div>
+                </TabsContent>
 
-          {/* Rewards Tab */}
-          <TabsContent value="rewards">
-            <Card className="bg-surface border-surface-light">
+                {/* Rewards Tab */}
+                <TabsContent value="rewards" className="flex-1 h-full">
+                  <div className="h-full">
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Gift className="mr-2" size={20} />
                   Recent Rewards
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1 flex flex-col">
                 {recentRewards.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
+                  <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
                     <Gift className="mx-auto mb-2" size={32} />
                     <p>No rewards yet</p>
                     <p className="text-sm">Make accurate predictions to earn rewards!</p>
@@ -747,10 +761,12 @@ export default function UserDashboard() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+                  </div>
+                </TabsContent>
 
-          {/* Market Watch Tab */}
-          <TabsContent value="market">
+                {/* Market Watch Tab */}
+                <TabsContent value="market" className="flex-1 h-full">
+                  <div className="h-full">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Live Prices - Interactive */}
               <div className="space-y-4">
@@ -884,11 +900,13 @@ export default function UserDashboard() {
                   </CardContent>
                 </Card>
               </div>
-            </div>
-          </TabsContent>
+                    </div>
+                  </div>
+                </TabsContent>
 
-          {/* Performance Tab */}
-          <TabsContent value="performance">
+                {/* Performance Tab */}
+                <TabsContent value="performance" className="flex-1 h-full">
+                  <div className="h-full">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
@@ -946,11 +964,13 @@ export default function UserDashboard() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          </TabsContent>
+                    </div>
+                  </div>
+                </TabsContent>
 
-          {/* Financial Tab - Deposit Only */}
-          <TabsContent value="financial">
+                {/* Financial Tab - Deposit Only */}
+                <TabsContent value="financial" className="flex-1 h-full">
+                  <div className="h-full">
             <div className="space-y-6">
               <div className="text-center p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2">Multi-Chain Financial System</h3>
@@ -959,13 +979,17 @@ export default function UserDashboard() {
                 </p>
               </div>
               <MultiChainFinancial />
-            </div>
-          </TabsContent>
+                    </div>
+                  </div>
+                </TabsContent>
 
-              {/* Battles Tab */}
-              <TabsContent value="battles">
-                <BattlesSection />
-              </TabsContent>
+                {/* Battles Tab */}
+                <TabsContent value="battles" className="flex-1 h-full">
+                  <div className="h-full">
+                    <BattlesSection />
+                  </div>
+                </TabsContent>
+              </div>
             </Tabs>
           </div>
         </div>
