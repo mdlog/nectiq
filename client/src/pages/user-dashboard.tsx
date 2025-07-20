@@ -202,7 +202,7 @@ export default function UserDashboard() {
     }
   };
 
-  const { data: stats } = useQuery<UserStats>({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<UserStats>({
     queryKey: ["/api/user/stats"],
     enabled: !!user,
     retry: false,
@@ -210,7 +210,7 @@ export default function UserDashboard() {
     staleTime: 60000,
   });
 
-  const { data: activePredictions = [] } = useQuery<ActivePrediction[]>({
+  const { data: activePredictions = [], isLoading: predictionsLoading, error: predictionsError } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
     enabled: !!user,
     retry: false,
@@ -219,7 +219,7 @@ export default function UserDashboard() {
     staleTime: 60000,
   });
 
-  const { data: recentRewards = [] } = useQuery<RecentReward[]>({
+  const { data: recentRewards = [], isLoading: rewardsLoading, error: rewardsError } = useQuery<RecentReward[]>({
     queryKey: ["/api/rewards/recent"],
     enabled: !!user,
     retry: false,
@@ -243,6 +243,24 @@ export default function UserDashboard() {
     staleTime: 25000,
     retry: 2,
     retryDelay: 3000,
+  });
+
+  // Add missing query states that are referenced in debugging
+  const { data: leaderboard = [], isLoading: leaderboardLoading, error: leaderboardError } = useQuery({
+    queryKey: ["/api/leaderboard"],
+    enabled: !!user,
+    retry: false,
+    throwOnError: false,
+    staleTime: 60000,
+  });
+
+  const { data: liveFeed = [], isLoading: liveFeedLoading, error: liveFeedError } = useQuery({
+    queryKey: ["/api/predictions/live-feed"],
+    enabled: !!user,
+    retry: false,
+    throwOnError: false,
+    refetchInterval: false,
+    staleTime: 60000,
   });
 
   // Global error handler for unhandled promise rejections
