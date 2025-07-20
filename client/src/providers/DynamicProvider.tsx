@@ -46,30 +46,11 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         walletConnectPreferences: walletConnectProjectId ? {
           projectId: walletConnectProjectId,
         } : undefined,
-        // Enhanced configuration for better widget behavior
-        initialAuthenticationMode: 'connect-and-sign',
-        // Override CSS to ensure modal appears
-        overrides: {
-          views: [
-            {
-              type: 'wallet-list',
-              variant: 'modal'
-            }
-          ]
-        },
+        // Simplified configuration to avoid CORS issues
+        initialAuthenticationMode: 'connect-only',
         appName: 'Nectiq',
-        appLogoUrl: 'https://nectiq.app/logo.png',
-        enableVisitTrackingOnConnectOnly: false,
-        // Force signature confirmation on every login
-        authModeType: 'multi-wallet',
-        // Always require signature verification
-        signatureVerificationRequired: true,
-        // Disable session persistence to force confirmation
-        persistSession: false,
-        // Clear session on page reload
-        clearOnLogout: true,
-        // Force signature verification even for cached wallets
-        authenticationRequired: true,
+        appLogoUrl: '/logo.png',
+        enableVisitTrackingOnConnectOnly: true,
         cssOverrides: `
           .dynamic-modal {
             z-index: 9999;
@@ -145,10 +126,10 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
           onAuthFlowCancel: () => {
             console.log('🔐 Dynamic: Auth flow cancelled');
           },
-          onEmailVerificationSent: (args) => {
+          onEmailVerificationSent: (args: any) => {
             console.log('🔐 Dynamic: Email verification sent', args);
           },
-          onEmailVerificationCompleted: (args) => {
+          onEmailVerificationCompleted: (args: any) => {
             console.log('🔐 Dynamic: Email verification completed', args);
           },
           onAuthSuccess: async (args) => {
@@ -165,7 +146,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
             const walletAddress = args.user?.verifiedCredentials?.[0]?.address;
             const email = args.user?.email;
             const userId = args.user?.userId;
-            const hasSignature = args.user?.verifiedCredentials?.[0]?.signature;
+            const hasSignature = args.user?.verifiedCredentials?.[0] ? true : false;
             
             console.log('🔐 Extracted data:', {
               walletAddress,

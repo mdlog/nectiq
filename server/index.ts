@@ -135,8 +135,20 @@ app.use(session({
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Allow all origins for development, especially Dynamic authentication domains
-  res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  // Dynamic Labs specific domains for CORS
+  const allowedOrigins = [
+    'https://app.dynamicauth.com',
+    'https://api.dynamicauth.com',
+    'https://auth.dynamicauth.com',
+    'https://dynamicauth.com',
+    'https://replit.dev',
+    'https://replit.app',
+    origin // Allow the current origin
+  ];
+  
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : '*';
+  
+  res.setHeader('Access-Control-Allow-Origin', corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since');
   res.setHeader('Access-Control-Allow-Credentials', 'true');

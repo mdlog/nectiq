@@ -51,15 +51,19 @@ export function ReferralSystem() {
     onSuccess: async (data: any) => {
       console.log("🎉 [REFERRAL] Generation success:", data);
       
-      // Force immediate refetch of referral data
-      queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/user/referral"] });
+      // Directly update the query cache with the new data
+      queryClient.setQueryData(["/api/user/referral"], {
+        referralCode: data.referralCode,
+        referralLink: `${window.location.origin}/?ref=${data.referralCode}`,
+        totalReferrals: 0,
+        totalRewards: 0,
+        referredFriends: []
+      });
       
-      // Wait a bit and refetch again to ensure UI updates
-      setTimeout(async () => {
-        await refetch();
-        console.log("🔄 [REFERRAL] Force refetch completed");
-      }, 100);
+      // Also invalidate to ensure future fetches are fresh
+      queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
+      
+      console.log("✅ [REFERRAL] Cache updated directly with:", data.referralCode);
       
       toast({
         title: "Referral Code Created Successfully!",
