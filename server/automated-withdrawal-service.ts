@@ -65,6 +65,14 @@ export class AutomatedWithdrawalService {
         .orderBy(withdrawals.createdAt);
 
       console.log(`📝 [AUTO-WD] Found ${pendingWithdrawals.length} pending withdrawals`);
+      
+      // Debug: Log withdrawal details if any found
+      if (pendingWithdrawals.length > 0) {
+        console.log('🔍 [AUTO-WD] Pending withdrawal details:');
+        pendingWithdrawals.forEach(w => {
+          console.log(`   - ID: ${w.id}, User: ${w.userId}, Amount: ${w.ntiqAmount} NTIQ, Network: ${w.chainName}, Status: ${w.status}`);
+        });
+      }
 
       for (const withdrawal of pendingWithdrawals) {
         // PREVENTION: Pre-flight validation before processing
