@@ -85,13 +85,9 @@ function LandingHeader() {
   });
 
   const handleGetStarted = () => {
-    if (user) {
-      // User is logged in, redirect to Home page
-      setLocation("/home");
-    } else {
-      // User is not logged in, redirect to wallet login page
-      setLocation("/wallet-login");
-    }
+    // Always redirect to wallet login page to ensure proper authentication
+    // This prevents bypassing login after logout
+    setLocation("/wallet-login");
   };
 
   return (

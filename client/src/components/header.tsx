@@ -126,12 +126,19 @@ export function Header() {
       return { success: true };
     },
     onSuccess: () => {
-      // Clear all cached data
+      // Clear all cached data immediately
       queryClient.clear();
-      // Remove specific queries
+      
+      // Remove specific queries to prevent any cached data from persisting
       queryClient.removeQueries({ queryKey: ['/api/user'] });
       queryClient.removeQueries({ queryKey: ['/api/predictions/active'] });
       queryClient.removeQueries({ queryKey: ['/api/rewards/recent'] });
+      queryClient.removeQueries({ queryKey: ['/api/user/referral'] });
+      
+      // Invalidate all queries to force fresh data on next login
+      queryClient.invalidateQueries();
+      
+      console.log('🔐 [LOGOUT] All query cache cleared');
     },
     onError: (error) => {
       console.error("Logout error:", error);
