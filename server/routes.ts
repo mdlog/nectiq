@@ -6157,7 +6157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chainId: validatedData.chainId,
         tokenType: validatedData.tokenType,
         tokenAddress: validatedData.tokenAddress,
-        amountUSD: validatedData.amountUSD,
+        amountUSD: validatedData.amountUSD.toString(),
         ntiqAmount,
         ethPriceSnapshot,
         status: 'pending',
