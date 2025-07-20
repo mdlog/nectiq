@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { DynamicWidget } from '@dynamic-labs/sdk-react-core';
+import DynamicWalletWidget from '@/components/DynamicWalletWidget';
 
 
 
