@@ -23,9 +23,9 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
   const [, navigate] = useLocation();
   
   // Debug environment variables
-  console.log('🔧 Dynamic Labs Configuration:');
+  console.log('🔧 Dynamic Labs Configuration with Reown:');
   console.log('   ENVIRONMENT_ID:', import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID);
-  console.log('   WALLETCONNECT_PROJECT_ID:', import.meta.env.VITE_WALLETCONNECT_PROJECT_ID);
+  console.log('   REOWN_PROJECT_ID (WalletConnect):', import.meta.env.VITE_WALLETCONNECT_PROJECT_ID);
   
   const environmentId = import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID;
   const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
@@ -47,6 +47,28 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         ],
         walletConnectPreferences: walletConnectProjectId ? {
           projectId: walletConnectProjectId,
+          // Reown (WalletConnect v2) configuration
+          version: '2',
+          chains: ['eip155:1', 'eip155:137', 'eip155:42161', 'eip155:10', 'eip155:8453', 'eip155:11155111', 'eip155:17000'],
+          methods: ['eth_sendTransaction', 'eth_signTransaction', 'eth_sign', 'personal_sign', 'eth_signTypedData'],
+          events: ['accountsChanged', 'chainChanged'],
+          rpcMap: {
+            1: 'https://eth-mainnet.public.blastapi.io',
+            137: 'https://polygon-rpc.com',
+            42161: 'https://arb1.arbitrum.io/rpc',
+            10: 'https://mainnet.optimism.io',
+            8453: 'https://mainnet.base.org',
+            11155111: 'https://eth-sepolia.public.blastapi.io',
+            17000: 'https://ethereum-holesky-rpc.publicnode.com'
+          },
+          // Reown specific options
+          optionalNamespaces: {
+            eip155: {
+              methods: ['eth_signTypedData_v4'],
+              events: ['chainChanged', 'accountsChanged'],
+              chains: ['eip155:1', 'eip155:137', 'eip155:42161', 'eip155:10', 'eip155:8453']
+            }
+          }
         } : undefined,
         appName: 'Nectiq',
         appLogoUrl: 'https://nectiq.app/logo.png',

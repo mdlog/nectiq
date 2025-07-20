@@ -68,10 +68,10 @@ export default function WalletLoginPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Wallet Authentication
+              Wallet Authentication with Reown
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Connect your crypto wallet for secure, passwordless access to Nectiq prediction platform.
+              Connect your crypto wallet using Reown (formerly WalletConnect) for secure, passwordless access to Nectiq prediction platform.
             </p>
           </div>
 
@@ -112,15 +112,16 @@ export default function WalletLoginPage() {
                 <div className="mt-4 p-4 bg-muted rounded-lg text-sm">
                   <h4 className="font-semibold mb-2">Debug Information:</h4>
                   <p>Environment ID: {import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID ? 'Configured ✓' : 'Missing ✗'}</p>
-                  <p>WalletConnect ID: {import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ? 'Configured ✓' : 'Missing ✗'}</p>
-                  <p>Check browser console for Dynamic Labs errors</p>
+                  <p>Reown Project ID: {import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ? 'Configured ✓' : 'Missing ✗'}</p>
+                  <p>Using Reown (formerly WalletConnect) v2 protocol</p>
+                  <p>Check browser console for wallet connection logs</p>
                 </div>
 
                 <Alert>
                   <Shield className="h-4 w-4" />
                   <AlertDescription>
-                    Dynamic Labs provides secure multi-wallet support including MetaMask, WalletConnect, 
-                    Coinbase Wallet, and many more. Your wallet will be used for secure authentication.
+                    Dynamic Labs provides secure multi-wallet support including MetaMask, Reown (WalletConnect v2), 
+                    Coinbase Wallet, and many more. Reown enables secure cross-platform wallet connections with enhanced security.
                   </AlertDescription>
                 </Alert>
               </CardContent>
