@@ -306,117 +306,135 @@ export default function UserDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <div className="bg-surface border-b border-surface-light">
-        <div className="container max-w-6xl mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-                <Star className="text-white" size={16} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <Header />
+      
+      {/* Hero Section with User Welcome */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-between">
+              <div className="mb-6 md:mb-0">
+                <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.username || 'Trader'}! 👋</h1>
+                <p className="text-blue-100 text-lg">Ready to make some profitable predictions today?</p>
               </div>
-              <h1 className="text-lg sm:text-xl font-bold">My Dashboard</h1>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="flex items-center space-x-1 sm:space-x-2 bg-surface-light px-2 sm:px-3 py-1 rounded-lg">
-                <Coins className="text-warning" size={14} />
-                <span className="text-sm sm:text-base font-semibold">{user?.balance?.toLocaleString() || "0"}</span>
-                <span className="text-xs text-slate-400">NTIQ</span>
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[120px]">
+                  <div className="text-2xl font-bold">{user?.balance?.toLocaleString() || '0'}</div>
+                  <div className="text-sm text-blue-200">NTIQ Balance</div>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[120px]">
+                  <div className="text-2xl font-bold">{stats?.accuracy || 0}%</div>
+                  <div className="text-sm text-blue-200">Accuracy</div>
+                </div>
+                <Button 
+                  onClick={() => setLocation('/home')}
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Make Prediction
+                </Button>
               </div>
-              <div className="hidden sm:block">
-                {getRankBadge(stats?.rank)}
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="bg-surface-light border-surface-light text-xs sm:text-sm" 
-                onClick={() => setLocation('/home')}
-              >
-                <ArrowLeft className="mr-1 sm:mr-2" size={14} />
-                <span className="hidden sm:inline">Back to App</span>
-                <span className="sm:hidden">Back</span>
-              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="container max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        {/* Welcome Section */}
-        <div className="mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold mb-2">Welcome back, {user?.username || "User"}!</h2>
-          <p className="text-slate-400 text-sm sm:text-base">Track your predictions, analyze performance, and climb the leaderboard.</p>
+      <main className="container max-w-6xl mx-auto px-3 sm:px-4 py-8">
+        {/* Quick Stats Overview */}
+        <div className="mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <BarChart3 className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Predictions</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats?.totalPredictions || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                    <Target className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Accuracy</p>
+                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats?.accuracy || 0}%</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl flex items-center justify-center">
+                    <Trophy className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Rank</p>
+                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                      {stats?.rank ? `#${stats.rank}` : "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Coins className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Rewards</p>
+                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats?.totalRewards || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Key Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-          <Card className="bg-surface border-surface-light">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Total Predictions</CardTitle>
-              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold">{stats?.totalPredictions || 0}</div>
-              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Lifetime predictions made</div>
-            </CardContent>
-          </Card>
 
-          <Card className="bg-surface border-surface-light">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Accuracy Rate</CardTitle>
-              <Target className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold text-success">{stats?.accuracy || 0}%</div>
-              <div className={`text-xs px-1 sm:px-2 py-1 rounded-full inline-block mt-1 ${accuracyLevel.bg} ${accuracyLevel.color} hidden sm:block`}>
-                {accuracyLevel.label}
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="bg-surface border-surface-light">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Current Rank</CardTitle>
-              <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold text-warning">
-                {stats?.rank ? `#${stats.rank}` : "N/A"}
-              </div>
-              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Global ranking</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-surface border-surface-light">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Total Rewards</CardTitle>
-              <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold text-primary">{stats?.totalRewards || 0}</div>
-              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Points earned</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content with Sidebar Layout */}
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar Navigation */}
-          <div className="lg:w-80 flex-shrink-0">
-            <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl sticky top-4">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-white mb-2">Dashboard Menu</h3>
-                <p className="text-sm text-slate-400">Manage your account and track your performance</p>
+        {/* Main Content with Modern Sidebar Layout */}
+        <div className="flex flex-col xl:flex-row gap-8">
+          {/* Modern Sidebar Navigation */}
+          <div className="xl:w-80 flex-shrink-0">
+            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-2xl overflow-hidden sticky top-4">
+              <div className="p-6 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <UserCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">{user?.username || 'User'}</h3>
+                    <p className="text-sm text-blue-200">Personal Dashboard</p>
+                  </div>
+                </div>
+                <div className="bg-white/10 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-white">{user?.balance?.toLocaleString() || '0'}</div>
+                  <div className="text-xs text-blue-200">Available Balance</div>
+                </div>
               </div>
               
               <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
-                <div className="space-y-2">
-                  <TabsList className="bg-transparent w-full h-auto p-0 flex-col space-y-2">
+                <div className="p-4 space-y-1">
+                  <TabsList className="bg-transparent w-full h-auto p-0 flex-col space-y-1">
                     <TabsTrigger 
                       value="profile" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-blue-400/50 text-slate-700 dark:text-slate-300"
                     >
-                      <UserCircle className="h-5 w-5" />
+                      <UserCircle className="h-4 w-4" />
                       <span>Profile</span>
                     </TabsTrigger>
                     
