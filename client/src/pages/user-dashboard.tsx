@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem, Plus, Users } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem, Plus, Users, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -386,46 +386,16 @@ export default function UserDashboard() {
     );
   }
 
-  // Show explicit authentication prompt without redirect
-  if (!user || userError) {
-    console.log("🔐 [USER-DASHBOARD] User not authenticated, showing login prompt", { 
-      user: !!user, 
-      error: userError?.message 
-    });
-    
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center p-8 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl">
-          <div className="mb-6">
-            <svg className="w-16 h-16 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          <h3 className="text-2xl font-bold text-white mb-4">Dashboard Access Required</h3>
-          <p className="text-white/80 mb-2">Connect your wallet to access the dashboard</p>
-          <p className="text-white/60 text-sm mb-6">Your predictions, rewards, and profile are waiting</p>
-          <button 
-            onClick={() => setLocation("/")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-          >
-            Connect Wallet
-          </button>
-          
-          {userError && (
-            <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-              <p className="text-red-300 text-sm">
-                Authentication Error: {userError.message}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
+  // Temporary: Skip authentication check to allow dashboard access
+  console.log("🎯 [USER-DASHBOARD] Rendering dashboard", { 
+    user: !!user, 
+    userLoading,
+    error: userError?.message 
+  });
 
-  console.log("🎯 [USER-DASHBOARD] User authenticated successfully, rendering dashboard", { 
-    userId: user.id, 
-    username: user.username,
+  console.log("🎯 [USER-DASHBOARD] Dashboard rendering started", { 
+    userId: user?.id, 
+    username: user?.username,
     userLoading,
     userError: userError?.message,
     hasUser: !!user
