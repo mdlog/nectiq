@@ -9,13 +9,27 @@ import { Copy, Users, Gift, ExternalLink, Share2, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+interface ReferralData {
+  referralCode: string | null;
+  referralLink: string | null;
+  totalReferrals: number;
+  referralRewards: number;
+  referredUsers: Array<{
+    id: number;
+    username: string;
+    uid: string;
+    joinedAt: string;
+    rewardAmount: number;
+  }>;
+}
+
 export function ReferralSystem() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [referralCode, setReferralCode] = useState("");
 
   // Fetch referral data
-  const { data: referralData, isLoading } = useQuery({
+  const { data: referralData, isLoading } = useQuery<ReferralData>({
     queryKey: ["/api/user/referral"],
     staleTime: 0,
     gcTime: 0,
@@ -26,7 +40,7 @@ export function ReferralSystem() {
     mutationFn: () => apiRequest("/api/user/referral/generate", {
       method: "POST",
     }),
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
       toast({
         title: "Referral Code Created Successfully!",
@@ -132,7 +146,7 @@ export function ReferralSystem() {
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    onClick={() => handleCopyCode(referralData.referralCode)}
+                    onClick={() => handleCopyCode(referralData.referralCode!)}
                     variant="outline"
                     size="sm"
                   >
@@ -140,7 +154,7 @@ export function ReferralSystem() {
                     Copy Code
                   </Button>
                   <Button
-                    onClick={() => handleShareReferral(referralData.referralCode)}
+                    onClick={() => handleShareReferral(referralData.referralCode!)}
                     variant="outline"
                     size="sm"
                   >
@@ -163,7 +177,7 @@ export function ReferralSystem() {
                       className="text-sm bg-gray-50 dark:bg-gray-800"
                     />
                     <Button
-                      onClick={() => handleCopyLink(referralData.referralLink)}
+                      onClick={() => handleCopyLink(referralData.referralLink!)}
                       variant="outline"
                       size="sm"
                     >
