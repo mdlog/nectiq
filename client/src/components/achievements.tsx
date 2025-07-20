@@ -96,39 +96,45 @@ export function Achievements() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">🏆 Achievements</h2>
+        <p className="text-gray-600 dark:text-gray-400">Complete challenges and earn NTIQ rewards!</p>
+      </div>
+
       {/* Stats Header */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-200 dark:border-yellow-700">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
               <Trophy className="w-8 h-8 text-yellow-500" />
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">Completed</p>
-                <p className="text-2xl font-bold">{completedAchievements.length}</p>
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Completed</p>
+                <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{completedAchievements.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
               <Target className="w-8 h-8 text-blue-500" />
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">In Progress</p>
-                <p className="text-2xl font-bold">{inProgressAchievements.length}</p>
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-300">In Progress</p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{inProgressAchievements.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
               <Coins className="w-8 h-8 text-green-500" />
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">Total Rewards</p>
-                <p className="text-2xl font-bold">{totalRewards.toLocaleString()} NTIQ</p>
+                <p className="text-sm font-medium text-green-800 dark:text-green-300">Total Rewards</p>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">{totalRewards.toLocaleString()} NTIQ</p>
               </div>
             </div>
           </CardContent>
@@ -188,16 +194,16 @@ export function Achievements() {
                       +{userAchievement.achievement.reward} NTIQ
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg">{userAchievement.achievement.name}</CardTitle>
+                  <CardTitle className="text-lg text-gray-900 dark:text-gray-100">{userAchievement.achievement.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-white dark:text-white mb-3 font-semibold">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                     {userAchievement.achievement.description}
                   </p>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-white dark:text-white font-semibold">Progress</span>
-                      <span className="font-bold text-white dark:text-white">
+                      <span className="text-gray-600 dark:text-gray-400">Progress</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
                         {userAchievement.progress} / {userAchievement.achievement.target}
                       </span>
                     </div>
@@ -210,7 +216,7 @@ export function Achievements() {
                     <Badge variant="outline" className="text-xs">
                       {getAchievementTypeLabel(userAchievement.achievement.type)}
                     </Badge>
-                    <span className="text-xs text-white dark:text-white font-semibold">Target: {userAchievement.achievement.target}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Target: {userAchievement.achievement.target}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -222,7 +228,7 @@ export function Achievements() {
       {/* Available Achievements */}
       {notStartedAchievements.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold mb-4 text-white dark:text-white">📋 Available Achievements</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-600 dark:text-gray-300">📋 Available Achievements</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {notStartedAchievements.map((achievement) => (
               <Card key={achievement.id} className="border-gray-200 opacity-75">
@@ -236,21 +242,54 @@ export function Achievements() {
                       +{achievement.reward} NTIQ
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg text-white dark:text-white font-bold">{achievement.name}</CardTitle>
+                  <CardTitle className="text-lg text-gray-900 dark:text-gray-100">{achievement.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-white dark:text-white mb-3 font-semibold">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     {achievement.description}
                   </p>
                   <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="text-xs font-semibold">
+                    <Badge variant="outline" className="text-xs">
                       {getAchievementTypeLabel(achievement.type)}
                     </Badge>
-                    <span className="text-xs text-white dark:text-white font-semibold">Target: {achievement.target}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-500">Target: {achievement.target}</span>
                   </div>
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {userAchievements.length === 0 && allAchievements.length === 0 && (
+        <div className="text-center py-12">
+          <Award className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Achievements Available</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Start making predictions to unlock achievements and earn rewards!
+          </p>
+          <div className="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded-lg text-sm font-medium">
+            <Target className="w-4 h-4 mr-2" />
+            Make your first prediction to get started
+          </div>
+        </div>
+      )}
+
+      {/* Help Text */}
+      {(completedAchievements.length > 0 || inProgressAchievements.length > 0 || notStartedAchievements.length > 0) && (
+        <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <Award className="w-5 h-5 text-blue-500 mt-0.5" />
+            <div>
+              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">💡 Tips for Achievements</h4>
+              <ul className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
+                <li>• Make accurate predictions to unlock accuracy-based achievements</li>
+                <li>• Place higher stakes to earn high-stakes achievement rewards</li>
+                <li>• Build win streaks for bonus multiplier achievements</li>
+                <li>• Check back regularly for new achievements and challenges</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
