@@ -6134,6 +6134,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
+      console.log('🔧 [DEPOSIT] Creating deposit with data:', {
+        userId: session.userId,
+        fromWalletAddress: validatedData.fromWalletAddress,
+        toWalletAddress: validatedData.toWalletAddress,
+        chainName: validatedData.chainName,
+        chainId: validatedData.chainId,
+        tokenType: validatedData.tokenType,
+        tokenAddress: validatedData.tokenAddress,
+        amountUSD: validatedData.amountUSD,
+        ntiqAmount,
+        ethPriceSnapshot,
+        status: 'pending',
+        expiresAt: expiresAt.toISOString(),
+      });
+
       const deposit = await storage.createDeposit({
         userId: session.userId,
         fromWalletAddress: validatedData.fromWalletAddress,

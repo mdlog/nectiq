@@ -628,8 +628,15 @@ export class DatabaseStorage implements IStorage {
 
   // Multi-chain Deposit operations  
   async createDeposit(deposit: any): Promise<any> {
-    const [newDeposit] = await db.insert(deposits).values(deposit).returning();
-    return newDeposit;
+    try {
+      console.log('🔧 [STORAGE] Creating deposit in database:', deposit);
+      const [newDeposit] = await db.insert(deposits).values(deposit).returning();
+      console.log('✅ [STORAGE] Deposit created successfully:', newDeposit);
+      return newDeposit;
+    } catch (error) {
+      console.error('❌ [STORAGE] Database error creating deposit:', error);
+      throw error;
+    }
   }
 
   async getUserDeposits(userId: number, limit: number = 10): Promise<any[]> {
