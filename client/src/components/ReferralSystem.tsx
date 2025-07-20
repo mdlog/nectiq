@@ -37,6 +37,9 @@ export function ReferralSystem() {
     refetchOnWindowFocus: true,
   });
 
+  // Debug logging
+  console.log("🔍 [REFERRAL] Component data:", { referralData, isLoading });
+
   // Generate referral code mutation
   const generateCodeMutation = useMutation({
     mutationFn: async () => {
@@ -46,10 +49,18 @@ export function ReferralSystem() {
       return await response.json();
     },
     onSuccess: async (data: any) => {
+      console.log("🎉 [REFERRAL] Generation success:", data);
+      
       // Force immediate refetch of referral data
       queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
       await queryClient.refetchQueries({ queryKey: ["/api/user/referral"] });
-      await refetch(); // Force immediate component refetch
+      
+      // Wait a bit and refetch again to ensure UI updates
+      setTimeout(async () => {
+        await refetch();
+        console.log("🔄 [REFERRAL] Force refetch completed");
+      }, 100);
+      
       toast({
         title: "Referral Code Created Successfully!",
         description: `Your referral code: ${data.referralCode}`,
@@ -201,7 +212,10 @@ export function ReferralSystem() {
                 You don't have a referral code yet. Generate one now to start inviting friends!
               </p>
               <Button
-                onClick={() => generateCodeMutation.mutate()}
+                onClick={() => {
+                  console.log("🔄 [REFERRAL] Generate button clicked");
+                  generateCodeMutation.mutate();
+                }}
                 disabled={generateCodeMutation.isPending}
                 className="bg-purple-600 hover:bg-purple-700"
               >
