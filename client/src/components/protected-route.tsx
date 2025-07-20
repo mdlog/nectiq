@@ -27,16 +27,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       errorMessage: error?.message,
       location: window.location.pathname 
     });
-
-    // Redirect to landing page after a reasonable timeout if not authenticated
-    if (!isLoading && !user && error && error.message.includes("401")) {
-      console.log("🔐 [ProtectedRoute] Redirecting to / due to 401 error");
-      const timer = setTimeout(() => {
-        setLocation("/");
-      }, 1000); // Increased delay untuk admin panel
-      return () => clearTimeout(timer);
-    }
-  }, [user, isLoading, error, setLocation]);
+  }, [user, isLoading, error]);
 
   // Show loading while checking authentication (with timeout)
   if (isLoading) {
@@ -50,16 +41,27 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // If not authenticated (confirmed by 401 error), redirect immediately
-  if (!user && error && error.message.includes("401")) {
-    setLocation("/");
-    return null;
-  }
-  
-  // If there's no user data but also no error, assume not authenticated and redirect
-  if (!user && !error) {
-    setLocation("/");
-    return null;
+  // If not authenticated, show login message instead of redirecting
+  if (!isLoading && !user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center p-8 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl">
+          <div className="mb-6">
+            <svg className="w-16 h-16 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-4">Authentication Required</h3>
+          <p className="text-white/80 mb-6">Please connect your wallet to access the dashboard</p>
+          <button 
+            onClick={() => setLocation("/")}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            Connect Wallet
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // If authenticated, render the protected content

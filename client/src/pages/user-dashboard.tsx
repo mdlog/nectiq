@@ -355,42 +355,62 @@ export default function UserDashboard() {
     setShowChart(true);
   };
 
-  // Show loading state
+  // Show comprehensive loading state with debugging info
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-lg">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading Dashboard...</p>
+          <p className="text-white/60 text-sm mt-2">Authenticating your wallet...</p>
         </div>
       </div>
     );
   }
 
-  // Show login message if not authenticated
+  // Show explicit authentication prompt without redirect
   if (!user || userError) {
+    console.log("🔐 [USER-DASHBOARD] User not authenticated, showing login prompt", { 
+      user: !!user, 
+      error: userError?.message 
+    });
+    
     return (
-      <div className="min-h-screen bg-background text-foreground">
-        <Header />
-        <div className="container max-w-6xl mx-auto px-4 py-8">
-          <div className="text-center py-16">
-            <div className="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mx-auto mb-6">
-              <UserCircle className="text-white" size={32} />
-            </div>
-            <h2 className="text-2xl font-bold mb-4">Access Dashboard</h2>
-            <p className="text-slate-400 mb-8 max-w-md mx-auto">
-              Connect your wallet to access your personal dashboard and view predictions, rewards, and performance statistics.
-            </p>
-            <Button onClick={() => setLocation("/")} className="gradient-bg text-white">
-              <Wallet className="mr-2" size={16} />
-              Connect Wallet
-            </Button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center p-8 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl">
+          <div className="mb-6">
+            <svg className="w-16 h-16 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
           </div>
+          <h3 className="text-2xl font-bold text-white mb-4">Dashboard Access Required</h3>
+          <p className="text-white/80 mb-2">Connect your wallet to access the dashboard</p>
+          <p className="text-white/60 text-sm mb-6">Your predictions, rewards, and profile are waiting</p>
+          <button 
+            onClick={() => setLocation("/")}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            Connect Wallet
+          </button>
+          
+          {userError && (
+            <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+              <p className="text-red-300 text-sm">
+                Authentication Error: {userError.message}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
+  console.log("🎯 [USER-DASHBOARD] User authenticated successfully, rendering dashboard", { 
+    userId: user.id, 
+    username: user.username 
+  });
+
+  // Dashboard content for authenticated users
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
