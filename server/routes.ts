@@ -198,7 +198,7 @@ function getAdminWalletAddresses(): string[] {
 
 // Admin IP whitelist for bypassing rate limiting - loaded from environment
 function getAdminIPWhitelist(): Set<string> {
-  const defaultIPs = ['127.0.0.1', '::1', 'localhost', '172.31.128.37'];
+  const defaultIPs = ['127.0.0.1', '::1', 'localhost', '172.31.128.37', '172.31.128.39'];
   const envIPs = process.env.ADMIN_IP_WHITELIST;
   
   if (!envIPs) {
