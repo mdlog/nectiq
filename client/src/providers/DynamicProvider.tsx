@@ -42,12 +42,21 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         walletConnectors: [
           EthereumWalletConnectors,
           SolanaWalletConnectors,
-          CosmosWalletConnectors,
-          StarknetWalletConnectors,
         ],
         walletConnectPreferences: walletConnectProjectId ? {
           projectId: walletConnectProjectId,
         } : undefined,
+        // Enhanced configuration for better widget behavior
+        initialAuthenticationMode: 'connect-only',
+        // Override CSS to ensure modal appears
+        overrides: {
+          views: [
+            {
+              type: 'wallet-list',
+              variant: 'modal'
+            }
+          ]
+        },
         appName: 'Nectiq',
         appLogoUrl: 'https://nectiq.app/logo.png',
         initialAuthenticationMode: 'connect-and-sign',

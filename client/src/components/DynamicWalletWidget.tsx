@@ -199,10 +199,67 @@ export default function DynamicWalletWidget() {
     );
   }
 
+  const connectMetaMask = async () => {
+    try {
+      if (typeof window.ethereum !== 'undefined') {
+        const accounts = await window.ethereum.request({ 
+          method: 'eth_requestAccounts' 
+        });
+        
+        if (accounts.length > 0) {
+          await loginWithWallet(accounts[0]);
+        }
+      } else {
+        toast({
+          title: "MetaMask Not Found",
+          description: "Please install MetaMask extension",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('MetaMask connection error:', error);
+      toast({
+        title: "Connection Failed",
+        description: "Failed to connect to MetaMask",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="w-full">
-      {/* Dynamic Labs Widget Only - Clean and Simple */}
-      <DynamicWidget />
+    <div className="w-full space-y-6">
+      {/* Primary: Dynamic Labs Widget */}
+      <div className="text-center">
+        <DynamicWidget />
+      </div>
+      
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">Or connect directly</span>
+        </div>
+      </div>
+      
+      {/* Fallback: Direct MetaMask Connection */}
+      <div className="text-center">
+        <Button
+          onClick={connectMetaMask}
+          className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+          size="lg"
+        >
+          <Wallet className="mr-2 h-4 w-4" />
+          Connect MetaMask Directly
+        </Button>
+      </div>
+      
+      {/* Status info */}
+      <div className="text-xs text-muted-foreground text-center p-2 bg-muted/30 rounded">
+        <p>Environment: {import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID ? '✅ Connected' : '❌ Missing'}</p>
+        <p>WalletConnect: {import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ? '✅ Connected' : '❌ Missing'}</p>
+      </div>
     </div>
   );
 }
