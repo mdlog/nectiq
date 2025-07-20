@@ -153,6 +153,7 @@ export interface IStorage {
   generateReferralCode(userId: number): Promise<string>;
   getUserByReferralCode(code: string): Promise<User | undefined>;
   getReferralStats(userId: number): Promise<any>;
+  processReferral(referralCode: string, newUserId: number): Promise<void>;
 
   // Battle operations
   createBattle(battle: any): Promise<any>;
@@ -3181,6 +3182,32 @@ export class MemStorage implements IStorage {
       .where(eq(users.id, userId));
 
     return code;
+  }
+
+  async processReferral(referralCode: string, newUserId: number): Promise<void> {
+    // Find the referrer by referral code
+    const referrer = await this.getUserByReferralCode(referralCode);
+    if (!referrer) {
+      throw new Error('Invalid referral code');
+    }
+
+    // Create referral record
+    await this.createReferral(referrer.id, newUserId, referralCode);
+
+    // Award rewards to both users (100 NTIQ each)
+    const balanceService = new BalanceService();
+    await balanceService.processTransaction(referrer.id, 100, 'referral_reward', `Referral bonus for inviting user ${newUserId}`);
+    await balanceService.processTransaction(newUserId, 100, 'referral_bonus', `Welcome bonus from referral code ${referralCode}`);
+  }
+
+  async createReferral(referrerId: number, referredId: number, referralCode: string): Promise<void> {
+    await db.insert(referrals).values({
+      referrerId,
+      referredId,
+      referralCode,
+      reward: 100, // 100 NTIQ reward
+      createdAt: new Date(),
+    });
   }
 
   async getUserByReferralCode(referralCode: string): Promise<User | undefined> {
