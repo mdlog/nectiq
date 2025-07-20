@@ -8265,7 +8265,8 @@ Manual balance correction required IMMEDIATELY!`;
       // Check if user already has a referral code
       const user = await storage.getUser(userId);
       if (user?.referralCode) {
-        return res.status(400).json({ message: 'User already has a referral code' });
+        // Return existing referral code instead of error
+        return res.json({ referralCode: user.referralCode, success: true });
       }
 
       // Generate unique referral code using storage function
