@@ -102,7 +102,17 @@ export default function WalletLoginPage() {
                 
                 {/* Dynamic Labs Widget */}
                 <div className="flex justify-center">
-                  <DynamicWidget />
+                  <div className="w-full max-w-md">
+                    <DynamicWalletWidget />
+                  </div>
+                </div>
+                
+                {/* Debug Information */}
+                <div className="mt-4 p-4 bg-muted rounded-lg text-sm">
+                  <h4 className="font-semibold mb-2">Debug Information:</h4>
+                  <p>Environment ID: {import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID ? 'Configured ✓' : 'Missing ✗'}</p>
+                  <p>WalletConnect ID: {import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ? 'Configured ✓' : 'Missing ✗'}</p>
+                  <p>Check browser console for Dynamic Labs errors</p>
                 </div>
 
                 <Alert>
