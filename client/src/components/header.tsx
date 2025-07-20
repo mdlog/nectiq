@@ -231,9 +231,9 @@ export function Header() {
           
           <nav className="hidden md:flex space-x-8">
             <button 
-              onClick={() => setLocation('/')} 
+              onClick={() => setLocation('/home')} 
               className={`transition-colors ${
-                location === '/' ? "text-white font-bold" : "text-slate-300 hover:text-white"
+                location === '/home' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
               Home
@@ -387,7 +387,7 @@ export function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      onClick={() => setLocation('/dashboard')}
+                      onClick={() => setLocation('/user-dashboard')}
                       className="flex items-center space-x-2 p-3 cursor-pointer"
                     >
                       <User className="h-4 w-4" />
@@ -498,11 +498,11 @@ export function Header() {
               <nav className="space-y-2">
                 <button 
                   onClick={() => {
-                    setLocation('/');
+                    setLocation('/home');
                     setIsMobileMenuOpen(false);
                   }} 
                   className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    location === '/' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
+                    location === '/home' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
                   }`}
                 >
                   Home
