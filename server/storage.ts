@@ -74,8 +74,10 @@ export interface IStorage {
   // Multi-chain Deposit operations
   createDeposit(deposit: any): Promise<any>;
   getUserDeposits(userId: number, limit?: number): Promise<any[]>;
+  getDepositsByStatus(status: string): Promise<any[]>;
   updateDepositStatus(id: number, status: string, transactionHash?: string, blockNumber?: number): Promise<void>;
   getDepositByTransactionHash(hash: string): Promise<any>;
+  getUserById(id: number): Promise<User | undefined>;
 
   // Multi-chain Withdrawal operations
   createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
@@ -655,6 +657,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(deposits.transactionHash, hash))
       .limit(1);
     return result[0];
+  }
+
+  async getDepositsByStatus(status: string): Promise<any[]> {
+    return await db.select()
+      .from(deposits)
+      .where(eq(deposits.status, status))
+      .orderBy(desc(deposits.createdAt));
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   // Multi-chain Withdrawal operations

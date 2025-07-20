@@ -24,6 +24,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { survivalRoundService } from "./services/survivalRoundService";
 import { storage } from "./storage";
+import { DepositMonitorService } from "./services/depositMonitorService.js";
 
 const app = express();
 
@@ -263,6 +264,16 @@ try {
   setupAutomatedWithdrawals(storage);
 } catch (error) {
   console.error('❌ Failed to initialize automated withdrawal system:', error);
+}
+
+// Initialize automated deposit monitoring system
+console.log('🔧 Initializing Automated Deposit Monitoring System...');
+try {
+  const depositMonitorService = DepositMonitorService.getInstance();
+  await depositMonitorService.start();
+  console.log('✅ Automated deposit monitoring system started successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize automated deposit monitoring system:', error);
 }
 
 (async () => {
