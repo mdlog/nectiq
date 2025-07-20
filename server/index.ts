@@ -142,11 +142,16 @@ app.use((req, res, next) => {
     'https://auth.dynamicauth.com',
     'https://dynamicauth.com',
     'https://replit.dev',
-    'https://replit.app',
-    origin // Allow the current origin
+    'https://replit.app'
   ];
   
-  const corsOrigin = allowedOrigins.includes(origin) ? origin : '*';
+  // Handle undefined origin and determine CORS origin
+  let corsOrigin = '*';
+  if (origin && allowedOrigins.includes(origin)) {
+    corsOrigin = origin;
+  } else if (origin) {
+    corsOrigin = origin; // Allow the current origin if defined
+  }
   
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');

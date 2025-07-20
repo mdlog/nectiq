@@ -164,7 +164,7 @@ export function ReferralSystem() {
                   <Input
                     value={referralData.referralCode}
                     readOnly
-                    className="text-center text-xl font-bold tracking-wider bg-gray-50 dark:bg-gray-800"
+                    className="text-center text-xl font-bold tracking-wider bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -197,7 +197,7 @@ export function ReferralSystem() {
                     <Input
                       value={referralData.referralLink}
                       readOnly
-                      className="text-sm bg-gray-50 dark:bg-gray-800"
+                      className="text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     />
                     <Button
                       onClick={() => handleCopyLink(referralData.referralLink!)}
