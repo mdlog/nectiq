@@ -3118,8 +3118,9 @@ export class MemStorage implements IStorage {
   async createReferral(referrerId: number, referredId: number, referralCode: string): Promise<void> {
     await db.insert(referrals).values({
       referrerId,
-      referredUserId: referredId,
-      rewardAmount: 100, // 100 NTIQ reward per referral
+      referredId: referredId,
+      referralCode: referralCode,
+      reward: 100, // 100 NTIQ reward per referral
     });
   }
 
@@ -3194,7 +3195,7 @@ export class MemStorage implements IStorage {
   async getReferralStats(userId: number): Promise<any> {
     const [stats] = await db.select({
       totalReferrals: count(),
-      totalRewards: sql<number>`COALESCE(SUM(${referrals.rewardAmount}), 0)`.as('totalRewards'),
+      totalRewards: sql<number>`COALESCE(SUM(${referrals.reward}), 0)`.as('totalRewards'),
     })
     .from(referrals)
     .where(eq(referrals.referrerId, userId));

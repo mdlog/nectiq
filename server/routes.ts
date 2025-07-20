@@ -8223,16 +8223,8 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(401).json({ message: 'Authentication required' });
       }
 
-      // Get user's referral code
-      const user = await storage.getUser(userId);
-      
-      // Since user ID 60 has no referrals yet, return empty data with referral code
-      const referralData = {
-        referralCode: user?.referralCode || null,
-        totalReferrals: 0,
-        totalRewards: 0,
-        referredUsers: [],
-      };
+      // Get comprehensive referral data using storage function
+      const referralData = await storage.getReferralData(userId);
       
       res.json(referralData);
     } catch (error) {
@@ -8255,17 +8247,8 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(400).json({ message: 'User already has a referral code' });
       }
 
-      // Generate unique referral code (workaround for missing method)
-      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-      
-      // Update user with referral code using direct database access
-      const { db } = await import("./db");
-      const { users } = await import("@shared/schema");
-      const { eq } = await import("drizzle-orm");
-      
-      await db.update(users)
-        .set({ referralCode: code })
-        .where(eq(users.id, userId));
+      // Generate unique referral code using storage function
+      const code = await storage.generateReferralCode(userId);
 
       res.json({ referralCode: code, success: true });
     } catch (error) {
@@ -8283,39 +8266,10 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(400).json({ message: 'Missing referral code or user ID' });
       }
 
-      // Find referrer by code using direct query (workaround)
-      const { pool } = await import("./db");
-      
-      const referrerQuery = `SELECT * FROM users WHERE referral_code = $1`;
-      const referrerResult = await pool.query(referrerQuery, [referralCode]);
-      
-      if (referrerResult.rows.length === 0) {
-        return res.status(404).json({ message: 'Invalid referral code' });
-      }
-      
-      const referrer = referrerResult.rows[0];
+      // Process referral using storage function
+      const result = await storage.processReferral(referralCode, newUserId);
 
-      // Create referral record using direct query
-      const insertReferralQuery = `
-        INSERT INTO referrals (referrer_id, referred_id, reward, is_rewarded, created_at)
-        VALUES ($1, $2, $3, $4, NOW())
-      `;
-      await pool.query(insertReferralQuery, [referrer.id, newUserId, 100, true]);
-
-      // Add reward to referrer's balance
-      await storage.addToUserBalance(referrer.id, 100); // 100 NTIQ reward
-
-      // Create transaction log for reward
-      await storage.createTransactionLog({
-        userId: referrer.id,
-        type: 'referral_reward',
-        amount: 100,
-        description: `Referral reward for inviting user ID ${newUserId}`,
-        relatedId: newUserId,
-        status: 'completed'
-      });
-
-      res.json({ success: true, referrerId: referrer.id, reward: 100 });
+      res.json({ success: true, referrerId: result.referrerId, reward: result.reward });
     } catch (error) {
       console.error('Error processing referral:', error);
       res.status(500).json({ message: 'Failed to process referral' });

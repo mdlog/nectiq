@@ -21,7 +21,7 @@ import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
-import { ReferralSection } from "@/components/referral-section";
+import { ReferralSystem } from "@/components/ReferralSystem";
 import { LoyaltyTier } from "@/components/loyalty-tier";
 import { FinancialWallet } from "@/components/financial-wallet";
 import { SurvivalStatus } from "@/components/survival-status";
@@ -903,7 +903,7 @@ export default function UserDashboard() {
                 {/* Referral Program Tab */}
                 <TabsContent value="referral" className="flex-1 h-full">
                   <div className="h-full">
-                    <ReferralSection />
+                    <ReferralSystem />
                   </div>
                 </TabsContent>
 
