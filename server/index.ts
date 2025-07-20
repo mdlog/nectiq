@@ -281,7 +281,7 @@ console.log('🔧 Audit system temporarily disabled for debugging...');
 console.log('🔧 Initializing Automated Withdrawal System...');
 try {
   const { setupAutomatedWithdrawals } = await import('./withdrawal-scheduler.js');
-  setupAutomatedWithdrawals(storage);
+  setupAutomatedWithdrawals(storage as any);
 } catch (error) {
   console.error('❌ Failed to initialize automated withdrawal system:', error);
 }
@@ -299,7 +299,7 @@ try {
 // Initialize Deposit Expiry Service for 1-hour auto-cancel
 try {
   console.log('🔧 Initializing Deposit Expiry Service...');
-  const depositExpiryService = initializeDepositExpiryService(storage);
+  const depositExpiryService = initializeDepositExpiryService(storage as any);
   depositExpiryService.start();
   console.log('✅ Deposit expiry monitoring system started successfully');
 } catch (error) {

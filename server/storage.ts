@@ -3206,17 +3206,23 @@ export class MemStorage implements IStorage {
       referredId,
       referralCode,
       reward: 100, // 100 NTIQ reward
+      isRewarded: true,
       createdAt: new Date(),
     });
   }
 
   async getUserByReferralCode(referralCode: string): Promise<User | undefined> {
-    const [user] = await db.select()
-      .from(users)
-      .where(eq(users.referralCode, referralCode))
-      .limit(1);
-    
-    return user || undefined;
+    try {
+      const [user] = await db.select()
+        .from(users)
+        .where(eq(users.referralCode, referralCode))
+        .limit(1);
+      
+      return user || undefined;
+    } catch (error) {
+      console.error('Error getting user by referral code:', error);
+      return undefined;
+    }
   }
 
   async getReferralStats(userId: number): Promise<any> {
@@ -3231,6 +3237,43 @@ export class MemStorage implements IStorage {
       totalReferrals: stats?.totalReferrals || 0,
       totalRewards: stats?.totalRewards || 0,
     };
+  }
+
+  async getReferralData(userId: number): Promise<any> {
+    try {
+      // Get user's referral code
+      const user = await this.getUser(userId);
+      
+      // Get referral stats (people this user referred)
+      const stats = await this.getReferralStats(userId);
+      
+      // Get list of referred friends
+      const referredUsers = await db.select({
+        id: users.id,
+        username: users.username,
+        joinedAt: referrals.createdAt,
+        reward: referrals.reward
+      })
+      .from(referrals)
+      .innerJoin(users, eq(referrals.referredId, users.id))
+      .where(eq(referrals.referrerId, userId))
+      .orderBy(desc(referrals.createdAt));
+
+      return {
+        referralCode: user?.referralCode,
+        totalReferrals: stats.totalReferrals,
+        totalRewards: stats.totalRewards,
+        referredFriends: referredUsers
+      };
+    } catch (error) {
+      console.error('Error getting referral data:', error);
+      return {
+        referralCode: null,
+        totalReferrals: 0,
+        totalRewards: 0,
+        referredFriends: []
+      };
+    }
   }
 
 

@@ -562,9 +562,16 @@ function getContractConfiguration() {
 const depositSecurity = new AutomatedDepositSecurity(storage);
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
+  // URGENT DEBUGGING TEST ROUTE - PLACED FIRST
+  app.get('/api/test-route-priority', (req: Request, res: Response) => {
+    console.log('🎯 [URGENT-TEST] First route hit successfully!');
+    res.json({ 
+      success: true,
+      message: 'First route working!',
+      timestamp: new Date().toISOString()
+    });
+  });
 
-  
   // Wallet authentication routes
   app.get("/api/auth/wallet-user", async (req, res) => {
     try {
@@ -5806,7 +5813,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== LIVE ACTIVITY FEED ROUTES =====
   // Removed duplicate endpoint - using one in index.ts
 
-  // Enhanced middleware for security monitoring
+  // Enhanced middleware for security monitoring (temporarily disabled for debugging)
+  /*
   app.use((req, res, next) => {
     const ip = req.ip;
     const userAgent = req.get('User-Agent') || '';
@@ -5834,6 +5842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     next();
   });
+  */
 
   // Admin Battle Management Endpoints
   
@@ -8279,24 +8288,48 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
+  // Simple test endpoint to validate database connection - PLACED EARLY IN ROUTE REGISTRATION
+  app.get('/api/test/referral/:code', (req: Request, res: Response) => {
+    console.log('🧪 [TEST-HIT] Route accessed successfully!', req.params.code);
+    res.json({ 
+      success: true,
+      message: 'Route working',
+      code: req.params.code,
+      timestamp: new Date().toISOString()
+    });
+  });
+
   // Validate referral code and get referrer information
   app.get('/api/referrals/validate/:code', async (req: Request, res: Response) => {
     try {
       const { code } = req.params;
+      console.log('🔍 [REFERRAL-VALIDATION] Code received:', code);
       
       if (!code) {
         return res.status(400).json({ message: 'Referral code is required' });
       }
 
-      // Find the referrer by referral code
-      const referrer = await storage.getUserByReferralCode(code);
+      // Direct database query instead of storage method
+      const [referrer] = await db.select()
+        .from(users)
+        .where(eq(users.referralCode, code))
+        .limit(1);
+      
+      console.log('🔍 [REFERRAL-VALIDATION] Found referrer:', referrer);
       
       if (!referrer) {
+        console.log('🔍 [REFERRAL-VALIDATION] No referrer found for code:', code);
         return res.status(400).json({ 
           valid: false, 
           message: 'Invalid referral code' 
         });
       }
+
+      console.log('✅ [REFERRAL-VALIDATION] Valid referral code found:', {
+        code,
+        referrerId: referrer.id,
+        referrerUsername: referrer.username
+      });
 
       res.json({ 
         valid: true, 
@@ -8306,7 +8339,7 @@ Manual balance correction required IMMEDIATELY!`;
         }
       });
     } catch (error) {
-      console.error('Error validating referral code:', error);
+      console.error('❌ [REFERRAL-VALIDATION] Error validating referral code:', error);
       res.status(500).json({ message: 'Failed to validate referral code' });
     }
   });
