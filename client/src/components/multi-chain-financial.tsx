@@ -333,7 +333,9 @@ export function MultiChainFinancial() {
   // Query to get deposit history
   const { data: deposits, isLoading: depositsLoading } = useQuery({
     queryKey: ["/api/user/deposits"],
-    refetchInterval: 10000,
+    refetchInterval: 5000, // More frequent refresh
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache data
   });
 
   // Query to get withdrawal history
@@ -474,41 +476,23 @@ export function MultiChainFinancial() {
   const checkBlockchainStatus = async (depositId: number) => {
     setIsCheckingStatus(true);
     try {
-      const response = await apiRequest(`/api/deposits/${depositId}/check-blockchain-status`, {
-        method: 'POST',
-      });
+      // First, force refresh all deposit data from server
+      await queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/user/deposits"] });
+      
+      // Also refresh user balance
+      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/user"] });
 
-      if (response.success) {
-        if (response.status === 'completed') {
-          toast({
-            title: "Deposit Completed!",
-            description: response.message,
-          });
-          
-          // Refresh deposit and user data
-          queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-        } else if (response.status === 'failed') {
-          toast({
-            title: "Transaction Failed",
-            description: response.message,
-            variant: "destructive",
-          });
-          
-          // Refresh deposit data
-          queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
-        } else {
-          toast({
-            title: "Still Processing",
-            description: response.message,
-          });
-        }
-      }
+      toast({
+        title: "Status Refreshed",
+        description: "Deposit status has been updated from database",
+      });
     } catch (error: any) {
       console.error('Error checking blockchain status:', error);
       toast({
         title: "Error",
-        description: "Failed to check transaction status",
+        description: "Failed to refresh deposit status",
         variant: "destructive",
       });
     } finally {
