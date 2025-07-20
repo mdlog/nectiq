@@ -1084,7 +1084,7 @@ export function MultiChainFinancial() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <ArrowDownCircle className="w-5 h-5 text-green-600" />
-                  <span>Deposit ETH/USDC/USDT to NTIQ</span>
+                  <span className="text-sm">Deposit ETH/USDC/USDT to NTIQ</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1269,7 +1269,7 @@ export function MultiChainFinancial() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Clock className="w-5 h-5" />
-                <span>Deposit History</span>
+                <span className="text-sm">Deposit History</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1517,7 +1517,7 @@ export function MultiChainFinancial() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <ArrowUpCircle className="w-5 h-5 text-blue-600" />
-                  <span>Withdraw NTIQ to ETH/USDC/USDT</span>
+                  <span className="text-sm">Withdraw NTIQ to ETH/USDC/USDT</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1689,7 +1689,7 @@ export function MultiChainFinancial() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Clock className="w-5 h-5" />
-                <span>Withdrawal History</span>
+                <span className="text-sm">Withdrawal History</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
