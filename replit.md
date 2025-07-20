@@ -122,6 +122,8 @@ Nectiq is a gamified cryptocurrency price prediction platform that allows users 
 
 **Prevention**: Ensure valid Etherscan API key in Replit Secrets (not demo key)
 
+**✅ RESOLVED**: Valid Etherscan API key configured (FAJBQ6GECUEU2ZMKAQRH61XRCPQEIWKA7Z) - automatic deposit verification now operational
+
 ## Recent Changes
 
 - July 20, 2025. **✅ COMPLETED REFERRAL PROGRAM SEPARATION TO DEDICATED MENU**: Successfully separated Referral Program component from profile menu into dedicated dashboard menu item, added new "Referral Program" menu with pink gradient design and Users icon to sidebar, created separate TabsContent for referral section displaying ReferralSection component, removed ReferralSection from UserProfile component for cleaner separation, enhanced dashboard navigation with proper icon and styling integration
