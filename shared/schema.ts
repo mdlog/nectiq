@@ -80,8 +80,9 @@ export const deposits = pgTable("deposits", {
   ethPriceSnapshot: numeric("eth_price_snapshot", { precision: 20, scale: 8 }), // ETH price at deposit creation time
   transactionHash: varchar("transaction_hash", { length: 66 }).unique(),
   blockNumber: integer("block_number"),
-  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, confirmed, processed, failed
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, confirmed, processed, failed, cancelled
   processedAt: timestamp("processed_at"),
+  expiresAt: timestamp("expires_at").notNull(), // Deposit expires after 1 hour if not completed
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -830,6 +831,7 @@ export const insertDepositSchema = createInsertSchema(deposits).omit({
   blockNumber: true,
   status: true,
   processedAt: true,
+  expiresAt: true,
   createdAt: true,
 });
 

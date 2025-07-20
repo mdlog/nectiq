@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
+import { DepositCountdownTimer } from '@/components/deposit-countdown-timer';
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -240,6 +241,7 @@ interface DepositData {
   transactionHash?: string;
   ethPriceSnapshot?: string;
   createdAt: string;
+  expiresAt?: string;
 }
 
 interface WithdrawalData {
@@ -331,7 +333,7 @@ export function MultiChainFinancial() {
   });
 
   // Query to get deposit history
-  const { data: deposits, isLoading: depositsLoading } = useQuery({
+  const { data: deposits, isLoading: depositsLoading, refetch: refetchDeposits } = useQuery({
     queryKey: ["/api/user/deposits"],
     refetchInterval: 5000, // More frequent refresh
     staleTime: 0, // Always consider data stale
@@ -1357,6 +1359,21 @@ export function MultiChainFinancial() {
                           )}
                         </div>
                       </div>
+                      
+                      {/* Countdown Timer for Pending Deposits */}
+                      {deposit.status === 'pending' && deposit.expiresAt && (
+                        <div className="border-t">
+                          <DepositCountdownTimer 
+                            expiresAt={deposit.expiresAt}
+                            status={deposit.status}
+                            onExpired={() => {
+                              // Refresh deposits when timer expires
+                              refetchDeposits();
+                            }}
+                            className="m-3"
+                          />
+                        </div>
+                      )}
                       
                       {/* Action View for Pending Deposits */}
                       {deposit.status === 'pending' && expandedDeposits.has(deposit.id) && (

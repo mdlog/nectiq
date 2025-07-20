@@ -666,6 +666,28 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(deposits.createdAt));
   }
 
+  // New methods for deposit expiration handling
+  async getExpiredDeposits(): Promise<any[]> {
+    const now = new Date();
+    return await db.select()
+      .from(deposits)
+      .where(
+        and(
+          eq(deposits.status, 'pending'),
+          sql`${deposits.expiresAt} < ${now.toISOString()}`
+        )
+      );
+  }
+
+  async cancelExpiredDeposit(id: number): Promise<void> {
+    await db.update(deposits)
+      .set({ 
+        status: 'cancelled',
+        processedAt: new Date()
+      })
+      .where(eq(deposits.id, id));
+  }
+
   async getUserById(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -2995,6 +3017,29 @@ export class MemStorage implements IStorage {
   async getDepositByTransactionHash(hash: string): Promise<any> {
     return Array.from(this.withdrawals.values())
       .find((item: any) => item.transactionHash === hash && item.amountUSD);
+  }
+
+  async getExpiredDeposits(): Promise<any[]> {
+    const now = new Date();
+    return Array.from(this.withdrawals.values())
+      .filter((item: any) => 
+        item.amountUSD && 
+        item.status === 'pending' && 
+        item.expiresAt && 
+        new Date(item.expiresAt) < now
+      );
+  }
+
+  async cancelExpiredDeposit(id: number): Promise<void> {
+    const deposit = this.withdrawals.get(`deposit_${id}`);
+    if (deposit) {
+      const updated = { 
+        ...deposit, 
+        status: 'cancelled',
+        processedAt: new Date()
+      };
+      this.withdrawals.set(`deposit_${id}`, updated);
+    }
   }
 
   // Multi-chain Withdrawal operations

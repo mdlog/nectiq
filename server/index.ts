@@ -25,6 +25,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { survivalRoundService } from "./services/survivalRoundService";
 import { storage } from "./storage";
 import { DepositMonitorService } from "./services/depositMonitorService.js";
+import { initializeDepositExpiryService } from "./services/deposit-expiry-service";
 
 const app = express();
 
@@ -276,6 +277,16 @@ try {
   console.log('✅ Automated deposit monitoring system started successfully');
 } catch (error) {
   console.error('❌ Failed to initialize automated deposit monitoring system:', error);
+}
+
+// Initialize Deposit Expiry Service for 1-hour auto-cancel
+try {
+  console.log('🔧 Initializing Deposit Expiry Service...');
+  const depositExpiryService = initializeDepositExpiryService(storage);
+  depositExpiryService.start();
+  console.log('✅ Deposit expiry monitoring system started successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize deposit expiry service:', error);
 }
 
 (async () => {

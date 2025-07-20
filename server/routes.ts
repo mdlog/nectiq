@@ -6130,6 +6130,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Set expiration time to 1 hour from now
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 1);
+
       const deposit = await storage.createDeposit({
         userId: session.userId,
         fromWalletAddress: validatedData.fromWalletAddress,
@@ -6142,6 +6146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ntiqAmount,
         ethPriceSnapshot,
         status: 'pending',
+        expiresAt: expiresAt.toISOString(),
       });
 
       // Broadcast to admin for real-time notifications
