@@ -37,9 +37,12 @@ export function ReferralSystem() {
 
   // Generate referral code mutation
   const generateCodeMutation = useMutation({
-    mutationFn: () => apiRequest("/api/user/referral/generate", {
-      method: "POST",
-    }),
+    mutationFn: async () => {
+      const response = await apiRequest("/api/user/referral/generate", {
+        method: "POST",
+      });
+      return await response.json();
+    },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
       toast({
