@@ -7,6 +7,7 @@ import { ReactNode } from 'react';
 import { useLocation } from 'wouter';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthenticationHandler } from '@/hooks/useAuthenticationHandler';
+import { useForceSignature } from '@/hooks/useForceSignature';
 
 interface DynamicProviderProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ interface DynamicProviderProps {
 
 function DynamicContent({ children }: { children: ReactNode }) {
   useAuthenticationHandler();
+  useForceSignature();
   return <>{children}</>;
 }
 
@@ -50,6 +52,16 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         appLogoUrl: 'https://nectiq.app/logo.png',
         initialAuthenticationMode: 'connect-and-sign',
         enableVisitTrackingOnConnectOnly: false,
+        // Force signature confirmation on every login
+        authModeType: 'multi-wallet',
+        // Always require signature verification
+        signatureVerificationRequired: true,
+        // Disable session persistence to force confirmation
+        persistSession: false,
+        // Clear session on page reload
+        clearOnLogout: true,
+        // Force signature verification even for cached wallets
+        authenticationRequired: true,
         cssOverrides: `
           .dynamic-modal {
             z-index: 9999;
@@ -96,7 +108,28 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
             console.log('🔐 Dynamic: Auth initialized', args);
           },
           onAuthFlowOpen: () => {
-            console.log('🔐 Dynamic: Auth flow opened');
+            console.log('🔐 Dynamic: Auth flow opened - forcing signature verification');
+            
+            // Clear session data sebelum auth flow dimulai
+            try {
+              const keysToRemove = [
+                'dynamic-auth-token',
+                'dynamic-user-data',
+                'dynamic-wallet-data', 
+                'dynamic-session',
+                'dynamic-cached-wallet',
+                'dynamic-jwt-token'
+              ];
+              
+              keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                sessionStorage.removeItem(key);
+              });
+              
+              console.log('🔐 [FORCE-CONFIRM] Session data cleared before auth flow');
+            } catch (error) {
+              console.error('🔐 [FORCE-CONFIRM] Error clearing session:', error);
+            }
           },
           onAuthFlowClose: () => {
             console.log('🔐 Dynamic: Auth flow closed');
@@ -111,12 +144,12 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
             console.log('🔐 Dynamic: Email verification completed', args);
           },
           onAuthSuccess: async (args) => {
-            console.log('🔐 Dynamic: Authentication successful', args);
+            console.log('🔐 Dynamic: Authentication successful with signature confirmation', args);
             console.log('🔐 User object:', args.user);
             console.log('🔐 Auth args complete:', JSON.stringify(args, null, 2));
             
             // Add immediate debug log
-            console.log('🔐 onAuthSuccess TRIGGERED - Processing authentication...');
+            console.log('🔐 onAuthSuccess TRIGGERED - Processing authentication with signature...');
             
             // Try-catch to handle any errors in this callback
             try {
@@ -124,12 +157,14 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
             const walletAddress = args.user?.verifiedCredentials?.[0]?.address;
             const email = args.user?.email;
             const userId = args.user?.userId;
+            const hasSignature = args.user?.verifiedCredentials?.[0]?.signature;
             
             console.log('🔐 Extracted data:', {
               walletAddress,
               email,
               userId,
               hasVerifiedCredentials: !!args.user?.verifiedCredentials?.length,
+              hasSignature: !!hasSignature,
               verifiedCredentials: args.user?.verifiedCredentials
             });
             
@@ -146,7 +181,8 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                     address: walletAddress || null,
                     email: email || null,
                     userId: userId || null,
-                    user: args.user
+                    user: args.user,
+                    signatureVerified: !!hasSignature
                   }),
                 });
 
@@ -211,9 +247,42 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
             console.error('Dynamic: Authentication failed', error);
           },
           onLogout: () => {
-            console.log('Dynamic: User logged out');
+            console.log('🔐 Dynamic: User logged out - clearing all session data');
+            
             // Clear backend session
             fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+            
+            // Clear all Dynamic Labs session data untuk memaksa konfirmasi pada login berikutnya
+            try {
+              const keysToRemove = [
+                'dynamic-auth-token',
+                'dynamic-user-data',
+                'dynamic-wallet-data',
+                'dynamic-session',
+                'dynamic-cached-wallet', 
+                'dynamic-jwt-token'
+              ];
+              
+              keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                sessionStorage.removeItem(key);
+              });
+              
+              // Clear semua keys yang mengandung 'dynamic'
+              Object.keys(localStorage).forEach(key => {
+                if (key.toLowerCase().includes('dynamic')) {
+                  localStorage.removeItem(key);
+                }
+              });
+              
+              console.log('🔐 [FORCE-CONFIRM] All session data cleared on logout - next login will require confirmation');
+            } catch (error) {
+              console.error('🔐 [FORCE-CONFIRM] Error clearing session on logout:', error);
+            }
+            
+            // Invalidate queries and navigate
+            queryClient.invalidateQueries();
+            navigate('/');
           },
         },
       }}
