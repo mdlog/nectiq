@@ -80,8 +80,8 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       
-      <main className="max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-4 md:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-3 md:gap-6">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 md:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
           {/* Left Sidebar - Live Prices */}
           <div className="lg:col-span-1">
             <div className="flex flex-col space-y-6 h-full sticky top-4">
@@ -100,7 +100,7 @@ export default function Dashboard() {
           </div>
 
           {/* Main Content - Center */}
-          <div className="lg:col-span-3 space-y-3 md:space-y-6">
+          <div className="lg:col-span-2 space-y-3 md:space-y-6">
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
               <div className="space-y-2 md:space-y-4">
@@ -139,12 +139,12 @@ export default function Dashboard() {
           </div>
           
           {/* Right Sidebar */}
-          <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full sticky top-4">
-              <div className="xl:col-span-1">
+          <div className="lg:col-span-1">
+            <div className="flex flex-col space-y-6 h-full min-h-[600px] sticky top-4">
+              <div className="flex-1">
                 <TopPredictors />
               </div>
-              <div className="xl:col-span-1">
+              <div className="flex-1">
                 <RecentRewards />
               </div>
             </div>
