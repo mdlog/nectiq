@@ -200,48 +200,9 @@ export default function DynamicWalletWidget() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Manual wallet connection button as fallback */}
-      <div className="text-center">
-        <Button
-          onClick={() => {
-            console.log('🔧 Manual wallet connection attempt');
-            if (typeof window !== 'undefined' && window.ethereum) {
-              window.ethereum.request({ method: 'eth_requestAccounts' })
-                .then((accounts: string[]) => {
-                  console.log('🔧 MetaMask accounts:', accounts);
-                  if (accounts.length > 0) {
-                    loginWithWallet(accounts[0]);
-                  }
-                })
-                .catch((error: any) => {
-                  console.error('🔧 MetaMask connection error:', error);
-                  toast({
-                    title: "Connection Failed",
-                    description: "Could not connect to MetaMask. Please try again.",
-                    variant: "destructive",
-                  });
-                });
-            } else {
-              toast({
-                title: "MetaMask Not Found",
-                description: "Please install MetaMask extension.",
-                variant: "destructive",
-              });
-            }
-          }}
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-        >
-          <Wallet className="mr-2 h-4 w-4" />
-          Connect MetaMask Directly
-        </Button>
-      </div>
-      
-      {/* Dynamic Widget (if working) */}
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-2">Or use Dynamic Labs:</p>
-        <DynamicWidget />
-      </div>
+    <div className="w-full">
+      {/* Dynamic Labs Widget Only - Clean and Simple */}
+      <DynamicWidget />
     </div>
   );
 }

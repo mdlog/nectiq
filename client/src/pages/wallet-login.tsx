@@ -97,30 +97,30 @@ export default function WalletLoginPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-muted-foreground">
-                  Choose your preferred wallet from our secure Dynamic Labs integration. Supports MetaMask, WalletConnect, Coinbase Wallet, and 20+ other popular wallets.
+                <p className="text-muted-foreground text-center">
+                  One-click access to 20+ popular wallets through our secure Dynamic Labs integration.
                 </p>
                 
                 {/* Dynamic Labs Widget - Centered and Clean */}
-                <div className="flex justify-center py-8">
-                  <div className="w-full max-w-md">
+                <div className="flex justify-center py-12">
+                  <div className="w-full max-w-sm">
                     <DynamicWalletWidget />
                   </div>
                 </div>
 
                 {/* Supported Wallets Info */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm text-muted-foreground">
-                  <div className="p-2">
-                    <div className="font-semibold">MetaMask</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center text-xs text-muted-foreground">
+                  <div className="p-1">
+                    <div className="font-medium">MetaMask</div>
                   </div>
-                  <div className="p-2">
-                    <div className="font-semibold">WalletConnect</div>
+                  <div className="p-1">
+                    <div className="font-medium">WalletConnect</div>
                   </div>
-                  <div className="p-2">
-                    <div className="font-semibold">Coinbase</div>
+                  <div className="p-1">
+                    <div className="font-medium">Coinbase</div>
                   </div>
-                  <div className="p-2">
-                    <div className="font-semibold">20+ More</div>
+                  <div className="p-1">
+                    <div className="font-medium">20+ More</div>
                   </div>
                 </div>
 
