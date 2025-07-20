@@ -7,6 +7,7 @@ import LandingPage from "@/pages/landing";
 import ProtectedRoute from "@/components/protected-route";
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
+import SimpleDashboard from "@/pages/simple-dashboard";
 import AdminPanel from "@/pages/admin";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
@@ -69,8 +70,12 @@ function Router() {
       
       <Route path="/user-dashboard">
         <ProtectedRoute>
-          <UserDashboard />
+          <SimpleDashboard />
         </ProtectedRoute>
+      </Route>
+
+      <Route path="/test-dashboard">
+        <SimpleDashboard />
       </Route>
       
       <Route path="/dashboard">

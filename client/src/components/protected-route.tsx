@@ -35,10 +35,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Reset retry count on successful authentication
   useEffect(() => {
-    if (user && !error) {
+    if (user && !error && retryCount > 0) {
+      console.log("🔄 [ProtectedRoute] Authentication successful, resetting retry count");
       setRetryCount(0);
     }
-  }, [user, error]);
+  }, [user, error, retryCount]);
 
   useEffect(() => {
     // Debug logging untuk troubleshooting
