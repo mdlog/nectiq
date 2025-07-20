@@ -393,6 +393,15 @@ export function Header() {
                       <User className="h-4 w-4" />
                       <span>Go to Dashboard</span>
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={handleDisconnect}
+                      disabled={logoutMutation.isPending}
+                      className="flex items-center space-x-2 p-3 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>{logoutMutation.isPending ? 'Logging out...' : 'Logout'}</span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
