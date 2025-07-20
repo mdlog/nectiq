@@ -370,7 +370,9 @@ export function MultiChainFinancial() {
   // Function to calculate token amount from USD for deposit history action view
   const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string, ethPriceSnapshot?: string): string => {
     if (tokenType === 'USDC' || tokenType === 'USDT') {
-      return usdAmount.toFixed(2); // 1:1 ratio for stablecoins
+      // For USDC/USDT, add 2% fee to the amount user needs to send
+      const amountWithFee = usdAmount * 1.02;
+      return amountWithFee.toFixed(2);
     }
     
     if (tokenType === 'ETH') {
@@ -386,8 +388,10 @@ export function MultiChainFinancial() {
       
       if (price === 0) return "0.000000";
       
-      const tokenAmount = usdAmount / price;
-      return tokenAmount.toFixed(6);
+      // Calculate base ETH amount and add 2% fee
+      const baseTokenAmount = usdAmount / price;
+      const tokenAmountWithFee = baseTokenAmount * 1.02;
+      return tokenAmountWithFee.toFixed(6);
     }
     
     return "0.000000";
@@ -519,9 +523,10 @@ export function MultiChainFinancial() {
       if (!isNaN(usd) && usd > 0) {
         const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === "ethereum")?.current_price;
         if (ethPrice) {
-          // Calculate exact ETH amount based on USD - no additional fee charged to user
+          // Calculate ETH amount based on USD + add 2% fee on ETH payment
           const baseEthAmount = usd / ethPrice;
-          setFixedEthAmount(baseEthAmount.toFixed(6));
+          const ethAmountWithFee = baseEthAmount * 1.02; // Add 2% fee to ETH payment
+          setFixedEthAmount(ethAmountWithFee.toFixed(6));
         }
       } else {
         setFixedEthAmount("0");
@@ -707,7 +712,7 @@ export function MultiChainFinancial() {
         return;
       }
 
-      // Calculate ETH amount using snapshot price - exact amount without additional fee
+      // Calculate ETH amount using snapshot price - includes 2% fee for payment
       const ethAmount = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
       if (!ethAmount || ethAmount === "0.000000" || deposit.tokenType !== 'ETH') {
         toast({
@@ -1149,17 +1154,19 @@ export function MultiChainFinancial() {
                         USD Amount: <span className="font-bold text-gray-900 dark:text-white">${parseFloat(depositAmount).toFixed(2)}</span>
                       </p>
                       <p className="text-gray-700 dark:text-gray-300">
-                        Deposit Fee (2%): <span className="font-bold text-orange-600">-${(parseFloat(depositAmount) * 0.02).toFixed(2)}</span>
+                        You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 100).toLocaleString()} NTIQ</span>
                       </p>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 98).toLocaleString()} NTIQ</span>
-                      </p>
+                      {selectedToken !== "ETH" && (
+                        <p className="text-gray-700 dark:text-gray-300">
+                          Payment Fee (2%): <span className="font-bold text-orange-600">+${(parseFloat(depositAmount) * 0.02).toFixed(2)}</span>
+                        </p>
+                      )}
                     </div>
                     {selectedToken === "ETH" && fixedEthAmount !== "0" && (
                       <div className="text-orange-600 space-y-1">
                         <p>ETH to send: <span className="font-bold">{getFixedETHAmount()} ETH</span></p>
                         <p className="text-xs text-orange-500">
-                          (Exact amount based on current ETH price)
+                          (Includes 2% processing fee on ETH payment)
                         </p>
                       </div>
                     )}
@@ -1204,16 +1211,18 @@ export function MultiChainFinancial() {
                         <span className="text-gray-700 dark:text-gray-300">Amount:</span>
                         <span className="font-medium text-gray-900 dark:text-white">${depositAmount} USD</span>
                       </div>
-                      <div className="border-t pt-2 space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-gray-700 dark:text-gray-300">Deposit Fee (2%):</span>
-                          <span className="font-bold text-orange-600">-${(parseFloat(depositAmount || "0") * 0.02).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
-                          <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 98).toLocaleString()} NTIQ</span>
-                        </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
+                        <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 100).toLocaleString()} NTIQ</span>
                       </div>
+                      {selectedToken !== "ETH" && (
+                        <div className="border-t pt-2 space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-gray-700 dark:text-gray-300">Payment Fee (2%):</span>
+                            <span className="font-bold text-orange-600">+${(parseFloat(depositAmount || "0") * 0.02).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      )}
                       {selectedToken === "ETH" && depositAmount && confirmationEthAmount !== "0" && (
                         <div className="border-t pt-2 mt-2 space-y-1">
                           <div className="flex justify-between">
@@ -1221,7 +1230,7 @@ export function MultiChainFinancial() {
                             <span className="font-bold text-orange-600">{confirmationEthAmount} ETH</span>
                           </div>
                           <div className="text-xs text-orange-500 text-right">
-                            (Exact amount based on current ETH price)
+                            (Includes 2% processing fee on ETH payment)
                           </div>
                         </div>
                       )}
@@ -1383,7 +1392,7 @@ export function MultiChainFinancial() {
                                     {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} {deposit.tokenType}
                                   </span>
                                   <div className="text-xs text-gray-500">
-                                    (≈ ${deposit.amountUSD} USD)
+                                    (≈ ${deposit.amountUSD} USD + 2% fee)
                                   </div>
                                 </div>
                               </div>
@@ -1479,7 +1488,7 @@ export function MultiChainFinancial() {
                                   Send {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ETH via MetaMask
                                 </Button>
                                 <p className="text-xs text-gray-500 text-center mt-2">
-                                  Click to automatically send the exact amount using MetaMask
+                                  Click to automatically send the amount (includes 2% processing fee) using MetaMask
                                 </p>
                               </div>
                             )}
@@ -1496,7 +1505,7 @@ export function MultiChainFinancial() {
                                   Send {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} {deposit.tokenType} via MetaMask
                                 </Button>
                                 <p className="text-xs text-gray-500 text-center mt-2">
-                                  Click to automatically send the exact amount using MetaMask
+                                  Click to automatically send the amount (includes 2% processing fee) using MetaMask
                                 </p>
                               </div>
                             )}
