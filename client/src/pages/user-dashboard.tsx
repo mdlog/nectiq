@@ -156,6 +156,12 @@ export default function UserDashboard() {
   const [editedUsername, setEditedUsername] = useState("");
   const [activeTab, setActiveTab] = useState("profile");
 
+  // Debug function to track tab changes
+  const handleTabChange = (value: string) => {
+    console.log("🎯 Tab clicked:", value);
+    setActiveTab(value);
+  };
+
   // Manual refresh function for Market Overview
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -409,7 +415,7 @@ export default function UserDashboard() {
                 <p className="text-sm text-slate-400 leading-relaxed">Manage your account and track your performance</p>
               </div>
               
-              <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
+              <Tabs value={activeTab} onValueChange={handleTabChange} orientation="vertical" className="w-full">
                 <div className="space-y-3">
                   <TabsList className="bg-transparent w-full h-auto p-0 flex-col space-y-3">
                     <TabsTrigger 
@@ -507,7 +513,7 @@ export default function UserDashboard() {
 
           {/* Main Content Area - 2/3 of width */}
           <div className="lg:col-span-2 min-h-0">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full">
               <div className="flex flex-col h-full space-y-6">
 
                 {/* Profile Tab */}
@@ -649,6 +655,7 @@ export default function UserDashboard() {
                 {/* Loyalty Tab */}
                 <TabsContent value="loyalty" className="flex-1 h-full">
                   <div className="h-full">
+                    {console.log("📊 Rendering Loyalty TabsContent, activeTab:", activeTab)}
                     <LoyaltyTier />
                   </div>
                 </TabsContent>
