@@ -992,7 +992,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.redirect("/?error=invalid-access");
       }
 
-      const adminWallet = "0x4c6165286739696849fb3e77a16b0639d762c5b6";
+      const adminAddresses = getAdminWalletAddresses();
+      const adminWallet = adminAddresses[0]; // Use first admin address
       
       // Create or get admin user
       let user = await storage.getUserByWalletAddress(adminWallet);
@@ -1026,7 +1027,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Wallet address required" });
       }
 
-      const adminWallet = "0x4c6165286739696849fb3e77a16b0639d762c5b6";
+      const adminAddresses = getAdminWalletAddresses();
+      const adminWallet = adminAddresses[0]; // Use first admin address
       
       if (walletAddress.toLowerCase() !== adminWallet.toLowerCase()) {
         return res.status(403).json({ message: "Admin access denied" });
@@ -1064,8 +1066,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if wallet address is authorized admin
-      const ADMIN_WALLET = "0x4C6165286739696849Fb3e77A16b0639D762c5B6";
-      const isAuthorized = walletAddress.toLowerCase() === ADMIN_WALLET.toLowerCase();
+      const adminAddresses = getAdminWalletAddresses();
+      const isAuthorized = adminAddresses.includes(walletAddress.toLowerCase());
       
       if (!isAuthorized) {
         return res.status(403).json({ success: false, message: "Unauthorized wallet address" });
@@ -1103,8 +1105,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if wallet address is authorized admin
-      const ADMIN_WALLET = "0x4C6165286739696849Fb3e77A16b0639D762c5B6";
-      const isAuthorized = walletAddress.toLowerCase() === ADMIN_WALLET.toLowerCase();
+      const adminAddresses = getAdminWalletAddresses();
+      const isAuthorized = adminAddresses.includes(walletAddress.toLowerCase());
       
       if (!isAuthorized) {
         return res.status(403).json({ success: false, message: "Unauthorized wallet address" });

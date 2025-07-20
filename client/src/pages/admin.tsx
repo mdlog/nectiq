@@ -1107,7 +1107,7 @@ export default function AdminPanel() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ 
-          walletAddress: "0x4c6165286739696849fb3e77a16b0639d762c5b6",
+          walletAddress: currentUser?.walletAddress || "",
           forceAuth: true 
         })
       })
@@ -3462,7 +3462,7 @@ export default function AdminPanel() {
                       try {
                         const response = await fetch('/api/admin/authenticate', {
                           method: 'POST',
-                          body: JSON.stringify({ walletAddress: "0x4c6165286739696849fb3e77a16b0639d762c5b6" }),
+                          body: JSON.stringify({ walletAddress: currentUser?.walletAddress || "" }),
                           headers: { 'Content-Type': 'application/json' }
                         });
                         
@@ -3528,7 +3528,7 @@ export default function AdminPanel() {
                     }} className="space-y-2 mt-2">
                       <Input 
                         name="walletAddress"
-                        placeholder="0x4c6165286739696849fb3e77a16b0639d762c5b6"
+                        placeholder="Enter admin wallet address"
                         className="w-full text-xs"
                         size={60}
                       />
