@@ -399,57 +399,107 @@ export default function UserDashboard() {
           </Card>
         </div>
 
-        {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-3 sm:p-6 shadow-2xl">
-            {/* First Row */}
-            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-1 sm:gap-2 h-auto p-1 sm:p-2 rounded-xl mb-2 sm:mb-4 backdrop-blur-sm">
-              <TabsTrigger value="profile" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50">
-                <UserCircle className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Profile</span>
-              </TabsTrigger>
-              <TabsTrigger value="predictions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50">
-                <Clock className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">My Predictions</span>
-              </TabsTrigger>
-              <TabsTrigger value="achievements" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50">
-                <Award className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Achievements</span>
-              </TabsTrigger>
-              <TabsTrigger value="challenges" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50">
-                <Calendar className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Daily Challenges</span>
-              </TabsTrigger>
-              <TabsTrigger value="loyalty" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50">
-                <Shield className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Loyalty</span>
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* Second Row */}
-            <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-1 sm:gap-2 h-auto p-1 sm:p-2 rounded-xl backdrop-blur-sm">
-              <TabsTrigger value="market" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50">
-                <Eye className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Market Watch</span>
-              </TabsTrigger>
-              <TabsTrigger value="performance" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50">
-                <Activity className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Performance</span>
-              </TabsTrigger>
-              <TabsTrigger value="battles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50">
-                <Swords className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Battles</span>
-              </TabsTrigger>
-              <TabsTrigger value="financial" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50">
-                <Wallet className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Financial</span>
-              </TabsTrigger>
-              <TabsTrigger value="rewards" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-600/50 transition-all duration-300 flex items-center gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-indigo-400/50">
-                <History className="h-3 w-3 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">Reward History</span>
-              </TabsTrigger>
-            </TabsList>
+        {/* Main Content with Sidebar Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar Navigation */}
+          <div className="lg:w-80 flex-shrink-0">
+            <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl sticky top-4">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-white mb-2">Dashboard Menu</h3>
+                <p className="text-sm text-slate-400">Manage your account and track your performance</p>
+              </div>
+              
+              <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
+                <div className="space-y-2">
+                  <TabsList className="bg-transparent w-full h-auto p-0 flex-col space-y-2">
+                    <TabsTrigger 
+                      value="profile" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50 text-slate-300"
+                    >
+                      <UserCircle className="h-5 w-5" />
+                      <span>Profile</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="predictions" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50 text-slate-300"
+                    >
+                      <Clock className="h-5 w-5" />
+                      <span>My Predictions</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="achievements" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50 text-slate-300"
+                    >
+                      <Award className="h-5 w-5" />
+                      <span>Achievements</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="challenges" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50 text-slate-300"
+                    >
+                      <Calendar className="h-5 w-5" />
+                      <span>Daily Challenges</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="loyalty" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50 text-slate-300"
+                    >
+                      <Shield className="h-5 w-5" />
+                      <span>Loyalty</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="market" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50 text-slate-300"
+                    >
+                      <Eye className="h-5 w-5" />
+                      <span>Market Watch</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="performance" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50 text-slate-300"
+                    >
+                      <Activity className="h-5 w-5" />
+                      <span>Performance</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="battles" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50 text-slate-300"
+                    >
+                      <Swords className="h-5 w-5" />
+                      <span>Battles</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="financial" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50 text-slate-300"
+                    >
+                      <Wallet className="h-5 w-5" />
+                      <span>Financial</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="rewards" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-indigo-400/50 text-slate-300"
+                    >
+                      <History className="h-5 w-5" />
+                      <span>Reward History</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+              </Tabs>
+            </div>
           </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
 
           {/* Profile Tab */}
           <TabsContent value="profile">
@@ -899,11 +949,13 @@ export default function UserDashboard() {
             </div>
           </TabsContent>
 
-          {/* Battles Tab */}
-          <TabsContent value="battles">
-            <BattlesSection />
-          </TabsContent>
-        </Tabs>
+              {/* Battles Tab */}
+              <TabsContent value="battles">
+                <BattlesSection />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </main>
       
       <Footer />
