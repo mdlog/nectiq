@@ -29,15 +29,15 @@ export function ReferralSystem() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
       toast({
-        title: "Kode Referral Berhasil Dibuat!",
-        description: `Kode referral Anda: ${data.referralCode}`,
+        title: "Referral Code Created Successfully!",
+        description: `Your referral code: ${data.referralCode}`,
       });
     },
     onError: (error: any) => {
       toast({
         variant: "destructive",
-        title: "Gagal Membuat Kode Referral",
-        description: error.message || "Terjadi kesalahan saat membuat kode referral.",
+        title: "Failed to Create Referral Code",
+        description: error.message || "An error occurred while creating referral code.",
       });
     },
   });
@@ -45,33 +45,33 @@ export function ReferralSystem() {
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast({
-      title: "Kode Disalin!",
-      description: "Kode referral telah disalin ke clipboard.",
+      title: "Code Copied!",
+      description: "Referral code has been copied to clipboard.",
     });
   };
 
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(link);
     toast({
-      title: "Link Disalin!",
-      description: "Link referral telah disalin ke clipboard.",
+      title: "Link Copied!",
+      description: "Referral link has been copied to clipboard.",
     });
   };
 
   const handleShareReferral = (code: string) => {
-    const shareText = `🚀 Bergabunglah dengan Nectiq Platform!\n\n✨ Prediksi harga cryptocurrency dan dapatkan reward NTIQ!\n\n🎁 Gunakan kode referral saya: ${code}\n\n💰 Dapatkan bonus 100 NTIQ untuk memulai!\n\n${window.location.origin}/?ref=${code}`;
+    const shareText = `🚀 Join Nectiq Platform!\n\n✨ Predict cryptocurrency prices and earn NTIQ rewards!\n\n🎁 Use my referral code: ${code}\n\n💰 Get 100 NTIQ bonus to start!\n\n${window.location.origin}/?ref=${code}`;
     
     if (navigator.share) {
       navigator.share({
-        title: "Bergabung dengan Nectiq Platform",
+        title: "Join Nectiq Platform",
         text: shareText,
         url: `${window.location.origin}/?ref=${code}`,
       });
     } else {
       navigator.clipboard.writeText(shareText);
       toast({
-        title: "Pesan Referral Disalin!",
-        description: "Pesan referral telah disalin ke clipboard untuk dibagikan.",
+        title: "Referral Message Copied!",
+        description: "Referral message has been copied to clipboard for sharing.",
       });
     }
   };
@@ -102,10 +102,10 @@ export function ReferralSystem() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-purple-800 dark:text-purple-200">
             <Users className="w-6 h-6" />
-            Program Referral
+            Referral Program
           </CardTitle>
           <CardDescription className="text-purple-600 dark:text-purple-300">
-            Ajak teman dan dapatkan reward! Setiap referral berhasil = 100 NTIQ untuk Anda dan teman Anda.
+            Invite friends and earn rewards! Each successful referral = 100 NTIQ for you and your friend.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -113,9 +113,9 @@ export function ReferralSystem() {
       {/* Referral Code Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Kode Referral Anda</CardTitle>
+          <CardTitle className="text-lg">Your Referral Code</CardTitle>
           <CardDescription>
-            Bagikan kode ini kepada teman-teman untuk mendapatkan reward
+            Share this code with your friends to earn rewards
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -137,7 +137,7 @@ export function ReferralSystem() {
                     size="sm"
                   >
                     <Copy className="w-4 h-4 mr-2" />
-                    Salin Kode
+                    Copy Code
                   </Button>
                   <Button
                     onClick={() => handleShareReferral(referralData.referralCode)}
@@ -145,7 +145,7 @@ export function ReferralSystem() {
                     size="sm"
                   >
                     <Share2 className="w-4 h-4 mr-2" />
-                    Bagikan
+                    Share
                   </Button>
                 </div>
               </div>
@@ -154,7 +154,7 @@ export function ReferralSystem() {
               {referralData.referralLink && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Link Referral:
+                    Referral Link:
                   </label>
                   <div className="flex gap-2">
                     <Input
@@ -176,14 +176,14 @@ export function ReferralSystem() {
           ) : (
             <div className="text-center space-y-4">
               <p className="text-gray-600 dark:text-gray-400">
-                Anda belum memiliki kode referral. Generate sekarang untuk mulai mengajak teman!
+                You don't have a referral code yet. Generate one now to start inviting friends!
               </p>
               <Button
                 onClick={() => generateCodeMutation.mutate()}
                 disabled={generateCodeMutation.isPending}
                 className="bg-purple-600 hover:bg-purple-700"
               >
-                {generateCodeMutation.isPending ? "Membuat..." : "Buat Kode Referral"}
+                {generateCodeMutation.isPending ? "Creating..." : "Generate Referral Code"}
               </Button>
             </div>
           )}
@@ -196,7 +196,7 @@ export function ReferralSystem() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Referral</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Referrals</p>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {referralData?.totalReferrals || 0}
                 </p>
@@ -210,7 +210,7 @@ export function ReferralSystem() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Reward</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Rewards</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {referralData?.referralRewards || 0} NTIQ
                 </p>
@@ -237,9 +237,9 @@ export function ReferralSystem() {
       {referralData?.referredUsers && referralData.referredUsers.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Teman yang Direferral</CardTitle>
+            <CardTitle className="text-lg">Referred Friends</CardTitle>
             <CardDescription>
-              Daftar teman yang bergabung menggunakan kode referral Anda
+              List of friends who joined using your referral code
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -253,7 +253,7 @@ export function ReferralSystem() {
                     <div>
                       <p className="font-medium">{user.username}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Bergabung: {new Date(user.joinedAt).toLocaleDateString('id-ID')}
+                        Joined: {new Date(user.joinedAt).toLocaleDateString('en-US')}
                       </p>
                     </div>
                   </div>
@@ -270,7 +270,7 @@ export function ReferralSystem() {
       {/* How it Works */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Cara Kerja Referral</CardTitle>
+          <CardTitle className="text-lg">How Referral Works</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -279,9 +279,9 @@ export function ReferralSystem() {
                 1
               </div>
               <div>
-                <p className="font-medium">Bagikan Kode Referral</p>
+                <p className="font-medium">Share Referral Code</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Bagikan kode atau link referral Anda kepada teman-teman
+                  Share your referral code or link to friends
                 </p>
               </div>
             </div>
@@ -291,9 +291,9 @@ export function ReferralSystem() {
                 2
               </div>
               <div>
-                <p className="font-medium">Teman Bergabung</p>
+                <p className="font-medium">Friend Joins</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Teman mendaftar menggunakan kode referral Anda
+                  Friend registers using your referral code
                 </p>
               </div>
             </div>
@@ -303,9 +303,9 @@ export function ReferralSystem() {
                 3
               </div>
               <div>
-                <p className="font-medium">Dapatkan Reward</p>
+                <p className="font-medium">Get Rewards</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Anda dan teman mendapatkan 100 NTIQ bonus otomatis
+                  You and your friend get 100 NTIQ bonus automatically
                 </p>
               </div>
             </div>
