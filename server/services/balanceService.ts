@@ -76,10 +76,11 @@ export class BalanceService {
           break;
           
         case 'withdrawal_completed':
-          // Deduct withdrawal amount when completed
-          newBalance = user.balance - Math.abs(amount);
-          transactionAmount = -Math.abs(amount);
-          finalDescription = description || 'Withdrawal completed successfully';
+          // NO BALANCE DEDUCTION - balance already deducted during withdrawal_pending
+          // This is just a status update log for completed withdrawal
+          newBalance = user.balance; // Keep current balance unchanged
+          transactionAmount = 0; // No amount change for completed status
+          finalDescription = description || 'Withdrawal completed successfully (balance already deducted)';
           break;
           
         default:
