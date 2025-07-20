@@ -20,16 +20,32 @@ function DynamicContent({ children }: { children: ReactNode }) {
 export default function DynamicProvider({ children }: DynamicProviderProps) {
   const [, navigate] = useLocation();
   
+  // Debug environment variables
+  console.log('🔧 Dynamic Labs Configuration:');
+  console.log('   ENVIRONMENT_ID:', import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID);
+  console.log('   WALLETCONNECT_PROJECT_ID:', import.meta.env.VITE_WALLETCONNECT_PROJECT_ID);
+  
+  const environmentId = import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID;
+  const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  
+  if (!environmentId) {
+    console.error('❌ VITE_DYNAMIC_ENVIRONMENT_ID is not defined!');
+    return <div>Dynamic Labs configuration error. Please check environment variables.</div>;
+  }
+  
   return (
     <DynamicContextProvider
       settings={{
-        environmentId: import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID || 'live_default',
+        environmentId: environmentId,
         walletConnectors: [
           EthereumWalletConnectors,
           SolanaWalletConnectors,
           CosmosWalletConnectors,
           StarknetWalletConnectors,
         ],
+        walletConnectPreferences: walletConnectProjectId ? {
+          projectId: walletConnectProjectId,
+        } : undefined,
         appName: 'Nectiq',
         appLogoUrl: 'https://nectiq.app/logo.png',
         initialAuthenticationMode: 'connect-and-sign',

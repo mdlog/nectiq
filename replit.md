@@ -122,6 +122,16 @@ Nectiq is a gamified cryptocurrency price prediction platform that allows users 
 
 **Prevention**: Ensure valid Etherscan API key in Replit Secrets (not demo key)
 
+## Recent Changes
+
+- July 20, 2025. **✅ COMPLETED REPLIT AGENT TO REPLIT MIGRATION**: Successfully migrated Nectiq cryptocurrency prediction platform from Replit Agent to standard Replit environment, installed all required packages including tsx for TypeScript execution, configured PostgreSQL database with proper connection strings, applied complete database schema with all tables (users, predictions, cryptocurrencies, deposits, withdrawals, etc.), configured Dynamic Labs authentication with proper API keys (VITE_DYNAMIC_ENVIRONMENT_ID and VITE_WALLETCONNECT_PROJECT_ID), enhanced debugging for MetaMask connection issues, implemented proper client/server separation with security best practices, server running successfully on port 5000 with all backend services operational including automated withdrawal processing, deposit security monitoring, and real-time price feeds from CoinGecko API
+
+## User Preferences
+
+- Language: Mixed Indonesian/English communication preferred
+- Focus on practical troubleshooting and security implementation
+- Preference for comprehensive documentation of system changes
+
 ## Changelog
 
 ```
