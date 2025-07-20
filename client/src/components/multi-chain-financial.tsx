@@ -519,9 +519,9 @@ export function MultiChainFinancial() {
       if (!isNaN(usd) && usd > 0) {
         const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === "ethereum")?.current_price;
         if (ethPrice) {
+          // Calculate exact ETH amount based on USD - no additional fee charged to user
           const baseEthAmount = usd / ethPrice;
-          const ethAmountWithFee = baseEthAmount * 1.02; // Add 2% fee
-          setFixedEthAmount(ethAmountWithFee.toFixed(6));
+          setFixedEthAmount(baseEthAmount.toFixed(6));
         }
       } else {
         setFixedEthAmount("0");
@@ -707,7 +707,7 @@ export function MultiChainFinancial() {
         return;
       }
 
-      // Calculate ETH amount using snapshot price
+      // Calculate ETH amount using snapshot price - exact amount without additional fee
       const ethAmount = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
       if (!ethAmount || ethAmount === "0.000000" || deposit.tokenType !== 'ETH') {
         toast({
@@ -1144,14 +1144,22 @@ export function MultiChainFinancial() {
                 />
                 {depositAmount && (
                   <div className="text-sm mt-1 space-y-1">
-                    <p className="text-gray-600">
-                      You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 100).toLocaleString()} NTIQ</span>
-                    </p>
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded border border-blue-200 dark:border-blue-800 space-y-1">
+                      <p className="text-gray-700 dark:text-gray-300">
+                        USD Amount: <span className="font-bold text-gray-900 dark:text-white">${parseFloat(depositAmount).toFixed(2)}</span>
+                      </p>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        Deposit Fee (2%): <span className="font-bold text-orange-600">-${(parseFloat(depositAmount) * 0.02).toFixed(2)}</span>
+                      </p>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 98).toLocaleString()} NTIQ</span>
+                      </p>
+                    </div>
                     {selectedToken === "ETH" && fixedEthAmount !== "0" && (
                       <div className="text-orange-600 space-y-1">
-                        <p>Send: <span className="font-bold">{getFixedETHAmount()} ETH</span></p>
+                        <p>ETH to send: <span className="font-bold">{getFixedETHAmount()} ETH</span></p>
                         <p className="text-xs text-orange-500">
-                          (Includes 2% processing fee)
+                          (Exact amount based on current ETH price)
                         </p>
                       </div>
                     )}
@@ -1196,9 +1204,15 @@ export function MultiChainFinancial() {
                         <span className="text-gray-700 dark:text-gray-300">Amount:</span>
                         <span className="font-medium text-gray-900 dark:text-white">${depositAmount} USD</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
-                        <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 100).toLocaleString()} NTIQ</span>
+                      <div className="border-t pt-2 space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-gray-700 dark:text-gray-300">Deposit Fee (2%):</span>
+                          <span className="font-bold text-orange-600">-${(parseFloat(depositAmount || "0") * 0.02).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
+                          <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 98).toLocaleString()} NTIQ</span>
+                        </div>
                       </div>
                       {selectedToken === "ETH" && depositAmount && confirmationEthAmount !== "0" && (
                         <div className="border-t pt-2 mt-2 space-y-1">
@@ -1207,7 +1221,7 @@ export function MultiChainFinancial() {
                             <span className="font-bold text-orange-600">{confirmationEthAmount} ETH</span>
                           </div>
                           <div className="text-xs text-orange-500 text-right">
-                            (Includes 2% processing fee)
+                            (Exact amount based on current ETH price)
                           </div>
                         </div>
                       )}

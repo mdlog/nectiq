@@ -6092,8 +6092,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid deposit amount" });
       }
 
-      // Calculate NTIQ amount (1 USD = 100 NTIQ)
-      const ntiqAmount = Math.floor(amountUSD * 100);
+      // Calculate NTIQ amount with 2% deposit fee deduction (1 USD = 100 NTIQ, but 2% fee applies)
+      // User pays full USD amount but receives NTIQ after 2% fee deduction
+      const ntiqAmountBeforeFee = amountUSD * 100;
+      const feeAmount = ntiqAmountBeforeFee * 0.02; // 2% deposit fee
+      const ntiqAmount = Math.floor(ntiqAmountBeforeFee - feeAmount); // Final NTIQ after fee deduction
 
       // Get current ETH price for snapshot if deposit is ETH
       let ethPriceSnapshot = null;
