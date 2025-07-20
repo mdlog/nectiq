@@ -1688,28 +1688,7 @@ function UserProfile() {
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
-      <Card className="bg-surface border-surface-light">
-        <CardHeader>
-          <CardTitle className="text-white">Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
-              <Clock className="mr-2" size={16} />
-              View Predictions
-            </Button>
-            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
-              <Award className="mr-2" size={16} />
-              Check Achievements
-            </Button>
-            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
-              <History className="mr-2" size={16} />
-              Reward History
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Survival Tournament Status */}
       <SurvivalStatus />
