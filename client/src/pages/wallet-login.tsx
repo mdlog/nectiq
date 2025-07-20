@@ -93,12 +93,12 @@ export default function WalletLoginPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Wallet className="mr-2" />
-                  Dynamic Labs Wallet Connection
+                  Wallet Connection
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground text-center">
-                  One-click access to 20+ popular wallets through our secure Dynamic Labs integration.
+                  Secure wallet authentication with enterprise-grade security. Connect your MetaMask wallet to get started.
                 </p>
                 
                 {/* Dynamic Labs Widget - Centered and Clean */}
@@ -127,8 +127,8 @@ export default function WalletLoginPage() {
                 <Alert>
                   <Shield className="h-4 w-4" />
                   <AlertDescription>
-                    Dynamic Labs provides enterprise-grade security with one-click access to 20+ popular wallets. 
-                    Your wallet signature ensures secure authentication without storing any private keys.
+                    Your wallet signature provides secure, passwordless authentication. 
+                    No private keys are stored on our servers, ensuring maximum security.
                   </AlertDescription>
                 </Alert>
               </CardContent>
