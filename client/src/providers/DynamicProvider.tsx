@@ -47,7 +47,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
           projectId: walletConnectProjectId,
         } : undefined,
         // Enhanced configuration for better widget behavior
-        initialAuthenticationMode: 'connect-only',
+        initialAuthenticationMode: 'connect-and-sign',
         // Override CSS to ensure modal appears
         overrides: {
           views: [
@@ -59,7 +59,6 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
         },
         appName: 'Nectiq',
         appLogoUrl: 'https://nectiq.app/logo.png',
-        initialAuthenticationMode: 'connect-and-sign',
         enableVisitTrackingOnConnectOnly: false,
         // Force signature confirmation on every login
         authModeType: 'multi-wallet',
