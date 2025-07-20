@@ -2022,7 +2022,9 @@ export default function AdminPanel() {
       status: w.status || 'pending',
       amount: w.ntiqAmount, // Fix: use ntiqAmount instead of ptsAmount
       hash: w.transactionHash || null, // Fix: use transactionHash instead of txHash
-      timestamp: w.createdAt
+      timestamp: w.createdAt,
+      networkName: w.chainName, // Add networkName mapping from chainName
+      chainName: w.chainName // Ensure chainName is available for explorer URL mapping
     })) : []),
     ...(Array.isArray(transactionDeposits) ? transactionDeposits.map((d: any) => ({
       ...d,
