@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem, Plus } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem, Plus, Users } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -485,6 +485,14 @@ export default function UserDashboard() {
                     </TabsTrigger>
                     
                     <TabsTrigger 
+                      value="referral" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-pink-400/50 text-slate-300"
+                    >
+                      <Users className="h-5 w-5" />
+                      <span>Referral Program</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
                       value="rewards" 
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-indigo-400/50 text-slate-300"
                     >
@@ -632,6 +640,11 @@ export default function UserDashboard() {
           {/* Loyalty Tab */}
           <TabsContent value="loyalty">
             <LoyaltyTier />
+          </TabsContent>
+
+          {/* Referral Program Tab */}
+          <TabsContent value="referral">
+            <ReferralSection />
           </TabsContent>
 
           {/* Rewards Tab */}
@@ -1660,9 +1673,6 @@ function UserProfile() {
 
       {/* Survival Tournament Status */}
       <SurvivalStatus />
-
-      {/* Referral Section */}
-      <ReferralSection />
     </div>
   );
 }
