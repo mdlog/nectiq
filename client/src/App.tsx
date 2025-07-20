@@ -69,7 +69,7 @@ function Router() {
       </Route>
       
       <Route path="/user-dashboard">
-        <SimpleDashboard />
+        <UserDashboard />
       </Route>
 
       <Route path="/test-dashboard">
