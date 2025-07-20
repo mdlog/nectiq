@@ -6146,7 +6146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ntiqAmount,
         ethPriceSnapshot,
         status: 'pending',
-        expiresAt: expiresAt.toISOString(),
+        expiresAt: expiresAt,
       });
 
       const deposit = await storage.createDeposit({
@@ -6159,9 +6159,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tokenAddress: validatedData.tokenAddress,
         amountUSD: validatedData.amountUSD.toString(),
         ntiqAmount,
-        ethPriceSnapshot,
+        ethPriceSnapshot: ethPriceSnapshot?.toString() || null,
         status: 'pending',
-        expiresAt: expiresAt.toISOString(),
+        expiresAt: expiresAt,
       });
 
       // Broadcast to admin for real-time notifications
