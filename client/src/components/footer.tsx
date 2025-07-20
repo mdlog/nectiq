@@ -118,13 +118,7 @@ export function Footer() {
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-6 p-4 bg-surface-light rounded-lg border border-slate-600">
-          <p className="text-xs text-slate-400 text-center">
-            <strong>Disclaimer:</strong> This platform is for entertainment and educational purposes only. 
-            Cryptocurrency prediction carries high risks. No financial gain is guaranteed. 
-            Cryptocurrency prices are highly volatile and can change drastically.
-          </p>
-        </div>
+
       </div>
     </footer>
   );
