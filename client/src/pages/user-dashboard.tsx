@@ -400,21 +400,21 @@ export default function UserDashboard() {
         </div>
 
         {/* Main Content with Sidebar Layout */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
-          {/* Sidebar Navigation */}
-          <div className="lg:w-80 flex-shrink-0">
-            <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl sticky top-4 h-fit">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-white mb-2">Dashboard Menu</h3>
-                <p className="text-sm text-slate-400">Manage your account and track your performance</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Sidebar Navigation - 1/3 of width */}
+          <div className="lg:col-span-1">
+            <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl sticky top-4 h-fit">
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Dashboard Menu</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">Manage your account and track your performance</p>
               </div>
               
               <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
-                <div className="space-y-2">
-                  <TabsList className="bg-transparent w-full h-auto p-0 flex-col space-y-2">
+                <div className="space-y-3">
+                  <TabsList className="bg-transparent w-full h-auto p-0 flex-col space-y-3">
                     <TabsTrigger 
                       value="profile" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-blue-400/50 text-slate-300"
                     >
                       <UserCircle className="h-5 w-5" />
                       <span>Profile</span>
@@ -422,7 +422,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="predictions" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-green-400/50 text-slate-300"
                     >
                       <Clock className="h-5 w-5" />
                       <span>My Predictions</span>
@@ -430,7 +430,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="achievements" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-yellow-400/50 text-slate-300"
                     >
                       <Award className="h-5 w-5" />
                       <span>Achievements</span>
@@ -438,7 +438,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="challenges" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-purple-400/50 text-slate-300"
                     >
                       <Calendar className="h-5 w-5" />
                       <span>Daily Challenges</span>
@@ -446,7 +446,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="loyalty" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-red-400/50 text-slate-300"
                     >
                       <Shield className="h-5 w-5" />
                       <span>Loyalty</span>
@@ -454,7 +454,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="market" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-orange-400/50 text-slate-300"
                     >
                       <Eye className="h-5 w-5" />
                       <span>Market Watch</span>
@@ -462,7 +462,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="performance" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-amber-400/50 text-slate-300"
                     >
                       <Activity className="h-5 w-5" />
                       <span>Performance</span>
@@ -470,7 +470,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="battles" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-emerald-400/50 text-slate-300"
                     >
                       <Swords className="h-5 w-5" />
                       <span>Battles</span>
@@ -478,7 +478,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="financial" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-rose-400/50 text-slate-300"
                     >
                       <Wallet className="h-5 w-5" />
                       <span>Financial</span>
@@ -486,7 +486,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="referral" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-pink-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-pink-400/50 text-slate-300"
                     >
                       <Users className="h-5 w-5" />
                       <span>Referral Program</span>
@@ -494,7 +494,7 @@ export default function UserDashboard() {
                     
                     <TabsTrigger 
                       value="rewards" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-indigo-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-4 px-5 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-indigo-400/50 text-slate-300"
                     >
                       <History className="h-5 w-5" />
                       <span>Reward History</span>
@@ -505,8 +505,8 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          {/* Main Content Area */}
-          <div className="flex-1 min-h-0">
+          {/* Main Content Area - 2/3 of width */}
+          <div className="lg:col-span-2 min-h-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
               <div className="flex flex-col h-full space-y-6">
 
