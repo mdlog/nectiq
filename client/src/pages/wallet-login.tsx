@@ -68,10 +68,10 @@ export default function WalletLoginPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Wallet Authentication with Reown
+              Connect Your Wallet
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Connect your crypto wallet using Reown (formerly WalletConnect) for secure, passwordless access to Nectiq prediction platform.
+              Secure, passwordless access to Nectiq prediction platform with Dynamic Labs wallet integration.
             </p>
           </div>
 
@@ -93,68 +93,87 @@ export default function WalletLoginPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Wallet className="mr-2" />
-                  Connect Wallet
+                  Dynamic Labs Wallet Connection
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">
-                  Connect your preferred crypto wallet to get started with secure authentication.
+                  Choose your preferred wallet from our secure Dynamic Labs integration. Supports MetaMask, WalletConnect, Coinbase Wallet, and 20+ other popular wallets.
                 </p>
                 
-                {/* Dynamic Labs Widget */}
-                <div className="flex justify-center">
+                {/* Dynamic Labs Widget - Centered and Clean */}
+                <div className="flex justify-center py-8">
                   <div className="w-full max-w-md">
                     <DynamicWalletWidget />
                   </div>
                 </div>
-                
-                {/* Debug Information */}
-                <div className="mt-4 p-4 bg-muted rounded-lg text-sm">
-                  <h4 className="font-semibold mb-2">Debug Information:</h4>
-                  <p>Environment ID: {import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID ? 'Configured ✓' : 'Missing ✗'}</p>
-                  <p>Reown Project ID: {import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ? 'Configured ✓' : 'Missing ✗'}</p>
-                  <p>Using Reown (formerly WalletConnect) v2 protocol</p>
-                  <p>Check browser console for wallet connection logs</p>
+
+                {/* Supported Wallets Info */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm text-muted-foreground">
+                  <div className="p-2">
+                    <div className="font-semibold">MetaMask</div>
+                  </div>
+                  <div className="p-2">
+                    <div className="font-semibold">WalletConnect</div>
+                  </div>
+                  <div className="p-2">
+                    <div className="font-semibold">Coinbase</div>
+                  </div>
+                  <div className="p-2">
+                    <div className="font-semibold">20+ More</div>
+                  </div>
                 </div>
 
                 <Alert>
                   <Shield className="h-4 w-4" />
                   <AlertDescription>
-                    Dynamic Labs provides secure multi-wallet support including MetaMask, Reown (WalletConnect v2), 
-                    Coinbase Wallet, and many more. Reown enables secure cross-platform wallet connections with enhanced security.
+                    Dynamic Labs provides enterprise-grade security with one-click access to 20+ popular wallets. 
+                    Your wallet signature ensures secure authentication without storing any private keys.
                   </AlertDescription>
                 </Alert>
               </CardContent>
             </Card>
 
-            {/* Info Cards */}
-            <div className="grid md:grid-cols-2 gap-4">
+            {/* Benefits */}
+            <div className="grid md:grid-cols-3 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <Shield className="mr-2 h-5 w-5 text-green-500" />
-                    Secure Authentication
+                  <CardTitle className="text-base flex items-center">
+                    <Shield className="mr-2 h-4 w-4 text-green-500" />
+                    Secure
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Your wallet signature provides secure, passwordless authentication. 
-                    No sensitive information is stored on our servers.
+                    Wallet signature authentication without storing private keys.
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <User className="mr-2 h-5 w-5 text-blue-500" />
-                    Auto Registration
+                  <CardTitle className="text-base flex items-center">
+                    <User className="mr-2 h-4 w-4 text-blue-500" />
+                    Instant
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    New wallets are automatically registered. Start making predictions 
-                    and earning rewards immediately after authentication.
+                    Auto-registration for new wallets. Start earning immediately.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center">
+                    <Wallet className="mr-2 h-4 w-4 text-purple-500" />
+                    Universal
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Works with all popular wallets across multiple chains.
                   </p>
                 </CardContent>
               </Card>

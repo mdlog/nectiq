@@ -16,9 +16,9 @@ Nectiq is a gamified cryptocurrency price prediction platform that allows users 
 - **Stake System**: Stake 50-500 NTIQ points on your predictions
 
 ### 🔐 Authentication & Wallet Integration
-- **Multi-Chain Wallet Support**: MetaMask, Reown (WalletConnect v2), Coinbase Wallet, and more
-- **Dynamic Labs Integration**: Seamless Web3 authentication with auto-registration
-- **Reown Protocol**: Enhanced cross-platform wallet connectivity with improved security
+- **Dynamic Labs Integration**: Unified wallet connection interface with 20+ wallet support
+- **Multi-Chain Wallet Support**: MetaMask, WalletConnect, Coinbase Wallet, and more
+- **Enterprise Security**: Secure authentication without storing private keys
 - **Complete Wallet Disconnect**: Full logout with MetaMask confirmation required for reconnection
 - **Admin Panel**: Secure admin access with wallet-based authentication
 
@@ -118,9 +118,7 @@ DATABASE_URL=postgresql://username:password@host:port/database
 
 # Dynamic Labs (Web3 Authentication)
 VITE_DYNAMIC_ENVIRONMENT_ID=your_dynamic_environment_id
-VITE_WALLETCONNECT_PROJECT_ID=your_reown_project_id
-# Reown (formerly WalletConnect) configuration
-VITE_REOWN_PROJECT_ID=your_reown_project_id
+VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
 
 # Session Security
 SESSION_SECRET=your_session_secret
