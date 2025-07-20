@@ -306,215 +306,197 @@ export default function UserDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <Header />
-      
-      {/* Hero Section with User Welcome */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="mb-6 md:mb-0">
-                <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.username || 'Trader'}! 👋</h1>
-                <p className="text-blue-100 text-lg">Ready to make some profitable predictions today?</p>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Header */}
+      <div className="bg-surface border-b border-surface-light">
+        <div className="container max-w-6xl mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                <Star className="text-white" size={16} />
               </div>
-              <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[120px]">
-                  <div className="text-2xl font-bold">{user?.balance?.toLocaleString() || '0'}</div>
-                  <div className="text-sm text-blue-200">NTIQ Balance</div>
-                </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[120px]">
-                  <div className="text-2xl font-bold">{stats?.accuracy || 0}%</div>
-                  <div className="text-sm text-blue-200">Accuracy</div>
-                </div>
-                <Button 
-                  onClick={() => setLocation('/home')}
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Make Prediction
-                </Button>
+              <h1 className="text-lg sm:text-xl font-bold">My Dashboard</h1>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="flex items-center space-x-1 sm:space-x-2 bg-surface-light px-2 sm:px-3 py-1 rounded-lg">
+                <Coins className="text-warning" size={14} />
+                <span className="text-sm sm:text-base font-semibold">{user?.balance?.toLocaleString() || "0"}</span>
+                <span className="text-xs text-slate-400">NTIQ</span>
               </div>
+              <div className="hidden sm:block">
+                {getRankBadge(stats?.rank)}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="bg-surface-light border-surface-light text-xs sm:text-sm" 
+                onClick={() => setLocation('/home')}
+              >
+                <ArrowLeft className="mr-1 sm:mr-2" size={14} />
+                <span className="hidden sm:inline">Back to App</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="container max-w-6xl mx-auto px-3 sm:px-4 py-8">
-        {/* Quick Stats Overview */}
-        <div className="mb-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                    <BarChart3 className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Predictions</p>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats?.totalPredictions || 0}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                    <Target className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Accuracy</p>
-                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats?.accuracy || 0}%</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl flex items-center justify-center">
-                    <Trophy className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Rank</p>
-                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                      {stats?.rank ? `#${stats.rank}` : "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <Coins className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Rewards</p>
-                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats?.totalRewards || 0}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+      <main className="container max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        {/* Welcome Section */}
+        <div className="mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold mb-2">Welcome back, {user?.username || "User"}!</h2>
+          <p className="text-slate-400 text-sm sm:text-base">Track your predictions, analyze performance, and climb the leaderboard.</p>
         </div>
 
+        {/* Key Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <Card className="bg-surface border-surface-light">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Total Predictions</CardTitle>
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+            </CardHeader>
+            <CardContent className="pb-3">
+              <div className="text-lg sm:text-2xl font-bold">{stats?.totalPredictions || 0}</div>
+              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Lifetime predictions made</div>
+            </CardContent>
+          </Card>
 
+          <Card className="bg-surface border-surface-light">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Accuracy Rate</CardTitle>
+              <Target className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
+            </CardHeader>
+            <CardContent className="pb-3">
+              <div className="text-lg sm:text-2xl font-bold text-success">{stats?.accuracy || 0}%</div>
+              <div className={`text-xs px-1 sm:px-2 py-1 rounded-full inline-block mt-1 ${accuracyLevel.bg} ${accuracyLevel.color} hidden sm:block`}>
+                {accuracyLevel.label}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Main Content with Modern Sidebar Layout */}
-        <div className="flex flex-col xl:flex-row gap-8">
-          {/* Modern Sidebar Navigation */}
-          <div className="xl:w-80 flex-shrink-0">
-            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-2xl overflow-hidden sticky top-4">
-              <div className="p-6 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <UserCircle className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-white">{user?.username || 'User'}</h3>
-                    <p className="text-sm text-blue-200">Personal Dashboard</p>
-                  </div>
-                </div>
-                <div className="bg-white/10 rounded-lg p-3 text-center">
-                  <div className="text-lg font-bold text-white">{user?.balance?.toLocaleString() || '0'}</div>
-                  <div className="text-xs text-blue-200">Available Balance</div>
-                </div>
+          <Card className="bg-surface border-surface-light">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Current Rank</CardTitle>
+              <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
+            </CardHeader>
+            <CardContent className="pb-3">
+              <div className="text-lg sm:text-2xl font-bold text-warning">
+                {stats?.rank ? `#${stats.rank}` : "N/A"}
+              </div>
+              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Global ranking</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-surface border-surface-light">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Total Rewards</CardTitle>
+              <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+            </CardHeader>
+            <CardContent className="pb-3">
+              <div className="text-lg sm:text-2xl font-bold text-primary">{stats?.totalRewards || 0}</div>
+              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Points earned</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content with Sidebar Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar Navigation */}
+          <div className="lg:w-80 flex-shrink-0">
+            <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-4 shadow-2xl sticky top-4">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-white mb-2">Dashboard Menu</h3>
+                <p className="text-sm text-slate-400">Manage your account and track your performance</p>
               </div>
               
               <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
-                <div className="p-4 space-y-1">
-                  <TabsList className="bg-transparent w-full h-auto p-0 flex-col space-y-1">
+                <div className="space-y-2">
+                  <TabsList className="bg-transparent w-full h-auto p-0 flex-col space-y-2">
                     <TabsTrigger 
                       value="profile" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-blue-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-blue-400/50 text-slate-300"
                     >
-                      <UserCircle className="h-4 w-4" />
+                      <UserCircle className="h-5 w-5" />
                       <span>Profile</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="predictions" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-emerald-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-green-400/50 text-slate-300"
                     >
-                      <Clock className="h-4 w-4" />
+                      <Clock className="h-5 w-5" />
                       <span>My Predictions</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="achievements" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-amber-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-yellow-400/50 text-slate-300"
                     >
-                      <Award className="h-4 w-4" />
+                      <Award className="h-5 w-5" />
                       <span>Achievements</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="challenges" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-purple-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-purple-400/50 text-slate-300"
                     >
-                      <Calendar className="h-4 w-4" />
+                      <Calendar className="h-5 w-5" />
                       <span>Daily Challenges</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="loyalty" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-yellow-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-red-400/50 text-slate-300"
                     >
-                      <Crown className="h-4 w-4" />
+                      <Shield className="h-5 w-5" />
                       <span>Loyalty</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
-                      value="market-watch" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-teal-400/50 text-slate-700 dark:text-slate-300"
+                      value="market" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-orange-400/50 text-slate-300"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-5 w-5" />
                       <span>Market Watch</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="performance" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-cyan-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-amber-400/50 text-slate-300"
                     >
-                      <Activity className="h-4 w-4" />
+                      <Activity className="h-5 w-5" />
                       <span>Performance</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="battles" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-red-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-emerald-400/50 text-slate-300"
                     >
-                      <Swords className="h-4 w-4" />
+                      <Swords className="h-5 w-5" />
                       <span>Battles</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="financial" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-rose-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-rose-400/50 text-slate-300"
                     >
-                      <Wallet className="h-4 w-4" />
+                      <Wallet className="h-5 w-5" />
                       <span>Financial</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="referral" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-pink-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-pink-400/50 text-slate-300"
                     >
-                      <Users className="h-4 w-4" />
+                      <Users className="h-5 w-5" />
                       <span>Referral Program</span>
                     </TabsTrigger>
                     
                     <TabsTrigger 
                       value="rewards" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-indigo-400/50 text-slate-700 dark:text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg border border-transparent data-[state=active]:border-indigo-400/50 text-slate-300"
                     >
-                      <History className="h-4 w-4" />
+                      <History className="h-5 w-5" />
                       <span>Reward History</span>
                     </TabsTrigger>
                   </TabsList>
@@ -529,32 +511,24 @@ export default function UserDashboard() {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
-            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
-              <UserProfile />
-            </div>
+            <UserProfile />
           </TabsContent>
 
           {/* Active Predictions Tab */}
           <TabsContent value="predictions">
-            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
+            <Card className="bg-surface border-surface-light">
               <CardHeader>
-                <CardTitle className="flex items-center text-slate-900 dark:text-slate-100">
+                <CardTitle className="flex items-center">
                   <Clock className="mr-2" size={20} />
                   Active Predictions ({activePredictions.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {activePredictions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Clock className="text-white" size={24} />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Active Predictions</h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-4">Start making predictions to track them here!</p>
-                    <Button onClick={() => setLocation('/home')} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Make Your First Prediction
-                    </Button>
+                  <div className="text-center py-8 text-slate-400">
+                    <Clock className="mx-auto mb-2" size={32} />
+                    <p>No active predictions</p>
+                    <p className="text-sm">Start making predictions to see them here!</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -585,7 +559,7 @@ export default function UserDashboard() {
                       };
                       
                       return (
-                        <div key={prediction.id} className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
+                        <div key={prediction.id} className="p-4 bg-surface-light rounded-lg border border-slate-600">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-3">
                               <div className="relative w-10 h-10 flex-shrink-0">
@@ -607,26 +581,26 @@ export default function UserDashboard() {
                                 </div>
                               </div>
                               <div>
-                                <p className="font-semibold capitalize text-slate-900 dark:text-slate-100">{prediction.cryptocurrency}</p>
-                                <p className="text-sm text-slate-600 dark:text-slate-400">{prediction.timeframe} prediction</p>
+                                <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
+                                <p className="text-sm text-slate-400">{prediction.timeframe} prediction</p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className={`text-sm font-medium ${isExpired ? "text-red-500" : "text-emerald-500"}`}>
+                              <p className={`text-sm font-medium ${isExpired ? "text-error" : "text-success"}`}>
                                 {formatTimeLeft(prediction.timeLeft)}
                               </p>
-                              <p className="text-xs text-slate-600 dark:text-slate-400">Stake: {prediction.stakeAmount} NTIQ</p>
+                              <p className="text-xs text-slate-400">Stake: {prediction.stakeAmount} NTIQ</p>
                             </div>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-4 mb-3">
                             <div>
-                              <p className="text-xs text-slate-600 dark:text-slate-400">Predicted Price</p>
-                              <p className="font-semibold text-slate-900 dark:text-slate-100">${predictedPrice.toLocaleString()}</p>
+                              <p className="text-xs text-slate-400">Predicted Price</p>
+                              <p className="font-semibold">${predictedPrice.toLocaleString()}</p>
                             </div>
                             <div>
-                              <p className="text-xs text-slate-600 dark:text-slate-400">Current Price</p>
-                              <p className={`font-semibold ${currentPrice >= predictedPrice ? "text-emerald-500" : "text-red-500"}`}>
+                              <p className="text-xs text-slate-400">Current Price</p>
+                              <p className={`font-semibold ${currentPrice >= predictedPrice ? "text-success" : "text-error"}`}>
                                 ${currentPrice.toLocaleString()}
                               </p>
                             </div>
@@ -634,8 +608,8 @@ export default function UserDashboard() {
                           
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${accuracy >= 90 ? "bg-emerald-500" : accuracy >= 70 ? "bg-amber-500" : "bg-red-500"}`}></div>
-                              <span className={`text-sm font-medium ${accuracy >= 90 ? "text-emerald-500" : accuracy >= 70 ? "text-amber-500" : "text-red-500"}`}>
+                              <div className={`w-2 h-2 rounded-full ${accuracy >= 90 ? "bg-success" : accuracy >= 70 ? "bg-warning" : "bg-error"}`}></div>
+                              <span className={`text-sm font-medium ${accuracy >= 90 ? "text-success" : accuracy >= 70 ? "text-warning" : "text-error"}`}>
                                 {accuracy.toFixed(2)}% accuracy
                               </span>
                             </div>
@@ -655,53 +629,39 @@ export default function UserDashboard() {
 
           {/* Achievements Tab */}
           <TabsContent value="achievements">
-            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
-              <Achievements />
-            </div>
+            <Achievements />
           </TabsContent>
 
           {/* Daily Challenges Tab */}
           <TabsContent value="challenges">
-            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
-              <DailyChallenges />
-            </div>
+            <DailyChallenges />
           </TabsContent>
 
           {/* Loyalty Tab */}
           <TabsContent value="loyalty">
-            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
-              <LoyaltyTier />
-            </div>
+            <LoyaltyTier />
           </TabsContent>
 
           {/* Referral Program Tab */}
           <TabsContent value="referral">
-            <div className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl p-6">
-              <ReferralSection />
-            </div>
+            <ReferralSection />
           </TabsContent>
 
           {/* Rewards Tab */}
           <TabsContent value="rewards">
-            <Card className="bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
+            <Card className="bg-surface border-surface-light">
               <CardHeader>
-                <CardTitle className="flex items-center text-slate-900 dark:text-slate-100">
+                <CardTitle className="flex items-center">
                   <Gift className="mr-2" size={20} />
                   Recent Rewards
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {recentRewards.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Gift className="text-white" size={24} />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Rewards Yet</h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-4">Make accurate predictions to earn rewards!</p>
-                    <Button onClick={() => setLocation('/home')} className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white">
-                      <TrendingUp className="mr-2 h-4 w-4" />
-                      Start Earning Rewards
-                    </Button>
+                  <div className="text-center py-8 text-slate-400">
+                    <Gift className="mx-auto mb-2" size={32} />
+                    <p>No rewards yet</p>
+                    <p className="text-sm">Make accurate predictions to earn rewards!</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -743,7 +703,7 @@ export default function UserDashboard() {
                       }
                       
                       return (
-                        <div key={reward.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
+                        <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
                           <div className="flex items-center space-x-3">
                             <div className="relative w-8 h-8 flex-shrink-0">
                               {/* Activity Type Badge */}
@@ -1688,7 +1648,28 @@ function UserProfile() {
         </CardContent>
       </Card>
 
-
+      {/* Quick Actions */}
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-white">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
+              <Clock className="mr-2" size={16} />
+              View Predictions
+            </Button>
+            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
+              <Award className="mr-2" size={16} />
+              Check Achievements
+            </Button>
+            <Button variant="outline" className="bg-surface-light border-surface-light hover:bg-primary/10">
+              <History className="mr-2" size={16} />
+              Reward History
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Survival Tournament Status */}
       <SurvivalStatus />
