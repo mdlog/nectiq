@@ -29,10 +29,12 @@ export function ReferralSystem() {
   const [referralCode, setReferralCode] = useState("");
 
   // Fetch referral data
-  const { data: referralData, isLoading } = useQuery<ReferralData>({
+  const { data: referralData, isLoading, refetch } = useQuery<ReferralData>({
     queryKey: ["/api/user/referral"],
     staleTime: 0,
     gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Generate referral code mutation
@@ -43,8 +45,11 @@ export function ReferralSystem() {
       });
       return await response.json();
     },
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
+      // Force immediate refetch of referral data
       queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/user/referral"] });
+      await refetch(); // Force immediate component refetch
       toast({
         title: "Referral Code Created Successfully!",
         description: `Your referral code: ${data.referralCode}`,
