@@ -141,7 +141,7 @@ function WithdrawalHistory() {
 }
 
 export default function UserDashboard() {
-  const { data: user } = useQuery<User>({
+  const { data: user, isLoading: userLoading, error: userError } = useQuery<User>({
     queryKey: ["/api/user"],
     retry: 2,
     retryDelay: 1000,
@@ -349,6 +349,42 @@ export default function UserDashboard() {
     setSelectedCrypto(crypto);
     setShowChart(true);
   };
+
+  // Show loading state
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login message if not authenticated
+  if (!user || userError) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <Header />
+        <div className="container max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <div className="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mx-auto mb-6">
+              <UserCircle className="text-white" size={32} />
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Access Dashboard</h2>
+            <p className="text-slate-400 mb-8 max-w-md mx-auto">
+              Connect your wallet to access your personal dashboard and view predictions, rewards, and performance statistics.
+            </p>
+            <Button onClick={() => setLocation("/")} className="gradient-bg text-white">
+              <Wallet className="mr-2" size={16} />
+              Connect Wallet
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
