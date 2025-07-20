@@ -445,11 +445,30 @@ export default function UserDashboard() {
     liveFeedError: liveFeedError?.message
   });
 
-  // Dashboard content for authenticated users  
+  // Dashboard content for authenticated users
+  console.log("🎯 [RENDER] Dashboard JSX about to return for user:", user?.username);
+  
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>
+      {/* Emergency Debug Indicator */}
+      <div style={{
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        right: '0',
+        backgroundColor: 'red',
+        color: 'white',
+        padding: '10px',
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        zIndex: 10000
+      }}>
+        🎯 DASHBOARD ACTIVE - User: {user?.username} | Balance: {user?.balance} NTIQ
+      </div>
+      
       {/* Header */}
-      <div className="bg-surface border-b border-surface-light">
+      <div className="bg-surface border-b border-surface-light" style={{ marginTop: '50px', backgroundColor: '#2a2a2a' }}>
         <div className="container max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
