@@ -37,14 +37,81 @@ export default function DynamicWalletWidget() {
 
   const handleDisconnect = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      handleLogOut();
-      toast({
-        title: "Disconnected",
-        description: "Wallet disconnected successfully",
+      console.log('🔐 [WIDGET] Starting complete wallet disconnect...');
+      
+      // 1. Disconnect wallet from MetaMask/provider level first
+      if (window.ethereum) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_revokePermissions',
+            params: [{ eth_accounts: {} }],
+          });
+          console.log('🔐 [WIDGET] MetaMask permissions revoked');
+        } catch (error) {
+          console.log('🔐 [WIDGET] MetaMask revoke not available, trying alternative...');
+          try {
+            await window.ethereum.request({
+              method: 'wallet_requestPermissions',
+              params: [{ eth_accounts: {} }],
+            });
+          } catch (altError) {
+            console.log('🔐 [WIDGET] MetaMask alternative disconnect:', altError);
+          }
+        }
+      }
+      
+      // 2. Logout dari Dynamic Labs
+      await handleLogOut();
+      
+      // 3. Logout dari backend
+      await fetch('/api/auth/logout', { 
+        method: 'POST',
+        credentials: 'include'
       });
+      
+      // 4. Clear all Dynamic Labs session data
+      const keysToRemove = [
+        'dynamic-auth-token',
+        'dynamic-user-data',
+        'dynamic-wallet-data',
+        'dynamic-session',
+        'dynamic-cached-wallet',
+        'dynamic-jwt-token'
+      ];
+      
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      });
+      
+      // Clear semua keys yang mengandung 'dynamic'
+      Object.keys(localStorage).forEach(key => {
+        if (key.toLowerCase().includes('dynamic')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      toast({
+        title: "Wallet Disconnected",
+        description: "Wallet completely disconnected. Next login will require confirmation.",
+      });
+      
+      // Force redirect ke landing page
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+      
     } catch (error) {
-      console.error('Disconnect error:', error);
+      console.error('🔐 [WIDGET] Disconnect error:', error);
+      toast({
+        title: "Disconnect Error",
+        description: "Error during disconnect, but wallet should be logged out",
+        variant: "destructive",
+      });
+      // Fallback redirect
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
     }
   };
 

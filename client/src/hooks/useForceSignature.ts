@@ -66,40 +66,63 @@ export function useForceSignature() {
   // Function untuk force logout dan clear semua session data
   const forceLogoutAndClear = async () => {
     try {
-      console.log('🔐 [FORCE-SIGNATURE] Starting force logout and clear...');
+      console.log('🔐 [FORCE-SIGNATURE] Starting complete wallet disconnect...');
       
-      // 1. Logout dari backend
+      // 1. Disconnect dari semua wallet providers terlebih dahulu
+      if (window.ethereum) {
+        try {
+          // Revoke permissions dari MetaMask
+          await window.ethereum.request({
+            method: 'wallet_revokePermissions',
+            params: [{ eth_accounts: {} }],
+          });
+          console.log('🔐 [FORCE-SIGNATURE] MetaMask permissions revoked');
+        } catch (error) {
+          console.log('🔐 [FORCE-SIGNATURE] MetaMask revoke method not available, trying alternative...');
+          
+          // Alternative: Request new permissions to reset connection
+          try {
+            await window.ethereum.request({
+              method: 'wallet_requestPermissions',
+              params: [{ eth_accounts: {} }],
+            });
+          } catch (altError) {
+            console.log('🔐 [FORCE-SIGNATURE] MetaMask alternative disconnect:', altError);
+          }
+        }
+      }
+
+      // 2. Logout dari Dynamic Labs terlebih dahulu
+      await handleLogOut();
+
+      // 3. Logout dari backend
       await fetch('/api/auth/logout', { 
         method: 'POST',
         credentials: 'include'
       });
 
-      // 2. Logout dari Dynamic Labs
-      await handleLogOut();
-
-      // 3. Clear semua storage
+      // 4. Clear semua storage data
       localStorage.clear();
       sessionStorage.clear();
 
-      // 4. Clear MetaMask connection state jika ada
-      if (window.ethereum) {
-        try {
-          // Disconnect from MetaMask
-          await window.ethereum.request({
-            method: 'wallet_requestPermissions',
-            params: [{ eth_accounts: {} }],
-          });
-        } catch (error) {
-          console.log('🔐 [FORCE-SIGNATURE] MetaMask disconnect:', error);
-        }
-      }
+      // 5. Clear browser cookies jika memungkinkan
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
 
-      console.log('🔐 [FORCE-SIGNATURE] Force logout and clear completed');
+      console.log('🔐 [FORCE-SIGNATURE] Complete wallet disconnect completed');
       
-      // Reload page untuk memastikan clean state
-      window.location.reload();
+      // 6. Reload page untuk memastikan clean state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+      
     } catch (error) {
       console.error('🔐 [FORCE-SIGNATURE] Error in force logout:', error);
+      // Fallback: tetap reload page
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
     }
   };
 

@@ -58,16 +58,72 @@ export function Header() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      console.log('🔐 [LOGOUT] Starting complete wallet disconnect...');
+      
+      // 1. Disconnect wallet from MetaMask/provider level first
+      if (window.ethereum) {
+        try {
+          // Revoke permissions dari MetaMask
+          await window.ethereum.request({
+            method: 'wallet_revokePermissions',
+            params: [{ eth_accounts: {} }],
+          });
+          console.log('🔐 [LOGOUT] MetaMask permissions revoked');
+        } catch (error) {
+          console.log('🔐 [LOGOUT] MetaMask revoke not available, trying alternative...');
+          try {
+            // Alternative method untuk disconnect
+            await window.ethereum.request({
+              method: 'wallet_requestPermissions',
+              params: [{ eth_accounts: {} }],
+            });
+          } catch (altError) {
+            console.log('🔐 [LOGOUT] MetaMask alternative disconnect:', altError);
+          }
+        }
+      }
+
+      // 2. Logout dari Dynamic Labs
+      await handleLogOut();
+      
+      // 3. Logout dari backend
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include'
       });
+      
       if (!response.ok) {
-        throw new Error('Logout failed');
+        throw new Error('Backend logout failed');
       }
-      return response.json();
+      
+      // 4. Clear all Dynamic Labs session data
+      const keysToRemove = [
+        'dynamic-auth-token',
+        'dynamic-user-data',
+        'dynamic-wallet-data',
+        'dynamic-session',
+        'dynamic-cached-wallet',
+        'dynamic-jwt-token'
+      ];
+      
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      });
+      
+      // Clear semua keys yang mengandung 'dynamic'
+      Object.keys(localStorage).forEach(key => {
+        if (key.toLowerCase().includes('dynamic')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      console.log('🔐 [LOGOUT] All session data cleared');
+      
+      return { success: true };
     },
     onSuccess: () => {
       // Clear all cached data
@@ -84,68 +140,75 @@ export function Header() {
 
   const handleDisconnect = async () => {
     try {
-      console.log("🔌 Starting wallet disconnect process...");
+      console.log("🔌 Starting complete wallet disconnect process...");
       
       // Show loading state
       toast({
         title: "Disconnecting...",
-        description: "Logging out and disconnecting wallet",
+        description: "Completely disconnecting wallet and clearing session",
       });
-
-      // Step 1: Logout from server
-      console.log("📤 Logging out from server...");
+      
+      // Execute complete logout
       await logoutMutation.mutateAsync();
       
-      // Step 2: Use Dynamic Labs handleLogOut for proper wallet disconnection
-      console.log("🔗 Disconnecting from Dynamic Labs...");
-      handleLogOut();
-      
-      // Step 3: Clear localStorage (native wallet data)
-      console.log("🧹 Clearing local storage...");
-      localStorage.removeItem('wallet_address');
-      localStorage.removeItem('auth_token');
-      
-      // Step 4: Clear React Query cache
-      console.log("🗑️ Clearing query cache...");
-      queryClient.clear();
-      
-      // Step 5: Success notification
+      // Show success message
       toast({
         title: "Wallet Disconnected",
-        description: "Successfully logged out and disconnected wallet",
+        description: "Wallet completely disconnected. Next login will require confirmation.",
       });
       
-      // Step 6: Navigate to landing page
-      console.log("🏠 Redirecting to landing page...");
-      setLocation('/');
-      
-      // Step 7: Force page reload to clear all state
+      // Navigate to landing page
       setTimeout(() => {
-        window.location.reload();
-      }, 500);
+        setLocation('/');
+        // Force page reload untuk memastikan clean state
+        window.location.href = '/';
+      }, 1000);
       
     } catch (error) {
-      console.error("❌ Disconnect error:", error);
+      console.error("❌ Complete disconnect error:", error);
       
-      // Still perform cleanup even if server call fails
-      handleLogOut(); // Force Dynamic Labs logout
-      localStorage.removeItem('wallet_address');
-      localStorage.removeItem('auth_token');
-      queryClient.clear();
+      // Fallback: Still perform manual cleanup even if mutation fails
+      try {
+        // Manual MetaMask disconnect
+        if (window.ethereum) {
+          await window.ethereum.request({
+            method: 'wallet_revokePermissions',
+            params: [{ eth_accounts: {} }],
+          });
+        }
+        
+        // Manual Dynamic Labs logout
+        await handleLogOut();
+        
+        // Manual backend logout
+        await fetch('/api/auth/logout', { 
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        // Clear storage manually
+        localStorage.clear();
+        sessionStorage.clear();
+        queryClient.clear();
+        
+        toast({
+          title: "Wallet Disconnected",
+          description: "Wallet disconnected with fallback method",
+          variant: "destructive",
+        });
+      } catch (fallbackError) {
+        console.error("❌ Fallback disconnect also failed:", fallbackError);
+        toast({
+          title: "Disconnect Error",
+          description: "Error during disconnect, please refresh page",
+          variant: "destructive",
+        });
+      }
       
-      toast({
-        title: "Disconnected",
-        description: "Wallet disconnected (with some errors)",
-        variant: "destructive",
-      });
-      
-      // Navigate to landing page anyway
-      setLocation('/');
-      
-      // Force page reload
+      // Force navigation regardless
       setTimeout(() => {
-        window.location.reload();
-      }, 500);
+        window.location.href = '/';
+      }, 1500);
     }
   };
 
