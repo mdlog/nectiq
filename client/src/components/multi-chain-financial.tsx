@@ -205,7 +205,7 @@ const SUPPORTED_CHAINS = [
     shortName: "sepolia",
     color: "text-purple-600",
     logo: SepoliaLogo,
-    explorerUrl: "https://sepolia.ethplorer.io",
+    explorerUrl: "https://sepolia.etherscan.io",
     adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       ETH: { address: "native", decimals: 18 },

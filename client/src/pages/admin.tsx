@@ -5451,7 +5451,7 @@ export default function AdminPanel() {
                                             case 'arbitrum':
                                               return `https://arbiscan.io/tx/${hash}`;
                                             case 'sepolia':
-                                              return `https://sepolia.ethplorer.io/tx/${hash}`;
+                                              return `https://sepolia.etherscan.io/tx/${hash}`;
                                             case 'holesky':
                                               return `https://holesky.etherscan.io/tx/${hash}`;
                                             default:
