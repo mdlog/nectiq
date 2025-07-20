@@ -445,25 +445,9 @@ export default function UserDashboard() {
     liveFeedError: liveFeedError?.message
   });
 
-  // Dashboard content for authenticated users
-  console.log("🎯 [RENDER] About to render dashboard JSX for user:", user?.username);
-  
+  // Dashboard content for authenticated users  
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Debug Header - Remove after testing */}
-      <div style={{
-        position: 'fixed', 
-        top: '10px', 
-        right: '10px', 
-        backgroundColor: 'red', 
-        color: 'white', 
-        padding: '10px', 
-        zIndex: 9999,
-        fontSize: '12px'
-      }}>
-        DASHBOARD RENDERED: {user?.username || 'Unknown'}
-      </div>
-      
       {/* Header */}
       <div className="bg-surface border-b border-surface-light">
         <div className="container max-w-6xl mx-auto px-4">
