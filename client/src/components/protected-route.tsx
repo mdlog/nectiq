@@ -9,14 +9,26 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [, setLocation] = useLocation();
 
-  const { data: user, isLoading, error } = useQuery({
+  const { data: user, isLoading, error, refetch } = useQuery({
     queryKey: ["/api/user"],
-    retry: 1,
-    staleTime: 10 * 60 * 1000, // 10 minutes - longer stale time
-    refetchOnWindowFocus: false,
-    refetchOnMount: true, // Only on mount
-    refetchOnReconnect: false // Disable to reduce calls
+    retry: 3, // Increased retry for session timing issues
+    staleTime: 0, // Force fresh data check
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true, // Enable for session recovery
+    refetchInterval: false // Disable auto-refresh to avoid spam
   });
+
+  // Add session recovery mechanism - retry if initially failed
+  useEffect(() => {
+    if (error && !isLoading) {
+      console.log("🔄 [ProtectedRoute] Authentication failed, retrying in 2 seconds...", error?.message);
+      const timer = setTimeout(() => {
+        refetch();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, isLoading, refetch]);
 
   useEffect(() => {
     // Debug logging untuk troubleshooting
@@ -25,7 +37,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       hasUser: !!user, 
       hasError: !!error, 
       errorMessage: error?.message,
-      location: window.location.pathname 
+      location: window.location.pathname,
+      userDetails: user ? { id: user.id, username: user.username } : null
     });
   }, [user, isLoading, error]);
 
