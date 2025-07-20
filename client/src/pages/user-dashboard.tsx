@@ -655,8 +655,139 @@ export default function UserDashboard() {
                 {/* Loyalty Tab */}
                 <TabsContent value="loyalty" className="flex-1 h-full">
                   <div className="h-full">
-                    {console.log("📊 Rendering Loyalty TabsContent, activeTab:", activeTab)}
-                    <LoyaltyTier />
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Shield className="mr-2" size={20} />
+                          Loyalty Tier Program
+                        </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          Earn rewards based on your prediction performance and platform activity
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col">
+                        <div className="space-y-6">
+                          {/* Current Tier Status */}
+                          <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl p-6 border border-blue-500/20">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center space-x-3">
+                                <div className="p-2 bg-blue-500/20 rounded-lg">
+                                  <Crown className="h-6 w-6 text-blue-400" />
+                                </div>
+                                <div>
+                                  <h3 className="text-lg font-semibold text-white">Bronze Tier</h3>
+                                  <p className="text-sm text-slate-400">Current Status</p>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                                Active
+                              </Badge>
+                            </div>
+                            <div className="space-y-3">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-400">Lifetime Earnings</span>
+                                <span className="text-white font-medium">425 NTIQ</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-400">Next Tier Progress</span>
+                                <span className="text-white font-medium">42.5%</span>
+                              </div>
+                              <Progress value={42.5} className="h-2" />
+                              <div className="text-xs text-slate-500">
+                                575 NTIQ needed to reach Silver Tier
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Current Benefits */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <TrendingUp className="h-4 w-4 text-green-400" />
+                                <span className="text-sm font-medium text-white">Reward Multiplier</span>
+                              </div>
+                              <div className="text-2xl font-bold text-green-400">1.0x</div>
+                              <div className="text-xs text-slate-400">Base reward rate</div>
+                            </div>
+                            
+                            <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Gift className="h-4 w-4 text-purple-400" />
+                                <span className="text-sm font-medium text-white">Monthly Bonus</span>
+                              </div>
+                              <div className="text-2xl font-bold text-purple-400">0 NTIQ</div>
+                              <div className="text-xs text-slate-400">No monthly bonus yet</div>
+                            </div>
+                            
+                            <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Clock className="h-4 w-4 text-blue-400" />
+                                <span className="text-sm font-medium text-white">Priority Support</span>
+                              </div>
+                              <div className="text-sm text-slate-400">Not available</div>
+                            </div>
+                            
+                            <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Zap className="h-4 w-4 text-yellow-400" />
+                                <span className="text-sm font-medium text-white">Early Access</span>
+                              </div>
+                              <div className="text-sm text-slate-400">Not available</div>
+                            </div>
+                          </div>
+
+                          {/* Tier Roadmap */}
+                          <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700">
+                            <h4 className="text-lg font-semibold text-white mb-4">Tier Roadmap</h4>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                                <div className="flex items-center space-x-3">
+                                  <Crown className="h-5 w-5 text-blue-400" />
+                                  <div>
+                                    <div className="font-medium text-blue-300">Bronze</div>
+                                    <div className="text-xs text-slate-400">0+ NTIQ earned</div>
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/30">Current</Badge>
+                              </div>
+                              
+                              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <div className="flex items-center space-x-3">
+                                  <Star className="h-5 w-5 text-slate-400" />
+                                  <div>
+                                    <div className="font-medium text-slate-300">Silver</div>
+                                    <div className="text-xs text-slate-400">1,000+ NTIQ • 1.2x multiplier</div>
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className="bg-slate-700 text-slate-400 border-slate-600">Locked</Badge>
+                              </div>
+                              
+                              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <div className="flex items-center space-x-3">
+                                  <Zap className="h-5 w-5 text-slate-400" />
+                                  <div>
+                                    <div className="font-medium text-slate-300">Gold</div>
+                                    <div className="text-xs text-slate-400">5,000+ NTIQ • 1.5x multiplier • Monthly bonus</div>
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className="bg-slate-700 text-slate-400 border-slate-600">Locked</Badge>
+                              </div>
+                              
+                              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <div className="flex items-center space-x-3">
+                                  <Gift className="h-5 w-5 text-slate-400" />
+                                  <div>
+                                    <div className="font-medium text-slate-300">Platinum</div>
+                                    <div className="text-xs text-slate-400">25,000+ NTIQ • 2.0x multiplier • VIP benefits</div>
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className="bg-slate-700 text-slate-400 border-slate-600">Locked</Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
