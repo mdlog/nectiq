@@ -96,6 +96,91 @@ const TradingViewChart = ({
   const chartData = formatChartData(cryptoId, currentPrice);
   
   console.log(`🔄 CoinGecko Chart Update: ${cryptoId} -> $${currentPrice}`);
+
+  // Chart.js configuration
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        mode: 'index' as const,
+        intersect: false,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        borderColor: '#3b82f6',
+        borderWidth: 1,
+        callbacks: {
+          label: (context: any) => {
+            return `Price: $${context.parsed.y.toLocaleString('en-US', { 
+              minimumFractionDigits: 2, 
+              maximumFractionDigits: 6 
+            })}`;
+          }
+        }
+      },
+    },
+    interaction: {
+      mode: 'nearest' as const,
+      axis: 'x' as const,
+      intersect: false,
+    },
+    scales: {
+      x: {
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
+        },
+        ticks: {
+          color: '#9ca3af',
+          maxTicksLimit: 8,
+        },
+      },
+      y: {
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
+        },
+        ticks: {
+          color: '#9ca3af',
+          callback: function(value: any) {
+            return '$' + value.toLocaleString('en-US', { 
+              minimumFractionDigits: 0, 
+              maximumFractionDigits: 2 
+            });
+          }
+        },
+      },
+    },
+  };
+
+  // Chart data configuration with gradient
+  const data = {
+    labels: chartData.labels,
+    datasets: [
+      {
+        label: `${name} Price`,
+        data: chartData.data,
+        borderColor: priceChange24h >= 0 ? '#10b981' : '#ef4444',
+        backgroundColor: (context: any) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+          gradient.addColorStop(0, priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)');
+          gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+          return gradient;
+        },
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: priceChange24h >= 0 ? '#10b981' : '#ef4444',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
+      },
+    ],
+  };
     
     script.innerHTML = JSON.stringify({
       autosize: true,
