@@ -26,6 +26,7 @@ import { LoyaltyTier } from "@/components/loyalty-tier";
 import { FinancialWallet } from "@/components/financial-wallet";
 import { SurvivalStatus } from "@/components/survival-status";
 import { MultiChainFinancial } from "@/components/multi-chain-financial";
+import { WalletEmailVerification } from "@/components/WalletEmailVerification";
 
 
 // Dynamic function to get crypto image from live API data
@@ -1517,6 +1518,7 @@ function UserProfile() {
   const [newUsername, setNewUsername] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [walletCopied, setWalletCopied] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -1927,7 +1929,17 @@ function UserProfile() {
                   </Badge>
                 </>
               ) : (
-                <span className="text-slate-400">Not linked</span>
+                <>
+                  <span className="text-slate-400">Not linked</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowEmailDialog(true)}
+                    className="ml-2 text-xs bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30"
+                  >
+                    Link Email
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -1944,6 +1956,13 @@ function UserProfile() {
 
       {/* Survival Tournament Status */}
       <SurvivalStatus />
+
+      {/* Email Verification Dialog */}
+      {showEmailDialog && (
+        <WalletEmailVerification 
+          onClose={() => setShowEmailDialog(false)}
+        />
+      )}
     </div>
   );
 }
