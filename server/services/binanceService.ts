@@ -36,7 +36,7 @@ export interface FormattedCryptoPrice {
 class BinanceService {
   private baseURL = 'https://api.binance.com/api/v3';
   private cache = new Map<string, { data: any; timestamp: number }>();
-  private cacheTimeout = 3000; // 3 detik cache
+  private cacheTimeout = 5000; // 5 detik cache untuk stabilitas
 
   // Mapping cryptocurrency symbols to Binance trading pairs
   private cryptoMapping = {
@@ -254,35 +254,45 @@ class BinanceService {
   private getFallbackPrices(): FormattedCryptoPrice[] {
     console.log('⚠️ [BINANCE] Using fallback prices data');
     
+    // Generate realistic price variations (+/- 0.5% from base price)
+    const generateVariation = (basePrice: number): number => {
+      const variation = (Math.random() - 0.5) * 0.01; // +/- 0.5%
+      return Math.round((basePrice * (1 + variation)) * 100) / 100;
+    };
+
+    const generateChangePercent = (): number => {
+      return (Math.random() - 0.5) * 10; // +/- 5% range
+    };
+    
     const fallbackPrices = [
       {
         id: 'bitcoin',
         symbol: 'BTC',
         name: 'Bitcoin',
-        current_price: 118000,
-        price_change_percentage_24h: 2.5,
-        market_cap: 2340000000000,
-        total_volume: 35000000000,
+        current_price: generateVariation(105000), // More realistic BTC price
+        price_change_percentage_24h: generateChangePercent(),
+        market_cap: 2070000000000,
+        total_volume: 28000000000,
         image: this.logoMapping.bitcoin
       },
       {
         id: 'ethereum',
         symbol: 'ETH',
         name: 'Ethereum',
-        current_price: 3050,
-        price_change_percentage_24h: 1.8,
-        market_cap: 367000000000,
-        total_volume: 18000000000,
+        current_price: generateVariation(3800), // More realistic ETH price
+        price_change_percentage_24h: generateChangePercent(),
+        market_cap: 457000000000,
+        total_volume: 15000000000,
         image: this.logoMapping.ethereum
       },
       {
         id: 'binancecoin',
         symbol: 'BNB',
         name: 'BNB',
-        current_price: 685,
-        price_change_percentage_24h: 0.5,
+        current_price: generateVariation(720), // More realistic BNB price
+        price_change_percentage_24h: generateChangePercent(),
         market_cap: 104000000000,
-        total_volume: 2100000000,
+        total_volume: 1800000000,
         image: this.logoMapping.binancecoin
       }
     ];

@@ -9,6 +9,7 @@ import { storage } from "./storage";
 import { db } from "./db";
 
 import { binanceService } from "./services/binanceService";
+import { coinGeckoService } from "./services/coingeckoService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
@@ -1823,11 +1824,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get live cryptocurrency prices from Binance
+  // Get live cryptocurrency prices with Binance and CoinGecko fallback
   app.get("/api/crypto/prices", async (req, res) => {
     try {
-      console.log('📈 [API] Fetching crypto prices from Binance...');
-      const prices = await binanceService.getCurrentPrices();
+      console.log('📈 [API] Fetching crypto prices with hybrid system...');
+      let prices = await binanceService.getCurrentPrices();
+      
+      // If Binance returns only fallback data (limited to 3 coins), try CoinGecko as backup
+      if (prices.length <= 3) {
+        console.log('🔄 [API] Binance returned limited data, trying CoinGecko backup...');
+        const coinGeckoPrices = await coinGeckoService.getCurrentPrices();
+        
+        if (coinGeckoPrices.length > 0) {
+          console.log(`✅ [API] Using CoinGecko data: ${coinGeckoPrices.length} cryptocurrencies`);
+          // Convert CoinGecko format to match expected format
+          prices = coinGeckoPrices.map(coin => ({
+            id: coin.id,
+            symbol: coin.symbol,
+            name: coin.name,
+            current_price: coin.current_price,
+            price_change_percentage_24h: coin.price_change_percentage_24h,
+            market_cap: coin.market_cap,
+            total_volume: coin.total_volume,
+            image: coin.image
+          }));
+        }
+      }
       
       // Update storage with latest prices
       for (const price of prices) {
@@ -1840,10 +1862,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log(`✅ [API] Successfully returned ${prices.length} crypto prices from Binance`);
+      console.log(`✅ [API] Successfully returned ${prices.length} crypto prices`);
       res.json(prices);
     } catch (error) {
-      console.error('❌ [API] Error fetching crypto prices from Binance:', error);
+      console.error('❌ [API] Error fetching crypto prices:', error);
       res.status(500).json({ message: "Failed to get crypto prices" });
     }
   });
