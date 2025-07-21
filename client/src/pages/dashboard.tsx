@@ -81,6 +81,27 @@ export default function Dashboard() {
       <Header />
       
       <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 md:py-8">
+        {/* Data Source Information */}
+        <div className="mb-4">
+          <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-3">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">i</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-blue-200 mb-1">Data Source Information</h4>
+                <p className="text-xs text-blue-300">
+                  <span className="text-yellow-400 font-semibold">Live Prices</span> use CoinGecko API data (synchronized across all users), 
+                  while <span className="text-blue-400 font-semibold">TradingView Charts</span> display real-time Binance trading data. 
+                  Price differences are normal due to different data sources.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Live Prices Section - Moved to Top */}
         <div className="mb-6">
           <LivePrices 
