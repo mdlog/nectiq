@@ -17,7 +17,12 @@ const getTradingViewSymbol = (cryptoId: string): string => {
     'avalanche-2': 'BINANCE:AVAXUSDT',
     'matic-network': 'BINANCE:MATICUSDT',
     'chainlink': 'BINANCE:LINKUSDT',
-    'hyperliquid': 'BINANCE:BTCUSDT', // Fallback ke BTC jika tidak ada
+    'monero': 'BINANCE:XMRUSDT',
+    'uniswap': 'BINANCE:UNIUSDT',
+    'ripple': 'BINANCE:XRPUSDT',
+    'bittensor': 'BINANCE:BTCUSDT', // TAO tidak tersedia di Binance, fallback ke BTC
+    'hyperliquid': 'BINANCE:BTCUSDT', // HYPE tidak tersedia di Binance, fallback ke BTC
+    'polkadot': 'BINANCE:DOTUSDT',
   };
   
   return symbolMapping[cryptoId] || 'BINANCE:BTCUSDT';
@@ -77,6 +82,7 @@ const TradingViewChart = ({
     script.async = true;
     
     const tradingViewSymbol = getTradingViewSymbol(cryptoId);
+    console.log(`🔄 TradingView Chart Update: ${cryptoId} -> ${tradingViewSymbol}`);
     
     script.innerHTML = JSON.stringify({
       autosize: true,
