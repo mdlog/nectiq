@@ -94,7 +94,7 @@ export function BannerSection({ position = "below_live_prices", className = "", 
       <div className={`${className}`}>
         <div className="relative bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg overflow-hidden">
           {/* Running text container */}
-          <div className="relative h-14 flex items-center overflow-hidden">
+          <div className="relative h-32 flex items-center overflow-hidden">
             <div className="flex animate-scroll-left whitespace-nowrap">
               {/* Duplicate banners for continuous scroll */}
               {[...activeBanners, ...activeBanners, ...activeBanners].map((banner, index) => (
@@ -103,28 +103,46 @@ export function BannerSection({ position = "below_live_prices", className = "", 
                   className="inline-flex items-center mx-6 cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
                   onClick={() => handleBannerClick(banner)}
                 >
-                  {/* Banner card content - same size as screenshot */}
-                  <div className="flex items-center gap-3 bg-black/20 rounded-lg px-4 py-2 border border-white/10">
-                    {banner.imageUrl && (
-                      <img
-                        src={banner.imageUrl}
-                        alt="Banner"
-                        className="w-6 h-6 object-cover rounded flex-shrink-0"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    )}
-                    <div className="flex items-center gap-2">
-                      <span className="text-orange-400 text-sm">🔥</span>
-                      <span className="text-white font-medium text-sm">
-                        {banner.title || "Special Offer"}
-                      </span>
-                      {banner.linkUrl && (
-                        <ExternalLink size={12} className="text-purple-400" />
-                      )}
+                  {/* Banner card content - original size */}
+                  <Card className="relative overflow-hidden bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 flex-shrink-0">
+                    <div className="p-6">
+                      <div className="flex items-center gap-4">
+                        {/* Banner Image */}
+                        {banner.imageUrl && (
+                          <div className="w-16 h-16 flex-shrink-0">
+                            <img
+                              src={banner.imageUrl}
+                              alt="Banner"
+                              className="w-full h-full object-cover rounded-lg"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                        {/* Banner Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-orange-400">🔥</span>
+                            <h3 className="text-white font-semibold text-lg truncate">
+                              {banner.title || "Special Offer"}
+                            </h3>
+                            {banner.linkUrl && (
+                              <ExternalLink size={16} className="text-purple-400" />
+                            )}
+                          </div>
+                          {banner.description && (
+                            <p className="text-gray-300 text-sm line-clamp-2">
+                              {banner.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                    
+                    {/* Animated background gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-blue-600/5 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  </Card>
                 </div>
               ))}
             </div>
