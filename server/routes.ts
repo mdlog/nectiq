@@ -338,7 +338,7 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     const ADMIN_WALLET_ADDRESSES = getAdminWalletAddresses(); // Get fresh admin addresses
     const isAuthorizedAdmin = user.walletAddress && 
       ADMIN_WALLET_ADDRESSES.includes(normalizedUserWallet) &&
-      user.authMethod === 'wallet'; // Ensure wallet authentication
+      (user.authMethod === 'wallet' || user.authMethod === 'both'); // Allow both wallet-only and wallet+email authentication
 
     // Debug admin check
     console.log("🔍 Admin verification debug:");
