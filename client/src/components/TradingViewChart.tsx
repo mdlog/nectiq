@@ -225,10 +225,10 @@ const TradingViewChart = ({
 
       {/* Make Prediction Button - positioned below chart */}
       {onPredictClick && !isFullscreen && (
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4">
           <Button 
             onClick={() => onPredictClick(cryptoId)}
-            className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg"
+            className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg w-full"
             size="lg"
           >
             <Target size={20} className="mr-3" />
