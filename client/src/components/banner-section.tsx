@@ -23,7 +23,6 @@ interface BannerSectionProps {
 export function BannerSection({ position = "below_live_prices", className = "", userRole = "user" }: BannerSectionProps) {
   const [dismissedBanners, setDismissedBanners] = useState<number[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAutoSliding, setIsAutoSliding] = useState(true);
   
   const isHorizontal = className?.includes('horizontal-banners');
 
@@ -34,31 +33,7 @@ export function BannerSection({ position = "below_live_prices", className = "", 
 
   const activeBanners = banners.filter(banner => !dismissedBanners.includes(banner.id));
   
-  // Auto slideshow functionality
-  useEffect(() => {
-    console.log('🎬 [BANNER] Slideshow check:', { 
-      isHorizontal, 
-      bannersCount: activeBanners.length, 
-      isAutoSliding,
-      shouldSlide: isHorizontal && activeBanners.length >= 4 && isAutoSliding 
-    });
-    
-    if (isHorizontal && activeBanners.length >= 4 && isAutoSliding) {
-      console.log('🎬 [BANNER] Starting auto slideshow...');
-      const interval = setInterval(() => {
-        setCurrentIndex(prev => {
-          const newIndex = prev + 3 >= activeBanners.length ? 0 : prev + 3;
-          console.log('🎬 [BANNER] Auto slide:', prev, '->', newIndex);
-          return newIndex;
-        });
-      }, 3000); // 3 seconds per slide for more dynamic feeling
-      
-      return () => {
-        console.log('🎬 [BANNER] Clearing slideshow interval');
-        clearInterval(interval);
-      };
-    }
-  }, [isHorizontal, activeBanners.length, isAutoSliding]);
+  // Static display - no auto slideshow
 
   const handleDismiss = (bannerId: number) => {
     setDismissedBanners(prev => [...prev, bannerId]);
@@ -71,17 +46,11 @@ export function BannerSection({ position = "below_live_prices", className = "", 
   };
 
   const goToPrevious = () => {
-    setIsAutoSliding(false);
     setCurrentIndex(prev => prev === 0 ? Math.max(0, activeBanners.length - 3) : Math.max(0, prev - 3));
-    // Re-enable auto sliding after 10 seconds of manual interaction
-    setTimeout(() => setIsAutoSliding(true), 10000);
   };
 
   const goToNext = () => {
-    setIsAutoSliding(false);
     setCurrentIndex(prev => (prev + 3) >= activeBanners.length ? 0 : prev + 3);
-    // Re-enable auto sliding after 10 seconds of manual interaction
-    setTimeout(() => setIsAutoSliding(true), 10000);
   };
 
   if (activeBanners.length === 0) {
@@ -167,17 +136,14 @@ export function BannerSection({ position = "below_live_prices", className = "", 
             ))}
           </div>
 
-          {/* Dot indicators for slideshow */}
+          {/* Dot indicators for navigation */}
           {activeBanners.length >= 4 && (
             <div className="flex justify-center mt-4 space-x-2">
               {Array.from({ length: Math.ceil(activeBanners.length / 3) }).map((_, index) => (
                 <button
                   key={index}
                   onClick={() => {
-                    setIsAutoSliding(false);
                     setCurrentIndex(index * 3);
-                    // Re-enable auto sliding after 10 seconds of manual interaction
-                    setTimeout(() => setIsAutoSliding(true), 10000);
                   }}
                   className={`w-2 h-2 rounded-full transition-colors ${
                     Math.floor(currentIndex / 3) === index 
