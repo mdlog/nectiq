@@ -138,17 +138,17 @@ export default function Dashboard() {
               <div className="flex-1">
                 <RecentRewards />
               </div>
-              
-              {/* Banner Section - Moved to Right Sidebar */}
-              <div className="flex-shrink-0">
-                <BannerSection position="below_live_prices" />
-              </div>
             </div>
           </div>
         </div>
+
+        {/* Banner Section - Horizontal Layout Above Live Activity */}
+        <div className="mt-8">
+          <BannerSection position="below_live_prices" className="horizontal-banners" />
+        </div>
         
         {/* Live Activity Feed */}
-        <div className="mt-8">
+        <div className="mt-6">
           <SimpleActivityFeed />
         </div>
       </main>
