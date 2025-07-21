@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
 import { db } from "./db";
-import { cryptoService, CryptoService } from "./services/cryptoService";
+
 import { binanceService } from "./services/binanceService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
@@ -2095,7 +2095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 50);
 
       // Get current crypto prices
-      const cryptoPrices = await cryptoService.getCurrentPrices();
+      const cryptoPrices = await binanceService.getCurrentPrices();
       const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
 
       // Format predictions with current prices and time left
@@ -2227,8 +2227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get current price for the cryptocurrency
-      const { cryptoService } = await import('./services/cryptoService');
-      const prices = await cryptoService.getCurrentPrices();
+      const prices = await binanceService.getCurrentPrices();
       const cryptoPrice = prices.find((p: any) => p.id === cryptocurrency);
       
       if (!cryptoPrice) {
@@ -2308,7 +2307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const battles = await storage.getLiveBattles();
       
       // Get current crypto prices
-      const cryptoPrices = await cryptoService.getCurrentPrices();
+      const cryptoPrices = await binanceService.getCurrentPrices();
       const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
 
       const battlesWithPrices = battles.map((battle: any) => ({
@@ -2370,7 +2369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Get current price
-      const cryptoPrices = await cryptoService.getCurrentPrices();
+      const cryptoPrices = await binanceService.getCurrentPrices();
       const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
       
       const battleWithPrice = {
@@ -5050,8 +5049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newCrypto = await storage.upsertCryptocurrency(cryptoData);
       
       // Clear crypto service cache so new cryptocurrency appears immediately
-      const { cryptoService } = await import('../services/cryptoService');
-      cryptoService.clearCache();
+      binanceService.clearCache();
       
       auditLog('admin_crypto_added', { 
         cryptoId: newCrypto.id, 
@@ -5089,7 +5087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteCryptocurrency(id);
       
       // Clear crypto service cache to immediately update Live Prices
-      cryptoService.clearCache();
+      binanceService.clearCache();
       
       auditLog('admin_crypto_deleted', { cryptoId: id }, req);
       res.json({ message: "Cryptocurrency deleted successfully" });
@@ -6162,7 +6160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let ethPriceSnapshot = null;
       if (validatedData.tokenType === 'ETH') {
         try {
-          const cryptoPrices = await cryptoService.getCurrentPrices();
+          const cryptoPrices = await binanceService.getCurrentPrices();
           const ethPrice = cryptoPrices.find(crypto => crypto.id === 'ethereum');
           if (ethPrice) {
             ethPriceSnapshot = ethPrice.current_price.toString();
@@ -6557,8 +6555,8 @@ Manual balance correction required IMMEDIATELY!`;
       
       if (validatedData.tokenType === 'ETH') {
         console.log('⚡ [WITHDRAWAL] ETH withdrawal - getting current price...');
-        // Get current ETH price using existing cryptoService instance
-        const prices = await cryptoService.getCurrentPrices();
+        // Get current ETH price using existing binanceService instance
+        const prices = await binanceService.getCurrentPrices();
         const ethPrice = prices.find(coin => coin.symbol === 'ETH')?.current_price || 3500; // fallback price
         console.log('💵 [WITHDRAWAL] ETH price:', ethPrice);
         

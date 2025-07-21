@@ -151,7 +151,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
         <h3 className="text-base font-bold flex items-center">
           <ChartLine className="text-success mr-2" size={16} />
           Live Prices
-          <span className="text-xs text-yellow-400 bg-yellow-900/20 px-2 py-0.5 rounded ml-2">CoinGecko</span>
+          <span className="text-xs text-yellow-400 bg-yellow-900/20 px-2 py-0.5 rounded ml-2">Binance</span>
         </h3>
         <div className="flex items-center text-xs text-green-400">
           <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse mr-1"></div>
