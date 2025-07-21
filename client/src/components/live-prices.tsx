@@ -4,6 +4,34 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { CryptoPrice } from "@/types";
 
+function getValidImageUrl(crypto: CryptoPrice): string {
+  // Manual mapping for coins with known correct logo URLs
+  const logoMappings: Record<string, string> = {
+    monero: "https://coin-images.coingecko.com/coins/images/69/large/monero_logo.png",
+    bittensor: "https://coin-images.coingecko.com/coins/images/28452/large/ARUsPeNQ_400x400.jpg",
+    uniswap: "https://coin-images.coingecko.com/coins/images/12504/large/uniswap-uni.png",
+    ripple: "https://coin-images.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png",
+    hyperliquid: "https://coin-images.coingecko.com/coins/images/44077/large/hyperliquid.png",
+  };
+  
+  // Check if we have a manual mapping for this coin
+  if (logoMappings[crypto.id]) {
+    return logoMappings[crypto.id];
+  }
+  
+  // Handle cases where crypto.image might be undefined
+  if (!crypto.image) {
+    return '';
+  }
+  
+  // If the URL path contains "images/1/large" it's likely invalid, use fallback
+  if (crypto.image.includes('/images/1/large/')) {
+    return '';
+  }
+  
+  return crypto.image;
+}
+
 function getCryptoIcon(id: string): string {
   const icons: Record<string, string> = {
     bitcoin: "₿",
@@ -16,6 +44,12 @@ function getCryptoIcon(id: string): string {
     hyperliquid: "HYPE",
     "avalanche-2": "AVAX",
     "matic-network": "MATIC",
+    monero: "XMR",
+    uniswap: "UNI",
+    ripple: "XRP",
+    bittensor: "TAO",
+    polkadot: "DOT",
+    chainlink: "LINK",
   };
   return icons[id] || id.toUpperCase().slice(0, 4);
 }
@@ -32,6 +66,12 @@ function getCryptoColor(id: string): string {
     hyperliquid: "bg-green-500",
     "avalanche-2": "bg-red-500",
     "matic-network": "bg-purple-700",
+    monero: "bg-orange-600",
+    uniswap: "bg-pink-500",
+    ripple: "bg-blue-400",
+    bittensor: "bg-green-600",
+    polkadot: "bg-pink-600",
+    chainlink: "bg-blue-700",
   };
   return colors[id] || "bg-gray-500";
 }
@@ -143,20 +183,28 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                 <div className="flex flex-col items-center space-y-1 min-w-0">
                   {/* Crypto logo and symbol */}
                   <div className="relative w-5 h-5 flex-shrink-0">
-                    <img 
-                      src={crypto.image} 
-                      alt={crypto.name}
-                      className="w-5 h-5 rounded-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        const fallback = target.nextElementSibling as HTMLElement;
-                        if (fallback) {
-                          target.style.display = 'none';
-                          fallback.style.display = 'flex';
-                        }
-                      }}
-                    />
-                    <div className={`w-5 h-5 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-xs font-bold`}>
+                    {(() => {
+                      const validImageUrl = getValidImageUrl(crypto);
+                      if (validImageUrl) {
+                        return (
+                          <img 
+                            src={validImageUrl} 
+                            alt={crypto.name}
+                            className="w-5 h-5 rounded-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              if (fallback) {
+                                target.style.display = 'none';
+                                fallback.style.display = 'flex';
+                              }
+                            }}
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
+                    <div className={`w-5 h-5 ${getCryptoColor(crypto.id)} rounded-full ${getValidImageUrl(crypto) ? 'hidden' : 'flex'} items-center justify-center text-white text-xs font-bold`}>
                       {getCryptoIcon(crypto.id)}
                     </div>
                   </div>
