@@ -36,12 +36,27 @@ export function BannerSection({ position = "below_live_prices", className = "", 
   
   // Auto slideshow functionality
   useEffect(() => {
-    if (isHorizontal && activeBanners.length > 3 && isAutoSliding) {
+    console.log('🎬 [BANNER] Slideshow check:', { 
+      isHorizontal, 
+      bannersCount: activeBanners.length, 
+      isAutoSliding,
+      shouldSlide: isHorizontal && activeBanners.length >= 4 && isAutoSliding 
+    });
+    
+    if (isHorizontal && activeBanners.length >= 4 && isAutoSliding) {
+      console.log('🎬 [BANNER] Starting auto slideshow...');
       const interval = setInterval(() => {
-        setCurrentIndex(prev => (prev + 3) % activeBanners.length);
-      }, 5000); // 5 seconds per slide
+        setCurrentIndex(prev => {
+          const newIndex = prev + 3 >= activeBanners.length ? 0 : prev + 3;
+          console.log('🎬 [BANNER] Auto slide:', prev, '->', newIndex);
+          return newIndex;
+        });
+      }, 3000); // 3 seconds per slide for more dynamic feeling
       
-      return () => clearInterval(interval);
+      return () => {
+        console.log('🎬 [BANNER] Clearing slideshow interval');
+        clearInterval(interval);
+      };
     }
   }, [isHorizontal, activeBanners.length, isAutoSliding]);
 
@@ -58,11 +73,15 @@ export function BannerSection({ position = "below_live_prices", className = "", 
   const goToPrevious = () => {
     setIsAutoSliding(false);
     setCurrentIndex(prev => prev === 0 ? Math.max(0, activeBanners.length - 3) : Math.max(0, prev - 3));
+    // Re-enable auto sliding after 10 seconds of manual interaction
+    setTimeout(() => setIsAutoSliding(true), 10000);
   };
 
   const goToNext = () => {
     setIsAutoSliding(false);
     setCurrentIndex(prev => (prev + 3) >= activeBanners.length ? 0 : prev + 3);
+    // Re-enable auto sliding after 10 seconds of manual interaction
+    setTimeout(() => setIsAutoSliding(true), 10000);
   };
 
   if (activeBanners.length === 0) {
@@ -79,14 +98,13 @@ export function BannerSection({ position = "below_live_prices", className = "", 
       <div className={`${className}`}>
         <div className="relative">
           {/* Navigation buttons - only show if more than 3 banners */}
-          {activeBanners.length > 3 && (
+          {activeBanners.length >= 4 && (
             <>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={goToPrevious}
                 className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-surface/80 hover:bg-surface border-surface-light"
-                disabled={currentIndex === 0}
               >
                 <ChevronLeft size={16} className="text-white" />
               </Button>
@@ -96,7 +114,6 @@ export function BannerSection({ position = "below_live_prices", className = "", 
                 size="sm"
                 onClick={goToNext}
                 className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-surface/80 hover:bg-surface border-surface-light"
-                disabled={currentIndex + 3 >= activeBanners.length}
               >
                 <ChevronRight size={16} className="text-white" />
               </Button>
@@ -151,7 +168,7 @@ export function BannerSection({ position = "below_live_prices", className = "", 
           </div>
 
           {/* Dot indicators for slideshow */}
-          {activeBanners.length > 3 && (
+          {activeBanners.length >= 4 && (
             <div className="flex justify-center mt-4 space-x-2">
               {Array.from({ length: Math.ceil(activeBanners.length / 3) }).map((_, index) => (
                 <button
@@ -159,6 +176,8 @@ export function BannerSection({ position = "below_live_prices", className = "", 
                   onClick={() => {
                     setIsAutoSliding(false);
                     setCurrentIndex(index * 3);
+                    // Re-enable auto sliding after 10 seconds of manual interaction
+                    setTimeout(() => setIsAutoSliding(true), 10000);
                   }}
                   className={`w-2 h-2 rounded-full transition-colors ${
                     Math.floor(currentIndex / 3) === index 
