@@ -1917,6 +1917,21 @@ function UserProfile() {
             </div>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-surface-light">
+            <span className="text-slate-300">Linked Email</span>
+            <div className="flex items-center space-x-2">
+              {user.email ? (
+                <>
+                  <span className="text-white font-medium">{user.email}</span>
+                  <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-500/30 text-xs">
+                    Verified
+                  </Badge>
+                </>
+              ) : (
+                <span className="text-slate-400">Not linked</span>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between items-center py-3 border-b border-surface-light">
             <span className="text-slate-300">Account Type</span>
             <span className="text-white font-medium">{user.isAdmin ? 'Administrator' : 'Standard User'}</span>
           </div>

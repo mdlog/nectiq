@@ -3912,6 +3912,7 @@ export default function AdminPanel() {
                           <TableHead>User</TableHead>
                           <TableHead>UID</TableHead>
                           <TableHead>Wallet Address</TableHead>
+                          <TableHead>Linked Email</TableHead>
                           <TableHead 
                             className="cursor-pointer hover:bg-surface-light" 
                             onClick={() => handleUserSort("balance")}
@@ -3988,6 +3989,20 @@ export default function AdminPanel() {
                                   `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 
                                   "Not set"
                                 }
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                {user.email ? (
+                                  <>
+                                    <span className="text-sm">{user.email}</span>
+                                    <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-500/30 text-xs px-1 py-0">
+                                      ✓
+                                    </Badge>
+                                  </>
+                                ) : (
+                                  <span className="text-sm text-slate-400">Not linked</span>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell>
