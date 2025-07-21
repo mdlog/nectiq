@@ -70,19 +70,19 @@ export function WalletEmailVerification({
       console.error('Link wallet email error:', error);
       
       // Handle specific error codes for better user experience
-      let title = "Verifikasi Gagal";
-      let description = "Gagal menautkan wallet dengan email. Silakan coba lagi.";
+      let title = "Verification Failed";
+      let description = "Failed to link wallet with email. Please try again.";
       
       if (error.code === "EMAIL_ALREADY_LINKED" || 
-          (error.message && error.message.includes("sudah terkait"))) {
-        title = "Email Sudah Digunakan";
-        description = error.message || "Email ini sudah terkait dengan alamat wallet lain. Silakan gunakan email yang berbeda.";
-        setErrorMessage(error.message || "Email ini sudah terkait dengan alamat wallet lain. Silakan gunakan email yang berbeda.");
+          (error.message && (error.message.includes("sudah terkait") || error.message.includes("already linked")))) {
+        title = "Email Already Used";
+        description = error.message || "This email is already linked with another wallet address. Please use a different email.";
+        setErrorMessage(error.message || "This email is already linked with another wallet address. Please use a different email.");
       } else if (error.message) {
         description = error.message;
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("Gagal menautkan wallet dengan email. Silakan coba lagi.");
+        setErrorMessage("Failed to link wallet with email. Please try again.");
       }
       
       toast({
@@ -212,7 +212,7 @@ export function WalletEmailVerification({
                 <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-red-900">
-                    Error Saat Menautkan Email
+                    Email Linking Error
                   </p>
                   <p className="text-xs text-red-700">
                     {errorMessage}
