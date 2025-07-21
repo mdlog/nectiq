@@ -8,6 +8,7 @@ import fs from "fs";
 import { storage } from "./storage";
 import { db } from "./db";
 import { cryptoService, CryptoService } from "./services/cryptoService";
+import { binanceService } from "./services/binanceService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
@@ -1822,10 +1823,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get live cryptocurrency prices
+  // Get live cryptocurrency prices from Binance
   app.get("/api/crypto/prices", async (req, res) => {
     try {
-      const prices = await cryptoService.getCurrentPrices();
+      console.log('📈 [API] Fetching crypto prices from Binance...');
+      const prices = await binanceService.getCurrentPrices();
       
       // Update storage with latest prices
       for (const price of prices) {
@@ -1838,23 +1840,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      console.log(`✅ [API] Successfully returned ${prices.length} crypto prices from Binance`);
       res.json(prices);
     } catch (error) {
+      console.error('❌ [API] Error fetching crypto prices from Binance:', error);
       res.status(500).json({ message: "Failed to get crypto prices" });
     }
   });
 
-  // Get financial metrics for cryptocurrency (volume, market cap)
+  // Get financial metrics for cryptocurrency (volume, market cap) from Binance
   app.get("/api/crypto/metrics/:cryptoId", async (req, res) => {
     try {
       const { cryptoId } = req.params;
       
-      // Get detailed data from CoinGecko including market data
-      const response = await cryptoService.getCryptoMetrics(cryptoId);
+      console.log(`📊 [API] Fetching crypto metrics for ${cryptoId} from Binance...`);
       
+      // Get detailed data from Binance
+      const response = await binanceService.getCryptoMetrics(cryptoId);
+      
+      if (!response) {
+        console.log(`⚠️ [API] No metrics found for ${cryptoId} on Binance`);
+        return res.status(404).json({ message: "Cryptocurrency not found" });
+      }
+      
+      console.log(`✅ [API] Successfully fetched metrics for ${cryptoId} from Binance`);
       res.json(response);
     } catch (error) {
-      console.error("Error fetching crypto metrics:", error);
+      console.error(`❌ [API] Error fetching crypto metrics for ${cryptoId}:`, error);
       res.status(500).json({ message: "Failed to get crypto metrics" });
     }
   });
@@ -1872,8 +1884,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid cryptocurrency" });
       }
 
-      // Get current price for the cryptocurrency from real-time data
-      const realTimePrices = await cryptoService.getCurrentPrices();
+      // Get current price for the cryptocurrency from Binance real-time data
+      const realTimePrices = await binanceService.getCurrentPrices();
       const cryptoPrice = realTimePrices.find(p => p.id === cryptoId);
       const currentPrice = cryptoPrice ? cryptoPrice.current_price : 50000; // Use real-time price
       
