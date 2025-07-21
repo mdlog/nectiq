@@ -75,18 +75,45 @@ export function WalletEmailVerification({
   const handleGoogleSignIn = async () => {
     setIsSigningIn(true);
     try {
+      console.log('🔥 [FIREBASE] Attempting Google Sign-In...');
+      console.log('🔥 [FIREBASE] Current domain:', window.location.hostname);
       const user = await signInWithGoogle();
       if (user) {
+        console.log('✅ [FIREBASE] Google Sign-In successful:', user.email);
         setStep('gmail');
       }
     } catch (error: any) {
-      console.error('Google sign-in error:', error);
-      toast({
-        title: "Google Sign-in Failed",
-        description: error.message || "Failed to sign in with Google. Please try again.",
-        variant: "destructive",
-      });
-      setStep('manual');
+      console.error('❌ [FIREBASE] Google sign-in error:', error);
+      
+      // Check if it's an unauthorized domain error
+      if (error.code === 'auth/unauthorized-domain') {
+        console.log('🔥 [FIREBASE] Domain authorization required for:', window.location.hostname);
+        toast({
+          title: "Firebase Domain Configuration Required",
+          description: `Add "${window.location.hostname}" to Firebase Console > Authentication > Settings > Authorized domains`,
+          variant: "destructive",
+        });
+        
+        // Show domain info in console for easy copy-paste
+        console.log(`
+🔧 FIREBASE SETUP REQUIRED:
+1. Go to https://console.firebase.google.com/
+2. Select your project  
+3. Go to Authentication > Settings > Authorized domains
+4. Click "Add domain" and enter: ${window.location.hostname}
+5. Save and try again
+        `);
+        
+        // Show manual email option for unauthorized domain
+        setStep('manual');
+      } else {
+        toast({
+          title: "Google Sign-in Failed",
+          description: error.message || "Failed to sign in with Google. Please try again.",
+          variant: "destructive",
+        });
+        setStep('manual');
+      }
     } finally {
       setIsSigningIn(false);
     }

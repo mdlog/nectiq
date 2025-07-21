@@ -98,6 +98,16 @@ Nectiq is a gamified cryptocurrency price prediction platform that allows users 
 - `SESSION_SECRET`: Session encryption key
 - `NODE_ENV`: Environment mode (development/production)
 - `VITE_WALLETCONNECT_PROJECT_ID`: WalletConnect project identifier
+- `VITE_FIREBASE_API_KEY`: Firebase API key for authentication
+- `VITE_FIREBASE_PROJECT_ID`: Firebase project identifier
+- `VITE_FIREBASE_APP_ID`: Firebase application ID
+
+### Firebase Configuration
+- **Purpose**: Link wallet addresses with Gmail verification for enhanced security
+- **Components**: WalletEmailVerification dialog with Google Sign-In popup
+- **Database Fields**: firebase_uid, firebase_display_name, email
+- **Current Issue**: Domain authorization required in Firebase Console
+- **Setup Required**: Add `44f8170b-ba82-42ff-ba2d-cad6f3daf3b7-00-s3w0re7yhyrw.spock.replit.dev` to Firebase Console > Authentication > Settings > Authorized domains
 
 ### Security Features
 - **Input Validation**: Comprehensive sanitization and validation
@@ -126,6 +136,7 @@ Nectiq is a gamified cryptocurrency price prediction platform that allows users 
 
 ## Recent Changes
 
+- July 21, 2025. **✅ FIREBASE EMAIL VERIFICATION INTEGRATION COMPLETED**: Successfully implemented comprehensive Firebase authentication system for linking wallet addresses with Gmail verification, created WalletEmailVerification component with Google Sign-In popup, added API endpoint `/api/auth/link-wallet-email` with complete database integration (firebase_uid, firebase_display_name fields), implemented automatic dialog trigger for users without email, enhanced error handling for "auth/unauthorized-domain" with clear setup instructions, added debug functionality with red "Test Firebase Dialog" button, system ready for production after adding current Replit domain (44f8170b-ba82-42ff-ba2d-cad6f3daf3b7-00-s3w0re7yhyrw.spock.replit.dev) to Firebase Console authorized domains
 - July 21, 2025. **✅ PRICE CONSISTENCY ISSUE FIXED BETWEEN LIVE PRICES AND TRADINGVIEW CHART**: Successfully resolved price discrepancy where Live Prices showed CoinGecko data with microsecond variations while TradingView chart header displayed conflicting prices, removed price display from TradingView chart header to avoid conflicts with widget's independent Binance real-time data, chart header now shows only symbol/name with "Real-time data from TradingView" notation, eliminated price confusion ensuring Live Prices displays synchronized CoinGecko data while TradingView widget shows authentic Binance trading data without interference
 - July 21, 2025. **✅ LIVE PRICES EXPANDED TO 14 COINS PER PAGE**: Successfully increased Live Prices display from 4 to 14 cryptocurrency coins per page as requested by user, maintained single-row horizontal layout with < > navigation system, updated both loading skeleton state and main view to accommodate 14 coins simultaneously, providing comprehensive cryptocurrency overview in single view while preserving navigation functionality for potential future expansion
 - July 21, 2025. **✅ LIVE PRICES HORIZONTAL LAYOUT WITH NAVIGATION RESTORED**: Successfully restored Live Prices to single-row horizontal layout with < > navigation buttons as requested by user, implemented 4-cryptocurrency per view pagination system with left/right arrow controls, added dot indicators showing current page position, maintained minimalist design with compact spacing and real-time updates, eliminated flex-wrap multi-row layout returning to clean single-row interface with smooth navigation between cryptocurrency pages for better space utilization
