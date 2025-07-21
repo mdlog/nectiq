@@ -145,14 +145,16 @@ const TradingViewChart = ({
                 />
               )}
               <div>
-                <CardTitle className="text-lg text-white">{name} ({symbol.toUpperCase()})</CardTitle>
-                <div className="flex items-center space-x-2 mt-1">
+                <div className="flex items-center space-x-3">
+                  <CardTitle className="text-lg text-white">{name} ({symbol.toUpperCase()})</CardTitle>
                   <span className="text-xl font-bold text-white">
                     ${currentPrice.toLocaleString('en-US', { 
                       minimumFractionDigits: 2, 
                       maximumFractionDigits: 6 
                     })}
                   </span>
+                </div>
+                <div className="flex items-center mt-1">
                   <span className={`flex items-center text-sm font-medium ${
                     priceChange24h >= 0 ? 'text-success' : 'text-error'
                   }`}>
