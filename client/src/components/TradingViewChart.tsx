@@ -145,10 +145,7 @@ const TradingViewChart = ({
                 />
               )}
               <div>
-                <CardTitle className="text-lg text-white flex items-center">
-                  {name} ({symbol.toUpperCase()})
-                  <span className="text-xs text-blue-400 bg-blue-900/20 px-2 py-0.5 rounded ml-2">Binance Live</span>
-                </CardTitle>
+                <CardTitle className="text-lg text-white">{name} ({symbol.toUpperCase()})</CardTitle>
                 <p className="text-sm text-gray-400 mt-1">Real-time data from TradingView</p>
               </div>
             </div>

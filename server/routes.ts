@@ -7,9 +7,7 @@ import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
 import { db } from "./db";
-
-import { binanceService } from "./services/binanceService";
-import { coinGeckoService } from "./services/coingeckoService";
+import { cryptoService, CryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
@@ -1824,32 +1822,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get live cryptocurrency prices with Binance and CoinGecko fallback
+  // Get live cryptocurrency prices
   app.get("/api/crypto/prices", async (req, res) => {
     try {
-      console.log('📈 [API] Fetching crypto prices with hybrid system...');
-      let prices = await binanceService.getCurrentPrices();
-      
-      // If Binance returns only fallback data (limited to 3 coins), try CoinGecko as backup
-      if (prices.length <= 3) {
-        console.log('🔄 [API] Binance returned limited data, trying CoinGecko backup...');
-        const coinGeckoPrices = await coinGeckoService.getCurrentPrices();
-        
-        if (coinGeckoPrices.length > 0) {
-          console.log(`✅ [API] Using CoinGecko data: ${coinGeckoPrices.length} cryptocurrencies`);
-          // Convert CoinGecko format to match expected format
-          prices = coinGeckoPrices.map(coin => ({
-            id: coin.id,
-            symbol: coin.symbol,
-            name: coin.name,
-            current_price: coin.current_price,
-            price_change_percentage_24h: coin.price_change_percentage_24h,
-            market_cap: coin.market_cap,
-            total_volume: coin.total_volume,
-            image: coin.image
-          }));
-        }
-      }
+      const prices = await cryptoService.getCurrentPrices();
       
       // Update storage with latest prices
       for (const price of prices) {
@@ -1862,33 +1838,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log(`✅ [API] Successfully returned ${prices.length} crypto prices`);
       res.json(prices);
     } catch (error) {
-      console.error('❌ [API] Error fetching crypto prices:', error);
       res.status(500).json({ message: "Failed to get crypto prices" });
     }
   });
 
-  // Get financial metrics for cryptocurrency (volume, market cap) from Binance
+  // Get financial metrics for cryptocurrency (volume, market cap)
   app.get("/api/crypto/metrics/:cryptoId", async (req, res) => {
     try {
       const { cryptoId } = req.params;
       
-      console.log(`📊 [API] Fetching crypto metrics for ${cryptoId} from Binance...`);
+      // Get detailed data from CoinGecko including market data
+      const response = await cryptoService.getCryptoMetrics(cryptoId);
       
-      // Get detailed data from Binance
-      const response = await binanceService.getCryptoMetrics(cryptoId);
-      
-      if (!response) {
-        console.log(`⚠️ [API] No metrics found for ${cryptoId} on Binance`);
-        return res.status(404).json({ message: "Cryptocurrency not found" });
-      }
-      
-      console.log(`✅ [API] Successfully fetched metrics for ${cryptoId} from Binance`);
       res.json(response);
     } catch (error) {
-      console.error(`❌ [API] Error fetching crypto metrics for ${cryptoId}:`, error);
+      console.error("Error fetching crypto metrics:", error);
       res.status(500).json({ message: "Failed to get crypto metrics" });
     }
   });
@@ -1906,8 +1872,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid cryptocurrency" });
       }
 
-      // Get current price for the cryptocurrency from Binance real-time data
-      const realTimePrices = await binanceService.getCurrentPrices();
+      // Get current price for the cryptocurrency from real-time data
+      const realTimePrices = await cryptoService.getCurrentPrices();
       const cryptoPrice = realTimePrices.find(p => p.id === cryptoId);
       const currentPrice = cryptoPrice ? cryptoPrice.current_price : 50000; // Use real-time price
       
@@ -2117,7 +2083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 50);
 
       // Get current crypto prices
-      const cryptoPrices = await binanceService.getCurrentPrices();
+      const cryptoPrices = await cryptoService.getCurrentPrices();
       const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
 
       // Format predictions with current prices and time left
@@ -2249,7 +2215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get current price for the cryptocurrency
-      const prices = await binanceService.getCurrentPrices();
+      const { cryptoService } = await import('./services/cryptoService');
+      const prices = await cryptoService.getCurrentPrices();
       const cryptoPrice = prices.find((p: any) => p.id === cryptocurrency);
       
       if (!cryptoPrice) {
@@ -2329,7 +2296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const battles = await storage.getLiveBattles();
       
       // Get current crypto prices
-      const cryptoPrices = await binanceService.getCurrentPrices();
+      const cryptoPrices = await cryptoService.getCurrentPrices();
       const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
 
       const battlesWithPrices = battles.map((battle: any) => ({
@@ -2391,7 +2358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Get current price
-      const cryptoPrices = await binanceService.getCurrentPrices();
+      const cryptoPrices = await cryptoService.getCurrentPrices();
       const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
       
       const battleWithPrice = {
@@ -5071,7 +5038,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newCrypto = await storage.upsertCryptocurrency(cryptoData);
       
       // Clear crypto service cache so new cryptocurrency appears immediately
-      binanceService.clearCache();
+      const { cryptoService } = await import('../services/cryptoService');
+      cryptoService.clearCache();
       
       auditLog('admin_crypto_added', { 
         cryptoId: newCrypto.id, 
@@ -5109,7 +5077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteCryptocurrency(id);
       
       // Clear crypto service cache to immediately update Live Prices
-      binanceService.clearCache();
+      cryptoService.clearCache();
       
       auditLog('admin_crypto_deleted', { cryptoId: id }, req);
       res.json({ message: "Cryptocurrency deleted successfully" });
@@ -6182,7 +6150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let ethPriceSnapshot = null;
       if (validatedData.tokenType === 'ETH') {
         try {
-          const cryptoPrices = await binanceService.getCurrentPrices();
+          const cryptoPrices = await cryptoService.getCurrentPrices();
           const ethPrice = cryptoPrices.find(crypto => crypto.id === 'ethereum');
           if (ethPrice) {
             ethPriceSnapshot = ethPrice.current_price.toString();
@@ -6577,8 +6545,8 @@ Manual balance correction required IMMEDIATELY!`;
       
       if (validatedData.tokenType === 'ETH') {
         console.log('⚡ [WITHDRAWAL] ETH withdrawal - getting current price...');
-        // Get current ETH price using existing binanceService instance
-        const prices = await binanceService.getCurrentPrices();
+        // Get current ETH price using existing cryptoService instance
+        const prices = await cryptoService.getCurrentPrices();
         const ethPrice = prices.find(coin => coin.symbol === 'ETH')?.current_price || 3500; // fallback price
         console.log('💵 [WITHDRAWAL] ETH price:', ethPrice);
         

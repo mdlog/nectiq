@@ -1014,26 +1014,6 @@ export default function UserDashboard() {
                 {/* Market Watch Tab */}
                 <TabsContent value="market" className="flex-1 h-full">
                   <div className="h-full space-y-6">
-                    {/* Data Source Information */}
-                    <div className="mb-4">
-                      <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-3">
-                        <div className="flex items-start space-x-3">
-                          <div className="flex-shrink-0">
-                            <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">✓</span>
-                            </div>
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-medium text-green-200 mb-1">Unified Data Source</h4>
-                            <p className="text-xs text-green-300">
-                              Both <span className="text-yellow-400 font-semibold">Live Prices</span> and <span className="text-blue-400 font-semibold">TradingView Charts</span> 
-                              now use the same <span className="text-green-400 font-semibold">Binance API</span> data source for consistent pricing across the platform.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Live Prices Section - Moved to Top */}
                     <div className="mb-6">
                       <LivePrices onCryptoSelect={handleCryptoSelect} />
