@@ -20,6 +20,8 @@ export const users = pgTable("users", {
   twitterHandle: text("twitter_handle"),
   emailVerified: boolean("email_verified").notNull().default(false),
   twitterVerified: boolean("twitter_verified").notNull().default(false),
+  firebaseUid: text("firebase_uid"),
+  firebaseDisplayName: text("firebase_display_name"),
   referralCode: varchar("referral_code", { length: 8 }).unique(),
   referredBy: integer("referred_by").references(() => users.id),
   totalReferrals: integer("total_referrals").notNull().default(0),

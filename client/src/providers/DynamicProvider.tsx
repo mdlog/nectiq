@@ -3,11 +3,12 @@ import { EthereumWalletConnectors } from '@dynamic-labs/ethereum';
 import { SolanaWalletConnectors } from '@dynamic-labs/solana';
 import { CosmosWalletConnectors } from '@dynamic-labs/cosmos';
 import { StarknetWalletConnectors } from '@dynamic-labs/starknet';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { useLocation } from 'wouter';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthenticationHandler } from '@/hooks/useAuthenticationHandler';
 import { useForceSignature } from '@/hooks/useForceSignature';
+import { WalletEmailVerification } from '@/components/WalletEmailVerification';
 
 interface DynamicProviderProps {
   children: ReactNode;
@@ -21,6 +22,8 @@ function DynamicContent({ children }: { children: ReactNode }) {
 
 export default function DynamicProvider({ children }: DynamicProviderProps) {
   const [, navigate] = useLocation();
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [pendingWalletAddress, setPendingWalletAddress] = useState<string | null>(null);
   
   // Debug environment variables
   console.log('🔧 Dynamic Labs Configuration:');
@@ -36,13 +39,14 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
   }
   
   return (
-    <DynamicContextProvider
-      settings={{
-        environmentId: environmentId,
-        walletConnectors: [
-          EthereumWalletConnectors,
-          SolanaWalletConnectors,
-        ],
+    <>
+      <DynamicContextProvider
+        settings={{
+          environmentId: environmentId,
+          walletConnectors: [
+            EthereumWalletConnectors,
+            SolanaWalletConnectors,
+          ],
         walletConnectPreferences: walletConnectProjectId ? {
           projectId: walletConnectProjectId,
         } : undefined,
@@ -181,6 +185,14 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                   const responseData = await response.json();
                   console.log('🔐 Backend authentication successful:', responseData);
                   
+                  // Check if user needs email verification (no existing email)
+                  if (!responseData.user?.email && walletAddress) {
+                    console.log('🔐 User needs email verification');
+                    setPendingWalletAddress(walletAddress);
+                    setShowEmailVerification(true);
+                    return; // Don't invalidate queries yet, wait for email verification
+                  }
+                  
                   // Invalidate all queries to refresh authentication state
                   console.log('🔐 Invalidating queries...');
                   await queryClient.invalidateQueries();
@@ -278,5 +290,32 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
     >
       <DynamicContent>{children}</DynamicContent>
     </DynamicContextProvider>
+    
+    {/* Firebase Email Verification Modal */}
+    {showEmailVerification && pendingWalletAddress && (
+      <WalletEmailVerification 
+        walletAddress={pendingWalletAddress}
+        onSuccess={async () => {
+          console.log('🔐 Email verification successful');
+          setShowEmailVerification(false);
+          setPendingWalletAddress(null);
+          
+          // Now invalidate queries to refresh authentication state
+          await queryClient.invalidateQueries();
+          
+          // Navigate to home after successful verification
+          const currentPath = window.location.pathname;
+          if (currentPath === '/' || currentPath === '/landing' || currentPath === '/wallet-login') {
+            setTimeout(() => navigate('/home'), 1000);
+          }
+        }}
+        onCancel={() => {
+          console.log('🔐 Email verification cancelled');
+          setShowEmailVerification(false);
+          setPendingWalletAddress(null);
+        }}
+      />
+    )}
+    </>
   );
 }

@@ -700,6 +700,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Firebase Wallet-Email Linking endpoint
+  app.post("/api/auth/link-wallet-email", async (req, res) => {
+    try {
+      const { walletAddress, email, firebaseUid, displayName } = req.body;
+      
+      if (!walletAddress || !email) {
+        return res.status(400).json({ message: "Wallet address and email are required" });
+      }
+      
+      // Normalize wallet address
+      const normalizedAddress = normalizeWalletAddress(walletAddress);
+      
+      // Find user by wallet address
+      const user = await storage.getUserByWalletAddress(normalizedAddress);
+      if (!user) {
+        return res.status(404).json({ message: "User not found with this wallet address" });
+      }
+      
+      // Check if email is already used by another user
+      const [existingEmailUser] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (existingEmailUser && existingEmailUser.id !== user.id) {
+        return res.status(400).json({ 
+          message: "This email is already linked to another account" 
+        });
+      }
+      
+      // Update user with email and Firebase info
+      await db.update(users)
+        .set({
+          email: email,
+          firebaseUid: firebaseUid || null,
+          firebaseDisplayName: displayName || null,
+          emailVerified: true,
+          authMethod: "both"
+        })
+        .where(eq(users.id, user.id));
+      
+      // Log the email linking event
+      auditLog('WALLET_EMAIL_LINKED', {
+        userId: user.id,
+        username: user.username,
+        email: email.substring(0, 3) + '***',
+        firebaseUid: firebaseUid ? 'Yes' : 'No',
+        walletAddress: normalizedAddress,
+        isAdmin: user.isAdmin,
+        clientIP: req.ip
+      }, req);
+      
+      res.json({ 
+        success: true, 
+        message: "Email successfully linked to wallet address",
+        user: {
+          id: user.id,
+          username: user.username,
+          email: email,
+          emailVerified: true,
+          authMethod: "both"
+        }
+      });
+      
+    } catch (error) {
+      console.error("Error linking wallet with email:", error);
+      res.status(500).json({ message: "Failed to link wallet with email" });
+    }
+  });
+
   // Dynamic SDK Authentication endpoint
   app.post("/api/auth/dynamic", async (req, res) => {
     try {

@@ -1,0 +1,337 @@
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Mail, Wallet, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import { signInWithGoogle, auth } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+interface WalletEmailVerificationProps {
+  isOpen: boolean;
+  onClose: () => void;
+  walletAddress: string;
+  onVerificationComplete: () => void;
+}
+
+interface LinkWalletEmailRequest {
+  walletAddress: string;
+  email: string;
+  firebaseUid: string;
+  displayName?: string;
+}
+
+export function WalletEmailVerification({ 
+  isOpen, 
+  onClose, 
+  walletAddress, 
+  onVerificationComplete 
+}: WalletEmailVerificationProps) {
+  const [step, setStep] = useState<'info' | 'gmail' | 'manual' | 'success'>('info');
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [manualEmail, setManualEmail] = useState('');
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      if (user && step === 'gmail') {
+        handleEmailVerified(user);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [step]);
+
+  const linkWalletEmailMutation = useMutation({
+    mutationFn: async (data: LinkWalletEmailRequest) => {
+      return apiRequest('/api/auth/link-wallet-email', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      setStep('success');
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      toast({
+        title: "Email Linked Successfully",
+        description: "Your wallet address has been linked with your Gmail account.",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Link wallet email error:', error);
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Failed to link wallet with email. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleGoogleSignIn = async () => {
+    setIsSigningIn(true);
+    try {
+      const user = await signInWithGoogle();
+      if (user) {
+        setStep('gmail');
+      }
+    } catch (error: any) {
+      console.error('Google sign-in error:', error);
+      toast({
+        title: "Google Sign-in Failed",
+        description: error.message || "Failed to sign in with Google. Please try again.",
+        variant: "destructive",
+      });
+      setStep('manual');
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleEmailVerified = async (user: User) => {
+    if (user.email) {
+      try {
+        await linkWalletEmailMutation.mutateAsync({
+          walletAddress,
+          email: user.email,
+          firebaseUid: user.uid,
+          displayName: user.displayName || undefined,
+        });
+      } catch (error) {
+        console.error('Email verification error:', error);
+      }
+    }
+  };
+
+  const handleManualEmail = async () => {
+    if (!manualEmail.includes('@gmail.com')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid Gmail address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await linkWalletEmailMutation.mutateAsync({
+        walletAddress,
+        email: manualEmail,
+        firebaseUid: '',
+        displayName: undefined,
+      });
+    } catch (error) {
+      console.error('Manual email error:', error);
+    }
+  };
+
+  const handleComplete = () => {
+    onVerificationComplete();
+    onClose();
+  };
+
+  const handleSkip = () => {
+    toast({
+      title: "Email Verification Skipped",
+      description: "You can link your email later in your profile settings.",
+    });
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-blue-500" />
+            Wallet Email Verification
+          </DialogTitle>
+          <DialogDescription>
+            Link your wallet address with Gmail for enhanced security and recovery options.
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === 'info' && (
+          <div className="space-y-4">
+            <Card className="border-blue-200 bg-blue-50/50">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <Wallet className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-blue-900">Wallet Address</p>
+                    <p className="text-xs text-blue-700 font-mono break-all">
+                      {walletAddress}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-3 text-sm text-gray-600">
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <span>Enhanced account security</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <span>Account recovery options</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <span>Email notifications for important activities</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button onClick={() => setStep('gmail')} className="flex-1">
+                <Mail className="h-4 w-4 mr-2" />
+                Verify with Gmail
+              </Button>
+              <Button variant="outline" onClick={handleSkip}>
+                Skip for now
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 'gmail' && (
+          <div className="space-y-4">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                <Mail className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="font-medium">Sign in with Gmail</h3>
+              <p className="text-sm text-gray-600">
+                Click below to sign in with your Gmail account and verify your email address.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Button
+                onClick={handleGoogleSignIn}
+                disabled={isSigningIn || linkWalletEmailMutation.isPending}
+                className="w-full bg-red-600 hover:bg-red-700"
+              >
+                {isSigningIn ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Sign in with Google
+                  </>
+                )}
+              </Button>
+
+              <div className="text-center">
+                <Button
+                  variant="link"
+                  onClick={() => setStep('manual')}
+                  className="text-sm text-gray-500"
+                >
+                  Enter email manually instead
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 'manual' && (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <AlertCircle className="h-12 w-12 text-amber-500 mx-auto" />
+              <h3 className="font-medium">Enter Gmail Address</h3>
+              <p className="text-sm text-gray-600">
+                Please enter your Gmail address manually for verification.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Gmail Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your.email@gmail.com"
+                  value={manualEmail}
+                  onChange={(e) => setManualEmail(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              <Button
+                onClick={handleManualEmail}
+                disabled={!manualEmail || linkWalletEmailMutation.isPending}
+                className="w-full"
+              >
+                {linkWalletEmailMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Verify Email
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setStep('gmail')}
+                className="w-full"
+              >
+                Back to Google Sign-in
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 'success' && (
+          <div className="space-y-4">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="font-medium text-green-900">Email Verified Successfully!</h3>
+              <p className="text-sm text-gray-600">
+                Your wallet address has been linked with your Gmail account.
+              </p>
+            </div>
+
+            {firebaseUser && (
+              <Card className="border-green-200 bg-green-50/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <Mail className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-green-900">
+                        {firebaseUser.displayName || 'Gmail User'}
+                      </p>
+                      <p className="text-xs text-green-700">{firebaseUser.email}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Button onClick={handleComplete} className="w-full">
+              Continue to Dashboard
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
