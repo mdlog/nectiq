@@ -43,7 +43,7 @@ interface LivePricesProps {
 
 export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerView = 4; // Show 4 cryptos at once
+  const itemsPerView = 14; // Show 14 cryptos at once
 
   const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
@@ -91,7 +91,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
             <ChevronLeft size={14} />
           </Button>
           <div className="flex gap-1.5 justify-center">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(14)].map((_, i) => (
               <div key={i} className="crypto-card px-3 py-2 bg-surface-light rounded-md animate-pulse flex-shrink-0">
                 <div className="w-16 h-14 bg-slate-600 rounded"></div>
               </div>
