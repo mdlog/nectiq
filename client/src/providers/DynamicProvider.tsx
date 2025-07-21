@@ -130,9 +130,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
           onAuthFlowCancel: () => {
             console.log('🔐 Dynamic: Auth flow cancelled');
           },
-          onEmailVerificationSent: (args: any) => {
-            console.log('🔐 Dynamic: Email verification sent', args);
-          },
+
           onEmailVerificationCompleted: (args: any) => {
             console.log('🔐 Dynamic: Email verification completed', args);
           },
@@ -186,8 +184,15 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
                   console.log('🔐 Backend authentication successful:', responseData);
                   
                   // Check if user needs email verification (no existing email)
+                  console.log('🔐 [DEBUG] Checking email verification need:', {
+                    hasEmail: !!responseData.user?.email,
+                    email: responseData.user?.email,
+                    walletAddress,
+                    showDialog: !responseData.user?.email && !!walletAddress
+                  });
+                  
                   if (!responseData.user?.email && walletAddress) {
-                    console.log('🔐 User needs email verification');
+                    console.log('🔥 [FIREBASE] User needs email verification - showing dialog!');
                     setPendingWalletAddress(walletAddress);
                     setShowEmailVerification(true);
                     return; // Don't invalidate queries yet, wait for email verification
@@ -291,12 +296,61 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
       <DynamicContent>{children}</DynamicContent>
     </DynamicContextProvider>
     
+    {/* Debug button for testing Firebase dialog */}
+    {import.meta.env.DEV && (
+      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 10000 }}>
+        <button 
+          onClick={() => {
+            console.log('🔥 [DEBUG] Manually triggering Firebase dialog');
+            setPendingWalletAddress('0x4c6165286739696849fb3e77a16b0639d762c5b6');
+            setShowEmailVerification(true);
+          }}
+          style={{ 
+            background: '#ff6b6b', 
+            color: 'white', 
+            padding: '8px 12px', 
+            border: 'none', 
+            borderRadius: '4px',
+            fontSize: '12px'
+          }}
+        >
+          Test Firebase Dialog
+        </button>
+      </div>
+    )}
+
     {/* Firebase Email Verification Modal */}
     {showEmailVerification && pendingWalletAddress && (
       <WalletEmailVerification 
         walletAddress={pendingWalletAddress}
-        onSuccess={async () => {
-          console.log('🔐 Email verification successful');
+        onSuccess={async (email, firebaseUid, displayName) => {
+          console.log('🔥 [FIREBASE] Email verification successful:', { email, firebaseUid, displayName });
+          
+          // Link wallet to email via API
+          if (pendingWalletAddress) {
+            try {
+              const response = await fetch('/api/auth/link-wallet-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                  walletAddress: pendingWalletAddress,
+                  email,
+                  firebaseUid,
+                  displayName
+                })
+              });
+              
+              if (response.ok) {
+                console.log('✅ [FIREBASE] Email linked successfully');
+              } else {
+                console.error('❌ [FIREBASE] Failed to link email - server error');
+              }
+            } catch (error) {
+              console.error('❌ [FIREBASE] Failed to link email:', error);
+            }
+          }
+          
           setShowEmailVerification(false);
           setPendingWalletAddress(null);
           
