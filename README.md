@@ -1,11 +1,13 @@
-# 🚀 Nectiq - Cryptocurrency Price Prediction Platform
+# 🚀 Nectiq - Advanced Cryptocurrency Price Prediction Platform
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-brightgreen.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-brightgreen.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6+-blue.svg)](https://www.typescriptlang.org/)
+[![Dynamic Labs](https://img.shields.io/badge/Dynamic_Labs-Web3_Auth-purple.svg)](https://www.dynamic.xyz/)
+[![Firebase](https://img.shields.io/badge/Firebase-Email_Verification-orange.svg)](https://firebase.google.com/)
 
-Nectiq is a gamified cryptocurrency price prediction platform that allows users to make predictions on cryptocurrency prices and earn rewards based on their accuracy. The platform features modern Web3 wallet integration, real-time price feeds, and a comprehensive reward system.
+Nectiq is a cutting-edge gamified cryptocurrency price prediction platform that combines Web3 wallet authentication, Firebase email verification, and real-time trading analytics. Users can make predictions on cryptocurrency prices, engage in competitive battles, and earn rewards based on their accuracy. The platform features enterprise-grade security, multi-chain support, and professional trading interfaces.
 
 ## ✨ Features
 
@@ -15,12 +17,14 @@ Nectiq is a gamified cryptocurrency price prediction platform that allows users 
 - **Accuracy-Based Rewards**: Up to 5x multiplier for perfect predictions (±0.1% accuracy)
 - **Stake System**: Stake 50-500 NTIQ points on your predictions
 
-### 🔐 Authentication & Wallet Integration
-- **Dynamic Labs Integration**: Unified wallet connection interface with 20+ wallet support
+### 🔐 Advanced Authentication & Security
+- **Dynamic Labs Integration**: Enterprise-grade wallet authentication with 20+ wallet support
+- **Firebase Email Verification**: Link wallet addresses with Gmail for enhanced security
+- **Dual Authentication Methods**: Traditional email login and Web3 wallet authentication
 - **Multi-Chain Wallet Support**: MetaMask, WalletConnect, Coinbase Wallet, and more
-- **Enterprise Security**: Secure authentication without storing private keys
-- **Complete Wallet Disconnect**: Full logout with MetaMask confirmation required for reconnection
-- **Admin Panel**: Secure admin access with wallet-based authentication
+- **Complete Session Management**: Full logout with MetaMask confirmation required for reconnection
+- **Admin Panel Security**: Multi-layer admin authentication with wallet-based access control
+- **Email Linking System**: Secure email verification with Google Sign-In integration
 
 ### 💰 Financial System
 - **Multi-Chain Deposits**: Support for ETH, USDC, USDT across 7 blockchain networks
@@ -28,18 +32,29 @@ Nectiq is a gamified cryptocurrency price prediction platform that allows users 
 - **Real-Time Balance**: Live balance updates with comprehensive transaction history
 - **Fee Structure**: Transparent 2.5% withdrawal fee system
 
-### 🏆 Gamification
+### 🏆 Gamification & Competition
 - **Achievement System**: Unlock achievements for various milestones
-- **Leaderboard**: Live rankings based on accuracy and total rewards
+- **Live Leaderboard**: Real-time rankings based on accuracy and total rewards
 - **Battle Mode**: Challenge other users in prediction battles
-- **Survival Tournaments**: Multi-round elimination tournaments
+- **Survival Tournaments**: Multi-round elimination tournaments with prize pools
 - **Daily Challenges**: Time-limited challenges with bonus rewards
+- **Referral Program**: Invite friends and earn rewards for successful referrals
 
-### 📊 Real-Time Features
-- **Live Price Charts**: Interactive TradingView-style charts with multiple timeframes
-- **Synchronized Prices**: All users see identical real-time prices
-- **Activity Feed**: Live updates of platform activities
-- **WebSocket Integration**: Real-time notifications and updates
+### 🛡️ Advanced Admin Features
+- **Comprehensive User Management**: View, edit, and manage all user accounts
+- **Enhanced CSV Export**: Export complete user data with 21+ fields including email verification status
+- **Financial Oversight**: Monitor all deposits, withdrawals, and financial transactions
+- **Security Monitoring**: Real-time security events and user activity tracking
+- **Platform Analytics**: Detailed statistics and platform performance metrics
+- **Multi-Chain Transaction Management**: Monitor and process transactions across all networks
+
+### 📊 Advanced Real-Time Features
+- **Professional Trading Charts**: Full TradingView widget integration with candlestick charts
+- **Live Price Feeds**: Real-time cryptocurrency prices with 3-second synchronization
+- **Optimized UI Layout**: Single-row horizontal Live Prices display (14 coins per page)
+- **WebSocket Integration**: Real-time notifications and platform updates
+- **Activity Feed**: Live updates of predictions, battles, and platform activities
+- **Price Consistency**: Synchronized micro-variations ensuring all users see identical prices
 
 ## 🛠️ Technology Stack
 
@@ -59,11 +74,12 @@ Nectiq is a gamified cryptocurrency price prediction platform that allows users 
 - **Neon Database** (serverless PostgreSQL)
 - **WebSocket** for real-time communication
 
-### Web3 Integration
-- **Dynamic Labs** for wallet authentication
-- **Wagmi + Web3Modal** for wallet connections
+### Web3 & Authentication Integration
+- **Dynamic Labs** for enterprise-grade wallet authentication
+- **Firebase** for Google Sign-In email verification and user management
+- **Wagmi + Web3Modal** for wallet connections and smart contract interactions
 - **Reown (formerly WalletConnect)** for cross-platform wallet connectivity
-- **Ethers.js** for blockchain interactions
+- **Ethers.js** for blockchain interactions and transaction processing
 - **Multi-chain support**: Ethereum, Base, BSC, Optimism, Arbitrum, Sepolia, Holesky
 
 ### External APIs
@@ -108,6 +124,27 @@ npm run dev
 
 The application will be available at `http://localhost:5000`
 
+## 🔧 Firebase Setup
+
+To enable email verification with Gmail integration:
+
+1. **Create Firebase Project**
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Create a new project or use existing one
+
+2. **Configure Authentication**
+   - Enable Authentication → Sign-in providers → Google
+   - Add your domain to Authorized domains list
+
+3. **Get Configuration Keys**
+   - Project Settings → General → Your apps
+   - Copy `apiKey`, `projectId`, and `appId` values
+
+4. **Add to Environment Variables**
+   - Set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`
+
+For detailed setup instructions, see `FIREBASE_SETUP_INSTRUCTIONS.md`
+
 ## ⚙️ Configuration
 
 ### Required Environment Variables
@@ -119,6 +156,11 @@ DATABASE_URL=postgresql://username:password@host:port/database
 # Dynamic Labs (Web3 Authentication)
 VITE_DYNAMIC_ENVIRONMENT_ID=your_dynamic_environment_id
 VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
+
+# Firebase (Email Verification)
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+VITE_FIREBASE_APP_ID=your_firebase_app_id
 
 # Session Security
 SESSION_SECRET=your_session_secret
@@ -239,14 +281,18 @@ The application uses Drizzle ORM with PostgreSQL. Run migrations:
 npm run db:push
 ```
 
-## 🔒 Security Features
+## 🔒 Enterprise Security Features
 
-- **Wallet-Based Authentication**: Secure Web3 wallet integration
-- **Session Management**: Secure server-side session handling
-- **Input Validation**: Comprehensive data validation using Zod
-- **Rate Limiting**: API rate limiting and abuse prevention
-- **Admin Protection**: Multi-layer admin authentication
-- **Audit Logging**: Complete transaction and activity audit trails
+- **Multi-Factor Authentication**: Wallet + Email verification for enhanced security
+- **Firebase Integration**: Google Sign-In with email verification and user management
+- **Session Management**: Secure server-side sessions with complete logout functionality
+- **Input Validation**: Comprehensive data validation using Zod schemas
+- **Rate Limiting**: Advanced API rate limiting with synchronized price variations
+- **Admin Protection**: Multi-layer admin authentication with wallet-based access control
+- **Real-Time Security Monitoring**: Live security event tracking and automated threat detection
+- **Audit Logging**: Complete transaction and activity audit trails with comprehensive export
+- **Deposit Security**: Automated deposit monitoring with integrity verification
+- **Withdrawal Security**: Multi-chain automated withdrawal processing with fraud detection
 
 ## 🐛 Troubleshooting
 
@@ -254,23 +300,45 @@ npm run db:push
 
 1. **Wallet Connection Failed**
    - Ensure MetaMask or supported wallet is installed
-   - Check network configuration
-   - Verify Dynamic Labs environment ID
+   - Check network configuration and wallet permissions
+   - Verify Dynamic Labs environment ID in environment variables
+   - Check browser console for connection errors
 
-2. **Database Connection Issues**
-   - Verify DATABASE_URL is correctly set
-   - Ensure PostgreSQL is running
-   - Run `npm run db:push` to update schema
+2. **Firebase Email Verification Issues**
+   - Verify Firebase configuration keys are set correctly
+   - Check that current domain is added to Firebase Authorized domains
+   - Ensure Google Sign-In provider is enabled in Firebase Console
+   - Review browser console for authentication errors
 
-3. **Price Data Not Loading**
-   - Check CoinGecko API connectivity
-   - Verify rate limiting isn't blocking requests
-   - Check console for API errors
+3. **Database Connection Issues**
+   - Verify DATABASE_URL is correctly set and accessible
+   - Ensure PostgreSQL database is running and accessible
+   - Run `npm run db:push` to update database schema
+   - Check database connection logs for connectivity issues
 
-4. **Deposit/Withdrawal Issues**
-   - Verify contract addresses are correct
-   - Check RPC URL connectivity
-   - Ensure sufficient gas for transactions
+4. **Price Data Not Loading**
+   - Check CoinGecko API connectivity and rate limits
+   - Verify micro-variation system is functioning during rate limits
+   - Check console for API errors and network issues
+   - Ensure synchronized price variations are working correctly
+
+5. **Admin Panel Access Issues**
+   - Verify admin wallet addresses are correctly configured
+   - Check authentication method compatibility (wallet/both)
+   - Ensure proper session management after email verification
+   - Review security monitoring for blocked access attempts
+
+6. **Deposit/Withdrawal Issues**
+   - Verify multi-chain contract addresses are correct
+   - Check RPC URL connectivity for all supported networks
+   - Ensure sufficient gas for blockchain transactions
+   - Monitor automated processing systems status
+
+7. **CSV Export and Data Management**
+   - Check admin permissions for user data export
+   - Verify UTF-8 encoding and special character handling
+   - Ensure comprehensive user data fields are accessible
+   - Monitor export functionality for large datasets
 
 ## 📄 License
 
