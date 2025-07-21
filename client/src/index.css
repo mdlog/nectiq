@@ -72,6 +72,18 @@
 }
 
 @layer utilities {
+  /* TradingView Chart Styling */
+  .tradingview-widget-container {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  .tradingview-widget-container iframe {
+    border-radius: 8px;
+  }
+  
   /* Responsive container fixes */
   .responsive-grid {
     display: grid;

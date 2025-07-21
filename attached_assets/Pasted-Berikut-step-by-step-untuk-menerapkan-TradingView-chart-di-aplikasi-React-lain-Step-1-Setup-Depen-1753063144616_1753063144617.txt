@@ -1,0 +1,107 @@
+Berikut step-by-step untuk menerapkan TradingView chart di aplikasi React lain:
+
+Step 1: Setup Dependencies
+
+# Install dependencies yang diperlukan
+npm install react react-dom
+# Jika menggunakan TypeScript
+npm install --save-dev @types/react @types/react-dom
+
+Step 2: Buat Komponen TradingViewChart
+Buat file TradingViewChart.tsx atau TradingViewChart.jsx:
+
+
+import { useEffect, useRef } from "react";
+
+const TradingViewChart = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.type = "text/javascript";
+    script.async = true;
+    
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: "BINANCE:BTCUSDT", // Ganti sesuai kebutuhan
+      interval: "D",
+      timezone: "Etc/UTC",
+      theme: "dark", // atau "light"
+      style: "1",
+      locale: "en",
+      toolbar_bg: "#1a1a1a",
+      enable_publishing: false,
+      allow_symbol_change: true,
+      calendar: false,
+      support_host: "https://www.tradingview.com"
+    });
+
+    if (containerRef.current) {
+      containerRef.current.appendChild(script);
+    }
+
+    // Cleanup function
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
+      }
+    };
+  }, []);
+
+  return (
+    <div style={{ height: "600px", width: "100%" }}>
+      <div 
+        ref={containerRef}
+        className="tradingview-widget-container"
+        style={{ height: "100%", width: "100%" }}
+      >
+        <div className="tradingview-widget-container__widget"></div>
+      </div>
+    </div>
+  );
+};
+
+export default TradingViewChart;
+
+
+Step 3: Import & Gunakan di Komponen Lain
+
+import TradingViewChart from './path/to/TradingViewChart';
+
+function App() {
+  return (
+    <div>
+      <h1>My Trading App</h1>
+      <TradingViewChart />
+    </div>
+  );
+}
+
+Step 4: Tambahkan CSS (Opsional)
+
+.tradingview-widget-container {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+Step 5: Kustomisasi (Opsional)
+
+Untuk mengubah symbol secara dinamis:
+
+
+const TradingViewChart = ({ symbol = "BINANCE:BTCUSDT" }) => {
+  // ... kode yang sama, tapi ganti symbol dengan props
+  script.innerHTML = JSON.stringify({
+    symbol: symbol, // Gunakan props
+    // ... konfigurasi lainnya
+  });
+}
+
+Konfigurasi Penting:
+Symbol: Format EXCHANGE:PAIR (contoh: BINANCE:BTCUSDT)
+Interval: 1, 5, 15, 30, 60, 240, D, W, M
+Theme: "dark" atau "light"
+Style: "1" (candlestick), "2" (line), dll
+Chart akan otomatis muncul dengan semua indikator TradingView bawaan!

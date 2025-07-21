@@ -16,7 +16,7 @@ import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
-import CryptoChart from "@/components/crypto-chart";
+import TradingViewChart from "@/components/TradingViewChart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
@@ -1084,12 +1084,13 @@ export default function UserDashboard() {
               {/* Interactive Chart */}
               <div className="space-y-4">
                 {selectedCrypto && showChart ? (
-                  <CryptoChart
+                  <TradingViewChart
                     cryptoId={selectedCrypto.id}
                     symbol={selectedCrypto.symbol}
                     name={selectedCrypto.name}
                     currentPrice={selectedCrypto.current_price}
                     priceChange24h={selectedCrypto.price_change_percentage_24h}
+                    onPredictClick={(cryptoId) => setLocation(`/predict?crypto=${cryptoId}`)}
                   />
                 ) : (
                   <Card className="bg-surface border-surface-light">
