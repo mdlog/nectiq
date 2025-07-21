@@ -33,6 +33,7 @@ export function WalletEmailVerification({
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [manualEmail, setManualEmail] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -64,9 +65,26 @@ export function WalletEmailVerification({
     },
     onError: (error: any) => {
       console.error('Link wallet email error:', error);
+      
+      // Handle specific error codes for better user experience
+      let title = "Verifikasi Gagal";
+      let description = "Gagal menautkan wallet dengan email. Silakan coba lagi.";
+      
+      if (error.code === "EMAIL_ALREADY_LINKED" || 
+          (error.message && error.message.includes("sudah terkait"))) {
+        title = "Email Sudah Digunakan";
+        description = error.message || "Email ini sudah terkait dengan alamat wallet lain. Silakan gunakan email yang berbeda.";
+        setErrorMessage(error.message || "Email ini sudah terkait dengan alamat wallet lain. Silakan gunakan email yang berbeda.");
+      } else if (error.message) {
+        description = error.message;
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("Gagal menautkan wallet dengan email. Silakan coba lagi.");
+      }
+      
       toast({
-        title: "Verification Failed",
-        description: error.message || "Failed to link wallet with email. Please try again.",
+        title,
+        description,
         variant: "destructive",
       });
     },
@@ -74,6 +92,7 @@ export function WalletEmailVerification({
 
   const handleGoogleSignIn = async () => {
     setIsSigningIn(true);
+    setErrorMessage(null); // Reset error message
     try {
       console.log('🔥 [FIREBASE] Attempting Google Sign-In...');
       console.log('🔥 [FIREBASE] Current domain:', window.location.hostname);
@@ -135,6 +154,7 @@ export function WalletEmailVerification({
   };
 
   const handleManualEmail = async () => {
+    setErrorMessage(null); // Reset error message
     if (!manualEmail.includes('@gmail.com')) {
       toast({
         title: "Invalid Email",
@@ -180,6 +200,25 @@ export function WalletEmailVerification({
             Link your wallet address with Gmail for enhanced security and recovery options.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Error Message Display */}
+        {errorMessage && (
+          <Card className="border-red-200 bg-red-50/50 mb-4">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-red-900">
+                    Error Saat Menautkan Email
+                  </p>
+                  <p className="text-xs text-red-700">
+                    {errorMessage}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {step === 'info' && (
           <div className="space-y-4">
