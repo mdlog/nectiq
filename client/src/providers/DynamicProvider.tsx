@@ -295,29 +295,6 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
     >
       <DynamicContent>{children}</DynamicContent>
     </DynamicContextProvider>
-    
-    {/* Debug button for testing Firebase dialog */}
-    {import.meta.env.DEV && (
-      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 10000 }}>
-        <button 
-          onClick={() => {
-            console.log('🔥 [DEBUG] Manually triggering Firebase dialog');
-            setPendingWalletAddress('0x4c6165286739696849fb3e77a16b0639d762c5b6');
-            setShowEmailVerification(true);
-          }}
-          style={{ 
-            background: '#ff6b6b', 
-            color: 'white', 
-            padding: '8px 12px', 
-            border: 'none', 
-            borderRadius: '4px',
-            fontSize: '12px'
-          }}
-        >
-          Test Firebase Dialog
-        </button>
-      </div>
-    )}
 
     {/* Firebase Email Verification Modal */}
     {showEmailVerification && pendingWalletAddress && (
