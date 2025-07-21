@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, ChartLine } from "lucide-react";
+import { TrendingUp, TrendingDown, ChartLine, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import type { CryptoPrice } from "@/types";
 
 function getCryptoIcon(id: string): string {
@@ -40,6 +42,9 @@ interface LivePricesProps {
 }
 
 export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const itemsPerView = 4; // Show 4 cryptos at once
+
   const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 3000, // Faster updates every 3 seconds
@@ -56,41 +61,77 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   // Sort prices by market cap (highest price first)
   const sortedPrices = prices.sort((a, b) => b.current_price - a.current_price);
 
+  // Pagination functions
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => Math.max(0, prev - itemsPerView));
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => 
+      Math.min(sortedPrices.length - itemsPerView, prev + itemsPerView)
+    );
+  };
+
+  // Get current page items
+  const currentItems = sortedPrices.slice(currentIndex, currentIndex + itemsPerView);
+
+  // Check if navigation buttons should be disabled
+  const canGoPrevious = currentIndex > 0;
+  const canGoNext = currentIndex + itemsPerView < sortedPrices.length;
+
   if (isLoading) {
     return (
-      <div className="bg-surface rounded-lg p-4 border border-surface-light">
+      <div className="bg-surface rounded-lg p-2 border border-surface-light">
         <h3 className="text-base font-bold mb-3 flex items-center">
           <ChartLine className="text-success mr-2" size={16} />
           Live Prices
         </h3>
-        <div className="flex gap-1.5 justify-center flex-wrap">
-          {[...Array(9)].map((_, i) => (
-            <div key={i} className="crypto-card px-3 py-2 bg-surface-light rounded-md animate-pulse flex-shrink-0">
-              <div className="w-16 h-14 bg-slate-600 rounded"></div>
-            </div>
-          ))}
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" disabled>
+            <ChevronLeft size={14} />
+          </Button>
+          <div className="flex gap-1.5 justify-center">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="crypto-card px-3 py-2 bg-surface-light rounded-md animate-pulse flex-shrink-0">
+                <div className="w-16 h-14 bg-slate-600 rounded"></div>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" disabled>
+            <ChevronRight size={14} />
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-lg p-4 border border-surface-light">
-      <h3 className="text-base font-bold mb-3 flex items-center">
-        <ChartLine className="text-success mr-2" size={16} />
-        Live Prices
-        <div className="ml-auto flex items-center text-xs text-green-400">
+    <div className="bg-surface rounded-lg p-2 border border-surface-light">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-bold flex items-center">
+          <ChartLine className="text-success mr-2" size={16} />
+          Live Prices
+        </h3>
+        <div className="flex items-center text-xs text-green-400">
           <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse mr-1"></div>
-          REAL-TIME
-          <div className="ml-2 text-xs text-gray-400">
-            {lastUpdate}
-          </div>
+          REAL-TIME {lastUpdate}
         </div>
-      </h3>
+      </div>
       
-      {/* All cryptocurrencies in one view */}
-      <div className="flex gap-1.5 justify-center flex-wrap">
-        {sortedPrices.map((crypto) => {
+      {/* Single row with navigation */}
+      <div className="flex items-center space-x-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={goToPrevious}
+          disabled={!canGoPrevious}
+          className="flex-shrink-0"
+        >
+          <ChevronLeft size={14} />
+        </Button>
+        
+        <div className="flex gap-1.5 overflow-hidden">
+          {currentItems.map((crypto) => {
             const isPositive = crypto.price_change_percentage_24h >= 0;
             
             return (
@@ -101,11 +142,11 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
               >
                 <div className="flex flex-col items-center space-y-1 min-w-0">
                   {/* Crypto logo and symbol */}
-                  <div className="relative w-4 h-4 flex-shrink-0">
+                  <div className="relative w-5 h-5 flex-shrink-0">
                     <img 
                       src={crypto.image} 
                       alt={crypto.name}
-                      className="w-4 h-4 rounded-full object-cover"
+                      className="w-5 h-5 rounded-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         const fallback = target.nextElementSibling as HTMLElement;
@@ -115,7 +156,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                         }
                       }}
                     />
-                    <div className={`w-4 h-4 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-xs font-bold`}>
+                    <div className={`w-5 h-5 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-xs font-bold`}>
                       {getCryptoIcon(crypto.id)}
                     </div>
                   </div>
@@ -142,6 +183,31 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
             );
           })}
         </div>
+        
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={goToNext}
+          disabled={!canGoNext}
+          className="flex-shrink-0"
+        >
+          <ChevronRight size={14} />
+        </Button>
+      </div>
+      
+      {/* Dot indicators */}
+      <div className="flex justify-center mt-2 space-x-1">
+        {Array.from({ length: Math.ceil(sortedPrices.length / itemsPerView) }).map((_, index) => (
+          <div
+            key={index}
+            className={`w-1.5 h-1.5 rounded-full transition-colors duration-200 ${
+              Math.floor(currentIndex / itemsPerView) === index 
+                ? 'bg-primary' 
+                : 'bg-gray-600'
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
