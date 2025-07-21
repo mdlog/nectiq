@@ -153,8 +153,6 @@ const TradingViewChart = ({
                       maximumFractionDigits: 6 
                     })}
                   </span>
-                </div>
-                <div className="flex items-center mt-1">
                   <span className={`flex items-center text-sm font-medium ${
                     priceChange24h >= 0 ? 'text-success' : 'text-error'
                   }`}>
