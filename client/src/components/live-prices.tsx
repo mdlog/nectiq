@@ -81,16 +81,16 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
 
   if (isLoading) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
-        <h3 className="text-lg font-bold mb-4 flex items-center">
-          <ChartLine className="text-success mr-2" size={18} />
+      <div className="bg-surface rounded-lg p-4 border border-surface-light">
+        <h3 className="text-base font-bold mb-3 flex items-center">
+          <ChartLine className="text-success mr-2" size={16} />
           Live Prices
         </h3>
-        <div className="flex items-center gap-4">
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="crypto-card p-3 bg-surface-light rounded-lg animate-pulse">
-                <div className="h-16 bg-slate-600 rounded"></div>
+                <div className="h-12 bg-slate-600 rounded"></div>
               </div>
             ))}
           </div>
@@ -100,12 +100,12 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   }
 
   return (
-    <div className="bg-surface rounded-xl p-6 border border-surface-light">
-      <h3 className="text-lg font-bold mb-4 flex items-center">
-        <ChartLine className="text-success mr-2" size={18} />
+    <div className="bg-surface rounded-lg p-4 border border-surface-light">
+      <h3 className="text-base font-bold mb-3 flex items-center">
+        <ChartLine className="text-success mr-2" size={16} />
         Live Prices
         <div className="ml-auto flex items-center text-xs text-green-400">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-1"></div>
+          <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse mr-1"></div>
           REAL-TIME
           <div className="ml-2 text-xs text-gray-400">
             {lastUpdate}
@@ -114,36 +114,36 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
       </h3>
       
       {/* Horizontal layout with navigation */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         {/* Left navigation button */}
         <Button
           variant="outline"
           size="sm"
           onClick={goToPrevious}
           disabled={currentIndex === 0}
-          className="h-10 w-10 p-0 flex-shrink-0"
+          className="h-8 w-8 p-0 flex-shrink-0"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-3 w-3" />
         </Button>
 
         {/* Horizontal cryptocurrency grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           {visiblePrices.map((crypto) => {
             const isPositive = crypto.price_change_percentage_24h >= 0;
             
             return (
               <div 
                 key={crypto.id} 
-                className="crypto-card p-4 bg-surface-light rounded-lg transition-all duration-200 cursor-pointer hover:bg-slate-700 hover:scale-105"
+                className="crypto-card p-3 bg-surface-light rounded-lg transition-all duration-200 cursor-pointer hover:bg-slate-700 hover:scale-105"
                 onClick={() => onCryptoSelect?.(crypto)}
               >
-                <div className="flex flex-col items-center space-y-2">
+                <div className="flex flex-col items-center space-y-1.5">
                   {/* Crypto logo and symbol */}
-                  <div className="relative w-8 h-8 flex-shrink-0">
+                  <div className="relative w-6 h-6 flex-shrink-0">
                     <img 
                       src={crypto.image} 
                       alt={crypto.name}
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-6 h-6 rounded-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         const fallback = target.nextElementSibling as HTMLElement;
@@ -153,25 +153,25 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                         }
                       }}
                     />
-                    <div className={`w-8 h-8 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-sm font-bold`}>
+                    <div className={`w-6 h-6 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-xs font-bold`}>
                       {getCryptoIcon(crypto.id)}
                     </div>
                   </div>
                   
                   {/* Symbol and name */}
                   <div className="text-center">
-                    <p className="font-semibold text-sm">{crypto.symbol}</p>
-                    <p className="text-xs text-slate-400 truncate max-w-20">{crypto.name}</p>
+                    <p className="font-semibold text-xs">{crypto.symbol}</p>
+                    <p className="text-xs text-slate-400 truncate max-w-16">{crypto.name}</p>
                   </div>
                   
                   {/* Price and change */}
                   <div className="text-center">
-                    <p className="font-semibold text-sm">${crypto.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                    <div className="flex items-center justify-center space-x-1 mt-1">
+                    <p className="font-semibold text-xs">${crypto.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <div className="flex items-center justify-center space-x-1 mt-0.5">
                       {isPositive ? (
-                        <TrendingUp className="text-success" size={12} />
+                        <TrendingUp className="text-success" size={10} />
                       ) : (
-                        <TrendingDown className="text-error" size={12} />
+                        <TrendingDown className="text-error" size={10} />
                       )}
                       <p className={`text-xs ${isPositive ? "text-success" : "text-error"}`}>
                         {isPositive ? "+" : ""}{crypto.price_change_percentage_24h.toFixed(2)}%
@@ -190,15 +190,15 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           size="sm"
           onClick={goToNext}
           disabled={currentIndex >= maxIndex}
-          className="h-10 w-10 p-0 flex-shrink-0"
+          className="h-8 w-8 p-0 flex-shrink-0"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3 w-3" />
         </Button>
       </div>
 
       {/* Navigation indicators */}
       {sortedPrices.length > itemsPerView && (
-        <div className="mt-4 flex items-center justify-center gap-2">
+        <div className="mt-2 flex items-center justify-center gap-2">
           <div className="text-xs text-slate-400">
             Showing {currentIndex + 1}-{Math.min(currentIndex + itemsPerView, sortedPrices.length)} of {sortedPrices.length}
           </div>
@@ -206,7 +206,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
             {Array.from({ length: Math.ceil(sortedPrices.length / itemsPerView) }, (_, i) => (
               <div
                 key={i}
-                className={`w-2 h-2 rounded-full transition-colors ${
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${
                   Math.floor(currentIndex / itemsPerView) === i
                     ? "bg-success"
                     : "bg-slate-600"
