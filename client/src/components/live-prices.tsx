@@ -87,10 +87,10 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           Live Prices
         </h3>
         <div className="flex items-center gap-2">
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1.5">
+          <div className="flex-1 flex gap-1.5 justify-center">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="crypto-card p-2 bg-surface-light rounded-md animate-pulse">
-                <div className="h-16 bg-slate-600 rounded"></div>
+              <div key={i} className="crypto-card px-3 py-2 bg-surface-light rounded-md animate-pulse flex-shrink-0">
+                <div className="w-16 h-14 bg-slate-600 rounded"></div>
               </div>
             ))}
           </div>
@@ -127,23 +127,23 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
         </Button>
 
         {/* Horizontal cryptocurrency grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1.5">
+        <div className="flex-1 flex gap-1.5 justify-center">
           {visiblePrices.map((crypto) => {
             const isPositive = crypto.price_change_percentage_24h >= 0;
             
             return (
               <div 
                 key={crypto.id} 
-                className="crypto-card p-2 bg-surface-light rounded-md transition-all duration-200 cursor-pointer hover:bg-slate-700 hover:scale-105 min-w-0"
+                className="crypto-card px-3 py-2 bg-surface-light rounded-md transition-all duration-200 cursor-pointer hover:bg-slate-700 hover:scale-105 flex-shrink-0"
                 onClick={() => onCryptoSelect?.(crypto)}
               >
-                <div className="flex flex-col items-center space-y-1">
+                <div className="flex flex-col items-center space-y-1 min-w-0">
                   {/* Crypto logo and symbol */}
-                  <div className="relative w-5 h-5 flex-shrink-0">
+                  <div className="relative w-4 h-4 flex-shrink-0">
                     <img 
                       src={crypto.image} 
                       alt={crypto.name}
-                      className="w-5 h-5 rounded-full object-cover"
+                      className="w-4 h-4 rounded-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         const fallback = target.nextElementSibling as HTMLElement;
@@ -153,16 +153,16 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                         }
                       }}
                     />
-                    <div className={`w-5 h-5 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-xs font-bold`}>
+                    <div className={`w-4 h-4 ${getCryptoColor(crypto.id)} rounded-full hidden items-center justify-center text-white text-xs font-bold`}>
                       {getCryptoIcon(crypto.id)}
                     </div>
                   </div>
                   
                   {/* Symbol */}
-                  <p className="font-semibold text-xs">{crypto.symbol}</p>
+                  <p className="font-semibold text-xs whitespace-nowrap">{crypto.symbol}</p>
                   
                   {/* Price */}
-                  <p className="font-semibold text-xs truncate w-full text-center">${crypto.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="font-medium text-xs whitespace-nowrap">${crypto.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   
                   {/* Change percentage */}
                   <div className="flex items-center space-x-0.5">
@@ -171,7 +171,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                     ) : (
                       <TrendingDown className="text-error" size={8} />
                     )}
-                    <span className={`text-xs ${isPositive ? "text-success" : "text-error"}`}>
+                    <span className={`text-xs font-medium whitespace-nowrap ${isPositive ? "text-success" : "text-error"}`}>
                       {isPositive ? "+" : ""}{crypto.price_change_percentage_24h.toFixed(1)}%
                     </span>
                   </div>
