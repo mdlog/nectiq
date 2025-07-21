@@ -43,7 +43,7 @@ const TradingViewChart = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [cryptoLogo, setCryptoLogo] = useState<string>('');
-  const [interval, setInterval] = useState('D'); // Default 1 day
+  const interval = 'D'; // Default 1 day - fixed since TradingView has built-in controls
   
   // Fetch cryptocurrency logo from crypto prices API
   const fetchCryptoLogo = async () => {
@@ -123,15 +123,6 @@ const TradingViewChart = ({
     };
   }, [cryptoId, interval]);
 
-  const timeframeButtons = [
-    { label: '5M', value: '5' },
-    { label: '15M', value: '15' },
-    { label: '1H', value: '60' },
-    { label: '4H', value: '240' },
-    { label: '1D', value: 'D' },
-    { label: '1W', value: 'W' },
-  ];
-
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
@@ -186,24 +177,6 @@ const TradingViewChart = ({
                 <Expand size={16} />
               </Button>
             </div>
-          </div>
-          
-          {/* Timeframe selector */}
-          <div className="flex space-x-2 mt-4">
-            {timeframeButtons.map((btn) => (
-              <Button
-                key={btn.value}
-                variant={interval === btn.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setInterval(btn.value)}
-                className={interval === btn.value ? 
-                  "bg-primary text-white" : 
-                  "text-slate-400 border-slate-600 hover:bg-slate-700"
-                }
-              >
-                {btn.label}
-              </Button>
-            ))}
           </div>
         </CardHeader>
         
