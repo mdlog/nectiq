@@ -81,25 +81,16 @@ export default function Dashboard() {
       <Header />
       
       <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 md:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
-          {/* Left Sidebar - Live Prices */}
-          <div className="lg:col-span-1">
-            <div className="flex flex-col space-y-6 h-full sticky top-4">
-              <div className="flex-1">
-                <LivePrices 
-                  onCryptoSelect={handleCryptoSelect}
-                  onPredictClick={handlePredictClick}
-                />
-              </div>
-              
-              {/* Banner Section - Below Live Prices with Fixed Position */}
-              <div className="flex-shrink-0">
-                <BannerSection position="below_live_prices" />
-              </div>
-            </div>
-          </div>
+        {/* Live Prices Section - Moved to Top */}
+        <div className="mb-6">
+          <LivePrices 
+            onCryptoSelect={handleCryptoSelect}
+            onPredictClick={handlePredictClick}
+          />
+        </div>
 
-          {/* Main Content - Center */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
+          {/* Main Content - Chart Section (Now Takes More Space) */}
           <div className="lg:col-span-2 space-y-3 md:space-y-6">
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
@@ -146,6 +137,11 @@ export default function Dashboard() {
               </div>
               <div className="flex-1">
                 <RecentRewards />
+              </div>
+              
+              {/* Banner Section - Moved to Right Sidebar */}
+              <div className="flex-shrink-0">
+                <BannerSection position="below_live_prices" />
               </div>
             </div>
           </div>
