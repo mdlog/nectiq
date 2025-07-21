@@ -2737,27 +2737,61 @@ export default function AdminPanel() {
   };
 
   const handleExportUsers = () => {
+    // Helper function to safely escape CSV values that contain commas, quotes, or newlines
+    const escapeCSV = (value: any) => {
+      if (value === null || value === undefined) return "";
+      const str = String(value);
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+
     const csvContent = [
-      ["Username", "UID", "Wallet Address", "Balance", "Predictions", "Accuracy", "Rewards", "Admin"].join(","),
+      [
+        "ID", "Username", "UID", "Email", "Linked Email", "Email Verified", 
+        "Auth Method", "Wallet Address", "Balance (NTIQ)", "Total Predictions", 
+        "Correct Predictions", "Accuracy", "Total Rewards", "Admin Status", 
+        "Profile Photo", "Twitter Handle", "Twitter Verified", "Firebase UID", 
+        "Firebase Display Name", "Registration Date", "Last Activity"
+      ].join(","),
       ...sortedUsers.map(user => [
-        user.username,
-        user.uid,
-        user.walletAddress || "Not set",
-        user.balance || 0,
-        user.totalPredictions || 0,
-        user.totalPredictions > 0 ? ((user.correctPredictions / user.totalPredictions) * 100).toFixed(2) + "%" : "0%",
-        user.totalRewards || 0,
-        user.isAdmin ? "Yes" : "No"
+        escapeCSV(user.id),
+        escapeCSV(user.username),
+        escapeCSV(user.uid),
+        escapeCSV(user.email || "Not linked"),
+        escapeCSV(user.email ? user.email : "No email linked"),
+        escapeCSV(user.emailVerified ? "Yes" : "No"),
+        escapeCSV(user.authMethod || "wallet"),
+        escapeCSV(user.walletAddress || "Not set"),
+        escapeCSV(user.balance || 0),
+        escapeCSV(user.totalPredictions || 0),
+        escapeCSV(user.correctPredictions || 0),
+        escapeCSV(user.totalPredictions > 0 ? ((user.correctPredictions / user.totalPredictions) * 100).toFixed(2) + "%" : "0%"),
+        escapeCSV(user.totalRewards || 0),
+        escapeCSV(user.isAdmin ? "Yes" : "No"),
+        escapeCSV(user.profilePhoto || "None"),
+        escapeCSV(user.twitterHandle || "Not linked"),
+        escapeCSV(user.twitterVerified ? "Yes" : "No"),
+        escapeCSV(user.firebase_uid || "Not linked"),
+        escapeCSV(user.firebase_display_name || "Not set"),
+        escapeCSV(user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : "Unknown"),
+        escapeCSV(user.lastLoginAt ? new Date(user.lastLoginAt).toISOString().split('T')[0] : "Unknown")
       ].join(","))
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `users_comprehensive_export_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Export Complete",
+      description: `Successfully exported ${sortedUsers.length} users with comprehensive information including emails, auth methods, and verification status.`,
+    });
   };
 
   const { data: leaderboard = [] } = useQuery<LeaderboardEntry[]>({
