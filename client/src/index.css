@@ -279,11 +279,11 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-33.333%);
   }
 }
 
 .animate-scroll-left {
-  animation: scroll-left 30s linear infinite;
+  animation: scroll-left 45s linear infinite;
   will-change: transform;
 }

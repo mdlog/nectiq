@@ -91,40 +91,40 @@ export function BannerSection({ position = "below_live_prices", className = "", 
   // Horizontal layout for banner section above Live Activity - Running Text Style
   if (isHorizontal) {
     return (
-      <div className={`${className} overflow-hidden`}>
-        <div className="relative bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg py-3">
+      <div className={`${className}`}>
+        <div className="relative bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg overflow-hidden">
           {/* Running text container */}
-          <div className="overflow-hidden">
+          <div className="relative h-14 flex items-center overflow-hidden">
             <div className="flex animate-scroll-left whitespace-nowrap">
               {/* Duplicate banners for continuous scroll */}
-              {[...activeBanners, ...activeBanners].map((banner, index) => (
+              {[...activeBanners, ...activeBanners, ...activeBanners].map((banner, index) => (
                 <div
                   key={`${banner.id}-${index}`}
-                  className="inline-flex items-center mx-8 cursor-pointer hover:text-purple-300 transition-colors"
+                  className="inline-flex items-center mx-6 cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
                   onClick={() => handleBannerClick(banner)}
                 >
-                  {/* Banner content as running text */}
-                  <div className="flex items-center gap-3">
+                  {/* Banner card content - same size as screenshot */}
+                  <div className="flex items-center gap-3 bg-black/20 rounded-lg px-4 py-2 border border-white/10">
                     {banner.imageUrl && (
                       <img
                         src={banner.imageUrl}
                         alt="Banner"
-                        className="w-8 h-8 object-cover rounded-md flex-shrink-0"
+                        className="w-6 h-6 object-cover rounded flex-shrink-0"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
                       />
                     )}
-                    <span className="text-white font-medium text-sm">
-                      🔥 {banner.title || "Special Offer"} 
+                    <div className="flex items-center gap-2">
+                      <span className="text-orange-400 text-sm">🔥</span>
+                      <span className="text-white font-medium text-sm">
+                        {banner.title || "Special Offer"}
+                      </span>
                       {banner.linkUrl && (
-                        <ExternalLink size={12} className="inline ml-2" />
+                        <ExternalLink size={12} className="text-purple-400" />
                       )}
-                    </span>
+                    </div>
                   </div>
-                  
-                  {/* Separator */}
-                  <div className="mx-8 text-purple-400">•</div>
                 </div>
               ))}
             </div>
