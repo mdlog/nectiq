@@ -185,16 +185,6 @@ const TradingViewChart = ({
               >
                 <Expand size={16} />
               </Button>
-              {onPredictClick && (
-                <Button 
-                  onClick={() => onPredictClick(cryptoId)}
-                  className="bg-primary hover:bg-primary/90 text-white"
-                  size="sm"
-                >
-                  <Target size={16} className="mr-2" />
-                  Make Prediction
-                </Button>
-              )}
             </div>
           </div>
           
@@ -232,6 +222,20 @@ const TradingViewChart = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Make Prediction Button - positioned below chart */}
+      {onPredictClick && !isFullscreen && (
+        <div className="mt-4 flex justify-center">
+          <Button 
+            onClick={() => onPredictClick(cryptoId)}
+            className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg"
+            size="lg"
+          >
+            <Target size={20} className="mr-3" />
+            Make Prediction
+          </Button>
+        </div>
+      )}
 
       {/* Financial Metrics - hanya tampil jika tidak fullscreen */}
       {!isFullscreen && (
