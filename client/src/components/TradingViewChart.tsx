@@ -3,53 +3,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Target, BarChart3, Expand } from 'lucide-react';
 import FinancialMetrics from '@/components/financial-metrics';
-import { useQuery } from "@tanstack/react-query";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
-
-// Function to format price data for Chart.js
-const formatChartData = (cryptoId: string, currentPrice: number) => {
-  // Generate sample historical data based on current price with realistic variations
-  const hours = 24;
-  const data = [];
-  const labels = [];
+// TradingView symbol mapping untuk cryptocurrency
+const getTradingViewSymbol = (cryptoId: string): string => {
+  const symbolMapping: Record<string, string> = {
+    'bitcoin': 'BINANCE:BTCUSDT',
+    'ethereum': 'BINANCE:ETHUSDT', 
+    'binancecoin': 'BINANCE:BNBUSDT',
+    'cardano': 'BINANCE:ADAUSDT',
+    'solana': 'BINANCE:SOLUSDT',
+    'aave': 'BINANCE:AAVEUSDT',
+    'litecoin': 'BINANCE:LTCUSDT',
+    'avalanche-2': 'BINANCE:AVAXUSDT',
+    'matic-network': 'BINANCE:MATICUSDT',
+    'chainlink': 'BINANCE:LINKUSDT',
+    'hyperliquid': 'BINANCE:BTCUSDT', // Fallback ke BTC jika tidak ada
+  };
   
-  for (let i = hours; i >= 0; i--) {
-    const time = new Date();
-    time.setHours(time.getHours() - i);
-    labels.push(time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
-    
-    // Generate realistic price variations (±5% from current price)
-    const variation = (Math.random() - 0.5) * 0.1; // ±5%
-    const price = currentPrice * (1 + variation);
-    data.push(price);
-  }
-  
-  // Ensure the last point is the current price
-  data[data.length - 1] = currentPrice;
-  
-  return { labels, data };
+  return symbolMapping[cryptoId] || 'BINANCE:BTCUSDT';
 };
 
 interface TradingViewChartProps {
@@ -69,8 +40,10 @@ const TradingViewChart = ({
   priceChange24h,
   onPredictClick 
 }: TradingViewChartProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [cryptoLogo, setCryptoLogo] = useState<string>('');
+  const interval = 'D'; // Default 1 day - fixed since TradingView has built-in controls
   
   // Fetch cryptocurrency logo from crypto prices API
   const fetchCryptoLogo = async () => {
@@ -92,95 +65,18 @@ const TradingViewChart = ({
     fetchCryptoLogo();
   }, [cryptoId]);
 
-  // Generate chart data using CoinGecko current price
-  const chartData = formatChartData(cryptoId, currentPrice);
-  
-  console.log(`🔄 CoinGecko Chart Update: ${cryptoId} -> $${currentPrice}`);
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-  // Chart.js configuration
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        mode: 'index' as const,
-        intersect: false,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#fff',
-        bodyColor: '#fff',
-        borderColor: '#3b82f6',
-        borderWidth: 1,
-        callbacks: {
-          label: (context: any) => {
-            return `Price: $${context.parsed.y.toLocaleString('en-US', { 
-              minimumFractionDigits: 2, 
-              maximumFractionDigits: 6 
-            })}`;
-          }
-        }
-      },
-    },
-    interaction: {
-      mode: 'nearest' as const,
-      axis: 'x' as const,
-      intersect: false,
-    },
-    scales: {
-      x: {
-        grid: {
-          color: 'rgba(255, 255, 255, 0.1)',
-        },
-        ticks: {
-          color: '#9ca3af',
-          maxTicksLimit: 8,
-        },
-      },
-      y: {
-        grid: {
-          color: 'rgba(255, 255, 255, 0.1)',
-        },
-        ticks: {
-          color: '#9ca3af',
-          callback: function(value: any) {
-            return '$' + value.toLocaleString('en-US', { 
-              minimumFractionDigits: 0, 
-              maximumFractionDigits: 2 
-            });
-          }
-        },
-      },
-    },
-  };
+    // Clear previous chart
+    containerRef.current.innerHTML = "";
 
-  // Chart data configuration with gradient
-  const data = {
-    labels: chartData.labels,
-    datasets: [
-      {
-        label: `${name} Price`,
-        data: chartData.data,
-        borderColor: priceChange24h >= 0 ? '#10b981' : '#ef4444',
-        backgroundColor: (context: any) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-          gradient.addColorStop(0, priceChange24h >= 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)');
-          gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
-          return gradient;
-        },
-        borderWidth: 3,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointHoverBackgroundColor: priceChange24h >= 0 ? '#10b981' : '#ef4444',
-        pointHoverBorderColor: '#fff',
-        pointHoverBorderWidth: 2,
-      },
-    ],
-  };
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.type = "text/javascript";
+    script.async = true;
+    
+    const tradingViewSymbol = getTradingViewSymbol(cryptoId);
     
     script.innerHTML = JSON.stringify({
       autosize: true,
