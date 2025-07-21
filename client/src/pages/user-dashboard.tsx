@@ -1958,9 +1958,14 @@ function UserProfile() {
       <SurvivalStatus />
 
       {/* Email Verification Dialog */}
-      {showEmailDialog && (
+      {showEmailDialog && user && (
         <WalletEmailVerification 
-          onClose={() => setShowEmailDialog(false)}
+          walletAddress={user.walletAddress || ''}
+          onSuccess={() => {
+            setShowEmailDialog(false);
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          }}
+          onCancel={() => setShowEmailDialog(false)}
         />
       )}
     </div>

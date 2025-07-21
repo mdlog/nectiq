@@ -37,6 +37,9 @@ export function WalletEmailVerification({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Debug logging
+  console.log('🔧 [WalletEmailVerification] Component rendered with props:', { walletAddress, step });
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setFirebaseUser(user);
