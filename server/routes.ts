@@ -722,7 +722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [existingEmailUser] = await db.select().from(users).where(eq(users.email, email)).limit(1);
       if (existingEmailUser && existingEmailUser.id !== user.id) {
         return res.status(400).json({ 
-          message: "Email ini sudah terkait dengan alamat wallet lain. Satu email hanya bisa ditautkan ke satu wallet address.",
+          message: "This email is already linked with another wallet address. One email can only be linked to one wallet address.",
           code: "EMAIL_ALREADY_LINKED"
         });
       }
