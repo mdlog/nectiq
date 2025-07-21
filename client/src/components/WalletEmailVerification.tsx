@@ -12,10 +12,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 interface WalletEmailVerificationProps {
-  isOpen: boolean;
-  onClose: () => void;
   walletAddress: string;
-  onVerificationComplete: () => void;
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
 interface LinkWalletEmailRequest {
@@ -26,10 +25,9 @@ interface LinkWalletEmailRequest {
 }
 
 export function WalletEmailVerification({ 
-  isOpen, 
-  onClose, 
   walletAddress, 
-  onVerificationComplete 
+  onSuccess, 
+  onCancel 
 }: WalletEmailVerificationProps) {
   const [step, setStep] = useState<'info' | 'gmail' | 'manual' | 'success'>('info');
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
@@ -132,8 +130,7 @@ export function WalletEmailVerification({
   };
 
   const handleComplete = () => {
-    onVerificationComplete();
-    onClose();
+    onSuccess();
   };
 
   const handleSkip = () => {
@@ -141,11 +138,11 @@ export function WalletEmailVerification({
       title: "Email Verification Skipped",
       description: "You can link your email later in your profile settings.",
     });
-    onClose();
+    onCancel();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={true} onOpenChange={onCancel}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
