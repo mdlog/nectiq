@@ -280,19 +280,21 @@ export function PredictionBattles() {
     retry: false
   });
 
-  // Fetch live battles
+  // Fetch live battles with faster updates
   const { data: liveBattles = [], isLoading } = useQuery<Battle[]>({
     queryKey: ['/api/battles/live'],
-    refetchInterval: 5000 // Update every 5 seconds
+    refetchInterval: 2000, // Faster battle updates - every 2 seconds
+    refetchIntervalInBackground: true, // Background updates for battles
   });
 
-  // Fetch live Pyth Network prices for real-time updates
+  // Fetch live Pyth Network prices for ultra-fast real-time updates
   const { data: cryptoPricesData = [] } = useQuery({
     queryKey: ['/api/crypto/pyth-prices'],
-    refetchInterval: 1000, // Same as Live Prices - ultra-fast updates
+    refetchInterval: 300, // Ultra-fast updates - 300ms like Live Prices microsecond precision
     refetchIntervalInBackground: true, // Enable background updates
-    staleTime: 500, // Same as Live Prices - very fresh data
+    staleTime: 100, // Ultra-fresh data - 100ms stale time for instant updates
     retry: 3, // More retry attempts for reliability
+    gcTime: 1000, // Short garbage collection time for fresh data
   });
 
 
