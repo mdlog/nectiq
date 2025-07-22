@@ -3193,17 +3193,33 @@ export default function AdminPanel() {
 
   const addCryptoMutation = useMutation({
     mutationFn: async (data: { cryptoId: string, name: string, symbol: string, pythFeedId: string }) => {
+      console.log('🔧 [FRONTEND] Submitting cryptocurrency data:', data);
+      
       const response = await fetch("/api/admin/cryptocurrencies", {
         method: "POST",
         credentials: "include",
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" },
       });
+      
+      console.log('📡 [FRONTEND] Response status:', response.status);
+      console.log('📡 [FRONTEND] Response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || "Failed to add cryptocurrency");
+        console.error('❌ [FRONTEND] Error response:', errorText);
+        
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || "Failed to add cryptocurrency");
+        } catch (parseError) {
+          throw new Error(errorText || "Failed to add cryptocurrency");
+        }
       }
-      return response.json();
+      
+      const result = await response.json();
+      console.log('✅ [FRONTEND] Success response:', result);
+      return result;
     },
     onSuccess: (data) => {
       toast({
