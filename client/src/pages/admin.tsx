@@ -877,6 +877,8 @@ export default function AdminPanel() {
   const [newCryptoName, setNewCryptoName] = useState("");
   const [newCryptoSymbol, setNewCryptoSymbol] = useState("");
   const [pythFeedId, setPythFeedId] = useState("");
+  const [isFetchingLogo, setIsFetchingLogo] = useState(false);
+  const [fetchedLogoUrl, setFetchedLogoUrl] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<{
     isValid: boolean;
@@ -1188,6 +1190,67 @@ export default function AdminPanel() {
     }
     const crypto = cryptoPrices.find(c => c && c.id === cryptoId);
     return crypto?.image || `https://assets.coingecko.com/coins/images/1/large/${cryptoId}.png`;
+  };
+
+  // Function to fetch cryptocurrency logo from CoinGecko API
+  const fetchCryptoLogo = async () => {
+    if (!newCryptoId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a Crypto ID first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsFetchingLogo(true);
+    try {
+      console.log(`🔍 [LOGO-FETCH] Fetching logo for: ${newCryptoId}`);
+      
+      const response = await fetch(`https://api.coingecko.com/api/v3/coins/${newCryptoId.toLowerCase()}`);
+      
+      if (!response.ok) {
+        throw new Error(`CoinGecko API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.image) {
+        const logoUrl = data.image.large || data.image.small;
+        if (logoUrl) {
+          setFetchedLogoUrl(logoUrl);
+          console.log(`✅ [LOGO-FETCH] Successfully fetched logo:`, logoUrl);
+          
+          toast({
+            title: "Success!",
+            description: `Logo fetched for ${data.name || newCryptoId}`,
+          });
+
+          // Auto-fill name and symbol if not already filled
+          if (!newCryptoName && data.name) {
+            setNewCryptoName(data.name);
+          }
+          if (!newCryptoSymbol && data.symbol) {
+            setNewCryptoSymbol(data.symbol.toUpperCase());
+          }
+        } else {
+          throw new Error("No image found in API response");
+        }
+      } else {
+        throw new Error("No image data found in API response");
+      }
+    } catch (error: any) {
+      console.error(`❌ [LOGO-FETCH] Error:`, error);
+      setFetchedLogoUrl("");
+      
+      toast({
+        title: "Failed to fetch logo",
+        description: error.message || "Failed to fetch cryptocurrency logo from CoinGecko API",
+        variant: "destructive"
+      });
+    } finally {
+      setIsFetchingLogo(false);
+    }
   };
 
   const { data: transactionPurchases = [] } = useQuery({
@@ -3513,6 +3576,8 @@ export default function AdminPanel() {
       setNewCryptoSymbol('');
       setPythFeedId('');
       setValidationResult(null);
+      setFetchedLogoUrl(''); // Reset fetched logo URL
+      setIsFetchingLogo(false); // Reset fetching state
       
       toast({
         title: "Success",
@@ -3614,7 +3679,8 @@ export default function AdminPanel() {
       cryptoId: newCryptoId.trim().toLowerCase(),
       name: newCryptoName.trim(),
       symbol: newCryptoSymbol.trim().toUpperCase(),
-      pythFeedId: pythFeedId.trim()
+      pythFeedId: pythFeedId.trim(),
+      image: fetchedLogoUrl.trim() || null // Use fetched logo URL or null if not available
     };
 
     console.log('🚀 [FORM] Submitting mutation data:', mutationData);
@@ -4441,16 +4507,32 @@ export default function AdminPanel() {
                           <Label htmlFor="crypto-id" className="text-sm font-semibold text-blue-900 dark:text-blue-200">
                             Crypto ID *
                           </Label>
-                          <Input
-                            id="crypto-id"
-                            placeholder="chainlink"
-                            value={newCryptoId}
-                            onChange={(e) => setNewCryptoId(e.target.value)}
-                            required
-                            className="h-10 border-blue-300 dark:border-blue-600 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                          <div className="flex space-x-2">
+                            <Input
+                              id="crypto-id"
+                              placeholder="chainlink"
+                              value={newCryptoId}
+                              onChange={(e) => setNewCryptoId(e.target.value)}
+                              required
+                              className="h-10 border-blue-300 dark:border-blue-600 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <Button
+                              type="button"
+                              onClick={fetchCryptoLogo}
+                              disabled={!newCryptoId || isFetchingLogo}
+                              size="sm"
+                              variant="outline"
+                              className="h-10 px-3 border-green-300 hover:bg-green-50 text-green-700"
+                            >
+                              {isFetchingLogo ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                           <p className="text-xs text-blue-600 dark:text-blue-400">
-                            Unique ID for the cryptocurrency
+                            Unique ID for the cryptocurrency • Click 📥 to fetch logo
                           </p>
                         </div>
                         
@@ -4488,6 +4570,34 @@ export default function AdminPanel() {
                           </p>
                         </div>
                       </div>
+
+                      {/* Logo Preview Section (only show if logo is fetched) */}
+                      {fetchedLogoUrl && (
+                        <div className="space-y-3 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <Label className="text-sm font-semibold text-green-900 dark:text-green-200 flex items-center">
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Logo Preview
+                            <Badge className="ml-2 bg-green-600 text-white text-xs px-2 py-1">
+                              CoinGecko
+                            </Badge>
+                          </Label>
+                          <div className="flex items-center space-x-3">
+                            <img 
+                              src={fetchedLogoUrl} 
+                              alt={newCryptoName || newCryptoId}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-green-300"
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                                Logo fetched successfully!
+                              </p>
+                              <p className="text-xs text-green-600 dark:text-green-400 font-mono break-all">
+                                {fetchedLogoUrl}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Pyth Feed ID Section */}
                       <div className="space-y-3 p-4 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg">
