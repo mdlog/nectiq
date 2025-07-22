@@ -4507,7 +4507,11 @@ export default function AdminPanel() {
                               console.log('⌨️ [KEYUP] Pyth Feed ID keyup:', e.currentTarget.value);
                               setPythFeedId(e.currentTarget.value);
                             }}
-                            className="flex-1 h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                            className="flex-1 h-10 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+                                     bg-white dark:bg-gray-800 
+                                     text-gray-900 dark:text-gray-100 
+                                     placeholder-gray-500 dark:placeholder-gray-400
+                                     focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                             required
                           />
                           <Button
