@@ -164,29 +164,32 @@ const PythNetworkChart = ({
     const paddedMaxPrice = maxPrice + (priceRange * 0.1);
     const paddedRange = paddedMaxPrice - paddedMinPrice;
 
-    // Draw grid lines with margin
-    const margin = 40;
-    const chartWidth = width - (margin * 2);
-    const chartHeight = height - (margin * 2);
+    // Draw grid lines with optimized margins for label visibility
+    const leftMargin = 65; // Increased for price labels
+    const rightMargin = 50; // Increased for current price indicator
+    const topMargin = 30;
+    const bottomMargin = 50;
+    const chartWidth = width - leftMargin - rightMargin;
+    const chartHeight = height - topMargin - bottomMargin;
     
     ctx.strokeStyle = '#1f1f1f';
     ctx.lineWidth = 1;
     
     // Horizontal grid lines
     for (let i = 0; i <= 5; i++) {
-      const y = margin + (chartHeight / 5) * i;
+      const y = topMargin + (chartHeight / 5) * i;
       ctx.beginPath();
-      ctx.moveTo(margin, y);
-      ctx.lineTo(width - margin, y);
+      ctx.moveTo(leftMargin, y);
+      ctx.lineTo(width - rightMargin, y);
       ctx.stroke();
     }
 
     // Vertical grid lines
     for (let i = 0; i <= 10; i++) {
-      const x = margin + (chartWidth / 10) * i;
+      const x = leftMargin + (chartWidth / 10) * i;
       ctx.beginPath();
-      ctx.moveTo(x, margin);
-      ctx.lineTo(x, height - margin);
+      ctx.moveTo(x, topMargin);
+      ctx.lineTo(x, height - bottomMargin);
       ctx.stroke();
     }
 
@@ -196,8 +199,8 @@ const PythNetworkChart = ({
     ctx.beginPath();
     
     priceHistory.forEach((data, index) => {
-      const x = margin + (index / Math.max(priceHistory.length - 1, 1)) * chartWidth;
-      const y = margin + (chartHeight - ((data.price - paddedMinPrice) / paddedRange) * chartHeight);
+      const x = leftMargin + (index / Math.max(priceHistory.length - 1, 1)) * chartWidth;
+      const y = topMargin + (chartHeight - ((data.price - paddedMinPrice) / paddedRange) * chartHeight);
       
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -214,9 +217,9 @@ const PythNetworkChart = ({
       const upperPrice = latestData.price + latestData.confidence;
       const lowerPrice = latestData.price - latestData.confidence;
       
-      const upperY = margin + (chartHeight - ((upperPrice - paddedMinPrice) / paddedRange) * chartHeight);
-      const lowerY = margin + (chartHeight - ((lowerPrice - paddedMinPrice) / paddedRange) * chartHeight);
-      const x = width;
+      const upperY = topMargin + (chartHeight - ((upperPrice - paddedMinPrice) / paddedRange) * chartHeight);
+      const lowerY = topMargin + (chartHeight - ((lowerPrice - paddedMinPrice) / paddedRange) * chartHeight);
+      const x = width - rightMargin;
 
       // Draw confidence band
       ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
@@ -249,10 +252,10 @@ const PythNetworkChart = ({
     // Debug logging for price range calculation
     console.log(`[PYTH-CHART] Price range: min=${paddedMinPrice}, max=${paddedMaxPrice}, range=${paddedRange}`);
 
-    // Draw 6 price levels on the left sidebar with better positioning
+    // Draw 6 price levels on the left sidebar with optimized positioning
     for (let i = 0; i <= 5; i++) {
       const priceLevel = paddedMinPrice + (paddedRange * (5 - i) / 5); // Reverse order (top to bottom)
-      const y = margin + (chartHeight / 5) * i;
+      const y = topMargin + (chartHeight / 5) * i;
       
       // Enhanced validation and formatting
       if (paddedRange > 0 && !isNaN(priceLevel) && isFinite(priceLevel) && priceLevel > 0) {
@@ -265,19 +268,19 @@ const PythNetworkChart = ({
         // Draw background for better readability
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         const textWidth = ctx.measureText(`$${formattedPrice}`).width;
-        ctx.fillRect(margin - textWidth - 10, y - 8, textWidth + 6, 16);
+        ctx.fillRect(leftMargin - textWidth - 12, y - 8, textWidth + 8, 16);
         
         // Draw the price text
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(`$${formattedPrice}`, margin - 8, y);
+        ctx.fillText(`$${formattedPrice}`, leftMargin - 6, y);
         console.log(`[PYTH-CHART] Drawing price label: $${formattedPrice} at y=${y}`);
       } else {
         console.error(`[PYTH-CHART] Invalid price level: ${priceLevel}, paddedRange: ${paddedRange}`);
         // Draw fallback label with background
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(margin - 25, y - 8, 20, 16);
+        ctx.fillRect(leftMargin - 30, y - 8, 24, 16);
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('$--', margin - 8, y);
+        ctx.fillText('$--', leftMargin - 6, y);
       }
     }
     // Draw time labels (X-axis - horizontal)
@@ -289,7 +292,7 @@ const PythNetworkChart = ({
     if (priceHistory.length > 1) {
       const timeLabels = 6; // Number of time labels
       for (let i = 0; i <= timeLabels; i++) {
-        const x = margin + (i / timeLabels) * chartWidth;
+        const x = leftMargin + (i / timeLabels) * chartWidth;
         
         // Create date labels spanning several days for better context
         const daysAgo = 6 - i; // Show last 6 days
@@ -301,7 +304,7 @@ const PythNetworkChart = ({
           month: 'short'
         });
         
-        ctx.fillText(dayLabel, x, height - margin + 15);
+        ctx.fillText(dayLabel, x, height - bottomMargin + 15);
       }
       
       // Draw current month/year at bottom center
@@ -314,14 +317,14 @@ const PythNetworkChart = ({
       ctx.fillText(currentDate, width / 2, height - 5);
     }
 
-    // Current price indicator
+    // Current price indicator with proper margin
     if (currentPythData) {
-      const currentY = margin + (chartHeight - ((currentPythData.current_price - paddedMinPrice) / paddedRange) * chartHeight);
+      const currentY = topMargin + (chartHeight - ((currentPythData.current_price - paddedMinPrice) / paddedRange) * chartHeight);
       
       // Draw current price indicator dot
       ctx.fillStyle = '#10b981';
       ctx.beginPath();
-      ctx.arc(width - margin - 5, currentY, 4, 0, 2 * Math.PI);
+      ctx.arc(width - rightMargin + 15, currentY, 4, 0, 2 * Math.PI);
       ctx.fill();
       
       // Draw current price line across chart
@@ -329,16 +332,21 @@ const PythNetworkChart = ({
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.moveTo(margin, currentY);
-      ctx.lineTo(width - margin, currentY);
+      ctx.moveTo(leftMargin, currentY);
+      ctx.lineTo(width - rightMargin, currentY);
       ctx.stroke();
       ctx.setLineDash([]);
       
-      // Current price label on right
+      // Current price label on right with background
+      const priceText = `$${currentPythData.current_price.toFixed(0)}`;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      const textWidth = ctx.measureText(priceText).width;
+      ctx.fillRect(width - rightMargin + 20, currentY - 8, textWidth + 8, 16);
+      
       ctx.fillStyle = '#10b981';
-      ctx.font = '11px monospace';
+      ctx.font = 'bold 11px monospace';
       ctx.textAlign = 'left';
-      ctx.fillText(`$${currentPythData.current_price.toFixed(6)}`, width - margin + 8, currentY + 4);
+      ctx.fillText(priceText, width - rightMargin + 24, currentY + 4);
     }
 
   }, [priceHistory, currentPythData]);
