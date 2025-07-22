@@ -4409,223 +4409,166 @@ export default function AdminPanel() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddCrypto} className="space-y-6">
-                    {/* Basic Information */}
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="crypto-id">Crypto ID</Label>
-                          <Input
-                            id="crypto-id"
-                            placeholder="e.g., ripple, dogecoin, polygon"
-                            value={newCryptoId}
-                            onChange={(e) => setNewCryptoId(e.target.value)}
-                            required
-                          />
-                          <p className="text-sm text-slate-400">
-                            Enter a unique ID for the cryptocurrency.
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="crypto-name">Name</Label>
-                          <Input
-                            id="crypto-name"
-                            placeholder="e.g., Ripple, Dogecoin, Polygon"
-                            value={newCryptoName}
-                            onChange={(e) => setNewCryptoName(e.target.value)}
-                            required
-                          />
-                          <p className="text-sm text-slate-400">
-                            Full name of the cryptocurrency.
-                          </p>
-                        </div>
-                      </div>
-                      
+                    {/* Basic Information - Simplified Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="crypto-symbol">Symbol</Label>
+                        <Label htmlFor="crypto-id">Crypto ID *</Label>
+                        <Input
+                          id="crypto-id"
+                          placeholder="hyperliquid"
+                          value={newCryptoId}
+                          onChange={(e) => setNewCryptoId(e.target.value)}
+                          required
+                          className="h-10"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="crypto-name">Name *</Label>
+                        <Input
+                          id="crypto-name"
+                          placeholder="Hyperliquid"
+                          value={newCryptoName}
+                          onChange={(e) => setNewCryptoName(e.target.value)}
+                          required
+                          className="h-10"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="crypto-symbol">Symbol *</Label>
                         <Input
                           id="crypto-symbol"
-                          placeholder="e.g., XRP, DOGE, MATIC"
+                          placeholder="HYPE"
                           value={newCryptoSymbol}
                           onChange={(e) => setNewCryptoSymbol(e.target.value)}
                           required
+                          className="h-10"
                         />
-                        <p className="text-sm text-slate-400">
-                          Trading symbol for the cryptocurrency.
-                        </p>
+                      </div>
+                    </div>
+                      
+                    {/* Pyth Network Validation - Unified Section */}
+                    <div className="p-6 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border border-purple-200 dark:border-purple-800 rounded-xl">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <Zap className="h-5 w-5 text-purple-600" />
+                        <h3 className="font-semibold text-purple-900 dark:text-purple-100">Pyth Network Price Feed Validation</h3>
+                        <Badge className="bg-purple-100 text-purple-800 text-xs">Required</Badge>
                       </div>
                       
-                      {/* Pyth Network Integration (Required) */}
-                      <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                        <div className="flex items-start space-x-3">
-                          <Zap className="h-5 w-5 text-purple-600 mt-0.5" />
-                          <div className="flex-1">
-                            <div className="mb-3">
-                              <h4 className="font-semibold text-purple-900 dark:text-purple-100">Pyth Network Price Feed</h4>
-                              <p className="text-sm text-purple-700 dark:text-purple-300">Required for all cryptocurrencies - Validation Required</p>
-                            </div>
-                            
-                            <div className="space-y-3">
-                              <div>
-                                <Label htmlFor="pyth-feed-id">Pyth Price Feed ID *</Label>
-                                <div className="flex space-x-2">
-                                  <Input
-                                    id="pyth-feed-id"
-                                    placeholder="0x..."
-                                    value={pythFeedId}
-                                    onChange={(e) => {
-                                      setPythFeedId(e.target.value);
-                                      setValidationResult(null); // Clear validation when input changes
-                                    }}
-                                    className="flex-1"
-                                    required
-                                  />
-                                  <Button
-                                    type="button"
-                                    onClick={handleValidatePyth}
-                                    disabled={!pythFeedId.trim() || validatePythMutation.isPending}
-                                    className="bg-purple-600 hover:bg-purple-700"
-                                  >
-                                    {validatePythMutation.isPending ? "Validating..." : "Validate"}
-                                  </Button>
-                                </div>
-                                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                                  Find Pyth Price Feed IDs at: pyth.network/developers/price-feed-ids
-                                </p>
-                                
-                                {/* Validation Result Display */}
-                                {validationResult && (
-                                  <div className={`mt-2 p-3 rounded-lg border ${
-                                    validationResult.isValid 
-                                      ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' 
-                                      : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
-                                  }`}>
-                                    <div className="flex items-center space-x-2">
-                                      {validationResult.isValid ? (
-                                        <CheckCircle className="h-4 w-4 text-green-600" />
-                                      ) : (
-                                        <XCircle className="h-4 w-4 text-red-600" />
-                                      )}
-                                      <span className={`text-sm font-medium ${
-                                        validationResult.isValid 
-                                          ? 'text-green-800 dark:text-green-200' 
-                                          : 'text-red-800 dark:text-red-200'
-                                      }`}>
-                                        {validationResult.isValid ? 'Validation Successful' : 'Validation Failed'}
-                                      </span>
-                                    </div>
-                                    <p className={`text-xs mt-1 ${
-                                      validationResult.isValid 
-                                        ? 'text-green-700 dark:text-green-300' 
-                                        : 'text-red-700 dark:text-red-300'
-                                    }`}>
-                                      {validationResult.message}
-                                    </p>
-                                    {validationResult.priceData && (
-                                      <div className="mt-2 text-xs text-green-600 dark:text-green-400">
-                                        Current Price: ${validationResult.priceData.price} 
-                                        {validationResult.priceData.confidence && (
-                                          <span className="ml-2">
-                                            (±${validationResult.priceData.confidence} confidence)
-                                          </span>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded text-xs text-purple-800 dark:text-purple-200">
-                                <p className="font-medium mb-1">Pyth Network Benefits:</p>
-                                <ul className="space-y-0.5">
-                                  <li>• Sub-second price updates</li>
-                                  <li>• Institutional-grade data quality</li>
-                                  <li>• Confidence intervals for accuracy</li>
-                                  <li>• Real-time market data</li>
-                                </ul>
-                              </div>
-                              
-                              {/* Validation Required Notice */}
-                              {!validationResult?.isValid && (
-                                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 rounded-lg">
-                                  <div className="flex items-center space-x-2">
-                                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                                    <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                                      Validasi Diperlukan
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                                    Silakan validasi Pyth Feed ID terlebih dahulu sebelum menambahkan cryptocurrency ke database.
-                                  </p>
-                                </div>
+                      <div className="space-y-4">
+                        {/* Feed ID Input & Validate */}
+                        <div className="flex space-x-2">
+                          <Input
+                            id="pyth-feed-id"
+                            placeholder="Enter Pyth Feed ID (0x...)"
+                            value={pythFeedId}
+                            onChange={(e) => {
+                              setPythFeedId(e.target.value);
+                              setValidationResult(null);
+                            }}
+                            className="flex-1 h-10"
+                            required
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleValidatePyth}
+                            disabled={!pythFeedId.trim() || validatePythMutation.isPending}
+                            className="bg-purple-600 hover:bg-purple-700 px-6 h-10"
+                          >
+                            {validatePythMutation.isPending ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Validate"
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* Validation Results */}
+                        {validationResult && (
+                          <div className={`p-4 rounded-lg border ${
+                            validationResult.isValid 
+                              ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
+                              : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+                          }`}>
+                            <div className="flex items-center space-x-2 mb-2">
+                              {validationResult.isValid ? (
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                              ) : (
+                                <XCircle className="h-5 w-5 text-red-600" />
                               )}
+                              <span className={`font-medium ${
+                                validationResult.isValid 
+                                  ? 'text-green-800 dark:text-green-200' 
+                                  : 'text-red-800 dark:text-red-200'
+                              }`}>
+                                {validationResult.isValid ? '✅ Valid Pyth Feed ID' : '❌ Validation Failed'}
+                              </span>
                             </div>
+                            <p className={`text-sm ${
+                              validationResult.isValid 
+                                ? 'text-green-700 dark:text-green-300' 
+                                : 'text-red-700 dark:text-red-300'
+                            }`}>
+                              {validationResult.message}
+                            </p>
+                            {validationResult.priceData && (
+                              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-green-600 dark:text-green-400">
+                                <div>💰 Price: ${validationResult.priceData.price}</div>
+                                <div>📊 Confidence: ±${validationResult.priceData.confidence}</div>
+                                <div>🕒 Updated: {new Date(validationResult.priceData.publishTime * 1000).toLocaleTimeString()}</div>
+                              </div>
+                            )}
                           </div>
+                        )}
+
+                        {!validationResult?.isValid && (
+                          <div className="p-4 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                              <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                                ⚠️ Validasi Diperlukan
+                              </span>
+                            </div>
+                            <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                              Silakan validasi Pyth Feed ID terlebih dahulu sebelum menambahkan cryptocurrency.
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 p-3 rounded-lg">
+                          <p className="mb-1">💡 <strong>Find Pyth Feed IDs:</strong> pyth.network/developers/price-feed-ids</p>
+                          <p className="opacity-80">🎯 Benefits: Sub-second updates • Enterprise data • Confidence intervals</p>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Add Cryptocurrency Button */}
-                      <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                        <Button 
-                          type="submit" 
-                          className={`w-full h-12 ${
-                            !validationResult?.isValid 
-                              ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50' 
-                              : validationResult?.isValid 
-                              ? 'bg-green-600 hover:bg-green-700' 
-                              : ''
-                          }`}
-                          disabled={addCryptoMutation.isPending || !validationResult?.isValid}
-                        >
-                          {addCryptoMutation.isPending ? (
-                            <div className="flex items-center space-x-2">
-                              <RefreshCw className="h-4 w-4 animate-spin" />
-                              <span>Adding Cryptocurrency...</span>
-                            </div>
-                          ) : !validationResult?.isValid ? (
-                            <div className="flex items-center space-x-2">
-                              <AlertTriangle className="h-4 w-4" />
-                              <span>Validation Required</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center space-x-2">
-                              <Plus className="h-4 w-4" />
-                              <span>Add Cryptocurrency</span>
-                            </div>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
+                    {/* Submit Button */}
+                    <Button 
+                      type="submit" 
+                      className={`w-full h-12 text-base font-medium ${
+                        !validationResult?.isValid 
+                          ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50' 
+                          : 'bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all'
+                      }`}
+                      disabled={addCryptoMutation.isPending || !validationResult?.isValid}
+                    >
+                      {addCryptoMutation.isPending ? (
+                        <div className="flex items-center space-x-2">
+                          <RefreshCw className="h-5 w-5 animate-spin" />
+                          <span>Adding Cryptocurrency...</span>
+                        </div>
+                      ) : !validationResult?.isValid ? (
+                        <div className="flex items-center space-x-2">
+                          <AlertTriangle className="h-5 w-5" />
+                          <span>Validation Required</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <Plus className="h-5 w-5" />
+                          <span>Add Cryptocurrency to Database</span>
+                        </div>
+                      )}
+                    </Button>
                   </form>
-                  
-                  {/* Help Section */}
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How to find Pyth Price Feed IDs:</h4>
-                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                      <li>1. Visit pyth.network/developers/price-feed-ids</li>
-                      <li>2. Search for your cryptocurrency in the list</li>
-                      <li>3. Copy the 64-character hex string (starting with 0x)</li>
-                    </ul>
-                    <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded">
-                      <p className="text-xs text-yellow-800 dark:text-yellow-200 font-medium mb-2">Example Pyth Feed IDs:</p>
-                      <div className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
-                        <div>• Bitcoin: 0xe62df6c8b4c85672d3ce6c62b8b6e2b8b4c85672d3ce6c62b8...</div>
-                        <div>• Ethereum: 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665...</div>
-                        <div>• Solana: 0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc...</div>
-                        <span>• Shiba Inu: "shiba-inu"</span>
-                      </div>
-                    </div>
-                    
-                    {/* Pyth Network Notice */}
-                    <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 border border-purple-200 dark:border-purple-800 rounded">
-                      <div className="flex items-center mb-2">
-                        <Zap className="h-4 w-4 text-purple-600 mr-2" />
-                        <p className="text-xs text-purple-800 dark:text-purple-200 font-medium">Pyth Network Integration</p>
-                      </div>
-                      <p className="text-xs text-purple-700 dark:text-purple-300">
-                        Bitcoin, Ethereum, Solana, BNB, and Cardano automatically get enhanced with institutional-grade Pyth Network data for Live Prices display.
-                      </p>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
