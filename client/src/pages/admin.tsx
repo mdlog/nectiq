@@ -3564,8 +3564,22 @@ export default function AdminPanel() {
   const handleAddCrypto = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🚨 [EMERGENCY-FINAL] DOM extraction approach starting...');
+    
+    // EMERGENCY: Get values directly from DOM instead of React state
+    const form = e.target as HTMLFormElement;
+    const formInputs = {
+      cryptoId: (form.querySelector('input[placeholder*="hyperliquid"]') as HTMLInputElement)?.value || newCryptoId,
+      name: (form.querySelector('input[placeholder*="Hyperliquid"]') as HTMLInputElement)?.value || newCryptoName,
+      symbol: (form.querySelector('input[placeholder*="HYPE"]') as HTMLInputElement)?.value || newCryptoSymbol,
+      pythFeedId: pythFeedInputRef.current?.value || pythFeedId
+    };
+    
+    console.log('🚨 [EMERGENCY-FINAL] Extracted values:', formInputs);
+    console.log('🚨 [EMERGENCY-FINAL] React state values:', { newCryptoId, newCryptoName, newCryptoSymbol, pythFeedId });
+    
     // Validation for Pyth-only integration
-    if (!newCryptoId.trim()) {
+    if (!formInputs.cryptoId.trim()) {
       toast({
         title: "Error",
         description: "Please enter a cryptocurrency ID",
@@ -3574,7 +3588,7 @@ export default function AdminPanel() {
       return;
     }
 
-    if (!newCryptoName.trim()) {
+    if (!formInputs.name.trim()) {
       toast({
         title: "Error",
         description: "Please enter the cryptocurrency name",
@@ -3583,7 +3597,7 @@ export default function AdminPanel() {
       return;
     }
 
-    if (!newCryptoSymbol.trim()) {
+    if (!formInputs.symbol.trim()) {
       toast({
         title: "Error",
         description: "Please enter the cryptocurrency symbol",
@@ -3592,7 +3606,7 @@ export default function AdminPanel() {
       return;
     }
 
-    if (!pythFeedId.trim()) {
+    if (!formInputs.pythFeedId.trim()) {
       toast({
         title: "Error",
         description: "Pyth Feed ID is required for all cryptocurrencies",
@@ -3601,7 +3615,7 @@ export default function AdminPanel() {
       return;
     }
     
-    if (!pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+    if (!formInputs.pythFeedId.startsWith('0x') || formInputs.pythFeedId.length !== 66) {
       toast({
         title: "Error",
         description: "Pyth Feed ID must be a 64-character hex string starting with '0x'",
@@ -3621,10 +3635,10 @@ export default function AdminPanel() {
     }
 
     const mutationData = {
-      cryptoId: newCryptoId.trim().toLowerCase(),
-      name: newCryptoName.trim(),
-      symbol: newCryptoSymbol.trim().toUpperCase(),
-      pythFeedId: pythFeedId.trim()
+      cryptoId: formInputs.cryptoId.trim().toLowerCase(),
+      name: formInputs.name.trim(),
+      symbol: formInputs.symbol.trim().toUpperCase(),
+      pythFeedId: formInputs.pythFeedId.trim()
     };
 
     addCryptoMutation.mutate(mutationData);
@@ -4613,12 +4627,14 @@ export default function AdminPanel() {
                           type="button"
                           size="sm"
                           onClick={() => {
-                            const testValue = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+                            // Hyperliquid example Feed ID (64-character hex with 0x prefix = 66 total)
+                            const testValue = "0xe30c13c424f1ee0e2fd55c78bd3f8e0eb4fad7de7be9f9f98a2bf7afc0c3ac6e";
                             setPythFeedId(testValue);
                             if (pythFeedInputRef.current) {
                               pythFeedInputRef.current.value = testValue;
                             }
-                            console.log('🚨 [EMERGENCY-SET] Set test value:', testValue);
+                            console.log('🚨 [EMERGENCY-SET] Set Hyperliquid test Feed ID:', testValue);
+                            console.log('🚨 [EMERGENCY-SET] Length:', testValue.length, 'characters');
                           }}
                           className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 h-6"
                         >
