@@ -5137,20 +5137,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Validate Pyth Feed ID format
-      if (!pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
-        console.log('❌ [ADMIN] Invalid Pyth Feed ID format:', pythFeedId, 'Length:', pythFeedId.length);
+      // Validate Pyth Feed ID format - CORRECTED: Remove 0x prefix check for new format
+      const feedIdWithoutPrefix = pythFeedId.startsWith('0x') ? pythFeedId.slice(2) : pythFeedId;
+      if (feedIdWithoutPrefix.length !== 64) {
+        console.log('❌ [ADMIN] Invalid Pyth Feed ID format:', pythFeedId, 'Length after removing 0x:', feedIdWithoutPrefix.length);
         return res.status(400).json({ 
-          message: "Invalid Pyth Feed ID format. Must be 64-character hex string starting with '0x'" 
+          message: "Invalid Pyth Feed ID format. Must be 64-character hex string (with or without 0x prefix)" 
         });
       }
+
+      // FIXED: Store Feed ID WITHOUT 0x prefix (as required by new system)
+      const normalizedFeedId = feedIdWithoutPrefix;
+      console.log('🔧 [ADMIN] Normalized Feed ID (without 0x):', normalizedFeedId);
 
       // PRE-VALIDATE PYTH NETWORK SUPPORT
       console.log('🔍 [ADMIN] Pre-validating Pyth Network support...');
       const { PythPriceService } = await import('./services/PythPriceService.js');
       const pythService = new PythPriceService();
       
-      const validation = await pythService.validatePythFeedId(pythFeedId);
+      const validation = await pythService.validatePythFeedId(normalizedFeedId);
       
       if (!validation.isValid) {
         console.log('❌ [ADMIN] Pyth Network validation failed - PREVENTING database insertion:', validation.error);
@@ -5161,57 +5166,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('✅ [ADMIN] Pyth Network validation successful - proceeding with database insertion');
 
-      // Create cryptocurrency data with provided information
+      // FIXED: Insert cryptocurrency directly into database with all fields including pyth_feed_id
       const cryptoData = {
         id: cryptoId.toLowerCase().trim(),
         name: name.trim(),
         symbol: symbol.toUpperCase().trim(),
-        currentPrice: 0, // Will be updated by Pyth Network
-        priceChange24h: 0, // Will be calculated by Pyth Network
+        image: `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId.toLowerCase()}.png`,
+        currentPrice: 0,
+        priceChange24h: 0,
+        pythFeedId: normalizedFeedId // Store without 0x prefix
       };
 
-      console.log('💾 [ADMIN] Creating cryptocurrency in database:', cryptoData);
-      const newCrypto = await storage.upsertCryptocurrency(cryptoData);
-      console.log('✅ [ADMIN] Database entry created:', newCrypto);
+      console.log('💾 [ADMIN] Inserting cryptocurrency directly into database:', cryptoData);
       
-      // Add to Pyth Network service (required for all cryptocurrencies)
-      try {
-        console.log('🔗 [ADMIN] Importing PythPriceService...');
-        const { PythPriceService } = await import('./services/PythPriceService.js');
-        console.log('✅ [ADMIN] PythPriceService imported successfully');
+      // Use direct database insertion instead of storage.upsertCryptocurrency
+      const [newCrypto] = await db
+        .insert(cryptocurrencies)
+        .values(cryptoData)
+        .returning();
         
-        const pythService = new PythPriceService();
-        console.log('✅ [ADMIN] PythPriceService instance created');
-        
-        // Add to Pyth service mappings
-        console.log('🔗 [ADMIN] Adding crypto to Pyth service:', cryptoId.toLowerCase(), pythFeedId);
-        pythService.addCryptocurrency(cryptoId.toLowerCase(), pythFeedId);
-        
-        auditLog('admin_crypto_pyth_integration', { 
-          cryptoId: newCrypto.id, 
-          pythFeedId,
-          status: 'success'
-        }, req);
-        
-        console.log(`✅ [ADMIN] Successfully added ${cryptoData.name} (${cryptoData.symbol}) with Pyth Network integration`);
-      } catch (pythError) {
-        console.error('❌ [ADMIN] Pyth integration failed:', pythError);
-        console.error('❌ [ADMIN] Stack trace:', pythError.stack);
-        
-        // Remove the cryptocurrency if Pyth integration fails (since it's required)
-        await storage.deleteCryptocurrency(cryptoId.toLowerCase());
-        
-        auditLog('admin_crypto_pyth_integration', { 
-          cryptoId: newCrypto.id, 
-          pythFeedId,
-          status: 'failed',
-          error: pythError.message
-        }, req);
-        
-        return res.status(500).json({ 
-          message: `Failed to add Pyth Network integration: ${pythError.message}` 
-        });
-      }
+      console.log('✅ [ADMIN] Database entry created successfully:', newCrypto);
+      
+      // Clear PythPriceService cache to load new cryptocurrency
+      console.log('🧹 [ADMIN] Clearing PythPriceService cache...');
+      pythService.clearCache();
+      console.log('✅ [ADMIN] PythPriceService cache cleared');
       
       // Clear crypto service cache so new cryptocurrency appears immediately
       console.log('🧹 [ADMIN] Clearing crypto service cache...');
@@ -5222,15 +5201,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cryptoId: newCrypto.id, 
         name: newCrypto.name,
         symbol: newCrypto.symbol,
-        source: 'pyth_network_only',
-        pythFeedId
+        source: 'pyth_network_dynamic',
+        pythFeedId: normalizedFeedId
       }, req);
       
+      // Return success response
       console.log('🎉 [ADMIN] Cryptocurrency addition completed successfully');
       res.json({
-        ...newCrypto,
-        pythIntegration: true,
-        pythFeedId
+        success: true,
+        message: `Successfully added ${name} (${symbol.toUpperCase()}) with Pyth Network integration`,
+        cryptocurrency: newCrypto
       });
     } catch (error) {
       console.error("❌ [ADMIN] Error adding cryptocurrency:", error);
