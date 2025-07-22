@@ -48,8 +48,22 @@ interface PredictionFormProps {
 
 export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: PredictionFormProps) {
   const [selectedStake, setSelectedStake] = useState<number | null>(null);
+  const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch live Pyth Network prices for real-time updates
+  const { data: livePrices, isLoading: pricesLoading } = useQuery({
+    queryKey: ["/api/crypto/prices"],
+    refetchInterval: 3000, // Update every 3 seconds for live prices
+    select: (data: any[]) => {
+      const priceMap: Record<string, number> = {};
+      data.forEach(crypto => {
+        priceMap[crypto.id] = crypto.current_price;
+      });
+      return priceMap;
+    }
+  });
 
   // Fetch available cryptocurrencies from database
   const { data: availableCryptos, isLoading: cryptosLoading } = useQuery({
@@ -59,6 +73,13 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
       label: `${crypto.name} (${crypto.symbol})`
     }))
   });
+
+  // Update current prices when live prices change
+  useEffect(() => {
+    if (livePrices) {
+      setCurrentPrices(livePrices);
+    }
+  }, [livePrices]);
 
   // Create dynamic schema based on available cryptocurrencies
   const cryptoIds = availableCryptos?.map(crypto => crypto.value) || [];
@@ -88,6 +109,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
         body: JSON.stringify({
           ...data,
           predictedPrice: parseFloat(data.predictedPrice),
+          currentPrice: currentPrices[data.cryptocurrency] || 0, // Include live Pyth price
         }),
       });
       
@@ -268,7 +290,17 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
             name="predictedPrice"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-slate-300">Predicted Price (USD)</FormLabel>
+                <FormLabel className="text-slate-300 flex items-center justify-between">
+                  Predicted Price (USD)
+                  {form.watch('cryptocurrency') && currentPrices[form.watch('cryptocurrency')] && (
+                    <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
+                      Live: ${currentPrices[form.watch('cryptocurrency')].toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 8
+                      })}
+                    </div>
+                  )}
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
                     <span className="absolute left-3 top-3 text-slate-400">$</span>

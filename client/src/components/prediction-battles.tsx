@@ -249,6 +249,7 @@ export function PredictionBattles() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [joiningBattle, setJoiningBattle] = useState<Battle | null>(null);
   const [joinPrediction, setJoinPrediction] = useState<number>(0);
+  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [createForm, setCreateForm] = useState<CreateBattleForm>({
     cryptocurrency: '',
     timeframe: '',
@@ -272,22 +273,39 @@ export function PredictionBattles() {
     refetchInterval: 5000 // Update every 5 seconds
   });
 
-  // Fetch crypto prices for logo URLs and real-time prices
-  const { data: cryptoPricesData } = useQuery({
+  // Fetch live Pyth Network prices for real-time updates
+  const { data: pythPrices } = useQuery({
     queryKey: ['/api/crypto/prices'],
-    refetchInterval: 1000 // Update every 1 second for real-time prices
+    refetchInterval: 3000, // Update every 3 seconds for live Pyth prices
+    select: (data: any[]) => {
+      const priceMap: Record<string, number> = {};
+      data.forEach(crypto => {
+        priceMap[crypto.id] = crypto.current_price;
+      });
+      return priceMap;
+    }
   });
+
+  // Update live prices when Pyth prices change
+  useEffect(() => {
+    if (pythPrices) {
+      setLivePrices(pythPrices);
+    }
+  }, [pythPrices]);
 
   // Fetch cryptocurrencies for create form
   const { data: cryptos = [] } = useQuery({
     queryKey: ['/api/crypto/prices']
   });
 
-  // Create battle mutation
+  // Create battle mutation with live Pyth prices
   const createBattleMutation = useMutation({
     mutationFn: (data: CreateBattleForm) => apiRequest('/api/battles/create', {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify({
+        ...data,
+        currentPrice: livePrices[data.cryptocurrency] || 0 // Include live Pyth price
+      })
     }),
     onSuccess: () => {
       toast({
@@ -780,7 +798,17 @@ export function PredictionBattles() {
               </div>
               
               <div>
-                <label className="text-sm font-medium">Your Prediction ($)</label>
+                <label className="text-sm font-medium flex items-center justify-between">
+                  Your Prediction ($)
+                  {createForm.cryptocurrency && livePrices[createForm.cryptocurrency] && (
+                    <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
+                      Live: ${livePrices[createForm.cryptocurrency].toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 8
+                      })}
+                    </div>
+                  )}
+                </label>
                 <Input
                   type="number"
                   min="0"
@@ -887,13 +915,21 @@ export function PredictionBattles() {
                 </div>
                 
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="text-sm text-muted-foreground">Current Price</div>
-                  <div className="text-3xl font-bold">${selectedBattle.currentPrice.toLocaleString('en-US', { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
-                  })}</div>
+                  <div className="text-sm text-muted-foreground">Current Price (Live Pyth)</div>
+                  <div className="text-3xl font-bold">
+                    ${(() => {
+                      const livePrice = livePrices[selectedBattle.cryptocurrency] || selectedBattle.currentPrice;
+                      return livePrice.toLocaleString('en-US', { 
+                        minimumFractionDigits: 2, 
+                        maximumFractionDigits: 8 
+                      });
+                    })()}
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     <CountdownTimer targetTime={selectedBattle.targetTime} /> remaining
+                  </div>
+                  <div className="text-xs text-green-400 mt-1">
+                    Real-time Pyth Network feed
                   </div>
                 </div>
 
@@ -1016,7 +1052,17 @@ export function PredictionBattles() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Your Price Prediction (USD)</label>
+                <label className="text-sm font-medium flex items-center justify-between">
+                  Your Price Prediction (USD)
+                  {joiningBattle && livePrices[joiningBattle.cryptocurrency] && (
+                    <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
+                      Live: ${livePrices[joiningBattle.cryptocurrency].toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 8
+                      })}
+                    </div>
+                  )}
+                </label>
                 <Input
                   type="number"
                   placeholder="Enter your price prediction..."

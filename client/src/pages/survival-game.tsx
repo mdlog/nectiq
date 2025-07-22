@@ -129,11 +129,11 @@ const SurvivalGame = () => {
     retry: false
   });
 
-  // Fetch crypto prices (reduced frequency to avoid rate limits)
+  // Fetch live Pyth Network prices for survival gameplay
   const { data: cryptoPrices = [] } = useQuery<CryptoPrice[]>({
     queryKey: ['/api/crypto/prices'],
-    refetchInterval: 10000, // Refresh every 10 seconds instead of 2
-    staleTime: 5000, // Data considered fresh for 5 seconds
+    refetchInterval: 3000, // Refresh every 3 seconds for live Pyth Network data
+    staleTime: 1000, // Data considered fresh for 1 second
     retry: 2,
   });
 
