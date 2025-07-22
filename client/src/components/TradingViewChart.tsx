@@ -267,7 +267,7 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
                   <div className="flex items-center space-x-1">
                     <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                     <span className="text-green-400 text-xs">
-                      Sinkron dengan Live Prices
+                      Real-time
                     </span>
                   </div>
                 </div>
