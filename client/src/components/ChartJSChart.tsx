@@ -286,10 +286,14 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
           callback: function(value: any) {
             return '$' + value.toLocaleString();
           },
+          // Set step size to $1000
+          stepSize: 1000,
+          // Calculate max ticks based on price range
+          maxTicksLimit: 8,
         },
-        // Set realistic min/max based on current price
-        min: cryptoInfo ? cryptoInfo.current_price * 0.75 : undefined,
-        max: cryptoInfo ? cryptoInfo.current_price * 1.25 : undefined,
+        // Set realistic min/max based on current price with $1000 intervals
+        min: cryptoInfo ? Math.floor(cryptoInfo.current_price * 0.75 / 1000) * 1000 : undefined,
+        max: cryptoInfo ? Math.ceil(cryptoInfo.current_price * 1.25 / 1000) * 1000 : undefined,
       },
       // Add right Y-axis for live price
       y1: {
@@ -314,9 +318,9 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
             size: 12
           }
         },
-        // Match the left axis scale
-        min: cryptoInfo ? cryptoInfo.current_price * 0.75 : undefined,
-        max: cryptoInfo ? cryptoInfo.current_price * 1.25 : undefined,
+        // Match the left axis scale with $1000 intervals
+        min: cryptoInfo ? Math.floor(cryptoInfo.current_price * 0.75 / 1000) * 1000 : undefined,
+        max: cryptoInfo ? Math.ceil(cryptoInfo.current_price * 1.25 / 1000) * 1000 : undefined,
       },
     },
   };
