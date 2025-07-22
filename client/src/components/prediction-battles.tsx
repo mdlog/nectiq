@@ -625,42 +625,37 @@ export function PredictionBattles() {
             <span>Current Price</span>
             <span className="font-semibold">
               ${(() => {
-                // FORCE USE CACHE DATA - Directly access Live Prices cache
-                const cacheData = livePricesFromCache.length > 0 ? livePricesFromCache : cryptoPricesData;
-                console.log('🔍 [CACHE-CHECK] Cache data length:', livePricesFromCache.length, 'Query data length:', cryptoPricesData.length);
-                
-                const livePriceCrypto = cacheData.find(c => c.id === battle.cryptocurrency);
-                if (livePriceCrypto && livePriceCrypto.current_price) {
-                  console.log('💰 [CACHE-EXACT] Using cached data:', livePriceCrypto.current_price, 'for', battle.cryptocurrency);
-                  console.log('🎯 [CACHE-SOURCE] Data source: livePricesFromCache.length =', livePricesFromCache.length);
-                  return livePriceCrypto.current_price.toLocaleString(undefined, { 
+                // CRITICAL FIX: FORCE EXACT SAME PRICE AS LIVE PRICES
+                // Use getRealTimePrice function for consistency
+                const livePrice = getRealTimePrice(battle.cryptocurrency);
+                if (livePrice) {
+                  console.log('💰 [BATTLE-SYNC] Using getRealTimePrice:', livePrice, 'for', battle.cryptocurrency);
+                  return livePrice.toLocaleString(undefined, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   });
                 } else {
-                  console.log('🔴 [CACHE-FALLBACK] Using database price:', battle.currentPrice, 'cache not available');
+                  console.log('🔴 [BATTLE-FALLBACK] Using database price:', battle.currentPrice, 'getRealTimePrice failed');
                   return battle.currentPrice.toLocaleString(undefined, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   });
                 }
               })()} 
-              {/* Debug: Show data source with update timer */}
+              {/* Debug: Show data source and sync status */}
               <span className="text-xs ml-1 flex items-center gap-1">
-                {cryptoPricesData.find(c => c.id === battle.cryptocurrency) ? '🟢 LIVE' : '🔴 DB'}
+                {getRealTimePrice(battle.cryptocurrency) ? '🟢 SYNC' : '🔴 DB'}
                 <span className="animate-pulse text-green-400">●</span>
                 <span className="text-xs text-muted-foreground">
-                  {new Date(dataUpdatedAt).toLocaleTimeString().slice(-8)}
+                  Live Prices
                 </span>
               </span>
             </span>
           </div>
           
           {battle.challengerPrediction && battle.challengedPrediction && (() => {
-            // PROBABILITY CALCULATION USES CACHE DATA
-            const cacheData = livePricesFromCache.length > 0 ? livePricesFromCache : cryptoPricesData;
-            const livePriceCrypto = cacheData.find(c => c.id === battle.cryptocurrency);
-            const currentPrice = (livePriceCrypto && livePriceCrypto.current_price) ? livePriceCrypto.current_price : battle.currentPrice;
+            // PROBABILITY CALCULATION USES getRealTimePrice FOR CONSISTENCY
+            const currentPrice = getRealTimePrice(battle.cryptocurrency) || battle.currentPrice;
             const battleWithRealTimePrice = { ...battle, currentPrice };
             const probability = calculateWinProbability(battleWithRealTimePrice);
             
