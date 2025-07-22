@@ -99,6 +99,8 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   const bitcoinPrice = prices.find(c => c.id === 'bitcoin')?.current_price;
   if (bitcoinPrice) {
     console.log('🟢 [LIVE-PRICES] Bitcoin price:', bitcoinPrice, 'at', new Date().toLocaleTimeString());
+    console.log('📊 [LIVE-PRICES-DEBUG] Full price data length:', prices?.length);
+    console.log('🎯 [LIVE-PRICES-DEBUG] Query dataUpdatedAt:', new Date(dataUpdatedAt).toLocaleTimeString());
   }
 
   // Add visual indicator for when data was last updated

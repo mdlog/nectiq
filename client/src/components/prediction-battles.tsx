@@ -287,16 +287,15 @@ export function PredictionBattles() {
     refetchIntervalInBackground: true, // Background updates for battles
   });
 
-  // Fetch live Pyth Network prices - ULTRA-FAST UPDATES MATCHING LIVE PRICES
+  // Fetch live Pyth Network prices - EXACTLY MATCHING LIVE PRICES SETTINGS
   const { data: cryptoPricesData = [], isLoading: pricesLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/pyth-prices"], // EXACT same queryKey format as Live Prices
-    refetchInterval: 1000, // ULTRA-FAST 1 second updates - same as Live Prices
-    refetchIntervalInBackground: true, // Background updates enabled
-    staleTime: 100, // REDUCED stale time from 500ms to 100ms for fresher data
-    gcTime: 1000, // Garbage collection time reduced for faster updates
-    retry: 3, // Retry attempts for reliability
-    refetchOnWindowFocus: true, // Refresh when window gets focus
-    refetchOnMount: true, // Refresh on component mount
+    refetchInterval: 1000, // EXACT same as Live Prices - 1 second updates
+    refetchIntervalInBackground: true, // EXACT same as Live Prices
+    staleTime: 500, // EXACT same as Live Prices - 500ms stale time  
+    retry: 3, // EXACT same as Live Prices
+    refetchOnWindowFocus: true, // EXACT same as Live Prices
+    refetchOnMount: true, // EXACT same as Live Prices
   });
 
 
@@ -479,21 +478,20 @@ export function PredictionBattles() {
 
   // Get real-time crypto price from live data - ENHANCED WITH DEBUG
   const getRealTimePrice = (cryptoId: string) => {
-    console.log('🔍 [DEBUG] getRealTimePrice called for:', cryptoId);
-    console.log('🔍 [DEBUG] cryptoPricesData available:', cryptoPricesData?.length, 'items');
+    console.log('🔍 [BATTLE-DEBUG] getRealTimePrice called for:', cryptoId);
+    console.log('🔍 [BATTLE-DEBUG] cryptoPricesData available:', cryptoPricesData?.length, 'items');
     
     if (cryptoPricesData && Array.isArray(cryptoPricesData) && cryptoPricesData.length > 0) {
-      console.log('🔍 [DEBUG] All available crypto IDs:', cryptoPricesData.map(c => c.id));
-      
       const crypto = cryptoPricesData.find((c: CryptoPrice) => c.id === cryptoId);
       if (crypto && crypto.current_price) {
-        console.log('🟢 [DEBUG] FOUND live price for', cryptoId, ':', crypto.current_price);
+        console.log('🟢 [BATTLE-DEBUG] FOUND live price for', cryptoId, ':', crypto.current_price);
+        console.log('💰 [BATTLE-PRICE] Battles component Bitcoin price:', crypto.current_price);
         return crypto.current_price;
       } else {
-        console.log('🔴 [DEBUG] NOT FOUND crypto for', cryptoId);
+        console.log('🔴 [BATTLE-DEBUG] NOT FOUND crypto for', cryptoId);
       }
     }
-    console.log('🔴 [DEBUG] Returning null for', cryptoId);
+    console.log('🔴 [BATTLE-DEBUG] Returning null for', cryptoId);
     return null;
   };
 
@@ -624,22 +622,25 @@ export function PredictionBattles() {
             <span>Current Price</span>
             <span className="font-semibold">
               ${(() => {
-                // FORCE LIVE PRICE - Always use Pyth Network data if available
-                const realTimePrice = getRealTimePrice(battle.cryptocurrency);
-                console.log('🔍 [BATTLE-PRICE] Crypto:', battle.cryptocurrency, 'LivePrice:', realTimePrice, 'DatabasePrice:', battle.currentPrice);
-                
-                // Use live price if available, otherwise fallback to database
-                const finalPrice = realTimePrice !== null ? realTimePrice : battle.currentPrice;
-                console.log('🎯 [BATTLE-PRICE] Final price displayed:', finalPrice);
-                
-                return finalPrice.toLocaleString(undefined, { 
-                  minimumFractionDigits: 2, 
-                  maximumFractionDigits: 2 
-                });
+                // DIRECT ACCESS TO LIVE PRICES DATA - No helper function
+                const livePriceCrypto = cryptoPricesData.find(c => c.id === battle.cryptocurrency);
+                if (livePriceCrypto && livePriceCrypto.current_price) {
+                  console.log('💰 [DIRECT-LIVE] Using Live Prices data:', livePriceCrypto.current_price, 'for', battle.cryptocurrency);
+                  return livePriceCrypto.current_price.toLocaleString(undefined, { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  });
+                } else {
+                  console.log('🔴 [DIRECT-DB] Using database price:', battle.currentPrice, 'for', battle.cryptocurrency);
+                  return battle.currentPrice.toLocaleString(undefined, { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  });
+                }
               })()} 
               {/* Debug: Show data source with update timer */}
               <span className="text-xs ml-1 flex items-center gap-1">
-                {getRealTimePrice(battle.cryptocurrency) !== null ? '🟢 LIVE' : '🔴 DB'}
+                {cryptoPricesData.find(c => c.id === battle.cryptocurrency) ? '🟢 LIVE' : '🔴 DB'}
                 <span className="animate-pulse text-green-400">●</span>
                 <span className="text-xs text-muted-foreground">
                   {new Date(dataUpdatedAt).toLocaleTimeString().slice(-8)}
@@ -649,9 +650,9 @@ export function PredictionBattles() {
           </div>
           
           {battle.challengerPrediction && battle.challengedPrediction && (() => {
-            // Use real-time price for probability calculation
-            const realTimePrice = getRealTimePrice(battle.cryptocurrency);
-            const currentPrice = realTimePrice || battle.currentPrice;
+            // DIRECT ACCESS FOR PROBABILITY CALCULATION
+            const livePriceCrypto = cryptoPricesData.find(c => c.id === battle.cryptocurrency);
+            const currentPrice = (livePriceCrypto && livePriceCrypto.current_price) ? livePriceCrypto.current_price : battle.currentPrice;
             const battleWithRealTimePrice = { ...battle, currentPrice };
             const probability = calculateWinProbability(battleWithRealTimePrice);
             
@@ -955,17 +956,21 @@ export function PredictionBattles() {
                   <div className="text-sm text-muted-foreground">Current Price (Live Pyth)</div>
                   <div className="text-3xl font-bold">
                     ${(() => {
-                      // FORCE CONSISTENT PRICING - Use same getRealTimePrice function
-                      const realTimePrice = getRealTimePrice(selectedBattle.cryptocurrency);
-                      console.log('🔍 [DIALOG-PRICE] Crypto:', selectedBattle.cryptocurrency, 'LivePrice:', realTimePrice, 'DatabasePrice:', selectedBattle.currentPrice);
-                      
-                      const finalPrice = realTimePrice !== null ? realTimePrice : selectedBattle.currentPrice;
-                      console.log('🎯 [DIALOG-PRICE] Final price displayed:', finalPrice);
-                      
-                      return parseFloat(finalPrice.toString()).toLocaleString(undefined, { 
-                        minimumFractionDigits: 2, 
-                        maximumFractionDigits: 2 
-                      });
+                      // DIRECT ACCESS TO LIVE PRICES DATA FOR DIALOG
+                      const livePriceCrypto = cryptoPricesData.find(c => c.id === selectedBattle.cryptocurrency);
+                      if (livePriceCrypto && livePriceCrypto.current_price) {
+                        console.log('💰 [DIALOG-LIVE] Using Live Prices data:', livePriceCrypto.current_price);
+                        return parseFloat(livePriceCrypto.current_price.toString()).toLocaleString(undefined, { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        });
+                      } else {
+                        console.log('🔴 [DIALOG-DB] Using database price:', selectedBattle.currentPrice);
+                        return parseFloat(selectedBattle.currentPrice.toString()).toLocaleString(undefined, { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        });
+                      }
                     })()}
                   </div>
                   <div className="text-sm text-muted-foreground">
