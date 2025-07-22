@@ -338,7 +338,7 @@ const PythNetworkChart = ({
       ctx.setLineDash([]);
       
       // Current price label on right with background - positioned safely within canvas
-      const priceText = `$${currentPythData.current_price.toFixed(0)}`;
+      const priceText = `$${currentPythData.current_price.toFixed(2)}`;
       ctx.font = 'bold 11px monospace';
       const textWidth = ctx.measureText(priceText).width;
       
@@ -370,10 +370,8 @@ const PythNetworkChart = ({
   };
 
   const formatPrice = (price: number) => {
-    if (price < 1) return price.toFixed(8);
-    if (price < 100) return price.toFixed(6);
-    if (price < 10000) return price.toFixed(2);
-    return price.toFixed(0);
+    // Always use 2 decimal places to match live prices format
+    return price.toFixed(2);
   };
 
   const getPriceChange = () => {
