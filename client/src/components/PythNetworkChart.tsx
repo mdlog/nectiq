@@ -422,9 +422,9 @@ const PythNetworkChart = ({
               </div>
             )}
             
-            {/* Chart Info Overlay - Moved to top right */}
+            {/* Chart Info Overlay - Moved to top right with transparent background */}
             {currentPythData && (
-              <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 text-xs">
+              <div className="absolute top-4 right-4 bg-transparent backdrop-blur-sm rounded-lg p-3 text-xs">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Activity size={12} className="text-green-400" />
