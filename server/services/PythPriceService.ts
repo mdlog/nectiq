@@ -1,5 +1,5 @@
 import { HermesClient } from "@pythnetwork/hermes-client";
-import { CryptoPrice } from "@shared/schema";
+import { CryptoPrice } from "./cryptoService";
 
 export interface PythPriceData {
   id: string;
@@ -33,8 +33,8 @@ export class PythPriceService {
     'binancecoin': '0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f',
     'solana': '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
     'cardano': '0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d',
-    // Contoh: Tambah Dogecoin dengan Pyth Price Feed ID
-    'dogecoin': '0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c'
+    'dogecoin': '0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c',
+    'ripple': '0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8'
   };
 
   private cryptoMapping: Record<string, { name: string; symbol: string; image: string }> = {
@@ -43,8 +43,8 @@ export class PythPriceService {
     'binancecoin': { name: 'BNB', symbol: 'BNB', image: 'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png' },
     'solana': { name: 'Solana', symbol: 'SOL', image: 'https://coin-images.coingecko.com/coins/images/4128/large/solana.png' },
     'cardano': { name: 'Cardano', symbol: 'ADA', image: 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png' },
-    // Contoh: Tambah Dogecoin
-    'dogecoin': { name: 'Dogecoin', symbol: 'DOGE', image: 'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png' }
+    'dogecoin': { name: 'Dogecoin', symbol: 'DOGE', image: 'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png' },
+    'ripple': { name: 'Ripple', symbol: 'XRP', image: 'https://coin-images.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png' }
   };
 
   constructor() {
