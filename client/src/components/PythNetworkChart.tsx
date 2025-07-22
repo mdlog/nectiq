@@ -489,7 +489,7 @@ const PythNetworkChart = ({
                     <span className="text-green-400 font-semibold">Pyth Network Live Feed</span>
                   </div>
                   <div className="text-gray-300">
-                    Price: ${currentPythData.current_price.toFixed(8)}
+                    Price: ${currentPythData.current_price.toFixed(2)}
                   </div>
                   <div className="text-gray-300">
                     Update: Every 3s
