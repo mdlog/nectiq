@@ -4559,7 +4559,7 @@ export default function AdminPanel() {
                           <div className="flex items-center space-x-4">
                             <div className="relative w-10 h-10 flex-shrink-0">
                               <img 
-                                src={crypto.image || getCryptoImageUrl(crypto.id)}
+                                src={crypto.image || ''}
                                 alt={crypto.name}
                                 className="w-10 h-10 rounded-full object-cover"
                                 onError={(e) => {
