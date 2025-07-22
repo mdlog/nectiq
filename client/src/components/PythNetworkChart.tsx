@@ -214,13 +214,15 @@ const PythNetworkChart = ({
       });
     }
 
-    // Draw realistic price line with time-based positioning
+    // Draw smooth price line with gradient effect
     ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.beginPath();
     
+    // Create smooth line connecting all price points
     priceHistory.forEach((data, index) => {
-      // Position based on actual data point index (representing 12-hour intervals)
       const x = leftMargin + (index / Math.max(priceHistory.length - 1, 1)) * chartWidth;
       const y = topMargin + (chartHeight - ((data.price - paddedMinPrice) / paddedRange) * chartHeight);
       
@@ -229,19 +231,38 @@ const PythNetworkChart = ({
       } else {
         ctx.lineTo(x, y);
       }
-      
-      // Draw subtle data point markers
-      ctx.save();
-      ctx.fillStyle = '#10b981';
-      ctx.beginPath();
-      ctx.arc(x, y, 2, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.restore();
     });
 
+    // Draw the main price line
     ctx.stroke();
     
-    console.log(`[PYTH-CHART] Drew price line with ${priceHistory.length} data points representing ${priceHistory.length * 12} hours of market data`);
+    // Optional: Add gradient fill under the line for better visual appeal
+    if (priceHistory.length > 1) {
+      const gradient = ctx.createLinearGradient(0, topMargin, 0, height - bottomMargin);
+      gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+      gradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      
+      // Start from bottom left
+      ctx.moveTo(leftMargin, height - bottomMargin);
+      
+      // Draw along the price line
+      priceHistory.forEach((data, index) => {
+        const x = leftMargin + (index / Math.max(priceHistory.length - 1, 1)) * chartWidth;
+        const y = topMargin + (chartHeight - ((data.price - paddedMinPrice) / paddedRange) * chartHeight);
+        ctx.lineTo(x, y);
+      });
+      
+      // Close the path at bottom right
+      const lastX = leftMargin + chartWidth;
+      ctx.lineTo(lastX, height - bottomMargin);
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    console.log(`[PYTH-CHART] Drew smooth price line with ${priceHistory.length} data points representing ${priceHistory.length * 12} hours of market data`);
 
     // Draw confidence intervals if available
     const latestData = priceHistory[priceHistory.length - 1];
