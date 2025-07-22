@@ -5066,11 +5066,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/admin/cryptocurrencies", requireAdmin, async (req, res) => {
+    console.log('🔧 [ADMIN] Add cryptocurrency request received:', req.body);
+    
     try {
       const { cryptoId, name, symbol, pythFeedId } = req.body;
       
       // Validate required fields for Pyth-only integration
       if (!cryptoId || !name || !symbol || !pythFeedId) {
+        console.log('❌ [ADMIN] Missing required fields:', { cryptoId, name, symbol, pythFeedId });
         return res.status(400).json({ 
           message: "cryptoId, name, symbol, and pythFeedId are required for Pyth Network integration" 
         });
@@ -5078,6 +5081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate Pyth Feed ID format
       if (!pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+        console.log('❌ [ADMIN] Invalid Pyth Feed ID format:', pythFeedId, 'Length:', pythFeedId.length);
         return res.status(400).json({ 
           message: "Invalid Pyth Feed ID format. Must be 64-character hex string starting with '0x'" 
         });
@@ -5092,14 +5096,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         priceChange24h: 0, // Will be calculated by Pyth Network
       };
 
+      console.log('💾 [ADMIN] Creating cryptocurrency in database:', cryptoData);
       const newCrypto = await storage.upsertCryptocurrency(cryptoData);
+      console.log('✅ [ADMIN] Database entry created:', newCrypto);
       
       // Add to Pyth Network service (required for all cryptocurrencies)
-      const { PythPriceService } = await import('../services/PythPriceService.js');
-      const pythService = new PythPriceService();
-      
       try {
+        console.log('🔗 [ADMIN] Importing PythPriceService...');
+        const { PythPriceService } = await import('../services/PythPriceService.js');
+        console.log('✅ [ADMIN] PythPriceService imported successfully');
+        
+        const pythService = new PythPriceService();
+        console.log('✅ [ADMIN] PythPriceService instance created');
+        
         // Add to Pyth service mappings
+        console.log('🔗 [ADMIN] Adding crypto to Pyth service:', cryptoId.toLowerCase(), pythFeedId);
         pythService.addCryptocurrency(cryptoId.toLowerCase(), pythFeedId);
         
         auditLog('admin_crypto_pyth_integration', { 
@@ -5111,6 +5122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`✅ [ADMIN] Successfully added ${cryptoData.name} (${cryptoData.symbol}) with Pyth Network integration`);
       } catch (pythError) {
         console.error('❌ [ADMIN] Pyth integration failed:', pythError);
+        console.error('❌ [ADMIN] Stack trace:', pythError.stack);
         
         // Remove the cryptocurrency if Pyth integration fails (since it's required)
         await storage.deleteCryptocurrency(cryptoId.toLowerCase());
@@ -5128,7 +5140,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Clear crypto service cache so new cryptocurrency appears immediately
+      console.log('🧹 [ADMIN] Clearing crypto service cache...');
       cryptoService.clearCache();
+      console.log('✅ [ADMIN] Cache cleared');
       
       auditLog('admin_crypto_added', { 
         cryptoId: newCrypto.id, 
@@ -5138,13 +5152,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pythFeedId
       }, req);
       
+      console.log('🎉 [ADMIN] Cryptocurrency addition completed successfully');
       res.json({
         ...newCrypto,
         pythIntegration: true,
         pythFeedId
       });
     } catch (error) {
-      console.error("Error adding cryptocurrency:", error);
+      console.error("❌ [ADMIN] Error adding cryptocurrency:", error);
+      console.error("❌ [ADMIN] Error stack trace:", error.stack);
       
       if (error instanceof Error) {
         if (error.message.includes("not found on CoinGecko")) {
