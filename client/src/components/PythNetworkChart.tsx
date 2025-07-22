@@ -240,18 +240,19 @@ const PythNetworkChart = ({
       ctx.setLineDash([]);
     }
 
-    // Draw price labels (Y-axis - vertical sidebar)
+    // Draw price labels (Y-axis - vertical sidebar) with enhanced visibility
     ctx.fillStyle = '#ffffff';
-    ctx.font = '11px monospace';
+    ctx.font = 'bold 12px monospace';
     ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
 
     // Debug logging for price range calculation
     console.log(`[PYTH-CHART] Price range: min=${paddedMinPrice}, max=${paddedMaxPrice}, range=${paddedRange}`);
 
-    // Draw 6 price levels on the left sidebar
+    // Draw 6 price levels on the left sidebar with better positioning
     for (let i = 0; i <= 5; i++) {
       const priceLevel = paddedMinPrice + (paddedRange * (5 - i) / 5); // Reverse order (top to bottom)
-      const y = margin + (chartHeight / 5) * i + 5;
+      const y = margin + (chartHeight / 5) * i;
       
       // Enhanced validation and formatting
       if (paddedRange > 0 && !isNaN(priceLevel) && isFinite(priceLevel) && priceLevel > 0) {
@@ -260,12 +261,23 @@ const PythNetworkChart = ({
           : priceLevel < 1000 
             ? priceLevel.toFixed(2)
             : priceLevel.toFixed(0);
-        ctx.fillText(`$${formattedPrice}`, margin - 5, y);
+        
+        // Draw background for better readability
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        const textWidth = ctx.measureText(`$${formattedPrice}`).width;
+        ctx.fillRect(margin - textWidth - 10, y - 8, textWidth + 6, 16);
+        
+        // Draw the price text
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`$${formattedPrice}`, margin - 8, y);
         console.log(`[PYTH-CHART] Drawing price label: $${formattedPrice} at y=${y}`);
       } else {
         console.error(`[PYTH-CHART] Invalid price level: ${priceLevel}, paddedRange: ${paddedRange}`);
-        // Draw fallback label
-        ctx.fillText('$--', margin - 5, y);
+        // Draw fallback label with background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(margin - 25, y - 8, 20, 16);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('$--', margin - 8, y);
       }
     }
     // Draw time labels (X-axis - horizontal)
