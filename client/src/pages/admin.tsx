@@ -4184,7 +4184,7 @@ export default function AdminPanel() {
                     <div className="space-y-2 text-sm text-purple-800 dark:text-purple-200">
                       <div className="flex justify-between">
                         <span>Supported Cryptos:</span>
-                        <span className="font-medium">5 Major Assets</span>
+                        <span className="font-medium">6 Major Assets</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Update Interval:</span>

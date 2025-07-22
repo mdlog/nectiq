@@ -32,7 +32,9 @@ export class PythPriceService {
     'ethereum': '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
     'binancecoin': '0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f',
     'solana': '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
-    'cardano': '0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d'
+    'cardano': '0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d',
+    // Contoh: Tambah Dogecoin dengan Pyth Price Feed ID
+    'dogecoin': '0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c'
   };
 
   private cryptoMapping: Record<string, { name: string; symbol: string; image: string }> = {
@@ -40,7 +42,9 @@ export class PythPriceService {
     'ethereum': { name: 'Ethereum', symbol: 'ETH', image: 'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png' },
     'binancecoin': { name: 'BNB', symbol: 'BNB', image: 'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png' },
     'solana': { name: 'Solana', symbol: 'SOL', image: 'https://coin-images.coingecko.com/coins/images/4128/large/solana.png' },
-    'cardano': { name: 'Cardano', symbol: 'ADA', image: 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png' }
+    'cardano': { name: 'Cardano', symbol: 'ADA', image: 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png' },
+    // Contoh: Tambah Dogecoin
+    'dogecoin': { name: 'Dogecoin', symbol: 'DOGE', image: 'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png' }
   };
 
   constructor() {
