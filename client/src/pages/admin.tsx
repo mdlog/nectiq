@@ -3224,18 +3224,13 @@ export default function AdminPanel() {
     },
     onSuccess: (data) => {
       console.log('✅ [ADMIN] Pyth validation successful:', data);
-      // Force state update by creating new object
-      const newValidationResult = {
+      console.log('🔍 [ADMIN-UI] Setting validation result to SUCCESS');
+      
+      setValidationResult({
         isValid: true,
         message: data.message || "Pyth Feed ID is valid and supported",
         priceData: data.priceData
-      };
-      setValidationResult(newValidationResult);
-      
-      // Add delay to ensure state is updated before re-render
-      setTimeout(() => {
-        setValidationResult(prev => ({...newValidationResult}));
-      }, 100);
+      });
       
       toast({
         title: "Validation Success",
@@ -4563,27 +4558,34 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
-                    {/* Debug Info */}
-                    {process.env.NODE_ENV === 'development' && (
-                      <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">
-                        <div>validationResult: {validationResult ? JSON.stringify(validationResult) : 'null'}</div>
-                        <div>isValid: {validationResult?.isValid ? 'true' : 'false'}</div>
-                        <div>pythFeedId: {pythFeedId}</div>
+                    {/* Debug Info - ALWAYS VISIBLE */}
+                    <div className="p-3 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 rounded text-xs font-mono">
+                      <div className="font-bold text-blue-800 dark:text-blue-200 mb-2">🔍 Debug State:</div>
+                      <div>validationResult: {validationResult ? JSON.stringify(validationResult, null, 2) : 'null'}</div>
+                      <div>isValid: <span className={validationResult?.isValid ? 'text-green-600 font-bold' : 'text-red-600'}>{validationResult?.isValid ? 'TRUE' : 'FALSE'}</span></div>
+                      <div>pythFeedId: "{pythFeedId}"</div>
+                      <div>Render time: {new Date().toLocaleTimeString()}</div>
+                    </div>
+
+                    {/* Success Message */}
+                    {validationResult?.isValid && (
+                      <div className="p-3 bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                            ✅ Ready to Add - Validation Successful
+                          </span>
+                        </div>
                       </div>
                     )}
 
-                    {/* Submit Button */}
+                    {/* Submit Button - ALWAYS SHOW BOTH FOR DEBUGGING */}
                     <div className="space-y-3">
-                      {validationResult?.isValid && (
-                        <div className="p-3 bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                            <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                              ✅ Ready to Add - Validation Successful
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                      <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                        <div className="font-bold">Button Logic Test:</div>
+                        <div>Should show GREEN button: {validationResult?.isValid === true ? 'YES' : 'NO'}</div>
+                        <div>Should show GRAY button: {validationResult?.isValid !== true ? 'YES' : 'NO'}</div>
+                      </div>
                       
                       {validationResult?.isValid === true ? (
                         <Button 
@@ -4599,7 +4601,7 @@ export default function AdminPanel() {
                           ) : (
                             <div className="flex items-center space-x-2">
                               <Plus className="h-5 w-5" />
-                              <span>Add Cryptocurrency to Database</span>
+                              <span>🟢 Add Cryptocurrency to Database</span>
                             </div>
                           )}
                         </Button>
@@ -4611,7 +4613,7 @@ export default function AdminPanel() {
                         >
                           <div className="flex items-center space-x-2">
                             <AlertTriangle className="h-5 w-5" />
-                            <span>Validation Required</span>
+                            <span>⚫ Validation Required</span>
                           </div>
                         </Button>
                       )}
