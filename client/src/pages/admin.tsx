@@ -4457,12 +4457,31 @@ export default function AdminPanel() {
                         <div className="flex items-end">
                           <Button 
                             type="submit" 
-                            className="w-full"
+                            className={`w-full ${
+                              !validationResult?.isValid 
+                                ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50' 
+                                : validationResult?.isValid 
+                                ? 'bg-green-600 hover:bg-green-700' 
+                                : ''
+                            }`}
                             disabled={addCryptoMutation.isPending || !validationResult?.isValid}
                           >
-                            {addCryptoMutation.isPending ? "Adding..." : 
-                             !validationResult?.isValid ? "Validation Required" : 
-                             "Add Cryptocurrency"}
+                            {addCryptoMutation.isPending ? (
+                              <div className="flex items-center space-x-2">
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                <span>Adding Cryptocurrency...</span>
+                              </div>
+                            ) : !validationResult?.isValid ? (
+                              <div className="flex items-center space-x-2">
+                                <AlertTriangle className="h-4 w-4" />
+                                <span>Validation Required</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2">
+                                <Plus className="h-4 w-4" />
+                                <span>Add Cryptocurrency</span>
+                              </div>
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -4556,6 +4575,21 @@ export default function AdminPanel() {
                                   <li>• Real-time market data</li>
                                 </ul>
                               </div>
+                              
+                              {/* Validation Required Notice */}
+                              {!validationResult?.isValid && (
+                                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 rounded-lg">
+                                  <div className="flex items-center space-x-2">
+                                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                                    <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                                      Validasi Diperlukan
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                    Silakan validasi Pyth Feed ID terlebih dahulu sebelum menambahkan cryptocurrency ke database.
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
