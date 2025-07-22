@@ -4631,18 +4631,48 @@ export default function AdminPanel() {
                           type="button"
                           size="sm"
                           onClick={() => {
+                            console.log('🔧 [WORKING-TEST] Starting comprehensive form fill...');
                             // Using existing working Feed ID from Ripple (XRP) - GUARANTEED TO WORK
                             const testValue = "0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8";
+                            
+                            // 1. Set Pyth Feed ID state and input field
                             setPythFeedId(testValue);
                             if (pythFeedInputRef.current) {
                               pythFeedInputRef.current.value = testValue;
+                              // Trigger input event to ensure React detects change
+                              const event = new Event('input', { bubbles: true });
+                              pythFeedInputRef.current.dispatchEvent(event);
                             }
-                            console.log('🚨 [EMERGENCY-SET] Set XRP test Feed ID (GUARANTEED WORKING):', testValue);
-                            console.log('🚨 [EMERGENCY-SET] Length:', testValue.length, 'characters');
-                            // Auto fill other fields for a NEW cryptocurrency using XRP feed ID as test
+                            
+                            // 2. Set all other form fields with state updates
                             setNewCryptoId('chainlink');
                             setNewCryptoName('Chainlink');
                             setNewCryptoSymbol('LINK');
+                            
+                            // 3. Update input field references if they exist
+                            const cryptoIdInput = document.querySelector('input[placeholder*="crypto-id"]') as HTMLInputElement;
+                            const nameInput = document.querySelector('input[placeholder*="Name"]') as HTMLInputElement;
+                            const symbolInput = document.querySelector('input[placeholder*="Symbol"]') as HTMLInputElement;
+                            
+                            if (cryptoIdInput) {
+                              cryptoIdInput.value = 'chainlink';
+                              cryptoIdInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            if (nameInput) {
+                              nameInput.value = 'Chainlink';
+                              nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            if (symbolInput) {
+                              symbolInput.value = 'LINK';
+                              symbolInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            
+                            console.log('🔧 [WORKING-TEST] Form filled with:');
+                            console.log('   Feed ID:', testValue);
+                            console.log('   Crypto ID: chainlink');
+                            console.log('   Name: Chainlink');
+                            console.log('   Symbol: LINK');
+                            console.log('🔧 [WORKING-TEST] Ready for validation!');
                           }}
                           className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 h-6"
                         >
