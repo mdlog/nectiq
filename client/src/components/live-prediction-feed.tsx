@@ -51,27 +51,7 @@ interface TrendingCrypto {
 // Dynamic function to get crypto image from live API data
 function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
   const cryptoData = cryptoPrices?.find(crypto => crypto.id === cryptoId);
-  if (cryptoData?.image) {
-    return cryptoData.image;
-  }
-  
-  const commonIds: Record<string, string> = {
-    'bitcoin': '1',
-    'ethereum': '279',
-    'tron': '1094',
-    'binancecoin': '825',
-    'cardano': '975',
-    'solana': '4128',
-    'chainlink': '877',
-    'polkadot': '12171',
-    'litecoin': '2',
-    'matic-network': '4713',
-    'hyperliquid': '44077',
-    'sahara-ai': '66681'
-  };
-  
-  const imageId = commonIds[cryptoId] || '1';
-  return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${cryptoId}.png`;
+  return cryptoData?.image || `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`;
 }
 
 function formatTimeAgo(dateString: string): string {

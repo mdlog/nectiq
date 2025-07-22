@@ -55,20 +55,7 @@ export default function HowToPlay() {
       }
     }
     
-    // Fallback: Static mapping for supported cryptocurrencies
-    const commonIds: Record<string, string> = {
-      'bitcoin': '1',
-      'ethereum': '279',
-      'binancecoin': '825',
-      'cardano': '975',
-      'solana': '4128',
-      'chainlink': '877',
-      'polkadot': '12171',
-      'litecoin': '2'
-    };
-    
-    const imageId = commonIds[cryptoId] || '1';
-    return `https://coin-images.coingecko.com/coins/images/${imageId}/large/${cryptoId}.png`;
+    return `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`;
   }
 
   const timeframes = [

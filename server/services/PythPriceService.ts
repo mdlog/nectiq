@@ -168,6 +168,8 @@ export class PythPriceService {
         continue;
       }
 
+      console.log(`🔍 [PYTH-FORMAT] Processing ${cryptoInfo.id}, image: ${cryptoInfo.image}`);
+
       try {
         // Convert price from Pyth format (price * 10^expo) to regular decimal
         const price = parseFloat(data.price.price) * Math.pow(10, data.price.expo);

@@ -76,14 +76,14 @@ export class CryptoService {
         return [];
       }
 
-      // Convert Pyth prices to CryptoPrice format and add standard images
+      // Convert Pyth prices to CryptoPrice format using image directly from database
       const realPrices: CryptoPrice[] = pythPrices.map((pythPrice) => ({
         id: pythPrice.id,
         symbol: pythPrice.symbol,
         name: pythPrice.name,
         current_price: pythPrice.current_price,
         price_change_percentage_24h: pythPrice.price_change_percentage_24h || 0, // Default to 0 if not available
-        image: this.getCryptoImageUrl(pythPrice.id),
+        image: pythPrice.image, // Use image directly from database (via PythPriceService)
         source: 'pyth' as const,
         confidence_interval: pythPrice.confidence_interval,
         last_updated: pythPrice.last_updated || new Date().toISOString()
@@ -162,7 +162,7 @@ export class CryptoService {
           name: coin.name,
           current_price: coin.current_price,
           price_change_percentage_24h: coin.price_change_percentage_24h,
-          image: this.getCryptoImageUrl(coin.id),
+          image: coin.image || `https://coin-images.coingecko.com/coins/images/1/large/${coin.id}.png`,
           source: 'coingecko',
           last_updated: coin.last_updated
         }));
@@ -277,14 +277,14 @@ export class CryptoService {
       // Get all cryptocurrencies from database
       const dbCryptos = await storage.getAllCryptocurrencies();
       
-      // Convert database cryptos to CryptoPrice format with proper image URLs
+      // Convert database cryptos to CryptoPrice format with database image URLs
       const dbPrices: CryptoPrice[] = dbCryptos.map(crypto => ({
         id: crypto.id,
         symbol: crypto.symbol,
         name: crypto.name,
         current_price: parseFloat(crypto.currentPrice || '0'),
         price_change_percentage_24h: parseFloat(crypto.priceChange24h || '0'),
-        image: this.getCryptoImageUrl(crypto.id)
+        image: crypto.image
       }));
       
       // If we have real cached prices from CoinGecko, merge them
@@ -314,7 +314,7 @@ export class CryptoService {
             return {
               ...coinGeckoPrice,
               current_price: newPrice,
-              image: this.getCryptoImageUrl(dbPrice.id)
+              image: dbPrice.image
             };
           }
           return dbPrice;
@@ -327,7 +327,7 @@ export class CryptoService {
             allPrices.push({
               ...cgPrice,
               current_price: cgPrice.current_price * (1 + microVariation),
-              image: this.getCryptoImageUrl(cgPrice.id)
+              image: cgPrice.image
             });
           }
         }
@@ -400,7 +400,7 @@ export class CryptoService {
         price_change_percentage_24h: coin.market_data?.price_change_percentage_24h || 0,
         volume_24h: coin.market_data?.total_volume?.usd || 0,
         volume_30d_estimate: (coin.market_data?.total_volume?.usd || 0) * 30,
-        image: this.getCryptoImageUrl(coin.id)
+        image: coin.image || `https://coin-images.coingecko.com/coins/images/1/large/${coin.id}.png`
       };
     } catch (error) {
       console.error(`Error fetching metrics for ${coinId}:`, error);
@@ -426,7 +426,7 @@ export class CryptoService {
         price_change_percentage_24h: 0,
         volume_24h: 0,
         volume_30d_estimate: 0,
-        image: this.getCryptoImageUrl(coinId)
+        image: `https://coin-images.coingecko.com/coins/images/1/large/${coinId}.png`
       };
     }
 
@@ -443,7 +443,7 @@ export class CryptoService {
       price_change_percentage_24h: crypto.price_change_percentage_24h,
       volume_24h: crypto.current_price * 500000,
       volume_30d_estimate: crypto.current_price * 500000 * 30,
-      image: this.getCryptoImageUrl(crypto.id)
+      image: crypto.image
     };
   }
 
@@ -489,54 +489,7 @@ export class CryptoService {
     return mapping[id] || id;
   }
 
-  private getCryptoImageUrl(coinId: string): string {
-    const imageMapping: { [key: string]: string } = {
-      'bitcoin': 'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png',
-      'ethereum': 'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png',
-      'binancecoin': 'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
-      'cardano': 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png',
-      'solana': '/attached_assets/solana_1750613756851.png',
-      'chainlink': 'https://coin-images.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
-      'polkadot': 'https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png',
-      'litecoin': 'https://coin-images.coingecko.com/coins/images/2/large/litecoin.png',
-      'matic-network': 'https://coin-images.coingecko.com/coins/images/4713/large/matic-token-icon.png',
-      'hyperliquid': 'https://coin-images.coingecko.com/coins/images/44077/large/hyperliquid.png',
-      'avalanche-2': 'https://coin-images.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
-      'stellar': 'https://coin-images.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png',
-      'tron': 'https://coin-images.coingecko.com/coins/images/1094/large/tron-logo.png',
-      'sui': 'https://coin-images.coingecko.com/coins/images/26375/large/sui_asset.jpeg',
-      'sahara': 'https://coin-images.coingecko.com/coins/images/66681/large/sahara.png',
-      'aave': 'https://coin-images.coingecko.com/coins/images/12645/large/AAVE.png'
-    };
-    
-    // Generate unique fallback URL based on coin ID to avoid duplicate images
-    const fallbackId = this.getCoinGeckoImageId(coinId);
-    return imageMapping[coinId] || `https://coin-images.coingecko.com/coins/images/${fallbackId}/large/${coinId}.png`;
-  }
 
-  private getCoinGeckoImageId(coinId: string): string {
-    // Map coin IDs to their correct CoinGecko image IDs
-    const idMapping: { [key: string]: string } = {
-      'bitcoin': '1',
-      'ethereum': '279',
-      'binancecoin': '825',
-      'cardano': '975',
-      'solana': '4128',
-      'chainlink': '877',
-      'polkadot': '12171',
-      'litecoin': '2',
-      'matic-network': '4713',
-      'hyperliquid': '44077',
-      'avalanche-2': '12559',
-      'stellar': '100',
-      'tron': '1094',
-      'sui': '26375',
-      'sahara': '66681',
-      'aave': '12645'
-    };
-    
-    return idMapping[coinId] || '1'; // Default to Bitcoin if unknown
-  }
 
   private getFallbackPrices(): CryptoPrice[] {
     const now = Date.now();
