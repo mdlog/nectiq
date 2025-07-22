@@ -57,8 +57,10 @@ interface CreateBattleForm {
 }
 
 // Function to calculate win probability based on prediction accuracy
-const calculateWinProbability = (battle: Battle): WinProbability => {
-  if (!battle.challengedPrediction || !battle.currentPrice) {
+const calculateWinProbability = (battle: Battle, liveCurrentPrice?: number): WinProbability => {
+  const currentPrice = liveCurrentPrice || battle.currentPrice;
+  
+  if (!battle.challengedPrediction || !currentPrice) {
     return {
       challengerWinChance: 50,
       challengedWinChance: 50,
@@ -69,8 +71,8 @@ const calculateWinProbability = (battle: Battle): WinProbability => {
   }
 
   // Calculate each player's accuracy against current price
-  const challengerAccuracy = Math.abs(battle.challengerPrediction - battle.currentPrice) / battle.currentPrice * 100;
-  const challengedAccuracy = Math.abs(battle.challengedPrediction - battle.currentPrice) / battle.currentPrice * 100;
+  const challengerAccuracy = Math.abs(battle.challengerPrediction - currentPrice) / currentPrice * 100;
+  const challengedAccuracy = Math.abs(battle.challengedPrediction - currentPrice) / currentPrice * 100;
 
   // Calculate probability based on accuracy comparison
   let challengerWinChance: number;
@@ -104,8 +106,16 @@ const calculateWinProbability = (battle: Battle): WinProbability => {
 };
 
 // Komponen grafik probabilitas menang-kalah
-const WinProbabilityChart = ({ battle }: { battle: Battle }) => {
-  const probability = calculateWinProbability(battle);
+const WinProbabilityChart = ({ battle, cryptoPrices }: { battle: Battle; cryptoPrices: any[] }) => {
+  // Get live current price from Pyth Network data
+  const cryptoMatch = cryptoPrices.find(crypto => 
+    crypto.id === battle.cryptocurrency.toLowerCase() || 
+    crypto.symbol.toLowerCase() === battle.cryptocurrency.toLowerCase() ||
+    crypto.name.toLowerCase() === battle.cryptocurrency.toLowerCase()
+  );
+  const liveCurrentPrice = cryptoMatch?.current_price;
+  
+  const probability = calculateWinProbability(battle, liveCurrentPrice);
   
   if (!battle.challengedPrediction) {
     return (
@@ -202,10 +212,14 @@ const WinProbabilityChart = ({ battle }: { battle: Battle }) => {
         <div className="bg-white dark:bg-gray-900 rounded-lg p-3 space-y-2">
           <div className="flex justify-between text-xs">
             <span className="text-gray-600 dark:text-gray-400">Current Price:</span>
-            <span className="font-semibold">${battle.currentPrice.toLocaleString(undefined, { 
-              minimumFractionDigits: 2, 
-              maximumFractionDigits: 2 
-            })}</span>
+            <span className="font-semibold">${(() => {
+              // Use live current price from Pyth Network data if available
+              const currentPrice = liveCurrentPrice || battle.currentPrice;
+              return parseFloat(currentPrice.toString()).toLocaleString(undefined, { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+              });
+            })()}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-gray-600 dark:text-gray-400">Prediksi Challenger:</span>
@@ -249,7 +263,6 @@ export function PredictionBattles() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [joiningBattle, setJoiningBattle] = useState<Battle | null>(null);
   const [joinPrediction, setJoinPrediction] = useState<number>(0);
-  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [createForm, setCreateForm] = useState<CreateBattleForm>({
     cryptocurrency: '',
     timeframe: '',
@@ -274,24 +287,15 @@ export function PredictionBattles() {
   });
 
   // Fetch live Pyth Network prices for real-time updates
-  const { data: pythPrices } = useQuery({
-    queryKey: ['/api/crypto/prices'],
-    refetchInterval: 3000, // Update every 3 seconds for live Pyth prices
-    select: (data: any[]) => {
-      const priceMap: Record<string, number> = {};
-      data.forEach(crypto => {
-        priceMap[crypto.id] = crypto.current_price;
-      });
-      return priceMap;
-    }
+  const { data: cryptoPricesData = [] } = useQuery({
+    queryKey: ['/api/crypto/pyth-prices'],
+    refetchInterval: 1000, // Same as Live Prices - ultra-fast updates
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Same as Live Prices - very fresh data
+    retry: 3, // More retry attempts for reliability
   });
 
-  // Update live prices when Pyth prices change
-  useEffect(() => {
-    if (pythPrices) {
-      setLivePrices(pythPrices);
-    }
-  }, [pythPrices]);
+
 
   // Fetch cryptocurrencies for create form
   const { data: cryptos = [] } = useQuery({
@@ -304,7 +308,10 @@ export function PredictionBattles() {
       method: 'POST',
       body: JSON.stringify({
         ...data,
-        currentPrice: livePrices[data.cryptocurrency] || 0 // Include live Pyth price
+        currentPrice: (() => {
+          const cryptoData = cryptoPricesData.find((crypto: any) => crypto.id === data.cryptocurrency);
+          return cryptoData ? cryptoData.current_price : 0;
+        })() // Include live Pyth price
       })
     }),
     onSuccess: () => {
@@ -800,12 +807,15 @@ export function PredictionBattles() {
               <div>
                 <label className="text-sm font-medium flex items-center justify-between">
                   Your Prediction ($)
-                  {createForm.cryptocurrency && livePrices[createForm.cryptocurrency] && (
+                  {createForm.cryptocurrency && cryptoPricesData.length > 0 && (
                     <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
-                      Live: ${livePrices[createForm.cryptocurrency].toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
+                      Live: ${(() => {
+                        const cryptoData = cryptoPricesData.find((crypto: any) => crypto.id === createForm.cryptocurrency);
+                        return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        }) : '0.00';
+                      })()}
                     </div>
                   )}
                 </label>
@@ -918,8 +928,13 @@ export function PredictionBattles() {
                   <div className="text-sm text-muted-foreground">Current Price (Live Pyth)</div>
                   <div className="text-3xl font-bold">
                     ${(() => {
+                      // Use live current price from Pyth Network data if available
+                      const livePrices = cryptoPricesData.reduce((acc: Record<string, number>, crypto: any) => {
+                        acc[crypto.id] = crypto.current_price;
+                        return acc;
+                      }, {});
                       const livePrice = livePrices[selectedBattle.cryptocurrency] || selectedBattle.currentPrice;
-                      return livePrice.toLocaleString(undefined, { 
+                      return parseFloat(livePrice.toString()).toLocaleString(undefined, { 
                         minimumFractionDigits: 2, 
                         maximumFractionDigits: 2 
                       });
@@ -958,7 +973,10 @@ export function PredictionBattles() {
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
                   <h3 className="text-lg font-semibold mb-4 text-center">Win Probability Analysis</h3>
                   {selectedBattle.status !== 'open' || selectedBattle.challengedId ? (
-                    <WinProbabilityChart battle={selectedBattle} />
+                    <WinProbabilityChart 
+                      battle={selectedBattle} 
+                      cryptoPrices={cryptoPricesData} 
+                    />
                   ) : (
                     <div className="text-center py-8">
                       <div className="text-4xl mb-4">🔒</div>

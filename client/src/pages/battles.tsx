@@ -92,10 +92,11 @@ export default function BattlesPage() {
 
   // Fetch crypto prices for filtering
   const { data: cryptos = [] } = useQuery({
-    queryKey: ['/api/crypto/prices'],
-    refetchInterval: 1000, // Auto-refresh every 1 second
-    refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
+    queryKey: ['/api/crypto/pyth-prices'],
+    refetchInterval: 1000, // Same as Live Prices - ultra-fast updates
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Same as Live Prices - very fresh data
+    retry: 3, // More retry attempts for reliability
   });
 
   // Filter battles based on search and filters
@@ -960,13 +961,22 @@ export default function BattlesPage() {
                                 Current Price
                               </h4>
                               <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                {battle.currentPrice ? 
-                                  `$${battle.currentPrice.toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 6
-                                  })}` : 
-                                  'Loading...'
-                                }
+                                {(() => {
+                                  // Get live current price from Pyth Network data
+                                  const cryptoMatch = cryptos.find(crypto => 
+                                    crypto.id === battle.cryptocurrency.toLowerCase() || 
+                                    crypto.symbol.toLowerCase() === battle.cryptocurrency.toLowerCase() ||
+                                    crypto.name.toLowerCase() === battle.cryptocurrency.toLowerCase()
+                                  );
+                                  const liveCurrentPrice = cryptoMatch?.current_price || battle.currentPrice;
+                                  
+                                  return liveCurrentPrice ? 
+                                    `$${parseFloat(liveCurrentPrice.toString()).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2
+                                    })}` : 
+                                    'Loading...';
+                                })()}
                               </p>
                               <p className="text-sm text-gray-900 dark:text-white font-medium">
                                 Live Price
