@@ -5155,7 +5155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { PythPriceService } = await import('./services/PythPriceService.js');
       const pythService = new PythPriceService();
       
-      const validation = await pythService.validatePythFeedId(normalizedFeedId);
+      const validation = await pythService.validatePythFeedId(pythFeedId);
       
       if (!validation.isValid) {
         console.log('❌ [ADMIN] Pyth Network validation failed - PREVENTING database insertion:', validation.error);

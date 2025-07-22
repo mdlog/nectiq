@@ -288,6 +288,15 @@ export class PythPriceService {
   }
 
   /**
+   * Clear cache completely
+   */
+  clearCache(): void {
+    this.cryptoDataCache.clear();
+    this.lastCacheUpdate = 0;
+    console.log("🧹 [PYTH] Cache cleared");
+  }
+
+  /**
    * Refresh cache manually
    */
   async refreshCache(): Promise<void> {
