@@ -4458,26 +4458,33 @@ export default function AdminPanel() {
                       </div>
                       
                       <div className="space-y-4">
-                        {/* Feed ID Input & Validate */}
+                        {/* Feed ID Input & Validate - SIMPLIFIED VERSION */}
                         <div className="flex space-x-2">
-                          <Input
-                            id="pyth-feed-id"
+                          <input
+                            id="pyth-feed-id-simple"
+                            type="text"
                             placeholder="Enter Pyth Feed ID (0x...)"
                             value={pythFeedId}
                             onChange={(e) => {
-                              console.log('🔧 [INPUT] Pyth Feed ID changed:', e.target.value);
+                              console.log('🔧 [SIMPLE-INPUT] Pyth Feed ID changed:', e.target.value);
                               setPythFeedId(e.target.value);
                               setValidationResult(null);
                             }}
-                            onKeyUp={(e) => {
-                              console.log('⌨️ [KEYUP] Pyth Feed ID:', e.currentTarget.value);
+                            onInput={(e) => {
+                              console.log('📝 [ONINPUT] Pyth Feed ID input:', e.currentTarget.value);
                             }}
-                            className="flex-1 h-10"
+                            onKeyUp={(e) => {
+                              console.log('⌨️ [KEYUP] Pyth Feed ID keyup:', e.currentTarget.value);
+                            }}
+                            className="flex-1 h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                             required
                           />
                           <Button
                             type="button"
-                            onClick={handleValidatePyth}
+                            onClick={() => {
+                              console.log('🔍 [VALIDATE-CLICK] Button clicked, pythFeedId:', pythFeedId);
+                              handleValidatePyth();
+                            }}
                             disabled={!pythFeedId.trim() || validatePythMutation.isPending}
                             className="bg-purple-600 hover:bg-purple-700 px-6 h-10"
                           >
