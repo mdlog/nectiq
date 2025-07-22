@@ -35,7 +35,8 @@ export class PythPriceService {
     'cardano': '0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d',
     'dogecoin': '0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c',
     'ripple': '0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8',
-    'avalanche': '0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7'
+    'avalanche': '0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7',
+    'bittensor': '0x410f41de235f2db824e562ea7ab2d3d3d4ff048316c61d629c0b93f58584e1af'
   };
 
   private cryptoMapping: Record<string, { name: string; symbol: string; image: string }> = {
@@ -46,7 +47,8 @@ export class PythPriceService {
     'cardano': { name: 'Cardano', symbol: 'ADA', image: 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png' },
     'dogecoin': { name: 'Dogecoin', symbol: 'DOGE', image: 'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png' },
     'ripple': { name: 'Ripple', symbol: 'XRP', image: 'https://coin-images.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png' },
-    'avalanche': { name: 'Avalanche', symbol: 'AVAX', image: 'https://coin-images.coingecko.com/coins/images/12559/large/avalanche-logo.png' }
+    'avalanche': { name: 'Avalanche', symbol: 'AVAX', image: 'https://coin-images.coingecko.com/coins/images/12559/large/avalanche-logo.png' },
+    'bittensor': { name: 'Bittensor', symbol: 'TAO', image: 'https://coin-images.coingecko.com/coins/images/16846/large/bittensor.png' }
   };
 
   constructor() {
