@@ -623,16 +623,22 @@ export function PredictionBattles() {
             <span>Current Price</span>
             <span className="font-semibold">
               ${(() => {
+                // FORCE LIVE PRICE - Always use Pyth Network data if available
                 const realTimePrice = getRealTimePrice(battle.cryptocurrency);
-                const currentPrice = realTimePrice || battle.currentPrice;
-                return currentPrice.toLocaleString(undefined, { 
+                console.log('🔍 [BATTLE-PRICE] Crypto:', battle.cryptocurrency, 'LivePrice:', realTimePrice, 'DatabasePrice:', battle.currentPrice);
+                
+                // Use live price if available, otherwise fallback to database
+                const finalPrice = realTimePrice !== null ? realTimePrice : battle.currentPrice;
+                console.log('🎯 [BATTLE-PRICE] Final price displayed:', finalPrice);
+                
+                return finalPrice.toLocaleString(undefined, { 
                   minimumFractionDigits: 2, 
                   maximumFractionDigits: 2 
                 });
               })()} 
-              {/* Debug: Show if using live price */}
-              <span className="text-xs text-green-500 ml-1">
-                {getRealTimePrice(battle.cryptocurrency) ? '🟢' : '🔴'}
+              {/* Debug: Show data source */}
+              <span className="text-xs ml-1">
+                {getRealTimePrice(battle.cryptocurrency) !== null ? '🟢 LIVE' : '🔴 DB'}
               </span>
             </span>
           </div>
@@ -944,13 +950,14 @@ export function PredictionBattles() {
                   <div className="text-sm text-muted-foreground">Current Price (Live Pyth)</div>
                   <div className="text-3xl font-bold">
                     ${(() => {
-                      // Use live current price from Pyth Network data if available
-                      const livePrices = cryptoPricesData.reduce((acc: Record<string, number>, crypto: any) => {
-                        acc[crypto.id] = crypto.current_price;
-                        return acc;
-                      }, {});
-                      const livePrice = livePrices[selectedBattle.cryptocurrency] || selectedBattle.currentPrice;
-                      return parseFloat(livePrice.toString()).toLocaleString(undefined, { 
+                      // FORCE CONSISTENT PRICING - Use same getRealTimePrice function
+                      const realTimePrice = getRealTimePrice(selectedBattle.cryptocurrency);
+                      console.log('🔍 [DIALOG-PRICE] Crypto:', selectedBattle.cryptocurrency, 'LivePrice:', realTimePrice, 'DatabasePrice:', selectedBattle.currentPrice);
+                      
+                      const finalPrice = realTimePrice !== null ? realTimePrice : selectedBattle.currentPrice;
+                      console.log('🎯 [DIALOG-PRICE] Final price displayed:', finalPrice);
+                      
+                      return parseFloat(finalPrice.toString()).toLocaleString(undefined, { 
                         minimumFractionDigits: 2, 
                         maximumFractionDigits: 2 
                       });

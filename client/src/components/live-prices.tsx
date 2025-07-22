@@ -95,6 +95,12 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
     refetchOnMount: true, // Refresh on component mount
   });
 
+  // Debug log for Live Prices Bitcoin price
+  const bitcoinPrice = prices.find(c => c.id === 'bitcoin')?.current_price;
+  if (bitcoinPrice) {
+    console.log('🟢 [LIVE-PRICES] Bitcoin price:', bitcoinPrice, 'at', new Date().toLocaleTimeString());
+  }
+
   // Add visual indicator for when data was last updated
   const lastUpdate = new Date(dataUpdatedAt).toLocaleTimeString();
 
