@@ -3260,146 +3260,6 @@ export default function AdminPanel() {
     },
   });
 
-  const addCryptoMutation = useMutation({
-    mutationFn: async (data: { cryptoId: string, name: string, symbol: string, pythFeedId: string }) => {
-      console.log('🔧 [FRONTEND] Submitting cryptocurrency data:', data);
-      
-      const response = await fetch("/api/admin/cryptocurrencies", {
-        method: "POST",
-        credentials: "include",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
-      
-      console.log('📡 [FRONTEND] Response status:', response.status);
-      console.log('📡 [FRONTEND] Response headers:', Object.fromEntries(response.headers.entries()));
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [FRONTEND] Error response:', errorText);
-        
-        try {
-          const errorJson = JSON.parse(errorText);
-          throw new Error(errorJson.message || "Failed to add cryptocurrency");
-        } catch (parseError) {
-          throw new Error(errorText || "Failed to add cryptocurrency");
-        }
-      }
-      
-      const result = await response.json();
-      console.log('✅ [FRONTEND] Success response:', result);
-      return result;
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Success",
-        description: "Cryptocurrency added successfully with Pyth Network integration",
-      });
-      
-      // Reset form state and validation
-      setNewCryptoId("");
-      setNewCryptoName("");
-      setNewCryptoSymbol("");
-      setPythFeedId("");
-      setValidationResult(null);
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/cryptocurrencies"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/crypto/prices"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/crypto/pyth-prices"] });
-    },
-    onError: (error: any) => {
-      console.error('💥 [FRONTEND] addCryptoMutation error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add cryptocurrency",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Form submission handler - FIXED: Added proper event handling
-  const handleAddCrypto = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Prevent default form submission
-    console.log('🚀 [FORM] Form submission started');
-    console.log('🚀 [FORM] Current form values:', {
-      cryptoId: newCryptoId,
-      name: newCryptoName, 
-      symbol: newCryptoSymbol,
-      pythFeedId: pythFeedId
-    });
-
-    // Validate all required fields
-    if (!newCryptoId?.trim()) {
-      console.log('❌ [FORM] Missing crypto ID');
-      toast({
-        title: "Error",
-        description: "Please enter a cryptocurrency ID",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!newCryptoName?.trim()) {
-      console.log('❌ [FORM] Missing name');
-      toast({
-        title: "Error",
-        description: "Please enter the cryptocurrency name",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!newCryptoSymbol?.trim()) {
-      console.log('❌ [FORM] Missing symbol');
-      toast({
-        title: "Error",
-        description: "Please enter the cryptocurrency symbol",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!pythFeedId?.trim()) {
-      console.log('❌ [FORM] Missing Pyth Feed ID');
-      toast({
-        title: "Error",
-        description: "Pyth Feed ID is required for all cryptocurrencies",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate Feed ID format (64-character hex)
-    const cleanFeedId = pythFeedId.startsWith('0x') ? pythFeedId.slice(2) : pythFeedId;
-    if (cleanFeedId.length !== 64 || !/^[0-9a-fA-F]+$/.test(cleanFeedId)) {
-      console.log('❌ [FORM] Invalid Feed ID format:', {
-        original: pythFeedId,
-        cleaned: cleanFeedId,
-        length: cleanFeedId.length,
-        isHex: /^[0-9a-fA-F]+$/.test(cleanFeedId)
-      });
-      toast({
-        title: "Error",
-        description: `Invalid Pyth Feed ID format. Must be 64-character hex string. Current: ${cleanFeedId.length} chars`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log('✅ [FORM] All validation passed, submitting...');
-    
-    // Prepare data for API
-    const mutationData = {
-      cryptoId: newCryptoId.trim().toLowerCase(),
-      name: newCryptoName.trim(),
-      symbol: newCryptoSymbol.trim().toUpperCase(),
-      pythFeedId: cleanFeedId // Store without 0x prefix
-    };
-
-    console.log('🚀 [FORM] Final submission data:', mutationData);
-    addCryptoMutation.mutate(mutationData);
-  };
-
   const deleteCryptoMutation = useMutation({
     mutationFn: async (cryptoId: string) => {
       const response = await fetch(`/api/admin/cryptocurrencies/${cryptoId}`, {
@@ -3617,6 +3477,58 @@ export default function AdminPanel() {
   // Create ref for emergency input handling
   const pythFeedInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Add cryptocurrency mutation
+  const addCryptoMutation = useMutation({
+    mutationFn: async (data: { cryptoId: string; name: string; symbol: string; pythFeedId: string }) => {
+      console.log('🚀 [MUTATION] Sending request to backend:', data);
+      
+      const response = await fetch('/api/admin/cryptocurrencies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      console.log('📡 [MUTATION] Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [MUTATION] Error response:', errorText);
+        throw new Error(errorText || 'Failed to add cryptocurrency');
+      }
+      
+      const result = await response.json();
+      console.log('✅ [MUTATION] Success response:', result);
+      return result;
+    },
+    onSuccess: (data) => {
+      console.log('🎉 [MUTATION] Add crypto successful:', data);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/cryptocurrencies'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/crypto/prices'] });
+      
+      // Reset form
+      setNewCryptoId('');
+      setNewCryptoName('');
+      setNewCryptoSymbol('');
+      setPythFeedId('');
+      setValidationResult(null);
+      
+      toast({
+        title: "Success",
+        description: data.message || "Cryptocurrency added successfully",
+      });
+    },
+    onError: (error: any) => {
+      console.error('💥 [MUTATION] Add crypto error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add cryptocurrency",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Function to validate Pyth Feed ID - EMERGENCY VERSION
   const handleValidatePyth = () => {
     console.log('🚨 [EMERGENCY] handleValidatePyth called');
@@ -3651,6 +3563,62 @@ export default function AdminPanel() {
 
     setValidationResult(null);
     validatePythMutation.mutate(feedId.trim());
+  };
+
+  // Function to handle cryptocurrency addition
+  const handleAddCrypto = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('🚀 [FORM] Add cryptocurrency form submitted');
+    console.log('🚀 [FORM] Form data:', { newCryptoId, newCryptoName, newCryptoSymbol, pythFeedId });
+    
+    // Validation for Pyth-only integration
+    if (!newCryptoId.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a cryptocurrency ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newCryptoName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter the cryptocurrency name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newCryptoSymbol.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter the cryptocurrency symbol",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!pythFeedId.trim()) {
+      toast({
+        title: "Error",
+        description: "Pyth Feed ID is required for all cryptocurrencies",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Direct submission - remove validation requirement for simplified UX
+    const mutationData = {
+      cryptoId: newCryptoId.trim().toLowerCase(),
+      name: newCryptoName.trim(),
+      symbol: newCryptoSymbol.trim().toUpperCase(),
+      pythFeedId: pythFeedId.trim()
+    };
+
+    console.log('🚀 [FORM] Submitting mutation data:', mutationData);
+    addCryptoMutation.mutate(mutationData);
   };
 
 
