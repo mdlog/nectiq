@@ -5113,7 +5113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add to Pyth Network service (required for all cryptocurrencies)
       try {
         console.log('🔗 [ADMIN] Importing PythPriceService...');
-        const { PythPriceService } = await import('../services/PythPriceService.js');
+        const { PythPriceService } = await import('./services/PythPriceService.js');
         console.log('✅ [ADMIN] PythPriceService imported successfully');
         
         const pythService = new PythPriceService();
