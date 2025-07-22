@@ -873,7 +873,8 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
 
 export default function AdminPanel() {
   const [newCryptoId, setNewCryptoId] = useState("");
-  const [enablePythIntegration, setEnablePythIntegration] = useState(false);
+  const [newCryptoName, setNewCryptoName] = useState("");
+  const [newCryptoSymbol, setNewCryptoSymbol] = useState("");
   const [pythFeedId, setPythFeedId] = useState("");
   // Remove authentication state as server handles admin access
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
@@ -3191,7 +3192,7 @@ export default function AdminPanel() {
   };
 
   const addCryptoMutation = useMutation({
-    mutationFn: async (data: { cryptoId: string, enablePythIntegration?: boolean, pythFeedId?: string }) => {
+    mutationFn: async (data: { cryptoId: string, name: string, symbol: string, pythFeedId: string }) => {
       const response = await fetch("/api/admin/cryptocurrencies", {
         method: "POST",
         credentials: "include",
@@ -3205,18 +3206,15 @@ export default function AdminPanel() {
       return response.json();
     },
     onSuccess: (data) => {
-      const successMessage = data.pythIntegration 
-        ? "Cryptocurrency added successfully with Pyth Network integration"
-        : "Cryptocurrency added successfully from CoinGecko";
-      
       toast({
         title: "Success",
-        description: successMessage,
+        description: "Cryptocurrency added successfully with Pyth Network integration",
       });
       
       // Reset form state
       setNewCryptoId("");
-      setEnablePythIntegration(false);
+      setNewCryptoName("");
+      setNewCryptoSymbol("");
       setPythFeedId("");
       
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cryptocurrencies"] });
@@ -3448,40 +3446,58 @@ export default function AdminPanel() {
 
   const handleAddCrypto = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation for Pyth-only integration
     if (!newCryptoId.trim()) {
       toast({
         title: "Error",
-        description: "Please enter a CoinGecko cryptocurrency ID",
+        description: "Please enter a cryptocurrency ID",
         variant: "destructive",
       });
       return;
     }
 
-    // Validate Pyth Feed ID if Pyth integration is enabled
-    if (enablePythIntegration) {
-      if (!pythFeedId.trim()) {
-        toast({
-          title: "Error",
-          description: "Please enter a Pyth Price Feed ID when enabling Pyth integration",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (!pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
-        toast({
-          title: "Error",
-          description: "Pyth Feed ID must be a 64-character hex string starting with '0x'",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (!newCryptoName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter the cryptocurrency name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newCryptoSymbol.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter the cryptocurrency symbol",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!pythFeedId.trim()) {
+      toast({
+        title: "Error",
+        description: "Pyth Feed ID is required for all cryptocurrencies",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+      toast({
+        title: "Error",
+        description: "Pyth Feed ID must be a 64-character hex string starting with '0x'",
+        variant: "destructive",
+      });
+      return;
     }
 
     const mutationData = {
       cryptoId: newCryptoId.trim().toLowerCase(),
-      enablePythIntegration,
-      pythFeedId: enablePythIntegration ? pythFeedId.trim() : undefined
+      name: newCryptoName.trim(),
+      symbol: newCryptoSymbol.trim().toUpperCase(),
+      pythFeedId: pythFeedId.trim()
     };
 
     addCryptoMutation.mutate(mutationData);
@@ -4238,29 +4254,30 @@ export default function AdminPanel() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 border-orange-200 dark:border-orange-800">
+                {/* Data Sources Summary */}
+                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
                   <CardContent className="pt-6">
                     <div className="flex items-center space-x-3 mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
-                        <BarChart3 className="h-5 w-5 text-white" />
+                      <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                        <Database className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-orange-900 dark:text-orange-100">CoinGecko API</h3>
-                        <p className="text-sm text-orange-700 dark:text-orange-300">Market Data Provider</p>
+                        <h3 className="font-semibold text-green-900 dark:text-green-100">Platform Summary</h3>
+                        <p className="text-sm text-green-700 dark:text-green-300">Pyth-Only Integration</p>
                       </div>
                     </div>
-                    <div className="space-y-2 text-sm text-orange-800 dark:text-orange-200">
+                    <div className="space-y-2 text-sm text-green-800 dark:text-green-200">
                       <div className="flex justify-between">
                         <span>Total Cryptos:</span>
                         <span className="font-medium">{cryptocurrencies?.length || 0} Assets</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Update Interval:</span>
-                        <span className="font-medium">30 Seconds</span>
+                        <span>Price Source:</span>
+                        <span className="font-medium">Pyth Network Only</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Data Quality:</span>
-                        <span className="font-medium text-blue-600">Professional</span>
+                        <span className="font-medium text-purple-600">Enterprise</span>
                       </div>
                     </div>
                   </CardContent>
@@ -4274,11 +4291,8 @@ export default function AdminPanel() {
                     <Plus className="mr-2" size={20} />
                     Add New Cryptocurrency
                     <div className="flex items-center space-x-2 ml-2">
-                      <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                        CoinGecko
-                      </Badge>
                       <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                        + Pyth Network
+                        Pyth Network Only
                       </Badge>
                     </div>
                   </CardTitle>
@@ -4287,18 +4301,47 @@ export default function AdminPanel() {
                   <form onSubmit={handleAddCrypto} className="space-y-6">
                     {/* Basic Information */}
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2 md:col-span-2">
-                          <Label htmlFor="crypto-id">CoinGecko ID</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="crypto-id">Crypto ID</Label>
                           <Input
                             id="crypto-id"
-                            placeholder="e.g., ripple, avalanche-2, matic-network"
+                            placeholder="e.g., ripple, dogecoin, polygon"
                             value={newCryptoId}
                             onChange={(e) => setNewCryptoId(e.target.value)}
                             required
                           />
                           <p className="text-sm text-slate-400">
-                            Enter the CoinGecko ID of the cryptocurrency. All other data will be fetched automatically.
+                            Enter a unique ID for the cryptocurrency.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="crypto-name">Name</Label>
+                          <Input
+                            id="crypto-name"
+                            placeholder="e.g., Ripple, Dogecoin, Polygon"
+                            value={newCryptoName}
+                            onChange={(e) => setNewCryptoName(e.target.value)}
+                            required
+                          />
+                          <p className="text-sm text-slate-400">
+                            Full name of the cryptocurrency.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="crypto-symbol">Symbol</Label>
+                          <Input
+                            id="crypto-symbol"
+                            placeholder="e.g., XRP, DOGE, MATIC"
+                            value={newCryptoSymbol}
+                            onChange={(e) => setNewCryptoSymbol(e.target.value)}
+                            required
+                          />
+                          <p className="text-sm text-slate-400">
+                            Trading symbol for the cryptocurrency.
                           </p>
                         </div>
                         <div className="flex items-end">
@@ -4312,51 +4355,42 @@ export default function AdminPanel() {
                         </div>
                       </div>
                       
-                      {/* Pyth Network Integration Option */}
+                      {/* Pyth Network Integration (Required) */}
                       <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border border-purple-200 dark:border-purple-800 rounded-lg">
                         <div className="flex items-start space-x-3">
                           <Zap className="h-5 w-5 text-purple-600 mt-0.5" />
                           <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-semibold text-purple-900 dark:text-purple-100">Pyth Network Integration</h4>
-                              <label className="flex items-center space-x-2 cursor-pointer">
-                                <input 
-                                  type="checkbox" 
-                                  className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                                  checked={enablePythIntegration}
-                                  onChange={(e) => setEnablePythIntegration(e.target.checked)}
-                                />
-                                <span className="text-sm text-purple-700 dark:text-purple-300">Enable Pyth Integration</span>
-                              </label>
+                            <div className="mb-3">
+                              <h4 className="font-semibold text-purple-900 dark:text-purple-100">Pyth Network Price Feed</h4>
+                              <p className="text-sm text-purple-700 dark:text-purple-300">Required for all cryptocurrencies</p>
                             </div>
                             
-                            {enablePythIntegration && (
-                              <div className="space-y-3">
-                                <div>
-                                  <Label htmlFor="pyth-feed-id">Pyth Price Feed ID</Label>
-                                  <Input
-                                    id="pyth-feed-id"
-                                    placeholder="0x..."
-                                    value={pythFeedId}
-                                    onChange={(e) => setPythFeedId(e.target.value)}
-                                    className="mt-1"
-                                  />
-                                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                                    Find Pyth Price Feed IDs at: pyth.network/developers/price-feed-ids
-                                  </p>
-                                </div>
-                                
-                                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded text-xs text-purple-800 dark:text-purple-200">
-                                  <p className="font-medium mb-1">Benefits of Pyth Network Integration:</p>
-                                  <ul className="space-y-0.5">
-                                    <li>• Sub-second price updates</li>
-                                    <li>• Institutional-grade data quality</li>
-                                    <li>• Confidence intervals for accuracy</li>
-                                    <li>• Real-time market data</li>
-                                  </ul>
-                                </div>
+                            <div className="space-y-3">
+                              <div>
+                                <Label htmlFor="pyth-feed-id">Pyth Price Feed ID *</Label>
+                                <Input
+                                  id="pyth-feed-id"
+                                  placeholder="0x..."
+                                  value={pythFeedId}
+                                  onChange={(e) => setPythFeedId(e.target.value)}
+                                  className="mt-1"
+                                  required
+                                />
+                                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                                  Find Pyth Price Feed IDs at: pyth.network/developers/price-feed-ids
+                                </p>
                               </div>
-                            )}
+                              
+                              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded text-xs text-purple-800 dark:text-purple-200">
+                                <p className="font-medium mb-1">Pyth Network Benefits:</p>
+                                <ul className="space-y-0.5">
+                                  <li>• Sub-second price updates</li>
+                                  <li>• Institutional-grade data quality</li>
+                                  <li>• Confidence intervals for accuracy</li>
+                                  <li>• Real-time market data</li>
+                                </ul>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -4365,22 +4399,18 @@ export default function AdminPanel() {
                   
                   {/* Help Section */}
                   <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How to find CoinGecko ID:</h4>
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How to find Pyth Price Feed IDs:</h4>
                     <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                      <li>1. Go to coingecko.com and search for your cryptocurrency</li>
-                      <li>2. Look at the URL: coingecko.com/en/coins/<strong>cryptocurrency-id</strong></li>
-                      <li>3. Use that ID here (e.g., "bitcoin", "ethereum", "ripple")</li>
+                      <li>1. Visit pyth.network/developers/price-feed-ids</li>
+                      <li>2. Search for your cryptocurrency in the list</li>
+                      <li>3. Copy the 64-character hex string (starting with 0x)</li>
                     </ul>
                     <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded">
-                      <p className="text-xs text-yellow-800 dark:text-yellow-200 font-medium mb-2">Common CoinGecko IDs:</p>
-                      <div className="text-xs text-yellow-700 dark:text-yellow-300 grid grid-cols-2 gap-1">
-                        <span>• Avalanche: "avalanche-2"</span>
-                        <span>• Polygon: "matic-network"</span>
-                        <span>• XRP: "ripple"</span>
-                        <span>• Chainlink: "chainlink"</span>
-                        <span>• Dogecoin: "dogecoin"</span>
-                        <span>• Litecoin: "litecoin"</span>
-                        <span>• Polkadot: "polkadot"</span>
+                      <p className="text-xs text-yellow-800 dark:text-yellow-200 font-medium mb-2">Example Pyth Feed IDs:</p>
+                      <div className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
+                        <div>• Bitcoin: 0xe62df6c8b4c85672d3ce6c62b8b6e2b8b4c85672d3ce6c62b8...</div>
+                        <div>• Ethereum: 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665...</div>
+                        <div>• Solana: 0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc...</div>
                         <span>• Shiba Inu: "shiba-inu"</span>
                       </div>
                     </div>

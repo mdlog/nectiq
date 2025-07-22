@@ -5067,101 +5067,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/cryptocurrencies", requireAdmin, async (req, res) => {
     try {
-      const { cryptoId, enablePythIntegration, pythFeedId } = req.body;
+      const { cryptoId, name, symbol, pythFeedId } = req.body;
       
-      if (!cryptoId || typeof cryptoId !== 'string') {
-        return res.status(400).json({ message: "Cryptocurrency ID is required" });
+      // Validate required fields for Pyth-only integration
+      if (!cryptoId || !name || !symbol || !pythFeedId) {
+        return res.status(400).json({ 
+          message: "cryptoId, name, symbol, and pythFeedId are required for Pyth Network integration" 
+        });
       }
 
-      // Validate Pyth integration if enabled
-      if (enablePythIntegration) {
-        if (!pythFeedId || typeof pythFeedId !== 'string' || !pythFeedId.startsWith('0x')) {
-          return res.status(400).json({ 
-            message: "Valid Pyth Feed ID (starting with 0x) is required when Pyth integration is enabled" 
-          });
-        }
+      // Validate Pyth Feed ID format
+      if (!pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+        return res.status(400).json({ 
+          message: "Invalid Pyth Feed ID format. Must be 64-character hex string starting with '0x'" 
+        });
       }
 
-      // Retry mechanism for CoinGecko API with exponential backoff
-      const retryFetch = async (url: string, maxRetries = 3, delayMs = 2000): Promise<any> => {
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          try {
-            const response = await fetch(url, {
-              headers: {
-                'User-Agent': 'Nectiq-Crypto-App/1.0',
-                'Accept': 'application/json'
-              }
-            });
-            
-            if (response.ok) {
-              return await response.json();
-            }
-            
-            if (response.status === 404) {
-              throw new Error("Cryptocurrency not found on CoinGecko. Please check the ID.");
-            }
-            
-            if (response.status === 429 && attempt < maxRetries) {
-              console.log(`Rate limit hit, retrying in ${delayMs}ms (attempt ${attempt}/${maxRetries})`);
-              await new Promise(resolve => setTimeout(resolve, delayMs));
-              delayMs *= 2; // Exponential backoff
-              continue;
-            }
-            
-            throw new Error(`CoinGecko API error: ${response.status}`);
-          } catch (fetchError) {
-            if (attempt === maxRetries) {
-              throw fetchError;
-            }
-            console.log(`Fetch attempt ${attempt} failed, retrying in ${delayMs}ms`);
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-            delayMs *= 2;
-          }
-        }
-      };
-
-      // Fetch data from CoinGecko API with retry logic
-      const coinData = await retryFetch(
-        `https://api.coingecko.com/api/v3/coins/${cryptoId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
-      );
-      
-      // Extract relevant data
+      // Create cryptocurrency data with provided information
       const cryptoData = {
-        id: coinData.id,
-        name: coinData.name,
-        symbol: coinData.symbol.toUpperCase(),
-        currentPrice: coinData.market_data?.current_price?.usd || 0,
-        priceChange24h: coinData.market_data?.price_change_percentage_24h || 0,
+        id: cryptoId.toLowerCase().trim(),
+        name: name.trim(),
+        symbol: symbol.toUpperCase().trim(),
+        currentPrice: 0, // Will be updated by Pyth Network
+        priceChange24h: 0, // Will be calculated by Pyth Network
       };
 
       const newCrypto = await storage.upsertCryptocurrency(cryptoData);
       
-      // If Pyth integration is enabled, add to Pyth service
-      if (enablePythIntegration && pythFeedId) {
-        const { PythPriceService } = await import('../services/PythPriceService.js');
-        const pythService = new PythPriceService();
+      // Add to Pyth Network service (required for all cryptocurrencies)
+      const { PythPriceService } = await import('../services/PythPriceService.js');
+      const pythService = new PythPriceService();
+      
+      try {
+        // Add to Pyth service mappings
+        pythService.addCryptocurrency(cryptoId.toLowerCase(), pythFeedId);
         
-        try {
-          // Add to Pyth service mappings
-          pythService.addCryptocurrency(cryptoId, pythFeedId);
-          
-          auditLog('admin_crypto_pyth_integration', { 
-            cryptoId: newCrypto.id, 
-            pythFeedId,
-            status: 'success'
-          }, req);
-          
-          console.log(`✅ [ADMIN] Successfully added ${cryptoData.name} with Pyth Network integration`);
-        } catch (pythError) {
-          console.error('⚠️ [ADMIN] Pyth integration failed:', pythError);
-          // Continue with CoinGecko-only integration
-          auditLog('admin_crypto_pyth_integration', { 
-            cryptoId: newCrypto.id, 
-            pythFeedId,
-            status: 'failed',
-            error: pythError.message
-          }, req);
-        }
+        auditLog('admin_crypto_pyth_integration', { 
+          cryptoId: newCrypto.id, 
+          pythFeedId,
+          status: 'success'
+        }, req);
+        
+        console.log(`✅ [ADMIN] Successfully added ${cryptoData.name} (${cryptoData.symbol}) with Pyth Network integration`);
+      } catch (pythError) {
+        console.error('❌ [ADMIN] Pyth integration failed:', pythError);
+        
+        // Remove the cryptocurrency if Pyth integration fails (since it's required)
+        await storage.deleteCryptocurrency(cryptoId.toLowerCase());
+        
+        auditLog('admin_crypto_pyth_integration', { 
+          cryptoId: newCrypto.id, 
+          pythFeedId,
+          status: 'failed',
+          error: pythError.message
+        }, req);
+        
+        return res.status(500).json({ 
+          message: `Failed to add Pyth Network integration: ${pythError.message}` 
+        });
       }
       
       // Clear crypto service cache so new cryptocurrency appears immediately
@@ -5171,14 +5134,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cryptoId: newCrypto.id, 
         name: newCrypto.name,
         symbol: newCrypto.symbol,
-        source: enablePythIntegration ? 'coingecko_api_with_pyth' : 'coingecko_api',
-        pythFeedId: enablePythIntegration ? pythFeedId : undefined
+        source: 'pyth_network_only',
+        pythFeedId
       }, req);
       
       res.json({
         ...newCrypto,
-        pythIntegration: enablePythIntegration,
-        pythFeedId: enablePythIntegration ? pythFeedId : undefined
+        pythIntegration: true,
+        pythFeedId
       });
     } catch (error) {
       console.error("Error adding cryptocurrency:", error);
