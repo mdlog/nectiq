@@ -65,7 +65,7 @@ export class PythPriceService {
         }
       }
 
-      this.lastCacheUpdate = now;
+      this.lastCacheUpdate = Date.now();
       console.log(`✅ [PYTH] Loaded ${this.cryptoDataCache.size} cryptocurrencies from database`);
     } catch (error) {
       console.error("❌ [PYTH] Error loading cryptocurrencies from database:", error);
