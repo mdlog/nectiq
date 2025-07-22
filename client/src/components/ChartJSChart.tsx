@@ -156,33 +156,28 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
 
   const { labels, data } = generateHistoricalData();
 
-  // Chart.js configuration
+  // Determine if price is going up or down for color scheme
+  const isPositive = cryptoInfo?.price_change_percentage_24h ? cryptoInfo.price_change_percentage_24h >= 0 : true;
+  const lineColor = isPositive ? '#16a34a' : '#dc2626'; // Green for up, red for down
+  const fillColor = isPositive ? 'rgba(22, 163, 74, 0.1)' : 'rgba(220, 38, 38, 0.1)';
+
+  // Chart.js configuration with CoinMarketCap style
   const chartData = {
     labels,
     datasets: [
       {
         label: `${cryptoInfo?.name || cryptoId} Price`,
         data,
-        borderColor: '#10b981',
-        backgroundColor: chartType === 'line' ? 'rgba(16, 185, 129, 0.1)' : '#10b981',
+        borderColor: lineColor,
+        backgroundColor: fillColor,
         borderWidth: 2,
-        fill: chartType === 'line',
-        tension: 0.4,
-        pointRadius: chartType === 'line' ? 0 : 2,
-        pointHoverRadius: 4,
-        // Add a special point at the end to highlight current price
-        pointBackgroundColor: (context: any) => {
-          return context.dataIndex === data.length - 1 ? '#10b981' : 'transparent';
-        },
-        pointBorderColor: (context: any) => {
-          return context.dataIndex === data.length - 1 ? '#ffffff' : 'transparent';
-        },
-        pointRadius: (context: any) => {
-          return context.dataIndex === data.length - 1 ? 6 : 0;
-        },
-        pointBorderWidth: (context: any) => {
-          return context.dataIndex === data.length - 1 ? 2 : 0;
-        },
+        fill: true, // Always fill for area chart effect
+        tension: 0.1, // Less tension for more realistic movements
+        pointRadius: 0, // No points on line
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: lineColor,
+        pointHoverBorderColor: '#ffffff',
+        pointHoverBorderWidth: 2,
       },
     ],
   };
@@ -190,6 +185,14 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: {
+        top: 20,
+        right: 20,
+        bottom: 10,
+        left: 10
+      }
+    },
     plugins: {
       legend: {
         display: false,
@@ -200,127 +203,124 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
       tooltip: {
         mode: 'index' as const,
         intersect: false,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
-        borderColor: '#333333',
+        backgroundColor: 'rgba(17, 24, 39, 0.95)',
+        titleColor: '#f9fafb',
+        bodyColor: '#f9fafb',
+        borderColor: 'rgba(75, 85, 99, 0.3)',
         borderWidth: 1,
+        cornerRadius: 8,
+        displayColors: false,
         callbacks: {
+          title: function(context: any) {
+            return context[0].label;
+          },
           label: function(context: any) {
             const value = context.parsed.y;
-            return `$${value.toLocaleString(undefined, { 
+            return `Price: $${value.toLocaleString(undefined, { 
               minimumFractionDigits: 2, 
-              maximumFractionDigits: 6 
+              maximumFractionDigits: 2 
             })}`;
           }
         }
       },
-      // Add annotation plugin for live price indicator
+      // Add annotation plugin for current price indicator
       annotation: {
         annotations: cryptoInfo && data.length > 0 ? {
-          livePriceLine: {
-            type: 'line',
-            yMin: cryptoInfo.current_price,
-            yMax: cryptoInfo.current_price,
-            borderColor: '#10b981',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            label: {
-              enabled: true,
-              content: `LIVE: $${cryptoInfo.current_price.toFixed(2)}`,
-              position: 'end',
-              backgroundColor: '#10b981',
-              color: '#ffffff',
-              font: {
-                weight: 'bold',
-                size: 11
-              },
-              padding: {
-                x: 8,
-                y: 4
-              },
-              cornerRadius: 6,
-              xAdjust: 15,
-              yAdjust: 0
-            }
-          },
-          livePricePoint: {
-            type: 'point',
+          currentPriceLabel: {
+            type: 'label',
             xValue: labels[labels.length - 1],
             yValue: cryptoInfo.current_price,
-            backgroundColor: '#10b981',
+            backgroundColor: lineColor,
             borderColor: '#ffffff',
-            borderWidth: 3,
-            radius: 8,
-            display: true
+            borderWidth: 2,
+            borderRadius: 4,
+            content: `$${cryptoInfo.current_price.toLocaleString()}`,
+            color: '#ffffff',
+            font: {
+              weight: 'bold',
+              size: 12
+            },
+            padding: 6,
+            xAdjust: 40,
+            yAdjust: 0
           }
         } : {}
       }
     },
     interaction: {
-      mode: 'nearest' as const,
-      axis: 'x' as const,
+      mode: 'index' as const,
       intersect: false,
+    },
+    elements: {
+      point: {
+        hoverRadius: 6,
+        hoverBorderWidth: 2,
+      },
+      line: {
+        borderCapStyle: 'round' as const,
+        borderJoinStyle: 'round' as const,
+      }
     },
     scales: {
       x: {
         display: true,
         grid: {
-          color: '#333333',
-          drawBorder: false,
+          display: false, // Hide vertical grid lines for cleaner look
         },
         ticks: {
-          color: '#888888',
-          maxTicksLimit: 8,
+          color: '#6b7280',
+          maxTicksLimit: 6,
+          font: {
+            size: 11
+          }
         },
+        border: {
+          display: false
+        }
       },
       y: {
-        display: true,
-        position: 'left' as const,
+        display: false, // Hide left Y-axis
         grid: {
-          color: '#333333',
+          color: 'rgba(107, 114, 128, 0.1)',
           drawBorder: false,
         },
-        ticks: {
-          color: '#888888',
-          callback: function(value: any) {
-            return '$' + value.toLocaleString();
-          },
-          // Set step size to $1000
-          stepSize: 1000,
-          // Calculate max ticks based on price range
-          maxTicksLimit: 8,
-        },
-        // Set realistic min/max based on current price with $1000 intervals
-        min: cryptoInfo ? Math.floor(cryptoInfo.current_price * 0.75 / 1000) * 1000 : undefined,
-        max: cryptoInfo ? Math.ceil(cryptoInfo.current_price * 1.25 / 1000) * 1000 : undefined,
+        // Set realistic min/max based on current price
+        min: cryptoInfo ? cryptoInfo.current_price * 0.85 : undefined,
+        max: cryptoInfo ? cryptoInfo.current_price * 1.15 : undefined,
       },
-      // Add right Y-axis for live price
+      // Right Y-axis for price labels (CoinMarketCap style)
       y1: {
         type: 'linear' as const,
         display: true,
         position: 'right' as const,
         grid: {
-          drawOnChartArea: false,
+          color: 'rgba(107, 114, 128, 0.1)',
+          drawBorder: false,
         },
         ticks: {
-          color: '#10b981',
+          color: '#6b7280',
           callback: function(value: any) {
-            // Only show the current live price
-            if (cryptoInfo && Math.abs(value - cryptoInfo.current_price) < (cryptoInfo.current_price * 0.01)) {
-              return `$${cryptoInfo.current_price.toFixed(2)}`;
+            // Format price labels similar to CoinMarketCap
+            if (value >= 1000000) {
+              return `${(value / 1000000).toFixed(1)}M`;
+            } else if (value >= 1000) {
+              return `${(value / 1000).toFixed(1)}K`;
             }
-            return '';
+            return `$${value.toLocaleString()}`;
           },
-          maxTicksLimit: 3,
+          maxTicksLimit: 6,
           font: {
-            weight: 'bold',
-            size: 12
-          }
+            size: 11,
+            weight: '500'
+          },
+          padding: 8
         },
-        // Match the left axis scale with $1000 intervals
-        min: cryptoInfo ? Math.floor(cryptoInfo.current_price * 0.75 / 1000) * 1000 : undefined,
-        max: cryptoInfo ? Math.ceil(cryptoInfo.current_price * 1.25 / 1000) * 1000 : undefined,
+        // Match the left axis scale
+        min: cryptoInfo ? cryptoInfo.current_price * 0.85 : undefined,
+        max: cryptoInfo ? cryptoInfo.current_price * 1.15 : undefined,
+        border: {
+          display: false
+        }
       },
     },
   };
