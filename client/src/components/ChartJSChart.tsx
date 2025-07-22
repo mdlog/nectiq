@@ -11,6 +11,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import annotationPlugin from 'chartjs-plugin-annotation';
 import { Line, Bar } from 'react-chartjs-2';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
@@ -26,7 +27,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  annotationPlugin
 );
 
 interface ChartJSChartProps {
@@ -57,14 +59,15 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
   // Fetch crypto data (same source as Live Prices for consistency)
   const { data: cryptoData } = useQuery<any[]>({
     queryKey: ['/api/crypto/prices'],
-    refetchInterval: 60000, // Same as Live Prices
-    staleTime: 45000,
+    refetchInterval: 3000, // 3 seconds for real-time sync with Live Prices
+    staleTime: 1000, // Very fresh data
+    refetchInBackground: true,
   });
 
   // Get crypto info
   const cryptoInfo = cryptoData?.find((c: any) => c.id === cryptoId);
 
-  // Generate realistic historical data
+  // Generate realistic historical data with current price as endpoint
   const generateHistoricalData = () => {
     if (!cryptoInfo) return { labels: [], data: [] };
 
@@ -83,26 +86,15 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
     const labels: string[] = [];
     const data: number[] = [];
     const now = Date.now();
-    let basePrice = currentPrice;
 
-    for (let i = dataPoints - 1; i >= 0; i--) {
-      const timestamp = new Date(now - i * intervalMs);
-      
-      // Format label based on timeframe
-      let label = '';
-      if (selectedTimeframe === '1m' || selectedTimeframe === '5m') {
-        label = timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      } else if (selectedTimeframe === '15m' || selectedTimeframe === '1h') {
-        label = timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      } else if (selectedTimeframe === '4h') {
-        label = timestamp.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) + ' ' + 
-                timestamp.toLocaleTimeString('id-ID', { hour: '2-digit' });
-      } else {
-        label = timestamp.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
-      }
-      
-      labels.push(label);
-
+    // Generate historical prices working backwards from current price
+    const historicalPrices: number[] = [];
+    
+    // Start with current price as the last point
+    historicalPrices[dataPoints - 1] = currentPrice;
+    
+    // Generate previous prices working backwards
+    for (let i = dataPoints - 2; i >= 0; i--) {
       // Generate realistic price variations based on timeframe
       let volatility = 0.01;
       switch (selectedTimeframe) {
@@ -125,13 +117,35 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
       }
 
       // Create realistic price movement with trend and noise
-      const trendComponent = Math.sin((dataPoints - i) / dataPoints * Math.PI * 2) * 0.05;
+      const trendComponent = Math.sin(i / dataPoints * Math.PI * 2) * 0.05;
       const noiseComponent = (Math.random() - 0.5) * volatility * 2;
       const priceChange = 1 + trendComponent + noiseComponent;
       
-      const price = Math.max(basePrice * priceChange, currentPrice * 0.7);
-      data.push(price);
-      basePrice = price;
+      // Work backwards from the next price point
+      const nextPrice = historicalPrices[i + 1];
+      const price = Math.max(nextPrice / priceChange, currentPrice * 0.7);
+      historicalPrices[i] = price;
+    }
+
+    // Now build labels and data arrays
+    for (let i = 0; i < dataPoints; i++) {
+      const timestamp = new Date(now - (dataPoints - 1 - i) * intervalMs);
+      
+      // Format label based on timeframe
+      let label = '';
+      if (selectedTimeframe === '1m' || selectedTimeframe === '5m') {
+        label = timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      } else if (selectedTimeframe === '15m' || selectedTimeframe === '1h') {
+        label = timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      } else if (selectedTimeframe === '4h') {
+        label = timestamp.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) + ' ' + 
+                timestamp.toLocaleTimeString('id-ID', { hour: '2-digit' });
+      } else {
+        label = timestamp.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      }
+      
+      labels.push(label);
+      data.push(historicalPrices[i]);
     }
 
     return { labels, data };
@@ -153,6 +167,19 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
         tension: 0.4,
         pointRadius: chartType === 'line' ? 0 : 2,
         pointHoverRadius: 4,
+        // Add a special point at the end to highlight current price
+        pointBackgroundColor: (context: any) => {
+          return context.dataIndex === data.length - 1 ? '#10b981' : 'transparent';
+        },
+        pointBorderColor: (context: any) => {
+          return context.dataIndex === data.length - 1 ? '#ffffff' : 'transparent';
+        },
+        pointRadius: (context: any) => {
+          return context.dataIndex === data.length - 1 ? 6 : 0;
+        },
+        pointBorderWidth: (context: any) => {
+          return context.dataIndex === data.length - 1 ? 2 : 0;
+        },
       },
     ],
   };
@@ -185,6 +212,47 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
           }
         }
       },
+      // Add annotation plugin for live price indicator
+      annotation: {
+        annotations: cryptoInfo && data.length > 0 ? {
+          livePriceLine: {
+            type: 'line',
+            yMin: cryptoInfo.current_price,
+            yMax: cryptoInfo.current_price,
+            borderColor: '#10b981',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            label: {
+              enabled: true,
+              content: `LIVE: $${cryptoInfo.current_price.toFixed(2)}`,
+              position: 'end',
+              backgroundColor: '#10b981',
+              color: '#ffffff',
+              font: {
+                weight: 'bold',
+                size: 11
+              },
+              padding: {
+                x: 8,
+                y: 4
+              },
+              cornerRadius: 6,
+              xAdjust: 15,
+              yAdjust: 0
+            }
+          },
+          livePricePoint: {
+            type: 'point',
+            xValue: labels[labels.length - 1],
+            yValue: cryptoInfo.current_price,
+            backgroundColor: '#10b981',
+            borderColor: '#ffffff',
+            borderWidth: 3,
+            radius: 8,
+            display: true
+          }
+        } : {}
+      }
     },
     interaction: {
       mode: 'nearest' as const,
@@ -215,6 +283,30 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
           callback: function(value: any) {
             return '$' + value.toLocaleString();
           },
+        },
+      },
+      // Add right Y-axis for live price
+      y1: {
+        type: 'linear' as const,
+        display: true,
+        position: 'right' as const,
+        grid: {
+          drawOnChartArea: false,
+        },
+        ticks: {
+          color: '#10b981',
+          callback: function(value: any) {
+            // Only show the current live price
+            if (cryptoInfo && Math.abs(value - cryptoInfo.current_price) < (cryptoInfo.current_price * 0.01)) {
+              return `$${cryptoInfo.current_price.toFixed(2)}`;
+            }
+            return '';
+          },
+          maxTicksLimit: 3,
+          font: {
+            weight: 'bold',
+            size: 12
+          }
         },
       },
     },
