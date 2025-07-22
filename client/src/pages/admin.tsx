@@ -3623,24 +3623,16 @@ export default function AdminPanel() {
       return;
     }
     
-    if (!formInputs.pythFeedId.startsWith('0x') || formInputs.pythFeedId.length !== 66) {
+    if (formInputs.pythFeedId.length !== 64) {
       toast({
         title: "Error",
-        description: "Pyth Feed ID must be a 64-character hex string starting with '0x'",
+        description: "Pyth Feed ID must be a 64-character hex string",
         variant: "destructive",
       });
       return;
     }
 
-    // REQUIRE VALIDATION BEFORE ADDING
-    if (!validationResult || !validationResult.isValid) {
-      toast({
-        title: "Validation Required",
-        description: "Please validate the Pyth Feed ID before adding the cryptocurrency",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Direct submission without validation requirement
 
     const mutationData = {
       cryptoId: formInputs.cryptoId.trim().toLowerCase(),
