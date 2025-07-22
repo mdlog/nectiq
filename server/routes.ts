@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
 import { db } from "./db";
-import { cryptoService, CryptoService } from "./services/cryptoService";
+import { cryptoService } from "./services/cryptoService";
 import { predictionService } from "./services/predictionService";
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
@@ -1892,7 +1892,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get live cryptocurrency prices
   app.get("/api/crypto/prices", async (req, res) => {
     try {
+      console.log('🔍 [API] /api/crypto/prices endpoint called');
       const prices = await cryptoService.getCurrentPrices();
+      console.log(`✅ [API] Successfully fetched ${prices?.length || 0} prices from cryptoService`);
       
       // Update storage with latest prices
       for (const price of prices) {
@@ -1906,8 +1908,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(prices);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to get crypto prices" });
+    } catch (error: any) {
+      console.error('❌ [API] Error in /api/crypto/prices:', error);
+      console.error('❌ [API] Error stack:', error.stack);
+      res.status(500).json({ message: "Failed to get crypto prices", error: error.message });
     }
   });
 
@@ -5105,7 +5109,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newCrypto = await storage.upsertCryptocurrency(cryptoData);
       
       // Clear crypto service cache so new cryptocurrency appears immediately
-      const { cryptoService } = await import('../services/cryptoService');
       cryptoService.clearCache();
       
       auditLog('admin_crypto_added', { 

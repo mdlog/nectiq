@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { pythPriceService } from './PythPriceService';
 
 // Configure axios defaults for better Ubuntu localhost compatibility
 axios.defaults.timeout = 10000;
@@ -20,6 +21,9 @@ export interface CryptoPrice {
   current_price: number;
   price_change_percentage_24h: number;
   image?: string;
+  source?: 'coingecko' | 'pyth' | 'hybrid';
+  confidence_interval?: number; // For Pyth Network confidence data
+  last_updated?: string;
 }
 
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
@@ -30,6 +34,7 @@ export class CryptoService {
   private readonly CACHE_DURATION = 10000; // Cache real prices for 10 seconds for better real-time experience
   private fetchPromise: Promise<CryptoPrice[]> | null = null; // Prevent concurrent fetches
   private priceVariationTime = 0; // Consistent variation time for all users
+  private pythEnabled = true; // Enable Pyth Network integration
 
   // Method to clear cache when cryptocurrencies are deleted
   clearCache() {
@@ -135,6 +140,145 @@ export class CryptoService {
     }
   }
 
+  /**
+   * Fetch prices using hybrid approach: Pyth Network + CoinGecko fallback
+   */
+  private async fetchHybridPrices(): Promise<CryptoPrice[]> {
+    const now = Date.now();
+    console.log('🔗 [HYBRID] Starting hybrid price fetch (Pyth + CoinGecko)');
+    
+    try {
+      // Get supported cryptocurrencies from database
+      const supportedCryptos = await storage.getAllCryptocurrencies();
+      const cryptoIds = supportedCryptos.map(crypto => crypto.id);
+      
+      if (cryptoIds.length === 0) {
+        this.cachedRealPrices = [];
+        this.lastFetchTime = now;
+        return [];
+      }
+
+      let pythPrices: CryptoPrice[] = [];
+      let coinGeckoPrices: CryptoPrice[] = [];
+      
+      // Try to fetch from Pyth Network first
+      try {
+        console.log('📡 [PYTH] Attempting to fetch prices from Pyth Network...');
+        pythPrices = await pythPriceService.getLatestPrices();
+        console.log(`✅ [PYTH] Successfully fetched ${pythPrices.length} prices from Pyth Network`);
+      } catch (pythError: any) {
+        console.warn('⚠️ [PYTH] Failed to fetch from Pyth Network:', pythError?.message || 'Unknown error');
+      }
+
+      // Fetch from CoinGecko for comparison and fallback
+      try {
+        console.log('🦎 [COINGECKO] Fetching prices from CoinGecko API...');
+        const response = await axios.get(`${COINGECKO_API_BASE}/coins/markets`, {
+          params: {
+            ids: cryptoIds.join(','),
+            vs_currency: 'usd',
+            order: 'market_cap_desc',
+            per_page: 20,
+            page: 1,
+            sparkline: false,
+            price_change_percentage: '24h'
+          }
+        });
+
+        coinGeckoPrices = response.data.map((coin: any) => ({
+          id: coin.id,
+          symbol: coin.symbol?.toUpperCase(),
+          name: coin.name,
+          current_price: coin.current_price,
+          price_change_percentage_24h: coin.price_change_percentage_24h,
+          image: this.getCryptoImageUrl(coin.id),
+          source: 'coingecko',
+          last_updated: coin.last_updated
+        }));
+        console.log(`✅ [COINGECKO] Successfully fetched ${coinGeckoPrices.length} prices from CoinGecko`);
+      } catch (coinGeckoError: any) {
+        if (coinGeckoError.response?.status === 429) {
+          console.log('⏳ [COINGECKO] Rate limit reached');
+        } else {
+          console.warn('⚠️ [COINGECKO] Failed to fetch from CoinGecko:', coinGeckoError.message);
+        }
+      }
+
+      // Merge prices: Prefer Pyth for supported cryptos, fallback to CoinGecko
+      const mergedPrices = this.mergeHybridPrices(pythPrices, coinGeckoPrices, cryptoIds);
+      
+      this.cachedRealPrices = mergedPrices;
+      this.lastFetchTime = now;
+      
+      console.log(`🔄 [HYBRID] Hybrid fetch completed: ${mergedPrices.length} total prices`);
+      return this.getMergedPriceData();
+      
+    } catch (error: any) {
+      console.error('❌ [HYBRID] Error in hybrid price fetch:', error);
+      this.fetchPromise = null;
+      
+      if (error.response?.status === 429) {
+        console.log('⏳ [HYBRID] Rate limit reached, using micro-variations on cached data');
+        this.generateMicroVariations();
+        this.lastFetchTime = now + 10000;
+      }
+      
+      return this.getMergedPriceData();
+    }
+  }
+
+  /**
+   * Merge Pyth and CoinGecko prices intelligently
+   */
+  private mergeHybridPrices(pythPrices: CryptoPrice[], coinGeckoPrices: CryptoPrice[], cryptoIds: string[]): CryptoPrice[] {
+    const mergedPrices: CryptoPrice[] = [];
+    const pythMap = new Map(pythPrices.map(p => [p.id, p]));
+    const coinGeckoMap = new Map(coinGeckoPrices.map(p => [p.id, p]));
+
+    console.log(`🔄 [MERGE] Merging prices: ${pythPrices.length} from Pyth, ${coinGeckoPrices.length} from CoinGecko`);
+
+    for (const cryptoId of cryptoIds) {
+      const pythPrice = pythMap.get(cryptoId);
+      const coinGeckoPrice = coinGeckoMap.get(cryptoId);
+
+      if (pythPrice && coinGeckoPrice) {
+        // Both sources available - prefer Pyth but add market data from CoinGecko
+        const hybridPrice: CryptoPrice = {
+          ...pythPrice,
+          // Keep Pyth's institutional price
+          current_price: pythPrice.current_price,
+          // Use CoinGecko's 24h change since Pyth doesn't provide this directly
+          price_change_percentage_24h: coinGeckoPrice.price_change_percentage_24h,
+          // Use CoinGecko's image if available
+          image: coinGeckoPrice.image || pythPrice.image,
+          source: 'hybrid',
+          confidence_interval: pythPrice.confidence_interval
+        };
+        mergedPrices.push(hybridPrice);
+        console.log(`🤝 [${cryptoId.toUpperCase()}] Hybrid: Pyth price ($${pythPrice.current_price.toFixed(4)}) + CoinGecko market data`);
+        
+      } else if (pythPrice) {
+        // Only Pyth available
+        mergedPrices.push({
+          ...pythPrice,
+          source: 'pyth'
+        });
+        console.log(`📡 [${cryptoId.toUpperCase()}] Pyth only: $${pythPrice.current_price.toFixed(4)}`);
+        
+      } else if (coinGeckoPrice) {
+        // Only CoinGecko available
+        mergedPrices.push({
+          ...coinGeckoPrice,
+          source: 'coingecko'
+        });
+        console.log(`🦎 [${cryptoId.toUpperCase()}] CoinGecko only: $${coinGeckoPrice.current_price.toFixed(4)}`);
+      }
+    }
+
+    console.log(`✅ [MERGE] Merged ${mergedPrices.length} prices successfully`);
+    return mergedPrices;
+  }
+
   async getCurrentPrices(): Promise<CryptoPrice[]> {
     const now = Date.now();
     
@@ -146,7 +290,7 @@ export class CryptoService {
     // Try to fetch real prices every 45 seconds to avoid rate limits while keeping prices current
     if (now - this.lastFetchTime > this.CACHE_DURATION) {
       // Create and store the fetch promise to prevent concurrent fetches
-      this.fetchPromise = this.fetchFreshPrices();
+      this.fetchPromise = this.pythEnabled ? this.fetchHybridPrices() : this.fetchFreshPrices();
       return this.fetchPromise;
     }
     
