@@ -61,13 +61,13 @@ const PythNetworkChart = ({
 
   // Update price history when new Pyth data arrives
   useEffect(() => {
-    if (currentPythData && currentPythData.price) {
+    if (currentPythData && currentPythData.current_price) {
       const now = Date.now();
       setPriceHistory(prev => {
         const newHistory = [...prev, {
           timestamp: now,
-          price: currentPythData.price,
-          confidence: currentPythData.confidence
+          price: currentPythData.current_price,
+          confidence: currentPythData.confidence_interval
         }];
         
         // Keep only last 50 data points for smooth performance
@@ -187,9 +187,9 @@ const PythNetworkChart = ({
     ctx.fillText(`$${minPrice.toFixed(8)}`, width - 10, height - 10);
     // Current price
     if (currentPythData) {
-      const currentY = height - ((currentPythData.price - minPrice) / priceRange) * height;
+      const currentY = height - ((currentPythData.current_price - minPrice) / priceRange) * height;
       ctx.fillStyle = '#10b981';
-      ctx.fillText(`$${currentPythData.price.toFixed(8)}`, width - 10, currentY + 5);
+      ctx.fillText(`$${currentPythData.current_price.toFixed(8)}`, width - 10, currentY + 5);
       
       // Draw current price indicator
       ctx.fillStyle = '#10b981';
@@ -253,7 +253,7 @@ const PythNetworkChart = ({
                     <>
                       <div className="flex items-center gap-2">
                         <span className="text-2xl font-mono text-white">
-                          ${formatPrice(currentPythData.price)}
+                          ${formatPrice(currentPythData.current_price)}
                         </span>
                         <div className={`flex items-center gap-1 ${percentage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {percentage >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
@@ -262,9 +262,9 @@ const PythNetworkChart = ({
                           </span>
                         </div>
                       </div>
-                      {currentPythData.confidence && (
+                      {currentPythData.confidence_interval && (
                         <div className="text-xs text-gray-400">
-                          Confidence: ±${currentPythData.confidence.toFixed(8)}
+                          Confidence: ±${currentPythData.confidence_interval.toFixed(8)}
                         </div>
                       )}
                     </>
@@ -299,7 +299,7 @@ const PythNetworkChart = ({
                   <span className="text-green-400">Loading Pyth Network data...</span>
                 </div>
               </div>
-            ) : priceHistory.length > 0 ? (
+            ) : currentPythData ? (
               <canvas
                 ref={canvasRef}
                 className="w-full h-full border border-gray-700 rounded-lg bg-gray-900"
@@ -318,7 +318,7 @@ const PythNetworkChart = ({
             )}
             
             {/* Chart Info Overlay */}
-            {priceHistory.length > 0 && (
+            {currentPythData && (
               <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 text-xs">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -326,13 +326,13 @@ const PythNetworkChart = ({
                     <span className="text-green-400 font-semibold">Pyth Network Live Feed</span>
                   </div>
                   <div className="text-gray-300">
-                    Data Points: {priceHistory.length}
+                    Price: ${currentPythData.current_price.toFixed(8)}
                   </div>
                   <div className="text-gray-300">
                     Update: Every 3s
                   </div>
                   <div className="text-gray-300">
-                    Last: {new Date(priceHistory[priceHistory.length - 1]?.timestamp || Date.now()).toLocaleTimeString()}
+                    Last: {new Date().toLocaleTimeString()}
                   </div>
                 </div>
               </div>
