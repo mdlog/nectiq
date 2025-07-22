@@ -3308,6 +3308,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["/api/crypto/pyth-prices"] });
     },
     onError: (error: any) => {
+      console.error('💥 [FRONTEND] addCryptoMutation error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to add cryptocurrency",
@@ -3315,6 +3316,89 @@ export default function AdminPanel() {
       });
     },
   });
+
+  // Form submission handler - FIXED: Added proper event handling
+  const handleAddCrypto = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Prevent default form submission
+    console.log('🚀 [FORM] Form submission started');
+    console.log('🚀 [FORM] Current form values:', {
+      cryptoId: newCryptoId,
+      name: newCryptoName, 
+      symbol: newCryptoSymbol,
+      pythFeedId: pythFeedId
+    });
+
+    // Validate all required fields
+    if (!newCryptoId?.trim()) {
+      console.log('❌ [FORM] Missing crypto ID');
+      toast({
+        title: "Error",
+        description: "Please enter a cryptocurrency ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newCryptoName?.trim()) {
+      console.log('❌ [FORM] Missing name');
+      toast({
+        title: "Error",
+        description: "Please enter the cryptocurrency name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newCryptoSymbol?.trim()) {
+      console.log('❌ [FORM] Missing symbol');
+      toast({
+        title: "Error",
+        description: "Please enter the cryptocurrency symbol",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!pythFeedId?.trim()) {
+      console.log('❌ [FORM] Missing Pyth Feed ID');
+      toast({
+        title: "Error",
+        description: "Pyth Feed ID is required for all cryptocurrencies",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate Feed ID format (64-character hex)
+    const cleanFeedId = pythFeedId.startsWith('0x') ? pythFeedId.slice(2) : pythFeedId;
+    if (cleanFeedId.length !== 64 || !/^[0-9a-fA-F]+$/.test(cleanFeedId)) {
+      console.log('❌ [FORM] Invalid Feed ID format:', {
+        original: pythFeedId,
+        cleaned: cleanFeedId,
+        length: cleanFeedId.length,
+        isHex: /^[0-9a-fA-F]+$/.test(cleanFeedId)
+      });
+      toast({
+        title: "Error",
+        description: `Invalid Pyth Feed ID format. Must be 64-character hex string. Current: ${cleanFeedId.length} chars`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('✅ [FORM] All validation passed, submitting...');
+    
+    // Prepare data for API
+    const mutationData = {
+      cryptoId: newCryptoId.trim().toLowerCase(),
+      name: newCryptoName.trim(),
+      symbol: newCryptoSymbol.trim().toUpperCase(),
+      pythFeedId: cleanFeedId // Store without 0x prefix
+    };
+
+    console.log('🚀 [FORM] Final submission data:', mutationData);
+    addCryptoMutation.mutate(mutationData);
+  };
 
   const deleteCryptoMutation = useMutation({
     mutationFn: async (cryptoId: string) => {
@@ -3569,80 +3653,7 @@ export default function AdminPanel() {
     validatePythMutation.mutate(feedId.trim());
   };
 
-  const handleAddCrypto = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log('🚨 [EMERGENCY-FINAL] DOM extraction approach starting...');
-    
-    // EMERGENCY: Get values directly from DOM instead of React state
-    const form = e.target as HTMLFormElement;
-    const formInputs = {
-      cryptoId: (form.querySelector('input[placeholder*="hyperliquid"]') as HTMLInputElement)?.value || newCryptoId,
-      name: (form.querySelector('input[placeholder*="Hyperliquid"]') as HTMLInputElement)?.value || newCryptoName,
-      symbol: (form.querySelector('input[placeholder*="HYPE"]') as HTMLInputElement)?.value || newCryptoSymbol,
-      pythFeedId: pythFeedInputRef.current?.value || pythFeedId
-    };
-    
-    console.log('🚨 [EMERGENCY-FINAL] Extracted values:', formInputs);
-    console.log('🚨 [EMERGENCY-FINAL] React state values:', { newCryptoId, newCryptoName, newCryptoSymbol, pythFeedId });
-    
-    // Validation for Pyth-only integration
-    if (!formInputs.cryptoId.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a cryptocurrency ID",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    if (!formInputs.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter the cryptocurrency name",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formInputs.symbol.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter the cryptocurrency symbol",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formInputs.pythFeedId.trim()) {
-      toast({
-        title: "Error",
-        description: "Pyth Feed ID is required for all cryptocurrencies",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (formInputs.pythFeedId.length !== 64) {
-      toast({
-        title: "Error",
-        description: "Pyth Feed ID must be a 64-character hex string",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Direct submission without validation requirement
-
-    const mutationData = {
-      cryptoId: formInputs.cryptoId.trim().toLowerCase(),
-      name: formInputs.name.trim(),
-      symbol: formInputs.symbol.trim().toUpperCase(),
-      pythFeedId: formInputs.pythFeedId.trim()
-    };
-
-    addCryptoMutation.mutate(mutationData);
-  };
 
   // Check if user lacks admin permissions
   const isUnauthorized = (statsError as any)?.message?.includes("401") || 
