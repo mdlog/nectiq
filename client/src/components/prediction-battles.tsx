@@ -288,7 +288,7 @@ export function PredictionBattles() {
   });
 
   // Fetch live Pyth Network prices - EXACTLY matching Live Prices settings
-  const { data: cryptoPricesData = [], isLoading: pricesLoading, dataUpdatedAt } = useQuery({
+  const { data: cryptoPricesData = [], isLoading: pricesLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/pyth-prices"], // EXACT same queryKey format as Live Prices
     refetchInterval: 1000, // EXACT same as Live Prices - 1 second updates
     refetchIntervalInBackground: true, // EXACT same as Live Prices
@@ -312,7 +312,7 @@ export function PredictionBattles() {
       body: JSON.stringify({
         ...data,
         currentPrice: (() => {
-          const cryptoData = cryptoPricesData.find((crypto: any) => crypto.id === data.cryptocurrency);
+          const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === data.cryptocurrency);
           return cryptoData ? cryptoData.current_price : 0;
         })() // Include live Pyth price
       })
@@ -476,14 +476,23 @@ export function PredictionBattles() {
     return cryptoMap[cryptoId] || `https://assets.coingecko.com/coins/images/1/small/bitcoin.png`;
   };
 
-  // Get real-time crypto price from live data
+  // Get real-time crypto price from live data - ENHANCED WITH DEBUG
   const getRealTimePrice = (cryptoId: string) => {
+    console.log('🔍 [DEBUG] getRealTimePrice called for:', cryptoId);
+    console.log('🔍 [DEBUG] cryptoPricesData available:', cryptoPricesData?.length, 'items');
+    
     if (cryptoPricesData && Array.isArray(cryptoPricesData) && cryptoPricesData.length > 0) {
-      const crypto = (cryptoPricesData as any[]).find((c: any) => c.id === cryptoId);
+      console.log('🔍 [DEBUG] All available crypto IDs:', cryptoPricesData.map(c => c.id));
+      
+      const crypto = cryptoPricesData.find((c: CryptoPrice) => c.id === cryptoId);
       if (crypto && crypto.current_price) {
+        console.log('🟢 [DEBUG] FOUND live price for', cryptoId, ':', crypto.current_price);
         return crypto.current_price;
+      } else {
+        console.log('🔴 [DEBUG] NOT FOUND crypto for', cryptoId);
       }
     }
+    console.log('🔴 [DEBUG] Returning null for', cryptoId);
     return null;
   };
 
@@ -817,7 +826,7 @@ export function PredictionBattles() {
                   {createForm.cryptocurrency && cryptoPricesData.length > 0 && (
                     <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
                       Live: ${(() => {
-                        const cryptoData = cryptoPricesData.find((crypto: any) => crypto.id === createForm.cryptocurrency);
+                        const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
                         return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
