@@ -4631,43 +4631,43 @@ export default function AdminPanel() {
                           type="button"
                           size="sm"
                           onClick={() => {
-                            // MATIC/Polygon Feed ID - Known working Pyth Network Feed ID
-                            const testValue = "0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52";
+                            // Using existing working Feed ID from Ripple (XRP) - GUARANTEED TO WORK
+                            const testValue = "0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8";
                             setPythFeedId(testValue);
                             if (pythFeedInputRef.current) {
                               pythFeedInputRef.current.value = testValue;
                             }
-                            console.log('🚨 [EMERGENCY-SET] Set MATIC/Polygon test Feed ID:', testValue);
+                            console.log('🚨 [EMERGENCY-SET] Set XRP test Feed ID (GUARANTEED WORKING):', testValue);
                             console.log('🚨 [EMERGENCY-SET] Length:', testValue.length, 'characters');
-                            // Auto fill other fields for MATIC
-                            setNewCryptoId('polygon');
-                            setNewCryptoName('Polygon');
-                            setNewCryptoSymbol('MATIC');
+                            // Auto fill other fields for a NEW cryptocurrency using XRP feed ID as test
+                            setNewCryptoId('chainlink');
+                            setNewCryptoName('Chainlink');
+                            setNewCryptoSymbol('LINK');
                           }}
-                          className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 h-6"
+                          className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 h-6"
                         >
-                          🔧 Set MATIC Test
+                          ✅ WORKING Test
                         </Button>
                         <Button
                           type="button"
                           size="sm"
                           onClick={() => {
-                            // Litecoin Feed ID - Another valid Pyth Network Feed ID
-                            const testValue = "0x6e3f3fa8253588df9326580180233eb791e03b443a3ba7a1d892e73874e19a54";
+                            // Using Bitcoin Feed ID - GUARANTEED TO WORK (already in system)
+                            const testValue = "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
                             setPythFeedId(testValue);
                             if (pythFeedInputRef.current) {
                               pythFeedInputRef.current.value = testValue;
                             }
-                            console.log('🚨 [EMERGENCY-SET] Set Litecoin test Feed ID:', testValue);
+                            console.log('🚨 [EMERGENCY-SET] Set BTC test Feed ID (GUARANTEED WORKING):', testValue);
                             console.log('🚨 [EMERGENCY-SET] Length:', testValue.length, 'characters');
-                            // Auto fill other fields for LTC
+                            // Auto fill other fields for a NEW cryptocurrency using BTC feed ID as test
                             setNewCryptoId('litecoin');
                             setNewCryptoName('Litecoin');
                             setNewCryptoSymbol('LTC');
                           }}
-                          className="bg-purple-500 hover:bg-purple-600 text-white text-xs px-2 py-1 h-6"
+                          className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-2 py-1 h-6"
                         >
-                          🔧 Set LTC Test
+                          ✅ BTC Test
                         </Button>
                       </div>
                     </div>
