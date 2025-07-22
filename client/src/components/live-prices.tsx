@@ -5,31 +5,8 @@ import { Button } from "@/components/ui/button";
 import type { CryptoPrice } from "@/types";
 
 function getValidImageUrl(crypto: CryptoPrice): string {
-  // Manual mapping for coins with known correct logo URLs
-  const logoMappings: Record<string, string> = {
-    monero: "https://coin-images.coingecko.com/coins/images/69/large/monero_logo.png",
-    bittensor: "https://coin-images.coingecko.com/coins/images/28452/large/ARUsPeNQ_400x400.jpg",
-    uniswap: "https://coin-images.coingecko.com/coins/images/12504/large/uniswap-uni.png",
-    ripple: "https://coin-images.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png",
-    hyperliquid: "https://coin-images.coingecko.com/coins/images/44077/large/hyperliquid.png",
-  };
-  
-  // Check if we have a manual mapping for this coin
-  if (logoMappings[crypto.id]) {
-    return logoMappings[crypto.id];
-  }
-  
-  // Handle cases where crypto.image might be undefined
-  if (!crypto.image) {
-    return '';
-  }
-  
-  // If the URL path contains "images/1/large" it's likely invalid, use fallback
-  if (crypto.image.includes('/images/1/large/')) {
-    return '';
-  }
-  
-  return crypto.image;
+  // Use image from API/database directly - no more manual mappings needed
+  return crypto.image || '';
 }
 
 function getCryptoIcon(id: string): string {
