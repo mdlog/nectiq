@@ -4700,123 +4700,17 @@ export default function AdminPanel() {
                       )}
                     </div>
 
-                    {/* FORM STATE DEBUG - Enhanced for New Architecture */}
-                    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
-                        <Code className="h-4 w-4 mr-2" />
-                        Debug Information - Pyth-First Architecture
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-                        <div className="space-y-2">
-                          <p className="text-gray-700 dark:text-gray-300">
-                            <span className="font-bold text-purple-600">Primary Input:</span>
-                          </p>
-                          <p className="pl-2 text-purple-700 dark:text-purple-400">
-                            pythFeedId: "{pythFeedId}"
-                          </p>
-                          <p className="text-gray-700 dark:text-gray-300">
-                            <span className="font-bold text-green-600">Auto-Generated Fields:</span>
-                          </p>
-                          <div className="pl-2 space-y-1 text-green-700 dark:text-green-400">
-                            <p>newCryptoId: "{newCryptoId}"</p>
-                            <p>newCryptoName: "{newCryptoName}"</p>
-                            <p>newCryptoSymbol: "{newCryptoSymbol}"</p>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-gray-700 dark:text-gray-300">
-                            <span className="font-bold text-blue-600">Validation Status:</span>
-                          </p>
-                          <p className="pl-2 text-blue-700 dark:text-blue-400">
-                            isValid: {validationResult?.isValid ? 'TRUE' : 'FALSE'}
-                          </p>
-                          <p className="text-gray-700 dark:text-gray-300">
-                            <span className="font-bold text-orange-600">Submission Ready:</span>
-                          </p>
-                          <p className="pl-2 text-orange-700 dark:text-orange-400">
-                            canSubmit: {(validationResult?.isValid && newCryptoId && newCryptoName && newCryptoSymbol) ? 'TRUE' : 'FALSE'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Success Message */}
                     {validationResult?.isValid && (
                       <div className="p-3 bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 rounded-lg">
                         <div className="flex items-center space-x-2">
                           <CheckCircle className="h-4 w-4 text-green-600" />
                           <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                            ✅ Ready to Add - Validation Successful
+                            ✅ Siap Ditambahkan - Validasi Berhasil
                           </span>
                         </div>
                       </div>
                     )}
-
-                    {/* Submit Button - ALWAYS SHOW THE APPROPRIATE BUTTON */}
-                    <div className="space-y-3">
-                      {/* Debug Info - ALWAYS VISIBLE */}
-                      <div className="p-2 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 rounded text-xs">
-                        <div className="font-bold text-yellow-800 dark:text-yellow-200">🔧 Button State Debug:</div>
-                        <div>validationResult exists: {validationResult ? 'YES' : 'NO'}</div>
-                        <div>isValid: {validationResult?.isValid === true ? 'TRUE' : 'FALSE'}</div>
-                        <div>Should show GREEN button: {validationResult?.isValid === true ? 'YES' : 'NO'}</div>
-                        <div>Should show GRAY button: {!validationResult || validationResult.isValid !== true ? 'YES' : 'NO'}</div>
-                        <div>Current validation result: {JSON.stringify(validationResult)}</div>
-                      </div>
-                      
-                      {/* CONDITIONAL RENDERING - Either GRAY or GREEN button */}
-                      {!validationResult || validationResult.isValid !== true ? (
-                        /* GRAY DISABLED BUTTON - Show when validation not done or failed */
-                        <Button 
-                          type="button" 
-                          className="w-full h-12 text-base font-medium bg-gray-400 hover:bg-gray-500 cursor-not-allowed text-white"
-                          disabled={true}
-                        >
-                          <div className="flex items-center justify-center space-x-2">
-                            <AlertTriangle className="h-5 w-5" />
-                            <span>⚠️ Validation Required - Please Validate Pyth Feed ID First</span>
-                          </div>
-                        </Button>
-                      ) : (
-                        /* GREEN SUBMIT BUTTON - Show when validation successful */
-                        <Button 
-                          type="submit" 
-                          className="w-full h-12 text-base font-medium bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
-                          disabled={addCryptoMutation.isPending || !newCryptoId.trim() || !newCryptoName.trim() || !newCryptoSymbol.trim()}
-                        >
-                          {addCryptoMutation.isPending ? (
-                            <div className="flex items-center justify-center space-x-2">
-                              <RefreshCw className="h-5 w-5 animate-spin" />
-                              <span>Adding Cryptocurrency to Database...</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center space-x-2">
-                              <Plus className="h-5 w-5" />
-                              <span>✅ Add Cryptocurrency to Database</span>
-                            </div>
-                          )}
-                        </Button>
-                      )}
-
-                      {/* FORCE RENDER TEST BUTTON - Manual trigger */}
-                      <Button 
-                        type="button"
-                        onClick={() => {
-                          console.log('🔧 [FORCE-RENDER] Current validation state:', validationResult);
-                          console.log('🔧 [FORCE-RENDER] Triggering re-render...');
-                          // Force update by setting state to new object reference
-                          setValidationResult(prev => {
-                            if (prev) {
-                              return { ...prev };
-                            }
-                            return null;
-                          });
-                        }}
-                        className="w-full h-8 text-sm bg-blue-500 hover:bg-blue-600 text-white"
-                      >
-                        🔄 Force Re-render (Debug)
-                      </Button>
-                    </div>
                   </form>
                 </CardContent>
               </Card>
