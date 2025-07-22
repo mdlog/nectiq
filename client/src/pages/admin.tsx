@@ -4659,45 +4659,47 @@ export default function AdminPanel() {
                       </div>
                     )}
 
-                    {/* Submit Button - SHOW BOTH BUTTONS ALWAYS FOR DEBUGGING */}
+                    {/* Submit Button - ALWAYS SHOW THE APPROPRIATE BUTTON */}
                     <div className="space-y-3">
-                      <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                        <div className="font-bold">Button Logic Test:</div>
+                      {/* Debug Info - ALWAYS VISIBLE */}
+                      <div className="p-2 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 rounded text-xs">
+                        <div className="font-bold text-yellow-800 dark:text-yellow-200">🔧 Button State Debug:</div>
+                        <div>validationResult exists: {validationResult ? 'YES' : 'NO'}</div>
+                        <div>isValid: {validationResult?.isValid === true ? 'TRUE' : 'FALSE'}</div>
                         <div>Should show GREEN button: {validationResult?.isValid === true ? 'YES' : 'NO'}</div>
-                        <div>Should show GRAY button: {validationResult?.isValid !== true ? 'YES' : 'NO'}</div>
-                        <div>Current validation state: {JSON.stringify(validationResult)}</div>
+                        <div>Should show GRAY button: {!validationResult || validationResult.isValid !== true ? 'YES' : 'NO'}</div>
+                        <div>Current validation result: {JSON.stringify(validationResult)}</div>
                       </div>
                       
-                      {/* GRAY BUTTON - Always show when not valid */}
-                      {(!validationResult || validationResult.isValid !== true) && (
+                      {/* CONDITIONAL RENDERING - Either GRAY or GREEN button */}
+                      {!validationResult || validationResult.isValid !== true ? (
+                        /* GRAY DISABLED BUTTON - Show when validation not done or failed */
                         <Button 
                           type="button" 
-                          className="w-full h-12 text-base font-medium bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50"
+                          className="w-full h-12 text-base font-medium bg-gray-400 hover:bg-gray-500 cursor-not-allowed text-white"
                           disabled={true}
                         >
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center justify-center space-x-2">
                             <AlertTriangle className="h-5 w-5" />
-                            <span>⚫ Validation Required</span>
+                            <span>⚠️ Validation Required - Please Validate Pyth Feed ID First</span>
                           </div>
                         </Button>
-                      )}
-
-                      {/* GREEN BUTTON - Show when valid */}
-                      {validationResult && validationResult.isValid === true && (
+                      ) : (
+                        /* GREEN SUBMIT BUTTON - Show when validation successful */
                         <Button 
                           type="submit" 
-                          className="w-full h-12 text-base font-medium bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all"
-                          disabled={addCryptoMutation.isPending}
+                          className="w-full h-12 text-base font-medium bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
+                          disabled={addCryptoMutation.isPending || !newCryptoId.trim() || !newCryptoName.trim() || !newCryptoSymbol.trim()}
                         >
                           {addCryptoMutation.isPending ? (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center justify-center space-x-2">
                               <RefreshCw className="h-5 w-5 animate-spin" />
-                              <span>Adding Cryptocurrency...</span>
+                              <span>Adding Cryptocurrency to Database...</span>
                             </div>
                           ) : (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center justify-center space-x-2">
                               <Plus className="h-5 w-5" />
-                              <span>🟢 Add Cryptocurrency to Database</span>
+                              <span>✅ Add Cryptocurrency to Database</span>
                             </div>
                           )}
                         </Button>
@@ -4707,8 +4709,15 @@ export default function AdminPanel() {
                       <Button 
                         type="button"
                         onClick={() => {
-                          console.log('🔧 FORCE RENDER - Current state:', validationResult);
-                          setValidationResult(prev => prev ? {...prev} : null);
+                          console.log('🔧 [FORCE-RENDER] Current validation state:', validationResult);
+                          console.log('🔧 [FORCE-RENDER] Triggering re-render...');
+                          // Force update by setting state to new object reference
+                          setValidationResult(prev => {
+                            if (prev) {
+                              return { ...prev };
+                            }
+                            return null;
+                          });
                         }}
                         className="w-full h-8 text-sm bg-blue-500 hover:bg-blue-600 text-white"
                       >
