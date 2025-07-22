@@ -3521,11 +3521,24 @@ export default function AdminPanel() {
     },
   });
 
-  // Function to validate Pyth Feed ID
-  const handleValidatePyth = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Create ref for emergency input handling
+  const pythFeedInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Function to validate Pyth Feed ID - EMERGENCY VERSION
+  const handleValidatePyth = () => {
+    console.log('🚨 [EMERGENCY] handleValidatePyth called');
     
-    if (!pythFeedId.trim()) {
+    // Get value from ref if state is empty
+    let feedId = pythFeedId;
+    if (!feedId && pythFeedInputRef.current) {
+      feedId = pythFeedInputRef.current.value;
+      console.log('🚨 [EMERGENCY] Got value from ref:', feedId);
+      setPythFeedId(feedId); // Update state
+    }
+    
+    console.log('🚨 [EMERGENCY] Final feedId for validation:', feedId);
+    
+    if (!feedId || !feedId.trim()) {
       toast({
         title: "Error",
         description: "Pyth Feed ID is required for validation",
@@ -3534,7 +3547,7 @@ export default function AdminPanel() {
       return;
     }
     
-    if (!pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+    if (!feedId.startsWith('0x') || feedId.length !== 66) {
       toast({
         title: "Error",
         description: "Pyth Feed ID must be a 64-character hex string starting with '0x'",
@@ -3544,7 +3557,7 @@ export default function AdminPanel() {
     }
 
     setValidationResult(null);
-    validatePythMutation.mutate(pythFeedId.trim());
+    validatePythMutation.mutate(feedId.trim());
   };
 
   const handleAddCrypto = (e: React.FormEvent) => {
@@ -4461,10 +4474,11 @@ export default function AdminPanel() {
                         {/* Feed ID Input & Validate - SIMPLIFIED VERSION */}
                         <div className="flex space-x-2">
                           <input
+                            ref={pythFeedInputRef}
                             id="pyth-feed-id-simple"
                             type="text"
                             placeholder="Enter Pyth Feed ID (0x...)"
-                            value={pythFeedId}
+                            defaultValue={pythFeedId}
                             onChange={(e) => {
                               console.log('🔧 [SIMPLE-INPUT] Pyth Feed ID changed:', e.target.value);
                               setPythFeedId(e.target.value);
@@ -4472,9 +4486,11 @@ export default function AdminPanel() {
                             }}
                             onInput={(e) => {
                               console.log('📝 [ONINPUT] Pyth Feed ID input:', e.currentTarget.value);
+                              setPythFeedId(e.currentTarget.value);
                             }}
                             onKeyUp={(e) => {
                               console.log('⌨️ [KEYUP] Pyth Feed ID keyup:', e.currentTarget.value);
+                              setPythFeedId(e.currentTarget.value);
                             }}
                             className="flex-1 h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                             required
@@ -4575,7 +4591,39 @@ export default function AdminPanel() {
                       <div>validationResult: {validationResult ? JSON.stringify(validationResult, null, 2) : 'null'}</div>
                       <div>isValid: <span className={validationResult?.isValid ? 'text-green-600 font-bold' : 'text-red-600'}>{validationResult?.isValid ? 'TRUE' : 'FALSE'}</span></div>
                       <div>pythFeedId: "{pythFeedId}"</div>
+                      <div>inputRefValue: "{pythFeedInputRef.current?.value || 'NO_REF_VALUE'}"</div>
                       <div>Render time: {new Date().toLocaleTimeString()}</div>
+                      
+                      {/* Emergency Test Buttons */}
+                      <div className="mt-3 space-x-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            console.log('🚨 [EMERGENCY-TEST] Current ref value:', pythFeedInputRef.current?.value);
+                            console.log('🚨 [EMERGENCY-TEST] Current state value:', pythFeedId);
+                            console.log('🚨 [EMERGENCY-TEST] Input element:', pythFeedInputRef.current);
+                          }}
+                          className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 h-6"
+                        >
+                          🚨 Test Ref
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            const testValue = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+                            setPythFeedId(testValue);
+                            if (pythFeedInputRef.current) {
+                              pythFeedInputRef.current.value = testValue;
+                            }
+                            console.log('🚨 [EMERGENCY-SET] Set test value:', testValue);
+                          }}
+                          className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 h-6"
+                        >
+                          🔧 Set Test
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Success Message */}
