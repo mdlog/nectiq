@@ -8,7 +8,7 @@ import fs from "fs";
 import { storage } from "./storage";
 import { db } from "./db";
 import { cryptoService } from "./services/cryptoService";
-import { PythPriceService } from "./services/PythPriceService";
+import { PythPriceService } from "./services/PythPriceService.js";
 import { predictionService } from "./services/predictionService";
 
 // Initialize Pyth Price Service
