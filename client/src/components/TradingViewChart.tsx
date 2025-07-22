@@ -51,22 +51,15 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
   // Get current crypto data
   const currentCryptoData = pythData?.find((crypto: PythPriceData) => crypto.id === cryptoId);
 
-  // Fetch crypto logo
-  useEffect(() => {
-    const fetchCryptoLogo = async () => {
-      try {
-        const response = await fetch('/api/crypto/prices');
-        const cryptos = await response.json();
-        const crypto = cryptos.find((c: any) => c.id === cryptoId);
-        if (crypto?.image) {
-          setCryptoLogo(crypto.image);
-        }
-      } catch (error) {
-        console.error('Error fetching crypto logo:', error);
-      }
-    };
-    fetchCryptoLogo();
-  }, [cryptoId]);
+  // Fetch crypto data for logo (using same source as Live Prices)
+  const { data: cryptoData } = useQuery<any[]>({
+    queryKey: ['/api/crypto/prices'],
+    refetchInterval: 60000, // Same as Live Prices
+    staleTime: 45000,
+  });
+
+  // Get crypto logo and metadata
+  const cryptoInfo = cryptoData?.find((c: any) => c.id === cryptoId);
 
   // Initialize chart
   useEffect(() => {
@@ -128,9 +121,9 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
       chartRef.current.removeSeries(seriesRef.current);
     }
 
-    // Generate historical data with realistic movements
+    // Generate historical data with realistic movements - use same price source as Live Prices
     const generateHistoricalData = () => {
-      const currentPrice = currentCryptoData.current_price;
+      const currentPrice = cryptoInfo?.current_price || currentCryptoData.current_price;
       const timeframeData = timeframes.find(tf => tf.value === selectedTimeframe);
       const intervalMs = (timeframeData?.minutes || 60) * 60 * 1000;
       
@@ -255,22 +248,21 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
         <div className="flex items-center space-x-4">
           {/* Crypto Info */}
           <div className="flex items-center space-x-3">
-            {cryptoLogo && (
-              <img src={cryptoLogo} alt={cryptoId} className="w-8 h-8 rounded-full" />
+            {cryptoInfo?.image && (
+              <img src={cryptoInfo.image} alt={cryptoId} className="w-8 h-8 rounded-full" />
             )}
             <div>
               <h3 className="font-semibold text-white">
-                {currentCryptoData?.name || cryptoId} ({currentCryptoData?.symbol?.toUpperCase()})
+                {cryptoInfo?.name || currentCryptoData?.name || cryptoId} ({cryptoInfo?.symbol?.toUpperCase() || currentCryptoData?.symbol?.toUpperCase()})
               </h3>
-              {currentCryptoData && (
+              {cryptoInfo && (
                 <div className="flex items-center space-x-2">
                   <span className="text-2xl font-bold text-white">
-                    ${currentCryptoData.current_price.toFixed(2)}
+                    ${cryptoInfo.current_price.toFixed(2)}
                   </span>
                   <div className="flex items-center space-x-1">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <span className="text-green-400 text-xs">
-                      Pyth Network Live Feed ±${currentCryptoData.confidence_interval.toFixed(4)}
+                    <span className={`text-sm ${cryptoInfo.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {cryptoInfo.price_change_percentage_24h >= 0 ? '+' : ''}{cryptoInfo.price_change_percentage_24h.toFixed(2)}% (24h)
                     </span>
                   </div>
                 </div>
