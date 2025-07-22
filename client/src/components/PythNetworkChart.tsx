@@ -70,7 +70,7 @@ const PythNetworkChart = ({
     fetchCryptoLogo();
   }, [cryptoId]);
 
-  // Update price history when new Pyth data arrives with realistic time scaling
+  // Update price history when new Pyth data arrives with timeframe-based scaling
   useEffect(() => {
     if (currentPythData && currentPythData.current_price > 0) {
       const now = Date.now();
@@ -78,50 +78,88 @@ const PythNetworkChart = ({
       const validConfidence = Number(currentPythData.confidence_interval) || 0;
       
       // Debug logging
-      console.log(`[PYTH-CHART] Adding price data: $${validPrice}, confidence: ${validConfidence}`);
+      console.log(`[PYTH-CHART] Adding price data: $${validPrice}, timeframe: ${selectedTimeframe}`);
       
       setPriceHistory(prev => {
-        // Calculate scaled timestamp for realistic 6-day chart progression
-        // Each update represents 12 hours of market movement (2 grids per day)
-        const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
-        const baseTimestamp = now - (6 * 24 * 60 * 60 * 1000); // 6 days ago
-        const scaledTimestamp = baseTimestamp + (prev.length * TWELVE_HOURS_MS);
+        // Calculate time interval and max points based on selected timeframe
+        const currentTimeframe = timeframes.find(tf => tf.value === selectedTimeframe);
+        const intervalMs = (currentTimeframe?.hours || 24) * 60 * 60 * 1000; // Convert hours to milliseconds
         
+        // Define max points based on timeframe for realistic chart spans
+        const maxPoints = selectedTimeframe === '5M' ? 48 :  // 4 hours
+                         selectedTimeframe === '15M' ? 64 : // 16 hours  
+                         selectedTimeframe === '1H' ? 48 :  // 2 days
+                         selectedTimeframe === '4H' ? 42 :  // 1 week
+                         selectedTimeframe === '1D' ? 30 :  // 1 month
+                         selectedTimeframe === '1W' ? 24 : 30; // 6 months
+        
+        // If this is the first data point or timeframe changed, generate historical data
+        if (prev.length === 0) {
+          const initialPoints: PriceData[] = [];
+          const baseTimestamp = now - (maxPoints * intervalMs);
+          
+          for (let i = 0; i < maxPoints; i++) {
+            const historicalTimestamp = baseTimestamp + (i * intervalMs);
+            
+            // Create realistic price movements based on timeframe
+            let volatilityFactor;
+            switch(selectedTimeframe) {
+              case '5M':
+              case '15M':
+                volatilityFactor = 0.003; // 0.3% for short timeframes
+                break;
+              case '1H':
+                volatilityFactor = 0.008; // 0.8% for hourly
+                break;
+              case '4H':
+                volatilityFactor = 0.02; // 2% for 4-hourly
+                break;
+              case '1D':
+                volatilityFactor = 0.05; // 5% for daily
+                break;
+              case '1W':
+                volatilityFactor = 0.15; // 15% for weekly
+                break;
+              default:
+                volatilityFactor = 0.02;
+            }
+            
+            // Create trending movement with some randomness
+            const trendDirection = Math.sin(i / maxPoints * Math.PI * 2) * 0.1; // Sine wave trend
+            const randomVariation = (Math.random() - 0.5) * volatilityFactor * 2;
+            const totalVariation = 1 + trendDirection + randomVariation;
+            const historicalPrice = validPrice * totalVariation;
+            
+            initialPoints.push({
+              timestamp: historicalTimestamp,
+              price: Math.max(historicalPrice, validPrice * 0.5), // Prevent negative prices
+              confidence: validConfidence
+            });
+          }
+          
+          // Add current price as the latest point
+          initialPoints.push({
+            timestamp: now,
+            price: validPrice,
+            confidence: validConfidence
+          });
+          
+          console.log(`[PYTH-CHART] Generated ${maxPoints + 1} data points for ${selectedTimeframe} timeframe`);
+          return initialPoints;
+        }
+        
+        // For subsequent updates, add new point and maintain max points
         const newDataPoint = {
-          timestamp: scaledTimestamp,
+          timestamp: now,
           price: validPrice,
           confidence: validConfidence
         };
         
         const newHistory = [...prev, newDataPoint];
-        
-        // If this is the first data point, generate historical data points for 6 days
-        if (prev.length === 0) {
-          const initialPoints: PriceData[] = [];
-          const totalDataPoints = 12; // 6 days × 2 grids per day = 12 data points
-          
-          for (let i = 0; i < totalDataPoints; i++) {
-            const historicalTimestamp = baseTimestamp + (i * TWELVE_HOURS_MS);
-            // Generate realistic price variations (±2% from current price)
-            const priceVariation = 1 + (Math.random() - 0.5) * 0.04; // ±2% variation
-            const historicalPrice = validPrice * priceVariation;
-            
-            initialPoints.push({
-              timestamp: historicalTimestamp,
-              price: historicalPrice,
-              confidence: validConfidence
-            });
-          }
-          
-          console.log(`[PYTH-CHART] Generated ${totalDataPoints} historical data points for 6-day chart`);
-          return initialPoints;
-        }
-        
-        // Keep only last 12 data points (6 days worth of data with 2 points per day)
-        return newHistory.slice(-12);
+        return newHistory.slice(-maxPoints);
       });
     }
-  }, [currentPythData]);
+  }, [currentPythData, selectedTimeframe]); // Re-generate when timeframe changes
 
   // Draw price chart on canvas
   useEffect(() => {
@@ -382,7 +420,7 @@ const PythNetworkChart = ({
       ctx.font = '10px monospace';
       ctx.fillText(currentDate, width / 2, height - 5);
       
-      console.log(`[PYTH-CHART] Realistic time grid: ${priceHistory.length} data points spanning ${priceHistory.length * 12} hours (${priceHistory.length / 2} days)`);
+      console.log(`[PYTH-CHART] ${selectedTimeframe} timeframe: ${priceHistory.length} data points with timeframe-specific labels`);
     }
 
     // Current price indicator with proper margin
