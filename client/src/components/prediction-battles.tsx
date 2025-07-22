@@ -288,8 +288,7 @@ export function PredictionBattles() {
   });
 
   // SHARED CACHE APPROACH: Access exact same data as Live Prices
-  const queryClient = useQueryClient();
-  const { data: cryptoPricesData = [], isLoading: pricesLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
+  const { data: cryptoPricesData = [], isLoading: pricesLoading, dataUpdatedAt } = useQuery<any[]>({
     queryKey: ["/api/crypto/pyth-prices"], // EXACT same queryKey format as Live Prices
     refetchInterval: 1000, // EXACT same as Live Prices - 1 second updates
     refetchIntervalInBackground: true, // EXACT same as Live Prices
@@ -300,7 +299,7 @@ export function PredictionBattles() {
   });
   
   // FORCE CACHE CONSISTENCY: Get Live Prices data from cache directly
-  const livePricesFromCache = queryClient.getQueryData(["/api/crypto/pyth-prices"]) as CryptoPrice[] || [];
+  const livePricesFromCache = queryClient.getQueryData(["/api/crypto/pyth-prices"]) as any[] || [];
 
 
 
@@ -455,7 +454,7 @@ export function PredictionBattles() {
   // Get crypto logo URL dynamically from live price data
   const getCryptoImageUrl = (cryptoId: string) => {
     if (cryptoPricesData && Array.isArray(cryptoPricesData) && cryptoPricesData.length > 0) {
-      const crypto = (cryptoPricesData as any[]).find((c: any) => c.id === cryptoId);
+      const crypto = cryptoPricesData.find((c: any) => c.id === cryptoId);
       if (crypto && crypto.image) {
         return crypto.image;
       }
@@ -480,22 +479,22 @@ export function PredictionBattles() {
     return cryptoMap[cryptoId] || `https://assets.coingecko.com/coins/images/1/small/bitcoin.png`;
   };
 
-  // Get real-time crypto price from live data - ENHANCED WITH DEBUG
+  // UPDATED: Get real-time crypto price using SAME CACHE APPROACH as main component
   const getRealTimePrice = (cryptoId: string) => {
-    console.log('🔍 [BATTLE-DEBUG] getRealTimePrice called for:', cryptoId);
-    console.log('🔍 [BATTLE-DEBUG] cryptoPricesData available:', cryptoPricesData?.length, 'items');
+    // SAME CACHE LOGIC as Current Price display
+    const cacheData = livePricesFromCache.length > 0 ? livePricesFromCache : cryptoPricesData;
+    console.log('🔍 [GET-PRICE] Using cache data length:', livePricesFromCache.length, 'Query data length:', cryptoPricesData.length);
     
-    if (cryptoPricesData && Array.isArray(cryptoPricesData) && cryptoPricesData.length > 0) {
-      const crypto = cryptoPricesData.find((c: CryptoPrice) => c.id === cryptoId);
+    if (cacheData && Array.isArray(cacheData) && cacheData.length > 0) {
+      const crypto = cacheData.find((c: any) => c.id === cryptoId);
       if (crypto && crypto.current_price) {
-        console.log('🟢 [BATTLE-DEBUG] FOUND live price for', cryptoId, ':', crypto.current_price);
-        console.log('💰 [BATTLE-PRICE] Battles component Bitcoin price:', crypto.current_price);
+        console.log('💰 [GET-PRICE-CACHE] Found price for', cryptoId, ':', crypto.current_price);
         return crypto.current_price;
       } else {
-        console.log('🔴 [BATTLE-DEBUG] NOT FOUND crypto for', cryptoId);
+        console.log('🔴 [GET-PRICE-CACHE] NOT FOUND crypto for', cryptoId, 'in cache');
       }
     }
-    console.log('🔴 [BATTLE-DEBUG] Returning null for', cryptoId);
+    console.log('🔴 [GET-PRICE-CACHE] Returning null for', cryptoId);
     return null;
   };
 
