@@ -28,6 +28,17 @@ const PythNetworkChart = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [priceHistory, setPriceHistory] = useState<PriceData[]>([]);
   const [cryptoLogo, setCryptoLogo] = useState<string>('');
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
+
+  // Timeframe options
+  const timeframes = [
+    { label: '5M', value: '5M', hours: 0.083 },
+    { label: '15M', value: '15M', hours: 0.25 },
+    { label: '1H', value: '1H', hours: 1 },
+    { label: '4H', value: '4H', hours: 4 },
+    { label: '1D', value: '1D', hours: 24 },
+    { label: '1W', value: '1W', hours: 168 }
+  ];
 
   // Fetch real-time Pyth Network prices
   const { data: pythPrices, isLoading: pythLoading } = useQuery({
@@ -497,15 +508,36 @@ const PythNetworkChart = ({
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline" 
-                size="sm"
-                onClick={toggleFullscreen}
-                className="text-white border-surface-light hover:bg-surface-light"
-              >
-                <Expand size={16} />
-              </Button>
+            <div className="flex items-center space-x-4">
+              {/* Timeframe Selector */}
+              <div className="flex items-center space-x-1">
+                {timeframes.map((tf) => (
+                  <Button
+                    key={tf.value}
+                    variant={selectedTimeframe === tf.value ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setSelectedTimeframe(tf.value)}
+                    className={`px-3 py-1 text-xs ${
+                      selectedTimeframe === tf.value 
+                        ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                        : 'text-gray-400 hover:text-white hover:bg-surface-light'
+                    }`}
+                  >
+                    {tf.label}
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline" 
+                  size="sm"
+                  onClick={toggleFullscreen}
+                  className="text-white border-surface-light hover:bg-surface-light"
+                >
+                  <Expand size={16} />
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>
