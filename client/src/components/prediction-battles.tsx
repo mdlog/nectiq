@@ -287,14 +287,15 @@ export function PredictionBattles() {
     refetchIntervalInBackground: true, // Background updates for battles
   });
 
-  // Fetch live Pyth Network prices for ultra-fast real-time updates
-  const { data: cryptoPricesData = [] } = useQuery({
-    queryKey: ['/api/crypto/pyth-prices'],
-    refetchInterval: 300, // Ultra-fast updates - 300ms like Live Prices microsecond precision
-    refetchIntervalInBackground: true, // Enable background updates
-    staleTime: 100, // Ultra-fresh data - 100ms stale time for instant updates
-    retry: 3, // More retry attempts for reliability
-    gcTime: 1000, // Short garbage collection time for fresh data
+  // Fetch live Pyth Network prices - EXACTLY matching Live Prices settings
+  const { data: cryptoPricesData = [], isLoading: pricesLoading, dataUpdatedAt } = useQuery({
+    queryKey: ["/api/crypto/pyth-prices"], // EXACT same queryKey format as Live Prices
+    refetchInterval: 1000, // EXACT same as Live Prices - 1 second updates
+    refetchIntervalInBackground: true, // EXACT same as Live Prices
+    staleTime: 500, // EXACT same as Live Prices - 500ms stale time
+    retry: 3, // EXACT same as Live Prices
+    refetchOnWindowFocus: true, // EXACT same as Live Prices
+    refetchOnMount: true, // EXACT same as Live Prices
   });
 
 
@@ -619,7 +620,11 @@ export function PredictionBattles() {
                   minimumFractionDigits: 2, 
                   maximumFractionDigits: 2 
                 });
-              })()}
+              })()} 
+              {/* Debug: Show if using live price */}
+              <span className="text-xs text-green-500 ml-1">
+                {getRealTimePrice(battle.cryptocurrency) ? '🟢' : '🔴'}
+              </span>
             </span>
           </div>
           
