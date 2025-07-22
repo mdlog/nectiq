@@ -4520,7 +4520,7 @@ export default function AdminPanel() {
                           </div>
                         )}
 
-                        {!validationResult?.isValid && (
+                        {!validationResult?.isValid && pythFeedId.trim() && (
                           <div className="p-4 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 rounded-lg">
                             <div className="flex items-center space-x-2">
                               <AlertTriangle className="h-4 w-4 text-yellow-600" />
@@ -4542,32 +4542,45 @@ export default function AdminPanel() {
                     </div>
 
                     {/* Submit Button */}
-                    <Button 
-                      type="submit" 
-                      className={`w-full h-12 text-base font-medium ${
-                        !validationResult?.isValid 
-                          ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50' 
-                          : 'bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all'
-                      }`}
-                      disabled={addCryptoMutation.isPending || !validationResult?.isValid}
-                    >
-                      {addCryptoMutation.isPending ? (
-                        <div className="flex items-center space-x-2">
-                          <RefreshCw className="h-5 w-5 animate-spin" />
-                          <span>Adding Cryptocurrency...</span>
-                        </div>
-                      ) : !validationResult?.isValid ? (
-                        <div className="flex items-center space-x-2">
-                          <AlertTriangle className="h-5 w-5" />
-                          <span>Validation Required</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <Plus className="h-5 w-5" />
-                          <span>Add Cryptocurrency to Database</span>
+                    <div className="space-y-3">
+                      {validationResult && validationResult.isValid && (
+                        <div className="p-3 bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                              ✅ Ready to Add - Validation Successful
+                            </span>
+                          </div>
                         </div>
                       )}
-                    </Button>
+                      
+                      <Button 
+                        type="submit" 
+                        className={`w-full h-12 text-base font-medium ${
+                          !validationResult?.isValid 
+                            ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50' 
+                            : 'bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all'
+                        }`}
+                        disabled={addCryptoMutation.isPending || !validationResult?.isValid}
+                      >
+                        {addCryptoMutation.isPending ? (
+                          <div className="flex items-center space-x-2">
+                            <RefreshCw className="h-5 w-5 animate-spin" />
+                            <span>Adding Cryptocurrency...</span>
+                          </div>
+                        ) : !validationResult?.isValid ? (
+                          <div className="flex items-center space-x-2">
+                            <AlertTriangle className="h-5 w-5" />
+                            <span>Validation Required</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <Plus className="h-5 w-5" />
+                            <span>Add Cryptocurrency to Database</span>
+                          </div>
+                        )}
+                      </Button>
+                    </div>
                   </form>
                 </CardContent>
               </Card>
