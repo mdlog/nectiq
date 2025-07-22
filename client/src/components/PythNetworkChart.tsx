@@ -70,6 +70,19 @@ const PythNetworkChart = ({
           confidence: currentPythData.confidence_interval
         }];
         
+        // If this is the first data point, add a few duplicate points for better visualization
+        if (prev.length === 0) {
+          const initialPoints = [];
+          for (let i = 0; i < 3; i++) {
+            initialPoints.push({
+              timestamp: now - (3000 * (3 - i)), // 3 seconds apart
+              price: currentPythData.current_price,
+              confidence: currentPythData.confidence_interval
+            });
+          }
+          return initialPoints.concat(newHistory);
+        }
+        
         // Keep only last 50 data points for smooth performance
         return newHistory.slice(-50);
       });
@@ -96,44 +109,75 @@ const PythNetworkChart = ({
     ctx.fillStyle = '#0f0f0f';
     ctx.fillRect(0, 0, width, height);
 
-    if (priceHistory.length < 2) return;
+    if (priceHistory.length < 2) {
+      // For single data point, create a simple horizontal line
+      if (currentPythData) {
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        const margin = 40;
+        const chartHeight = height - (margin * 2);
+        const y = margin + chartHeight / 2; // Center line
+        
+        ctx.moveTo(margin, y);
+        ctx.lineTo(width - margin, y);
+        ctx.stroke();
+        
+        // Draw current price label
+        ctx.fillStyle = '#10b981';
+        ctx.font = '14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`$${currentPythData.current_price.toFixed(8)}`, width / 2, y - 10);
+      }
+      return;
+    }
 
-    // Calculate price range
+    // Calculate price range with padding for better visualization
     const prices = priceHistory.map(d => d.price);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
-    const priceRange = maxPrice - minPrice || 1;
+    const priceRange = maxPrice - minPrice || (maxPrice * 0.01); // Use 1% of price if no range
+    
+    // Add padding to make chart more readable (10% padding on each side)
+    const paddedMinPrice = minPrice - (priceRange * 0.1);
+    const paddedMaxPrice = maxPrice + (priceRange * 0.1);
+    const paddedRange = paddedMaxPrice - paddedMinPrice;
 
-    // Draw grid lines
+    // Draw grid lines with margin
+    const margin = 40;
+    const chartWidth = width - (margin * 2);
+    const chartHeight = height - (margin * 2);
+    
     ctx.strokeStyle = '#1f1f1f';
     ctx.lineWidth = 1;
     
     // Horizontal grid lines
     for (let i = 0; i <= 5; i++) {
-      const y = (height / 5) * i;
+      const y = margin + (chartHeight / 5) * i;
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
+      ctx.moveTo(margin, y);
+      ctx.lineTo(width - margin, y);
       ctx.stroke();
     }
 
     // Vertical grid lines
     for (let i = 0; i <= 10; i++) {
-      const x = (width / 10) * i;
+      const x = margin + (chartWidth / 10) * i;
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
+      ctx.moveTo(x, margin);
+      ctx.lineTo(x, height - margin);
       ctx.stroke();
     }
 
     // Draw price line
     ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-
+    
     priceHistory.forEach((data, index) => {
-      const x = (index / (priceHistory.length - 1)) * width;
-      const y = height - ((data.price - minPrice) / priceRange) * height;
+      const x = margin + (index / Math.max(priceHistory.length - 1, 1)) * chartWidth;
+      const y = margin + (chartHeight - ((data.price - paddedMinPrice) / paddedRange) * chartHeight);
       
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -150,8 +194,8 @@ const PythNetworkChart = ({
       const upperPrice = latestData.price + latestData.confidence;
       const lowerPrice = latestData.price - latestData.confidence;
       
-      const upperY = height - ((upperPrice - minPrice) / priceRange) * height;
-      const lowerY = height - ((lowerPrice - minPrice) / priceRange) * height;
+      const upperY = margin + (chartHeight - ((upperPrice - paddedMinPrice) / paddedRange) * chartHeight);
+      const lowerY = margin + (chartHeight - ((lowerPrice - paddedMinPrice) / paddedRange) * chartHeight);
       const x = width;
 
       // Draw confidence band
@@ -182,12 +226,12 @@ const PythNetworkChart = ({
     ctx.textAlign = 'right';
 
     // Max price
-    ctx.fillText(`$${maxPrice.toFixed(8)}`, width - 10, 20);
+    ctx.fillText(`$${paddedMaxPrice.toFixed(8)}`, width - 10, margin + 20);
     // Min price  
-    ctx.fillText(`$${minPrice.toFixed(8)}`, width - 10, height - 10);
+    ctx.fillText(`$${paddedMinPrice.toFixed(8)}`, width - 10, height - margin - 10);
     // Current price
     if (currentPythData) {
-      const currentY = height - ((currentPythData.current_price - minPrice) / priceRange) * height;
+      const currentY = margin + (chartHeight - ((currentPythData.current_price - paddedMinPrice) / paddedRange) * chartHeight);
       ctx.fillStyle = '#10b981';
       ctx.fillText(`$${currentPythData.current_price.toFixed(8)}`, width - 10, currentY + 5);
       
