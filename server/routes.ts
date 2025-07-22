@@ -5123,6 +5123,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Image URL validation endpoint for preventing 403 errors
+  app.post("/api/admin/validate-image-url", requireAdmin, async (req, res) => {
+    console.log('🖼️ [ADMIN] Image URL validation request received:', req.body);
+    
+    try {
+      const { imageUrl } = req.body;
+      
+      if (!imageUrl) {
+        return res.status(400).json({ 
+          message: "imageUrl is required for validation" 
+        });
+      }
+
+      console.log('🔍 [ADMIN] Validating image URL accessibility:', imageUrl);
+      
+      // Test image URL accessibility
+      const response = await fetch(imageUrl, { method: 'HEAD' });
+      
+      if (response.ok) {
+        console.log('✅ [ADMIN] Image URL is accessible:', response.status);
+        res.json({ 
+          isValid: true,
+          status: response.status,
+          message: "Image URL is accessible"
+        });
+      } else {
+        console.log('❌ [ADMIN] Image URL is not accessible:', response.status);
+        res.json({ 
+          isValid: false,
+          status: response.status,
+          message: `Image URL returned ${response.status} error`
+        });
+      }
+    } catch (error: any) {
+      console.error("❌ [ADMIN] Error validating image URL:", error);
+      res.json({ 
+        isValid: false,
+        message: `Image validation failed: ${error.message}` 
+      });
+    }
+  });
+
   app.post("/api/admin/cryptocurrencies", requireAdmin, async (req, res) => {
     console.log('🔧 [ADMIN] Add cryptocurrency request received:', req.body);
     
@@ -5166,12 +5208,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('✅ [ADMIN] Pyth Network validation successful - proceeding with database insertion');
 
+      // ENHANCED: Fetch valid image URL from CoinGecko API instead of using generic path
+      console.log('🖼️ [ADMIN] Fetching valid image URL from CoinGecko API...');
+      let validImageUrl = `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId.toLowerCase()}.png`; // fallback
+      
+      try {
+        const coinGeckoResponse = await fetch(`https://api.coingecko.com/api/v3/coins/${cryptoId}`);
+        if (coinGeckoResponse.ok) {
+          const coinData = await coinGeckoResponse.json();
+          if (coinData.image?.large) {
+            validImageUrl = coinData.image.large;
+            console.log('✅ [ADMIN] Valid image URL fetched from CoinGecko:', validImageUrl);
+          } else {
+            console.log('⚠️ [ADMIN] No image found in CoinGecko response, using fallback');
+          }
+        } else {
+          console.log('⚠️ [ADMIN] CoinGecko API returned error, using fallback image URL');
+        }
+      } catch (error) {
+        console.log('⚠️ [ADMIN] Failed to fetch image from CoinGecko, using fallback:', error.message);
+      }
+
+      // ENHANCED: Validate final image URL accessibility to prevent 403 errors
+      console.log('🔍 [ADMIN] Validating final image URL accessibility...');
+      try {
+        const imageValidationResponse = await fetch(validImageUrl, { method: 'HEAD' });
+        if (imageValidationResponse.ok) {
+          console.log('✅ [ADMIN] Final image URL is accessible (HTTP', imageValidationResponse.status, ')');
+        } else {
+          console.log('⚠️ [ADMIN] WARNING: Final image URL returned HTTP', imageValidationResponse.status, '- may cause display issues');
+          // Still proceed but log the warning for admin monitoring
+        }
+      } catch (imageError) {
+        console.log('⚠️ [ADMIN] WARNING: Final image URL validation failed:', imageError.message, '- may cause display issues');
+        // Still proceed but log the warning for admin monitoring
+      }
+
       // FIXED: Insert cryptocurrency directly into database with all fields including pyth_feed_id
       const cryptoData = {
         id: cryptoId.toLowerCase().trim(),
         name: name.trim(),
         symbol: symbol.toUpperCase().trim(),
-        image: `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId.toLowerCase()}.png`,
+        image: validImageUrl,
         currentPrice: 0,
         priceChange24h: 0,
         pythFeedId: normalizedFeedId // Store without 0x prefix

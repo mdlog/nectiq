@@ -1218,12 +1218,31 @@ export default function AdminPanel() {
       if (data.image) {
         const logoUrl = data.image.large || data.image.small;
         if (logoUrl) {
+          console.log(`🔍 [LOGO-VALIDATION] Validating image URL accessibility:`, logoUrl);
+          
+          // ENHANCED: Validate image URL accessibility to prevent 403 errors
+          try {
+            const validationResponse = await fetch(logoUrl, { method: 'HEAD' });
+            if (!validationResponse.ok) {
+              throw new Error(`Image URL validation failed: ${validationResponse.status} ${validationResponse.statusText}`);
+            }
+            console.log(`✅ [LOGO-VALIDATION] Image URL is accessible (HTTP ${validationResponse.status})`);
+          } catch (validationError: any) {
+            console.error(`❌ [LOGO-VALIDATION] Image URL accessibility check failed:`, validationError);
+            toast({
+              title: "Warning: Image URL Issue",
+              description: `Logo URL might not be accessible (${validationError.message}). Consider using a different cryptocurrency or try again later.`,
+              variant: "destructive"
+            });
+            // Don't return here, still allow setting the URL for admin to review
+          }
+          
           setFetchedLogoUrl(logoUrl);
           console.log(`✅ [LOGO-FETCH] Successfully fetched logo:`, logoUrl);
           
           toast({
             title: "Success!",
-            description: `Logo fetched for ${data.name || newCryptoId}`,
+            description: `Logo fetched and validated for ${data.name || newCryptoId}`,
           });
 
           // Auto-fill name and symbol if not already filled
