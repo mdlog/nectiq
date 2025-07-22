@@ -4448,266 +4448,295 @@ export default function AdminPanel() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddCrypto} className="space-y-6">
-                    {/* Basic Information - Simplified Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="crypto-id">Crypto ID *</Label>
-                        <Input
-                          id="crypto-id"
-                          placeholder="hyperliquid"
-                          value={newCryptoId}
-                          onChange={(e) => setNewCryptoId(e.target.value)}
-                          required
-                          className="h-10"
-                        />
+                    {/* PYTH-FIRST APPROACH: Feed ID as Primary Input */}
+                    <div className="p-6 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border-2 border-purple-300 dark:border-purple-700 rounded-xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                            <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg text-purple-900 dark:text-purple-100">
+                              Pyth Network Data Integration
+                            </h3>
+                            <p className="text-sm text-purple-700 dark:text-purple-300">
+                              Masukkan Feed ID untuk mengambil data cryptocurrency otomatis
+                            </p>
+                          </div>
+                        </div>
+                        <Badge className="bg-purple-600 text-white text-xs px-3 py-1">
+                          Enterprise Data
+                        </Badge>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="crypto-name">Name *</Label>
-                        <Input
-                          id="crypto-name"
-                          placeholder="Hyperliquid"
-                          value={newCryptoName}
-                          onChange={(e) => setNewCryptoName(e.target.value)}
-                          required
-                          className="h-10"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="crypto-symbol">Symbol *</Label>
-                        <Input
-                          id="crypto-symbol"
-                          placeholder="HYPE"
-                          value={newCryptoSymbol}
-                          onChange={(e) => setNewCryptoSymbol(e.target.value)}
-                          required
-                          className="h-10"
-                        />
-                      </div>
-                    </div>
-                      
-                    {/* Pyth Network Validation - Unified Section */}
-                    <div className="p-6 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border border-purple-200 dark:border-purple-800 rounded-xl">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <Zap className="h-5 w-5 text-purple-600" />
-                        <h3 className="font-semibold text-purple-900 dark:text-purple-100">Pyth Network Price Feed Validation</h3>
-                        <Badge className="bg-purple-100 text-purple-800 text-xs">Required</Badge>
-                      </div>
-                      
+
                       <div className="space-y-4">
-                        {/* Feed ID Input & Validate - SIMPLIFIED VERSION */}
-                        <div className="flex space-x-2">
-                          <input
-                            ref={pythFeedInputRef}
-                            id="pyth-feed-id-simple"
-                            type="text"
-                            placeholder="Enter Pyth Feed ID (0x...)"
-                            value={pythFeedId}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              console.log('🔧 [FORM-INPUT] Pyth Feed ID changed:', newValue);
-                              setPythFeedId(newValue);
-                              // Only clear validation, keep other form fields intact
-                              setValidationResult(null);
-                              console.log('🔧 [FORM-STATE] Preserved form fields - ID:', newCryptoId, 'Name:', newCryptoName, 'Symbol:', newCryptoSymbol);
-                            }}
-                            className="flex-1 h-10 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
-                                     bg-white dark:bg-gray-800 
-                                     text-gray-900 dark:text-gray-100 
-                                     placeholder-gray-500 dark:placeholder-gray-400
-                                     focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                            required
-                          />
-                          <Button
-                            type="button"
-                            onClick={() => {
-                              console.log('🔍 [VALIDATE-CLICK] Button clicked, pythFeedId:', pythFeedId);
-                              handleValidatePyth();
-                            }}
-                            disabled={!pythFeedId.trim() || validatePythMutation.isPending}
-                            className="bg-purple-600 hover:bg-purple-700 px-6 h-10"
-                          >
-                            {validatePythMutation.isPending ? (
-                              <RefreshCw className="h-4 w-4 animate-spin" />
-                            ) : (
-                              "Validate"
-                            )}
-                          </Button>
-                        </div>
-
-                        {/* Validation Results */}
-                        {validationResult && (
-                          <div className={`p-4 rounded-lg border ${
-                            validationResult.isValid 
-                              ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
-                              : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
-                          }`}>
-                            <div className="flex items-center space-x-2 mb-2">
-                              {validationResult.isValid ? (
-                                <CheckCircle className="h-5 w-5 text-green-600" />
+                        <div className="space-y-3">
+                          <Label htmlFor="pyth-feed-id" className="text-sm font-semibold text-purple-900 dark:text-purple-200 flex items-center">
+                            Pyth Feed ID *
+                            <span className="ml-2 text-xs text-purple-600 bg-purple-100 dark:bg-purple-800 px-2 py-1 rounded">
+                              Primary Input
+                            </span>
+                          </Label>
+                          <div className="flex space-x-3">
+                            <div className="flex-1">
+                              <input
+                                ref={pythFeedInputRef}
+                                id="pyth-feed-id"
+                                type="text"
+                                placeholder="0x..."
+                                value={pythFeedId}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  console.log('🔧 [PYTH-PRIMARY] Feed ID changed:', newValue);
+                                  setPythFeedId(newValue);
+                                  setValidationResult(null);
+                                  // Clear auto-filled data when Feed ID changes
+                                  if (newValue !== pythFeedId && (newCryptoId || newCryptoName || newCryptoSymbol)) {
+                                    setNewCryptoId('');
+                                    setNewCryptoName('');
+                                    setNewCryptoSymbol('');
+                                    console.log('🔧 [PYTH-PRIMARY] Auto-cleared form for new Feed ID');
+                                  }
+                                }}
+                                className="w-full h-12 px-4 py-3 border-2 border-purple-300 dark:border-purple-600 rounded-lg 
+                                         bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
+                                         placeholder-purple-400 dark:placeholder-purple-500 
+                                         focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                                         font-mono text-sm"
+                                required
+                              />
+                              <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                                Format: 64 karakter hex dimulai dengan 0x
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              onClick={handleValidatePyth}
+                              disabled={!pythFeedId.trim() || validatePythMutation.isPending}
+                              size="lg"
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-6 h-12 font-semibold"
+                            >
+                              {validatePythMutation.isPending ? (
+                                <div className="flex items-center space-x-2">
+                                  <RefreshCw className="h-4 w-4 animate-spin" />
+                                  <span>Validating...</span>
+                                </div>
                               ) : (
-                                <XCircle className="h-5 w-5 text-red-600" />
+                                <div className="flex items-center space-x-2">
+                                  <Search className="h-4 w-4" />
+                                  <span>Fetch Data</span>
+                                </div>
                               )}
-                              <span className={`font-medium ${
-                                validationResult.isValid 
-                                  ? 'text-green-800 dark:text-green-200' 
-                                  : 'text-red-800 dark:text-red-200'
-                              }`}>
-                                {validationResult.isValid ? '✅ Valid Pyth Feed ID' : '❌ Validation Failed'}
-                              </span>
-                            </div>
-                            <p className={`text-sm ${
-                              validationResult.isValid 
-                                ? 'text-green-700 dark:text-green-300' 
-                                : 'text-red-700 dark:text-red-300'
-                            }`}>
-                              {validationResult.message}
-                            </p>
-                            {validationResult.priceData && (
-                              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-green-600 dark:text-green-400">
-                                <div>💰 Price: ${validationResult.priceData.price}</div>
-                                <div>📊 Confidence: ±${validationResult.priceData.confidence}</div>
-                                <div>🕒 Updated: {new Date(validationResult.priceData.publishTime * 1000).toLocaleTimeString()}</div>
-                              </div>
-                            )}
+                            </Button>
                           </div>
-                        )}
-
-                        {pythFeedId.trim() && !validationResult && (
-                          <div className="p-4 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 rounded-lg">
-                            <div className="flex items-center space-x-2">
-                              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                              <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                                ⚠️ Validasi Diperlukan
-                              </span>
-                            </div>
-                            <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                              Silakan validasi Pyth Feed ID terlebih dahulu sebelum menambahkan cryptocurrency.
-                            </p>
-                          </div>
-                        )}
-                        
-                        {validationResult && !validationResult.isValid && (
-                          <div className="p-4 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800 rounded-lg">
-                            <div className="flex items-center space-x-2">
-                              <XCircle className="h-4 w-4 text-red-600" />
-                              <span className="text-sm font-medium text-red-800 dark:text-red-200">
-                                ❌ Validasi Gagal
-                              </span>
-                            </div>
-                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">
-                              {validationResult.message}
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 p-3 rounded-lg">
-                          <p className="mb-1">💡 <strong>Find Pyth Feed IDs:</strong> pyth.network/developers/price-feed-ids</p>
-                          <p className="opacity-80">🎯 Benefits: Sub-second updates • Enterprise data • Confidence intervals</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Debug Info - ALWAYS VISIBLE */}
-                    <div className="p-3 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 rounded text-xs font-mono">
-                      <div className="font-bold text-blue-800 dark:text-blue-200 mb-2">🔍 Debug State:</div>
-                      <div>validationResult: {validationResult ? JSON.stringify(validationResult, null, 2) : 'null'}</div>
-                      <div>isValid: <span className={validationResult?.isValid ? 'text-green-600 font-bold' : 'text-red-600'}>{validationResult?.isValid ? 'TRUE' : 'FALSE'}</span></div>
-                      <div>pythFeedId: "{pythFeedId}"</div>
-                      <div>inputRefValue: "{pythFeedInputRef.current?.value || 'NO_REF_VALUE'}"</div>
-                      <div className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded">
-                        <div className="font-semibold text-yellow-800 dark:text-yellow-200">🔍 Form Fields State:</div>
-                        <div>newCryptoId: "{newCryptoId}"</div>
-                        <div>newCryptoName: "{newCryptoName}"</div>
-                        <div>newCryptoSymbol: "{newCryptoSymbol}"</div>
+                    {/* AUTO-FILLED DATA FROM PYTH - Only show when validated */}
+                    {validationResult?.isValid && (
+                      <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-2 border-green-300 dark:border-green-700 rounded-xl">
+                        <div className="flex items-center space-x-3 mb-4">
+                          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-green-900 dark:text-green-100">
+                              Data Berhasil Diambil dari Pyth Network
+                            </h3>
+                            <p className="text-sm text-green-700 dark:text-green-300">
+                              Silakan review dan edit informasi cryptocurrency
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="crypto-id-auto" className="text-sm font-semibold text-green-900 dark:text-green-200">
+                              Crypto ID *
+                            </Label>
+                            <Input
+                              id="crypto-id-auto"
+                              placeholder="Masukkan ID cryptocurrency"
+                              value={newCryptoId}
+                              onChange={(e) => setNewCryptoId(e.target.value)}
+                              required
+                              className="h-10 border-green-300 dark:border-green-600 focus:ring-green-500 focus:border-green-500"
+                            />
+                            <p className="text-xs text-green-600 dark:text-green-400">
+                              ID unik untuk cryptocurrency ini
+                            </p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="crypto-name-auto" className="text-sm font-semibold text-green-900 dark:text-green-200">
+                              Nama *
+                            </Label>
+                            <Input
+                              id="crypto-name-auto"
+                              placeholder="Nama lengkap cryptocurrency"
+                              value={newCryptoName}
+                              onChange={(e) => setNewCryptoName(e.target.value)}
+                              required
+                              className="h-10 border-green-300 dark:border-green-600 focus:ring-green-500 focus:border-green-500"
+                            />
+                            <p className="text-xs text-green-600 dark:text-green-400">
+                              Nama resmi cryptocurrency
+                            </p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="crypto-symbol-auto" className="text-sm font-semibold text-green-900 dark:text-green-200">
+                              Symbol *
+                            </Label>
+                            <Input
+                              id="crypto-symbol-auto"
+                              placeholder="Symbol trading"
+                              value={newCryptoSymbol}
+                              onChange={(e) => setNewCryptoSymbol(e.target.value)}
+                              required
+                              className="h-10 border-green-300 dark:border-green-600 focus:ring-green-500 focus:border-green-500"
+                            />
+                            <p className="text-xs text-green-600 dark:text-green-400">
+                              Symbol trading (contoh: BTC, ETH)
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Live Price Data Preview */}
+                        {validationResult.priceData && (
+                          <div className="mt-4 p-4 bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700 rounded-lg">
+                            <h4 className="font-semibold text-green-900 dark:text-green-100 mb-3 flex items-center">
+                              <TrendingUp className="h-4 w-4 mr-2" />
+                              Live Pyth Network Data Preview
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                              <div className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                                <span className="text-green-700 dark:text-green-300">💰 Current Price:</span>
+                                <span className="font-mono font-bold text-green-900 dark:text-green-100">
+                                  ${validationResult.priceData.price}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                                <span className="text-green-700 dark:text-green-300">📊 Confidence:</span>
+                                <span className="font-mono font-bold text-green-900 dark:text-green-100">
+                                  ±${validationResult.priceData.confidence}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                                <span className="text-green-700 dark:text-green-300">🕒 Updated:</span>
+                                <span className="font-mono text-green-900 dark:text-green-100">
+                                  {new Date(validationResult.priceData.publishTime * 1000).toLocaleTimeString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div>Render time: {new Date().toLocaleTimeString()}</div>
-                      
-                      {/* Emergency Test Buttons */}
-                      <div className="mt-3 space-x-2">
+                    )}
+
+                    {/* VALIDATION REQUIRED NOTICE */}
+                    {!validationResult?.isValid && (
+                      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                          <p className="text-yellow-800 dark:text-yellow-200 font-medium">
+                            ⚠️ Validasi Feed ID Diperlukan
+                          </p>
+                        </div>
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-2">
+                          Harap masukkan dan validasi Pyth Feed ID terlebih dahulu untuk melanjutkan penambahan cryptocurrency.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ERROR DISPLAY */}
+                    {validationResult && !validationResult.isValid && (
+                      <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                          <p className="text-red-800 dark:text-red-200 font-medium">
+                            ❌ Validasi Gagal
+                          </p>
+                        </div>
+                        <p className="text-sm text-red-700 dark:text-red-300 mt-2">
+                          {validationResult.message}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* SUBMIT BUTTON - Enhanced with Smart States */}
+                    <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      {!validationResult?.isValid ? (
                         <Button
                           type="button"
-                          size="sm"
-                          onClick={() => {
-                            console.log('🚨 [EMERGENCY-TEST] Current ref value:', pythFeedInputRef.current?.value);
-                            console.log('🚨 [EMERGENCY-TEST] Current state value:', pythFeedId);
-                            console.log('🚨 [EMERGENCY-TEST] Input element:', pythFeedInputRef.current);
-                          }}
-                          className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 h-6"
+                          disabled
+                          size="lg"
+                          className="bg-gray-400 dark:bg-gray-600 text-gray-600 dark:text-gray-400 cursor-not-allowed px-8 py-3 font-semibold"
                         >
-                          🚨 Test Ref
+                          <AlertTriangle className="h-5 w-5 mr-2" />
+                          Validasi Feed ID Diperlukan
                         </Button>
+                      ) : (
                         <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => {
-                            console.log('🔧 [WORKING-TEST] Starting comprehensive form fill...');
-                            // Using existing working Feed ID from Ripple (XRP) - GUARANTEED TO WORK
-                            const testValue = "0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8";
-                            
-                            // 1. Set Pyth Feed ID state and input field
-                            setPythFeedId(testValue);
-                            if (pythFeedInputRef.current) {
-                              pythFeedInputRef.current.value = testValue;
-                              // Trigger input event to ensure React detects change
-                              const event = new Event('input', { bubbles: true });
-                              pythFeedInputRef.current.dispatchEvent(event);
-                            }
-                            
-                            // 2. Set all other form fields with state updates
-                            setNewCryptoId('chainlink');
-                            setNewCryptoName('Chainlink');
-                            setNewCryptoSymbol('LINK');
-                            
-                            // 3. Update input field references if they exist
-                            const cryptoIdInput = document.querySelector('input[placeholder*="crypto-id"]') as HTMLInputElement;
-                            const nameInput = document.querySelector('input[placeholder*="Name"]') as HTMLInputElement;
-                            const symbolInput = document.querySelector('input[placeholder*="Symbol"]') as HTMLInputElement;
-                            
-                            if (cryptoIdInput) {
-                              cryptoIdInput.value = 'chainlink';
-                              cryptoIdInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            }
-                            if (nameInput) {
-                              nameInput.value = 'Chainlink';
-                              nameInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            }
-                            if (symbolInput) {
-                              symbolInput.value = 'LINK';
-                              symbolInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            }
-                            
-                            console.log('🔧 [WORKING-TEST] Form filled with:');
-                            console.log('   Feed ID:', testValue);
-                            console.log('   Crypto ID: chainlink');
-                            console.log('   Name: Chainlink');
-                            console.log('   Symbol: LINK');
-                            console.log('🔧 [WORKING-TEST] Ready for validation!');
-                          }}
-                          className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 h-6"
+                          type="submit"
+                          disabled={addCryptoMutation.isPending || !newCryptoId || !newCryptoName || !newCryptoSymbol}
+                          size="lg"
+                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 
+                                   text-white px-8 py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                         >
-                          ✅ WORKING Test
+                          {addCryptoMutation.isPending ? (
+                            <div className="flex items-center space-x-2">
+                              <RefreshCw className="h-5 w-5 animate-spin" />
+                              <span>Menambahkan...</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2">
+                              <Plus className="h-5 w-5" />
+                              <span>Tambah Cryptocurrency</span>
+                            </div>
+                          )}
                         </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => {
-                            // Using Bitcoin Feed ID - GUARANTEED TO WORK (already in system)
-                            const testValue = "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
-                            setPythFeedId(testValue);
-                            if (pythFeedInputRef.current) {
-                              pythFeedInputRef.current.value = testValue;
-                            }
-                            console.log('🚨 [EMERGENCY-SET] Set BTC test Feed ID (GUARANTEED WORKING):', testValue);
-                            console.log('🚨 [EMERGENCY-SET] Length:', testValue.length, 'characters');
-                            // Auto fill other fields for a NEW cryptocurrency using BTC feed ID as test
-                            setNewCryptoId('litecoin');
-                            setNewCryptoName('Litecoin');
-                            setNewCryptoSymbol('LTC');
-                          }}
-                          className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-2 py-1 h-6"
-                        >
-                          ✅ BTC Test
-                        </Button>
+                      )}
+                    </div>
+
+                    {/* FORM STATE DEBUG - Enhanced for New Architecture */}
+                    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
+                        <Code className="h-4 w-4 mr-2" />
+                        Debug Information - Pyth-First Architecture
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+                        <div className="space-y-2">
+                          <p className="text-gray-700 dark:text-gray-300">
+                            <span className="font-bold text-purple-600">Primary Input:</span>
+                          </p>
+                          <p className="pl-2 text-purple-700 dark:text-purple-400">
+                            pythFeedId: "{pythFeedId}"
+                          </p>
+                          <p className="text-gray-700 dark:text-gray-300">
+                            <span className="font-bold text-green-600">Auto-Generated Fields:</span>
+                          </p>
+                          <div className="pl-2 space-y-1 text-green-700 dark:text-green-400">
+                            <p>newCryptoId: "{newCryptoId}"</p>
+                            <p>newCryptoName: "{newCryptoName}"</p>
+                            <p>newCryptoSymbol: "{newCryptoSymbol}"</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-gray-700 dark:text-gray-300">
+                            <span className="font-bold text-blue-600">Validation Status:</span>
+                          </p>
+                          <p className="pl-2 text-blue-700 dark:text-blue-400">
+                            isValid: {validationResult?.isValid ? 'TRUE' : 'FALSE'}
+                          </p>
+                          <p className="text-gray-700 dark:text-gray-300">
+                            <span className="font-bold text-orange-600">Submission Ready:</span>
+                          </p>
+                          <p className="pl-2 text-orange-700 dark:text-orange-400">
+                            canSubmit: {(validationResult?.isValid && newCryptoId && newCryptoName && newCryptoSymbol) ? 'TRUE' : 'FALSE'}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
