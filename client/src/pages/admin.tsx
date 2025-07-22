@@ -3226,12 +3226,20 @@ export default function AdminPanel() {
     onSuccess: (data) => {
       console.log('✅ [ADMIN] Pyth validation successful:', data);
       console.log('🔍 [ADMIN-UI] Setting validation result to SUCCESS');
+      console.log('🔍 [FORM-PRESERVE] Before validation success - Current form state:');
+      console.log('   newCryptoId:', newCryptoId);
+      console.log('   newCryptoName:', newCryptoName);
+      console.log('   newCryptoSymbol:', newCryptoSymbol);
+      console.log('   pythFeedId:', pythFeedId);
       
       setValidationResult({
         isValid: true,
         message: data.message || "Pyth Feed ID is valid and supported",
         priceData: data.priceData
       });
+      
+      // IMPORTANT: Ensure form fields are preserved after validation
+      console.log('🔍 [FORM-PRESERVE] After validation success - Form state should be preserved');
       
       toast({
         title: "Validation Success",
@@ -4493,19 +4501,14 @@ export default function AdminPanel() {
                             id="pyth-feed-id-simple"
                             type="text"
                             placeholder="Enter Pyth Feed ID (0x...)"
-                            defaultValue={pythFeedId}
+                            value={pythFeedId}
                             onChange={(e) => {
-                              console.log('🔧 [SIMPLE-INPUT] Pyth Feed ID changed:', e.target.value);
-                              setPythFeedId(e.target.value);
+                              const newValue = e.target.value;
+                              console.log('🔧 [FORM-INPUT] Pyth Feed ID changed:', newValue);
+                              setPythFeedId(newValue);
+                              // Only clear validation, keep other form fields intact
                               setValidationResult(null);
-                            }}
-                            onInput={(e) => {
-                              console.log('📝 [ONINPUT] Pyth Feed ID input:', e.currentTarget.value);
-                              setPythFeedId(e.currentTarget.value);
-                            }}
-                            onKeyUp={(e) => {
-                              console.log('⌨️ [KEYUP] Pyth Feed ID keyup:', e.currentTarget.value);
-                              setPythFeedId(e.currentTarget.value);
+                              console.log('🔧 [FORM-STATE] Preserved form fields - ID:', newCryptoId, 'Name:', newCryptoName, 'Symbol:', newCryptoSymbol);
                             }}
                             className="flex-1 h-10 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
                                      bg-white dark:bg-gray-800 
@@ -4611,6 +4614,12 @@ export default function AdminPanel() {
                       <div>isValid: <span className={validationResult?.isValid ? 'text-green-600 font-bold' : 'text-red-600'}>{validationResult?.isValid ? 'TRUE' : 'FALSE'}</span></div>
                       <div>pythFeedId: "{pythFeedId}"</div>
                       <div>inputRefValue: "{pythFeedInputRef.current?.value || 'NO_REF_VALUE'}"</div>
+                      <div className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded">
+                        <div className="font-semibold text-yellow-800 dark:text-yellow-200">🔍 Form Fields State:</div>
+                        <div>newCryptoId: "{newCryptoId}"</div>
+                        <div>newCryptoName: "{newCryptoName}"</div>
+                        <div>newCryptoSymbol: "{newCryptoSymbol}"</div>
+                      </div>
                       <div>Render time: {new Date().toLocaleTimeString()}</div>
                       
                       {/* Emergency Test Buttons */}
