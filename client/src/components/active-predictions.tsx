@@ -95,11 +95,13 @@ export function ActivePredictions() {
 
   const isAuthenticated = !!user;
 
-  // OPTIMIZED: Reduced frequency to prevent rate limiting
+  // SYNCHRONIZED: Use same data source as Live Prices for consistency
   const { data: cryptoPrices = [] } = useQuery<any[]>({
-    queryKey: ["/api/crypto/prices"],
-    refetchInterval: false, // Disable auto-refresh
-    staleTime: 5 * 60 * 1000, // 5 minutes stale time
+    queryKey: ["/api/crypto/pyth-prices"],
+    refetchInterval: 1000, // Same as Live Prices - ultra-fast updates
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Same as Live Prices - very fresh data
+    retry: 3, // More retry attempts for reliability
   });
 
   const { data: predictions = [], isLoading } = useQuery<ActivePrediction[]>({
