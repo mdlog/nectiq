@@ -230,20 +230,20 @@ export default function UserDashboard() {
   });
 
   const { data: prices = [], isLoading: pricesLoading, refetch: refetchPrices } = useQuery<CryptoPrice[]>({
-    queryKey: ["/api/crypto/prices"],
-    refetchInterval: 30000, // Increased to 30 seconds to prevent rate limiting
-    staleTime: 25000,
-    retry: 3,
-    retryDelay: 3000,
+    queryKey: ["/api/crypto/pyth-prices"],
+    refetchInterval: 1000, // Same as Live Prices - ultra-fast updates
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Same as Live Prices - very fresh data
+    retry: 3, // More retry attempts for reliability
   });
 
   // Get real-time crypto prices for dynamic logo display in predictions
   const { data: cryptoPrices = [] } = useQuery<any[]>({
-    queryKey: ["/api/crypto/prices"],
-    refetchInterval: 30000, // Increased to 30 seconds
-    staleTime: 25000,
-    retry: 2,
-    retryDelay: 3000,
+    queryKey: ["/api/crypto/pyth-prices"],
+    refetchInterval: 1000, // Same as Live Prices - ultra-fast updates
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Same as Live Prices - very fresh data
+    retry: 3, // More retry attempts for reliability
   });
 
   // Add missing query states that are referenced in debugging
