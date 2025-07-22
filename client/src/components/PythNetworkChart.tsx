@@ -166,7 +166,7 @@ const PythNetworkChart = ({
 
     // Draw grid lines with optimized margins for label visibility
     const leftMargin = 65; // Increased for price labels
-    const rightMargin = 50; // Increased for current price indicator
+    const rightMargin = 70; // Increased more for current price indicator
     const topMargin = 30;
     const bottomMargin = 50;
     const chartWidth = width - leftMargin - rightMargin;
@@ -324,7 +324,7 @@ const PythNetworkChart = ({
       // Draw current price indicator dot
       ctx.fillStyle = '#10b981';
       ctx.beginPath();
-      ctx.arc(width - rightMargin + 15, currentY, 4, 0, 2 * Math.PI);
+      ctx.arc(width - rightMargin + 5, currentY, 4, 0, 2 * Math.PI);
       ctx.fill();
       
       // Draw current price line across chart
@@ -337,16 +337,30 @@ const PythNetworkChart = ({
       ctx.stroke();
       ctx.setLineDash([]);
       
-      // Current price label on right with background
+      // Current price label on right with background - positioned safely within canvas
       const priceText = `$${currentPythData.current_price.toFixed(0)}`;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      const textWidth = ctx.measureText(priceText).width;
-      ctx.fillRect(width - rightMargin + 20, currentY - 8, textWidth + 8, 16);
-      
-      ctx.fillStyle = '#10b981';
       ctx.font = 'bold 11px monospace';
+      const textWidth = ctx.measureText(priceText).width;
+      
+      // Position label safely within right margin area
+      const labelX = width - rightMargin + 8;
+      const labelY = currentY;
+      
+      // Ensure label fits within canvas bounds
+      const maxLabelX = width - textWidth - 4;
+      const finalLabelX = Math.min(labelX, maxLabelX);
+      
+      // Draw background for better readability
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.fillRect(finalLabelX - 3, labelY - 8, textWidth + 6, 16);
+      
+      // Draw the price text
+      ctx.fillStyle = '#10b981';
       ctx.textAlign = 'left';
-      ctx.fillText(priceText, width - rightMargin + 24, currentY + 4);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(priceText, finalLabelX, labelY);
+      
+      console.log(`[PYTH-CHART] Current price label positioned at x=${finalLabelX}, textWidth=${textWidth}, canvasWidth=${width}`);
     }
 
   }, [priceHistory, currentPythData]);
