@@ -3887,7 +3887,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Detailed Views */}
-        <Tabs defaultValue="statistics" className="space-y-6">
+        <Tabs defaultValue="cryptocurrencies" className="space-y-6">
           <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-3 sm:p-6 shadow-2xl">
             {/* First Row */}
             <TabsList className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 w-full flex justify-between gap-1 sm:gap-2 h-auto p-1 sm:p-2 rounded-xl mb-4 backdrop-blur-sm">
