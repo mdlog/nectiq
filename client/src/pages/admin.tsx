@@ -4631,18 +4631,43 @@ export default function AdminPanel() {
                           type="button"
                           size="sm"
                           onClick={() => {
-                            // Hyperliquid example Feed ID (64-character hex with 0x prefix = 66 total)
-                            const testValue = "0xe30c13c424f1ee0e2fd55c78bd3f8e0eb4fad7de7be9f9f98a2bf7afc0c3ac6e";
+                            // MATIC/Polygon Feed ID - Known working Pyth Network Feed ID
+                            const testValue = "0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52";
                             setPythFeedId(testValue);
                             if (pythFeedInputRef.current) {
                               pythFeedInputRef.current.value = testValue;
                             }
-                            console.log('🚨 [EMERGENCY-SET] Set Hyperliquid test Feed ID:', testValue);
+                            console.log('🚨 [EMERGENCY-SET] Set MATIC/Polygon test Feed ID:', testValue);
                             console.log('🚨 [EMERGENCY-SET] Length:', testValue.length, 'characters');
+                            // Auto fill other fields for MATIC
+                            setNewCryptoId('polygon');
+                            setNewCryptoName('Polygon');
+                            setNewCryptoSymbol('MATIC');
                           }}
                           className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 h-6"
                         >
-                          🔧 Set Test
+                          🔧 Set MATIC Test
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            // Litecoin Feed ID - Another valid Pyth Network Feed ID
+                            const testValue = "0x6e3f3fa8253588df9326580180233eb791e03b443a3ba7a1d892e73874e19a54";
+                            setPythFeedId(testValue);
+                            if (pythFeedInputRef.current) {
+                              pythFeedInputRef.current.value = testValue;
+                            }
+                            console.log('🚨 [EMERGENCY-SET] Set Litecoin test Feed ID:', testValue);
+                            console.log('🚨 [EMERGENCY-SET] Length:', testValue.length, 'characters');
+                            // Auto fill other fields for LTC
+                            setNewCryptoId('litecoin');
+                            setNewCryptoName('Litecoin');
+                            setNewCryptoSymbol('LTC');
+                          }}
+                          className="bg-purple-500 hover:bg-purple-600 text-white text-xs px-2 py-1 h-6"
+                        >
+                          🔧 Set LTC Test
                         </Button>
                       </div>
                     </div>
