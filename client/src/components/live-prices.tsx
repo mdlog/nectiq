@@ -86,10 +86,10 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   const itemsPerView = 14; // Show 14 cryptos at once
 
   const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
-    queryKey: ["/api/crypto/prices"],
-    refetchInterval: 3000, // Faster updates every 3 seconds
+    queryKey: ["/api/crypto/pyth-prices"],
+    refetchInterval: 1000, // Ultra-fast updates every 1 second for Pyth Network real-time data
     refetchIntervalInBackground: true, // Enable background updates for real-time feel
-    staleTime: 1000, // Very fresh data - 1 second stale time
+    staleTime: 500, // Very fresh data - 500ms stale time for institutional-grade updates
     retry: 3, // More retry attempts for reliability
     refetchOnWindowFocus: true, // Refresh when user focuses window
     refetchOnMount: true, // Refresh on component mount
@@ -151,6 +151,9 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
         <h3 className="text-base font-bold flex items-center">
           <ChartLine className="text-success mr-2" size={16} />
           Live Prices
+          <span className="ml-2 text-xs bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2 py-0.5 rounded-full font-medium">
+            Pyth Network
+          </span>
         </h3>
         <div className="flex items-center text-xs text-green-400">
           <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse mr-1"></div>
