@@ -15,7 +15,7 @@ import { predictionService } from "./services/predictionService";
 const pythPriceService = new PythPriceService();
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
-import { insertPredictionSchema, insertCryptocurrencySchema, insertDepositSchema, insertWithdrawalSchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions, deposits, withdrawals, rewards, achievements, dailyChallenges, banners } from "@shared/schema";
+import { insertPredictionSchema, insertCryptocurrencySchema, insertDepositSchema, insertWithdrawalSchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions, deposits, withdrawals, rewards, achievements, dailyChallenges, banners, cryptocurrencies } from "@shared/schema";
 import { eq, and, or, desc, sql } from "drizzle-orm";
 import { z } from "zod";
 import { ethers } from "ethers";
