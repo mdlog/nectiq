@@ -1,5 +1,8 @@
 import { HermesClient } from "@pythnetwork/hermes-client";
 import { CryptoPrice } from "./cryptoService";
+import { db } from "../db";
+import { eq } from "drizzle-orm";
+import { cryptocurrencies } from "../../shared/schema";
 
 export interface PythPriceData {
   id: string;
@@ -27,42 +30,63 @@ export interface PythPriceUpdate {
 
 export class PythPriceService {
   private client: HermesClient;
-  private priceIds: Record<string, string> = {
-    'bitcoin': '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43',
-    'ethereum': '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
-    'binancecoin': '0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f',
-    'solana': '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
-    'cardano': '0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d',
-    'dogecoin': '0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c',
-    'ripple': '0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8',
-    'avalanche': '0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7',
-    'bittensor': '0x410f41de235f2db824e562ea7ab2d3d3d4ff048316c61d629c0b93f58584e1af'
-  };
-
-  private cryptoMapping: Record<string, { name: string; symbol: string; image: string }> = {
-    'bitcoin': { name: 'Bitcoin', symbol: 'BTC', image: 'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png' },
-    'ethereum': { name: 'Ethereum', symbol: 'ETH', image: 'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png' },
-    'binancecoin': { name: 'BNB', symbol: 'BNB', image: 'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png' },
-    'solana': { name: 'Solana', symbol: 'SOL', image: 'https://coin-images.coingecko.com/coins/images/4128/large/solana.png' },
-    'cardano': { name: 'Cardano', symbol: 'ADA', image: 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png' },
-    'dogecoin': { name: 'Dogecoin', symbol: 'DOGE', image: 'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png' },
-    'ripple': { name: 'Ripple', symbol: 'XRP', image: 'https://coin-images.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png' },
-    'avalanche': { name: 'Avalanche', symbol: 'AVAX', image: 'https://coin-images.coingecko.com/coins/images/12559/large/avalanche-logo.png' },
-    'bittensor': { name: 'Bittensor', symbol: 'TAO', image: 'https://coin-images.coingecko.com/coins/images/16846/large/bittensor.png' }
-  };
+  private cryptoDataCache: Map<string, any> = new Map();
+  private lastCacheUpdate: number = 0;
+  private cacheExpiry: number = 30000; // 30 seconds cache
 
   constructor() {
     this.client = new HermesClient("https://hermes.pyth.network");
-    console.log("🔗 [PYTH] Pyth Network service initialized");
+    console.log("🔗 [PYTH] Pyth Network service initialized - FULLY DYNAMIC MODE");
   }
 
   /**
-   * Get latest prices from Pyth Network
+   * Load cryptocurrency data from database
+   */
+  private async loadCryptocurrenciesFromDB(): Promise<void> {
+    try {
+      const now = Date.now();
+      if (this.cryptoDataCache.size > 0 && (now - this.lastCacheUpdate) < this.cacheExpiry) {
+        return; // Use cached data
+      }
+
+      console.log("🔄 [PYTH] Loading cryptocurrency data from database...");
+      const cryptos = await db.select().from(cryptocurrencies);
+      
+      this.cryptoDataCache.clear();
+      for (const crypto of cryptos) {
+        if (crypto.pythFeedId) {
+          this.cryptoDataCache.set(crypto.id, {
+            id: crypto.id,
+            name: crypto.name,
+            symbol: crypto.symbol,
+            pythFeedId: crypto.pythFeedId,
+            image: crypto.image || `https://coin-images.coingecko.com/coins/images/1/large/${crypto.id}.png`
+          });
+        }
+      }
+
+      this.lastCacheUpdate = now;
+      console.log(`✅ [PYTH] Loaded ${this.cryptoDataCache.size} cryptocurrencies from database`);
+    } catch (error) {
+      console.error("❌ [PYTH] Error loading cryptocurrencies from database:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get latest prices from Pyth Network (fully dynamic from database)
    */
   async getLatestPrices(): Promise<CryptoPrice[]> {
     try {
-      const priceIds = Object.values(this.priceIds);
+      await this.loadCryptocurrenciesFromDB();
+      
+      const priceIds = Array.from(this.cryptoDataCache.values()).map(crypto => crypto.pythFeedId);
       console.log("🔍 [PYTH] Fetching latest prices for", priceIds.length, "cryptocurrencies");
+      
+      if (priceIds.length === 0) {
+        console.warn("⚠️ [PYTH] No cryptocurrencies with Pyth Feed IDs found in database");
+        return [];
+      }
       
       const priceUpdates = await this.client.getLatestPriceUpdates(priceIds);
       
@@ -81,12 +105,18 @@ export class PythPriceService {
   }
 
   /**
-   * Start streaming real-time price updates
+   * Start streaming real-time price updates (fully dynamic from database)
    */
   async startPriceStream(callback: (prices: CryptoPrice[]) => void): Promise<EventSource> {
     try {
-      const priceIds = Object.values(this.priceIds);
+      await this.loadCryptocurrenciesFromDB();
+      
+      const priceIds = Array.from(this.cryptoDataCache.values()).map(crypto => crypto.pythFeedId);
       console.log("🔄 [PYTH] Starting price stream for", priceIds.length, "cryptocurrencies");
+      
+      if (priceIds.length === 0) {
+        throw new Error("No cryptocurrencies with Pyth Feed IDs found in database");
+      }
       
       const eventSource = await this.client.getPriceUpdatesStream(priceIds);
 
@@ -116,21 +146,15 @@ export class PythPriceService {
   }
 
   /**
-   * Format Pyth price data to match our CryptoPrice interface
+   * Format Pyth price data to match our CryptoPrice interface (using database cache)
    */
   private formatPrices(pythData: PythPriceData[]): CryptoPrice[] {
     const prices: CryptoPrice[] = [];
 
     for (const data of pythData) {
-      const cryptoId = this.findCryptoIdByPriceId(data.id);
-      if (!cryptoId) {
-        console.warn("⚠️ [PYTH] Unknown price ID:", data.id);
-        continue;
-      }
-
-      const cryptoInfo = this.cryptoMapping[cryptoId];
+      const cryptoInfo = this.findCryptoBypythFeedId(data.id);
       if (!cryptoInfo) {
-        console.warn("⚠️ [PYTH] No mapping found for crypto:", cryptoId);
+        console.warn("⚠️ [PYTH] Unknown price ID:", data.id);
         continue;
       }
 
@@ -144,7 +168,7 @@ export class PythPriceService {
         const change24h = 0; // Will be enhanced in future iterations
 
         const cryptoPrice: CryptoPrice = {
-          id: cryptoId,
+          id: cryptoInfo.id,
           symbol: cryptoInfo.symbol,
           name: cryptoInfo.name,
           image: cryptoInfo.image,
@@ -159,11 +183,23 @@ export class PythPriceService {
 
         prices.push(cryptoPrice);
       } catch (error) {
-        console.error("❌ [PYTH] Error formatting price for", cryptoId, ":", error);
+        console.error("❌ [PYTH] Error formatting price for", cryptoInfo.id, ":", error);
       }
     }
 
     return prices;
+  }
+
+  /**
+   * Find crypto data by Pyth Feed ID from cache
+   */
+  private findCryptoBypythFeedId(pythFeedId: string): any | null {
+    for (const crypto of this.cryptoDataCache.values()) {
+      if (crypto.pythFeedId === pythFeedId) {
+        return crypto;
+      }
+    }
+    return null;
   }
 
   /**
@@ -225,83 +261,34 @@ export class PythPriceService {
   }
 
   /**
-   * Add new cryptocurrency to Pyth Network integration
+   * Get list of supported cryptocurrencies from database
    */
-  addCryptocurrency(cryptoId: string, pythFeedId: string): void {
-    try {
-      // Validate Pyth Feed ID format
-      if (!pythFeedId || !pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
-        throw new Error("Invalid Pyth Feed ID format. Must be 64-character hex string starting with '0x'");
-      }
-
-      // Add to price IDs mapping
-      this.priceIds[cryptoId] = pythFeedId;
-      
-      // Add basic crypto mapping (this can be enhanced later with CoinGecko data)
-      if (!this.cryptoMapping[cryptoId]) {
-        this.cryptoMapping[cryptoId] = {
-          name: cryptoId.charAt(0).toUpperCase() + cryptoId.slice(1),
-          symbol: cryptoId.toUpperCase().substring(0, 4),
-          image: `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`
-        };
-      }
-
-      console.log(`✅ [PYTH] Added ${cryptoId} with Pyth Feed ID: ${pythFeedId}`);
-    } catch (error) {
-      console.error(`❌ [PYTH] Failed to add ${cryptoId}:`, error);
-      throw error;
-    }
+  async getSupportedCryptocurrencies(): Promise<string[]> {
+    await this.loadCryptocurrenciesFromDB();
+    return Array.from(this.cryptoDataCache.keys());
   }
 
   /**
-   * Remove cryptocurrency from Pyth Network integration
+   * Get supported cryptocurrency IDs from database
    */
-  removeCryptocurrency(cryptoId: string): void {
-    try {
-      delete this.priceIds[cryptoId];
-      delete this.cryptoMapping[cryptoId];
-      console.log(`✅ [PYTH] Removed ${cryptoId} from Pyth Network integration`);
-    } catch (error) {
-      console.error(`❌ [PYTH] Failed to remove ${cryptoId}:`, error);
-      throw error;
-    }
+  async getSupportedCryptos(): Promise<string[]> {
+    return await this.getSupportedCryptocurrencies();
   }
 
   /**
-   * Get list of supported cryptocurrencies
+   * Check if a cryptocurrency is supported (from database cache)
    */
-  getSupportedCryptocurrencies(): string[] {
-    return Object.keys(this.priceIds);
+  async isSupported(cryptoId: string): Promise<boolean> {
+    await this.loadCryptocurrenciesFromDB();
+    return this.cryptoDataCache.has(cryptoId);
   }
 
   /**
-   * Find crypto ID by Pyth price ID
+   * Refresh cache manually
    */
-  private findCryptoIdByPriceId(priceId: string): string | null {
-    // Remove '0x' prefix if present for comparison
-    const cleanPriceId = priceId.startsWith('0x') ? priceId.slice(2) : priceId;
-    
-    for (const [cryptoId, pythPriceId] of Object.entries(this.priceIds)) {
-      const cleanPythPriceId = pythPriceId.startsWith('0x') ? pythPriceId.slice(2) : pythPriceId;
-      if (cleanPythPriceId === cleanPriceId) {
-        return cryptoId;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Get supported cryptocurrency IDs
-   */
-  getSupportedCryptos(): string[] {
-    return Object.keys(this.priceIds);
-  }
-
-  /**
-   * Check if a cryptocurrency is supported
-   */
-  isSupported(cryptoId: string): boolean {
-    return cryptoId in this.priceIds;
+  async refreshCache(): Promise<void> {
+    this.lastCacheUpdate = 0; // Force refresh
+    await this.loadCryptocurrenciesFromDB();
   }
 }
 
