@@ -227,7 +227,15 @@ export function ActivePredictions() {
       {paginatedPredictions.length > 0 && (
         <div className="space-y-4">
           {paginatedPredictions.map((prediction) => {
-            const accuracy = calculateAccuracy(prediction.predictedPrice, prediction.currentPrice);
+            // Get live current price from Pyth Network data
+            const cryptoMatch = cryptoPrices.find(crypto => 
+              crypto.id === prediction.cryptocurrency.toLowerCase() || 
+              crypto.symbol.toLowerCase() === prediction.cryptocurrency.toLowerCase() ||
+              crypto.name.toLowerCase() === prediction.cryptocurrency.toLowerCase()
+            );
+            const liveCurrentPrice = cryptoMatch?.current_price || prediction.currentPrice;
+            
+            const accuracy = calculateAccuracy(prediction.predictedPrice, liveCurrentPrice.toString());
             // Accuracy is now a percentage (0-100), determine if prediction is good based on threshold
             const isGoodPrediction = accuracy >= 90; // 90% minimum threshold for reward
             const isExpired = prediction.timeLeft <= 0;
@@ -271,7 +279,7 @@ export function ActivePredictions() {
                     <p className="text-xs text-slate-400">
                       Current: $
                       <span className="font-semibold text-slate-300">
-                        {parseFloat(prediction.currentPrice).toLocaleString()}
+                        {parseFloat(liveCurrentPrice.toString()).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </p>
                   </div>
