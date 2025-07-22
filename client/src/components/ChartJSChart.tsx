@@ -87,44 +87,47 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
     const data: number[] = [];
     const now = Date.now();
 
-    // Generate historical prices working backwards from current price
+    // Generate historical prices working backwards from current price with controlled volatility
     const historicalPrices: number[] = [];
     
     // Start with current price as the last point
     historicalPrices[dataPoints - 1] = currentPrice;
     
-    // Generate previous prices working backwards
+    // Generate previous prices working backwards with much smaller variations
     for (let i = dataPoints - 2; i >= 0; i--) {
-      // Generate realistic price variations based on timeframe
-      let volatility = 0.01;
+      // Use much smaller, more realistic volatility
+      let maxVariation = 0.005; // 0.5% max variation per step
       switch (selectedTimeframe) {
         case '1m':
         case '5m':
-          volatility = 0.002; // 0.2% for short timeframes
+          maxVariation = 0.001; // 0.1% for very short timeframes
           break;
         case '15m':
-          volatility = 0.003; // 0.3%
+          maxVariation = 0.002; // 0.2%
           break;
         case '1h':
-          volatility = 0.008; // 0.8%
+          maxVariation = 0.003; // 0.3%
           break;
         case '4h':
-          volatility = 0.02; // 2%
+          maxVariation = 0.008; // 0.8%
           break;
         case '1d':
-          volatility = 0.05; // 5%
+          maxVariation = 0.015; // 1.5% max
           break;
       }
 
-      // Create realistic price movement with trend and noise
-      const trendComponent = Math.sin(i / dataPoints * Math.PI * 2) * 0.05;
-      const noiseComponent = (Math.random() - 0.5) * volatility * 2;
-      const priceChange = 1 + trendComponent + noiseComponent;
+      // Create small, realistic price movement
+      const randomVariation = (Math.random() - 0.5) * maxVariation * 2;
+      const priceChange = 1 + randomVariation;
       
-      // Work backwards from the next price point
+      // Work backwards from the next price point with strict bounds
       const nextPrice = historicalPrices[i + 1];
-      const price = Math.max(nextPrice / priceChange, currentPrice * 0.7);
-      historicalPrices[i] = price;
+      const newPrice = nextPrice / priceChange;
+      
+      // Ensure price stays within reasonable bounds (±20% of current price)
+      const minPrice = currentPrice * 0.8;
+      const maxPrice = currentPrice * 1.2;
+      historicalPrices[i] = Math.max(minPrice, Math.min(maxPrice, newPrice));
     }
 
     // Now build labels and data arrays
@@ -284,6 +287,9 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
             return '$' + value.toLocaleString();
           },
         },
+        // Set realistic min/max based on current price
+        min: cryptoInfo ? cryptoInfo.current_price * 0.75 : undefined,
+        max: cryptoInfo ? cryptoInfo.current_price * 1.25 : undefined,
       },
       // Add right Y-axis for live price
       y1: {
@@ -308,6 +314,9 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
             size: 12
           }
         },
+        // Match the left axis scale
+        min: cryptoInfo ? cryptoInfo.current_price * 0.75 : undefined,
+        max: cryptoInfo ? cryptoInfo.current_price * 1.25 : undefined,
       },
     },
   };
