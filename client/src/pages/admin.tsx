@@ -1163,6 +1163,14 @@ export default function AdminPanel() {
     staleTime: 30000, // 30 seconds
   });
 
+  // Admin cryptocurrencies query for management
+  const { data: cryptocurrencies = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/cryptocurrencies"],
+    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 15000, // 15 seconds stale time
+    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
+  });
+
   // Helper function to get cryptocurrency image URL
   const getCryptoImageUrl = (cryptoId: string) => {
     if (!cryptoPrices || cryptoPrices.length === 0) {
@@ -2803,10 +2811,7 @@ export default function AdminPanel() {
     retry: false,
   });
 
-  const { data: cryptocurrencies = [] } = useQuery<Cryptocurrency[]>({
-    queryKey: ["/api/admin/cryptocurrencies"],
-    retry: false,
-  });
+
 
   // Use the existing transaction data queries (already defined above as transactionPurchases and transactionWithdrawals)
   const purchases = transactionPurchases;
@@ -3187,6 +3192,7 @@ export default function AdminPanel() {
     mutationFn: async (cryptoId: string) => {
       const response = await fetch("/api/admin/cryptocurrencies", {
         method: "POST",
+        credentials: "include",
         body: JSON.stringify({ cryptoId }),
         headers: { "Content-Type": "application/json" },
       });
@@ -4162,12 +4168,72 @@ export default function AdminPanel() {
           {/* Cryptocurrencies Tab */}
           <TabsContent value="cryptocurrencies">
             <div className="space-y-6">
+              {/* Data Sources Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border-purple-200 dark:border-purple-800">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                        <Zap className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-purple-900 dark:text-purple-100">Pyth Network</h3>
+                        <p className="text-sm text-purple-700 dark:text-purple-300">Institutional-Grade Data</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm text-purple-800 dark:text-purple-200">
+                      <div className="flex justify-between">
+                        <span>Supported Cryptos:</span>
+                        <span className="font-medium">5 Major Assets</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Update Interval:</span>
+                        <span className="font-medium">1 Second</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Data Quality:</span>
+                        <span className="font-medium text-green-600">Enterprise</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 border-orange-200 dark:border-orange-800">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                        <BarChart3 className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-orange-900 dark:text-orange-100">CoinGecko API</h3>
+                        <p className="text-sm text-orange-700 dark:text-orange-300">Market Data Provider</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm text-orange-800 dark:text-orange-200">
+                      <div className="flex justify-between">
+                        <span>Total Cryptos:</span>
+                        <span className="font-medium">{cryptocurrencies?.length || 0} Assets</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Update Interval:</span>
+                        <span className="font-medium">30 Seconds</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Data Quality:</span>
+                        <span className="font-medium text-blue-600">Professional</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
               {/* Add New Cryptocurrency Form */}
               <Card className="bg-surface border-surface-light">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Plus className="mr-2" size={20} />
                     Add New Cryptocurrency
+                    <Badge variant="outline" className="ml-2 text-xs">CoinGecko Integration</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -4219,6 +4285,17 @@ export default function AdminPanel() {
                         <span>• Shiba Inu: "shiba-inu"</span>
                       </div>
                     </div>
+                    
+                    {/* Pyth Network Notice */}
+                    <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 border border-purple-200 dark:border-purple-800 rounded">
+                      <div className="flex items-center mb-2">
+                        <Zap className="h-4 w-4 text-purple-600 mr-2" />
+                        <p className="text-xs text-purple-800 dark:text-purple-200 font-medium">Pyth Network Integration</p>
+                      </div>
+                      <p className="text-xs text-purple-700 dark:text-purple-300">
+                        Bitcoin, Ethereum, Solana, BNB, and Cardano automatically get enhanced with institutional-grade Pyth Network data for Live Prices display.
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -4233,52 +4310,80 @@ export default function AdminPanel() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {cryptocurrencies.map((crypto) => (
-                      <div key={crypto.id} className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="relative w-10 h-10 flex-shrink-0">
-                            <img 
-                              src={crypto.id === 'solana' ? '/attached_assets/solana_1750613756851.png' : `https://coin-images.coingecko.com/coins/images/${crypto.id === 'bitcoin' ? '1' : crypto.id === 'ethereum' ? '279' : crypto.id === 'binancecoin' ? '825' : crypto.id === 'cardano' ? '975' : crypto.id === 'avalanche-2' ? '12559' : crypto.id === 'tron' ? '1094' : crypto.id === 'ripple' ? '44' : crypto.id === 'dogecoin' ? '5' : crypto.id === 'polygon' ? '4713' : crypto.id === 'chainlink' ? '877' : crypto.id === 'litecoin' ? '2' : crypto.id === 'shiba-inu' ? '11939' : '1'}/large/${crypto.id}.png`}
-                              alt={crypto.name}
-                              className="w-10 h-10 rounded-full object-cover"
-                              onError={(e) => {
-                                // Fallback to colored icon with symbol if image fails to load
-                                const target = e.target as HTMLImageElement;
-                                const fallback = target.nextElementSibling as HTMLElement;
-                                if (fallback) {
-                                  target.style.display = 'none';
-                                  fallback.style.display = 'flex';
-                                }
-                              }}
-                            />
-                            <div className="w-10 h-10 bg-primary/10 rounded-full hidden items-center justify-center">
-                              <span className="text-primary font-bold text-sm">{crypto.symbol}</span>
+                    {cryptocurrencies.map((crypto) => {
+                      // Check if crypto has Pyth Network support
+                      const isPythSupported = ['bitcoin', 'ethereum', 'solana', 'binancecoin', 'cardano'].includes(crypto.id);
+                      
+                      return (
+                        <div key={crypto.id} className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
+                          <div className="flex items-center space-x-4">
+                            <div className="relative w-10 h-10 flex-shrink-0">
+                              <img 
+                                src={crypto.id === 'solana' ? '/attached_assets/solana_1750613756851.png' : `https://coin-images.coingecko.com/coins/images/${crypto.id === 'bitcoin' ? '1' : crypto.id === 'ethereum' ? '279' : crypto.id === 'binancecoin' ? '825' : crypto.id === 'cardano' ? '975' : crypto.id === 'avalanche-2' ? '12559' : crypto.id === 'tron' ? '1094' : crypto.id === 'ripple' ? '44' : crypto.id === 'dogecoin' ? '5' : crypto.id === 'polygon' ? '4713' : crypto.id === 'chainlink' ? '877' : crypto.id === 'litecoin' ? '2' : crypto.id === 'shiba-inu' ? '11939' : '1'}/large/${crypto.id}.png`}
+                                alt={crypto.name}
+                                className="w-10 h-10 rounded-full object-cover"
+                                onError={(e) => {
+                                  // Fallback to colored icon with symbol if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  const fallback = target.nextElementSibling as HTMLElement;
+                                  if (fallback) {
+                                    target.style.display = 'none';
+                                    fallback.style.display = 'flex';
+                                  }
+                                }}
+                              />
+                              <div className="w-10 h-10 bg-primary/10 rounded-full hidden items-center justify-center">
+                                <span className="text-primary font-bold text-sm">{crypto.symbol}</span>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-semibold">{crypto.name}</p>
+                                {isPythSupported && (
+                                  <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs px-2 py-0.5">
+                                    <Zap className="h-3 w-3 mr-1" />
+                                    Pyth
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-slate-400">ID: {crypto.id}</p>
                             </div>
                           </div>
-                          <div>
-                            <p className="font-semibold">{crypto.name}</p>
-                            <p className="text-sm text-slate-400">ID: {crypto.id}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-6">
-                          <div className="text-center">
-                            <p className="text-sm text-slate-400">Current Price</p>
-                            <p className="font-semibold">${crypto.currentPrice ? crypto.currentPrice.toLocaleString() : 'N/A'}</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm text-slate-400">24h Change</p>
-                            <p className={`font-semibold ${
-                              Number(crypto.priceChange24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'
-                            }`}>
-                              {crypto.priceChange24h ? `${Number(crypto.priceChange24h).toFixed(2)}%` : 'N/A'}
-                            </p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm text-slate-400">Last Updated</p>
-                            <p className="text-sm">
-                              {crypto.lastUpdated ? new Date(crypto.lastUpdated).toLocaleDateString() : 'N/A'}
-                            </p>
-                          </div>
+                          <div className="flex items-center space-x-6">
+                            <div className="text-center">
+                              <p className="text-sm text-slate-400">Data Source</p>
+                              <div className="flex items-center gap-1">
+                                {isPythSupported ? (
+                                  <Badge variant="outline" className="text-purple-600 border-purple-300 bg-purple-50 dark:bg-purple-950/20">
+                                    <Zap className="h-3 w-3 mr-1" />
+                                    Pyth + CoinGecko
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 dark:bg-orange-950/20">
+                                    <BarChart3 className="h-3 w-3 mr-1" />
+                                    CoinGecko
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-sm text-slate-400">Current Price</p>
+                              <p className="font-semibold">${crypto.currentPrice ? crypto.currentPrice.toLocaleString() : 'N/A'}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-sm text-slate-400">24h Change</p>
+                              <p className={`font-semibold ${
+                                Number(crypto.priceChange24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'
+                              }`}>
+                                {crypto.priceChange24h ? `${Number(crypto.priceChange24h).toFixed(2)}%` : 'N/A'}
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-sm text-slate-400">Last Updated</p>
+                              <p className="text-sm">
+                                {crypto.lastUpdated ? new Date(crypto.lastUpdated).toLocaleDateString() : 'N/A'}
+                              </p>
+                            </div>
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button
@@ -4325,7 +4430,8 @@ export default function AdminPanel() {
                           </Dialog>
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                     
                     {cryptocurrencies.length === 0 && (
                       <div className="text-center py-12">
