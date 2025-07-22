@@ -193,9 +193,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                       }
                       return null;
                     })()}
-                    <div className={`w-5 h-5 ${getCryptoColor(crypto.id)} rounded-full ${getValidImageUrl(crypto) ? 'hidden' : 'flex'} items-center justify-center text-white text-xs font-bold`}>
-                      {getCryptoIcon(crypto.id)}
-                    </div>
+                    {/* Fallback removed - only show logo images, no text fallback */}
                   </div>
                   
                   {/* Symbol */}
