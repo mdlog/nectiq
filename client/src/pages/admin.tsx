@@ -4440,50 +4440,18 @@ export default function AdminPanel() {
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="crypto-symbol">Symbol</Label>
-                          <Input
-                            id="crypto-symbol"
-                            placeholder="e.g., XRP, DOGE, MATIC"
-                            value={newCryptoSymbol}
-                            onChange={(e) => setNewCryptoSymbol(e.target.value)}
-                            required
-                          />
-                          <p className="text-sm text-slate-400">
-                            Trading symbol for the cryptocurrency.
-                          </p>
-                        </div>
-                        <div className="flex items-end">
-                          <Button 
-                            type="submit" 
-                            className={`w-full ${
-                              !validationResult?.isValid 
-                                ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50' 
-                                : validationResult?.isValid 
-                                ? 'bg-green-600 hover:bg-green-700' 
-                                : ''
-                            }`}
-                            disabled={addCryptoMutation.isPending || !validationResult?.isValid}
-                          >
-                            {addCryptoMutation.isPending ? (
-                              <div className="flex items-center space-x-2">
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                                <span>Adding Cryptocurrency...</span>
-                              </div>
-                            ) : !validationResult?.isValid ? (
-                              <div className="flex items-center space-x-2">
-                                <AlertTriangle className="h-4 w-4" />
-                                <span>Validation Required</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center space-x-2">
-                                <Plus className="h-4 w-4" />
-                                <span>Add Cryptocurrency</span>
-                              </div>
-                            )}
-                          </Button>
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="crypto-symbol">Symbol</Label>
+                        <Input
+                          id="crypto-symbol"
+                          placeholder="e.g., XRP, DOGE, MATIC"
+                          value={newCryptoSymbol}
+                          onChange={(e) => setNewCryptoSymbol(e.target.value)}
+                          required
+                        />
+                        <p className="text-sm text-slate-400">
+                          Trading symbol for the cryptocurrency.
+                        </p>
                       </div>
                       
                       {/* Pyth Network Integration (Required) */}
@@ -4593,6 +4561,38 @@ export default function AdminPanel() {
                             </div>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Add Cryptocurrency Button */}
+                      <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <Button 
+                          type="submit" 
+                          className={`w-full h-12 ${
+                            !validationResult?.isValid 
+                              ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50' 
+                              : validationResult?.isValid 
+                              ? 'bg-green-600 hover:bg-green-700' 
+                              : ''
+                          }`}
+                          disabled={addCryptoMutation.isPending || !validationResult?.isValid}
+                        >
+                          {addCryptoMutation.isPending ? (
+                            <div className="flex items-center space-x-2">
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                              <span>Adding Cryptocurrency...</span>
+                            </div>
+                          ) : !validationResult?.isValid ? (
+                            <div className="flex items-center space-x-2">
+                              <AlertTriangle className="h-4 w-4" />
+                              <span>Validation Required</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2">
+                              <Plus className="h-4 w-4" />
+                              <span>Add Cryptocurrency</span>
+                            </div>
+                          )}
+                        </Button>
                       </div>
                     </div>
                   </form>
