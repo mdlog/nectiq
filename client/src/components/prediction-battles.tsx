@@ -283,19 +283,20 @@ export function PredictionBattles() {
   // Fetch live battles with faster updates
   const { data: liveBattles = [], isLoading } = useQuery<Battle[]>({
     queryKey: ['/api/battles/live'],
-    refetchInterval: 2000, // Faster battle updates - every 2 seconds
+    refetchInterval: 1000, // Ultra-fast battle updates - every 1 second to match Live Prices
     refetchIntervalInBackground: true, // Background updates for battles
   });
 
-  // Fetch live Pyth Network prices - EXACTLY matching Live Prices settings
+  // Fetch live Pyth Network prices - ULTRA-FAST UPDATES MATCHING LIVE PRICES
   const { data: cryptoPricesData = [], isLoading: pricesLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/pyth-prices"], // EXACT same queryKey format as Live Prices
-    refetchInterval: 1000, // EXACT same as Live Prices - 1 second updates
-    refetchIntervalInBackground: true, // EXACT same as Live Prices
-    staleTime: 500, // EXACT same as Live Prices - 500ms stale time
-    retry: 3, // EXACT same as Live Prices
-    refetchOnWindowFocus: true, // EXACT same as Live Prices
-    refetchOnMount: true, // EXACT same as Live Prices
+    refetchInterval: 1000, // ULTRA-FAST 1 second updates - same as Live Prices
+    refetchIntervalInBackground: true, // Background updates enabled
+    staleTime: 100, // REDUCED stale time from 500ms to 100ms for fresher data
+    gcTime: 1000, // Garbage collection time reduced for faster updates
+    retry: 3, // Retry attempts for reliability
+    refetchOnWindowFocus: true, // Refresh when window gets focus
+    refetchOnMount: true, // Refresh on component mount
   });
 
 
@@ -636,9 +637,13 @@ export function PredictionBattles() {
                   maximumFractionDigits: 2 
                 });
               })()} 
-              {/* Debug: Show data source */}
-              <span className="text-xs ml-1">
+              {/* Debug: Show data source with update timer */}
+              <span className="text-xs ml-1 flex items-center gap-1">
                 {getRealTimePrice(battle.cryptocurrency) !== null ? '🟢 LIVE' : '🔴 DB'}
+                <span className="animate-pulse text-green-400">●</span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(dataUpdatedAt).toLocaleTimeString().slice(-8)}
+                </span>
               </span>
             </span>
           </div>
@@ -966,8 +971,12 @@ export function PredictionBattles() {
                   <div className="text-sm text-muted-foreground">
                     <CountdownTimer targetTime={selectedBattle.targetTime} /> remaining
                   </div>
-                  <div className="text-xs text-green-400 mt-1">
+                  <div className="text-xs text-green-400 mt-1 flex items-center gap-1">
+                    <span className="animate-pulse">●</span>
                     Real-time Pyth Network feed
+                    <span className="text-muted-foreground">
+                      {new Date(dataUpdatedAt).toLocaleTimeString().slice(-8)}
+                    </span>
                   </div>
                 </div>
 
