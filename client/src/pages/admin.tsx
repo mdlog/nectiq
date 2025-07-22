@@ -4579,15 +4579,31 @@ export default function AdminPanel() {
                       </div>
                     )}
 
-                    {/* Submit Button - ALWAYS SHOW BOTH FOR DEBUGGING */}
+                    {/* Submit Button - SHOW BOTH BUTTONS ALWAYS FOR DEBUGGING */}
                     <div className="space-y-3">
                       <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
                         <div className="font-bold">Button Logic Test:</div>
                         <div>Should show GREEN button: {validationResult?.isValid === true ? 'YES' : 'NO'}</div>
                         <div>Should show GRAY button: {validationResult?.isValid !== true ? 'YES' : 'NO'}</div>
+                        <div>Current validation state: {JSON.stringify(validationResult)}</div>
                       </div>
                       
-                      {validationResult?.isValid === true ? (
+                      {/* GRAY BUTTON - Always show when not valid */}
+                      {(!validationResult || validationResult.isValid !== true) && (
+                        <Button 
+                          type="button" 
+                          className="w-full h-12 text-base font-medium bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50"
+                          disabled={true}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <AlertTriangle className="h-5 w-5" />
+                            <span>⚫ Validation Required</span>
+                          </div>
+                        </Button>
+                      )}
+
+                      {/* GREEN BUTTON - Show when valid */}
+                      {validationResult && validationResult.isValid === true && (
                         <Button 
                           type="submit" 
                           className="w-full h-12 text-base font-medium bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all"
@@ -4605,18 +4621,19 @@ export default function AdminPanel() {
                             </div>
                           )}
                         </Button>
-                      ) : (
-                        <Button 
-                          type="button" 
-                          className="w-full h-12 text-base font-medium bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50"
-                          disabled={true}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <AlertTriangle className="h-5 w-5" />
-                            <span>⚫ Validation Required</span>
-                          </div>
-                        </Button>
                       )}
+
+                      {/* FORCE RENDER TEST BUTTON - Manual trigger */}
+                      <Button 
+                        type="button"
+                        onClick={() => {
+                          console.log('🔧 FORCE RENDER - Current state:', validationResult);
+                          setValidationResult(prev => prev ? {...prev} : null);
+                        }}
+                        className="w-full h-8 text-sm bg-blue-500 hover:bg-blue-600 text-white"
+                      >
+                        🔄 Force Re-render (Debug)
+                      </Button>
                     </div>
                   </form>
                 </CardContent>
