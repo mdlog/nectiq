@@ -479,22 +479,26 @@ export function PredictionBattles() {
     return cryptoMap[cryptoId] || `https://assets.coingecko.com/coins/images/1/small/bitcoin.png`;
   };
 
-  // UPDATED: Get real-time crypto price using SAME CACHE APPROACH as main component
+  // ENHANCED: Get real-time crypto price with DETAILED DEBUG
   const getRealTimePrice = (cryptoId: string) => {
-    // SAME CACHE LOGIC as Current Price display
+    // CRITICAL: Use EXACT same data source as Live Prices
     const cacheData = livePricesFromCache.length > 0 ? livePricesFromCache : cryptoPricesData;
-    console.log('🔍 [GET-PRICE] Using cache data length:', livePricesFromCache.length, 'Query data length:', cryptoPricesData.length);
+    
+    console.log('🔍 [PRICE-DEBUG] Getting price for:', cryptoId);
+    console.log('🔍 [PRICE-DEBUG] Cache data length:', livePricesFromCache.length, 'Query data length:', cryptoPricesData.length);
     
     if (cacheData && Array.isArray(cacheData) && cacheData.length > 0) {
       const crypto = cacheData.find((c: any) => c.id === cryptoId);
       if (crypto && crypto.current_price) {
-        console.log('💰 [GET-PRICE-CACHE] Found price for', cryptoId, ':', crypto.current_price);
+        console.log('💰 [PRICE-EXACT] Found price for', cryptoId, ':', crypto.current_price);
+        console.log('💰 [PRICE-RAW] Raw data object:', crypto);
         return crypto.current_price;
       } else {
-        console.log('🔴 [GET-PRICE-CACHE] NOT FOUND crypto for', cryptoId, 'in cache');
+        console.log('🔴 [PRICE-MISSING] NOT FOUND crypto for', cryptoId, 'in cache');
+        console.log('🔴 [PRICE-DEBUG] Available crypto IDs:', cacheData.map(c => c.id));
       }
     }
-    console.log('🔴 [GET-PRICE-CACHE] Returning null for', cryptoId);
+    console.log('🔴 [PRICE-NULL] Returning null for', cryptoId);
     return null;
   };
 
@@ -625,29 +629,33 @@ export function PredictionBattles() {
             <span>Current Price</span>
             <span className="font-semibold">
               ${(() => {
-                // CRITICAL FIX: FORCE EXACT SAME PRICE AS LIVE PRICES
-                // Use getRealTimePrice function for consistency
+                // CRITICAL DEBUG: Check exact crypto ID matching
                 const livePrice = getRealTimePrice(battle.cryptocurrency);
+                console.log('🎯 [BATTLE-MATCH] Battle crypto ID:', battle.cryptocurrency);
+                console.log('🎯 [BATTLE-PRICE] Live price result:', livePrice);
+                
                 if (livePrice) {
-                  console.log('💰 [BATTLE-SYNC] Using getRealTimePrice:', livePrice, 'for', battle.cryptocurrency);
-                  return livePrice.toLocaleString(undefined, { 
+                  const formattedPrice = livePrice.toLocaleString(undefined, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   });
+                  console.log('💰 [BATTLE-FINAL] Formatted price:', formattedPrice, 'from raw:', livePrice);
+                  return formattedPrice;
                 } else {
-                  console.log('🔴 [BATTLE-FALLBACK] Using database price:', battle.currentPrice, 'getRealTimePrice failed');
-                  return battle.currentPrice.toLocaleString(undefined, { 
+                  const dbFormattedPrice = battle.currentPrice.toLocaleString(undefined, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   });
+                  console.log('🔴 [BATTLE-DB] Using DB price:', dbFormattedPrice, 'from raw:', battle.currentPrice);
+                  return dbFormattedPrice;
                 }
               })()} 
-              {/* Debug: Show data source and sync status */}
+              {/* Enhanced Debug: Show exact data source */}
               <span className="text-xs ml-1 flex items-center gap-1">
-                {getRealTimePrice(battle.cryptocurrency) ? '🟢 SYNC' : '🔴 DB'}
+                {getRealTimePrice(battle.cryptocurrency) ? '🟢 LIVE' : '🔴 DB'}
                 <span className="animate-pulse text-green-400">●</span>
                 <span className="text-xs text-muted-foreground">
-                  Live Prices
+                  {new Date().toLocaleTimeString().slice(-8)}
                 </span>
               </span>
             </span>
