@@ -4465,8 +4465,12 @@ export default function AdminPanel() {
                             placeholder="Enter Pyth Feed ID (0x...)"
                             value={pythFeedId}
                             onChange={(e) => {
+                              console.log('🔧 [INPUT] Pyth Feed ID changed:', e.target.value);
                               setPythFeedId(e.target.value);
                               setValidationResult(null);
+                            }}
+                            onKeyUp={(e) => {
+                              console.log('⌨️ [KEYUP] Pyth Feed ID:', e.currentTarget.value);
                             }}
                             className="flex-1 h-10"
                             required
