@@ -61,14 +61,22 @@ const PythNetworkChart = ({
 
   // Update price history when new Pyth data arrives
   useEffect(() => {
-    if (currentPythData && currentPythData.current_price) {
+    if (currentPythData && currentPythData.current_price > 0) {
       const now = Date.now();
+      const validPrice = Number(currentPythData.current_price);
+      const validConfidence = Number(currentPythData.confidence_interval) || 0;
+      
+      // Debug logging
+      console.log(`[PYTH-CHART] Adding price data: $${validPrice}, confidence: ${validConfidence}`);
+      
       setPriceHistory(prev => {
-        const newHistory = [...prev, {
+        const newDataPoint = {
           timestamp: now,
-          price: currentPythData.current_price,
-          confidence: currentPythData.confidence_interval
-        }];
+          price: validPrice,
+          confidence: validConfidence
+        };
+        
+        const newHistory = [...prev, newDataPoint];
         
         // If this is the first data point, add a few duplicate points for better visualization
         if (prev.length === 0) {
@@ -76,11 +84,11 @@ const PythNetworkChart = ({
           for (let i = 0; i < 3; i++) {
             initialPoints.push({
               timestamp: now - (3000 * (3 - i)), // 3 seconds apart
-              price: currentPythData.current_price,
-              confidence: currentPythData.confidence_interval || 0
+              price: validPrice,
+              confidence: validConfidence
             });
           }
-          return [...initialPoints, newHistory];
+          return [...initialPoints, newDataPoint];
         }
         
         // Keep only last 50 data points for smooth performance
@@ -134,15 +142,25 @@ const PythNetworkChart = ({
     }
 
     // Calculate price range with padding for better visualization
-    const prices = priceHistory.map(d => d.price).filter(p => !isNaN(p) && isFinite(p) && p > 0);
-    if (prices.length === 0) return;
+    const prices = priceHistory
+      .map(d => d.price)
+      .filter(p => p != null && !isNaN(p) && isFinite(p) && p > 0);
+    
+    if (prices.length === 0) {
+      // Fallback to current price if no valid history
+      if (currentPythData && currentPythData.current_price > 0) {
+        prices.push(currentPythData.current_price);
+      } else {
+        return;
+      }
+    }
     
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const priceRange = maxPrice - minPrice || (maxPrice * 0.01); // Use 1% of price if no range
     
     // Add padding to make chart more readable (10% padding on each side)
-    const paddedMinPrice = minPrice - (priceRange * 0.1);
+    const paddedMinPrice = Math.max(0, minPrice - (priceRange * 0.1));
     const paddedMaxPrice = maxPrice + (priceRange * 0.1);
     const paddedRange = paddedMaxPrice - paddedMinPrice;
 
@@ -227,19 +245,27 @@ const PythNetworkChart = ({
     ctx.font = '11px monospace';
     ctx.textAlign = 'right';
 
+    // Debug logging for price range calculation
+    console.log(`[PYTH-CHART] Price range: min=${paddedMinPrice}, max=${paddedMaxPrice}, range=${paddedRange}`);
+
     // Draw 6 price levels on the left sidebar
     for (let i = 0; i <= 5; i++) {
       const priceLevel = paddedMinPrice + (paddedRange * (5 - i) / 5); // Reverse order (top to bottom)
       const y = margin + (chartHeight / 5) * i + 5;
       
-      // Handle NaN values and format properly
-      if (!isNaN(priceLevel) && isFinite(priceLevel)) {
+      // Enhanced validation and formatting
+      if (paddedRange > 0 && !isNaN(priceLevel) && isFinite(priceLevel) && priceLevel > 0) {
         const formattedPrice = priceLevel < 1 
           ? priceLevel.toFixed(6) 
           : priceLevel < 1000 
             ? priceLevel.toFixed(2)
             : priceLevel.toFixed(0);
         ctx.fillText(`$${formattedPrice}`, margin - 5, y);
+        console.log(`[PYTH-CHART] Drawing price label: $${formattedPrice} at y=${y}`);
+      } else {
+        console.error(`[PYTH-CHART] Invalid price level: ${priceLevel}, paddedRange: ${paddedRange}`);
+        // Draw fallback label
+        ctx.fillText('$--', margin - 5, y);
       }
     }
     // Draw time labels (X-axis - horizontal)
