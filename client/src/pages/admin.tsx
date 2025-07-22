@@ -873,6 +873,8 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
 
 export default function AdminPanel() {
   const [newCryptoId, setNewCryptoId] = useState("");
+  const [enablePythIntegration, setEnablePythIntegration] = useState(false);
+  const [pythFeedId, setPythFeedId] = useState("");
   // Remove authentication state as server handles admin access
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -3189,11 +3191,11 @@ export default function AdminPanel() {
   };
 
   const addCryptoMutation = useMutation({
-    mutationFn: async (cryptoId: string) => {
+    mutationFn: async (data: { cryptoId: string, enablePythIntegration?: boolean, pythFeedId?: string }) => {
       const response = await fetch("/api/admin/cryptocurrencies", {
         method: "POST",
         credentials: "include",
-        body: JSON.stringify({ cryptoId }),
+        body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" },
       });
       if (!response.ok) {
@@ -3202,14 +3204,24 @@ export default function AdminPanel() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const successMessage = data.pythIntegration 
+        ? "Cryptocurrency added successfully with Pyth Network integration"
+        : "Cryptocurrency added successfully from CoinGecko";
+      
       toast({
         title: "Success",
-        description: "Cryptocurrency added successfully from CoinGecko",
+        description: successMessage,
       });
+      
+      // Reset form state
       setNewCryptoId("");
+      setEnablePythIntegration(false);
+      setPythFeedId("");
+      
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cryptocurrencies"] });
       queryClient.invalidateQueries({ queryKey: ["/api/crypto/prices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/crypto/pyth-prices"] });
     },
     onError: (error: any) => {
       toast({
@@ -3444,7 +3456,35 @@ export default function AdminPanel() {
       });
       return;
     }
-    addCryptoMutation.mutate(newCryptoId.trim().toLowerCase());
+
+    // Validate Pyth Feed ID if Pyth integration is enabled
+    if (enablePythIntegration) {
+      if (!pythFeedId.trim()) {
+        toast({
+          title: "Error",
+          description: "Please enter a Pyth Price Feed ID when enabling Pyth integration",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+        toast({
+          title: "Error",
+          description: "Pyth Feed ID must be a 64-character hex string starting with '0x'",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const mutationData = {
+      cryptoId: newCryptoId.trim().toLowerCase(),
+      enablePythIntegration,
+      pythFeedId: enablePythIntegration ? pythFeedId.trim() : undefined
+    };
+
+    addCryptoMutation.mutate(mutationData);
   };
 
   // Check if user lacks admin permissions
@@ -4233,33 +4273,92 @@ export default function AdminPanel() {
                   <CardTitle className="flex items-center">
                     <Plus className="mr-2" size={20} />
                     Add New Cryptocurrency
-                    <Badge variant="outline" className="ml-2 text-xs">CoinGecko Integration</Badge>
+                    <div className="flex items-center space-x-2 ml-2">
+                      <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                        CoinGecko
+                      </Badge>
+                      <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                        + Pyth Network
+                      </Badge>
+                    </div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleAddCrypto} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="crypto-id">CoinGecko ID</Label>
-                        <Input
-                          id="crypto-id"
-                          placeholder="e.g., ripple, dogecoin, shiba-inu"
-                          value={newCryptoId}
-                          onChange={(e) => setNewCryptoId(e.target.value)}
-                          required
-                        />
-                        <p className="text-sm text-slate-400">
-                          Enter the CoinGecko ID of the cryptocurrency. All other data will be fetched automatically.
-                        </p>
+                  <form onSubmit={handleAddCrypto} className="space-y-6">
+                    {/* Basic Information */}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="crypto-id">CoinGecko ID</Label>
+                          <Input
+                            id="crypto-id"
+                            placeholder="e.g., ripple, avalanche-2, matic-network"
+                            value={newCryptoId}
+                            onChange={(e) => setNewCryptoId(e.target.value)}
+                            required
+                          />
+                          <p className="text-sm text-slate-400">
+                            Enter the CoinGecko ID of the cryptocurrency. All other data will be fetched automatically.
+                          </p>
+                        </div>
+                        <div className="flex items-end">
+                          <Button 
+                            type="submit" 
+                            className="w-full"
+                            disabled={addCryptoMutation.isPending}
+                          >
+                            {addCryptoMutation.isPending ? "Adding..." : "Add Cryptocurrency"}
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-end">
-                        <Button 
-                          type="submit" 
-                          className="w-full"
-                          disabled={addCryptoMutation.isPending}
-                        >
-                          {addCryptoMutation.isPending ? "Adding..." : "Add from CoinGecko"}
-                        </Button>
+                      
+                      {/* Pyth Network Integration Option */}
+                      <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                        <div className="flex items-start space-x-3">
+                          <Zap className="h-5 w-5 text-purple-600 mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-semibold text-purple-900 dark:text-purple-100">Pyth Network Integration</h4>
+                              <label className="flex items-center space-x-2 cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+                                  checked={enablePythIntegration}
+                                  onChange={(e) => setEnablePythIntegration(e.target.checked)}
+                                />
+                                <span className="text-sm text-purple-700 dark:text-purple-300">Enable Pyth Integration</span>
+                              </label>
+                            </div>
+                            
+                            {enablePythIntegration && (
+                              <div className="space-y-3">
+                                <div>
+                                  <Label htmlFor="pyth-feed-id">Pyth Price Feed ID</Label>
+                                  <Input
+                                    id="pyth-feed-id"
+                                    placeholder="0x..."
+                                    value={pythFeedId}
+                                    onChange={(e) => setPythFeedId(e.target.value)}
+                                    className="mt-1"
+                                  />
+                                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                                    Find Pyth Price Feed IDs at: pyth.network/developers/price-feed-ids
+                                  </p>
+                                </div>
+                                
+                                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded text-xs text-purple-800 dark:text-purple-200">
+                                  <p className="font-medium mb-1">Benefits of Pyth Network Integration:</p>
+                                  <ul className="space-y-0.5">
+                                    <li>• Sub-second price updates</li>
+                                    <li>• Institutional-grade data quality</li>
+                                    <li>• Confidence intervals for accuracy</li>
+                                    <li>• Real-time market data</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </form>

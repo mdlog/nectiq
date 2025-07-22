@@ -5067,10 +5067,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/cryptocurrencies", requireAdmin, async (req, res) => {
     try {
-      const { cryptoId } = req.body;
+      const { cryptoId, enablePythIntegration, pythFeedId } = req.body;
       
       if (!cryptoId || typeof cryptoId !== 'string') {
         return res.status(400).json({ message: "Cryptocurrency ID is required" });
+      }
+
+      // Validate Pyth integration if enabled
+      if (enablePythIntegration) {
+        if (!pythFeedId || typeof pythFeedId !== 'string' || !pythFeedId.startsWith('0x')) {
+          return res.status(400).json({ 
+            message: "Valid Pyth Feed ID (starting with 0x) is required when Pyth integration is enabled" 
+          });
+        }
       }
 
       // Retry mechanism for CoinGecko API with exponential backoff
@@ -5127,6 +5136,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newCrypto = await storage.upsertCryptocurrency(cryptoData);
       
+      // If Pyth integration is enabled, add to Pyth service
+      if (enablePythIntegration && pythFeedId) {
+        const { PythPriceService } = await import('../services/PythPriceService.js');
+        const pythService = new PythPriceService();
+        
+        try {
+          // Add to Pyth service mappings
+          pythService.addCryptocurrency(cryptoId, pythFeedId);
+          
+          auditLog('admin_crypto_pyth_integration', { 
+            cryptoId: newCrypto.id, 
+            pythFeedId,
+            status: 'success'
+          }, req);
+          
+          console.log(`✅ [ADMIN] Successfully added ${cryptoData.name} with Pyth Network integration`);
+        } catch (pythError) {
+          console.error('⚠️ [ADMIN] Pyth integration failed:', pythError);
+          // Continue with CoinGecko-only integration
+          auditLog('admin_crypto_pyth_integration', { 
+            cryptoId: newCrypto.id, 
+            pythFeedId,
+            status: 'failed',
+            error: pythError.message
+          }, req);
+        }
+      }
+      
       // Clear crypto service cache so new cryptocurrency appears immediately
       cryptoService.clearCache();
       
@@ -5134,10 +5171,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cryptoId: newCrypto.id, 
         name: newCrypto.name,
         symbol: newCrypto.symbol,
-        source: 'coingecko_api'
+        source: enablePythIntegration ? 'coingecko_api_with_pyth' : 'coingecko_api',
+        pythFeedId: enablePythIntegration ? pythFeedId : undefined
       }, req);
       
-      res.json(newCrypto);
+      res.json({
+        ...newCrypto,
+        pythIntegration: enablePythIntegration,
+        pythFeedId: enablePythIntegration ? pythFeedId : undefined
+      });
     } catch (error) {
       console.error("Error adding cryptocurrency:", error);
       

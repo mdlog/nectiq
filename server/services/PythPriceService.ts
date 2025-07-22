@@ -164,6 +164,56 @@ export class PythPriceService {
   }
 
   /**
+   * Add new cryptocurrency to Pyth Network integration
+   */
+  addCryptocurrency(cryptoId: string, pythFeedId: string): void {
+    try {
+      // Validate Pyth Feed ID format
+      if (!pythFeedId || !pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+        throw new Error("Invalid Pyth Feed ID format. Must be 64-character hex string starting with '0x'");
+      }
+
+      // Add to price IDs mapping
+      this.priceIds[cryptoId] = pythFeedId;
+      
+      // Add basic crypto mapping (this can be enhanced later with CoinGecko data)
+      if (!this.cryptoMapping[cryptoId]) {
+        this.cryptoMapping[cryptoId] = {
+          name: cryptoId.charAt(0).toUpperCase() + cryptoId.slice(1),
+          symbol: cryptoId.toUpperCase().substring(0, 4),
+          image: `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`
+        };
+      }
+
+      console.log(`✅ [PYTH] Added ${cryptoId} with Pyth Feed ID: ${pythFeedId}`);
+    } catch (error) {
+      console.error(`❌ [PYTH] Failed to add ${cryptoId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove cryptocurrency from Pyth Network integration
+   */
+  removeCryptocurrency(cryptoId: string): void {
+    try {
+      delete this.priceIds[cryptoId];
+      delete this.cryptoMapping[cryptoId];
+      console.log(`✅ [PYTH] Removed ${cryptoId} from Pyth Network integration`);
+    } catch (error) {
+      console.error(`❌ [PYTH] Failed to remove ${cryptoId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get list of supported cryptocurrencies
+   */
+  getSupportedCryptocurrencies(): string[] {
+    return Object.keys(this.priceIds);
+  }
+
+  /**
    * Find crypto ID by Pyth price ID
    */
   private findCryptoIdByPriceId(priceId: string): string | null {
