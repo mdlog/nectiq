@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, TrendingDown, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords, Play, RotateCcw, TestTube } from "lucide-react";
+import { Users, TrendingUp, TrendingDown, Award, Activity, BarChart3, Eye, Settings, Lock, AlertTriangle, Plus, Trash2, Coins, Edit, UserPlus, UserX, Shield, Database, FileText, RefreshCw, Calendar, DollarSign, Zap, Ban, Trophy, Download, Search, Filter, ChevronUp, ChevronDown, Target, X, AlertCircle, Info, Clock, CheckCircle, XCircle, Lightbulb, Cog, Gamepad2, Copy, Code, Archive, FileDown, FileSpreadsheet, ShieldCheck, Pause, Save, Megaphone, Star, MapPin, ExternalLink, Swords, Play, RotateCcw, TestTube } from "lucide-react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -876,6 +876,12 @@ export default function AdminPanel() {
   const [newCryptoName, setNewCryptoName] = useState("");
   const [newCryptoSymbol, setNewCryptoSymbol] = useState("");
   const [pythFeedId, setPythFeedId] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
+    isValid: boolean;
+    message: string;
+    priceData?: any;
+  } | null>(null);
   // Remove authentication state as server handles admin access
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -3191,6 +3197,57 @@ export default function AdminPanel() {
     }
   };
 
+  // Validation mutation for Pyth Network support
+  const validatePythMutation = useMutation({
+    mutationFn: async (pythFeedId: string) => {
+      console.log('🔍 [ADMIN] Validating Pyth Feed ID:', pythFeedId);
+      const response = await fetch("/api/admin/validate-pyth-support", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ pythFeedId }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || "Validation failed");
+        } catch (parseError) {
+          throw new Error(errorText || "Validation failed");
+        }
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('✅ [ADMIN] Pyth validation successful:', data);
+      setValidationResult({
+        isValid: true,
+        message: data.message || "Pyth Feed ID is valid and supported",
+        priceData: data.priceData
+      });
+      toast({
+        title: "Validation Success",
+        description: "Pyth Feed ID is valid and supported by Pyth Network",
+      });
+    },
+    onError: (error: any) => {
+      console.error('❌ [ADMIN] Pyth validation failed:', error);
+      setValidationResult({
+        isValid: false,
+        message: error.message || "Validation failed"
+      });
+      toast({
+        title: "Validation Failed",
+        description: error.message || "Pyth Feed ID is not supported",
+        variant: "destructive",
+      });
+    },
+  });
+
   const addCryptoMutation = useMutation({
     mutationFn: async (data: { cryptoId: string, name: string, symbol: string, pythFeedId: string }) => {
       console.log('🔧 [FRONTEND] Submitting cryptocurrency data:', data);
@@ -3227,11 +3284,12 @@ export default function AdminPanel() {
         description: "Cryptocurrency added successfully with Pyth Network integration",
       });
       
-      // Reset form state
+      // Reset form state and validation
       setNewCryptoId("");
       setNewCryptoName("");
       setNewCryptoSymbol("");
       setPythFeedId("");
+      setValidationResult(null);
       
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cryptocurrencies"] });
       queryClient.invalidateQueries({ queryKey: ["/api/crypto/prices"] });
@@ -3460,6 +3518,32 @@ export default function AdminPanel() {
     },
   });
 
+  // Function to validate Pyth Feed ID
+  const handleValidatePyth = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!pythFeedId.trim()) {
+      toast({
+        title: "Error",
+        description: "Pyth Feed ID is required for validation",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+      toast({
+        title: "Error",
+        description: "Pyth Feed ID must be a 64-character hex string starting with '0x'",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setValidationResult(null);
+    validatePythMutation.mutate(pythFeedId.trim());
+  };
+
   const handleAddCrypto = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -3504,6 +3588,16 @@ export default function AdminPanel() {
       toast({
         title: "Error",
         description: "Pyth Feed ID must be a 64-character hex string starting with '0x'",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // REQUIRE VALIDATION BEFORE ADDING
+    if (!validationResult || !validationResult.isValid) {
+      toast({
+        title: "Validation Required",
+        description: "Please validate the Pyth Feed ID before adding the cryptocurrency",
         variant: "destructive",
       });
       return;
@@ -4364,9 +4458,11 @@ export default function AdminPanel() {
                           <Button 
                             type="submit" 
                             className="w-full"
-                            disabled={addCryptoMutation.isPending}
+                            disabled={addCryptoMutation.isPending || !validationResult?.isValid}
                           >
-                            {addCryptoMutation.isPending ? "Adding..." : "Add Cryptocurrency"}
+                            {addCryptoMutation.isPending ? "Adding..." : 
+                             !validationResult?.isValid ? "Validation Required" : 
+                             "Add Cryptocurrency"}
                           </Button>
                         </div>
                       </div>
@@ -4378,23 +4474,77 @@ export default function AdminPanel() {
                           <div className="flex-1">
                             <div className="mb-3">
                               <h4 className="font-semibold text-purple-900 dark:text-purple-100">Pyth Network Price Feed</h4>
-                              <p className="text-sm text-purple-700 dark:text-purple-300">Required for all cryptocurrencies</p>
+                              <p className="text-sm text-purple-700 dark:text-purple-300">Required for all cryptocurrencies - Validation Required</p>
                             </div>
                             
                             <div className="space-y-3">
                               <div>
                                 <Label htmlFor="pyth-feed-id">Pyth Price Feed ID *</Label>
-                                <Input
-                                  id="pyth-feed-id"
-                                  placeholder="0x..."
-                                  value={pythFeedId}
-                                  onChange={(e) => setPythFeedId(e.target.value)}
-                                  className="mt-1"
-                                  required
-                                />
+                                <div className="flex space-x-2">
+                                  <Input
+                                    id="pyth-feed-id"
+                                    placeholder="0x..."
+                                    value={pythFeedId}
+                                    onChange={(e) => {
+                                      setPythFeedId(e.target.value);
+                                      setValidationResult(null); // Clear validation when input changes
+                                    }}
+                                    className="flex-1"
+                                    required
+                                  />
+                                  <Button
+                                    type="button"
+                                    onClick={handleValidatePyth}
+                                    disabled={!pythFeedId.trim() || validatePythMutation.isPending}
+                                    className="bg-purple-600 hover:bg-purple-700"
+                                  >
+                                    {validatePythMutation.isPending ? "Validating..." : "Validate"}
+                                  </Button>
+                                </div>
                                 <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
                                   Find Pyth Price Feed IDs at: pyth.network/developers/price-feed-ids
                                 </p>
+                                
+                                {/* Validation Result Display */}
+                                {validationResult && (
+                                  <div className={`mt-2 p-3 rounded-lg border ${
+                                    validationResult.isValid 
+                                      ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' 
+                                      : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
+                                  }`}>
+                                    <div className="flex items-center space-x-2">
+                                      {validationResult.isValid ? (
+                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                      ) : (
+                                        <XCircle className="h-4 w-4 text-red-600" />
+                                      )}
+                                      <span className={`text-sm font-medium ${
+                                        validationResult.isValid 
+                                          ? 'text-green-800 dark:text-green-200' 
+                                          : 'text-red-800 dark:text-red-200'
+                                      }`}>
+                                        {validationResult.isValid ? 'Validation Successful' : 'Validation Failed'}
+                                      </span>
+                                    </div>
+                                    <p className={`text-xs mt-1 ${
+                                      validationResult.isValid 
+                                        ? 'text-green-700 dark:text-green-300' 
+                                        : 'text-red-700 dark:text-red-300'
+                                    }`}>
+                                      {validationResult.message}
+                                    </p>
+                                    {validationResult.priceData && (
+                                      <div className="mt-2 text-xs text-green-600 dark:text-green-400">
+                                        Current Price: ${validationResult.priceData.price} 
+                                        {validationResult.priceData.confidence && (
+                                          <span className="ml-2">
+                                            (±${validationResult.priceData.confidence} confidence)
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               
                               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded text-xs text-purple-800 dark:text-purple-200">

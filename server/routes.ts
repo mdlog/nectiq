@@ -5075,6 +5075,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pyth Network validation endpoint
+  app.post("/api/admin/validate-pyth-support", requireAdmin, async (req, res) => {
+    console.log('🔍 [ADMIN] Pyth Network validation request received:', req.body);
+    
+    try {
+      const { pythFeedId } = req.body;
+      
+      if (!pythFeedId) {
+        return res.status(400).json({ 
+          message: "pythFeedId is required for validation" 
+        });
+      }
+
+      console.log('🔍 [ADMIN] Importing PythPriceService for validation...');
+      const { PythPriceService } = await import('./services/PythPriceService.js');
+      const pythService = new PythPriceService();
+      
+      console.log('🔍 [ADMIN] Validating Pyth Feed ID:', pythFeedId);
+      const validation = await pythService.validatePythFeedId(pythFeedId);
+      
+      if (!validation.isValid) {
+        console.log('❌ [ADMIN] Pyth Feed ID validation failed:', validation.error);
+        return res.status(400).json({ 
+          isValid: false,
+          message: validation.error 
+        });
+      }
+      
+      console.log('✅ [ADMIN] Pyth Feed ID validation successful');
+      res.json({ 
+        isValid: true,
+        message: "Pyth Feed ID is valid and supported by Pyth Network",
+        priceData: validation.priceData
+      });
+    } catch (error: any) {
+      console.error("❌ [ADMIN] Error validating Pyth Feed ID:", error);
+      res.status(500).json({ 
+        isValid: false,
+        message: `Validation failed: ${error.message}` 
+      });
+    }
+  });
+
   app.post("/api/admin/cryptocurrencies", requireAdmin, async (req, res) => {
     console.log('🔧 [ADMIN] Add cryptocurrency request received:', req.body);
     
@@ -5096,6 +5139,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Invalid Pyth Feed ID format. Must be 64-character hex string starting with '0x'" 
         });
       }
+
+      // PRE-VALIDATE PYTH NETWORK SUPPORT
+      console.log('🔍 [ADMIN] Pre-validating Pyth Network support...');
+      const { PythPriceService } = await import('./services/PythPriceService.js');
+      const pythService = new PythPriceService();
+      
+      const validation = await pythService.validatePythFeedId(pythFeedId);
+      
+      if (!validation.isValid) {
+        console.log('❌ [ADMIN] Pyth Network validation failed - PREVENTING database insertion:', validation.error);
+        return res.status(400).json({ 
+          message: `Cryptocurrency not supported by Pyth Network: ${validation.error}` 
+        });
+      }
+      
+      console.log('✅ [ADMIN] Pyth Network validation successful - proceeding with database insertion');
 
       // Create cryptocurrency data with provided information
       const cryptoData = {

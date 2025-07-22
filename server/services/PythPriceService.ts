@@ -167,6 +167,64 @@ export class PythPriceService {
   }
 
   /**
+   * Validate if a Pyth Feed ID is supported by Pyth Network
+   */
+  async validatePythFeedId(pythFeedId: string): Promise<{ isValid: boolean; error?: string; priceData?: any }> {
+    try {
+      // Validate format first
+      if (!pythFeedId || !pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+        return {
+          isValid: false,
+          error: "Invalid Pyth Feed ID format. Must be 64-character hex string starting with '0x'"
+        };
+      }
+
+      console.log(`🔍 [PYTH-VALIDATION] Testing Feed ID: ${pythFeedId}`);
+      
+      // Attempt to fetch price data for this Feed ID
+      const priceUpdates = await this.client.getLatestPriceUpdates([pythFeedId]);
+      
+      if (!priceUpdates || !priceUpdates.parsed || priceUpdates.parsed.length === 0) {
+        return {
+          isValid: false,
+          error: "Pyth Feed ID not found or not supported by Pyth Network. Please verify the Feed ID at https://www.pyth.network/developers/price-feed-ids"
+        };
+      }
+
+      const priceData = priceUpdates.parsed[0];
+      
+      // Check if price data is valid
+      if (!priceData.price || !priceData.price.price) {
+        return {
+          isValid: false,
+          error: "Pyth Feed ID exists but no valid price data available"
+        };
+      }
+
+      console.log(`✅ [PYTH-VALIDATION] Feed ID ${pythFeedId} is VALID - Price: ${priceData.price.price}`);
+      
+      return {
+        isValid: true,
+        priceData: priceData
+      };
+    } catch (error: any) {
+      console.error(`❌ [PYTH-VALIDATION] Error validating Feed ID ${pythFeedId}:`, error);
+      
+      if (error.message?.includes('404') || error.message?.includes('not found')) {
+        return {
+          isValid: false,
+          error: "Pyth Feed ID not found. Please verify the Feed ID at https://www.pyth.network/developers/price-feed-ids"
+        };
+      }
+      
+      return {
+        isValid: false,
+        error: `Pyth Network validation failed: ${error.message}`
+      };
+    }
+  }
+
+  /**
    * Add new cryptocurrency to Pyth Network integration
    */
   addCryptocurrency(cryptoId: string, pythFeedId: string): void {
