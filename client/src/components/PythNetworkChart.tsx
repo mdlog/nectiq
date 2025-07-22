@@ -37,7 +37,7 @@ const PythNetworkChart = ({
   });
 
   // Get current crypto data from Pyth Network
-  const currentPythData = pythPrices?.find((p: any) => p.id === cryptoId);
+  const currentPythData = Array.isArray(pythPrices) ? pythPrices.find((p: any) => p.id === cryptoId) : null;
 
   // Fetch cryptocurrency logo
   const fetchCryptoLogo = async () => {
@@ -72,15 +72,15 @@ const PythNetworkChart = ({
         
         // If this is the first data point, add a few duplicate points for better visualization
         if (prev.length === 0) {
-          const initialPoints = [];
+          const initialPoints: PriceData[] = [];
           for (let i = 0; i < 3; i++) {
             initialPoints.push({
               timestamp: now - (3000 * (3 - i)), // 3 seconds apart
               price: currentPythData.current_price,
-              confidence: currentPythData.confidence_interval
+              confidence: currentPythData.confidence_interval || 0
             });
           }
-          return initialPoints.concat(newHistory);
+          return [...initialPoints, newHistory];
         }
         
         // Keep only last 50 data points for smooth performance
@@ -220,26 +220,75 @@ const PythNetworkChart = ({
       ctx.setLineDash([]);
     }
 
-    // Draw price labels
+    // Draw price labels (Y-axis - vertical sidebar)
     ctx.fillStyle = '#ffffff';
-    ctx.font = '12px monospace';
+    ctx.font = '11px monospace';
     ctx.textAlign = 'right';
 
-    // Max price
-    ctx.fillText(`$${paddedMaxPrice.toFixed(8)}`, width - 10, margin + 20);
-    // Min price  
-    ctx.fillText(`$${paddedMinPrice.toFixed(8)}`, width - 10, height - margin - 10);
-    // Current price
+    // Draw 6 price levels on the left sidebar
+    for (let i = 0; i <= 5; i++) {
+      const priceLevel = paddedMinPrice + (paddedRange * (5 - i) / 5); // Reverse order (top to bottom)
+      const y = margin + (chartHeight / 5) * i + 5;
+      ctx.fillText(`$${priceLevel.toFixed(6)}`, margin - 5, y);
+    }
+    // Draw time labels (X-axis - horizontal)
+    ctx.fillStyle = '#888888';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    
+    // Draw time labels at bottom
+    if (priceHistory.length > 1) {
+      const timeLabels = 6; // Number of time labels
+      for (let i = 0; i <= timeLabels; i++) {
+        const dataIndex = Math.floor((i / timeLabels) * (priceHistory.length - 1));
+        const x = margin + (i / timeLabels) * chartWidth;
+        const timestamp = priceHistory[dataIndex]?.timestamp || Date.now();
+        const time = new Date(timestamp);
+        const timeLabel = time.toLocaleTimeString('id-ID', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        
+        ctx.fillText(timeLabel, x, height - margin + 15);
+      }
+      
+      // Draw date at bottom center
+      const currentDate = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+      ctx.fillStyle = '#666666';
+      ctx.font = '9px monospace';
+      ctx.fillText(currentDate, width / 2, height - 5);
+    }
+
+    // Current price indicator
     if (currentPythData) {
       const currentY = margin + (chartHeight - ((currentPythData.current_price - paddedMinPrice) / paddedRange) * chartHeight);
-      ctx.fillStyle = '#10b981';
-      ctx.fillText(`$${currentPythData.current_price.toFixed(8)}`, width - 10, currentY + 5);
       
-      // Draw current price indicator
+      // Draw current price indicator dot
       ctx.fillStyle = '#10b981';
       ctx.beginPath();
-      ctx.arc(width - 5, currentY, 3, 0, 2 * Math.PI);
+      ctx.arc(width - margin - 5, currentY, 4, 0, 2 * Math.PI);
       ctx.fill();
+      
+      // Draw current price line across chart
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(margin, currentY);
+      ctx.lineTo(width - margin, currentY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Current price label on right
+      ctx.fillStyle = '#10b981';
+      ctx.font = '11px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`$${currentPythData.current_price.toFixed(6)}`, width - margin + 8, currentY + 4);
     }
 
   }, [priceHistory, currentPythData]);
