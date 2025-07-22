@@ -202,7 +202,7 @@ function getAdminWalletAddresses(): string[] {
 
 // Admin IP whitelist for bypassing rate limiting - loaded from environment
 function getAdminIPWhitelist(): Set<string> {
-  const defaultIPs = ['127.0.0.1', '::1', 'localhost', '172.31.128.37', '172.31.128.39', '172.31.128.87'];
+  const defaultIPs = ['127.0.0.1', '::1', 'localhost', '172.31.128.37', '172.31.128.39', '172.31.128.87', '172.31.90.130'];
   const envIPs = process.env.ADMIN_IP_WHITELIST;
   
   if (!envIPs) {
@@ -257,6 +257,16 @@ ADMIN_IP_WHITELIST.forEach(ip => {
     attempts.count = 0;
   }
 });
+
+// Manual cleanup function for blocked admin IP
+const resetAdminIP = (ip: string) => {
+  blacklistedIPs.delete(ip);
+  adminAttempts.delete(ip);
+  console.log(`🔧 [ADMIN-FIX] Manually reset blacklist for IP: ${ip}`);
+};
+
+// Reset the current admin IP immediately on server start
+resetAdminIP('172.31.90.130');
 
 // Admin authentication middleware with enhanced security
 const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
