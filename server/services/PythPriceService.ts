@@ -207,18 +207,22 @@ export class PythPriceService {
    */
   async validatePythFeedId(pythFeedId: string): Promise<{ isValid: boolean; error?: string; priceData?: any }> {
     try {
-      // Validate format first
-      if (!pythFeedId || !pythFeedId.startsWith('0x') || pythFeedId.length !== 66) {
+      // Validate format first - accept both 0x prefixed and non-prefixed formats
+      const feedIdWithoutPrefix = pythFeedId.startsWith('0x') ? pythFeedId.slice(2) : pythFeedId;
+      if (!pythFeedId || feedIdWithoutPrefix.length !== 64) {
         return {
           isValid: false,
-          error: "Invalid Pyth Feed ID format. Must be 64-character hex string starting with '0x'"
+          error: "Invalid Pyth Feed ID format. Must be 64-character hex string (with or without 0x prefix)"
         };
       }
+      
+      // Use the original format for API call (Pyth expects 0x prefix)
+      const normalizedFeedId = pythFeedId.startsWith('0x') ? pythFeedId : `0x${pythFeedId}`;
 
-      console.log(`🔍 [PYTH-VALIDATION] Testing Feed ID: ${pythFeedId}`);
+      console.log(`🔍 [PYTH-VALIDATION] Testing Feed ID: ${normalizedFeedId}`);
       
       // Attempt to fetch price data for this Feed ID
-      const priceUpdates = await this.client.getLatestPriceUpdates([pythFeedId]);
+      const priceUpdates = await this.client.getLatestPriceUpdates([normalizedFeedId]);
       
       if (!priceUpdates || !priceUpdates.parsed || priceUpdates.parsed.length === 0) {
         return {
@@ -237,14 +241,14 @@ export class PythPriceService {
         };
       }
 
-      console.log(`✅ [PYTH-VALIDATION] Feed ID ${pythFeedId} is VALID - Price: ${priceData.price.price}`);
+      console.log(`✅ [PYTH-VALIDATION] Feed ID ${normalizedFeedId} is VALID - Price: ${priceData.price.price}`);
       
       return {
         isValid: true,
         priceData: priceData
       };
     } catch (error: any) {
-      console.error(`❌ [PYTH-VALIDATION] Error validating Feed ID ${pythFeedId}:`, error);
+      console.error(`❌ [PYTH-VALIDATION] Error validating Feed ID ${normalizedFeedId}:`, error);
       
       if (error.message?.includes('404') || error.message?.includes('not found')) {
         return {
