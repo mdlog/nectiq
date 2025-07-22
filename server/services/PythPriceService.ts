@@ -44,10 +44,9 @@ export class PythPriceService {
    */
   private async loadCryptocurrenciesFromDB(): Promise<void> {
     try {
-      const now = Date.now();
-      if (this.cryptoDataCache.size > 0 && (now - this.lastCacheUpdate) < this.cacheExpiry) {
-        return; // Use cached data
-      }
+      // FORCE RELOAD: Always clear cache to get fresh data
+      this.cryptoDataCache.clear();
+      this.lastCacheUpdate = 0;
 
       console.log("🔄 [PYTH] Loading cryptocurrency data from database...");
       const cryptos = await db.select().from(cryptocurrencies);
@@ -55,12 +54,13 @@ export class PythPriceService {
       this.cryptoDataCache.clear();
       for (const crypto of cryptos) {
         if (crypto.pythFeedId) {
+          console.log(`🔍 [PYTH-DEBUG] Loading crypto: ${crypto.id}, image: ${crypto.image}`);
           this.cryptoDataCache.set(crypto.id, {
             id: crypto.id,
             name: crypto.name,
             symbol: crypto.symbol,
             pythFeedId: crypto.pythFeedId,
-            image: crypto.image || `https://coin-images.coingecko.com/coins/images/1/large/${crypto.id}.png`
+            image: crypto.image // Use image directly from database without fallback
           });
         }
       }
@@ -74,10 +74,20 @@ export class PythPriceService {
   }
 
   /**
+   * Clear cache manually
+   */
+  clearCache(): void {
+    this.cryptoDataCache.clear();
+    this.lastCacheUpdate = 0;
+    console.log("🔄 [PYTH] Cache manually cleared - fresh database load on next request");
+  }
+
+  /**
    * Get latest prices from Pyth Network (fully dynamic from database)
    */
   async getLatestPrices(): Promise<CryptoPrice[]> {
     try {
+      console.log("🔍 [PYTH] getLatestPrices called - force loading from database");
       await this.loadCryptocurrenciesFromDB();
       
       const priceIds = Array.from(this.cryptoDataCache.values()).map(crypto => crypto.pythFeedId);
