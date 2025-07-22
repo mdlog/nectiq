@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Target, BarChart3, Expand } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, BarChart3, Expand, Activity } from 'lucide-react';
 import FinancialMetrics from '@/components/financial-metrics';
+import { useQuery } from '@tanstack/react-query';
 
 // TradingView symbol mapping untuk cryptocurrency
 const getTradingViewSymbol = (cryptoId: string): string => {
@@ -43,7 +44,18 @@ const TradingViewChart = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [cryptoLogo, setCryptoLogo] = useState<string>('');
+  const [showPythOverlay, setShowPythOverlay] = useState(true);
   const interval = 'D'; // Default 1 day - fixed since TradingView has built-in controls
+
+  // Fetch real-time Pyth Network prices
+  const { data: pythPrices, isLoading: pythLoading } = useQuery({
+    queryKey: ['/api/crypto/pyth-prices'],
+    refetchInterval: 3000, // Update every 3 seconds for real-time data
+    staleTime: 1000,
+  });
+
+  // Get current crypto data from Pyth Network
+  const currentPythData = pythPrices?.find((p: any) => p.id === cryptoId);
   
   // Fetch cryptocurrency logo from crypto prices API
   const fetchCryptoLogo = async () => {
@@ -145,12 +157,43 @@ const TradingViewChart = ({
                 />
               )}
               <div>
-                <CardTitle className="text-lg text-white">{name} ({symbol.toUpperCase()})</CardTitle>
-                <p className="text-sm text-gray-400 mt-1">Real-time data from TradingView</p>
+                <CardTitle className="text-lg text-white flex items-center gap-2">
+                  {name} ({symbol.toUpperCase()})
+                  {currentPythData && (
+                    <span className="text-sm bg-green-500/20 text-green-400 px-2 py-1 rounded-full border border-green-500/30">
+                      Pyth Live
+                    </span>
+                  )}
+                </CardTitle>
+                <div className="flex items-center gap-4 mt-1">
+                  <p className="text-sm text-gray-400">TradingView Chart</p>
+                  {currentPythData && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <Activity size={12} className="text-green-400" />
+                      <span className="text-green-400">
+                        ${currentPythData.price?.toFixed(8)} 
+                        {currentPythData.confidence && (
+                          <span className="text-gray-500 ml-1">±${currentPythData.confidence.toFixed(8)}</span>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
             <div className="flex items-center space-x-2">
+              {currentPythData && (
+                <Button
+                  variant={showPythOverlay ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowPythOverlay(!showPythOverlay)}
+                  className={`text-white border-surface-light ${showPythOverlay ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-surface-light'}`}
+                >
+                  <Activity size={16} />
+                  {showPythOverlay ? 'Hide' : 'Show'} Pyth
+                </Button>
+              )}
               <Button
                 variant="outline" 
                 size="sm"
@@ -163,7 +206,7 @@ const TradingViewChart = ({
           </div>
         </CardHeader>
         
-        <CardContent className="p-0">
+        <CardContent className="p-0 relative">
           <div className={`${isFullscreen ? 'h-screen' : 'h-96'} w-full`}>
             <div 
               ref={containerRef}
@@ -175,6 +218,54 @@ const TradingViewChart = ({
                 id="tradingview_chart"
               ></div>
             </div>
+            
+            {/* Pyth Network Price Overlay */}
+            {showPythOverlay && currentPythData && !pythLoading && (
+              <div className="absolute top-4 right-4 bg-black/90 backdrop-blur-sm border border-green-500/30 rounded-lg p-4 z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity size={16} className="text-green-400" />
+                  <span className="text-green-400 text-sm font-semibold">Pyth Network Live</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-gray-400 text-xs">Price:</span>
+                    <span className="text-white font-mono text-sm">
+                      ${currentPythData.price?.toFixed(8)}
+                    </span>
+                  </div>
+                  {currentPythData.confidence && (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-gray-400 text-xs">Confidence:</span>
+                      <span className="text-green-400 font-mono text-xs">
+                        ±${currentPythData.confidence.toFixed(8)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-gray-400 text-xs">Updated:</span>
+                    <span className="text-gray-300 font-mono text-xs">
+                      {new Date(currentPythData.timestamp || Date.now()).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div className="pt-1 border-t border-gray-700">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-xs">Live Feed</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Loading indicator for Pyth data */}
+            {showPythOverlay && pythLoading && (
+              <div className="absolute top-4 right-4 bg-black/90 backdrop-blur-sm border border-blue-500/30 rounded-lg p-4 z-10">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-blue-400 text-sm">Loading Pyth data...</span>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

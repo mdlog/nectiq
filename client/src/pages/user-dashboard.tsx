@@ -16,7 +16,7 @@ import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
-import TradingViewChart from "@/components/TradingViewChart";
+import PythNetworkChart from "@/components/PythNetworkChart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
@@ -1083,13 +1083,11 @@ export default function UserDashboard() {
                             </CardContent>
                           </Card>
 
-                          {/* TradingView Chart - Full Width */}
-                          <TradingViewChart
+                          {/* Pyth Network Chart - Full Width */}
+                          <PythNetworkChart
                             cryptoId={selectedCrypto.id}
                             symbol={selectedCrypto.symbol}
                             name={selectedCrypto.name}
-                            currentPrice={selectedCrypto.current_price}
-                            priceChange24h={selectedCrypto.price_change_percentage_24h}
                             onPredictClick={(cryptoId) => setLocation(`/predict?crypto=${cryptoId}`)}
                           />
                         </div>
@@ -1099,12 +1097,12 @@ export default function UserDashboard() {
                             <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
                             <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
                             <p className="text-slate-400 mb-4">
-                              Click on any cryptocurrency from the Live Prices panel to view its interactive TradingView chart
+                              Click on any cryptocurrency from the Live Prices panel to view its real-time Pyth Network chart
                             </p>
                             <div className="text-sm text-slate-500">
-                              <p>• Professional TradingView charts with candlestick data</p>
-                              <p>• Volume and RSI indicators</p>
-                              <p>• Multiple timeframe analysis (5M - 1W)</p>
+                              <p>• Real-time Pyth Network price feeds</p>
+                              <p>• Live price tracking with confidence intervals</p>
+                              <p>• Institutional-grade data accuracy</p>
                               <p>• Fullscreen mode available</p>
                               <p>• Direct prediction integration</p>
                             </div>
