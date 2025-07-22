@@ -4448,7 +4448,77 @@ export default function AdminPanel() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleAddCrypto} className="space-y-6">
-                    {/* PYTH-FIRST APPROACH: Feed ID as Primary Input */}
+                    {/* BASIC CRYPTOCURRENCY INFORMATION - Always visible */}
+                    <div className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-2 border-blue-300 dark:border-blue-700 rounded-xl">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                          <Coins className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-blue-900 dark:text-blue-100">
+                            Basic Cryptocurrency Information
+                          </h3>
+                          <p className="text-sm text-blue-700 dark:text-blue-300">
+                            Enter the basic details for the new cryptocurrency
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="crypto-id" className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                            Crypto ID *
+                          </Label>
+                          <Input
+                            id="crypto-id"
+                            placeholder="chainlink"
+                            value={newCryptoId}
+                            onChange={(e) => setNewCryptoId(e.target.value)}
+                            required
+                            className="h-10 border-blue-300 dark:border-blue-600 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <p className="text-xs text-blue-600 dark:text-blue-400">
+                            Unique ID for the cryptocurrency
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="crypto-name" className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                            Name *
+                          </Label>
+                          <Input
+                            id="crypto-name"
+                            placeholder="Chainlink"
+                            value={newCryptoName}
+                            onChange={(e) => setNewCryptoName(e.target.value)}
+                            required
+                            className="h-10 border-blue-300 dark:border-blue-600 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <p className="text-xs text-blue-600 dark:text-blue-400">
+                            Full name of the cryptocurrency
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="crypto-symbol" className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                            Symbol *
+                          </Label>
+                          <Input
+                            id="crypto-symbol"
+                            placeholder="LINK"
+                            value={newCryptoSymbol}
+                            onChange={(e) => setNewCryptoSymbol(e.target.value.toUpperCase())}
+                            required
+                            className="h-10 border-blue-300 dark:border-blue-600 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <p className="text-xs text-blue-600 dark:text-blue-400">
+                            Trading symbol (e.g., BTC, ETH, LINK)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* PYTH NETWORK VALIDATION */}
                     <div className="p-6 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border-2 border-purple-300 dark:border-purple-700 rounded-xl">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
@@ -4460,7 +4530,7 @@ export default function AdminPanel() {
                               Pyth Network Data Integration
                             </h3>
                             <p className="text-sm text-purple-700 dark:text-purple-300">
-                              Masukkan Feed ID untuk mengambil data cryptocurrency otomatis
+                              Enter Feed ID to validate price data availability
                             </p>
                           </div>
                         </div>
@@ -4474,7 +4544,7 @@ export default function AdminPanel() {
                           <Label htmlFor="pyth-feed-id" className="text-sm font-semibold text-purple-900 dark:text-purple-200 flex items-center">
                             Pyth Feed ID *
                             <span className="ml-2 text-xs text-purple-600 bg-purple-100 dark:bg-purple-800 px-2 py-1 rounded">
-                              Primary Input
+                              Required for price data
                             </span>
                           </Label>
                           <div className="flex space-x-3">
@@ -4483,20 +4553,13 @@ export default function AdminPanel() {
                                 ref={pythFeedInputRef}
                                 id="pyth-feed-id"
                                 type="text"
-                                placeholder="0x..."
+                                placeholder="8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221"
                                 value={pythFeedId}
                                 onChange={(e) => {
                                   const newValue = e.target.value;
-                                  console.log('🔧 [PYTH-PRIMARY] Feed ID changed:', newValue);
+                                  console.log('🔧 [PYTH-VALIDATION] Feed ID changed:', newValue);
                                   setPythFeedId(newValue);
                                   setValidationResult(null);
-                                  // Clear auto-filled data when Feed ID changes
-                                  if (newValue !== pythFeedId && (newCryptoId || newCryptoName || newCryptoSymbol)) {
-                                    setNewCryptoId('');
-                                    setNewCryptoName('');
-                                    setNewCryptoSymbol('');
-                                    console.log('🔧 [PYTH-PRIMARY] Auto-cleared form for new Feed ID');
-                                  }
                                 }}
                                 className="w-full h-12 px-4 py-3 border-2 border-purple-300 dark:border-purple-600 rounded-lg 
                                          bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
@@ -4506,7 +4569,7 @@ export default function AdminPanel() {
                                 required
                               />
                               <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                                Format: 64 karakter hex dimulai dengan 0x
+                                Format: 64 character hex string (without 0x prefix)
                               </p>
                             </div>
                             <Button
@@ -4524,7 +4587,7 @@ export default function AdminPanel() {
                               ) : (
                                 <div className="flex items-center space-x-2">
                                   <Search className="h-4 w-4" />
-                                  <span>Fetch Data</span>
+                                  <span>Validate Feed</span>
                                 </div>
                               )}
                             </Button>
@@ -4533,7 +4596,7 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
-                    {/* AUTO-FILLED DATA FROM PYTH - Only show when validated */}
+                    {/* VALIDATION RESULT - Show when validated */}
                     {validationResult?.isValid && (
                       <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-2 border-green-300 dark:border-green-700 rounded-xl">
                         <div className="flex items-center space-x-3 mb-4">
