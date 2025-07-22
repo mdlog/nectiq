@@ -255,9 +255,9 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
                 <span className="font-semibold">{currentCrypto.name}</span>
               </div>
               <div className="text-right">
-                <div className="font-bold">${Number(currentPrice).toFixed(2)}</div>
+                <div className="font-bold">${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div className={`text-sm ${priceChange24h >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                  {priceChange24h >= 0 ? '+' : ''}{Number(priceChange24h).toFixed(2)}%
+                  {priceChange24h >= 0 ? '+' : ''}{priceChange24h.toFixed(2)}%
                 </div>
               </div>
             </div>
@@ -268,7 +268,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
                 <div className="flex justify-between items-center text-sm">
                   <div>
                     <span className="font-medium">Starting Price:</span>
-                    <span className="ml-1">${Number(startingPrice).toFixed(2)}</span>
+                    <span className="ml-1">${startingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="text-right">
                     {(() => {
@@ -276,9 +276,9 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
                       const priceDiffPercent = ((priceDiff / Number(startingPrice)) * 100);
                       return (
                         <div className={`font-medium ${priceDiff >= 0 ? 'text-green-800' : 'text-red-800'}`}>
-                          {priceDiff >= 0 ? '+' : ''}${Number(priceDiff).toFixed(2)} 
+                          {priceDiff >= 0 ? '+' : ''}${priceDiff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 
                           <span className="text-xs ml-1">
-                            ({priceDiff >= 0 ? '+' : ''}{Number(priceDiffPercent).toFixed(2)}%)
+                            ({priceDiff >= 0 ? '+' : ''}{priceDiffPercent.toFixed(2)}%)
                           </span>
                         </div>
                       );
@@ -305,7 +305,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
                       return (
                         <div key={round.id} className="flex justify-between items-center text-xs bg-black/20 p-2 rounded">
                           <span className="font-medium">Round {round.roundNumber}:</span>
-                          <span className="font-mono">${startPrice.toFixed(2)} → ${endPrice.toFixed(2)}</span>
+                          <span className="font-mono">${startPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} → ${endPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span className={`font-bold ${priceChange >= 0 ? 'text-green-300' : 'text-red-300'}`}>
                             {priceChange >= 0 ? '↗ UP' : '↘ DOWN'} ({priceChangePercent >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%)
                           </span>
@@ -368,14 +368,14 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
                   {/* Show start price if round has started */}
                   {startingPrice && (
                     <div className="text-[10px] mt-1 opacity-90">
-                      Start: ${Number(startingPrice).toFixed(2)}
+                      Start: ${startingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   )}
                   
                   {/* Show end price if round is completed */}
                   {isRoundCompleted && endingPrice && (
                     <div className="text-[10px] opacity-90">
-                      End: ${Number(endingPrice).toFixed(2)}
+                      End: ${endingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   )}
                   

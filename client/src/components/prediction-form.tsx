@@ -296,7 +296,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
                     <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
                       Live: ${currentPrices[form.watch('cryptocurrency')].toLocaleString(undefined, {
                         minimumFractionDigits: 2,
-                        maximumFractionDigits: 8
+                        maximumFractionDigits: 2
                       })}
                     </div>
                   )}

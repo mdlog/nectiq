@@ -284,7 +284,7 @@ const SurvivalGame = () => {
                   tournament={tournament}
                   user={user}
                   cryptoPrices={cryptoPrices}
-                  onWalletRequired={checkWalletRequired}
+                  onWalletRequired={() => checkWalletRequired(() => {}, 'survival')}
                 />
               ))}
             </div>

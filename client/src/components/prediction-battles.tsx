@@ -606,7 +606,7 @@ export function PredictionBattles() {
               ${(() => {
                 const realTimePrice = getRealTimePrice(battle.cryptocurrency);
                 const currentPrice = realTimePrice || battle.currentPrice;
-                return currentPrice.toLocaleString('en-US', { 
+                return currentPrice.toLocaleString(undefined, { 
                   minimumFractionDigits: 2, 
                   maximumFractionDigits: 2 
                 });
@@ -804,7 +804,7 @@ export function PredictionBattles() {
                     <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
                       Live: ${livePrices[createForm.cryptocurrency].toLocaleString(undefined, {
                         minimumFractionDigits: 2,
-                        maximumFractionDigits: 8
+                        maximumFractionDigits: 2
                       })}
                     </div>
                   )}
@@ -919,9 +919,9 @@ export function PredictionBattles() {
                   <div className="text-3xl font-bold">
                     ${(() => {
                       const livePrice = livePrices[selectedBattle.cryptocurrency] || selectedBattle.currentPrice;
-                      return livePrice.toLocaleString('en-US', { 
+                      return livePrice.toLocaleString(undefined, { 
                         minimumFractionDigits: 2, 
-                        maximumFractionDigits: 8 
+                        maximumFractionDigits: 2 
                       });
                     })()}
                   </div>
@@ -1058,7 +1058,7 @@ export function PredictionBattles() {
                     <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
                       Live: ${livePrices[joiningBattle.cryptocurrency].toLocaleString(undefined, {
                         minimumFractionDigits: 2,
-                        maximumFractionDigits: 8
+                        maximumFractionDigits: 2
                       })}
                     </div>
                   )}
