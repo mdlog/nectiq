@@ -247,27 +247,28 @@ const PythNetworkChart = ({
     ctx.font = '10px monospace';
     ctx.textAlign = 'center';
     
-    // Draw time labels at bottom
+    // Draw time labels at bottom (daily format)
     if (priceHistory.length > 1) {
       const timeLabels = 6; // Number of time labels
       for (let i = 0; i <= timeLabels; i++) {
-        const dataIndex = Math.floor((i / timeLabels) * (priceHistory.length - 1));
         const x = margin + (i / timeLabels) * chartWidth;
-        const timestamp = priceHistory[dataIndex]?.timestamp || Date.now();
-        const time = new Date(timestamp);
-        const timeLabel = time.toLocaleTimeString('id-ID', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          second: '2-digit'
+        
+        // Create date labels spanning several days for better context
+        const daysAgo = 6 - i; // Show last 6 days
+        const date = new Date();
+        date.setDate(date.getDate() - daysAgo);
+        
+        const dayLabel = date.toLocaleDateString('id-ID', { 
+          day: '2-digit',
+          month: 'short'
         });
         
-        ctx.fillText(timeLabel, x, height - margin + 15);
+        ctx.fillText(dayLabel, x, height - margin + 15);
       }
       
-      // Draw date at bottom center
+      // Draw current month/year at bottom center
       const currentDate = new Date().toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
+        month: 'long',
         year: 'numeric'
       });
       ctx.fillStyle = '#888888';
