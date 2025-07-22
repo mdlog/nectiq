@@ -5181,6 +5181,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear crypto cache endpoint for manual cache refresh
+  app.post("/api/admin/clear-crypto-cache", requireAdmin, async (req, res) => {
+    try {
+      cryptoService.clearCache();
+      console.log("🔄 [ADMIN] Crypto cache cleared manually");
+      auditLog('admin_crypto_cache_cleared', { clearedBy: (req as any).session?.userId }, req);
+      res.json({ success: true, message: "Crypto cache cleared successfully" });
+    } catch (error) {
+      console.error("Error clearing crypto cache:", error);
+      res.status(500).json({ message: "Failed to clear crypto cache" });
+    }
+  });
+
   // Reset leaderboard statistics
   app.post("/api/admin/leaderboard/reset", requireAdmin, async (req, res) => {
     try {

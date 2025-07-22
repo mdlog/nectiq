@@ -64,79 +64,50 @@ export class CryptoService {
     const now = Date.now();
     
     try {
-      // Get cryptocurrency list from database instead of hardcoded list
-      const supportedCryptos = await storage.getAllCryptocurrencies();
-      const cryptoIds = supportedCryptos.map(crypto => crypto.id);
+      // PYTH-ONLY APPROACH: Get Pyth Network prices directly
+      console.log('📡 [PYTH-ONLY] Fetching prices from Pyth Network exclusively');
+      const pythPrices = await pythPriceService.getLatestPrices();
       
-      if (cryptoIds.length === 0) {
+      if (pythPrices.length === 0) {
+        console.log('⚠️ [PYTH-ONLY] No Pyth prices available');
         this.cachedRealPrices = [];
         this.lastFetchTime = now;
         this.fetchPromise = null;
         return [];
       }
 
-      const response = await axios.get(`${COINGECKO_API_BASE}/coins/markets`, {
-        params: {
-          ids: cryptoIds.join(','),
-          vs_currency: 'usd',
-          order: 'market_cap_desc',
-          per_page: 20,
-          page: 1,
-          sparkline: false
-        },
-        timeout: 15000,
-        headers: {
-          'User-Agent': 'Nectiq-Crypto-App/1.0',
-          'Accept': 'application/json',
-          'Accept-Encoding': 'gzip, deflate'
-        },
-        // Disable proxy for Ubuntu localhost
-        proxy: false,
-        // Add retry configuration
-        validateStatus: function (status) {
-          return status >= 200 && status < 300;
-        }
-      });
+      // Convert Pyth prices to CryptoPrice format and add standard images
+      const realPrices: CryptoPrice[] = pythPrices.map((pythPrice) => ({
+        id: pythPrice.id,
+        symbol: pythPrice.symbol,
+        name: pythPrice.name,
+        current_price: pythPrice.current_price,
+        price_change_percentage_24h: pythPrice.price_change_percentage_24h || 0, // Default to 0 if not available
+        image: this.getCryptoImageUrl(pythPrice.id),
+        source: 'pyth' as const,
+        confidence_interval: pythPrice.confidence_interval,
+        last_updated: pythPrice.last_updated || new Date().toISOString()
+      }));
 
-      this.cachedRealPrices = response.data.map((coin: any) => {
-        const imageUrl = coin.id === 'solana' ? '/attached_assets/solana_1750613756851.png' : this.getCryptoImageUrl(coin.id);
-        if (coin.id === 'aave') {
-          console.log(`🔍 [DEBUG] AAVE image mapping: coin.image=${coin.image}, mapped=${imageUrl}`);
-        }
-        return {
-          id: coin.id,
-          symbol: coin.symbol.toUpperCase(),
-          name: coin.name,
-          current_price: coin.current_price,
-          price_change_percentage_24h: coin.price_change_percentage_24h || 0,
-          image: imageUrl
-        };
-      });
+      console.log(`✅ [PYTH-ONLY] Successfully fetched ${realPrices.length} prices from Pyth Network`);
       
+      this.cachedRealPrices = realPrices;
       this.lastFetchTime = now;
       this.fetchPromise = null;
-      console.log('✅ Successfully fetched real crypto prices from CoinGecko');
       
-      // Return the merged data from all sources
-      return this.getMergedPriceData();
-      
+      return realPrices;
     } catch (error: any) {
-      this.fetchPromise = null;
-      if (error.response?.status === 429) {
-        console.log('⏳ CoinGecko rate limit reached, using micro-variations on cached data');
-        // When rate limited, simulate small price movements to maintain real-time feeling
+      console.error('❌ [PYTH-ONLY] Error fetching Pyth prices:', error.message);
+
+      // Try using cached data if available
+      if (this.cachedRealPrices.length > 0) {
+        console.log('📦 [PYTH-ONLY] Using cached data due to fetch failure');
         this.generateMicroVariations();
-        // Extend cache duration to avoid repeated hits
-        this.lastFetchTime = now + 10000; // Add 10 seconds
-      } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-        console.log('🌐 Network connection issue, using fallback data');
-        console.log('Error details:', error.code, error.address, error.port);
-      } else {
-        console.error('❌ Error fetching crypto prices:', error.message);
+        return this.cachedRealPrices;
       }
-      
-      // Return the merged data from all sources (cached + DB)
-      return this.getMergedPriceData();
+
+      this.fetchPromise = null;
+      throw error;
     }
   }
 
@@ -290,12 +261,12 @@ export class CryptoService {
     // Try to fetch real prices every 45 seconds to avoid rate limits while keeping prices current
     if (now - this.lastFetchTime > this.CACHE_DURATION) {
       // Create and store the fetch promise to prevent concurrent fetches
-      this.fetchPromise = this.pythEnabled ? this.fetchHybridPrices() : this.fetchFreshPrices();
+      this.fetchPromise = this.fetchFreshPrices(); // Pyth-only approach
       return this.fetchPromise;
     }
     
-    // Return cached data
-    return this.getMergedPriceData();
+    // Return cached Pyth data
+    return this.cachedRealPrices;
   }
   
   private async getMergedPriceData(): Promise<CryptoPrice[]> {
