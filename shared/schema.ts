@@ -53,6 +53,8 @@ export const cryptocurrencies = pgTable("cryptocurrencies", {
   name: text("name").notNull(),
   currentPrice: numeric("current_price", { precision: 18, scale: 8 }).notNull(),
   priceChange24h: numeric("price_change_24h", { precision: 5, scale: 2 }).notNull(),
+  pythFeedId: varchar("pyth_feed_id", { length: 66 }), // Pyth Network Feed ID for real-time prices
+  image: text("image"), // Cryptocurrency image/logo URL
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 

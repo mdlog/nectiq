@@ -1931,8 +1931,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get Pyth Network prices only (real-time institutional grade)
   app.get("/api/crypto/pyth-prices", async (req, res) => {
+    console.log('🟡 [PYTH] ENDPOINT HIT: /api/crypto/pyth-prices - Starting execution');
     try {
       console.log('🔍 [PYTH] /api/crypto/pyth-prices endpoint called');
+      console.log('🔄 [PYTH] Initializing PythPriceService...');
+      
       const pythPrices = await pythPriceService.getLatestPrices();
       console.log(`✅ [PYTH] Successfully fetched ${pythPrices.length} prices from Pyth Network`);
       
@@ -1940,8 +1943,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(pythPrices);
     } catch (error: any) {
       console.error('❌ [PYTH] Error fetching Pyth prices:', error);
+      console.error('❌ [PYTH] Error stack:', error.stack);
       res.status(500).json({ message: 'Failed to get Pyth Network prices', error: error.message });
     }
+    console.log('🔚 [PYTH] ENDPOINT COMPLETE: /api/crypto/pyth-prices - Finished execution');
   });
 
   // Get financial metrics for cryptocurrency (volume, market cap)
