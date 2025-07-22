@@ -3224,11 +3224,19 @@ export default function AdminPanel() {
     },
     onSuccess: (data) => {
       console.log('✅ [ADMIN] Pyth validation successful:', data);
-      setValidationResult({
+      // Force state update by creating new object
+      const newValidationResult = {
         isValid: true,
         message: data.message || "Pyth Feed ID is valid and supported",
         priceData: data.priceData
-      });
+      };
+      setValidationResult(newValidationResult);
+      
+      // Add delay to ensure state is updated before re-render
+      setTimeout(() => {
+        setValidationResult(prev => ({...newValidationResult}));
+      }, 100);
+      
       toast({
         title: "Validation Success",
         description: "Pyth Feed ID is valid and supported by Pyth Network",
@@ -4520,7 +4528,7 @@ export default function AdminPanel() {
                           </div>
                         )}
 
-                        {!validationResult?.isValid && pythFeedId.trim() && (
+                        {pythFeedId.trim() && !validationResult && (
                           <div className="p-4 bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800 rounded-lg">
                             <div className="flex items-center space-x-2">
                               <AlertTriangle className="h-4 w-4 text-yellow-600" />
@@ -4533,6 +4541,20 @@ export default function AdminPanel() {
                             </p>
                           </div>
                         )}
+                        
+                        {validationResult && !validationResult.isValid && (
+                          <div className="p-4 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <XCircle className="h-4 w-4 text-red-600" />
+                              <span className="text-sm font-medium text-red-800 dark:text-red-200">
+                                ❌ Validasi Gagal
+                              </span>
+                            </div>
+                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                              {validationResult.message}
+                            </p>
+                          </div>
+                        )}
 
                         <div className="text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 p-3 rounded-lg">
                           <p className="mb-1">💡 <strong>Find Pyth Feed IDs:</strong> pyth.network/developers/price-feed-ids</p>
@@ -4541,9 +4563,18 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
+                    {/* Debug Info */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">
+                        <div>validationResult: {validationResult ? JSON.stringify(validationResult) : 'null'}</div>
+                        <div>isValid: {validationResult?.isValid ? 'true' : 'false'}</div>
+                        <div>pythFeedId: {pythFeedId}</div>
+                      </div>
+                    )}
+
                     {/* Submit Button */}
                     <div className="space-y-3">
-                      {validationResult && validationResult.isValid && (
+                      {validationResult?.isValid && (
                         <div className="p-3 bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 rounded-lg">
                           <div className="flex items-center space-x-2">
                             <CheckCircle className="h-4 w-4 text-green-600" />
@@ -4554,32 +4585,36 @@ export default function AdminPanel() {
                         </div>
                       )}
                       
-                      <Button 
-                        type="submit" 
-                        className={`w-full h-12 text-base font-medium ${
-                          !validationResult?.isValid 
-                            ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50' 
-                            : 'bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all'
-                        }`}
-                        disabled={addCryptoMutation.isPending || !validationResult?.isValid}
-                      >
-                        {addCryptoMutation.isPending ? (
-                          <div className="flex items-center space-x-2">
-                            <RefreshCw className="h-5 w-5 animate-spin" />
-                            <span>Adding Cryptocurrency...</span>
-                          </div>
-                        ) : !validationResult?.isValid ? (
+                      {validationResult?.isValid === true ? (
+                        <Button 
+                          type="submit" 
+                          className="w-full h-12 text-base font-medium bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all"
+                          disabled={addCryptoMutation.isPending}
+                        >
+                          {addCryptoMutation.isPending ? (
+                            <div className="flex items-center space-x-2">
+                              <RefreshCw className="h-5 w-5 animate-spin" />
+                              <span>Adding Cryptocurrency...</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2">
+                              <Plus className="h-5 w-5" />
+                              <span>Add Cryptocurrency to Database</span>
+                            </div>
+                          )}
+                        </Button>
+                      ) : (
+                        <Button 
+                          type="button" 
+                          className="w-full h-12 text-base font-medium bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50"
+                          disabled={true}
+                        >
                           <div className="flex items-center space-x-2">
                             <AlertTriangle className="h-5 w-5" />
                             <span>Validation Required</span>
                           </div>
-                        ) : (
-                          <div className="flex items-center space-x-2">
-                            <Plus className="h-5 w-5" />
-                            <span>Add Cryptocurrency to Database</span>
-                          </div>
-                        )}
-                      </Button>
+                        </Button>
+                      )}
                     </div>
                   </form>
                 </CardContent>
