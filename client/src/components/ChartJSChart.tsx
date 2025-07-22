@@ -155,55 +155,54 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
 
   const { labels, data } = generateHistoricalData();
 
-  // Professional color scheme based on market movement
+  // Modern Binance-inspired color scheme
   const isPositive = cryptoInfo?.price_change_percentage_24h ? cryptoInfo.price_change_percentage_24h >= 0 : true;
   
-  // CoinMarketCap inspired colors - more vibrant and professional
-  const lineColor = isPositive ? '#16c784' : '#ea3943'; // CMC green/red
-  const shadowColor = isPositive ? 'rgba(22, 199, 132, 0.3)' : 'rgba(234, 57, 67, 0.3)';
+  // Premium Binance/TradingView colors - subtle but professional
+  const primaryColor = isPositive ? '#00d4aa' : '#f84960'; // Modern cyan/coral
+  const gradientStart = isPositive ? 'rgba(0, 212, 170, 0.25)' : 'rgba(248, 73, 96, 0.25)';
+  const gradientMid = isPositive ? 'rgba(0, 212, 170, 0.08)' : 'rgba(248, 73, 96, 0.08)';
+  const gradientEnd = 'rgba(255, 255, 255, 0)';
   
-  // Enhanced gradient configuration
-  const createGradient = (ctx: any, chartArea: any) => {
+  // Ultra-premium gradient with advanced configuration  
+  const createAdvancedGradient = (ctx: any, chartArea: any) => {
     const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-    if (isPositive) {
-      gradient.addColorStop(0, 'rgba(22, 199, 132, 0.3)');
-      gradient.addColorStop(0.5, 'rgba(22, 199, 132, 0.1)');
-      gradient.addColorStop(1, 'rgba(22, 199, 132, 0.02)');
-    } else {
-      gradient.addColorStop(0, 'rgba(234, 57, 67, 0.3)');
-      gradient.addColorStop(0.5, 'rgba(234, 57, 67, 0.1)');
-      gradient.addColorStop(1, 'rgba(234, 57, 67, 0.02)');
-    }
+    gradient.addColorStop(0, gradientStart);
+    gradient.addColorStop(0.4, gradientMid);
+    gradient.addColorStop(1, gradientEnd);
     return gradient;
   };
 
-  // Professional chart configuration
+  // Ultra-modern chart configuration
   const chartData = {
     labels,
     datasets: [
       {
         label: `${cryptoInfo?.name || cryptoId} Price`,
         data,
-        borderColor: lineColor,
+        borderColor: primaryColor,
         backgroundColor: (context: any) => {
           const chart = context.chart;
           const {ctx, chartArea} = chart;
-          if (!chartArea) return null;
-          return createGradient(ctx, chartArea);
+          if (!chartArea) return gradientEnd;
+          return createAdvancedGradient(ctx, chartArea);
         },
-        borderWidth: 2.5,
+        borderWidth: 3,
         fill: true,
-        tension: 0.2, // Optimal smoothness
+        tension: 0.25, // Extra smooth for premium feel
         pointRadius: 0,
-        pointHoverRadius: 6,
-        pointHoverBackgroundColor: lineColor,
-        pointHoverBorderColor: '#ffffff',
-        pointHoverBorderWidth: 2,
-        // Add glow effect
-        shadowOffsetX: 0,
-        shadowOffsetY: 0,
-        shadowBlur: 8,
-        shadowColor: shadowColor,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: primaryColor,
+        pointHoverBorderColor: '#1a1a1a',
+        pointHoverBorderWidth: 3,
+        segment: {
+          borderColor: (ctx: any) => {
+            // Dynamic color based on trend
+            const current = ctx.p1.parsed.y;
+            const previous = ctx.p0.parsed.y;
+            return current >= previous ? (isPositive ? '#00d4aa' : '#f84960') : (isPositive ? '#00b894' : '#e84142');
+          }
+        }
       },
     ],
   };
@@ -213,10 +212,10 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
     maintainAspectRatio: false,
     layout: {
       padding: {
-        top: 25,
-        right: 25,
-        bottom: 15,
-        left: 5
+        top: 30,
+        right: 30,
+        bottom: 20,
+        left: 10
       }
     },
     plugins: {
@@ -229,77 +228,94 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
       tooltip: {
         mode: 'index' as const,
         intersect: false,
-        backgroundColor: 'rgba(17, 25, 40, 0.95)',
-        titleColor: '#f8fafc',
-        bodyColor: '#f8fafc',
-        borderColor: lineColor,
-        borderWidth: 1,
-        cornerRadius: 10,
+        backgroundColor: 'rgba(20, 21, 26, 0.96)',
+        titleColor: '#eaecef',
+        bodyColor: '#eaecef',
+        borderColor: primaryColor,
+        borderWidth: 1.5,
+        cornerRadius: 8,
         displayColors: false,
         titleFont: {
           size: 11,
           weight: '600',
-          family: 'system-ui, -apple-system, sans-serif'
+          family: 'Roboto, Inter, sans-serif'
         },
         bodyFont: {
           size: 13,
           weight: '700',
-          family: 'system-ui, -apple-system, sans-serif'
+          family: 'Roboto, Inter, sans-serif'
         },
         padding: {
-          x: 14,
-          y: 10
+          x: 16,
+          y: 12
         },
-        caretSize: 8,
-        caretPadding: 10,
+        caretSize: 6,
+        caretPadding: 8,
+        titleMarginBottom: 8,
         callbacks: {
-          title: function() {
-            return `${cryptoInfo?.symbol?.toUpperCase() || cryptoId.toUpperCase()} Price`;
+          title: function(context: any) {
+            return `${cryptoInfo?.name || cryptoId} • ${context[0]?.label || ''}`;
           },
           label: function(context: any) {
             const value = context.parsed.y;
             return `$${value.toLocaleString(undefined, { 
               minimumFractionDigits: 2, 
-              maximumFractionDigits: 6 
+              maximumFractionDigits: 8 
             })}`;
+          },
+          afterLabel: function(context: any) {
+            if (cryptoInfo?.price_change_percentage_24h) {
+              const change = cryptoInfo.price_change_percentage_24h;
+              const sign = change >= 0 ? '+' : '';
+              return `24h: ${sign}${change.toFixed(2)}%`;
+            }
+            return '';
           }
-        },
-        filter: function(tooltipItem: any) {
-          return tooltipItem.datasetIndex === 0;
         }
       },
-      // Professional current price indicator
+      // Ultra-modern price indicator like Binance
       annotation: {
         annotations: cryptoInfo && data.length > 0 ? {
           currentPriceLine: {
             type: 'line' as const,
             yMin: cryptoInfo.current_price,
             yMax: cryptoInfo.current_price,
-            borderColor: lineColor,
-            borderWidth: 1.5,
-            borderDash: [8, 4],
+            borderColor: primaryColor,
+            borderWidth: 2,
+            borderDash: [5, 5],
             scaleID: 'y1',
             label: {
               enabled: true,
-              content: `$${cryptoInfo.current_price.toFixed(2)}`,
+              content: `${cryptoInfo.current_price.toFixed(2)}`,
               position: 'end',
-              backgroundColor: lineColor,
+              backgroundColor: primaryColor,
               color: '#ffffff',
               font: {
-                weight: '600',
-                size: 12,
-                family: 'system-ui, -apple-system, sans-serif'
+                weight: '700',
+                size: 11,
+                family: 'Roboto, Inter, sans-serif'
               },
               padding: {
-                x: 12,
-                y: 8
+                x: 10,
+                y: 6
               },
-              cornerRadius: 8,
-              xAdjust: 30,
+              cornerRadius: 4,
+              xAdjust: 25,
               yAdjust: 0,
-              borderColor: '#ffffff',
-              borderWidth: 2
+              borderColor: 'rgba(255, 255, 255, 0.8)',
+              borderWidth: 1
             }
+          },
+          // Add price change indicator
+          priceChangeIndicator: {
+            type: 'point' as const,
+            xValue: labels[labels.length - 1],
+            yValue: cryptoInfo.current_price,
+            backgroundColor: primaryColor,
+            borderColor: '#ffffff',
+            borderWidth: 3,
+            radius: 5,
+            scaleID: 'y1'
           }
         } : {}
       }
@@ -314,83 +330,98 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
         hoverBorderWidth: 2,
       },
       line: {
-        borderCapStyle: 'round' as const,
-        borderJoinStyle: 'round' as const,
+        elements: {
+          point: {
+            hoverRadius: 8,
+            hoverBorderWidth: 3,
+            hoverBackgroundColor: primaryColor,
+            hoverBorderColor: '#ffffff'
+          },
+          line: {
+            borderCapStyle: 'round' as const,
+            borderJoinStyle: 'round' as const,
+          }
+        },
       }
     },
     scales: {
       x: {
         display: true,
         grid: {
-          display: false, // Ultra-clean horizontal view
+          display: true,
+          color: 'rgba(255, 255, 255, 0.03)',
+          lineWidth: 1,
+          drawBorder: false
         },
         ticks: {
-          color: '#8b93a6',
-          maxTicksLimit: 6,
+          color: '#737a8c',
+          maxTicksLimit: 7,
           font: {
-            size: 11,
-            family: 'system-ui, -apple-system, sans-serif',
+            size: 10,
+            family: 'Roboto, Inter, sans-serif',
             weight: '400'
           },
-          padding: 8
+          padding: 12
         },
         border: {
-          display: false,
-          width: 0
+          display: false
         }
       },
       y: {
-        display: false, // Hidden primary axis
+        display: false, // Main Y-axis hidden
         grid: {
-          color: 'rgba(139, 147, 166, 0.06)',
+          display: true,
+          color: 'rgba(255, 255, 255, 0.03)',
+          lineWidth: 1,
           drawBorder: false,
-          lineWidth: 0.5
+          drawTicks: false
         },
-        // Tighter price range for better detail
-        min: cryptoInfo ? cryptoInfo.current_price * 0.94 : undefined,
-        max: cryptoInfo ? cryptoInfo.current_price * 1.06 : undefined,
+        // Optimal price range for maximum detail
+        min: cryptoInfo ? Math.floor(cryptoInfo.current_price * 0.96) : undefined,
+        max: cryptoInfo ? Math.ceil(cryptoInfo.current_price * 1.04) : undefined,
       },
-      // Professional right-side price scale
+      // Enhanced right Y-axis like Binance
       y1: {
         type: 'linear' as const,
         display: true,
         position: 'right' as const,
         grid: {
-          color: 'rgba(139, 147, 166, 0.06)',
+          display: true,
+          color: 'rgba(255, 255, 255, 0.03)',
+          lineWidth: 1,
           drawBorder: false,
-          lineWidth: 0.5,
           drawTicks: false
         },
         ticks: {
-          color: '#8b93a6',
+          color: '#737a8c',
           callback: function(value: any) {
             const numValue = Number(value);
-            // Enhanced formatting like TradingView/CoinMarketCap
+            // Binance-style formatting
             if (numValue >= 1000000) {
-              return `${(numValue / 1000000).toFixed(2)}M`;
+              return `${(numValue / 1000000).toFixed(1)}M`;
             } else if (numValue >= 100000) {
-              return `${(numValue / 1000).toFixed(0)}K`;
+              return `${Math.round(numValue / 1000)}K`;
             } else if (numValue >= 10000) {
               return `${(numValue / 1000).toFixed(1)}K`;
             } else if (numValue >= 1000) {
               return `${(numValue / 1000).toFixed(2)}K`;
+            } else if (numValue >= 100) {
+              return `$${numValue.toFixed(0)}`;
             }
             return `$${numValue.toFixed(2)}`;
           },
-          maxTicksLimit: 6,
+          maxTicksLimit: 8,
           font: {
-            size: 11,
-            family: 'system-ui, -apple-system, sans-serif',
+            size: 10,
+            family: 'Roboto, Inter, sans-serif',
             weight: '500'
           },
-          padding: 16,
-          align: 'end'
+          padding: 20
         },
-        min: cryptoInfo ? cryptoInfo.current_price * 0.94 : undefined,
-        max: cryptoInfo ? cryptoInfo.current_price * 1.06 : undefined,
+        min: cryptoInfo ? Math.floor(cryptoInfo.current_price * 0.96) : undefined,
+        max: cryptoInfo ? Math.ceil(cryptoInfo.current_price * 1.04) : undefined,
         border: {
-          display: false,
-          width: 0
+          display: false
         }
       },
     },
