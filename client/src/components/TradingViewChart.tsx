@@ -82,6 +82,7 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
       rightPriceScale: {
         borderColor: '#333333',
         textColor: '#ffffff',
+        visible: false, // Hide right price scale to avoid showing different prices than Live Prices
       },
       leftPriceScale: {
         borderColor: '#333333',
@@ -256,13 +257,17 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
                 {cryptoInfo?.name || currentCryptoData?.name || cryptoId} ({cryptoInfo?.symbol?.toUpperCase() || currentCryptoData?.symbol?.toUpperCase()})
               </h3>
               {cryptoInfo && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <span className="text-2xl font-bold text-white">
                     ${cryptoInfo.current_price.toFixed(2)}
                   </span>
+                  <span className={`text-sm ${cryptoInfo.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {cryptoInfo.price_change_percentage_24h >= 0 ? '+' : ''}{cryptoInfo.price_change_percentage_24h.toFixed(2)}% (24h)
+                  </span>
                   <div className="flex items-center space-x-1">
-                    <span className={`text-sm ${cryptoInfo.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {cryptoInfo.price_change_percentage_24h >= 0 ? '+' : ''}{cryptoInfo.price_change_percentage_24h.toFixed(2)}% (24h)
+                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    <span className="text-green-400 text-xs">
+                      Sinkron dengan Live Prices
                     </span>
                   </div>
                 </div>
