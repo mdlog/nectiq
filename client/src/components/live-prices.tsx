@@ -85,22 +85,23 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   const [currentIndex, setCurrentIndex] = useState(0);
   const itemsPerView = 14; // Show 14 cryptos at once
 
+  // CRITICAL: Force same endpoint as Battles component for perfect synchronization
   const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
-    queryKey: ["/api/crypto/pyth-prices"],
-    refetchInterval: 1000, // Ultra-fast updates every 1 second for Pyth Network real-time data
-    refetchIntervalInBackground: true, // Enable background updates for real-time feel
-    staleTime: 500, // Very fresh data - 500ms stale time for institutional-grade updates
-    retry: 3, // More retry attempts for reliability
-    refetchOnWindowFocus: true, // Refresh when user focuses window
-    refetchOnMount: true, // Refresh on component mount
+    queryKey: ["/api/crypto/pyth-prices"], // EXACT same endpoint as Battles
+    refetchInterval: 1000, // EXACT same as Battles - 1 second updates
+    refetchIntervalInBackground: true, // EXACT same as Battles
+    staleTime: 500, // EXACT same as Battles - 500ms stale time  
+    retry: 3, // EXACT same as Battles
+    refetchOnWindowFocus: true, // EXACT same as Battles
+    refetchOnMount: true, // EXACT same as Battles
   });
 
-  // Debug log for Live Prices Bitcoin price
+  // ENHANCED DEBUG: Compare with Battle component timing
   const bitcoinPrice = prices.find(c => c.id === 'bitcoin')?.current_price;
   if (bitcoinPrice) {
-    console.log('🟢 [LIVE-PRICES] Bitcoin price:', bitcoinPrice, 'at', new Date().toLocaleTimeString());
-    console.log('📊 [LIVE-PRICES-DEBUG] Full price data length:', prices?.length);
-    console.log('🎯 [LIVE-PRICES-DEBUG] Query dataUpdatedAt:', new Date(dataUpdatedAt).toLocaleTimeString());
+    console.log('🟢 [LIVE-EXACT] Bitcoin price:', bitcoinPrice, 'Source: Live Prices component');
+    console.log('📊 [LIVE-DEBUG] Data length:', prices?.length, 'Updated:', new Date(dataUpdatedAt).toLocaleTimeString());
+    console.log('🎯 [LIVE-DEBUG] Full Bitcoin object:', prices.find(c => c.id === 'bitcoin'));
   }
 
   // Add visual indicator for when data was last updated

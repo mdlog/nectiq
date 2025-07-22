@@ -287,7 +287,8 @@ export function PredictionBattles() {
     refetchIntervalInBackground: true, // Background updates for battles
   });
 
-  // Fetch live Pyth Network prices - EXACTLY MATCHING LIVE PRICES SETTINGS
+  // SHARED CACHE APPROACH: Access exact same data as Live Prices
+  const queryClient = useQueryClient();
   const { data: cryptoPricesData = [], isLoading: pricesLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/pyth-prices"], // EXACT same queryKey format as Live Prices
     refetchInterval: 1000, // EXACT same as Live Prices - 1 second updates
@@ -297,6 +298,9 @@ export function PredictionBattles() {
     refetchOnWindowFocus: true, // EXACT same as Live Prices
     refetchOnMount: true, // EXACT same as Live Prices
   });
+  
+  // FORCE CACHE CONSISTENCY: Get Live Prices data from cache directly
+  const livePricesFromCache = queryClient.getQueryData(["/api/crypto/pyth-prices"]) as CryptoPrice[] || [];
 
 
 
@@ -622,16 +626,20 @@ export function PredictionBattles() {
             <span>Current Price</span>
             <span className="font-semibold">
               ${(() => {
-                // DIRECT ACCESS TO LIVE PRICES DATA - No helper function
-                const livePriceCrypto = cryptoPricesData.find(c => c.id === battle.cryptocurrency);
+                // FORCE USE CACHE DATA - Directly access Live Prices cache
+                const cacheData = livePricesFromCache.length > 0 ? livePricesFromCache : cryptoPricesData;
+                console.log('🔍 [CACHE-CHECK] Cache data length:', livePricesFromCache.length, 'Query data length:', cryptoPricesData.length);
+                
+                const livePriceCrypto = cacheData.find(c => c.id === battle.cryptocurrency);
                 if (livePriceCrypto && livePriceCrypto.current_price) {
-                  console.log('💰 [DIRECT-LIVE] Using Live Prices data:', livePriceCrypto.current_price, 'for', battle.cryptocurrency);
+                  console.log('💰 [CACHE-EXACT] Using cached data:', livePriceCrypto.current_price, 'for', battle.cryptocurrency);
+                  console.log('🎯 [CACHE-SOURCE] Data source: livePricesFromCache.length =', livePricesFromCache.length);
                   return livePriceCrypto.current_price.toLocaleString(undefined, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   });
                 } else {
-                  console.log('🔴 [DIRECT-DB] Using database price:', battle.currentPrice, 'for', battle.cryptocurrency);
+                  console.log('🔴 [CACHE-FALLBACK] Using database price:', battle.currentPrice, 'cache not available');
                   return battle.currentPrice.toLocaleString(undefined, { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
@@ -650,8 +658,9 @@ export function PredictionBattles() {
           </div>
           
           {battle.challengerPrediction && battle.challengedPrediction && (() => {
-            // DIRECT ACCESS FOR PROBABILITY CALCULATION
-            const livePriceCrypto = cryptoPricesData.find(c => c.id === battle.cryptocurrency);
+            // PROBABILITY CALCULATION USES CACHE DATA
+            const cacheData = livePricesFromCache.length > 0 ? livePricesFromCache : cryptoPricesData;
+            const livePriceCrypto = cacheData.find(c => c.id === battle.cryptocurrency);
             const currentPrice = (livePriceCrypto && livePriceCrypto.current_price) ? livePriceCrypto.current_price : battle.currentPrice;
             const battleWithRealTimePrice = { ...battle, currentPrice };
             const probability = calculateWinProbability(battleWithRealTimePrice);
@@ -956,16 +965,17 @@ export function PredictionBattles() {
                   <div className="text-sm text-muted-foreground">Current Price (Live Pyth)</div>
                   <div className="text-3xl font-bold">
                     ${(() => {
-                      // DIRECT ACCESS TO LIVE PRICES DATA FOR DIALOG
-                      const livePriceCrypto = cryptoPricesData.find(c => c.id === selectedBattle.cryptocurrency);
+                      // DIALOG USES SAME CACHE APPROACH
+                      const cacheData = livePricesFromCache.length > 0 ? livePricesFromCache : cryptoPricesData;
+                      const livePriceCrypto = cacheData.find(c => c.id === selectedBattle.cryptocurrency);
                       if (livePriceCrypto && livePriceCrypto.current_price) {
-                        console.log('💰 [DIALOG-LIVE] Using Live Prices data:', livePriceCrypto.current_price);
+                        console.log('💰 [DIALOG-CACHE] Using cached data:', livePriceCrypto.current_price);
                         return parseFloat(livePriceCrypto.current_price.toString()).toLocaleString(undefined, { 
                           minimumFractionDigits: 2, 
                           maximumFractionDigits: 2 
                         });
                       } else {
-                        console.log('🔴 [DIALOG-DB] Using database price:', selectedBattle.currentPrice);
+                        console.log('🔴 [DIALOG-FALLBACK] Using database price:', selectedBattle.currentPrice);
                         return parseFloat(selectedBattle.currentPrice.toString()).toLocaleString(undefined, { 
                           minimumFractionDigits: 2, 
                           maximumFractionDigits: 2 
