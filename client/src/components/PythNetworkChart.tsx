@@ -134,7 +134,9 @@ const PythNetworkChart = ({
     }
 
     // Calculate price range with padding for better visualization
-    const prices = priceHistory.map(d => d.price);
+    const prices = priceHistory.map(d => d.price).filter(p => !isNaN(p) && isFinite(p) && p > 0);
+    if (prices.length === 0) return;
+    
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const priceRange = maxPrice - minPrice || (maxPrice * 0.01); // Use 1% of price if no range
@@ -229,7 +231,16 @@ const PythNetworkChart = ({
     for (let i = 0; i <= 5; i++) {
       const priceLevel = paddedMinPrice + (paddedRange * (5 - i) / 5); // Reverse order (top to bottom)
       const y = margin + (chartHeight / 5) * i + 5;
-      ctx.fillText(`$${priceLevel.toFixed(6)}`, margin - 5, y);
+      
+      // Handle NaN values and format properly
+      if (!isNaN(priceLevel) && isFinite(priceLevel)) {
+        const formattedPrice = priceLevel < 1 
+          ? priceLevel.toFixed(6) 
+          : priceLevel < 1000 
+            ? priceLevel.toFixed(2)
+            : priceLevel.toFixed(0);
+        ctx.fillText(`$${formattedPrice}`, margin - 5, y);
+      }
     }
     // Draw time labels (X-axis - horizontal)
     ctx.fillStyle = '#888888';
@@ -255,12 +266,12 @@ const PythNetworkChart = ({
       
       // Draw date at bottom center
       const currentDate = new Date().toLocaleDateString('id-ID', {
-        day: 'numeric',
+        day: '2-digit',
         month: 'short',
         year: 'numeric'
       });
-      ctx.fillStyle = '#666666';
-      ctx.font = '9px monospace';
+      ctx.fillStyle = '#888888';
+      ctx.font = '10px monospace';
       ctx.fillText(currentDate, width / 2, height - 5);
     }
 
