@@ -4441,7 +4441,7 @@ export default function AdminPanel() {
                   <div className="space-y-3">
                     {cryptocurrencies.map((crypto) => {
                       // Check if crypto has Pyth Network support
-                      const isPythSupported = ['bitcoin', 'ethereum', 'solana', 'binancecoin', 'cardano'].includes(crypto.id);
+                      const isPythSupported = ['bitcoin', 'ethereum', 'solana', 'binancecoin', 'cardano', 'dogecoin'].includes(crypto.id);
                       
                       return (
                         <div key={crypto.id} className="flex items-center justify-between p-4 bg-surface-light rounded-lg">
@@ -4482,17 +4482,10 @@ export default function AdminPanel() {
                             <div className="text-center">
                               <p className="text-sm text-slate-400">Data Source</p>
                               <div className="flex items-center gap-1">
-                                {isPythSupported ? (
-                                  <Badge variant="outline" className="text-purple-600 border-purple-300 bg-purple-50 dark:bg-purple-950/20">
-                                    <Zap className="h-3 w-3 mr-1" />
-                                    Pyth + CoinGecko
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 dark:bg-orange-950/20">
-                                    <BarChart3 className="h-3 w-3 mr-1" />
-                                    CoinGecko
-                                  </Badge>
-                                )}
+                                <Badge variant="outline" className="text-purple-600 border-purple-300 bg-purple-50 dark:bg-purple-950/20">
+                                  <Zap className="h-3 w-3 mr-1" />
+                                  Pyth Network
+                                </Badge>
                               </div>
                             </div>
                             <div className="text-center">
