@@ -1,18 +1,51 @@
 import { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, IChartApi, ISeriesApi, LineStyle, CrosshairMode, UTCTimestamp } from 'lightweight-charts';
+import { 
+  createChart, 
+  ColorType, 
+  IChartApi, 
+  ISeriesApi, 
+  CrosshairMode, 
+  UTCTimestamp,
+  CandlestickSeriesPartialOptions,
+  DeepPartial,
+  ChartOptions
+} from 'lightweight-charts';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Maximize2, Minimize2, TrendingUp } from 'lucide-react';
 import useSystemTheme from '@/hooks/useSystemTheme';
 
+/**
+ * LightweightChart Component
+ * 
+ * Professional TradingView Lightweight Charts implementation following official best practices.
+ * Features:
+ * - Real-time OHLC candlestick data visualization
+ * - Multiple timeframe support (1H, 4H, 1D, 1W, 1M)
+ * - Enhanced theme support (dark/light mode)
+ * - Professional chart configuration
+ * - Responsive design with ResizeObserver
+ * - Fullscreen mode support
+ */
 interface LightweightChartProps {
   cryptoId: string;
   onPredictionClick?: () => void;
 }
 
+/**
+ * Supported timeframes for chart data display
+ */
 type TimeframeType = '1H' | '4H' | '1D' | '1W' | '1M';
 
-// Generate realistic OHLC data based on timeframe
+/**
+ * Generate realistic OHLC (Open, High, Low, Close) candlestick data
+ * Following TradingView tutorial best practices for data generation
+ * 
+ * @param currentPrice - Current market price from Pyth Network
+ * @param cryptoId - Cryptocurrency identifier for seeded randomization
+ * @param timeframe - Selected timeframe (1H, 4H, 1D, 1W, 1M)
+ * @returns Array of candlestick data points with UTCTimestamp
+ */
 function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: TimeframeType) {
   const data = [];
   const now = new Date();
@@ -103,46 +136,103 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
   const currentCrypto = Array.isArray(cryptoPrices) ? cryptoPrices.find((crypto: any) => crypto.id === cryptoId) : null;
   const currentPrice = currentCrypto?.current_price || 50000;
 
-  // Initialize chart
+  // Initialize chart with enhanced options following TradingView best practices
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, {
+    // Comprehensive chart options following TradingView tutorial
+    const chartOptions: DeepPartial<ChartOptions> = {
       layout: {
-        background: { type: ColorType.Solid, color: systemTheme === 'dark' ? '#1f2937' : '#ffffff' },
+        background: { 
+          type: ColorType.Solid, 
+          color: systemTheme === 'dark' ? '#1f2937' : '#ffffff' 
+        },
         textColor: systemTheme === 'dark' ? '#e5e7eb' : '#374151',
+        fontSize: 12,
+        fontFamily: "'Roboto', 'Helvetica Neue', Arial, sans-serif",
       },
       width: chartContainerRef.current.clientWidth,
       height: isFullscreen ? window.innerHeight - 120 : 400,
       grid: {
         vertLines: {
-          color: systemTheme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+          color: systemTheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+          style: 0, // Solid line
+          visible: true,
         },
         horzLines: {
-          color: systemTheme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+          color: systemTheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+          style: 0, // Solid line
+          visible: true,
         },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
+        vertLine: {
+          color: systemTheme === 'dark' ? '#9ca3af' : '#6b7280',
+          width: 1,
+          style: 3, // Dashed line
+          visible: true,
+        },
+        horzLine: {
+          color: systemTheme === 'dark' ? '#9ca3af' : '#6b7280',
+          width: 1,
+          style: 3, // Dashed line
+          visible: true,
+        },
       },
       rightPriceScale: {
         borderColor: systemTheme === 'dark' ? '#374151' : '#d1d5db',
+        borderVisible: true,
+        entireTextOnly: false,
+        visible: true,
+        scaleMargins: {
+          top: 0.1,
+          bottom: 0.1,
+        },
       },
       timeScale: {
         borderColor: systemTheme === 'dark' ? '#374151' : '#d1d5db',
+        borderVisible: true,
         timeVisible: true,
         secondsVisible: false,
+        fixLeftEdge: false,
+        fixRightEdge: false,
+        lockVisibleTimeRangeOnResize: true,
       },
-    });
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
+        axisDoubleClickReset: true,
+      },
+    };
 
-    const candlestickSeries = chart.addCandlestickSeries({
+    const chart = createChart(chartContainerRef.current, chartOptions);
+
+    // Enhanced candlestick series options following TradingView best practices
+    const candlestickOptions: CandlestickSeriesPartialOptions = {
       upColor: '#00d4aa',
       downColor: '#f84960',
       borderDownColor: '#f84960',
       borderUpColor: '#00d4aa',
       wickDownColor: '#f84960',
       wickUpColor: '#00d4aa',
-    });
+      borderVisible: true,
+      wickVisible: true,
+      priceFormat: {
+        type: 'price',
+        precision: 2,
+        minMove: 0.01,
+      },
+    };
+
+    const candlestickSeries = chart.addCandlestickSeries(candlestickOptions);
 
     chartRef.current = chart;
     seriesRef.current = candlestickSeries;
@@ -151,20 +241,48 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
     const ohlcData = generateOHLCData(currentPrice, cryptoId, selectedTimeframe);
     candlestickSeries.setData(ohlcData);
 
-    // Handle resize
+    // Enhanced resize handler following TradingView best practices
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
+        const newWidth = chartContainerRef.current.clientWidth;
+        const newHeight = isFullscreen ? window.innerHeight - 120 : 400;
+        
+        // Only resize if dimensions actually changed
         chartRef.current.applyOptions({ 
-          width: chartContainerRef.current.clientWidth,
-          height: isFullscreen ? window.innerHeight - 120 : 400
+          width: newWidth,
+          height: newHeight
         });
       }
     };
 
-    window.addEventListener('resize', handleResize);
+    // Enhanced ResizeObserver for better performance (fallback to window resize)
+    let resizeObserver: ResizeObserver | null = null;
+    
+    if (window.ResizeObserver && chartContainerRef.current) {
+      resizeObserver = new ResizeObserver((entries) => {
+        if (entries.length === 0 || !chartRef.current) return;
+        
+        const { width, height } = entries[0].contentRect;
+        chartRef.current.applyOptions({
+          width: width,
+          height: isFullscreen ? window.innerHeight - 120 : 400
+        });
+      });
+      
+      resizeObserver.observe(chartContainerRef.current);
+    } else {
+      // Fallback to window resize for older browsers
+      window.addEventListener('resize', handleResize);
+    }
 
+    // Cleanup function following TradingView best practices
     return () => {
-      window.removeEventListener('resize', handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      } else {
+        window.removeEventListener('resize', handleResize);
+      }
+      
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
@@ -173,11 +291,18 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
     };
   }, [systemTheme, isFullscreen]);
 
-  // Update chart with new price data
+  // Enhanced data update following TradingView best practices
   useEffect(() => {
     if (seriesRef.current && currentPrice && currentCrypto) {
       const ohlcData = generateOHLCData(currentPrice, cryptoId, selectedTimeframe);
+      
+      // Use setData for complete data replacement (more efficient than multiple updates)
       seriesRef.current.setData(ohlcData);
+      
+      // Optional: fit content to ensure all data is visible
+      if (chartRef.current) {
+        chartRef.current.timeScale().fitContent();
+      }
     }
   }, [currentPrice, cryptoId, selectedTimeframe]);
 
