@@ -52,14 +52,14 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
       clearTimeout(retryTimeoutRef.current);
     }
 
-    // Set timeout for loading - reduced to 5 seconds for faster fallback
+    // Set timeout for loading - increased to 10 seconds to allow TradingView to load
     retryTimeoutRef.current = setTimeout(() => {
       if (isLoading) {
-        console.log("⏰ [TRADINGVIEW] Timeout reached, switching to fallback chart");
+        console.log("⏰ [TRADINGVIEW] Timeout reached after 10 seconds, switching to fallback chart");
         setHasError(true);
         setIsLoading(false);
       }
-    }, 5000); // 5 second timeout
+    }, 10000); // 10 second timeout for better TradingView loading
 
     if (!tvScriptLoadingPromise) {
       tvScriptLoadingPromise = new Promise((resolve, reject) => {
@@ -74,8 +74,11 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
         script.src = "https://s3.tradingview.com/tv.js";
         script.type = "text/javascript";
         script.onload = () => {
-          console.log("📊 [TRADINGVIEW] Script loaded successfully");
-          resolve();
+          console.log("📊 [TRADINGVIEW] Script loaded successfully from https://s3.tradingview.com/tv.js");
+          // Add small delay to ensure script is fully initialized
+          setTimeout(() => {
+            resolve();
+          }, 100);
         };
         script.onerror = () => {
           console.error("❌ [TRADINGVIEW] Failed to load script");
@@ -107,21 +110,26 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
 
     function createWidget() {
       console.log("🔧 [TRADINGVIEW] Creating widget for:", pythSymbol, "with theme:", systemTheme);
+      console.log("🔧 [TRADINGVIEW] Window TradingView available:", !!((window as any).TradingView));
       
       const container = document.getElementById("tradingview-widget");
       if (!container) {
-        console.error("❌ [TRADINGVIEW] Container not found");
+        console.error("❌ [TRADINGVIEW] Container 'tradingview-widget' not found in DOM");
+        console.error("❌ [TRADINGVIEW] Available elements:", document.querySelectorAll('[id*="trading"]'));
         setHasError(true);
         setIsLoading(false);
         return;
       }
+      console.log("✅ [TRADINGVIEW] Container found:", container);
 
       if (!("TradingView" in (window as any))) {
-        console.error("❌ [TRADINGVIEW] TradingView not available in window");
+        console.error("❌ [TRADINGVIEW] TradingView not available in window object");
+        console.error("❌ [TRADINGVIEW] Available window properties:", Object.keys(window).filter(k => k.toLowerCase().includes('trading')));
         setHasError(true);
         setIsLoading(false);
         return;
       }
+      console.log("✅ [TRADINGVIEW] TradingView object available in window");
 
       try {
         // Remove existing widget if it exists
@@ -132,6 +140,12 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
 
         // Clear existing content
         container.innerHTML = '';
+        console.log("🔧 [TRADINGVIEW] Container cleared, creating widget with config:", {
+          symbol: pythSymbol,
+          interval: selectedTimeframe,
+          theme: systemTheme,
+          container_id: "tradingview-widget"
+        });
         
         widgetRef.current = new (window as any).TradingView.widget({
           autosize: true,
@@ -157,11 +171,12 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
             foregroundColor: "#00d4aa"
           },
           onChartReady: () => {
-            console.log("✅ [TRADINGVIEW] Chart ready with", systemTheme, "theme");
+            console.log("✅ [TRADINGVIEW] Chart ready successfully with", systemTheme, "theme for", pythSymbol);
             setIsLoading(false);
             setHasError(false);
             if (retryTimeoutRef.current) {
               clearTimeout(retryTimeoutRef.current);
+              retryTimeoutRef.current = null;
             }
           }
         });
