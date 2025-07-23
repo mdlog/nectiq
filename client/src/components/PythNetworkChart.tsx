@@ -163,33 +163,27 @@ export default function PythNetworkChart({
       ctx.lineTo(x, padding.top + chartHeight);
       ctx.stroke();
       
-      // Time labels at bottom
-      if (i > 0 && i <= timePoints) { // Include all points for better visibility
-        const hoursAgo = (timePoints - i) * (selectedTimeframe === '1M' ? 10 : 
-                                           selectedTimeframe === '5M' ? 30 :
-                                           selectedTimeframe === '15M' ? 90 :
-                                           selectedTimeframe === '1H' ? 4 :
-                                           selectedTimeframe === '4H' ? 12 : 20);
+      // Time labels at bottom - ALWAYS shows 7 days range regardless of timeframe
+      if (i > 0 && i <= timePoints) {
+        // Calculate days ago for 7-day range
+        const daysAgo = (timePoints - i) * (7 / timePoints); // Distribute 7 days across 6 points
         
         const timeAgo = new Date();
-        timeAgo.setMinutes(timeAgo.getMinutes() - hoursAgo);
+        timeAgo.setDate(timeAgo.getDate() - daysAgo);
         
+        // Always show date format for 7-day range
         let timeLabel = '';
-        if (selectedTimeframe === '1M' || selectedTimeframe === '5M' || selectedTimeframe === '15M') {
-          timeLabel = timeAgo.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-        } else if (selectedTimeframe === '1H' || selectedTimeframe === '4H') {
-          timeLabel = timeAgo.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-        } else {
-          timeLabel = timeAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-        
-        // Special handling for current time (last point)
         if (i === timePoints) {
-          timeLabel = selectedTimeframe === '1D' ? 'Now' : 
-                     new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+          // Current time/today
+          timeLabel = 'Hari Ini';
           ctx.fillStyle = '#00d4aa'; // accent color for current time
           ctx.font = 'bold 10px "Inter", sans-serif';
         } else {
+          // Show date in Indonesian format
+          timeLabel = timeAgo.toLocaleDateString('id-ID', { 
+            month: 'short', 
+            day: 'numeric' 
+          });
           ctx.fillStyle = '#9CA3AF'; // gray-400
           ctx.font = '10px "Inter", sans-serif';
         }
@@ -280,13 +274,13 @@ export default function PythNetworkChart({
     ctx.fillStyle = '#6B7280'; // gray-500
     ctx.font = 'bold 10px "Inter", sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`Timeframe: ${selectedTimeframe}`, padding.left, rect.height - 10);
+    ctx.fillText(`Timeframe: ${selectedTimeframe} | Rentang: 7 Hari`, padding.left, rect.height - 10);
     
     // Data source indicator at bottom center
     ctx.fillStyle = '#00d4aa'; // accent color
     ctx.font = 'bold 9px "Inter", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Real-time Pyth Network Data', rect.width / 2, rect.height - 10);
+    ctx.fillText('Real-time Pyth Network Data - 7 Hari Terakhir', rect.width / 2, rect.height - 10);
 
   }, [historicalData, currentCryptoData, isFullscreen]);
 
