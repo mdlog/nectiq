@@ -50,10 +50,15 @@ export default function ProfessionalTradingViewChart({
   const [isLoading, setIsLoading] = useState(true);
   const [selectedInterval, setSelectedInterval] = useState('1H');
 
-  // Fetch Pyth Network prices untuk header info
+  // CRITICAL: Use SAME endpoint as Live Prices for perfect synchronization
   const { data: pythData } = useQuery<PythPriceData[]>({
-    queryKey: ['/api/crypto/pyth-prices'],
-    refetchInterval: 3000,
+    queryKey: ['/api/crypto/pyth-prices'], // EXACT same endpoint as Live Prices
+    refetchInterval: 1000, // EXACT same as Live Prices - 1 second updates
+    refetchIntervalInBackground: true, // EXACT same as Live Prices
+    staleTime: 500, // EXACT same as Live Prices - 500ms stale time
+    retry: 3, // EXACT same as Live Prices
+    refetchOnWindowFocus: true, // EXACT same as Live Prices
+    refetchOnMount: true, // EXACT same as Live Prices
   });
 
   // Fetch crypto data untuk logo dan metadata
@@ -212,16 +217,29 @@ export default function ProfessionalTradingViewChart({
                         maximumFractionDigits: 8
                       })}
                     </span>
+                    <span>•</span>
+                    <div className="flex items-center space-x-1 px-2 py-0.5 bg-green-500/10 rounded-md border border-green-500/20">
+                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-green-400 font-medium">Pyth Network</span>
+                    </div>
                   </>
                 )}
               </div>
             </div>
           </div>
 
-          {/* TradingView Badge */}
-          <div className="hidden md:flex items-center space-x-2 px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20">
-            <BarChart3 size={16} className="text-blue-400" />
-            <span className="text-xs text-blue-400 font-medium">TradingView Professional</span>
+          {/* Data Source Badges */}
+          <div className="hidden md:flex items-center space-x-2">
+            {/* Price Data Badge */}
+            <div className="flex items-center space-x-2 px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-xs text-green-400 font-medium">Harga dari Live Prices</span>
+            </div>
+            {/* Chart Badge */}
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20">
+              <BarChart3 size={16} className="text-blue-400" />
+              <span className="text-xs text-blue-400 font-medium">TradingView Chart</span>
+            </div>
           </div>
         </div>
 
