@@ -370,7 +370,7 @@ export default function Leaderboard() {
                           </div>
                           <div className="text-center">
                             <p className="text-slate-400">Pred Rewards</p>
-                            <p className="font-semibold text-primary">{formatPoints(user.totalRewards - (user.battleRewards || 0) - (user.survivalRewards || 0))}</p>
+                            <p className="font-semibold text-primary">{formatPoints(Number(user.totalRewards) - Number(user.battleRewards || 0) - Number(user.survivalRewards || 0))}</p>
                           </div>
                           
                           {/* Battle Stats */}

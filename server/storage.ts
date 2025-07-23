@@ -536,8 +536,8 @@ export class DatabaseStorage implements IStorage {
     const enhancedUsers = await Promise.all(usersData.map(async (user) => {
       // Get battle statistics
       const battleStatsQuery = await db.select({
-        totalBattles: sql<number>`COUNT(*)`,
-        wonBattles: sql<number>`SUM(CASE WHEN ${predictionBattles.winnerId} = ${user.id} THEN 1 ELSE 0 END)`
+        totalBattles: sql<number>`COUNT(*)::int`,
+        wonBattles: sql<number>`COALESCE(SUM(CASE WHEN ${predictionBattles.winnerId} = ${user.id} THEN 1 ELSE 0 END), 0)::int`
       }).from(predictionBattles)
       .where(
         and(
@@ -551,7 +551,7 @@ export class DatabaseStorage implements IStorage {
 
       // Get battle rewards from transaction_logs instead of battles table
       const battleRewardsQuery = await db.select({
-        battleRewards: sql<number>`COALESCE(SUM(${transactionLogs.amount}), 0)`
+        battleRewards: sql<number>`COALESCE(SUM(${transactionLogs.amount}), 0)::int`
       }).from(transactionLogs)
       .where(
         and(
@@ -572,9 +572,9 @@ export class DatabaseStorage implements IStorage {
 
       // Get survival tournament statistics
       const survivalStatsQuery = await db.select({
-        totalTournaments: sql<number>`COUNT(DISTINCT ${survivalParticipants.tournamentId})`,
-        wonTournaments: sql<number>`COUNT(DISTINCT CASE WHEN ${survivalTournaments.winnerId} = ${user.id} THEN ${survivalParticipants.tournamentId} END)`,
-        survivalRewards: sql<number>`SUM(CASE WHEN ${survivalTournaments.winnerId} = ${user.id} THEN ${survivalTournaments.prizePool} ELSE 0 END)`
+        totalTournaments: sql<number>`COUNT(DISTINCT ${survivalParticipants.tournamentId})::int`,
+        wonTournaments: sql<number>`COUNT(DISTINCT CASE WHEN ${survivalTournaments.winnerId} = ${user.id} THEN ${survivalParticipants.tournamentId} END)::int`,
+        survivalRewards: sql<number>`COALESCE(SUM(CASE WHEN ${survivalTournaments.winnerId} = ${user.id} THEN ${survivalTournaments.prizePool} ELSE 0 END), 0)::int`
       }).from(survivalParticipants)
       .leftJoin(survivalTournaments, eq(survivalParticipants.tournamentId, survivalTournaments.id))
       .where(eq(survivalParticipants.userId, user.id));
@@ -591,25 +591,28 @@ export class DatabaseStorage implements IStorage {
       const battleWinRate = battleStats.totalBattles > 0 ? 
         (battleStats.wonBattles / battleStats.totalBattles) * 100 : 0;
 
-      // Calculate total rewards including survival rewards
-      const calculatedTotalRewards = user.totalRewards + (survivalStats.survivalRewards || 0) + (battleRewardsStats.battleRewards || 0);
+      // Calculate total rewards including survival rewards - ensure numeric values
+      const baseRewards = Number(user.totalRewards) || 0;
+      const survivalRewards = Number(survivalStats.survivalRewards) || 0;
+      const battleRewards = Number(battleRewardsStats.battleRewards) || 0;
+      const calculatedTotalRewards = baseRewards + survivalRewards + battleRewards;
 
       return {
         ...user,
         winRate: predictionWinRate,
-        // Battle stats
-        totalBattles: battleStats.totalBattles,
-        wonBattles: battleStats.wonBattles,
+        // Battle stats - ensure numeric values
+        totalBattles: Number(battleStats.totalBattles) || 0,
+        wonBattles: Number(battleStats.wonBattles) || 0,
         battleWinRate: battleWinRate,
-        battleRewards: battleRewardsStats.battleRewards || 0,
-        // Survival stats
-        totalSurvivalTournaments: survivalStats.totalTournaments,
-        wonSurvivalTournaments: survivalStats.wonTournaments,
-        survivalRewards: survivalStats.survivalRewards || 0,
+        battleRewards: Number(battleRewardsStats.battleRewards) || 0,
+        // Survival stats - ensure numeric values
+        totalSurvivalTournaments: Number(survivalStats.totalTournaments) || 0,
+        wonSurvivalTournaments: Number(survivalStats.wonTournaments) || 0,
+        survivalRewards: Number(survivalStats.survivalRewards) || 0,
         // FIXED: Combined rewards includes survival + battle rewards
         combinedRewards: calculatedTotalRewards,
-        // Override totalRewards to include all reward sources
-        totalRewards: calculatedTotalRewards
+        // Override totalRewards to include all reward sources - ensure numeric value
+        totalRewards: Number(calculatedTotalRewards)
       };
     }));
 
