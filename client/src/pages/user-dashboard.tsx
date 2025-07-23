@@ -16,7 +16,7 @@ import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
-import PythNetworkChart from "@/components/PythNetworkChart";
+import TradingViewWidget from "@/components/TradingViewWidget";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
@@ -1063,8 +1063,8 @@ export default function UserDashboard() {
                             </CardContent>
                           </Card>
 
-                          {/* Pyth Network Chart - Full Width */}
-                          <PythNetworkChart
+                          {/* TradingView Widget - Full Width */}
+                          <TradingViewWidget
                             cryptoId={selectedCrypto.id}
                             onPredictionClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
                           />
@@ -1075,12 +1075,13 @@ export default function UserDashboard() {
                             <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
                             <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
                             <p className="text-slate-400 mb-4">
-                              Click on any cryptocurrency from the Live Prices panel to view its real-time Pyth Network chart
+                              Click on any cryptocurrency from the Live Prices panel to view its professional TradingView chart with Pyth Network data
                             </p>
                             <div className="text-sm text-slate-500">
+                              <p>• Professional TradingView charting interface</p>
                               <p>• Real-time Pyth Network price feeds</p>
-                              <p>• Live price tracking with confidence intervals</p>
-                              <p>• Institutional-grade data accuracy</p>
+                              <p>• Advanced technical indicators (Volume, RSI)</p>
+                              <p>• Multiple timeframe options</p>
                               <p>• Fullscreen mode available</p>
                               <p>• Direct prediction integration</p>
                             </div>
