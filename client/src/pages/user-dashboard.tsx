@@ -16,7 +16,7 @@ import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
-import ChartJSChart from "@/components/ChartJSChart";
+import ProfessionalTradingViewChart from "@/components/ProfessionalTradingViewChart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import { WalletBalances } from "@/components/wallet-balances";
@@ -1064,7 +1064,7 @@ export default function UserDashboard() {
                           </Card>
 
                           {/* Pyth Network Chart - Full Width */}
-                          <ChartJSChart
+                          <ProfessionalTradingViewChart
                             cryptoId={selectedCrypto.id}
                             onPredictionClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
                           />
