@@ -25,6 +25,7 @@ export default function PythNetworkChart({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('1H');
   const [historicalData, setHistoricalData] = useState<number[]>([]);
+  const [basePriceForLabels, setBasePriceForLabels] = useState<number | null>(null);
 
   // CRITICAL: Use SAME endpoint as Live Prices for perfect synchronization
   const { data: pythData } = useQuery<PythPriceData[]>({
@@ -76,6 +77,18 @@ export default function PythNetworkChart({
     return data;
   };
 
+  // Set static base price for left labels (only when crypto changes or first load)
+  useEffect(() => {
+    if (currentCryptoData?.current_price && !basePriceForLabels) {
+      setBasePriceForLabels(currentCryptoData.current_price);
+    }
+  }, [currentCryptoData?.current_price, basePriceForLabels]);
+
+  // Reset base price when crypto changes
+  useEffect(() => {
+    setBasePriceForLabels(null);
+  }, [cryptoId]);
+
   // Update historical data when crypto changes or timeframe changes
   useEffect(() => {
     if (currentCryptoData?.current_price) {
@@ -112,12 +125,13 @@ export default function PythNetworkChart({
     const chartWidth = rect.width - padding.left - padding.right;
     const chartHeight = rect.height - padding.top - padding.bottom;
 
-    // Find min/max prices for scaling
-    const minPrice = Math.min(...historicalData);
-    const maxPrice = Math.max(...historicalData);
-    const priceRange = maxPrice - minPrice;
-    const paddedMin = minPrice - priceRange * 0.1;
-    const paddedMax = maxPrice + priceRange * 0.1;
+    // Use STATIC base price for consistent left labels that don't change
+    const staticBasePrice = basePriceForLabels || currentCryptoData?.current_price || historicalData[historicalData.length - 1] || 0;
+    const priceVariation = staticBasePrice * 0.08; // 8% variation for tight range
+    
+    // STATIC price range that NEVER changes for left labels
+    const paddedMin = staticBasePrice - priceVariation;
+    const paddedMax = staticBasePrice + priceVariation;
     const paddedRange = paddedMax - paddedMin;
 
     // Draw grid
@@ -132,7 +146,7 @@ export default function PythNetworkChart({
       ctx.lineTo(padding.left + chartWidth, y);
       ctx.stroke();
       
-      // Price labels on left
+      // Static price labels on left - fixed range based on base price
       const price = paddedMax - (paddedRange / 5) * i;
       ctx.fillStyle = '#D1D5DB'; // gray-300 - more visible
       ctx.font = 'bold 12px "Inter", sans-serif';
