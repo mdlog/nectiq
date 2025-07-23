@@ -39,7 +39,7 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | ISeriesApi<'Line'> | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('1h');
-  const [chartType, setChartType] = useState<'candlestick' | 'line'>('line');
+  const [chartType, setChartType] = useState<'candlestick' | 'line'>('candlestick');
   const [cryptoLogo, setCryptoLogo] = useState<string>('');
 
   // Fetch Pyth Network prices
