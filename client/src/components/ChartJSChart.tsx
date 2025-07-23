@@ -315,7 +315,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
             scaleID: 'y1',
             z: 999 // Pastikan di atas semua elemen
           },
-          // Label harga running di atas dot hijau - posisi tepat di ujung kanan
+          // Label harga running di samping kanan dot hijau
           runningPriceLabel: {
             type: 'label' as const,
             xValue: data.length - 1, // Index ujung kanan chart
@@ -333,8 +333,8 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
               y: 8
             },
             cornerRadius: 6,
-            xAdjust: 0,
-            yAdjust: -30, // Posisi lebih tinggi di atas dot
+            xAdjust: 50, // Posisi di sebelah kanan dot, tidak menutupi
+            yAdjust: 0, // Sejajar dengan dot
             borderColor: '#ffffff',
             borderWidth: 2,
             z: 1000 // Di atas dot
