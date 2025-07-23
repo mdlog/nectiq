@@ -291,20 +291,41 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
     };
   }, [systemTheme, isFullscreen]);
 
-  // Enhanced data update following TradingView best practices
+  // Initialize chart data once per timeframe/crypto change
   useEffect(() => {
-    if (seriesRef.current && currentPrice && currentCrypto) {
+    if (seriesRef.current && currentCrypto) {
       const ohlcData = generateOHLCData(currentPrice, cryptoId, selectedTimeframe);
       
-      // Use setData for complete data replacement (more efficient than multiple updates)
+      // Use setData for initial data load
       seriesRef.current.setData(ohlcData);
       
-      // Optional: fit content to ensure all data is visible
+      // Fit content to ensure all data is visible
       if (chartRef.current) {
         chartRef.current.timeScale().fitContent();
       }
     }
-  }, [currentPrice, cryptoId, selectedTimeframe]);
+  }, [cryptoId, selectedTimeframe, currentCrypto]); // Only reinitialize on crypto/timeframe change
+
+  // Real-time price updates using series.update() - TradingView best practice  
+  useEffect(() => {
+    if (!seriesRef.current || !currentCrypto || !currentPrice) return;
+
+    // Create real-time candle update with current timestamp
+    const currentTime = Math.floor(Date.now() / 1000) as UTCTimestamp;
+    
+    // Simple real-time update: always update the current candle with latest price  
+    const realtimeUpdate = {
+      time: currentTime,
+      open: currentPrice,
+      high: currentPrice,
+      low: currentPrice,
+      close: currentPrice,
+    };
+
+    // Use series.update() for efficient real-time updates - as per TradingView docs
+    seriesRef.current.update(realtimeUpdate);
+    
+  }, [currentPrice]); // Only update when price changes
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement && chartContainerRef.current?.parentElement) {
@@ -389,6 +410,19 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => chartRef.current?.timeScale().scrollToRealTime()}
+            className={systemTheme === "dark" 
+              ? "text-gray-300 hover:text-white" 
+              : "text-gray-600 hover:text-gray-900"
+            }
+            title="Go to realtime"
+          >
+            Go to realtime
+          </Button>
+          
           <Button
             variant="ghost"
             size="sm"
