@@ -61,11 +61,15 @@ export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackC
   const [isFullscreen, setIsFullscreen] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // Fetch current price data
+  // Fetch current price data - SAME endpoint as Live Prices for perfect synchronization
   const { data: cryptoPrices } = useQuery({
-    queryKey: ['/api/crypto/prices'],
-    refetchInterval: 3000,
-    staleTime: 1000,
+    queryKey: ["/api/crypto/pyth-prices"], // EXACT same endpoint as Live Prices
+    refetchInterval: 1000, // EXACT same as Live Prices - 1 second updates
+    refetchIntervalInBackground: true, // EXACT same as Live Prices
+    staleTime: 500, // EXACT same as Live Prices - 500ms stale time  
+    retry: 3, // EXACT same as Live Prices
+    refetchOnWindowFocus: true, // EXACT same as Live Prices
+    refetchOnMount: true, // EXACT same as Live Prices
   });
 
   const currentCrypto = Array.isArray(cryptoPrices) ? cryptoPrices.find((crypto: any) => crypto.id === cryptoId) : null;
