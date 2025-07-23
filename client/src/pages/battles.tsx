@@ -1215,10 +1215,20 @@ export default function BattlesPage() {
                   Stake: {selectedBattle.stakeAmount} NTIQ
                 </p>
                 <p className="text-sm text-gray-900 dark:text-white font-medium">
-                  Current Price: ${selectedBattle.currentPrice?.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 6
-                  }) || 'Loading...'}
+                  Current Price: ${(() => {
+                    // Use same live price logic as in open battle cards
+                    const livePrice = cryptos.find(crypto => 
+                      crypto.id === selectedBattle.cryptocurrency.toLowerCase() || 
+                      crypto.symbol.toLowerCase() === selectedBattle.cryptocurrency.toLowerCase() ||
+                      crypto.name.toLowerCase() === selectedBattle.cryptocurrency.toLowerCase()
+                    )?.current_price;
+                    
+                    const finalPrice = livePrice || selectedBattle.currentPrice;
+                    return finalPrice?.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    }) || 'Loading...';
+                  })()}
                 </p>
               </div>
               
