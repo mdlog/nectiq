@@ -12,7 +12,7 @@ import {
 } from 'lightweight-charts';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Minimize2, TrendingUp } from 'lucide-react';
+import { Maximize2, Minimize2, TrendingUp, Target } from 'lucide-react';
 import useSystemTheme from '@/hooks/useSystemTheme';
 
 /**
@@ -389,15 +389,6 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
         </div>
 
         <div className="flex items-center gap-2">
-          {onPredictionClick && (
-            <Button 
-              onClick={onPredictionClick}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2"
-            >
-              Buat Prediksi
-            </Button>
-          )}
-          
           <Button
             variant="ghost"
             size="sm"
@@ -436,6 +427,20 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
           </span>
         </div>
       </div>
+
+      {/* Make Prediction Button - Positioned Below Chart */}
+      {onPredictionClick && (
+        <div className="mt-4">
+          <Button 
+            onClick={onPredictionClick}
+            className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white py-3 text-lg font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+            size="lg"
+          >
+            <Target className="mr-2 h-5 w-5" />
+            Make Prediction
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
