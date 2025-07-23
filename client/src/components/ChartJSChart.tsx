@@ -210,7 +210,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
     layout: {
       padding: {
         top: 30,
-        right: 40, // Margin optimal untuk ruang yang efisien
+        right: 25, // Margin lebih kecil untuk efisiensi ruang maksimal
         bottom: 20,
         left: 10
       }
