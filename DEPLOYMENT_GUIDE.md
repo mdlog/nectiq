@@ -1,303 +1,389 @@
-# 🚀 Smart Contract Deployment Guide
+# Nectiq Platform Deployment Guide
 
-Panduan lengkap untuk deployment smart contract Nectiq ke testnet Holesky dan Sepolia.
+## Overview
 
-## 📋 Prerequisites
+This guide provides comprehensive instructions for deploying the Nectiq cryptocurrency prediction platform in production environments. The platform is optimized for Replit deployment with support for custom domains and scaling.
 
-### 1. Setup Environment
+## Prerequisites
+
+### System Requirements
+- Node.js 20.0.0 or higher
+- PostgreSQL database (Neon Database recommended)
+- Replit deployment environment
+- External API access for Pyth Network and Etherscan
+
+### Required Services
+- **Dynamic Labs Account**: For Web3 wallet authentication
+- **Neon Database**: For PostgreSQL hosting
+- **Firebase Project** (Optional): For email verification
+- **Etherscan API Key**: For blockchain transaction verification
+
+## Production Environment Setup
+
+### 1. Environment Variables Configuration
+
+Create production `.env` file with the following variables:
+
+```env
+# Database Configuration (Required)
+DATABASE_URL=postgresql://username:password@host:port/database
+PGHOST=your-neon-db-host
+PGPORT=5432
+PGUSER=your-neon-db-user
+PGPASSWORD=your-neon-db-password
+PGDATABASE=your-neon-db-name
+
+# Session Security (Required)
+SESSION_SECRET=your-super-secure-session-secret-at-least-32-chars
+
+# Web3 Authentication (Required)
+VITE_DYNAMIC_ENVIRONMENT_ID=bd026474-57a4-4b86-96c5-4897759d9b62
+VITE_WALLETCONNECT_PROJECT_ID=ba0e679a5831cee26576868ecd70fdbf
+
+# Admin Configuration (Required)
+ADMIN_WALLET_ADDRESSES=0x1234...,0x5678...
+ADMIN_PRIVATE_KEY=your-encrypted-admin-private-key
+
+# External APIs (Required)
+ETHERSCAN_API_KEY=FAJBQ6GECUEU2ZMKAQRH61XRCPQEIWKA7Z
+
+# Firebase Email Verification (Optional)
+VITE_FIREBASE_API_KEY=your-firebase-api-key
+VITE_FIREBASE_PROJECT_ID=nectiq
+VITE_FIREBASE_APP_ID=your-firebase-app-id
+
+# Runtime Environment
+NODE_ENV=production
+```
+
+### 2. Database Setup
+
+Initialize the production database:
+
+```bash
+# Push database schema to production
+npm run db:push
+
+# Generate TypeScript types
+npm run db:generate
+```
+
+### 3. Build Process
+
+Create production build:
+
 ```bash
 # Install dependencies
 npm install
 
-# Copy environment file
-cp .env.example .env
+# Build frontend and backend
+npm run build
+
+# Verify build files
+ls -la dist/
 ```
 
-### 2. Configure .env File
-```bash
-# Your wallet private key (NEVER commit this to git!)
-PRIVATE_KEY=your_private_key_here
+## Replit Deployment
 
-# RPC URLs (default sudah disediakan)
-HOLESKY_RPC_URL=https://ethereum-holesky.blockpi.network/v1/rpc/public
-SEPOLIA_RPC_URL=https://rpc.sepolia.org
+### 1. Replit Configuration
 
-# Etherscan API key (optional untuk verification)
-ETHERSCAN_API_KEY=your_etherscan_api_key
+The platform is optimized for Replit deployment with the following configuration:
+
+**replit.nix** (if applicable):
+```nix
+{ pkgs }: {
+  deps = [
+    pkgs.nodejs-20_x
+    pkgs.postgresql
+  ];
+}
 ```
 
-### 3. Get Testnet ETH
-
-#### Holesky Testnet
-- **Faucet 1**: https://holesky-faucet.pk910.de/
-- **Faucet 2**: https://cloud.google.com/application/web3/faucet/ethereum/holesky
-- **Min Balance**: 0.01 ETH untuk deployment
-
-#### Sepolia Testnet  
-- **Faucet 1**: https://sepoliafaucet.com/
-- **Faucet 2**: https://www.alchemy.com/faucets/ethereum-sepolia
-- **Min Balance**: 0.01 ETH untuk deployment
-
-## 🚀 Deployment Commands
-
-### Quick Deploy ke Holesky Testnet
-```bash
-npx hardhat run scripts/quick-deploy.cjs --network holesky
-```
-
-### Quick Deploy ke Sepolia Testnet
-```bash
-npx hardhat run scripts/quick-deploy.cjs --network sepolia
-```
-
-### Full Deploy dengan Testing
-```bash
-npx hardhat run scripts/deploy-testnet.cjs --network holesky
-npx hardhat run scripts/deploy-testnet.cjs --network sepolia
-```
-
-### Test Local Deployment
-```bash
-# Start local node
-npx hardhat node
-
-# Deploy to local (terminal baru)
-npx hardhat run scripts/deploy-simple.cjs --network localhost
-```
-
-## 📊 Deployment Process
-
-Deployment script akan melakukan:
-
-1. **✅ Deploy SimpleNTIQ Token**
-   - 1 miliar token supply
-   - Mint ke deployer wallet
-
-2. **✅ Deploy SimplePriceOracle**
-   - Price feed system
-   - Multi-feeder authorization
-
-3. **✅ Deploy SimplePredictionBattle**
-   - Core prediction logic
-   - Staking mechanism
-
-4. **✅ Initial Setup**
-   - Transfer 100k NTIQ untuk rewards
-   - Set harga awal 10 cryptocurrency
-   - Create test prediction
-
-5. **✅ Verification & Testing**
-   - Verify contract addresses
-   - Test basic functionality
-
-## 📋 Expected Output
-
-```bash
-🚀 Deploying to HOLESKY testnet...
-
-Deploying with account: 0x1234...
-Account balance: 0.05 ETH
-
-📋 DEPLOYMENT PLAN:
-1. Deploy SimpleNTIQ Token
-2. Deploy SimplePriceOracle  
-3. Deploy SimplePredictionBattle
-4. Setup initial configuration
-5. Create test prediction
-
-1️⃣ Deploying SimpleNTIQ Token...
-✅ SimpleNTIQ deployed to: 0xabc123...
-
-2️⃣ Deploying SimplePriceOracle...
-✅ SimplePriceOracle deployed to: 0xdef456...
-
-3️⃣ Deploying SimplePredictionBattle...
-✅ SimplePredictionBattle deployed to: 0x789xyz...
-
-4️⃣ Setting up initial configurations...
-✅ NTIQ transferred successfully
-✅ Initial prices set
-
-5️⃣ Creating test prediction...
-✅ Test prediction created
-
-🎉 DEPLOYMENT TO HOLESKY SUCCESSFUL!
-
-📋 CONTRACT ADDRESSES:
-SimpleNTIQ Token: 0xabc123...
-SimplePriceOracle: 0xdef456...
-SimplePredictionBattle: 0x789xyz...
-```
-
-## 🔧 Testing Deployment
-
-### Update Contract Addresses
-Setelah deployment, update addresses di `scripts/test-interaction.cjs`:
-
-```javascript
-const CONTRACT_ADDRESSES = {
-  holesky: {
-    SimpleNTIQ: "0xabc123...", // Address dari deployment
-    SimplePriceOracle: "0xdef456...", // Address dari deployment
-    SimplePredictionBattle: "0x789xyz..." // Address dari deployment
-  }
-};
-```
-
-### Run Tests
-```bash
-# Test di Holesky
-npx hardhat run scripts/test-interaction.cjs --network holesky
-
-# Test di Sepolia
-npx hardhat run scripts/test-interaction.cjs --network sepolia
-```
-
-## 🔍 Contract Verification
-
-### Manual Verification
-```bash
-# Verify SimpleNTIQ
-npx hardhat verify --network holesky 0xCONTRACT_ADDRESS
-
-# Verify SimplePriceOracle
-npx hardhat verify --network holesky 0xCONTRACT_ADDRESS
-
-# Verify SimplePredictionBattle
-npx hardhat verify --network holesky 0xCONTRACT_ADDRESS "0xNTIQ_ADDRESS" "0xORACLE_ADDRESS"
-```
-
-## 📱 Frontend Integration
-
-### Update Contract Addresses
-Update addresses di frontend configuration:
-
-```typescript
-const contracts = {
-  holesky: {
-    SimpleNTIQ: "0xabc123...",
-    SimplePriceOracle: "0xdef456...",
-    SimplePredictionBattle: "0x789xyz..."
-  },
-  sepolia: {
-    SimpleNTIQ: "0xabc123...",
-    SimplePriceOracle: "0xdef456...",
-    SimplePredictionBattle: "0x789xyz..."
-  }
-};
-```
-
-### Web3 Connection
-```typescript
-// Connect to Holesky
-const holesky = {
-  chainId: '0x4268', // 17000
-  chainName: 'Holesky Testnet',
-  rpcUrls: ['https://ethereum-holesky.blockpi.network/v1/rpc/public'],
-  blockExplorerUrls: ['https://holesky.etherscan.io']
-};
-
-// Connect to Sepolia
-const sepolia = {
-  chainId: '0xaa36a7', // 11155111
-  chainName: 'Sepolia Testnet', 
-  rpcUrls: ['https://rpc.sepolia.org'],
-  blockExplorerUrls: ['https://sepolia.etherscan.io']
-};
-```
-
-## 🛠️ Core Functions
-
-### Submit Prediction
-```solidity
-predictionBattle.submitPrediction(
-    "bitcoin",                    // cryptocurrency
-    ethers.utils.parseEther("45000"), // predicted price
-    ethers.utils.parseEther("100"),   // stake amount
-    3600                         // duration (1 hour)
-);
-```
-
-### Resolve Prediction (Oracle)
-```solidity
-predictionBattle.resolvePrediction(
-    1,                          // prediction ID
-    ethers.utils.parseEther("44000") // actual price
-);
-```
-
-### Claim Reward
-```solidity
-predictionBattle.claimReward(1); // prediction ID
-```
-
-## 🏆 Reward System
-
-- **Perfect (±0.1%)**: 5x multiplier
-- **High (±1%)**: 3x multiplier
-- **Medium (±5%)**: 2x multiplier  
-- **Low (±10%)**: 1.5x multiplier
-- **Base (>10%)**: 1x multiplier
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-1. **Insufficient Gas**
-   ```bash
-   Error: transaction underpriced
-   ```
-   **Solution**: Increase gas price di hardhat.config.cjs
-
-2. **Insufficient Balance**
-   ```bash
-   Error: insufficient funds for gas * price + value
-   ```
-   **Solution**: Get more testnet ETH dari faucet
-
-3. **Network Connection**
-   ```bash
-   Error: network connection timeout
-   ```
-   **Solution**: Check RPC URL atau ganti dengan backup RPC
-
-4. **Private Key Issues**
-   ```bash
-   Error: invalid private key
-   ```
-   **Solution**: Check format private key di .env (harus dimulai dengan 0x)
-
-### Gas Optimization
-
-```javascript
-// Di hardhat.config.cjs
-networks: {
-  holesky: {
-    gasPrice: 20000000000, // 20 gwei
-    gas: 5000000          // 5M gas limit
+**package.json scripts**:
+```json
+{
+  "scripts": {
+    "dev": "tsx server/index.ts",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "vite build",
+    "build:backend": "esbuild server/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/index.js",
+    "start": "node dist/index.js",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate"
   }
 }
 ```
 
-## 🔗 Useful Links
+### 2. Replit Secrets Configuration
 
-### Block Explorers
-- **Holesky**: https://holesky.etherscan.io
-- **Sepolia**: https://sepolia.etherscan.io
+Configure the following secrets in Replit:
 
-### Faucets
-- **Holesky**: https://holesky-faucet.pk910.de/
-- **Sepolia**: https://sepoliafaucet.com/
+- `DATABASE_URL`
+- `SESSION_SECRET`
+- `ADMIN_WALLET_ADDRESSES`
+- `ADMIN_PRIVATE_KEY`
+- `ETHERSCAN_API_KEY`
+- `VITE_DYNAMIC_ENVIRONMENT_ID`
+- `VITE_WALLETCONNECT_PROJECT_ID`
+- `VITE_FIREBASE_API_KEY` (optional)
+- `VITE_FIREBASE_PROJECT_ID` (optional)
+- `VITE_FIREBASE_APP_ID` (optional)
 
-### Documentation
-- **Hardhat**: https://hardhat.org/docs
-- **OpenZeppelin**: https://docs.openzeppelin.com/
+### 3. Replit Deployment Process
 
-## 📝 Next Steps
+1. **Push Code**: Push all code to Replit repository
+2. **Configure Secrets**: Set all required environment variables in Replit Secrets
+3. **Database Setup**: Run `npm run db:push` to initialize database
+4. **Start Application**: Run `npm run dev` for development or `npm start` for production
+5. **Domain Configuration**: Set up custom domain if required
 
-1. ✅ Deploy contracts ke testnet
-2. ✅ Verify contracts di Etherscan
-3. ✅ Test all functions
-4. ✅ Update frontend configuration
-5. ✅ Setup price oracle automation
-6. ✅ Create production deployment plan
+## Production Optimizations
+
+### Performance Configurations
+
+**Frontend Optimizations**:
+- Vite production build with minification
+- Code splitting for optimal loading
+- Asset optimization and compression
+- CDN integration for static assets
+
+**Backend Optimizations**:
+- ESBuild bundling for Node.js
+- Connection pooling for PostgreSQL
+- Redis caching (if implemented)
+- API response optimization
+
+### Security Configurations
+
+**Production Security Headers**:
+```javascript
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
+```
+
+**CORS Configuration**:
+```javascript
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-domain.com', 'https://your-replit-domain.replit.app']
+    : true,
+  credentials: true
+}));
+```
+
+## External Service Configuration
+
+### Dynamic Labs Setup
+
+1. **Environment Configuration**: 
+   - Environment ID: `bd026474-57a4-4b86-96c5-4897759d9b62`
+   - Configure supported wallets and networks
+
+2. **Domain Authorization**:
+   - Add production domain to Dynamic Labs settings
+   - Configure redirect URLs for wallet authentication
+
+### Firebase Configuration (Optional)
+
+1. **Project Setup**:
+   - Project ID: `nectiq`
+   - Enable Google Authentication
+
+2. **Domain Authorization**:
+   - Add production domain to Firebase Console
+   - Path: Authentication > Settings > Authorized domains
+
+### Neon Database Configuration
+
+1. **Connection Setup**:
+   - Configure connection pooling
+   - Set up read replicas if needed
+   - Configure backup schedules
+
+2. **Performance Optimization**:
+   - Enable connection pooling
+   - Configure database indexes
+   - Set up monitoring and alerts
+
+## Monitoring and Maintenance
+
+### Application Monitoring
+
+**Health Checks**:
+```javascript
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    services: {
+      database: 'connected',
+      pyth: 'operational',
+      admin: 'available'
+    }
+  });
+});
+```
+
+**Error Monitoring**:
+- Comprehensive error logging
+- Admin panel monitoring dashboard
+- Automated alert system for critical errors
+
+### Database Maintenance
+
+**Regular Tasks**:
+- Database backups (automated)
+- Index optimization
+- Query performance monitoring
+- Connection pool monitoring
+
+**Monitoring Queries**:
+```sql
+-- Check active connections
+SELECT count(*) FROM pg_stat_activity;
+
+-- Monitor slow queries
+SELECT query, mean_exec_time FROM pg_stat_statements 
+ORDER BY mean_exec_time DESC LIMIT 10;
+```
+
+## Scaling Considerations
+
+### Horizontal Scaling
+
+**Load Balancing**:
+- Multiple Replit instances
+- Session persistence configuration
+- Database connection distribution
+
+**Caching Strategy**:
+- Redis for session storage
+- API response caching
+- Static asset CDN
+
+### Performance Metrics
+
+**Key Metrics to Monitor**:
+- API response times
+- Database query performance
+- WebSocket connection stability
+- Price feed update frequency
+- User session management
+
+## Backup and Recovery
+
+### Database Backups
+
+**Automated Backups**:
+- Daily database backups via Neon
+- Transaction log backups
+- Point-in-time recovery capability
+
+**Backup Verification**:
+```bash
+# Test backup restoration
+pg_restore --verbose --clean --no-acl --no-owner -h localhost -U username -d test_db backup_file.sql
+```
+
+### Disaster Recovery
+
+**Recovery Procedures**:
+1. **Database Recovery**: Restore from latest backup
+2. **Application Recovery**: Redeploy from Git repository
+3. **Configuration Recovery**: Restore environment variables
+4. **Service Recovery**: Restart external service connections
+
+## Security Deployment Checklist
+
+### Pre-Deployment Security
+- [ ] All environment variables in Replit Secrets
+- [ ] Admin wallet addresses secured
+- [ ] API keys validated and active
+- [ ] Firebase domains authorized
+- [ ] SSL/TLS certificates configured
+
+### Post-Deployment Security
+- [ ] Admin panel accessibility verified
+- [ ] Wallet authentication tested
+- [ ] Financial transactions tested
+- [ ] Security monitoring active
+- [ ] Backup systems verified
+
+## Troubleshooting
+
+### Common Deployment Issues
+
+**Database Connection Issues**:
+```bash
+# Test database connection
+npx drizzle-kit introspect --config=drizzle.config.ts
+```
+
+**Environment Variable Issues**:
+```bash
+# Verify environment variables
+node -e "console.log(process.env.DATABASE_URL ? 'DB Connected' : 'DB Missing')"
+```
+
+**Build Issues**:
+```bash
+# Clear build cache
+rm -rf dist/ node_modules/.vite/
+npm install
+npm run build
+```
+
+### Performance Troubleshooting
+
+**Database Performance**:
+- Check connection pool status
+- Analyze slow query logs
+- Verify index usage
+
+**API Performance**:
+- Monitor response times
+- Check rate limiting status
+- Verify external API connectivity
+
+## Support and Maintenance
+
+### Regular Maintenance Tasks
+
+**Daily**:
+- Monitor application health
+- Check error logs
+- Verify financial transactions
+
+**Weekly**:
+- Database performance review
+- Security log analysis
+- Backup verification
+
+**Monthly**:
+- Dependency updates
+- Security audit
+- Performance optimization review
+
+### Support Channels
+
+**Technical Support**:
+- GitHub Issues for bugs
+- Documentation updates
+- Community support forums
+
+**Emergency Support**:
+- Critical security issues
+- Financial system problems
+- Database recovery needs
+
+---
+
+**Version**: 2.0  
+**Last Updated**: July 23, 2025  
+**Deployment Status**: Production Ready  
+**Next Review**: August 23, 2025

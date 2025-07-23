@@ -1,138 +1,226 @@
-# Admin Security Guide - Nectiq Platform
+# Admin Security Guide for Nectiq Platform
 
-## Masalah Keamanan yang Telah Diperbaiki
+## Overview
 
-### 1. Hardcoded Admin Wallet Address
-**Masalah:** Admin wallet address tersimpan langsung di source code (`simpleAuth.ts` dan `header.tsx`)
-**Risiko:** Alamat wallet admin terekspos kepada semua orang yang dapat melihat kode
+This guide provides comprehensive security instructions for administrators managing the Nectiq cryptocurrency prediction platform. It covers authentication, financial oversight, security monitoring, and emergency procedures.
 
-### 2. Solusi Multi-Layer Security yang Diimplementasikan
+## Admin Authentication
 
-#### Layer 1: Environment Variables (Primary)
-```bash
-# Di file .env (TIDAK di-commit ke Git)
-ADMIN_WALLETS=0x4c6165286739696849fb3e77a16b0639d762c5b6,0xWallet2,0xWallet3
-ADMIN_SECRET_KEY=your_super_secret_admin_key_here
+### Multi-Wallet Admin System
+The platform supports multiple admin wallet addresses for redundancy and security:
+
+```env
+ADMIN_WALLET_ADDRESSES=0x1234...,0x5678...,0x9abc...
 ```
 
-**Keuntungan:**
-- Admin wallets tersembunyi dari source code
-- Dapat menambah/mengurangi admin tanpa mengubah kode
-- Secret key untuk enkripsi tambahan
+### Admin Access Requirements
+1. **Wallet Authentication**: Must connect with approved admin wallet address
+2. **Session Validation**: Continuous session verification during admin activities
+3. **Dynamic Labs Integration**: Admin wallets authenticated through Dynamic Labs system
+4. **IP Monitoring**: Admin IP addresses logged and monitored for security
 
-#### Layer 2: Database-Based Admin Management
-```typescript
-// System otomatis mengecek isAdmin dari database
-const user = await storage.getUserByWalletAddress(walletAddress);
-if (user && user.isAdmin) {
-  return true;
-}
+### Best Practices for Admin Wallets
+- Use hardware wallets (Ledger, Trezor) for admin addresses
+- Never share admin wallet private keys
+- Use different admin wallets for different responsibilities
+- Regularly rotate admin wallet addresses
+- Keep admin wallet addresses confidential
+
+## Financial Security Management
+
+### Automated Withdrawal System
+The platform includes automated withdrawal processing with the following security features:
+
+```env
+ADMIN_PRIVATE_KEY=your-encrypted-private-key-for-automated-withdrawals
 ```
 
-**Keuntungan:**
-- Kontrol admin melalui database
-- Dapat mengatur admin melalui Admin Panel
-- Audit trail untuk perubahan admin
+**Security Requirements:**
+- Private key stored in encrypted environment variables
+- Automated processing limited to ≤$500 USD transactions
+- Higher value withdrawals require manual admin approval
+- All automated withdrawals logged with complete audit trail
 
-#### Layer 3: Emergency Fallback (Encrypted)
-```typescript
-// Hanya untuk akses darurat dengan log warning
-const emergencyAdmin = '0x4c6165286739696849fb3e77a16b0639d762c5b6';
-if (normalizedAddress === emergencyAdmin.toLowerCase()) {
-  console.warn('🔒 Emergency admin access used - Review security logs');
-  return true;
-}
+### Deposit Monitoring
+- **Real-time Verification**: Deposits verified via Etherscan API
+- **Countdown Timers**: 1-hour expiry prevents deposit abuse
+- **Status Tracking**: Automated monitoring of deposit confirmations
+- **Balance Validation**: Continuous validation against blockchain data
+
+### Fraud Detection Controls
+- **Pattern Analysis**: Automated detection of suspicious transaction patterns
+- **IP Monitoring**: Real-time tracking of user IP addresses and locations
+- **Rate Limiting**: Prevention of excessive API requests and abuse
+- **Blacklist Management**: Dynamic IP blacklisting for malicious actors
+
+## Admin Panel Security Features
+
+### User Management Security
+- **Complete User Oversight**: View and manage all user accounts
+- **Email Verification Tracking**: Monitor Firebase email verification status
+- **Activity Monitoring**: Track user login patterns and suspicious behavior
+- **Account Controls**: Ability to suspend or restrict user accounts
+
+### Financial Oversight Dashboard
+- **Transaction Monitoring**: Real-time visibility into all platform transactions
+- **Balance Validation**: Automated checks for balance consistency
+- **Deposit/Withdrawal Tracking**: Complete financial transaction oversight
+- **Audit Trail Access**: Full access to transaction logs and history
+
+### Security Monitoring Tools
+- **Real-time Security Events**: Live monitoring of security threats and incidents
+- **IP Blacklist Management**: Dynamic blocking and management of malicious IPs
+- **User Activity Analysis**: Comprehensive tracking of user behavior patterns
+- **Alert Configuration**: Customizable thresholds for security notifications
+
+## Emergency Procedures
+
+### Security Incident Response
+1. **Immediate Assessment**: Evaluate threat level and scope
+2. **Automatic Protection**: System automatically blocks suspicious IPs
+3. **Manual Intervention**: Admin can manually block users or IPs
+4. **Investigation Tools**: Access to comprehensive audit logs
+5. **Recovery Procedures**: Restore normal operations after incident resolution
+
+### Emergency Admin Actions
+- **User Account Suspension**: Temporarily disable suspicious accounts
+- **IP Blacklisting**: Block malicious IP addresses immediately
+- **Transaction Freezing**: Halt specific financial operations if needed
+- **System Monitoring**: Enhanced monitoring during security incidents
+
+### Financial Emergency Procedures
+- **Withdrawal Suspension**: Temporarily disable withdrawal processing
+- **Balance Freezing**: Lock user balances during investigations
+- **Transaction Reversal**: Procedures for handling fraudulent transactions
+- **Audit Trail Preservation**: Maintain complete records during incidents
+
+## Security Monitoring Best Practices
+
+### Daily Security Tasks
+1. **Review Security Events**: Check overnight security alerts and incidents
+2. **Monitor Financial Transactions**: Verify all deposits and withdrawals
+3. **Check User Activity**: Review unusual login patterns or behavior
+4. **Validate System Health**: Ensure all security systems operational
+
+### Weekly Security Reviews
+1. **Audit Log Analysis**: Comprehensive review of security and transaction logs
+2. **IP Blacklist Review**: Evaluate and update blocked IP addresses
+3. **User Account Review**: Check for suspicious or inactive accounts
+4. **Security System Testing**: Verify all automated security features
+
+### Monthly Security Assessments
+1. **Comprehensive Security Audit**: Full review of all security measures
+2. **Access Control Review**: Verify admin access controls and permissions
+3. **Financial Reconciliation**: Complete validation of platform finances
+4. **Security Policy Updates**: Review and update security procedures
+
+## Admin Panel Access Guide
+
+### Initial Setup
+1. **Environment Configuration**: Ensure ADMIN_WALLET_ADDRESSES properly configured
+2. **Wallet Connection**: Connect admin wallet through Dynamic Labs
+3. **Session Establishment**: Verify admin session authentication
+4. **Security Verification**: Confirm access to all admin features
+
+### Navigation and Features
+- **Dashboard**: Overview of platform statistics and alerts
+- **User Management**: Complete user account oversight and controls
+- **Financial**: Deposit, withdrawal, and transaction monitoring
+- **Security**: Real-time security monitoring and incident management
+- **System**: Platform configuration and maintenance tools
+
+### Security Features Access
+- **Real-time Monitoring**: Live security event tracking and alerts
+- **IP Management**: Blacklist management and IP blocking tools
+- **Audit Logs**: Complete access to security and transaction logs
+- **Emergency Controls**: Immediate response tools for security incidents
+
+## Security Configuration Requirements
+
+### Environment Variables
+```env
+# Admin Authentication
+ADMIN_WALLET_ADDRESSES=comma,separated,admin,addresses
+ADMIN_PRIVATE_KEY=encrypted-private-key-for-automated-features
+
+# API Security
+ETHERSCAN_API_KEY=verified-etherscan-api-key
+SESSION_SECRET=secure-session-encryption-key
+
+# External Services
+VITE_DYNAMIC_ENVIRONMENT_ID=dynamic-labs-environment-id
+VITE_WALLETCONNECT_PROJECT_ID=walletconnect-project-id
 ```
 
-**Keuntungan:**
-- Akses darurat jika environment/database bermasalah
-- Warning log untuk monitoring
-- Hanya digunakan sebagai last resort
+### Security Headers Configuration
+Ensure the following security headers are properly configured:
+- **X-Frame-Options**: DENY
+- **X-Content-Type-Options**: nosniff
+- **X-XSS-Protection**: 1; mode=block
+- **Strict-Transport-Security**: max-age=31536000
+- **Content-Security-Policy**: Restrictive XSS prevention policy
 
-## Cara Penggunaan
+## Incident Documentation
 
-### 1. Setup Environment Variables
-```bash
-# Buat file .env di root project
-cp .env.example .env
+### Security Event Logging
+All security events are automatically logged with:
+- **Timestamp**: Exact time of security event
+- **IP Address**: Source IP address of the event
+- **User Information**: Associated user account (if applicable)
+- **Event Type**: Classification of security event
+- **Action Taken**: Automated or manual response actions
 
-# Edit .env dan tambahkan:
-ADMIN_WALLETS=0xYourAdminWallet1,0xYourAdminWallet2
-ADMIN_SECRET_KEY=GenerateStrongSecretKey123
-```
+### Financial Transaction Logging
+Complete audit trail maintained for:
+- **Deposits**: Amount, source address, confirmation status
+- **Withdrawals**: Amount, destination address, approval status
+- **Balance Changes**: All balance modifications with reasons
+- **Admin Actions**: All administrative financial interventions
 
-### 2. Tambah Admin Baru
-**Metode 1 - Environment:**
-```bash
-# Edit .env
-ADMIN_WALLETS=0xExisting,0xNewAdminWallet
-```
+## Security Alert Configuration
 
-**Metode 2 - Database:**
-```sql
-UPDATE users SET isAdmin = true WHERE walletAddress = '0xNewAdminWallet';
-```
+### Critical Alerts (Immediate Response Required)
+- **Failed Admin Login Attempts**: Multiple failed admin authentication attempts
+- **Suspicious Financial Activity**: Large or unusual transaction patterns
+- **System Security Breaches**: Unauthorized access attempts
+- **Automated System Failures**: Failure of automated security systems
 
-### 3. Hapus Admin
-**Metode 1 - Environment:**
-```bash
-# Hapus dari ADMIN_WALLETS di .env
-ADMIN_WALLETS=0xOnlyThisAdminNow
-```
+### Warning Alerts (Review Required)
+- **User Account Anomalies**: Unusual user behavior patterns
+- **IP Address Changes**: Frequent IP address changes for users
+- **API Rate Limit Violations**: Excessive API usage patterns
+- **Financial Discrepancies**: Minor balance or transaction inconsistencies
 
-**Metode 2 - Database:**
-```sql
-UPDATE users SET isAdmin = false WHERE walletAddress = '0xOldAdminWallet';
-```
+## Regular Maintenance Tasks
 
-## Security Best Practices
+### Security System Maintenance
+- **Log Rotation**: Regular cleanup of old security logs
+- **Database Optimization**: Maintain security database performance
+- **System Updates**: Keep security systems updated
+- **Backup Verification**: Ensure security data backups are current
 
-### 1. Environment Variables
-- **JANGAN** commit file `.env` ke Git
-- Gunakan `.env.example` untuk template
-- Generate secret key yang kuat
-- Rotasi secret key secara berkala
+### Admin Account Maintenance
+- **Access Review**: Regular review of admin access permissions
+- **Wallet Security**: Verify admin wallet security and availability
+- **Session Management**: Monitor admin session security and expiry
+- **Authentication Testing**: Regular testing of admin authentication systems
 
-### 2. Database Security
-- Audit log semua perubahan admin
-- Backup database secara rutin
-- Monitor akses admin suspicious
+## Support and Escalation
 
-### 3. Monitoring & Logging
-- Monitor log untuk "Emergency admin access"
-- Alert untuk login admin di jam tidak biasa
-- Track semua aktivitas admin
+### Technical Support
+- **Platform Issues**: Direct access to platform technical support
+- **Security Concerns**: Immediate escalation channels for security issues
+- **Emergency Contacts**: 24/7 emergency response for critical incidents
 
-## Implementasi Frontend
+### Escalation Procedures
+1. **Level 1**: Automated system response and basic admin intervention
+2. **Level 2**: Manual admin investigation and response
+3. **Level 3**: Emergency escalation to development team
+4. **Level 4**: External security expert consultation if required
 
-### Before (Tidak Aman)
-```typescript
-// Hardcoded admin check
-{address?.toLowerCase() === "0x4C6165286739696849Fb3e77A16b0639D762c5B6".toLowerCase() && (
-  <AdminButton />
-)}
-```
+---
 
-### After (Aman)
-```typescript
-// Dynamic admin check dari API
-{user?.isAdmin && (
-  <AdminButton />
-)}
-```
-
-## Keuntungan Solusi Baru
-
-1. **Scalability:** Mudah menambah/kurangi admin
-2. **Security:** Tidak ada hardcoded sensitive data
-3. **Flexibility:** Multiple layer authentication
-4. **Monitoring:** Comprehensive logging
-5. **Recovery:** Emergency access masih tersedia
-6. **Audit:** Database audit trail
-
-## Catatan Penting
-
-- Environment variables harus di-setup di production
-- Test semua layer authentication sebelum deploy
-- Monitor log security secara rutin
-- Backup konfigurasi admin secara berkala
+**Document Version**: 2.0  
+**Last Updated**: July 23, 2025  
+**Classification**: CONFIDENTIAL - Admin Use Only  
+**Next Review**: August 23, 2025

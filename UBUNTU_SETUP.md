@@ -1,215 +1,255 @@
-# Panduan Setup Nectiq di Ubuntu VPS Server
+# Ubuntu Server Setup Guide for Nectiq Platform
 
-## 0. VPS Initial Setup
+## Overview
 
-### SSH ke VPS dan Update System
+This guide provides comprehensive instructions for setting up the Nectiq cryptocurrency prediction platform on Ubuntu server (18.04 LTS or higher). It covers both development and production deployment scenarios.
+
+## Prerequisites
+
+### System Requirements
+
+**Minimum Requirements**:
+- Ubuntu 18.04 LTS or higher (20.04/22.04 recommended)
+- 2 GB RAM (4 GB recommended for production)
+- 20 GB disk space (50 GB recommended for production)
+- Internet connection for package installation
+
+**Recommended Server Specifications**:
+- Ubuntu 22.04 LTS
+- 4 GB RAM
+- 50 GB SSD storage
+- 2 CPU cores
+- Static IP address
+- Domain name (for production)
+
+### User Account Setup
+
+**Create Non-Root User**:
 ```bash
-# SSH ke VPS dengan IP dan user root/ubuntu
-ssh root@YOUR_VPS_IP
-# atau
-ssh ubuntu@YOUR_VPS_IP
+# Create new user
+sudo adduser nectiq
 
-# Update system pertama kali
-sudo apt update && sudo apt upgrade -y
+# Add user to sudo group
+sudo usermod -aG sudo nectiq
 
-# Install tools essential
-sudo apt install -y curl wget git unzip nano htop ufw fail2ban
+# Switch to new user
+su - nectiq
 ```
 
-### Konfigurasi Firewall (UFW)
+## System Update and Basic Setup
+
+### Update System Packages
+
 ```bash
-# Enable firewall
+# Update package lists
+sudo apt update
+
+# Upgrade existing packages
+sudo apt upgrade -y
+
+# Install essential packages
+sudo apt install -y curl wget git vim ufw software-properties-common
+```
+
+### Configure Firewall
+
+```bash
+# Enable UFW firewall
 sudo ufw enable
 
-# Allow SSH (pastikan jangan sampai terkunci)
+# Allow SSH access
 sudo ufw allow ssh
-sudo ufw allow 22
 
-# Allow HTTP dan HTTPS untuk web access
+# Allow HTTP and HTTPS
 sudo ufw allow 80
 sudo ufw allow 443
 
-# Allow port aplikasi (5000)
+# Allow custom application port (if needed)
 sudo ufw allow 5000
 
-# Check status
-sudo ufw status verbose
+# Check firewall status
+sudo ufw status
 ```
 
-### Setup Swap (untuk VPS kecil)
+### Configure Swap (Optional but Recommended)
+
 ```bash
-# Buat swap 2GB (adjust sesuai kebutuhan)
+# Create 2GB swap file
 sudo fallocate -l 2G /swapfile
+
+# Set swap file permissions
 sudo chmod 600 /swapfile
+
+# Set up swap area
 sudo mkswap /swapfile
+
+# Enable swap file
 sudo swapon /swapfile
 
-# Make permanent
+# Make swap permanent
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
-# Verify
+# Verify swap is active
 free -h
 ```
 
-## 1. Prerequisites dan Installation
+## Install Node.js
 
-### Install Node.js 20
+### Install Node.js 20.x
+
 ```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install Node.js 20
+# Add NodeSource repository
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
 
-# Verify
-node --version  # Should be v20.x.x
+# Install Node.js
+sudo apt install -y nodejs
+
+# Verify installation
+node --version
 npm --version
+
+# Install global packages
+sudo npm install -g pm2 typescript tsx
 ```
 
+## Install and Configure PostgreSQL
+
 ### Install PostgreSQL
+
 ```bash
 # Install PostgreSQL
-sudo apt install postgresql postgresql-contrib -y
+sudo apt install -y postgresql postgresql-contrib
 
-# Start dan enable service
+# Start and enable PostgreSQL
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
-# Verify status
+# Check PostgreSQL status
 sudo systemctl status postgresql
 ```
 
-## 2. Database Setup
+### Configure PostgreSQL Database
 
-### Create Database dan User
 ```bash
-# Switch ke postgres user
+# Switch to postgres user
 sudo -u postgres psql
 
-# Jalankan command berikut di PostgreSQL prompt:
+# Create database and user (in PostgreSQL shell)
+CREATE DATABASE nectiq_db;
 CREATE USER nectiq_user WITH PASSWORD 'nectiq_password_2024';
-CREATE DATABASE nectiq_db OWNER nectiq_user;
 GRANT ALL PRIVILEGES ON DATABASE nectiq_db TO nectiq_user;
-GRANT ALL PRIVILEGES ON SCHEMA public TO nectiq_user;
-ALTER USER nectiq_user CREATEDB;
 \q
-```
 
-### Test Database Connection
-```bash
+# Test database connection
 psql -h localhost -U nectiq_user -d nectiq_db -c "SELECT version();"
-# Password: nectiq_password_2024
 ```
 
-## 3. Project Setup
+## Application Setup
 
-### Extract dan Install Dependencies
+### Clone Repository
+
 ```bash
-# Extract project
+# Navigate to home directory
 cd ~
-unzip nectiq.zip
-cd CryptoPredictorBattle
+
+# Clone repository (replace with your repository URL)
+git clone https://github.com/your-username/nectiq-platform.git
+
+# Navigate to project directory
+cd nectiq-platform
 
 # Install dependencies
 npm install
-
-# Install additional packages for local PostgreSQL
-npm install pg @types/pg
 ```
 
 ### Environment Configuration
+
+**Create Environment File**:
 ```bash
-# Create .env file untuk production
-cat > .env << 'EOF'
+# Copy example environment file
+cp .env.example .env
+
+# Edit environment file
+nano .env
+```
+
+**Environment Variables Configuration**:
+```env
 # Database Configuration
 DATABASE_URL=postgresql://nectiq_user:nectiq_password_2024@localhost:5432/nectiq_db
+PGHOST=localhost
+PGPORT=5432
+PGUSER=nectiq_user
+PGPASSWORD=nectiq_password_2024
+PGDATABASE=nectiq_db
 
-# Session Secret (GANTI dengan secret yang aman!)
-SESSION_SECRET=nectiq_super_secret_session_key_2024_very_long_and_secure
+# Session Security
+SESSION_SECRET=your-super-secure-session-secret-minimum-32-characters
 
-# Environment (ubah ke production setelah testing)
+# Web3 Authentication
+VITE_DYNAMIC_ENVIRONMENT_ID=your-dynamic-environment-id
+VITE_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
+
+# Admin Configuration
+ADMIN_WALLET_ADDRESSES=0x1234...,0x5678...
+ADMIN_PRIVATE_KEY=your-encrypted-admin-private-key
+
+# External APIs
+ETHERSCAN_API_KEY=your-etherscan-api-key
+
+# Firebase (Optional)
+VITE_FIREBASE_API_KEY=your-firebase-api-key
+VITE_FIREBASE_PROJECT_ID=nectiq
+VITE_FIREBASE_APP_ID=your-firebase-app-id
+
+# Runtime Environment
 NODE_ENV=production
-
-# Admin Wallet Addresses (atur wallet admin)
-ADMIN_WALLET_ADDRESSES=0x4C6165286739696849Fb3e77A16b0639D762c5B6,0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4
-
-# Server Configuration
-PORT=5000
-HOST=0.0.0.0
-
-# API Keys (opsional tapi direkomendasikan)
-COINGECKO_API_KEY=your_coingecko_api_key_here
-ETHERSCAN_API_KEY=your_etherscan_api_key_here
-
-# Blockchain RPC URLs (untuk withdrawal system)
-SEPOLIA_RPC_URL=https://eth-sepolia.public.blastapi.io
-ETHEREUM_MAINNET_RPC_URL=https://eth-mainnet.public.blastapi.io
-
-# WalletConnect Project ID (untuk Web3 integration)
-VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
-
-# Admin Private Key (untuk automated withdrawals - KEEP SECRET!)
-ADMIN_PRIVATE_KEY=your_admin_private_key_here
-EOF
-
-# Set proper permissions untuk file .env
-chmod 600 .env
 ```
 
-### Network Configuration & API Testing
-```bash
-# Check internet connection
-ping -c 3 8.8.8.8
-
-# Test Pyth Network API (primary price feed)
-curl "https://hermes.pyth.network/v2/updates/price/latest?ids%5B%5D=0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
-
-# Test CoinGecko API (for cryptocurrency logos)
-curl -H "User-Agent: Nectiq-App/1.0" "https://api.coingecko.com/api/v3/ping"
-
-# If blocked by firewall, configure DNS
-echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
-echo "nameserver 8.8.4.4" | sudo tee -a /etc/resolv.conf
-```
-
-## 4. Database Schema Setup
+### Database Setup
 
 ```bash
-# Push schema to database
+# Initialize database schema
 npm run db:push
 
-# Verify tables created
-psql -h localhost -U nectiq_user -d nectiq_db -c "\dt"
+# Generate TypeScript types
+npm run db:generate
+
+# Verify database setup
+npm run db:introspect
 ```
 
-## 5. Production Setup dengan PM2 Process Manager
+## Application Deployment
 
-### Install PM2
+### Build Application
+
 ```bash
-# Install PM2 globally
-npm install -g pm2
-
-# Build aplikasi untuk production
+# Build frontend and backend
 npm run build
 
-# Verify build folder
+# Verify build files
 ls -la dist/
 ```
 
-### Create PM2 Configuration
+### Configure PM2 Process Manager
+
+**Create PM2 Ecosystem File**:
 ```bash
-# Create ecosystem file untuk PM2 (CommonJS format untuk compatibility)
-cat > ecosystem.config.cjs << 'EOF'
+# Create ecosystem configuration
+nano ecosystem.config.cjs
+```
+
+**PM2 Configuration**:
+```javascript
 module.exports = {
   apps: [{
-    name: 'nectiq-app',
-    script: './dist/index.js',
+    name: 'nectiq-platform',
+    script: 'dist/index.js',
     instances: 1,
-    exec_mode: 'cluster',
     autorestart: true,
     watch: false,
     max_memory_restart: '1G',
+    env_file: '.env',
     env: {
       NODE_ENV: 'production',
       PORT: 5000
@@ -220,55 +260,63 @@ module.exports = {
     time: true
   }]
 };
-EOF
+```
 
+### Start Application with PM2
+
+```bash
 # Create logs directory
 mkdir -p logs
-```
 
-### Start dengan PM2
-```bash
-# Start application dengan .cjs file
+# Start application
 pm2 start ecosystem.config.cjs
 
-# Check status
+# Check application status
 pm2 status
 
-# View logs
-pm2 logs nectiq-app
+# View application logs
+pm2 logs nectiq-platform
 
-# Setup auto-start on boot
-pm2 startup
+# Save PM2 configuration
 pm2 save
+
+# Generate startup script
+pm2 startup
+# Follow the instructions provided by PM2
 ```
 
-## 6. Nginx Reverse Proxy dan SSL
+## Web Server Configuration (Nginx)
 
 ### Install Nginx
+
 ```bash
 # Install Nginx
-sudo apt install nginx -y
+sudo apt install -y nginx
 
-# Start dan enable
+# Start and enable Nginx
 sudo systemctl start nginx
 sudo systemctl enable nginx
 
-# Check status
+# Check Nginx status
 sudo systemctl status nginx
 ```
 
-### Konfigurasi Nginx untuk Nectiq
+### Configure Nginx Virtual Host
+
 ```bash
-# Create Nginx config untuk Nectiq
-sudo tee /etc/nginx/sites-available/nectiq << 'EOF'
+# Create Nginx configuration
+sudo nano /etc/nginx/sites-available/nectiq-platform
+```
+
+**Nginx Configuration**:
+```nginx
 server {
     listen 80;
-    server_name YOUR_DOMAIN.com www.YOUR_DOMAIN.com;
+    server_name your-domain.com www.your-domain.com;
 
-    # Redirect HTTP ke HTTPS (setelah SSL setup)
+    # Redirect HTTP to HTTPS (after SSL setup)
     # return 301 https://$server_name$request_uri;
 
-    # Sementara direct proxy ke aplikasi
     location / {
         proxy_pass http://localhost:5000;
         proxy_http_version 1.1;
@@ -279,456 +327,367 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 300;
-        proxy_connect_timeout 300;
-        proxy_send_timeout 300;
     }
 
-    # Serve static files (jika ada)
-    location /static/ {
-        alias /var/www/nectiq/static/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 }
-EOF
+```
 
+**Enable Site Configuration**:
+```bash
 # Enable site
-sudo ln -s /etc/nginx/sites-available/nectiq /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/nectiq-platform /etc/nginx/sites-enabled/
 
 # Remove default site
 sudo rm /etc/nginx/sites-enabled/default
 
-# Test configuration
+# Test Nginx configuration
 sudo nginx -t
 
 # Reload Nginx
 sudo systemctl reload nginx
 ```
 
-### Setup SSL dengan Let's Encrypt (untuk domain)
+## SSL Certificate Setup (Let's Encrypt)
+
+### Install Certbot
+
 ```bash
 # Install Certbot
-sudo apt install certbot python3-certbot-nginx -y
+sudo apt install -y certbot python3-certbot-nginx
 
-# Ganti YOUR_DOMAIN.com dengan domain sebenarnya
-sudo certbot --nginx -d YOUR_DOMAIN.com -d www.YOUR_DOMAIN.com
+# Obtain SSL certificate
+sudo certbot --nginx -d your-domain.com -d www.your-domain.com
 
-# Test auto-renewal
+# Test automatic renewal
 sudo certbot renew --dry-run
-
-# Setup auto-renewal cron job
-echo "0 12 * * * /usr/bin/certbot renew --quiet" | sudo crontab -
 ```
 
-## 7. Monitoring dan Maintenance
+### Configure Automatic SSL Renewal
 
-### Setup Log Rotation
 ```bash
-# Create logrotate config untuk PM2 logs
-sudo tee /etc/logrotate.d/nectiq << 'EOF'
-/home/ubuntu/CryptoPredictorBattle/logs/*.log {
+# Add renewal cron job
+sudo crontab -e
+
+# Add this line to run renewal twice daily
+0 12 * * * /usr/bin/certbot renew --quiet
+```
+
+## System Monitoring and Maintenance
+
+### Configure Log Rotation
+
+```bash
+# Create logrotate configuration
+sudo nano /etc/logrotate.d/nectiq-platform
+```
+
+**Log Rotation Configuration**:
+```
+/home/nectiq/nectiq-platform/logs/*.log {
     daily
     missingok
-    rotate 30
+    rotate 52
     compress
     delaycompress
     notifempty
-    create 644 ubuntu ubuntu
+    create 644 nectiq nectiq
     postrotate
-        pm2 reloadLogs
+        pm2 reload nectiq-platform
     endscript
 }
-EOF
 ```
 
-### Monitoring Commands
-```bash
-# Check application status
-pm2 status
-pm2 monit
+### System Monitoring
 
-# Check system resources
+**Install monitoring tools**:
+```bash
+# Install system monitoring tools
+sudo apt install -y htop iotop nethogs
+
+# Monitor system resources
 htop
+
+# Monitor disk usage
 df -h
-free -h
 
-# Check logs
-pm2 logs nectiq-app --lines 50
-tail -f logs/combined.log
-
-# Check database connections
-sudo netstat -tulpn | grep :5432
-psql -h localhost -U nectiq_user -d nectiq_db -c "SELECT count(*) FROM users;"
-
-# Check Nginx access logs
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
+# Monitor network connections
+netstat -tulpn
 ```
 
-### Backup Automation
-```bash
-# Create backup script
-cat > backup-script.sh << 'EOF'
-#!/bin/bash
-BACKUP_DIR="/home/ubuntu/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
+### Database Backup Setup
 
+**Create Backup Script**:
+```bash
 # Create backup directory
-mkdir -p $BACKUP_DIR
+mkdir -p ~/backups
 
-# Database backup
-pg_dump -h localhost -U nectiq_user -d nectiq_db > $BACKUP_DIR/nectiq_db_$DATE.sql
-
-# Application backup
-tar -czf $BACKUP_DIR/nectiq_app_$DATE.tar.gz /home/ubuntu/CryptoPredictorBattle --exclude=node_modules --exclude=logs
-
-# Keep only last 7 days of backups
-find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
-find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
-
-echo "Backup completed: $DATE"
-EOF
-
-# Make executable
-chmod +x backup-script.sh
-
-# Setup daily backup cron job
-echo "0 2 * * * /home/ubuntu/CryptoPredictorBattle/backup-script.sh" | crontab -
+# Create backup script
+nano ~/backup-database.sh
 ```
 
-## 8. Access Points
-
-### Jika menggunakan IP langsung:
-- **Main Application**: http://YOUR_VPS_IP:5000
-- **Admin Panel**: http://YOUR_VPS_IP:5000/admin
-
-### Jika menggunakan Nginx + Domain:
-- **Main Application**: https://YOUR_DOMAIN.com
-- **Admin Panel**: https://YOUR_DOMAIN.com/admin
-
-### Jika menggunakan Nginx tanpa SSL:
-- **Main Application**: http://YOUR_DOMAIN.com
-- **Admin Panel**: http://YOUR_DOMAIN.com/admin
-
-## 9. Admin Access Setup
-
-### Default Admin Wallets (sesuai .env)
-Aplikasi menggunakan wallet admin yang dikonfigurasi di environment variables:
-```
-ADMIN_WALLET_ADDRESSES=0x4C6165286739696849Fb3e77A16b0639D762c5B6,0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4
-```
-
-### Create Manual Admin User (jika diperlukan)
+**Backup Script Content**:
 ```bash
-# Connect to database
-psql -h localhost -U nectiq_user -d nectiq_db
+#!/bin/bash
 
-# Insert admin user dengan wallet address yang sesuai .env
-INSERT INTO users (username, wallet_address, is_admin, balance, auth_method) 
-VALUES ('admin_production', '0x4C6165286739696849Fb3e77A16b0639D762c5B6', true, 10000, 'wallet');
-\q
+# Database backup script
+BACKUP_DIR="/home/nectiq/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="nectiq_db_backup_$DATE.sql"
+
+# Create backup
+pg_dump -h localhost -U nectiq_user -d nectiq_db > "$BACKUP_DIR/$BACKUP_FILE"
+
+# Compress backup
+gzip "$BACKUP_DIR/$BACKUP_FILE"
+
+# Remove backups older than 7 days
+find "$BACKUP_DIR" -name "nectiq_db_backup_*.sql.gz" -mtime +7 -delete
+
+echo "Database backup completed: $BACKUP_FILE.gz"
 ```
 
-## 10. Pyth Network Integration Status
-
-### Sistem Pricing Architecture
-Nectiq platform menggunakan sistem pricing hibrida:
-
-1. **Pyth Network (Primary)**: Real-time institutional-grade price feeds
-   - 14 cryptocurrency yang didukung dengan Pyth Feed IDs
-   - Update sub-detik dengan confidence intervals
-   - Endpoint: `/api/crypto/pyth-prices`
-
-2. **CoinGecko API (Secondary)**: Cryptocurrency logos dan metadata
-   - Automatic logo fetching untuk cryptocurrency baru
-   - Image URL validation system
-   - Endpoint untuk admin panel management
-
-### Unified Pricing Architecture
-```
-getRealTimePrice() Function
-├── Live Pyth Network Data (Primary)
-├── Database Cache (Fallback)
-└── Synchronized across ALL components:
-    ├── Battle Cards
-    ├── Tournament Cards
-    ├── Survival Games
-    ├── Live Prices Display
-    └── Prediction Forms
-```
-
-### Testing Pyth Network Integration
+**Make Script Executable and Schedule**:
 ```bash
-# Test Pyth Network API endpoint
-curl "http://localhost:5000/api/crypto/pyth-prices"
+# Make backup script executable
+chmod +x ~/backup-database.sh
 
-# Expected output: JSON array dengan 14 cryptocurrencies
-# Example: [{"id":"bitcoin","symbol":"BTC","name":"Bitcoin","price":118522.44,...}]
+# Add to crontab for daily backups
+crontab -e
 
-# Check server logs untuk Pyth Network status
-pm2 logs nectiq-app | grep PYTH
-
-# Expected logs:
-# ✅ [PYTH] Successfully fetched 14 prices from Pyth Network
-# 🔚 [PYTH] ENDPOINT COMPLETE: /api/crypto/pyth-prices
+# Add this line for daily backup at 2 AM
+0 2 * * * /home/nectiq/backup-database.sh
 ```
 
-### Supported Cryptocurrencies (Pyth Network)
-1. Bitcoin (BTC) - 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43
-2. Ethereum (ETH) - 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace
-3. Solana (SOL) - 0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d
-4. BNB (BNB) - 0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f
-5. Cardano (ADA) - 0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d
-6. Chainlink (LINK) - 0x8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221
-7. Litecoin (LTC) - 0x6e3f3fa8253588df9326580180233eb791e03b443a3ba7a1d892e73874e19a54
-8. Avalanche (AVAX) - 0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7
-9. Bitcoin Cash (BCH) - 0x3dd2b63686a450ec7077725977b07bf6f4e5cffa9a6c8bb8e0b7c8f42c87e4cf
-10. Ethereum Classic (ETC) - 0x7f5dc7b69e65e46a52c5f88bbde2ddac8bb8b67169e6d3c3d3a5d4e6b8c6b8
-11. Aptos (APT) - 0x03ae4db29ed4ae33d323568895aa00337e658e348b37509f5372ae51f0af00d5
-12. Sui (SUI) - 0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744
-13. Hyperliquid (HYPE) - 0x9e5d97e72e7025c2be31f1dd8b5aa8bfe5b0ccf85a8e30b39eaf8b4f4e4b4
-14. OKB (OKB) - 0x8a12d47b8b3a8f99c8b4c5e91b5f6d4e9a6a7c8d9e0f1a2b3c4d5e6f7a8b9c0
+## Development Environment Setup
 
-## 11. Troubleshooting VPS
+### Development Mode Setup
 
-### VPS Connection Issues
 ```bash
-# Test SSH connection
-ssh -v ubuntu@YOUR_VPS_IP
+# Install development dependencies
+npm install --dev
 
-# Check SSH service
-sudo systemctl status ssh
+# Create development environment file
+cp .env.example .env.development
 
-# Check firewall rules
-sudo ufw status verbose
-
-# Reset firewall if locked out (dari console VPS)
-sudo ufw --force reset
-sudo ufw enable
-sudo ufw allow 22
+# Edit development environment
+nano .env.development
 ```
 
-### Domain dan DNS Issues
-```bash
-# Check domain resolution
-nslookup YOUR_DOMAIN.com
-dig YOUR_DOMAIN.com
+**Development Environment Variables**:
+```env
+# Use local database for development
+DATABASE_URL=postgresql://nectiq_user:nectiq_password_2024@localhost:5432/nectiq_dev
 
-# Check if domain points to VPS IP
-host YOUR_DOMAIN.com
+# Development mode
+NODE_ENV=development
 
-# Test HTTP/HTTPS access
-curl -I http://YOUR_DOMAIN.com
-curl -I https://YOUR_DOMAIN.com
+# Development server port
+PORT=3000
+
+# Other variables same as production
 ```
 
-### PM2 Process Issues
+### Start Development Server
+
 ```bash
+# Create development database
+sudo -u postgres createdb nectiq_dev
+
+# Grant permissions
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE nectiq_dev TO nectiq_user;"
+
+# Initialize development database
+NODE_ENV=development npm run db:push
+
+# Start development server
+npm run dev
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+**Application Won't Start**:
+```bash
+# Check PM2 logs
+pm2 logs nectiq-platform
+
+# Check environment variables
+pm2 show nectiq-platform
+
 # Restart application
-pm2 restart nectiq-app
-
-# Rebuild and restart
-npm run build
-pm2 restart nectiq-app
-
-# Check logs untuk debugging
-pm2 logs nectiq-app --lines 100
-
-# Stop dan start ulang
-pm2 stop nectiq-app
-pm2 start ecosystem.config.cjs
-
-# Delete dan recreate
-pm2 delete nectiq-app
-pm2 start ecosystem.config.cjs
+pm2 restart nectiq-platform
 ```
 
-### Memory dan Performance Issues
+**Database Connection Issues**:
 ```bash
-# Check memory usage
-free -h
-htop
+# Test database connection
+psql -h localhost -U nectiq_user -d nectiq_db -c "SELECT version();"
 
-# Check disk space
-df -h
-
-# Clean up logs jika perlu
-pm2 flush
-sudo find /var/log -name "*.log" -mtime +7 -delete
-
-# Restart services to free memory
-sudo systemctl restart nginx
-pm2 restart nectiq-app
-```
-
-## 11. Traditional Troubleshooting
-
-### Database Connection Issues
-```bash
 # Check PostgreSQL status
 sudo systemctl status postgresql
-
-# Check if port 5432 is open
-sudo netstat -tlnp | grep 5432
-
-# Edit PostgreSQL config if needed
-sudo nano /etc/postgresql/*/main/pg_hba.conf
-# Ensure these lines exist:
-# local   all             all                                     md5
-# host    all             all             127.0.0.1/32            md5
 
 # Restart PostgreSQL
 sudo systemctl restart postgresql
 ```
 
-### CoinGecko API Connection Error (ECONNREFUSED 127.0.0.1:443)
+**Nginx Issues**:
 ```bash
-# Check DNS resolution
-nslookup api.coingecko.com
+# Test Nginx configuration
+sudo nginx -t
 
-# Test direct API call
-curl -v "https://api.coingecko.com/api/v3/ping"
+# Check Nginx logs
+sudo tail -f /var/log/nginx/error.log
 
-# If behind proxy, configure:
-export https_proxy="your-proxy:port"
-export http_proxy="your-proxy:port"
-
-# Or disable proxy temporarily:
-unset https_proxy
-unset http_proxy
+# Restart Nginx
+sudo systemctl restart nginx
 ```
 
-### Port 5000 Already in Use
+**Memory Issues**:
 ```bash
-# Find process using port 5000
-sudo lsof -i :5000
+# Check memory usage
+free -h
 
-# Kill process
-sudo kill -9 <PID>
+# Check swap usage
+swapon --show
 
-# Or change port in package.json scripts
+# Monitor process memory
+ps aux --sort=-%mem | head -10
 ```
-
-### Permission Issues
-```bash
-# Fix file permissions
-sudo chown -R $USER:$USER ./CryptoPredictorBattle
-chmod +x node_modules/.bin/*
-```
-
-## 9. Verification Tests
-
-### Test Database
-```bash
-psql -h localhost -U nectiq_user -d nectiq_db -c "SELECT count(*) FROM users;"
-```
-
-### Test API Endpoints
-```bash
-# Test crypto prices endpoint
-curl http://localhost:5000/api/crypto/prices
-
-# Test leaderboard
-curl http://localhost:5000/api/leaderboard
-```
-
-### Test CoinGecko Integration
-```bash
-# Direct test
-curl -H "User-Agent: Nectiq-App/1.0" "https://api.coingecko.com/api/v3/coins/markets?ids=bitcoin,ethereum&vs_currency=usd"
-```
-
-## 12. Quick Start Command Summary
-
-```bash
-# Clone project
-cd /home/ubuntu
-git clone YOUR_REPOSITORY_URL CryptoPredictorBattle
-cd CryptoPredictorBattle
-
-# Install dependencies
-npm install
-
-# Setup database
-sudo -u postgres psql -c "CREATE USER nectiq_user WITH PASSWORD 'nectiq_password_2024';"
-sudo -u postgres psql -c "CREATE DATABASE nectiq_db OWNER nectiq_user;"
-
-# Setup environment
-cp .env.example .env
-nano .env  # Edit with your configurations
-
-# Build dan deploy
-npm run build
-npm install -g pm2
-pm2 start ecosystem.config.cjs
-pm2 startup
-pm2 save
-
-# Setup Nginx (opsional)
-sudo apt install nginx -y
-# Configure nginx (lihat section 6)
-
-# Enable firewall
-sudo ufw enable
-sudo ufw allow 22,80,443,5000
-```
-
-## 13. Production Notes
 
 ### Performance Optimization
-- CoinGecko API memiliki rate limit 50 calls/minute untuk free tier
-- Aplikasi menggunakan caching 3 detik untuk real-time prices dengan synchronized variation system
-- PM2 cluster mode untuk better performance
-- Nginx sebagai reverse proxy untuk load balancing
-- Database connection pooling untuk scalability
 
-### Security Features
-- UFW firewall configuration
-- Fail2ban untuk SSH protection
-- SSL certificates dengan Let's Encrypt
-- Environment variables untuk sensitive data
-- Admin wallet authentication system
-- Rate limiting untuk API endpoints
-
-### Monitoring
-- PM2 process monitoring
-- Log rotation dengan logrotate
-- Daily automated backups
-- System resource monitoring dengan htop
-- Nginx access dan error logs
-
-### Financial System
-- Automated withdrawal system dengan blockchain integration
-- Multi-chain support (Ethereum, BSC, Base, Optimism, Arbitrum)
-- Real-time balance tracking dan security auditing
-- Complete transaction logging untuk audit trails
-
-## 14. Support dan Maintenance
-
-### Daily Maintenance Checklist
+**Database Optimization**:
 ```bash
-# Check application status
-pm2 status
+# Optimize PostgreSQL configuration
+sudo nano /etc/postgresql/*/main/postgresql.conf
 
-# Check system resources
-free -h && df -h
+# Key settings for small servers:
+# shared_buffers = 128MB
+# effective_cache_size = 1GB
+# work_mem = 4MB
+# maintenance_work_mem = 64MB
 
-# Check recent logs
-pm2 logs nectiq-app --lines 20
-
-# Check database connection
-psql -h localhost -U nectiq_user -d nectiq_db -c "SELECT count(*) FROM users;"
+# Restart PostgreSQL after changes
+sudo systemctl restart postgresql
 ```
 
-### Jika ada masalah, pastikan:
-1. VPS memiliki minimum 1GB RAM dan 10GB storage
-2. PostgreSQL service running dan accessible
-3. Database credentials di .env benar
-4. Internet connection aktif untuk CoinGecko API
-5. Firewall rules allow required ports
-6. PM2 process running dan healthy
-7. Nginx configuration benar (jika digunakan)
-8. Domain DNS pointing ke VPS IP (jika pakai domain)
-9. SSL certificate valid (jika HTTPS enabled)
-10. File .env configured dengan semua required variables
+**Node.js Optimization**:
+```bash
+# Update PM2 ecosystem for better performance
+nano ecosystem.config.cjs
+
+# Add these optimizations:
+# instances: 'max',  // Use all CPU cores
+# exec_mode: 'cluster',  // Enable cluster mode
+# max_memory_restart: '512M',  // Restart if memory exceeds limit
+```
+
+## Security Hardening
+
+### Basic Security Configuration
+
+```bash
+# Install fail2ban for intrusion prevention
+sudo apt install -y fail2ban
+
+# Configure SSH security
+sudo nano /etc/ssh/sshd_config
+
+# Recommended SSH settings:
+# PermitRootLogin no
+# PasswordAuthentication no
+# Port 2222  # Change default SSH port
+
+# Restart SSH service
+sudo systemctl restart ssh
+```
+
+### Application Security
+
+**Environment Variable Security**:
+```bash
+# Secure environment file
+chmod 600 .env
+
+# Ensure proper file ownership
+chown nectiq:nectiq .env
+```
+
+**Database Security**:
+```bash
+# Secure PostgreSQL configuration
+sudo nano /etc/postgresql/*/main/pg_hba.conf
+
+# Ensure local connections require password authentication
+# local   all             all                                     md5
+```
+
+## Quick Commands Reference
+
+### Application Management
+```bash
+# Start application
+pm2 start ecosystem.config.cjs
+
+# Stop application
+pm2 stop nectiq-platform
+
+# Restart application
+pm2 restart nectiq-platform
+
+# View logs
+pm2 logs nectiq-platform
+
+# Monitor resources
+pm2 monit
+```
+
+### Database Management
+```bash
+# Connect to database
+psql -h localhost -U nectiq_user -d nectiq_db
+
+# Backup database
+pg_dump -h localhost -U nectiq_user -d nectiq_db > backup.sql
+
+# Restore database
+psql -h localhost -U nectiq_user -d nectiq_db < backup.sql
+```
+
+### System Maintenance
+```bash
+# Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Clean package cache
+sudo apt autoremove -y && sudo apt autoclean
+
+# Check disk usage
+df -h
+
+# Check memory usage
+free -h
+
+# View system logs
+sudo journalctl -f
+```
+
+---
+
+**Document Version**: 2.0  
+**Last Updated**: July 23, 2025  
+**Ubuntu Compatibility**: 18.04 LTS, 20.04 LTS, 22.04 LTS  
+**Tested Configurations**: Development and Production Ready
