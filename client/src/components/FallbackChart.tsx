@@ -31,17 +31,32 @@ interface FallbackChartProps {
   onPredictionClick?: () => void;
 }
 
-// Generate realistic price data based on current price
+// Generate realistic price data based on current price with controlled range
 function generatePriceData(currentPrice: number, points: number = 50) {
   const data = [];
   const labels = [];
-  let price = currentPrice;
   
-  // Generate historical data points
-  for (let i = points; i >= 0; i--) {
-    const volatility = 0.02; // 2% volatility
-    const change = (Math.random() - 0.5) * volatility;
+  // Use seeded random for consistent patterns
+  let seed = currentPrice % 1000; // Use price as seed for consistency
+  function seededRandom() {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  }
+  
+  // Start from a base price close to current price
+  const basePrice = currentPrice * (0.95 + seededRandom() * 0.1); // ±5% from current
+  let price = basePrice;
+  
+  // Generate historical data points with tight control
+  for (let i = points; i >= 1; i--) {
+    const volatility = 0.005; // Reduced to 0.5% volatility for realistic movement
+    const change = (seededRandom() - 0.5) * volatility;
     price = price * (1 + change);
+    
+    // Ensure price stays within reasonable range (±3% of current price)
+    const minPrice = currentPrice * 0.97;
+    const maxPrice = currentPrice * 1.03;
+    price = Math.max(minPrice, Math.min(maxPrice, price));
     
     const time = new Date();
     time.setMinutes(time.getMinutes() - (i * 5)); // 5-minute intervals
@@ -52,6 +67,14 @@ function generatePriceData(currentPrice: number, points: number = 50) {
       minute: '2-digit' 
     }));
   }
+  
+  // Always end with exact current price
+  const currentTime = new Date();
+  data.push(currentPrice);
+  labels.push(currentTime.toLocaleTimeString('id-ID', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  }));
   
   return { data, labels };
 }
@@ -136,11 +159,15 @@ export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackC
       y: {
         display: true,
         position: 'right',
+        // Force scale to be tight around current price (±2%)
+        min: currentPrice * 0.98,
+        max: currentPrice * 1.02,
         grid: {
           color: systemTheme === "dark" ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
         },
         ticks: {
           color: systemTheme === "dark" ? '#9ca3af' : '#6b7280',
+          stepSize: currentPrice * 0.005, // Small steps for detailed view
           callback: function(value) {
             return '$' + Number(value).toLocaleString(undefined, {
               minimumFractionDigits: 0,
