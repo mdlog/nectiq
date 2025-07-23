@@ -337,7 +337,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
             yAdjust: 0, // Sejajar dengan dot
             borderColor: '#ffffff',
             borderWidth: 2,
-            z: 1000 // Di atas dot
+            z: 900 // Di bawah dot
           }
         } : {}
       }
