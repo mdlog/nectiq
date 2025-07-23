@@ -199,15 +199,72 @@ nectiq-platform/
 ### Cara Login Sebagai Admin:
 1. **Setup Admin Wallet Address** di `.env`:
    ```env
-   ADMIN_WALLET_ADDRESSES=0xYourAdminWalletAddress1,0xYourAdminWalletAddress2
+   ADMIN_WALLET_ADDRESSES=0x4C6165286739696849Fb3e77A16b0639D762c5B6,0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4
    ```
 
-2. **Login Process**:
+2. **Import Private Key ke MetaMask** (UNTUK TESTING SAJA):
+   ```
+   Private Key untuk 0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4:
+   0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+   ```
+   
+   **⚠️ HANYA UNTUK LOCALHOST TESTING - JANGAN GUNAKAN DI PRODUCTION!**
+
+3. **Login Process**:
    - Buka aplikasi di browser: `http://localhost:5000`
    - Klik "Login or Sign Up"
-   - Connect wallet menggunakan MetaMask/WalletConnect
-   - Pastikan wallet address sama dengan yang ada di `ADMIN_WALLET_ADDRESSES`
-   - Setelah login, akses admin panel di: `http://localhost:5000/admin`
+   - Connect wallet menggunakan MetaMask dengan private key di atas
+   - Setelah wallet terconnect, menu "Admin" akan muncul di navigation bar
+   - Klik menu "Admin" atau akses langsung: `http://localhost:5000/admin`
+
+### ⚠️ TROUBLESHOOTING ADMIN ACCESS:
+
+**Jika Menu Admin Tidak Muncul:**
+
+1. **Check Environment Variables**:
+   ```bash
+   # Pastikan .env berisi:
+   ADMIN_WALLET_ADDRESSES=0x4C6165286739696849Fb3e77A16b0639D762c5B6,0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4
+   ```
+
+2. **Restart Server**:
+   ```bash
+   # Stop aplikasi (Ctrl+C) lalu restart:
+   npm run dev
+   ```
+
+3. **Check Database Admin Status**:
+   ```bash
+   # Akses database untuk check admin status:
+   npm run db:studio
+   # Atau manual SQL check:
+   # SELECT * FROM users WHERE walletAddress = '0x3e4d881819768fab30c5a79f3a9a7e69f0a935a4';
+   ```
+
+4. **Manual Database Update** (jika diperlukan):
+   ```sql
+   UPDATE users 
+   SET isAdmin = true 
+   WHERE walletAddress = '0x3e4d881819768fab30c5a79f3a9a7e69f0a935a4';
+   ```
+
+5. **Clear Browser Cache**:
+   - Hard refresh browser (Ctrl+F5)
+   - Clear localStorage/sessionStorage
+   - Logout dan login ulang
+
+**Debug Console Checks:**
+- Buka Developer Tools (F12)
+- Check Console untuk error messages
+- Check Network tab untuk API calls
+- Look for "Admin verification debug" logs
+
+**Jika Masih Bermasalah:**
+1. Logout dari wallet completely
+2. Clear browser cache
+3. Restart npm server
+4. Login ulang dengan private key yang benar
+5. Check URL: `http://localhost:5000/admin` langsung
 
 3. **Admin Panel Features**:
    - **User Management**: Kelola semua user, export data CSV
@@ -219,10 +276,15 @@ nectiq-platform/
 ### Default Admin Accounts (Development):
 ```
 Admin Wallet 1: 0x4C6165286739696849Fb3e77A16b0639D762c5B6
-Admin Wallet 2: 0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4
+Admin Wallet 2: 0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4 ✅ (Recommended untuk testing)
+
+Private Key untuk Wallet 2: 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
 ```
 
-**⚠️ PENTING**: Ganti dengan wallet address Anda sendiri di production!
+**⚠️ PENTING**: 
+- Private key di atas HANYA untuk localhost testing
+- JANGAN PERNAH gunakan di production atau mainnet
+- Ganti dengan wallet address Anda sendiri di production
 
 ### Admin Authentication Flow:
 1. User connect wallet → Sistem check wallet address
