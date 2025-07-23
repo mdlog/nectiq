@@ -2856,6 +2856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/rewards/recent", async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
+      console.log(`🔍 [RECENT-REWARDS] API endpoint called for userId: ${userId}`);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -2969,33 +2970,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Error fetching battle transactions:', error);
       }
 
-      // 3. Get recent survival tournament activities
+      // 3. Get recent survival tournament activities from transaction_logs
       try {
-        const survivalActivities = await storage.getUserSurvivalHistory(userId, 5);
-        survivalActivities.forEach((activity) => {
-          if (activity.outcome) {
-            const isWin = activity.outcome === 'won';
-            const amount = isWin ? (activity.prize || 0) : -(activity.entryFee || 100);
+        // Get survival-related transactions for this user
+        const allTransactions = await storage.getTransactionLogs();
+        const survivalTransactions = allTransactions.filter(t => 
+          t.userId === userId && 
+          (t.type === 'survival_tournament_reward' || 
+           t.type === 'survival_tournament_shared_reward' ||
+           t.type === 'survival_entry')
+        );
+        
+        console.log(`🎯 [SURVIVAL-REWARDS] Found ${survivalTransactions.length} survival transactions for user ${userId}`);
+        
+        // Group transactions by related_id (tournament_id) to get complete tournament history
+        const tournamentGroups = new Map();
+        survivalTransactions.forEach(t => {
+          const tournamentId = t.relatedId || 'unknown';
+          if (!tournamentGroups.has(tournamentId)) {
+            tournamentGroups.set(tournamentId, []);
+          }
+          tournamentGroups.get(tournamentId).push(t);
+        });
+        
+        // Process each tournament group
+        for (const [tournamentId, transactions] of tournamentGroups) {
+          const rewardTransaction = transactions.find(t => 
+            t.type === 'survival_tournament_reward' || 
+            t.type === 'survival_tournament_shared_reward'
+          );
+          const entryTransaction = transactions.find(t => t.type === 'survival_entry');
+          
+          if (rewardTransaction) {
+            // User won the tournament
+            console.log(`🏆 [SURVIVAL-REWARDS] User ${userId} won tournament ${tournamentId} with ${rewardTransaction.amount} NTIQ`);
             
             allActivities.push({
-              id: `survival_${activity.id}`,
+              id: `survival_win_${rewardTransaction.id}`,
               type: 'survival',
               userId: userId,
-              survivalId: activity.id,
-              amount: amount,
-              description: isWin 
-                ? `Won Survival Tournament - ${amount} NTIQ Prize`
-                : `Eliminated from Survival Tournament - ${Math.abs(amount)} NTIQ Entry`,
-              createdAt: activity.endTime || activity.createdAt,
-              cryptocurrency: activity.cryptocurrency || 'Multiple',
-              isWin: isWin,
-              stakeAmount: activity.entryFee || 100,
-              rewardAmount: isWin ? amount : 0
+              survivalId: tournamentId,
+              amount: rewardTransaction.amount,
+              description: `Won Survival Tournament - ${rewardTransaction.amount} NTIQ Prize`,
+              createdAt: rewardTransaction.createdAt,
+              cryptocurrency: 'Multiple',
+              isWin: true,
+              stakeAmount: entryTransaction ? Math.abs(entryTransaction.amount) : 50,
+              rewardAmount: rewardTransaction.amount
+            });
+          } else if (entryTransaction && entryTransaction.amount < 0) {
+            // User entered but didn't win (loss entry)
+            console.log(`💸 [SURVIVAL-REWARDS] User ${userId} eliminated from tournament ${tournamentId} with ${Math.abs(entryTransaction.amount)} NTIQ entry`);
+            
+            allActivities.push({
+              id: `survival_loss_${entryTransaction.id}`,
+              type: 'survival',
+              userId: userId,
+              survivalId: tournamentId,
+              amount: entryTransaction.amount, // Already negative
+              description: `Eliminated from Survival Tournament - ${Math.abs(entryTransaction.amount)} NTIQ Entry`,
+              createdAt: entryTransaction.createdAt,
+              cryptocurrency: 'Multiple',
+              isWin: false,
+              stakeAmount: Math.abs(entryTransaction.amount),
+              rewardAmount: 0
             });
           }
-        });
+        }
+        
+        console.log(`✅ [SURVIVAL-REWARDS] Added ${allActivities.filter(a => a.type === 'survival').length} survival activities to recent rewards`);
+        
       } catch (error) {
-        console.log('No recent survival activities found for user');
+        console.log('⚠️ [SURVIVAL-REWARDS] Error fetching survival activities:', error);
       }
 
       // Sort all activities by date (newest first) and limit to 10
