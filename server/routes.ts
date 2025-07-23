@@ -2814,10 +2814,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enhancedLeaderboard = await storage.getEnhancedLeaderboard(limit);
       
       const leaderboard = enhancedLeaderboard.map(user => {
-        // For now, we'll use the same data for all filters since we don't have time-based tracking yet
-        // In a real implementation, you'd calculate these based on the time period
-        const weeklyPoints = Math.floor(user.totalRewards * 0.3); // Simulated weekly points
-        const monthlyPoints = Math.floor(user.totalRewards * 0.7); // Simulated monthly points
+        // FIXED: Use corrected totalRewards that includes survival + battle rewards
+        const correctedTotalRewards = user.totalRewards; // Already fixed in storage.getEnhancedLeaderboard
+        const weeklyPoints = Math.floor(correctedTotalRewards * 0.3); // Simulated weekly points
+        const monthlyPoints = Math.floor(correctedTotalRewards * 0.7); // Simulated monthly points
 
         return {
           id: user.id,
@@ -2827,7 +2827,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalPredictions: user.totalPredictions,
           correctPredictions: user.correctPredictions,
           winRate: user.winRate,
-          totalRewards: user.totalRewards,
+          totalRewards: correctedTotalRewards, // Use corrected value
           // Battle data
           totalBattles: user.totalBattles,
           wonBattles: user.wonBattles,

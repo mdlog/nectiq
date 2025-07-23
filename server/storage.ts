@@ -591,6 +591,9 @@ export class DatabaseStorage implements IStorage {
       const battleWinRate = battleStats.totalBattles > 0 ? 
         (battleStats.wonBattles / battleStats.totalBattles) * 100 : 0;
 
+      // Calculate total rewards including survival rewards
+      const calculatedTotalRewards = user.totalRewards + (survivalStats.survivalRewards || 0) + (battleRewardsStats.battleRewards || 0);
+
       return {
         ...user,
         winRate: predictionWinRate,
@@ -603,14 +606,16 @@ export class DatabaseStorage implements IStorage {
         totalSurvivalTournaments: survivalStats.totalTournaments,
         wonSurvivalTournaments: survivalStats.wonTournaments,
         survivalRewards: survivalStats.survivalRewards || 0,
-        // Combined rewards (this should match totalRewards but let's calculate to be sure)
-        combinedRewards: user.totalRewards
+        // FIXED: Combined rewards includes survival + battle rewards
+        combinedRewards: calculatedTotalRewards,
+        // Override totalRewards to include all reward sources
+        totalRewards: calculatedTotalRewards
       };
     }));
 
-    // Sort by total rewards and apply limit
+    // Sort by calculated total rewards (including survival + battle) and apply limit
     return enhancedUsers
-      .sort((a, b) => b.totalRewards - a.totalRewards)
+      .sort((a, b) => b.totalRewards - a.totalRewards) // Now sorting by corrected totalRewards
       .slice(0, limit)
       .map((user, index) => ({
         ...user,
