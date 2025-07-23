@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Minimize2 } from "lucide-react";
+import FallbackChart from "./FallbackChart";
 
 interface TradingViewWidgetProps {
   cryptoId: string;
@@ -30,35 +31,99 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
   const onLoadScriptRef = useRef<(() => void) | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('D');
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const widgetContainerRef = useRef<HTMLDivElement>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const pythSymbol = cryptoToPythSymbol[cryptoId] || 'PYTH:BTCUSD';
 
   useEffect(() => {
+    setIsLoading(true);
+    setHasError(false);
+    
     onLoadScriptRef.current = createWidget;
 
+    // Clear any existing timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+    }
+
+    // Set timeout for loading - reduced to 5 seconds for faster fallback
+    retryTimeoutRef.current = setTimeout(() => {
+      if (isLoading) {
+        console.log("⏰ [TRADINGVIEW] Timeout reached, switching to fallback chart");
+        setHasError(true);
+        setIsLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
     if (!tvScriptLoadingPromise) {
-      tvScriptLoadingPromise = new Promise((resolve) => {
+      tvScriptLoadingPromise = new Promise((resolve, reject) => {
+        // Check if script already exists
+        const existingScript = document.getElementById("tradingview-widget-loading-script");
+        if (existingScript) {
+          existingScript.remove();
+        }
+
         const script = document.createElement("script");
         script.id = "tradingview-widget-loading-script";
         script.src = "https://s3.tradingview.com/tv.js";
         script.type = "text/javascript";
-        script.onload = () => resolve();
+        script.onload = () => {
+          console.log("📊 [TRADINGVIEW] Script loaded successfully");
+          resolve();
+        };
+        script.onerror = () => {
+          console.error("❌ [TRADINGVIEW] Failed to load script");
+          reject(new Error("Failed to load TradingView script"));
+        };
 
         document.head.appendChild(script);
       });
     }
 
-    tvScriptLoadingPromise.then(
-      () => onLoadScriptRef.current && onLoadScriptRef.current()
-    );
+    tvScriptLoadingPromise
+      .then(() => {
+        if (onLoadScriptRef.current) {
+          onLoadScriptRef.current();
+        }
+      })
+      .catch((error) => {
+        console.error("❌ [TRADINGVIEW] Error loading:", error);
+        setHasError(true);
+        setIsLoading(false);
+      });
 
     return () => {
       onLoadScriptRef.current = null;
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
     };
 
     function createWidget() {
-      if (document.getElementById("tradingview-widget") && "TradingView" in (window as any)) {
+      console.log("🔧 [TRADINGVIEW] Creating widget for:", pythSymbol);
+      
+      const container = document.getElementById("tradingview-widget");
+      if (!container) {
+        console.error("❌ [TRADINGVIEW] Container not found");
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!("TradingView" in (window as any))) {
+        console.error("❌ [TRADINGVIEW] TradingView not available in window");
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Clear existing content
+        container.innerHTML = '';
+        
         new (window as any).TradingView.widget({
           autosize: true,
           symbol: pythSymbol,
@@ -81,8 +146,20 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
           loading_screen: {
             backgroundColor: "#1f2937",
             foregroundColor: "#00d4aa"
+          },
+          onChartReady: () => {
+            console.log("✅ [TRADINGVIEW] Chart ready");
+            setIsLoading(false);
+            setHasError(false);
+            if (retryTimeoutRef.current) {
+              clearTimeout(retryTimeoutRef.current);
+            }
           }
         });
+      } catch (error) {
+        console.error("❌ [TRADINGVIEW] Widget creation error:", error);
+        setHasError(true);
+        setIsLoading(false);
       }
     }
   }, [pythSymbol, selectedTimeframe]);
@@ -170,7 +247,7 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
       </div>
 
       {/* TradingView Widget Container */}
-      <div className={`tradingview-widget-container bg-gray-900 ${
+      <div className={`tradingview-widget-container bg-gray-900 relative ${
         isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[500px]'
       }`}>
         <div 
@@ -179,12 +256,25 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
         />
         
         {/* Loading indicator */}
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading Pyth Network Chart...</p>
+        {isLoading && !hasError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+              <p className="text-gray-400">Loading TradingView Chart...</p>
+              <p className="text-xs text-gray-500 mt-2">Connecting to Pyth Network data...</p>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Error state - Show fallback chart instead */}
+        {hasError && (
+          <div className="absolute inset-0 bg-gray-900 z-10">
+            <FallbackChart 
+              cryptoId={cryptoId}
+              onPredictionClick={onPredictionClick}
+            />
+          </div>
+        )}
       </div>
 
       {/* Footer Info */}
