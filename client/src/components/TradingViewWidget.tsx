@@ -42,6 +42,7 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
   const pythSymbol = cryptoToPythSymbol[cryptoId] || 'PYTH:BTCUSD';
 
   useEffect(() => {
+    console.log("🚀 [TRADINGVIEW] Starting widget initialization for", pythSymbol);
     setIsLoading(true);
     setHasError(false);
     
@@ -52,45 +53,66 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
       clearTimeout(retryTimeoutRef.current);
     }
 
-    // Set timeout for loading - increased to 10 seconds to allow TradingView to load
+    // Force fallback after 3 seconds to avoid long loading
     retryTimeoutRef.current = setTimeout(() => {
       if (isLoading) {
-        console.log("⏰ [TRADINGVIEW] Timeout reached after 10 seconds, switching to fallback chart");
+        console.log("⏰ [TRADINGVIEW] 3 second timeout reached, switching to fallback chart for better UX");
         setHasError(true);
         setIsLoading(false);
       }
-    }, 10000); // 10 second timeout for better TradingView loading
+    }, 3000); // Reduced to 3 seconds for faster fallback
+
+    // Check if TradingView is already available in window
+    if (typeof (window as any).TradingView !== 'undefined') {
+      console.log("✅ [TRADINGVIEW] TradingView already available, creating widget immediately");
+      setTimeout(() => {
+        if (onLoadScriptRef.current) {
+          onLoadScriptRef.current();
+        }
+      }, 100);
+      return () => {
+        onLoadScriptRef.current = null;
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current);
+        }
+      };
+    }
 
     if (!tvScriptLoadingPromise) {
+      console.log("📥 [TRADINGVIEW] Loading TradingView script...");
       tvScriptLoadingPromise = new Promise((resolve, reject) => {
         // Check if script already exists
         const existingScript = document.getElementById("tradingview-widget-loading-script");
         if (existingScript) {
           existingScript.remove();
+          console.log("🔄 [TRADINGVIEW] Removed existing script");
         }
 
         const script = document.createElement("script");
         script.id = "tradingview-widget-loading-script";
         script.src = "https://s3.tradingview.com/tv.js";
         script.type = "text/javascript";
+        script.async = true;
         script.onload = () => {
           console.log("📊 [TRADINGVIEW] Script loaded successfully from https://s3.tradingview.com/tv.js");
-          // Add small delay to ensure script is fully initialized
+          console.log("📊 [TRADINGVIEW] TradingView object available:", !!((window as any).TradingView));
           setTimeout(() => {
             resolve();
-          }, 100);
+          }, 200); // Increased delay for better initialization
         };
-        script.onerror = () => {
-          console.error("❌ [TRADINGVIEW] Failed to load script");
+        script.onerror = (error) => {
+          console.error("❌ [TRADINGVIEW] Failed to load script:", error);
           reject(new Error("Failed to load TradingView script"));
         };
 
         document.head.appendChild(script);
+        console.log("📥 [TRADINGVIEW] Script element added to document head");
       });
     }
 
     tvScriptLoadingPromise
       .then(() => {
+        console.log("🎯 [TRADINGVIEW] Script promise resolved, creating widget");
         if (onLoadScriptRef.current) {
           onLoadScriptRef.current();
         }
@@ -182,6 +204,7 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
         });
       } catch (error) {
         console.error("❌ [TRADINGVIEW] Widget creation error:", error);
+        console.log("🔄 [TRADINGVIEW] Falling back to fallback chart due to widget creation error");
         setHasError(true);
         setIsLoading(false);
       }
@@ -287,7 +310,7 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
           className="w-full h-full"
         />
         
-        {/* Loading indicator */}
+        {/* Loading indicator - Reduced loading time for better UX */}
         {isLoading && !hasError && (
           <div className={`absolute inset-0 flex items-center justify-center z-10 ${
             systemTheme === "dark" ? "bg-gray-900" : "bg-white"
@@ -298,7 +321,10 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
                 Loading TradingView Chart...
               </p>
               <p className={`text-xs mt-2 ${systemTheme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
-                Connecting to Pyth Network data...
+                Connecting to Pyth Network data... (3s timeout)
+              </p>
+              <p className={`text-xs mt-1 ${systemTheme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                Will fallback to Chart.js if TradingView fails
               </p>
             </div>
           </div>
