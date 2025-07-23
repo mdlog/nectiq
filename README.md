@@ -12,10 +12,11 @@ Nectiq is a cutting-edge gamified cryptocurrency price prediction platform that 
 ## ✨ Features
 
 ### 🎯 Core Functionality
-- **Price Predictions**: Make predictions on Bitcoin, Ethereum, BNB, Cardano, and Solana
+- **Price Predictions**: Make predictions on 14 supported cryptocurrencies with Pyth Network pricing
 - **Multiple Timeframes**: 1 hour, 6 hours, 24 hours, and 7 days prediction windows
 - **Accuracy-Based Rewards**: Up to 5x multiplier for perfect predictions (±0.1% accuracy)
 - **Stake System**: Stake 50-500 NTIQ points on your predictions
+- **Unified Pricing Architecture**: getRealTimePrice() function ensures identical live prices across all components
 
 ### 🔐 Advanced Authentication & Security
 - **Dynamic Labs Integration**: Enterprise-grade wallet authentication with 20+ wallet support
@@ -49,12 +50,14 @@ Nectiq is a cutting-edge gamified cryptocurrency price prediction platform that 
 - **Multi-Chain Transaction Management**: Monitor and process transactions across all networks
 
 ### 📊 Advanced Real-Time Features
+- **Pyth Network Integration**: Institutional-grade real-time price feeds with sub-second accuracy
+- **Unified Price Synchronization**: Complete consistency across all gaming components (battles, tournaments, predictions)
 - **Professional Trading Charts**: Full TradingView widget integration with candlestick charts
-- **Live Price Feeds**: Real-time cryptocurrency prices with 3-second synchronization
+- **Live Price Feeds**: Real-time cryptocurrency prices with 3-second synchronization across 14 supported assets
 - **Optimized UI Layout**: Single-row horizontal Live Prices display (14 coins per page)
 - **WebSocket Integration**: Real-time notifications and platform updates
 - **Activity Feed**: Live updates of predictions, battles, and platform activities
-- **Price Consistency**: Synchronized micro-variations ensuring all users see identical prices
+- **Dynamic Price Architecture**: getRealTimePrice() function ensures identical pricing across all components
 
 ## 🛠️ Technology Stack
 
@@ -72,6 +75,8 @@ Nectiq is a cutting-edge gamified cryptocurrency price prediction platform that 
 - **Express.js** with session-based authentication
 - **PostgreSQL** with Drizzle ORM
 - **Neon Database** (serverless PostgreSQL)
+- **Pyth Network** for institutional-grade real-time price feeds
+- **CoinGecko API** for cryptocurrency logos and metadata
 - **WebSocket** for real-time communication
 
 ### Web3 & Authentication Integration

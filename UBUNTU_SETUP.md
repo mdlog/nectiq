@@ -157,12 +157,15 @@ EOF
 chmod 600 .env
 ```
 
-### Network Configuration (Fix CoinGecko API)
+### Network Configuration & API Testing
 ```bash
 # Check internet connection
 ping -c 3 8.8.8.8
 
-# Test CoinGecko API directly
+# Test Pyth Network API (primary price feed)
+curl "https://hermes.pyth.network/v2/updates/price/latest?ids%5B%5D=0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+
+# Test CoinGecko API (for cryptocurrency logos)
 curl -H "User-Agent: Nectiq-App/1.0" "https://api.coingecko.com/api/v3/ping"
 
 # If blocked by firewall, configure DNS
@@ -427,7 +430,67 @@ VALUES ('admin_production', '0x4C6165286739696849Fb3e77A16b0639D762c5B6', true, 
 \q
 ```
 
-## 10. Troubleshooting VPS
+## 10. Pyth Network Integration Status
+
+### Sistem Pricing Architecture
+Nectiq platform menggunakan sistem pricing hibrida:
+
+1. **Pyth Network (Primary)**: Real-time institutional-grade price feeds
+   - 14 cryptocurrency yang didukung dengan Pyth Feed IDs
+   - Update sub-detik dengan confidence intervals
+   - Endpoint: `/api/crypto/pyth-prices`
+
+2. **CoinGecko API (Secondary)**: Cryptocurrency logos dan metadata
+   - Automatic logo fetching untuk cryptocurrency baru
+   - Image URL validation system
+   - Endpoint untuk admin panel management
+
+### Unified Pricing Architecture
+```
+getRealTimePrice() Function
+├── Live Pyth Network Data (Primary)
+├── Database Cache (Fallback)
+└── Synchronized across ALL components:
+    ├── Battle Cards
+    ├── Tournament Cards
+    ├── Survival Games
+    ├── Live Prices Display
+    └── Prediction Forms
+```
+
+### Testing Pyth Network Integration
+```bash
+# Test Pyth Network API endpoint
+curl "http://localhost:5000/api/crypto/pyth-prices"
+
+# Expected output: JSON array dengan 14 cryptocurrencies
+# Example: [{"id":"bitcoin","symbol":"BTC","name":"Bitcoin","price":118522.44,...}]
+
+# Check server logs untuk Pyth Network status
+pm2 logs nectiq-app | grep PYTH
+
+# Expected logs:
+# ✅ [PYTH] Successfully fetched 14 prices from Pyth Network
+# 🔚 [PYTH] ENDPOINT COMPLETE: /api/crypto/pyth-prices
+```
+
+### Supported Cryptocurrencies (Pyth Network)
+1. Bitcoin (BTC) - 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43
+2. Ethereum (ETH) - 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace
+3. Solana (SOL) - 0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d
+4. BNB (BNB) - 0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f
+5. Cardano (ADA) - 0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d
+6. Chainlink (LINK) - 0x8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221
+7. Litecoin (LTC) - 0x6e3f3fa8253588df9326580180233eb791e03b443a3ba7a1d892e73874e19a54
+8. Avalanche (AVAX) - 0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7
+9. Bitcoin Cash (BCH) - 0x3dd2b63686a450ec7077725977b07bf6f4e5cffa9a6c8bb8e0b7c8f42c87e4cf
+10. Ethereum Classic (ETC) - 0x7f5dc7b69e65e46a52c5f88bbde2ddac8bb8b67169e6d3c3d3a5d4e6b8c6b8
+11. Aptos (APT) - 0x03ae4db29ed4ae33d323568895aa00337e658e348b37509f5372ae51f0af00d5
+12. Sui (SUI) - 0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744
+13. Hyperliquid (HYPE) - 0x9e5d97e72e7025c2be31f1dd8b5aa8bfe5b0ccf85a8e30b39eaf8b4f4e4b4
+14. OKB (OKB) - 0x8a12d47b8b3a8f99c8b4c5e91b5f6d4e9a6a7c8d9e0f1a2b3c4d5e6f7a8b9c0
+
+## 11. Troubleshooting VPS
 
 ### VPS Connection Issues
 ```bash
