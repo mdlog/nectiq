@@ -210,7 +210,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
     layout: {
       padding: {
         top: 30,
-        right: 25, // Margin lebih kecil untuk efisiensi ruang maksimal
+        right: 35, // Margin yang cukup untuk dot hijau terlihat utuh
         bottom: 20,
         left: 10
       }
@@ -333,7 +333,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
               y: 8
             },
             cornerRadius: 6,
-            xAdjust: -70, // Posisi di sebelah kiri dot dengan jarak yang lebih nyaman
+            xAdjust: -80, // Posisi lebih jauh ke kiri agar tidak menutupi dot
             yAdjust: 0, // Sejajar dengan dot
             borderColor: '#ffffff',
             borderWidth: 2,
