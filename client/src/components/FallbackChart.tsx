@@ -31,35 +31,51 @@ interface FallbackChartProps {
   onPredictionClick?: () => void;
 }
 
-// Generate realistic price data based on current price with controlled range
-function generatePriceData(currentPrice: number, points: number = 50) {
+// Static baseline price for consistent chart patterns per cryptocurrency
+let basePriceForLabels: { [key: string]: number } = {};
+
+// Generate smooth, consistent price data based on current price
+function generatePriceData(currentPrice: number, cryptoId: string, points: number = 50) {
   const data = [];
   const labels = [];
   
-  // Use seeded random for consistent patterns
-  let seed = currentPrice % 1000; // Use price as seed for consistency
+  // Set baseline price once per cryptocurrency for consistent patterns
+  if (!basePriceForLabels[cryptoId]) {
+    basePriceForLabels[cryptoId] = currentPrice;
+  }
+  const baselinePrice = basePriceForLabels[cryptoId];
+  
+  // Use crypto ID hash as consistent seed for same pattern every time
+  let seed = 0;
+  for (let i = 0; i < cryptoId.length; i++) {
+    seed += cryptoId.charCodeAt(i);
+  }
+  seed = seed % 1000;
+  
   function seededRandom() {
     seed = (seed * 9301 + 49297) % 233280;
     return seed / 233280;
   }
   
-  // Start from a base price close to current price
-  const basePrice = currentPrice * (0.95 + seededRandom() * 0.1); // ±5% from current
+  // Generate STATIC historical data that never changes for this cryptocurrency
+  const basePrice = baselinePrice * 0.99; // Start slightly below baseline
   let price = basePrice;
   
-  // Generate historical data points with tight control
+  // Create smooth, consistent historical pattern
   for (let i = points; i >= 1; i--) {
-    const volatility = 0.005; // Reduced to 0.5% volatility for realistic movement
-    const change = (seededRandom() - 0.5) * volatility;
+    // Use position-based volatility for smooth transitions
+    const volatility = 0.002; // Very low volatility for smooth movement
+    const positionFactor = Math.sin((i / points) * Math.PI) * 0.01; // Sine wave for smoothness
+    const change = (seededRandom() - 0.5) * volatility + positionFactor;
     price = price * (1 + change);
     
-    // Ensure price stays within reasonable range (±3% of current price)
-    const minPrice = currentPrice * 0.97;
-    const maxPrice = currentPrice * 1.03;
+    // Keep historical data within tight range of baseline  
+    const minPrice = baselinePrice * 0.995;
+    const maxPrice = baselinePrice * 1.005;
     price = Math.max(minPrice, Math.min(maxPrice, price));
     
     const time = new Date();
-    time.setMinutes(time.getMinutes() - (i * 5)); // 5-minute intervals
+    time.setMinutes(time.getMinutes() - (i * 5));
     
     data.push(price);
     labels.push(time.toLocaleTimeString('id-ID', { 
@@ -68,7 +84,7 @@ function generatePriceData(currentPrice: number, points: number = 50) {
     }));
   }
   
-  // Always end with exact current price
+  // ONLY the last point uses live current price for smooth endpoint movement
   const currentTime = new Date();
   data.push(currentPrice);
   labels.push(currentTime.toLocaleTimeString('id-ID', { 
@@ -98,8 +114,8 @@ export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackC
   const currentCrypto = Array.isArray(cryptoPrices) ? cryptoPrices.find((crypto: any) => crypto.id === cryptoId) : null;
   const currentPrice = currentCrypto?.current_price || 50000;
 
-  // Generate chart data
-  const priceData = generatePriceData(currentPrice);
+  // Generate chart data with cryptoId for consistent patterns
+  const priceData = generatePriceData(currentPrice, cryptoId);
 
   const chartData = {
     labels: priceData.labels,
