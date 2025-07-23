@@ -333,7 +333,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
               y: 8
             },
             cornerRadius: 6,
-            xAdjust: -60, // Posisi di sebelah kiri dot, disesuaikan dengan margin baru
+            xAdjust: -70, // Posisi di sebelah kiri dot dengan jarak yang lebih nyaman
             yAdjust: 0, // Sejajar dengan dot
             borderColor: '#ffffff',
             borderWidth: 2,
