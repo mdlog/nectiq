@@ -91,7 +91,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
     // Generate historical prices working backwards from current price with controlled volatility
     const historicalPrices: number[] = [];
     
-    // Start with current price as the last point
+    // Start with current price as the last point (this will be dynamic)
     historicalPrices[dataPoints - 1] = currentPrice;
     
     // Generate previous prices working backwards with much smaller variations
@@ -308,23 +308,22 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
               borderWidth: 1
             }
           },
-          // Dot hijau prominent di ujung line chart dengan harga running
+          // Dot hijau prominent di ujung kanan line chart dengan harga running
           runningPriceDot: {
             type: 'point' as const,
-            xValue: labels[labels.length - 1], // Ujung chart
+            xValue: data.length - 1, // Index ujung kanan chart (data point terakhir)
             yValue: cryptoInfo.current_price,
             backgroundColor: '#00d4aa', // Hijau cyan premium
             borderColor: '#ffffff',
             borderWidth: 4,
             radius: 8, // Dot lebih besar dan prominent
             scaleID: 'y1',
-            // Animasi pulse effect
             z: 999 // Pastikan di atas semua elemen
           },
-          // Label harga running di atas dot hijau
+          // Label harga running di atas dot hijau - posisi tepat di ujung kanan
           runningPriceLabel: {
             type: 'label' as const,
-            xValue: labels[labels.length - 1],
+            xValue: data.length - 1, // Index ujung kanan chart
             yValue: cryptoInfo.current_price,
             content: `$${cryptoInfo.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
             backgroundColor: '#00d4aa',
@@ -340,7 +339,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
             },
             cornerRadius: 6,
             xAdjust: 0,
-            yAdjust: -25, // Posisi di atas dot
+            yAdjust: -30, // Posisi lebih tinggi di atas dot
             borderColor: '#ffffff',
             borderWidth: 2,
             z: 1000 // Di atas dot
