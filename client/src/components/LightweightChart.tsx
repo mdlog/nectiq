@@ -369,8 +369,8 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
           </h3>
           
           {currentCrypto && (
-            <div className="text-sm">
-              <span className={`font-semibold ${
+            <div className="text-base">
+              <span className={`text-xl font-bold ${
                 systemTheme === "dark" ? "text-white" : "text-gray-900"
               }`}>
                 ${currentPrice.toLocaleString(undefined, { 
@@ -378,7 +378,7 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
                   maximumFractionDigits: 2 
                 })}
               </span>
-              <span className={`ml-2 ${
+              <span className={`ml-3 text-sm font-medium ${
                 currentCrypto.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'
               }`}>
                 {currentCrypto.price_change_percentage_24h >= 0 ? '+' : ''}
