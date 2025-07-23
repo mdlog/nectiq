@@ -107,8 +107,8 @@ export default function PythNetworkChart({
     ctx.fillStyle = '#111827'; // gray-900
     ctx.fillRect(0, 0, rect.width, rect.height);
 
-    // Chart dimensions
-    const padding = { top: 20, right: 80, bottom: 40, left: 60 };
+    // Chart dimensions - increase bottom padding for time labels
+    const padding = { top: 20, right: 80, bottom: 50, left: 70 };
     const chartWidth = rect.width - padding.left - padding.right;
     const chartHeight = rect.height - padding.top - padding.bottom;
 
@@ -140,7 +140,7 @@ export default function PythNetworkChart({
       ctx.fillText(`$${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, padding.left - 10, y + 4);
     }
 
-    // Vertical grid lines
+    // Vertical grid lines with time labels
     const timePoints = 6;
     for (let i = 0; i <= timePoints; i++) {
       const x = padding.left + (chartWidth / timePoints) * i;
@@ -148,7 +148,44 @@ export default function PythNetworkChart({
       ctx.moveTo(x, padding.top);
       ctx.lineTo(x, padding.top + chartHeight);
       ctx.stroke();
+      
+      // Time labels at bottom
+      if (i > 0 && i <= timePoints) { // Include all points for better visibility
+        const hoursAgo = (timePoints - i) * (selectedTimeframe === '1M' ? 10 : 
+                                           selectedTimeframe === '5M' ? 30 :
+                                           selectedTimeframe === '15M' ? 90 :
+                                           selectedTimeframe === '1H' ? 4 :
+                                           selectedTimeframe === '4H' ? 12 : 20);
+        
+        const timeAgo = new Date();
+        timeAgo.setMinutes(timeAgo.getMinutes() - hoursAgo);
+        
+        let timeLabel = '';
+        if (selectedTimeframe === '1M' || selectedTimeframe === '5M' || selectedTimeframe === '15M') {
+          timeLabel = timeAgo.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        } else if (selectedTimeframe === '1H' || selectedTimeframe === '4H') {
+          timeLabel = timeAgo.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        } else {
+          timeLabel = timeAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+        
+        // Special handling for current time (last point)
+        if (i === timePoints) {
+          timeLabel = selectedTimeframe === '1D' ? 'Now' : 
+                     new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+          ctx.fillStyle = '#00d4aa'; // accent color for current time
+          ctx.font = 'bold 10px "Inter", sans-serif';
+        } else {
+          ctx.fillStyle = '#9CA3AF'; // gray-400
+          ctx.font = '10px "Inter", sans-serif';
+        }
+        
+        ctx.textAlign = 'center';
+        ctx.fillText(timeLabel, x, padding.top + chartHeight + 25);
+      }
     }
+    
+    // Remove duplicate current time label - it's handled in the loop above
 
     // Draw price line
     ctx.strokeStyle = '#00d4aa';
@@ -222,8 +259,20 @@ export default function PythNetworkChart({
       ctx.fillStyle = '#9CA3AF'; // gray-400 - more visible
       ctx.font = 'bold 11px "Inter", sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(`±$${currentCryptoData.confidence_interval.toFixed(2)}`, rect.width - 15, rect.height - 15);
+      ctx.fillText(`±$${currentCryptoData.confidence_interval.toFixed(2)}`, rect.width - 15, rect.height - 35);
     }
+    
+    // Add timeframe and data source indicators at bottom
+    ctx.fillStyle = '#6B7280'; // gray-500
+    ctx.font = 'bold 10px "Inter", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Timeframe: ${selectedTimeframe}`, padding.left, rect.height - 10);
+    
+    // Data source indicator at bottom center
+    ctx.fillStyle = '#00d4aa'; // accent color
+    ctx.font = 'bold 9px "Inter", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Real-time Pyth Network Data', rect.width / 2, rect.height - 10);
 
   }, [historicalData, currentCryptoData, isFullscreen]);
 
