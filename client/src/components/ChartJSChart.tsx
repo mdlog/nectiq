@@ -308,16 +308,42 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
               borderWidth: 1
             }
           },
-          // Add price change indicator
-          priceChangeIndicator: {
+          // Dot hijau prominent di ujung line chart dengan harga running
+          runningPriceDot: {
             type: 'point' as const,
+            xValue: labels[labels.length - 1], // Ujung chart
+            yValue: cryptoInfo.current_price,
+            backgroundColor: '#00d4aa', // Hijau cyan premium
+            borderColor: '#ffffff',
+            borderWidth: 4,
+            radius: 8, // Dot lebih besar dan prominent
+            scaleID: 'y1',
+            // Animasi pulse effect
+            z: 999 // Pastikan di atas semua elemen
+          },
+          // Label harga running di atas dot hijau
+          runningPriceLabel: {
+            type: 'label' as const,
             xValue: labels[labels.length - 1],
             yValue: cryptoInfo.current_price,
-            backgroundColor: primaryColor,
+            content: `$${cryptoInfo.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            backgroundColor: '#00d4aa',
+            color: '#ffffff',
+            font: {
+              weight: '800',
+              size: 12,
+              family: 'Roboto, Inter, sans-serif'
+            },
+            padding: {
+              x: 12,
+              y: 8
+            },
+            cornerRadius: 6,
+            xAdjust: 0,
+            yAdjust: -25, // Posisi di atas dot
             borderColor: '#ffffff',
-            borderWidth: 3,
-            radius: 5,
-            scaleID: 'y1'
+            borderWidth: 2,
+            z: 1000 // Di atas dot
           }
         } : {}
       }
@@ -328,22 +354,14 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
     },
     elements: {
       point: {
-        hoverRadius: 6,
-        hoverBorderWidth: 2,
+        hoverRadius: 8,
+        hoverBorderWidth: 3,
+        hoverBackgroundColor: primaryColor,
+        hoverBorderColor: '#ffffff'
       },
       line: {
-        elements: {
-          point: {
-            hoverRadius: 8,
-            hoverBorderWidth: 3,
-            hoverBackgroundColor: primaryColor,
-            hoverBorderColor: '#ffffff'
-          },
-          line: {
-            borderCapStyle: 'round' as const,
-            borderJoinStyle: 'round' as const,
-          }
-        },
+        borderCapStyle: 'round' as const,
+        borderJoinStyle: 'round' as const,
       }
     },
     scales: {
