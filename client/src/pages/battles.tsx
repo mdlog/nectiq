@@ -1119,19 +1119,39 @@ export default function BattlesPage() {
                           <div className="flex justify-between text-sm">
                             <span>Current Price</span>
                             <span className="font-semibold">
-                              ${battle.currentPrice ? 
-                                battle.currentPrice.toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2
-                                }) : 
-                                'Loading...'
-                              }
+                              ${(() => {
+                                // Use live price from Pyth Network data
+                                const livePrice = cryptos.find(crypto => 
+                                  crypto.id === battle.cryptocurrency.toLowerCase() || 
+                                  crypto.symbol.toLowerCase() === battle.cryptocurrency.toLowerCase() ||
+                                  crypto.name.toLowerCase() === battle.cryptocurrency.toLowerCase()
+                                )?.current_price;
+                                
+                                const finalPrice = livePrice || battle.currentPrice;
+                                return finalPrice ? 
+                                  finalPrice.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                  }) : 
+                                  'Loading...';
+                              })()}
                             </span>
                           </div>
                           
                           {/* Win Probability Bar */}
-                          {battle.challengerPrediction && battle.challengedPrediction && battle.currentPrice && (() => {
-                            const currentPrice = battle.currentPrice;
+                          {battle.challengerPrediction && battle.challengedPrediction && (() => {
+                            // Use same live price logic for win probability calculation
+                            const livePrice = cryptos.find(crypto => 
+                              crypto.id === battle.cryptocurrency.toLowerCase() || 
+                              crypto.symbol.toLowerCase() === battle.cryptocurrency.toLowerCase() ||
+                              crypto.name.toLowerCase() === battle.cryptocurrency.toLowerCase()
+                            )?.current_price;
+                            
+                            const currentPrice = livePrice || battle.currentPrice;
+                            
+                            // Only show probability if we have a valid current price
+                            if (!currentPrice) return null;
+                            
                             const challengerPrediction = parseFloat(battle.challengerPrediction);
                             const challengedPrediction = parseFloat(battle.challengedPrediction);
                             
