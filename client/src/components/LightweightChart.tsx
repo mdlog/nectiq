@@ -365,7 +365,7 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
             systemTheme === "dark" ? "text-white" : "text-gray-900"
           }`}>
             <TrendingUp size={20} className="text-cyan-400" />
-            {currentCrypto?.symbol || 'Crypto'}/USD Chart (Lightweight Charts)
+            {currentCrypto?.symbol || 'Crypto'}/USD Chart
           </h3>
           
           {currentCrypto && (
