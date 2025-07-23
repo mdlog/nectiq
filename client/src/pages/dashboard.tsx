@@ -13,7 +13,7 @@ import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
 import { SimpleActivityFeed } from "@/components/simple-activity-feed";
-import ProfessionalTradingViewChart from "@/components/ProfessionalTradingViewChart";
+import PythNetworkChart from "@/components/PythNetworkChart";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,7 +95,7 @@ export default function Dashboard() {
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
               <div className="space-y-2 md:space-y-4">
-                <ProfessionalTradingViewChart
+                <PythNetworkChart
                   cryptoId={selectedCrypto.id}
                   onPredictionClick={() => handlePredictClick(selectedCrypto.id)}
                 />
