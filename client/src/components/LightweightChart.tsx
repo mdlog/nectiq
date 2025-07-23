@@ -103,13 +103,8 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
     basePrice = close;
   }
   
-  // Update last candle with current price
-  if (data.length > 0) {
-    const lastCandle = data[data.length - 1];
-    lastCandle.close = Number(currentPrice.toFixed(2));
-    lastCandle.high = Math.max(lastCandle.high, currentPrice);
-    lastCandle.low = Math.min(lastCandle.low, currentPrice);
-  }
+  // STATIC CHART - No real-time price updates
+  // Last candle uses static generated data only
   
   return data;
 }
@@ -122,15 +117,15 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeType>('1D');
 
-  // Fetch current price data - SAME endpoint as Live Prices for perfect synchronization
+  // Fetch current price data - STATIC CHART (No Real-time Updates)
   const { data: cryptoPrices } = useQuery({
-    queryKey: ["/api/crypto/pyth-prices"], // EXACT same endpoint as Live Prices
-    refetchInterval: 1000, // EXACT same as Live Prices - 1 second updates
-    refetchIntervalInBackground: true, // EXACT same as Live Prices
-    staleTime: 500, // EXACT same as Live Prices - 500ms stale time  
-    retry: 3, // EXACT same as Live Prices
-    refetchOnWindowFocus: true, // EXACT same as Live Prices
-    refetchOnMount: true, // EXACT same as Live Prices
+    queryKey: ["/api/crypto/pyth-prices"], 
+    refetchInterval: false, // DISABLED - No automatic refresh
+    refetchIntervalInBackground: false, // DISABLED - No background updates
+    staleTime: Infinity, // STATIC - Data never becomes stale
+    retry: 3,
+    refetchOnWindowFocus: false, // DISABLED - No refresh on window focus
+    refetchOnMount: true, // Only fetch once on component mount
   });
 
   const currentCrypto = Array.isArray(cryptoPrices) ? cryptoPrices.find((crypto: any) => crypto.id === cryptoId) : null;
@@ -306,26 +301,8 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
     }
   }, [cryptoId, selectedTimeframe, currentCrypto]); // Only reinitialize on crypto/timeframe change
 
-  // Real-time price updates using series.update() - TradingView best practice  
-  useEffect(() => {
-    if (!seriesRef.current || !currentCrypto || !currentPrice) return;
-
-    // Create real-time candle update with current timestamp
-    const currentTime = Math.floor(Date.now() / 1000) as UTCTimestamp;
-    
-    // Simple real-time update: always update the current candle with latest price  
-    const realtimeUpdate = {
-      time: currentTime,
-      open: currentPrice,
-      high: currentPrice,
-      low: currentPrice,
-      close: currentPrice,
-    };
-
-    // Use series.update() for efficient real-time updates - as per TradingView docs
-    seriesRef.current.update(realtimeUpdate);
-    
-  }, [currentPrice]); // Only update when price changes
+  // STATIC CHART - Real-time updates DISABLED
+  // No automatic price updates - chart displays static data only
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement && chartContainerRef.current?.parentElement) {

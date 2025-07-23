@@ -42,20 +42,27 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
   const [chartType, setChartType] = useState<'candlestick' | 'line'>('candlestick');
   const [cryptoLogo, setCryptoLogo] = useState<string>('');
 
-  // Fetch Pyth Network prices
+  // Fetch Pyth Network prices - STATIC CHART (No Real-time Updates)
   const { data: pythData } = useQuery<PythPriceData[]>({
     queryKey: ['/api/crypto/pyth-prices'],
-    refetchInterval: 3000, // 3 seconds
+    refetchInterval: false, // DISABLED - No automatic refresh
+    refetchIntervalInBackground: false, // DISABLED - No background updates
+    staleTime: Infinity, // STATIC - Data never becomes stale
+    refetchOnWindowFocus: false, // DISABLED - No refresh on window focus
+    refetchOnMount: true, // Only fetch once on component mount
   });
 
   // Get current crypto data
   const currentCryptoData = pythData?.find((crypto: PythPriceData) => crypto.id === cryptoId);
 
-  // Fetch crypto data for logo (using same source as Live Prices)
+  // Fetch crypto data for logo - STATIC CHART (No Real-time Updates)
   const { data: cryptoData } = useQuery<any[]>({
     queryKey: ['/api/crypto/prices'],
-    refetchInterval: 60000, // Same as Live Prices
-    staleTime: 45000,
+    refetchInterval: false, // DISABLED - No automatic refresh
+    refetchIntervalInBackground: false, // DISABLED - No background updates
+    staleTime: Infinity, // STATIC - Data never becomes stale
+    refetchOnWindowFocus: false, // DISABLED - No refresh on window focus
+    refetchOnMount: true, // Only fetch once on component mount
   });
 
   // Get crypto logo and metadata
