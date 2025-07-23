@@ -194,6 +194,51 @@ nectiq-platform/
 - Gunakan hardware wallet untuk admin accounts
 - Monitor admin activities melalui logs
 
+## 👨‍💼 Admin Login & Access
+
+### Cara Login Sebagai Admin:
+1. **Setup Admin Wallet Address** di `.env`:
+   ```env
+   ADMIN_WALLET_ADDRESSES=0xYourAdminWalletAddress1,0xYourAdminWalletAddress2
+   ```
+
+2. **Login Process**:
+   - Buka aplikasi di browser: `http://localhost:5000`
+   - Klik "Login or Sign Up"
+   - Connect wallet menggunakan MetaMask/WalletConnect
+   - Pastikan wallet address sama dengan yang ada di `ADMIN_WALLET_ADDRESSES`
+   - Setelah login, akses admin panel di: `http://localhost:5000/admin`
+
+3. **Admin Panel Features**:
+   - **User Management**: Kelola semua user, export data CSV
+   - **Cryptocurrency Management**: Tambah/edit cryptocurrency dengan Pyth Network Feed IDs
+   - **Predictions**: Monitor semua prediction user
+   - **Financial**: Kelola deposits, withdrawals, purchases
+   - **Platform Statistics**: Overview lengkap platform metrics
+
+### Default Admin Accounts (Development):
+```
+Admin Wallet 1: 0x4C6165286739696849Fb3e77A16b0639D762c5B6
+Admin Wallet 2: 0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4
+```
+
+**⚠️ PENTING**: Ganti dengan wallet address Anda sendiri di production!
+
+### Admin Authentication Flow:
+1. User connect wallet → Sistem check wallet address
+2. Jika address ada di `ADMIN_WALLET_ADDRESSES` → Grant admin access
+3. Admin dapat akses semua fitur management
+4. Security audit log semua admin activities
+
+### Admin Panel Navigation:
+- **Statistics**: Overview platform metrics
+- **Users**: User management & CSV export  
+- **Cryptocurrencies**: Manage Pyth Network integrations
+- **Predictions**: Monitor all user predictions
+- **Purchases**: Transaction monitoring
+- **Deposits**: Deposit management
+- **Withdrawals**: Withdrawal processing
+
 ## 🚨 Troubleshooting
 
 ### Database Connection Issues:
