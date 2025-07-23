@@ -10,8 +10,10 @@ interface LightweightChartProps {
   onPredictionClick?: () => void;
 }
 
-// Generate realistic OHLC data for 24 hours
-function generateOHLCData(currentPrice: number, cryptoId: string) {
+type TimeframeType = '1H' | '4H' | '1D' | '1W' | '1M';
+
+// Generate realistic OHLC data based on timeframe
+function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: TimeframeType) {
   const data = [];
   const now = new Date();
   
@@ -26,9 +28,20 @@ function generateOHLCData(currentPrice: number, cryptoId: string) {
 
   let basePrice = currentPrice;
   
-  // Generate 24 hours of hourly OHLC data
-  for (let i = 23; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+  // Calculate intervals based on timeframe
+  const timeframeConfig = {
+    '1H': { intervals: 24, duration: 60 * 60 * 1000 },        // 24 hours of hourly data
+    '4H': { intervals: 30, duration: 4 * 60 * 60 * 1000 },    // 30 periods of 4-hour data (5 days)
+    '1D': { intervals: 30, duration: 24 * 60 * 60 * 1000 },   // 30 days of daily data
+    '1W': { intervals: 24, duration: 7 * 24 * 60 * 60 * 1000 }, // 24 weeks of weekly data
+    '1M': { intervals: 12, duration: 30 * 24 * 60 * 60 * 1000 }  // 12 months of monthly data
+  };
+  
+  const config = timeframeConfig[timeframe];
+  
+  // Generate OHLC data for specified timeframe
+  for (let i = config.intervals - 1; i >= 0; i--) {
+    const time = new Date(now.getTime() - i * config.duration);
     const timestamp = Math.floor(time.getTime() / 1000);
     
     // Generate realistic volatility (0.5% to 1.5% per hour)
@@ -74,6 +87,7 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeType>('1D');
 
   // Fetch current price data - SAME endpoint as Live Prices for perfect synchronization
   const { data: cryptoPrices } = useQuery({
@@ -134,7 +148,7 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
     seriesRef.current = candlestickSeries;
 
     // Generate and set initial data
-    const ohlcData = generateOHLCData(currentPrice, cryptoId);
+    const ohlcData = generateOHLCData(currentPrice, cryptoId, selectedTimeframe);
     candlestickSeries.setData(ohlcData);
 
     // Handle resize
@@ -162,10 +176,10 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
   // Update chart with new price data
   useEffect(() => {
     if (seriesRef.current && currentPrice && currentCrypto) {
-      const ohlcData = generateOHLCData(currentPrice, cryptoId);
+      const ohlcData = generateOHLCData(currentPrice, cryptoId, selectedTimeframe);
       seriesRef.current.setData(ohlcData);
     }
-  }, [currentPrice, cryptoId]);
+  }, [currentPrice, cryptoId, selectedTimeframe]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement && chartContainerRef.current?.parentElement) {
@@ -226,6 +240,27 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
               </span>
             </div>
           )}
+        </div>
+
+        {/* Timeframe Selector */}
+        <div className="flex items-center gap-1">
+          {(['1H', '4H', '1D', '1W', '1M'] as TimeframeType[]).map((timeframe) => (
+            <Button
+              key={timeframe}
+              variant={selectedTimeframe === timeframe ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setSelectedTimeframe(timeframe)}
+              className={`px-3 py-1 text-xs ${
+                selectedTimeframe === timeframe
+                  ? "bg-cyan-500 text-white hover:bg-cyan-600"
+                  : systemTheme === "dark"
+                  ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+              }`}
+            >
+              {timeframe}
+            </Button>
+          ))}
         </div>
 
         <div className="flex items-center gap-2">
