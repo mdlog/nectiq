@@ -77,6 +77,12 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
   // Wallet requirement system
   const { checkWalletRequired } = useWalletRequired();
 
+  // Helper function to get real-time price from Pyth Network data
+  const getRealTimePrice = (cryptoId: string): number => {
+    const crypto = cryptoPrices?.find(c => c.id === cryptoId);
+    return crypto?.current_price || 0;
+  };
+
   // Early return with error card if props are invalid
   if (!tournament) {
     return (
@@ -191,9 +197,9 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
     }
   });
 
-  // Get current crypto price
+  // Get current crypto price using live Pyth Network data
   const currentCrypto = cryptoPrices?.find(crypto => crypto.id === tournament.cryptocurrency);
-  const currentPrice = currentCrypto?.current_price || 0;
+  const currentPrice = getRealTimePrice(tournament.cryptocurrency);
   const priceChange24h = currentCrypto?.price_change_percentage_24h || 0;
 
   // Check if user has joined
@@ -209,7 +215,6 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
   // Check if user is winner
   const activeParticipants = (participants as any[])?.filter((p: any) => p.status === 'active') || [];
   const isWinner = currentUser?.status === 'winner' || 
-                   (tournament.winnerId && tournament.winnerId === user?.id) || // Check tournament winnerId
                    (tournament.status === 'completed' && 
                     currentUser?.status === 'active' && 
                     !isEliminated &&
@@ -272,7 +277,8 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
                   </div>
                   <div className="text-right">
                     {(() => {
-                      const priceDiff = Number(currentPrice) - Number(startingPrice);
+                      const livePythPrice = getRealTimePrice(tournament.cryptocurrency);
+                      const priceDiff = Number(livePythPrice) - Number(startingPrice);
                       const priceDiffPercent = ((priceDiff / Number(startingPrice)) * 100);
                       return (
                         <div className={`font-medium ${priceDiff >= 0 ? 'text-green-800' : 'text-red-800'}`}>
@@ -447,7 +453,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
               onClick={() => {
                 checkWalletRequired(() => {
                   joinTournamentMutation.mutate();
-                }, 'tournament');
+                }, 'survival');
               }}
               disabled={joinTournamentMutation.isPending}
               className="w-full bg-green-600 hover:bg-green-700"
@@ -480,7 +486,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
                   onClick={() => {
                     checkWalletRequired(() => {
                       predictUpMutation.mutate();
-                    }, 'tournament');
+                    }, 'survival');
                   }}
                   disabled={predictUpMutation.isPending}
                   className="flex-1 bg-green-600 hover:bg-green-700"
@@ -493,7 +499,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
                   onClick={() => {
                     checkWalletRequired(() => {
                       predictDownMutation.mutate();
-                    }, 'tournament');
+                    }, 'survival');
                   }}
                   disabled={predictDownMutation.isPending}
                   className="flex-1 bg-red-600 hover:bg-red-700"
