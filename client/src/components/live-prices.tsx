@@ -62,15 +62,15 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   const [currentIndex, setCurrentIndex] = useState(0);
   const itemsPerView = 14; // Show 14 cryptos at once
 
-  // CRITICAL: Force same endpoint as Battles component for perfect synchronization
+  // Use regular endpoint for 24h change data from CoinGecko
   const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
-    queryKey: ["/api/crypto/pyth-prices"], // EXACT same endpoint as Battles
-    refetchInterval: 1000, // EXACT same as Battles - 1 second updates
-    refetchIntervalInBackground: true, // EXACT same as Battles
-    staleTime: 500, // EXACT same as Battles - 500ms stale time  
-    retry: 3, // EXACT same as Battles
-    refetchOnWindowFocus: true, // EXACT same as Battles
-    refetchOnMount: true, // EXACT same as Battles
+    queryKey: ["/api/crypto/prices"], // Use regular endpoint for 24h change data
+    refetchInterval: 3000, // 3 second updates for live prices
+    refetchIntervalInBackground: true,
+    staleTime: 1000, // 1 second stale time  
+    retry: 3,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   // ENHANCED DEBUG: Compare with Battle component timing
