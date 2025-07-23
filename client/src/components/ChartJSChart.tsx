@@ -68,7 +68,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
   // Get crypto info
   const cryptoInfo = cryptoData?.find((c: any) => c.id === cryptoId);
 
-  // Generate realistic historical data with current price as endpoint
+  // Generate realistic historical data with STATIC baseline and dynamic endpoint only
   const generateHistoricalData = () => {
     if (!cryptoInfo) return { labels: [], data: [] };
 
@@ -88,48 +88,43 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
     const data: number[] = [];
     const now = Date.now();
 
-    // Generate historical prices working backwards from current price with controlled volatility
-    const historicalPrices: number[] = [];
+    // Membuat baseline price berdasarkan cryptocurrency yang dipilih
+    const getBaselinePrice = (cryptoId: string, currentPrice: number) => {
+      // Gunakan current price sebagai base, dikurangi sedikit untuk trend naik
+      return currentPrice * 0.985; // 1.5% di bawah current price
+    };
     
-    // Start with current price as the last point (this will be dynamic)
-    historicalPrices[dataPoints - 1] = currentPrice;
+    const baselinePrice = getBaselinePrice(cryptoId, currentPrice);
+    const staticHistoricalPrices: number[] = [];
     
-    // Generate previous prices working backwards with much smaller variations
-    for (let i = dataPoints - 2; i >= 0; i--) {
-      // Use much smaller, more realistic volatility
-      let maxVariation = 0.005; // 0.5% max variation per step
-      switch (selectedTimeframe) {
-        case '1m':
-        case '5m':
-          maxVariation = 0.001; // 0.1% for very short timeframes
-          break;
-        case '15m':
-          maxVariation = 0.002; // 0.2%
-          break;
-        case '1h':
-          maxVariation = 0.003; // 0.3%
-          break;
-        case '4h':
-          maxVariation = 0.008; // 0.8%
-          break;
-        case '1d':
-          maxVariation = 0.015; // 1.5% max
-          break;
+    // Generate STATIC historical prices (konsisten, tidak berubah setiap render)
+    // Menggunakan seed yang konsisten berdasarkan cryptoId agar pattern sama
+    const seedValue = cryptoId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+    let seed = seedValue;
+    
+    // Simple seeded random function untuk konsistensi
+    const seededRandom = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    
+    // Generate STATIC historical prices yang tidak berubah-ubah
+    for (let i = 0; i < dataPoints - 1; i++) {
+      const variation = 0.002; // 0.2% max variation
+      const randomFactor = (seededRandom() - 0.5) * variation * 2;
+      const priceVariation = 1 + randomFactor;
+      
+      if (i === 0) {
+        staticHistoricalPrices[i] = baselinePrice;
+      } else {
+        staticHistoricalPrices[i] = staticHistoricalPrices[i - 1] * priceVariation;
       }
-
-      // Create small, realistic price movement
-      const randomVariation = (Math.random() - 0.5) * maxVariation * 2;
-      const priceChange = 1 + randomVariation;
-      
-      // Work backwards from the next price point with strict bounds
-      const nextPrice = historicalPrices[i + 1];
-      const newPrice = nextPrice / priceChange;
-      
-      // Ensure price stays within reasonable bounds (±20% of current price)
-      const minPrice = currentPrice * 0.8;
-      const maxPrice = currentPrice * 1.2;
-      historicalPrices[i] = Math.max(minPrice, Math.min(maxPrice, newPrice));
     }
+    
+    // HANYA data point terakhir yang menggunakan current price (dinamis real-time)
+    staticHistoricalPrices[dataPoints - 1] = currentPrice;
+    
+
 
     // Now build labels and data arrays
     for (let i = 0; i < dataPoints; i++) {
@@ -149,7 +144,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
       }
       
       labels.push(label);
-      data.push(historicalPrices[i]);
+      data.push(staticHistoricalPrices[i]);
     }
 
     return { labels, data };
@@ -215,7 +210,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
     layout: {
       padding: {
         top: 30,
-        right: 30,
+        right: 120, // Extra wide margin untuk label harga running yang panjang
         bottom: 20,
         left: 10
       }
