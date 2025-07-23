@@ -31,7 +31,7 @@ const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 export class CryptoService {
   private lastFetchTime = 0;
   private cachedRealPrices: CryptoPrice[] = [];
-  private readonly CACHE_DURATION = 1000; // Cache real prices for 1 second to force hybrid refresh
+  private readonly CACHE_DURATION = 10000; // Cache real prices for 10 seconds for better real-time experience
   private fetchPromise: Promise<CryptoPrice[]> | null = null; // Prevent concurrent fetches
   private priceVariationTime = 0; // Consistent variation time for all users
   private pythEnabled = true; // Enable Pyth Network integration
@@ -260,13 +260,12 @@ export class CryptoService {
     
     // Try to fetch real prices every 45 seconds to avoid rate limits while keeping prices current
     if (now - this.lastFetchTime > this.CACHE_DURATION) {
-      console.log('🔄 [CRYPTO-DEBUG] Cache expired, starting hybrid price fetch for 24h change data');
       // Create and store the fetch promise to prevent concurrent fetches
-      this.fetchPromise = this.fetchHybridPrices(); // Use hybrid approach for 24h change data
+      this.fetchPromise = this.fetchFreshPrices(); // Pyth-only approach
       return this.fetchPromise;
     }
     
-    // Return cached hybrid data
+    // Return cached Pyth data
     return this.cachedRealPrices;
   }
   

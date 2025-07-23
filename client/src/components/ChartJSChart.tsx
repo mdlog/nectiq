@@ -56,9 +56,9 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
   const [selectedTimeframe, setSelectedTimeframe] = useState('1h');
   const [chartType, setChartType] = useState<'line' | 'bar'>('line');
 
-  // Fetch crypto data (FIXED: same source as Live Prices for price consistency)
+  // Fetch crypto data (same source as Live Prices for consistency)
   const { data: cryptoData } = useQuery<any[]>({
-    queryKey: ['/api/crypto/prices'], // CHANGED: Use hybrid approach like Live Prices
+    queryKey: ['/api/crypto/pyth-prices'],
     refetchInterval: 1000, // Same as Live Prices - ultra-fast updates
     refetchIntervalInBackground: true, // Enable background updates
     staleTime: 500, // Same as Live Prices - very fresh data
