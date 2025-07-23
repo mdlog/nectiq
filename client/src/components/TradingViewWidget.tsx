@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Minimize2 } from "lucide-react";
+import useSystemTheme from "@/hooks/useSystemTheme";
 import FallbackChart from "./FallbackChart";
 
 interface TradingViewWidgetProps {
@@ -28,12 +29,14 @@ const cryptoToPythSymbol: Record<string, string> = {
 let tvScriptLoadingPromise: Promise<void> | null = null;
 
 export default function TradingViewWidget({ cryptoId, onPredictionClick }: TradingViewWidgetProps) {
+  const systemTheme = useSystemTheme();
   const onLoadScriptRef = useRef<(() => void) | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('D');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const widgetContainerRef = useRef<HTMLDivElement>(null);
+  const widgetRef = useRef<any>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const pythSymbol = cryptoToPythSymbol[cryptoId] || 'PYTH:BTCUSD';
@@ -103,7 +106,7 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
     };
 
     function createWidget() {
-      console.log("🔧 [TRADINGVIEW] Creating widget for:", pythSymbol);
+      console.log("🔧 [TRADINGVIEW] Creating widget for:", pythSymbol, "with theme:", systemTheme);
       
       const container = document.getElementById("tradingview-widget");
       if (!container) {
@@ -121,18 +124,24 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
       }
 
       try {
+        // Remove existing widget if it exists
+        if (widgetRef.current) {
+          widgetRef.current.remove();
+          widgetRef.current = null;
+        }
+
         // Clear existing content
         container.innerHTML = '';
         
-        new (window as any).TradingView.widget({
+        widgetRef.current = new (window as any).TradingView.widget({
           autosize: true,
           symbol: pythSymbol,
           interval: selectedTimeframe,
           timezone: "Asia/Jakarta",
-          theme: "dark",
+          theme: systemTheme, // Use system theme
           style: "1",
           locale: "id",
-          toolbar_bg: "#1f2937",
+          toolbar_bg: systemTheme === "dark" ? "#1f2937" : "#f1f3f6",
           enable_publishing: false,
           allow_symbol_change: false,
           container_id: "tradingview-widget",
@@ -144,11 +153,11 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
             "RSI@tv-basicstudies"
           ],
           loading_screen: {
-            backgroundColor: "#1f2937",
+            backgroundColor: systemTheme === "dark" ? "#1f2937" : "#ffffff",
             foregroundColor: "#00d4aa"
           },
           onChartReady: () => {
-            console.log("✅ [TRADINGVIEW] Chart ready");
+            console.log("✅ [TRADINGVIEW] Chart ready with", systemTheme, "theme");
             setIsLoading(false);
             setHasError(false);
             if (retryTimeoutRef.current) {
@@ -162,7 +171,7 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
         setIsLoading(false);
       }
     }
-  }, [pythSymbol, selectedTimeframe]);
+  }, [pythSymbol, selectedTimeframe, systemTheme]); // Added systemTheme dependency
 
   const timeframes = [
     { label: '1M', value: '1' },
@@ -196,14 +205,22 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
   return (
     <div 
       ref={widgetContainerRef}
-      className={`bg-gray-900 rounded-lg overflow-hidden border border-gray-700 ${
-        isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'relative'
-      }`}
+      className={`rounded-lg overflow-hidden border ${
+        systemTheme === "dark" 
+          ? "bg-gray-900 border-gray-700" 
+          : "bg-white border-gray-300"
+      } ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'relative'}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
+      <div className={`flex items-center justify-between p-4 border-b ${
+        systemTheme === "dark" 
+          ? "bg-gray-800 border-gray-700" 
+          : "bg-gray-100 border-gray-300"
+      }`}>
         <div className="flex items-center gap-4">
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className={`text-lg font-semibold ${
+            systemTheme === "dark" ? "text-white" : "text-gray-900"
+          }`}>
             {pythSymbol.replace('PYTH:', '').replace('USD', '/USD')} Chart
           </h3>
           
@@ -257,18 +274,26 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
         
         {/* Loading indicator */}
         {isLoading && !hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+          <div className={`absolute inset-0 flex items-center justify-center z-10 ${
+            systemTheme === "dark" ? "bg-gray-900" : "bg-white"
+          }`}>
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-              <p className="text-gray-400">Loading TradingView Chart...</p>
-              <p className="text-xs text-gray-500 mt-2">Connecting to Pyth Network data...</p>
+              <p className={systemTheme === "dark" ? "text-gray-400" : "text-gray-600"}>
+                Loading TradingView Chart...
+              </p>
+              <p className={`text-xs mt-2 ${systemTheme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+                Connecting to Pyth Network data...
+              </p>
             </div>
           </div>
         )}
 
         {/* Error state - Show fallback chart instead */}
         {hasError && (
-          <div className="absolute inset-0 bg-gray-900 z-10">
+          <div className={`absolute inset-0 z-10 ${
+            systemTheme === "dark" ? "bg-gray-900" : "bg-white"
+          }`}>
             <FallbackChart 
               cryptoId={cryptoId}
               onPredictionClick={onPredictionClick}

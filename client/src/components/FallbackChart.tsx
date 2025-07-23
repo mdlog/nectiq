@@ -14,6 +14,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Maximize2, Minimize2, TrendingUp } from "lucide-react";
+import useSystemTheme from "@/hooks/useSystemTheme";
 
 ChartJS.register(
   CategoryScale,
@@ -56,6 +57,7 @@ function generatePriceData(currentPrice: number, points: number = 50) {
 }
 
 export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackChartProps) {
+  const systemTheme = useSystemTheme();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
 
@@ -101,9 +103,9 @@ export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackC
         display: false,
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
+        backgroundColor: systemTheme === "dark" ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+        titleColor: systemTheme === "dark" ? '#ffffff' : '#000000',
+        bodyColor: systemTheme === "dark" ? '#ffffff' : '#000000',
         borderColor: '#00d4aa',
         borderWidth: 1,
         callbacks: {
@@ -120,10 +122,10 @@ export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackC
       x: {
         display: true,
         grid: {
-          color: 'rgba(255, 255, 255, 0.1)',
+          color: systemTheme === "dark" ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
         },
         ticks: {
-          color: '#9ca3af',
+          color: systemTheme === "dark" ? '#9ca3af' : '#6b7280',
           maxTicksLimit: 8,
         },
       },
@@ -131,10 +133,10 @@ export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackC
         display: true,
         position: 'right',
         grid: {
-          color: 'rgba(255, 255, 255, 0.1)',
+          color: systemTheme === "dark" ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
         },
         ticks: {
-          color: '#9ca3af',
+          color: systemTheme === "dark" ? '#9ca3af' : '#6b7280',
           callback: function(value) {
             return '$' + Number(value).toLocaleString(undefined, {
               minimumFractionDigits: 0,
@@ -174,21 +176,31 @@ export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackC
   return (
     <div 
       ref={chartRef}
-      className={`bg-gray-900 rounded-lg overflow-hidden border border-gray-700 ${
-        isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'relative'
-      }`}
+      className={`rounded-lg overflow-hidden border ${
+        systemTheme === "dark" 
+          ? "bg-gray-900 border-gray-700" 
+          : "bg-white border-gray-300"
+      } ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'relative'}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
+      <div className={`flex items-center justify-between p-4 border-b ${
+        systemTheme === "dark" 
+          ? "bg-gray-800 border-gray-700" 
+          : "bg-gray-100 border-gray-300"
+      }`}>
         <div className="flex items-center gap-4">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+          <h3 className={`text-lg font-semibold flex items-center gap-2 ${
+            systemTheme === "dark" ? "text-white" : "text-gray-900"
+          }`}>
             <TrendingUp size={20} className="text-cyan-400" />
             {currentCrypto?.symbol || 'Crypto'}/USD Chart (Fallback)
           </h3>
           
           {currentCrypto && (
             <div className="text-sm">
-              <span className="text-white font-semibold">
+              <span className={`font-semibold ${
+                systemTheme === "dark" ? "text-white" : "text-gray-900"
+              }`}>
                 ${currentPrice.toLocaleString(undefined, { 
                   minimumFractionDigits: 2, 
                   maximumFractionDigits: 2 
@@ -218,24 +230,31 @@ export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackC
             variant="ghost"
             size="sm"
             onClick={toggleFullscreen}
-            className="text-gray-300 hover:text-white"
+            className={systemTheme === "dark" 
+              ? "text-gray-300 hover:text-white" 
+              : "text-gray-600 hover:text-gray-900"
+            }
           >
             {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </Button>
         </div>
       </div>
 
-      {/* Chart Container */}
-      <div className={`bg-gray-900 ${
-        isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[400px]'
-      }`}>
+      {/* Chart Container */}  
+      <div className={`${
+        systemTheme === "dark" ? "bg-gray-900" : "bg-white"
+      } ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[400px]'}`}>
         <Line data={chartData} options={options} />
       </div>
 
       {/* Footer Info */}
-      <div className="px-4 py-2 bg-gray-800 border-t border-gray-700">
+      <div className={`px-4 py-2 border-t ${
+        systemTheme === "dark" 
+          ? "bg-gray-800 border-gray-700" 
+          : "bg-gray-100 border-gray-300"
+      }`}>
         <div className="flex justify-between items-center text-xs">
-          <span className="text-gray-400">
+          <span className={systemTheme === "dark" ? "text-gray-400" : "text-gray-600"}>
             Fallback Chart | Live Data from Pyth Network
           </span>
           <span className="text-cyan-400 font-medium">
