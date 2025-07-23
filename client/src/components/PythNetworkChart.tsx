@@ -103,8 +103,8 @@ export default function PythNetworkChart({
     canvas.height = rect.height * window.devicePixelRatio;
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-    // Clear canvas
-    ctx.fillStyle = '#0f0f0f';
+    // Clear canvas with dark background
+    ctx.fillStyle = '#111827'; // gray-900
     ctx.fillRect(0, 0, rect.width, rect.height);
 
     // Chart dimensions
@@ -121,7 +121,7 @@ export default function PythNetworkChart({
     const paddedRange = paddedMax - paddedMin;
 
     // Draw grid
-    ctx.strokeStyle = '#1f1f1f';
+    ctx.strokeStyle = '#374151'; // gray-700
     ctx.lineWidth = 1;
     
     // Horizontal grid lines
@@ -134,8 +134,8 @@ export default function PythNetworkChart({
       
       // Price labels on left
       const price = paddedMax - (paddedRange / 5) * i;
-      ctx.fillStyle = '#888888';
-      ctx.font = 'bold 11px "Inter", sans-serif';
+      ctx.fillStyle = '#D1D5DB'; // gray-300 - more visible
+      ctx.font = 'bold 12px "Inter", sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(`$${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, padding.left - 10, y + 4);
     }
@@ -195,25 +195,34 @@ export default function PythNetworkChart({
       ctx.stroke();
       ctx.setLineDash([]);
       
-      // Current price label
-      ctx.fillStyle = '#0f0f0f';
-      ctx.fillRect(lastX + 5, currentY - 12, 70, 24);
-      ctx.strokeStyle = '#00d4aa';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(lastX + 5, currentY - 12, 70, 24);
+      // Current price label with better visibility
+      const labelWidth = 85;
+      const labelHeight = 26;
+      const labelX = Math.min(lastX + 5, rect.width - labelWidth - 10);
+      const labelY = currentY - 13;
       
-      ctx.fillStyle = '#00d4aa';
-      ctx.font = 'bold 12px "Inter", sans-serif';
+      // Label background
+      ctx.fillStyle = '#111827'; // gray-900
+      ctx.fillRect(labelX, labelY, labelWidth, labelHeight);
+      
+      // Label border
+      ctx.strokeStyle = '#00d4aa';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(labelX, labelY, labelWidth, labelHeight);
+      
+      // Price text
+      ctx.fillStyle = '#FFFFFF'; // white text for better contrast
+      ctx.font = 'bold 13px "Inter", sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText(`$${currentCryptoData.current_price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, lastX + 8, currentY + 4);
+      ctx.fillText(`$${currentCryptoData.current_price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, labelX + 6, currentY + 4);
     }
 
     // Draw confidence interval if available
     if (currentCryptoData?.confidence_interval) {
-      ctx.fillStyle = '#888888';
-      ctx.font = '10px "Inter", sans-serif';
+      ctx.fillStyle = '#9CA3AF'; // gray-400 - more visible
+      ctx.font = 'bold 11px "Inter", sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(`±$${currentCryptoData.confidence_interval.toFixed(2)}`, rect.width - 10, rect.height - 10);
+      ctx.fillText(`±$${currentCryptoData.confidence_interval.toFixed(2)}`, rect.width - 15, rect.height - 15);
     }
 
   }, [historicalData, currentCryptoData, isFullscreen]);
@@ -232,11 +241,11 @@ export default function PythNetworkChart({
   ];
 
   return (
-    <div className={`bg-surface rounded-lg border border-surface-light ${
+    <div className={`bg-gray-900 rounded-lg border border-gray-700 ${
       isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''
     }`}>
       {/* Header dengan crypto info dan controls */}
-      <div className="flex items-center justify-between p-4 border-b border-surface-light">
+      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800/50">
         <div className="flex items-center space-x-4">
           {/* Crypto Info */}
           <div className="flex items-center space-x-3">
@@ -251,25 +260,31 @@ export default function PythNetworkChart({
               />
             )}
             <div>
-              <h3 className="text-lg font-semibold text-accent">
+              <h3 className="text-xl font-bold text-white mb-1">
                 {cryptoInfo?.name || currentCryptoData?.name || cryptoId.toUpperCase()}
               </h3>
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
-                <span>{cryptoInfo?.symbol?.toUpperCase() || currentCryptoData?.symbol}</span>
+              <div className="flex items-center space-x-3 text-sm">
+                <span className="text-gray-300 font-medium">
+                  {cryptoInfo?.symbol?.toUpperCase() || currentCryptoData?.symbol}
+                </span>
                 {currentCryptoData && (
                   <>
-                    <span>•</span>
-                    <span className="text-accent font-mono">
+                    <span className="text-gray-500">•</span>
+                    <span className="text-white font-mono text-lg font-bold">
                       ${currentCryptoData.current_price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
-                        maximumFractionDigits: 8
+                        maximumFractionDigits: 2
                       })}
                     </span>
-                    <span>•</span>
-                    <div className="flex items-center space-x-1 px-2 py-0.5 bg-green-500/10 rounded-md border border-green-500/20">
-                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-400 font-medium">Pyth Network</span>
+                    <div className="flex items-center space-x-1 px-2 py-1 bg-green-500/20 rounded-md border border-green-500/30">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-green-300 font-medium">Live</span>
                     </div>
+                    {currentCryptoData.confidence_interval && (
+                      <span className="text-xs text-gray-400">
+                        ±${currentCryptoData.confidence_interval.toFixed(2)}
+                      </span>
+                    )}
                   </>
                 )}
               </div>
@@ -277,9 +292,9 @@ export default function PythNetworkChart({
           </div>
 
           {/* Data Source Badge */}
-          <div className="hidden md:flex items-center space-x-2 px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20">
+          <div className="hidden md:flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 rounded-full border border-green-500/40">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-green-400 font-medium">100% Pyth Network Data</span>
+            <span className="text-sm text-green-300 font-semibold">100% Pyth Network</span>
           </div>
         </div>
 
@@ -316,19 +331,19 @@ export default function PythNetworkChart({
       </div>
 
       {/* Chart Container */}
-      <div className="relative">
+      <div className="relative bg-gray-900">
         <canvas 
           ref={canvasRef}
-          className={`w-full ${isFullscreen ? 'h-[calc(100vh-200px)]' : 'h-[500px]'} bg-surface`}
+          className={`w-full ${isFullscreen ? 'h-[calc(100vh-200px)]' : 'h-[500px]'} bg-gray-900`}
           style={{ display: 'block' }}
         />
         
         {/* Loading state */}
         {!currentCryptoData && (
-          <div className="absolute inset-0 flex items-center justify-center bg-surface/80">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90">
             <div className="flex flex-col items-center space-y-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
-              <span className="text-sm text-gray-400">Loading Pyth Network Chart...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+              <span className="text-sm text-white">Loading Pyth Network Chart...</span>
             </div>
           </div>
         )}
@@ -336,10 +351,10 @@ export default function PythNetworkChart({
 
       {/* Prediction Button */}
       {onPredictionClick && (
-        <div className="p-4 border-t border-surface-light">
+        <div className="p-4 border-t border-gray-700 bg-gray-800/30">
           <Button
             onClick={onPredictionClick}
-            className="w-full bg-gradient-to-r from-accent to-blue-500 hover:from-accent/80 hover:to-blue-600 text-white font-semibold py-3 transition-all duration-200"
+            className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 transition-all duration-200 shadow-lg"
           >
             <TrendingUp size={18} className="mr-2" />
             Make Price Prediction
