@@ -59,7 +59,8 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
     return seedRandom / 233280;
   };
 
-  let basePrice = currentPrice;
+  // Start with a base price that creates reasonable historical progression
+  let basePrice = currentPrice * 0.98; // Start slightly below current price
   
   // Calculate intervals based on timeframe
   const timeframeConfig = {
@@ -103,13 +104,23 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
     basePrice = close;
   }
   
-  // STATIC CHART - Ensure last candle uses actual current price
+  // Ensure the final price gradually approaches the current price
   if (data.length > 0) {
     const lastCandle = data[data.length - 1];
-    lastCandle.close = Number(currentPrice.toFixed(2));
-    lastCandle.high = Math.max(lastCandle.high, currentPrice);
-    lastCandle.low = Math.min(lastCandle.low, currentPrice);
+    const targetPrice = Number(currentPrice.toFixed(2));
+    
+    // Adjust the last candle to be closer to current price but keep it realistic
+    const priceAdjustment = (targetPrice - lastCandle.close) * 0.5;
+    lastCandle.close = Number((lastCandle.close + priceAdjustment).toFixed(2));
+    
+    // Ensure high and low are proportional to avoid extreme candlesticks
+    const range = Math.abs(lastCandle.high - lastCandle.low);
+    lastCandle.high = Number((lastCandle.close + range * 0.3).toFixed(2));
+    lastCandle.low = Number((lastCandle.close - range * 0.3).toFixed(2));
   }
+  
+  // STATIC CHART - Generate realistic data based on current price
+  // Keep all candles proportional and realistic without extreme values
   
   return data;
 }
