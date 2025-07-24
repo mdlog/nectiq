@@ -62,13 +62,13 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
   // Start with a base price that creates reasonable historical progression
   let basePrice = currentPrice * 0.98; // Start slightly below current price
   
-  // Calculate intervals based on timeframe
+  // TIMEFRAME SESUAI STANDAR TRADING: Setiap candle mewakili interval waktu yang dipilih
   const timeframeConfig = {
-    '1H': { intervals: 24, duration: 60 * 60 * 1000 },        // 24 hours of hourly data
-    '4H': { intervals: 30, duration: 4 * 60 * 60 * 1000 },    // 30 periods of 4-hour data (5 days)
-    '1D': { intervals: 30, duration: 24 * 60 * 60 * 1000 },   // 30 days of daily data
-    '1W': { intervals: 24, duration: 7 * 24 * 60 * 60 * 1000 }, // 24 weeks of weekly data
-    '1M': { intervals: 12, duration: 30 * 24 * 60 * 60 * 1000 }  // 12 months of monthly data
+    '1H': { intervals: 168, duration: 60 * 60 * 1000 },         // 168 jam (1 minggu) - setiap candle = 1 jam
+    '4H': { intervals: 42, duration: 4 * 60 * 60 * 1000 },      // 42 periode (1 minggu) - setiap candle = 4 jam  
+    '1D': { intervals: 30, duration: 24 * 60 * 60 * 1000 },     // 30 hari - setiap candle = 1 hari
+    '1W': { intervals: 52, duration: 7 * 24 * 60 * 60 * 1000 }, // 52 minggu (1 tahun) - setiap candle = 1 minggu
+    '1M': { intervals: 24, duration: 30 * 24 * 60 * 60 * 1000 } // 24 bulan (2 tahun) - setiap candle = 1 bulan
   };
   
   const config = timeframeConfig[timeframe];
@@ -78,9 +78,17 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
     const time = new Date(now.getTime() - i * config.duration);
     const timestamp = Math.floor(time.getTime() / 1000);
     
-    // Generate realistic volatility (0.5% to 1.5% per hour)
-    const volatility = 0.005 + seededRandom() * 0.010;
-    const trend = Math.sin((23 - i) * 0.3) * 0.5; // Sine wave trend
+    // Generate volatility sesuai dengan timeframe yang dipilih
+    const volatilityByTimeframe = {
+      '1H': 0.005 + seededRandom() * 0.010,   // 0.5-1.5% per jam
+      '4H': 0.015 + seededRandom() * 0.025,   // 1.5-4% per 4 jam
+      '1D': 0.025 + seededRandom() * 0.050,   // 2.5-7.5% per hari
+      '1W': 0.100 + seededRandom() * 0.150,   // 10-25% per minggu
+      '1M': 0.200 + seededRandom() * 0.300    // 20-50% per bulan
+    };
+    
+    const volatility = volatilityByTimeframe[timeframe] || volatilityByTimeframe['1D'];
+    const trend = Math.sin((config.intervals - i) * 0.3) * 0.5; // Sine wave trend
     
     const priceChange = (seededRandom() - 0.5) * volatility + trend * 0.002;
     basePrice = basePrice * (1 + priceChange);
@@ -104,19 +112,21 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
     basePrice = close;
   }
   
-  // Ensure the final price gradually approaches the current price
+  // CRITICAL: Ensure the LAST CANDLE uses EXACT current price from Pyth Network
   if (data.length > 0) {
     const lastCandle = data[data.length - 1];
-    const targetPrice = Number(currentPrice.toFixed(2));
+    const exactCurrentPrice = Number(currentPrice.toFixed(2));
     
-    // Adjust the last candle to be closer to current price but keep it realistic
-    const priceAdjustment = (targetPrice - lastCandle.close) * 0.5;
-    lastCandle.close = Number((lastCandle.close + priceAdjustment).toFixed(2));
+    // Set the last candle close to EXACT current price (not approximate)
+    lastCandle.close = exactCurrentPrice;
     
-    // Ensure high and low are proportional to avoid extreme candlesticks
-    const range = Math.abs(lastCandle.high - lastCandle.low);
-    lastCandle.high = Number((lastCandle.close + range * 0.3).toFixed(2));
-    lastCandle.low = Number((lastCandle.close - range * 0.3).toFixed(2));
+    // Adjust high/low proportionally around the exact current price
+    const volatilityRange = exactCurrentPrice * 0.002; // 0.2% range
+    lastCandle.high = Number((exactCurrentPrice + volatilityRange).toFixed(2));
+    lastCandle.low = Number((exactCurrentPrice - volatilityRange).toFixed(2));
+    
+    // Ensure open is within reasonable range
+    lastCandle.open = Number((exactCurrentPrice + (Math.random() - 0.5) * volatilityRange).toFixed(2));
   }
   
   // STATIC CHART - Generate realistic data based on current price
