@@ -1413,12 +1413,14 @@ export class DatabaseStorage implements IStorage {
     const enhancedBattleData = {
       ...battleData,
       joinDeadline,
-      minimumJoinTime: 300, // 5 menit minimum
+      minimumJoinTime: 300, // 5 menit minimum (300 seconds)
       priceAtCreation: currentPrice,
       priceMovementPenalty: true,
       fairnessMultiplier: "1.00",
       joinTimeBonus: "1.00"
     };
+
+    console.log(`🔍 [BATTLE-CREATE] Battle created with minimumJoinTime: ${enhancedBattleData.minimumJoinTime} seconds (${enhancedBattleData.minimumJoinTime/60} minutes)`);
 
     const [battle] = await db
       .insert(predictionBattles)
@@ -2160,7 +2162,11 @@ export class DatabaseStorage implements IStorage {
       new Date(battle.joinDeadline) : 
       new Date(createdAt.getTime() + (battleDuration * 0.8));
     
-    const minimumJoinTime = battle.minimumJoinTime || 5; // 5 seconds for testing purposes
+    // 🚨 CRITICAL FIX: Ensure consistent unit (seconds) for minimumJoinTime
+    const minimumJoinTime = battle.minimumJoinTime || 300; // Default 300 seconds (5 minutes)
+
+    // Debug logging untuk troubleshooting
+    console.log(`🔍 [BATTLE-JOIN] Battle ${battleId} - minimumJoinTime: ${minimumJoinTime} seconds`);
 
     // Check 1: Is it still within join time limit
     if (now > joinDeadline) {
@@ -2169,15 +2175,23 @@ export class DatabaseStorage implements IStorage {
 
     // Check 2: Has minimum join time passed
     const timeSinceCreation = (now.getTime() - createdAt.getTime()) / 1000; // in seconds
+    console.log(`🔍 [BATTLE-JOIN] Battle ${battleId} - timeSinceCreation: ${timeSinceCreation} seconds`);
+    
     if (timeSinceCreation < minimumJoinTime) {
-      const remainingTime = Math.ceil((minimumJoinTime - timeSinceCreation));
+      const remainingTime = Math.ceil(minimumJoinTime - timeSinceCreation);
+      console.log(`⚠️ [BATTLE-JOIN] Battle ${battleId} - remainingTime: ${remainingTime} seconds`);
+      
       if (remainingTime > 60) {
         const remainingMinutes = Math.ceil(remainingTime / 60);
+        console.log(`❌ [BATTLE-JOIN] Battle ${battleId} - ERROR: Must wait ${remainingMinutes} more minutes`);
         throw new Error(`You must wait ${remainingMinutes} more minutes before joining to prevent unfair strategies.`);
       } else {
+        console.log(`❌ [BATTLE-JOIN] Battle ${battleId} - ERROR: Must wait ${remainingTime} more seconds`);
         throw new Error(`You must wait ${remainingTime} more seconds before joining to prevent unfair strategies.`);
       }
     }
+
+    console.log(`✅ [BATTLE-JOIN] Battle ${battleId} - Join time validation passed`);
 
     // Calculate fairness multipliers
     const currentPrice = await this.getCurrentCryptoPrice(battle.cryptocurrency);
