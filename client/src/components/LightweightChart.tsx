@@ -103,8 +103,13 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
     basePrice = close;
   }
   
-  // STATIC CHART - No real-time price updates
-  // Last candle uses static generated data only
+  // STATIC CHART - Ensure last candle uses actual current price
+  if (data.length > 0) {
+    const lastCandle = data[data.length - 1];
+    lastCandle.close = Number(currentPrice.toFixed(2));
+    lastCandle.high = Math.max(lastCandle.high, currentPrice);
+    lastCandle.low = Math.min(lastCandle.low, currentPrice);
+  }
   
   return data;
 }
@@ -232,9 +237,12 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
     chartRef.current = chart;
     seriesRef.current = candlestickSeries;
 
-    // Generate and set initial data
+    // Generate and set initial data with real price
     const ohlcData = generateOHLCData(currentPrice, cryptoId, selectedTimeframe);
     candlestickSeries.setData(ohlcData);
+    
+    // Set chart to display price range around current price for better visibility
+    chart.timeScale().fitContent();
 
     // Enhanced resize handler following TradingView best practices
     const handleResize = () => {
@@ -286,20 +294,21 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
     };
   }, [systemTheme, isFullscreen]);
 
-  // Initialize chart data once per timeframe/crypto change
+  // Initialize chart data once per timeframe/crypto change - STATIC CHART
   useEffect(() => {
     if (seriesRef.current && currentCrypto) {
       const ohlcData = generateOHLCData(currentPrice, cryptoId, selectedTimeframe);
       
-      // Use setData for initial data load
+      // Use setData for initial data load with real price synchronization
       seriesRef.current.setData(ohlcData);
       
-      // Fit content to ensure all data is visible
+      // Fit content to ensure all data is visible and scroll to latest
       if (chartRef.current) {
         chartRef.current.timeScale().fitContent();
+        chartRef.current.timeScale().scrollToRealTime();
       }
     }
-  }, [cryptoId, selectedTimeframe, currentCrypto]); // Only reinitialize on crypto/timeframe change
+  }, [cryptoId, selectedTimeframe, currentCrypto, currentPrice]); // Include currentPrice for proper sync
 
   // STATIC CHART - Real-time updates DISABLED
   // No automatic price updates - chart displays static data only
