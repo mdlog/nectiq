@@ -62,15 +62,15 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   const [currentIndex, setCurrentIndex] = useState(0);
   const itemsPerView = 14; // Show 14 cryptos at once
 
-  // CRITICAL: Force same endpoint as Battles component for perfect synchronization
+  // STATIC PRICES - No Real-time Updates (matches chart behavior)
   const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
-    queryKey: ["/api/crypto/pyth-prices"], // EXACT same endpoint as Battles
-    refetchInterval: 1000, // EXACT same as Battles - 1 second updates
-    refetchIntervalInBackground: true, // EXACT same as Battles
-    staleTime: 500, // EXACT same as Battles - 500ms stale time  
-    retry: 3, // EXACT same as Battles
-    refetchOnWindowFocus: true, // EXACT same as Battles
-    refetchOnMount: true, // EXACT same as Battles
+    queryKey: ["/api/crypto/pyth-prices"], 
+    refetchInterval: false, // DISABLED - No automatic refresh
+    refetchIntervalInBackground: false, // DISABLED - No background updates
+    staleTime: Infinity, // STATIC - Data never becomes stale
+    retry: 3,
+    refetchOnWindowFocus: false, // DISABLED - No refresh on window focus
+    refetchOnMount: true, // Only fetch once on component mount
   });
 
   // ENHANCED DEBUG: Compare with Battle component timing
