@@ -1470,7 +1470,7 @@ export class DatabaseStorage implements IStorage {
   private async resolveExpiredBattles(): Promise<void> {
     try {
       // Find all active battles that have passed their target time
-      const expiredBattles = await db
+      const expiredActiveBattles = await db
         .select()
         .from(predictionBattles)
         .where(and(
@@ -1478,11 +1478,71 @@ export class DatabaseStorage implements IStorage {
           lt(predictionBattles.targetTime, new Date())
         ));
 
-      for (const battle of expiredBattles) {
+      for (const battle of expiredActiveBattles) {
         await this.resolveBattle(battle.id);
+      }
+
+      // 🆕 CRITICAL FIX: Handle expired 'open' battles with no participants
+      const expiredOpenBattles = await db
+        .select()
+        .from(predictionBattles)
+        .where(and(
+          eq(predictionBattles.status, 'open'),
+          lt(predictionBattles.targetTime, new Date())
+        ));
+
+      for (const battle of expiredOpenBattles) {
+        await this.refundExpiredOpenBattle(battle.id);
       }
     } catch (error) {
       console.error('Error resolving expired battles:', error);
+    }
+  }
+
+  // 🆕 Method to handle expired battles with no participants
+  private async refundExpiredOpenBattle(battleId: number): Promise<void> {
+    try {
+      const [battle] = await db
+        .select()
+        .from(predictionBattles)
+        .where(eq(predictionBattles.id, battleId));
+
+      if (!battle || battle.status !== 'open') {
+        return;
+      }
+
+      console.log(`💰 REFUNDING EXPIRED BATTLE: Battle ${battleId} had no participants, refunding ${battle.stakeAmount} NTIQ to challenger ID ${battle.challengerId}`);
+
+      // Refund stake to challenger using BalanceService
+      const stakeAmount = parseFloat(String(battle.stakeAmount));
+      
+      try {
+        await BalanceService.processTransaction({
+          userId: battle.challengerId,
+          type: 'battle_refund',
+          amount: stakeAmount,
+          description: `Battle expired with no participants - Battle #${battleId}`,
+          relatedId: battleId
+        }, this);
+
+        console.log(`✅ BATTLE REFUND SUCCESS: Battle ${battleId} - Refunded ${stakeAmount} NTIQ to challenger`);
+      } catch (error) {
+        console.error(`❌ BATTLE REFUND ERROR: Failed to refund battle ${battleId}:`, error);
+      }
+
+      // Update battle status to cancelled
+      await db
+        .update(predictionBattles)
+        .set({
+          status: 'cancelled',
+          actualPrice: '0'
+        })
+        .where(eq(predictionBattles.id, battleId));
+
+      console.log(`🚫 Battle ${battleId} marked as cancelled due to no participants`);
+
+    } catch (error) {
+      console.error(`Error refunding expired open battle ${battleId}:`, error);
     }
   }
 
