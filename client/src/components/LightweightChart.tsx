@@ -78,38 +78,20 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
     const time = new Date(now.getTime() - i * config.duration);
     const timestamp = Math.floor(time.getTime() / 1000);
     
-    // Generate volatility yang REALISTIS sesuai dengan batas harga historis crypto
+    // Generate volatility sesuai dengan timeframe yang dipilih
     const volatilityByTimeframe = {
-      '1H': 0.003 + seededRandom() * 0.007,   // 0.3-1% per jam (realistis untuk crypto)
-      '4H': 0.008 + seededRandom() * 0.012,   // 0.8-2% per 4 jam 
-      '1D': 0.015 + seededRandom() * 0.025,   // 1.5-4% per hari
-      '1W': 0.020 + seededRandom() * 0.030,   // 2-5% per minggu (DIPERKECIL agar tidak ekstrem)
-      '1M': 0.040 + seededRandom() * 0.060    // 4-10% per bulan (DIPERKECIL agar tetap realistis)
+      '1H': 0.005 + seededRandom() * 0.010,   // 0.5-1.5% per jam
+      '4H': 0.015 + seededRandom() * 0.025,   // 1.5-4% per 4 jam
+      '1D': 0.025 + seededRandom() * 0.050,   // 2.5-7.5% per hari
+      '1W': 0.100 + seededRandom() * 0.150,   // 10-25% per minggu
+      '1M': 0.200 + seededRandom() * 0.300    // 20-50% per bulan
     };
     
     const volatility = volatilityByTimeframe[timeframe] || volatilityByTimeframe['1D'];
+    const trend = Math.sin((config.intervals - i) * 0.3) * 0.5; // Sine wave trend
     
-    // Trend yang lebih gentle untuk timeframe panjang
-    const trendFactor = timeframe === '1W' || timeframe === '1M' ? 0.001 : 0.002;
-    const trend = Math.sin((config.intervals - i) * 0.3) * trendFactor;
-    
-    const priceChange = (seededRandom() - 0.5) * volatility + trend;
-    const newPrice = basePrice * (1 + priceChange);
-    
-    // BATASI HARGA BERDASARKAN BATAS HISTORIS REALISTIS SETIAP CRYPTOCURRENCY
-    const cryptoPriceLimits = {
-      'bitcoin': { maxHistorical: 73000, minHistorical: 15000 },
-      'ethereum': { maxHistorical: 4900, minHistorical: 80 },
-      'binancecoin': { maxHistorical: 690, minHistorical: 8 },
-      'solana': { maxHistorical: 260, minHistorical: 8 },
-      'default': { maxHistorical: currentPrice * 2, minHistorical: currentPrice * 0.3 }
-    };
-    
-    const limits = cryptoPriceLimits[cryptoId] || cryptoPriceLimits['default'];
-    const maxRealisticPrice = Math.min(limits.maxHistorical, currentPrice * 1.3); // Max 30% di atas current atau batas historis
-    const minRealisticPrice = Math.max(limits.minHistorical, currentPrice * 0.7); // Min 30% di bawah current atau batas historis
-    
-    basePrice = Math.max(minRealisticPrice, Math.min(maxRealisticPrice, newPrice));
+    const priceChange = (seededRandom() - 0.5) * volatility + trend * 0.002;
+    basePrice = basePrice * (1 + priceChange);
     
     // Generate OHLC values
     const open = basePrice;
