@@ -218,13 +218,13 @@ export function RecentRewards() {
                         <div className="flex items-center space-x-2 text-xs">
                           <Target size={10} className="text-blue-500" />
                           <span className="text-gray-600 dark:text-gray-400">
-                            Prediksi: {formatPrice(parseFloat(reward.sourceDetails.predictedPrice || "0"))}
+                            Predicted: {formatPrice(parseFloat(reward.sourceDetails.predictedPrice || "0"))}
                           </span>
                           {reward.sourceDetails.actualPrice && (
                             <>
                               <span className="text-gray-500">→</span>
                               <span className="text-gray-600 dark:text-gray-400">
-                                Aktual: {formatPrice(parseFloat(reward.sourceDetails.actualPrice))}
+                                Actual: {formatPrice(parseFloat(reward.sourceDetails.actualPrice))}
                               </span>
                             </>
                           )}
