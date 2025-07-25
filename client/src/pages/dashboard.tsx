@@ -80,18 +80,18 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       
-      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 md:py-8">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4 md:py-8">
         {/* Live Prices Section - Moved to Top */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <LivePrices 
             onCryptoSelect={handleCryptoSelect}
             onPredictClick={handlePredictClick}
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-6">
           {/* Main Content - Chart Section (Now Takes More Space) */}
-          <div className="lg:col-span-2 space-y-3 md:space-y-6">
+          <div className="lg:col-span-2 space-y-2 sm:space-y-3 md:space-y-6">
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
               <div className="space-y-2 md:space-y-4">
@@ -102,12 +102,12 @@ export default function Dashboard() {
               </div>
             ) : (
               <Card className="bg-surface-light border-border-subtle">
-                <CardContent className="p-8 text-center">
-                  <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-300 mb-2">
+                <CardContent className="p-4 sm:p-8 text-center">
+                  <BarChart3 className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                  <h3 className="text-base sm:text-lg font-medium text-gray-300 mb-2">
                     Select a Cryptocurrency
                   </h3>
-                  <p className="text-gray-500">
+                  <p className="text-sm sm:text-base text-gray-500">
                     Choose a cryptocurrency from Live Prices to view its interactive chart and start making predictions.
                   </p>
                 </CardContent>
@@ -115,12 +115,12 @@ export default function Dashboard() {
             )}
             
             {/* Active Predictions */}
-            <div className="mt-4">
+            <div className="mt-3 sm:mt-4">
               <ActivePredictions />
             </div>
             
             {/* Events Section */}
-            <div className="mt-4">
+            <div className="mt-3 sm:mt-4">
               <EventsSection />
             </div>
           </div>
