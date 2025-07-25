@@ -230,25 +230,6 @@ export function RecentRewards() {
                           )}
                         </div>
                       )}
-                      
-                      {/* Visual Accuracy Indicator Only */}
-                      {(reward.sourceDetails.predictedPrice && reward.sourceDetails.actualPrice) && (
-                        <div className="flex items-center space-x-2 text-xs">
-                          <div className={`w-2 h-2 rounded-full ${
-                            calculateAccuracy(
-                              parseFloat(reward.sourceDetails.predictedPrice),
-                              parseFloat(reward.sourceDetails.actualPrice)
-                            ) >= 80 ? 'bg-green-500' :
-                            calculateAccuracy(
-                              parseFloat(reward.sourceDetails.predictedPrice),
-                              parseFloat(reward.sourceDetails.actualPrice)  
-                            ) >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                          }`}></div>
-                          <span className="text-gray-600 dark:text-gray-400 text-xs">
-                            Indikator akurasi
-                          </span>
-                        </div>
-                      )}
                     </div>
                   )}
                   
