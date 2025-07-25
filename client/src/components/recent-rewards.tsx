@@ -54,7 +54,8 @@ export function RecentRewards() {
     queryKey: ["/api/rewards/recent"],
     refetchInterval: false, // DISABLED to prevent rate limiting
     refetchIntervalInBackground: false,
-    staleTime: 10 * 60 * 1000, // 10 minutes stale time
+    staleTime: 0, // Force fresh data to show latest changes
+    gcTime: 0, // Clear cache immediately
   });
 
   // OPTIMIZED: Crypto prices for dynamic logo display
@@ -230,7 +231,7 @@ export function RecentRewards() {
                         </div>
                       )}
                       
-                      {/* Accuracy Display */}
+                      {/* Visual Accuracy Indicator Only */}
                       {(reward.sourceDetails.predictedPrice && reward.sourceDetails.actualPrice) && (
                         <div className="flex items-center space-x-2 text-xs">
                           <div className={`w-2 h-2 rounded-full ${
@@ -243,11 +244,8 @@ export function RecentRewards() {
                               parseFloat(reward.sourceDetails.actualPrice)  
                             ) >= 60 ? 'bg-yellow-500' : 'bg-red-500'
                           }`}></div>
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Akurasi: {calculateAccuracy(
-                              parseFloat(reward.sourceDetails.predictedPrice),
-                              parseFloat(reward.sourceDetails.actualPrice)
-                            ).toFixed(1)}%
+                          <span className="text-gray-600 dark:text-gray-400 text-xs">
+                            Indikator akurasi
                           </span>
                         </div>
                       )}
