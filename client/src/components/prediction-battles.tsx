@@ -856,29 +856,10 @@ export function PredictionBattles() {
               <div>
                 <label className="text-sm font-medium flex items-center justify-between">
                   Your Price Prediction ($)
-                  {/* SIMPLE ALWAYS VISIBLE BADGE */}
-                  <span 
-                    className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold border-2 border-green-400"
-                    style={{ 
-                      backgroundColor: '#10b981', 
-                      color: 'white',
-                      display: 'inline-block',
-                      minWidth: '100px',
-                      textAlign: 'center'
-                    }}
-                  >
-                    {createForm.cryptocurrency && cryptoPricesData.length > 0 ? (() => {
-                      const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                      if (cryptoData) {
-                        const price = parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        });
-                        return `Live: $${price}`;
-                      }
-                      return 'Live: No data';
-                    })() : 'Live: Select crypto'}
-                  </span>
+                  {/* HARD-CODED TEST BADGE */}
+                  <div className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold">
+                    LIVE BADGE TEST
+                  </div>
                 </label>
                 <Input
                   type="number"
