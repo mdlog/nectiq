@@ -823,11 +823,40 @@ export function PredictionBattles() {
                 </Select>
               </div>
 
-              {/* Your Price Prediction Field with Live Price Badge (DEBUGGING VERSION) */}
               <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-2 flex items-center justify-between">
+                <label className="text-sm font-medium">Timeframe</label>
+                <Select 
+                  value={createForm.timeframe} 
+                  onValueChange={(value) => setCreateForm(prev => ({ ...prev, timeframe: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select timeframe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1h">1 Hour</SelectItem>
+                    <SelectItem value="6h">6 Hours</SelectItem>
+                    <SelectItem value="24h">24 Hours</SelectItem>
+                    <SelectItem value="7d">7 Days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Stake Amount (NTIQ)</label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="500"
+                  value={createForm.stakeAmount}
+                  onChange={(e) => setCreateForm(prev => ({ ...prev, stakeAmount: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
+
+              {/* Your Price Prediction Field with Live Price Badge - MOVED TO CORRECT POSITION */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2 flex items-center justify-between">
                   Your Price Prediction ($)
-                  {/* ALWAYS VISIBLE DEBUG BADGE */}
+                  {/* LIVE PRICE BADGE - ALWAYS VISIBLE FOR DEBUG */}
                   <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
                     {(() => {
                       console.log('🔧 [CREATE-BATTLE-DEBUG] Selected crypto:', createForm.cryptocurrency);
@@ -872,35 +901,6 @@ export function PredictionBattles() {
                     }))}
                   />
                 </div>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Timeframe</label>
-                <Select 
-                  value={createForm.timeframe} 
-                  onValueChange={(value) => setCreateForm(prev => ({ ...prev, timeframe: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select timeframe" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1h">1 Hour</SelectItem>
-                    <SelectItem value="6h">6 Hours</SelectItem>
-                    <SelectItem value="24h">24 Hours</SelectItem>
-                    <SelectItem value="7d">7 Days</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Stake Amount (NTIQ)</label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="500"
-                  value={createForm.stakeAmount}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, stakeAmount: parseInt(e.target.value) || 0 }))}
-                />
               </div>
               
 
