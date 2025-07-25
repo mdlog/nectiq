@@ -823,45 +823,35 @@ export function PredictionBattles() {
                 </Select>
               </div>
 
-              {/* Current Price Display - DEBUGGING VERSION */}
-              <div className="p-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-muted-foreground">Current Live Price</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {createForm.cryptocurrency ? (
-                        cryptoPricesData.length > 0 ? (
-                          <span>
-                            ${(() => {
-                              console.log('🔍 [PRICE-DEBUG] Selected crypto:', createForm.cryptocurrency);
-                              console.log('🔍 [PRICE-DEBUG] Available cryptos:', cryptoPricesData.map(c => c.id));
-                              const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                              console.log('🔍 [PRICE-DEBUG] Found crypto data:', cryptoData);
-                              return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                              }) : 'NOT FOUND';
-                            })()}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-gray-500">Loading prices...</span>
-                        )
-                      ) : (
-                        <span className="text-sm text-gray-500">Select crypto first</span>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {createForm.cryptocurrency && cryptoPricesData.length > 0 && (() => {
-                        const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                        return cryptoData ? `${cryptoData.name} (${cryptoData.symbol.toUpperCase()})` : `ID: ${createForm.cryptocurrency}`;
-                      })()}
-                      {createForm.cryptocurrency && !cryptoPricesData.length && 'Loading...'}
-                      {!createForm.cryptocurrency && 'No cryptocurrency selected'}
-                    </div>
-                  </div>
+              {/* Your Price Prediction Field with Live Price Badge (Same as Make Prediction) */}
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-2 flex items-center justify-between">
+                  Your Price Prediction ($)
+                  {createForm.cryptocurrency && cryptoPricesData.length > 0 && (() => {
+                    const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
+                    return cryptoData ? (
+                      <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
+                        Live: ${parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </div>
+                    ) : null;
+                  })()}
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-3 text-slate-400">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Enter predicted price"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 pl-8 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={createForm.challengerPrediction || ''}
+                    onChange={(e) => setCreateForm(prev => ({
+                      ...prev,
+                      challengerPrediction: parseFloat(e.target.value) || 0
+                    }))}
+                  />
                 </div>
               </div>
               
@@ -894,29 +884,7 @@ export function PredictionBattles() {
                 />
               </div>
               
-              <div>
-                <label className="text-sm font-medium flex items-center justify-between">
-                  Your Prediction ($)
-                  {createForm.cryptocurrency && cryptoPricesData.length > 0 && (
-                    <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
-                      Live: ${(() => {
-                        const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                        return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        }) : '0.00';
-                      })()}
-                    </div>
-                  )}
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={createForm.challengerPrediction}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, challengerPrediction: parseFloat(e.target.value) || 0 }))}
-                />
-              </div>
+
               
               <Button 
                 onClick={handleCreateBattle} 
