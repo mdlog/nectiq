@@ -823,8 +823,8 @@ export function PredictionBattles() {
                 </Select>
               </div>
 
-              {/* Current Price Display */}
-              {createForm.cryptocurrency && cryptoPricesData.length > 0 && (
+              {/* Current Price Display - Always show when crypto is selected */}
+              {createForm.cryptocurrency && (
                 <div className="p-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -833,18 +833,26 @@ export function PredictionBattles() {
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        ${(() => {
-                          const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                          return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          }) : '0.00';
-                        })()}
+                        {cryptoPricesData.length > 0 ? (
+                          <span>
+                            ${(() => {
+                              const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
+                              console.log('🔍 [PRICE-DEBUG] Looking for:', createForm.cryptocurrency, 'in', cryptoPricesData.length, 'items');
+                              console.log('🔍 [PRICE-DEBUG] Found crypto:', cryptoData);
+                              return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              }) : '0.00';
+                            })()}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-500">Loading...</span>
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {(() => {
+                        {cryptoPricesData.length > 0 && (() => {
                           const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                          return cryptoData ? `${cryptoData.name} (${cryptoData.symbol.toUpperCase()})` : '';
+                          return cryptoData ? `${cryptoData.name} (${cryptoData.symbol.toUpperCase()})` : createForm.cryptocurrency.toUpperCase();
                         })()}
                       </div>
                     </div>
