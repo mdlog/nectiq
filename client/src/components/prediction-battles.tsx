@@ -823,21 +823,40 @@ export function PredictionBattles() {
                 </Select>
               </div>
 
-              {/* Your Price Prediction Field with Live Price Badge (Same as Make Prediction) */}
+              {/* Your Price Prediction Field with Live Price Badge (DEBUGGING VERSION) */}
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2 flex items-center justify-between">
                   Your Price Prediction ($)
-                  {createForm.cryptocurrency && cryptoPricesData.length > 0 && (() => {
-                    const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                    return cryptoData ? (
-                      <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
-                        Live: ${parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })}
-                      </div>
-                    ) : null;
-                  })()}
+                  {/* ALWAYS VISIBLE DEBUG BADGE */}
+                  <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
+                    {(() => {
+                      console.log('🔧 [CREATE-BATTLE-DEBUG] Selected crypto:', createForm.cryptocurrency);
+                      console.log('🔧 [CREATE-BATTLE-DEBUG] CryptoPricesData length:', cryptoPricesData?.length || 0);
+                      console.log('🔧 [CREATE-BATTLE-DEBUG] Available crypto IDs:', cryptoPricesData?.map(c => c.id) || []);
+                      
+                      if (!createForm.cryptocurrency) {
+                        return 'Live: Select crypto first';
+                      }
+                      
+                      if (!cryptoPricesData || cryptoPricesData.length === 0) {
+                        return 'Live: Loading prices...';
+                      }
+                      
+                      const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
+                      console.log('🔧 [CREATE-BATTLE-DEBUG] Found crypto data:', cryptoData);
+                      
+                      if (!cryptoData) {
+                        return `Live: No data for ${createForm.cryptocurrency}`;
+                      }
+                      
+                      const price = parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      });
+                      
+                      return `Live: $${price}`;
+                    })()}
+                  </div>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-3 text-slate-400">$</span>
