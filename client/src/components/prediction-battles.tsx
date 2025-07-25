@@ -852,55 +852,41 @@ export function PredictionBattles() {
                 />
               </div>
 
-              {/* Your Price Prediction Field with Live Price Badge - MOVED TO CORRECT POSITION */}
+              {/* Your Price Prediction Field with Live Price Badge */}
               <div>
-                <label className="block text-sm font-medium text-white mb-2 flex items-center justify-between">
+                <label className="text-sm font-medium flex items-center justify-between">
                   Your Price Prediction ($)
-                  {/* LIVE PRICE BADGE - ALWAYS VISIBLE FOR DEBUG */}
-                  <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
-                    {(() => {
-                      console.log('🔧 [CREATE-BATTLE-DEBUG] Selected crypto:', createForm.cryptocurrency);
-                      console.log('🔧 [CREATE-BATTLE-DEBUG] CryptoPricesData length:', cryptoPricesData?.length || 0);
-                      console.log('🔧 [CREATE-BATTLE-DEBUG] Available crypto IDs:', cryptoPricesData?.map(c => c.id) || []);
-                      
-                      if (!createForm.cryptocurrency) {
-                        return 'Live: Select crypto first';
-                      }
-                      
-                      if (!cryptoPricesData || cryptoPricesData.length === 0) {
-                        return 'Live: Loading prices...';
-                      }
-                      
+                  {/* SIMPLE ALWAYS VISIBLE BADGE */}
+                  <span 
+                    className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold border-2 border-green-400"
+                    style={{ 
+                      backgroundColor: '#10b981', 
+                      color: 'white',
+                      display: 'inline-block',
+                      minWidth: '100px',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {createForm.cryptocurrency && cryptoPricesData.length > 0 ? (() => {
                       const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                      console.log('🔧 [CREATE-BATTLE-DEBUG] Found crypto data:', cryptoData);
-                      
-                      if (!cryptoData) {
-                        return `Live: No data for ${createForm.cryptocurrency}`;
+                      if (cryptoData) {
+                        const price = parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        });
+                        return `Live: $${price}`;
                       }
-                      
-                      const price = parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      });
-                      
-                      return `Live: $${price}`;
-                    })()}
-                  </div>
+                      return 'Live: No data';
+                    })() : 'Live: Select crypto'}
+                  </span>
                 </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-3 text-slate-400">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Enter predicted price"
-                    className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 pl-8 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={createForm.challengerPrediction || ''}
-                    onChange={(e) => setCreateForm(prev => ({
-                      ...prev,
-                      challengerPrediction: parseFloat(e.target.value) || 0
-                    }))}
-                  />
-                </div>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={createForm.challengerPrediction}
+                  onChange={(e) => setCreateForm(prev => ({ ...prev, challengerPrediction: parseFloat(e.target.value) || 0 }))}
+                />
               </div>
               
 
