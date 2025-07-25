@@ -659,14 +659,16 @@ export function PredictionBattles() {
                   return dbFormattedPrice;
                 }
               })()} 
-              {/* Enhanced Debug: Show exact data source */}
-              <span className="text-xs ml-1 flex items-center gap-1">
-                {getRealTimePrice(battle.cryptocurrency) ? '🟢 LIVE' : '🔴 DB'}
-                <span className="animate-pulse text-green-400">●</span>
+              {/* Enhanced Live Price Badge with Better Visibility */}
+              <div className="inline-flex items-center gap-1 ml-2 bg-black/20 dark:bg-white/20 rounded-md px-2 py-1">
+                <span className={`text-xs font-semibold ${getRealTimePrice(battle.cryptocurrency) ? 'text-green-400' : 'text-red-400'}`}>
+                  {getRealTimePrice(battle.cryptocurrency) ? '🟢 LIVE' : '🔴 DB'}
+                </span>
+                <span className="animate-pulse text-green-400 text-xs">●</span>
                 <span className="text-xs text-muted-foreground">
                   {new Date().toLocaleTimeString().slice(-8)}
                 </span>
-              </span>
+              </div>
             </span>
           </div>
           

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Gift, Check, X, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Gift, Check, X, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Target } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { RecentReward } from "@/types";
 import { EngagementPlaceholder } from "@/components/engagement-placeholder";
@@ -26,6 +26,24 @@ function formatTimeAgo(dateString: string): string {
     const diffInDays = Math.floor(diffInHours / 24);
     return `${diffInDays} days ago`;
   }
+}
+
+// Function to calculate accuracy percentage
+function calculateAccuracy(predictedPrice: number, actualPrice: number): number {
+  if (!predictedPrice || !actualPrice) return 0;
+  const difference = Math.abs(predictedPrice - actualPrice);
+  const percentageDifference = (difference / actualPrice) * 100;
+  const accuracy = Math.max(0, 100 - percentageDifference);
+  return accuracy;
+}
+
+// Function to format price with proper decimal places
+function formatPrice(price: number): string {
+  if (!price) return '$0.00';
+  return `$${price.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
 }
 
 export function RecentRewards() {
@@ -190,7 +208,53 @@ export function RecentRewards() {
                   <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                     {sourceText}
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  
+                  {/* Prediction Details for Prediction Type */}
+                  {reward.type === 'prediction' && reward.sourceDetails && (
+                    <div className="mt-1 space-y-1">
+                      {/* Predicted vs Actual Price */}
+                      {(reward.sourceDetails.predictedPrice || reward.sourceDetails.actualPrice) && (
+                        <div className="flex items-center space-x-2 text-xs">
+                          <Target size={10} className="text-blue-500" />
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Prediksi: {formatPrice(parseFloat(reward.sourceDetails.predictedPrice || "0"))}
+                          </span>
+                          {reward.sourceDetails.actualPrice && (
+                            <>
+                              <span className="text-gray-500">→</span>
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Aktual: {formatPrice(parseFloat(reward.sourceDetails.actualPrice))}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Accuracy Display */}
+                      {(reward.sourceDetails.predictedPrice && reward.sourceDetails.actualPrice) && (
+                        <div className="flex items-center space-x-2 text-xs">
+                          <div className={`w-2 h-2 rounded-full ${
+                            calculateAccuracy(
+                              parseFloat(reward.sourceDetails.predictedPrice),
+                              parseFloat(reward.sourceDetails.actualPrice)
+                            ) >= 80 ? 'bg-green-500' :
+                            calculateAccuracy(
+                              parseFloat(reward.sourceDetails.predictedPrice),
+                              parseFloat(reward.sourceDetails.actualPrice)  
+                            ) >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}></div>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Akurasi: {calculateAccuracy(
+                              parseFloat(reward.sourceDetails.predictedPrice),
+                              parseFloat(reward.sourceDetails.actualPrice)
+                            ).toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     {formatTimeAgo(reward.createdAt)}
                   </p>
                 </div>

@@ -2884,7 +2884,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           accuracy: prediction.accuracy || "0",
           isWin: isWin,
           stakeAmount: prediction.stakeAmount,
-          rewardAmount: prediction.rewardAmount || 0
+          rewardAmount: prediction.rewardAmount || 0,
+          // Add prediction details for enhanced display
+          sourceDetails: {
+            predictedPrice: prediction.predictedPrice ? prediction.predictedPrice.toString() : null,
+            actualPrice: prediction.actualPrice ? prediction.actualPrice.toString() : null,
+            accuracy: prediction.accuracy || "0"
+          }
         });
       });
 
