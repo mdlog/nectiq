@@ -823,42 +823,47 @@ export function PredictionBattles() {
                 </Select>
               </div>
 
-              {/* Current Price Display - Always show when crypto is selected */}
-              {createForm.cryptocurrency && (
-                <div className="p-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium text-muted-foreground">Current Live Price</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {cryptoPricesData.length > 0 ? (
+              {/* Current Price Display - DEBUGGING VERSION */}
+              <div className="p-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-muted-foreground">Current Live Price</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {createForm.cryptocurrency ? (
+                        cryptoPricesData.length > 0 ? (
                           <span>
                             ${(() => {
+                              console.log('🔍 [PRICE-DEBUG] Selected crypto:', createForm.cryptocurrency);
+                              console.log('🔍 [PRICE-DEBUG] Available cryptos:', cryptoPricesData.map(c => c.id));
                               const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                              console.log('🔍 [PRICE-DEBUG] Looking for:', createForm.cryptocurrency, 'in', cryptoPricesData.length, 'items');
-                              console.log('🔍 [PRICE-DEBUG] Found crypto:', cryptoData);
+                              console.log('🔍 [PRICE-DEBUG] Found crypto data:', cryptoData);
                               return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
-                              }) : '0.00';
+                              }) : 'NOT FOUND';
                             })()}
                           </span>
                         ) : (
-                          <span className="text-sm text-gray-500">Loading...</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {cryptoPricesData.length > 0 && (() => {
-                          const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
-                          return cryptoData ? `${cryptoData.name} (${cryptoData.symbol.toUpperCase()})` : createForm.cryptocurrency.toUpperCase();
-                        })()}
-                      </div>
+                          <span className="text-sm text-gray-500">Loading prices...</span>
+                        )
+                      ) : (
+                        <span className="text-sm text-gray-500">Select crypto first</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {createForm.cryptocurrency && cryptoPricesData.length > 0 && (() => {
+                        const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
+                        return cryptoData ? `${cryptoData.name} (${cryptoData.symbol.toUpperCase()})` : `ID: ${createForm.cryptocurrency}`;
+                      })()}
+                      {createForm.cryptocurrency && !cryptoPricesData.length && 'Loading...'}
+                      {!createForm.cryptocurrency && 'No cryptocurrency selected'}
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
               
               <div>
                 <label className="text-sm font-medium">Timeframe</label>
