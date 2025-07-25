@@ -56,6 +56,15 @@ interface CreateBattleForm {
   isPublic: boolean;
 }
 
+interface CryptoPrice {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  image?: string;
+}
+
 // Function to calculate win probability based on prediction accuracy
 const calculateWinProbability = (battle: Battle, liveCurrentPrice?: number): WinProbability => {
   const currentPrice = liveCurrentPrice || battle.currentPrice;
@@ -813,6 +822,35 @@ export function PredictionBattles() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Current Price Display */}
+              {createForm.cryptocurrency && cryptoPricesData.length > 0 && (
+                <div className="p-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-muted-foreground">Current Live Price</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        ${(() => {
+                          const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
+                          return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          }) : '0.00';
+                        })()}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {(() => {
+                          const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === createForm.cryptocurrency);
+                          return cryptoData ? `${cryptoData.name} (${cryptoData.symbol.toUpperCase()})` : '';
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div>
                 <label className="text-sm font-medium">Timeframe</label>
@@ -1121,12 +1159,15 @@ export function PredictionBattles() {
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center justify-between">
                   Your Price Prediction (USD)
-                  {joiningBattle && livePrices[joiningBattle.cryptocurrency] && (
+                  {joiningBattle && cryptoPricesData.length > 0 && (
                     <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
-                      Live: ${livePrices[joiningBattle.cryptocurrency].toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
+                      Live: ${(() => {
+                        const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === joiningBattle.cryptocurrency);
+                        return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        }) : '0.00';
+                      })()}
                     </div>
                   )}
                 </label>
