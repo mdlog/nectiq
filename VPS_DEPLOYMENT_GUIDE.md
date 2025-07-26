@@ -150,11 +150,11 @@ psql -h localhost -U nectiq_user -d nectiq_db -c "SELECT version();"
 # Masuk ke home directory
 cd ~
 
-# Clone aplikasi (ganti dengan repository URL Anda)
-git clone https://github.com/your-username/nectiq-platform.git
+# Clone aplikasi
+git clone https://github.com/mdlog/nectiq.git
 
 # Masuk ke direktori aplikasi
-cd nectiq-platform
+cd nectiq
 ```
 
 ### 3.2 Install Dependencies

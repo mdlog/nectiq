@@ -32,7 +32,7 @@ print_error() {
 # Configuration
 APP_NAME="nectiq-platform"
 APP_USER="nectiq"
-APP_DIR="/home/$APP_USER/$APP_NAME"
+APP_DIR="/home/$APP_USER/nectiq"
 DOMAIN=""
 EMAIL=""
 
@@ -217,10 +217,10 @@ setup_application() {
         mv "$APP_DIR" "${APP_DIR}_backup_$(date +%Y%m%d_%H%M%S)"
     fi
     
-    # Clone repository (you need to replace this with your actual repo)
+    # Clone repository
     print_status "Cloning repository..."
     echo "Please manually clone your repository to $APP_DIR"
-    echo "Example: git clone https://github.com/your-username/nectiq-platform.git $APP_DIR"
+    echo "Example: git clone https://github.com/mdlog/nectiq.git $APP_DIR"
     
     read -p "Press Enter after you've cloned the repository..."
     

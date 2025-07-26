@@ -8,8 +8,8 @@
 ssh your-user@your-vps-ip
 
 # 2. Download aplikasi dan script
-git clone https://github.com/your-repo/nectiq-platform.git
-cd nectiq-platform
+git clone https://github.com/mdlog/nectiq.git
+cd nectiq
 
 # 3. Jalankan script deploy otomatis
 ./deploy.sh
