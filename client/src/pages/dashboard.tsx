@@ -6,7 +6,7 @@ import { ActivePredictions } from "@/components/active-predictions";
 import { LivePrices } from "@/components/live-prices";
 import { TopPredictors } from "@/components/top-predictors";
 import { RecentRewards } from "@/components/recent-rewards";
-import { WalletRequiredModal } from "@/components/WalletRequiredModal";
+
 import { useWalletRequired } from "@/hooks/useWalletRequired";
 
 import { PredictionBattles } from "@/components/prediction-battles";
@@ -180,13 +180,7 @@ export default function Dashboard() {
       
       <Footer />
       
-      {/* Wallet Required Modal */}
-      <WalletRequiredModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        onWalletConnected={onWalletConnected}
-        actionType={actionType}
-      />
+      {/* Wallet requirement functionality removed */}
     </div>
   );
 }

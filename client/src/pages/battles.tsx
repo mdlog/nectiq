@@ -14,7 +14,6 @@ import { PredictionBattles } from '@/components/prediction-battles';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { CountdownTimer } from '@/components/countdown-timer';
-import { WalletRequiredModal } from '@/components/WalletRequiredModal';
 import { useWalletRequired } from '@/hooks/useWalletRequired';
 import { Swords, Plus, Search, Filter, Trophy, Clock, Users, DollarSign, Award } from 'lucide-react';
 
@@ -1289,12 +1288,7 @@ export default function BattlesPage() {
       <Footer />
       
       {/* Wallet Required Modal */}
-      <WalletRequiredModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        onWalletConnected={onWalletConnected}
-        actionType={actionType}
-      />
+      {/* Wallet requirement functionality removed */}
     </div>
   );
 }

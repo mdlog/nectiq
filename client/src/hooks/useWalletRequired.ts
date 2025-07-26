@@ -9,7 +9,7 @@ export function useWalletRequired() {
   const { toast } = useToast();
 
   // Check current user and wallet status
-  const { data: user, refetch: refetchUser } = useQuery({
+  const { data: user, refetch: refetchUser } = useQuery<any>({
     queryKey: ['/api/user'],
     retry: false,
   });

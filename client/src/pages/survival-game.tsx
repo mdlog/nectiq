@@ -6,7 +6,6 @@ import { Footer } from '@/components/footer';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WalletRequiredModal } from '@/components/WalletRequiredModal';
 import { useWalletRequired } from '@/hooks/useWalletRequired';
 import { Search, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
 
@@ -436,12 +435,7 @@ const SurvivalGame = () => {
       <Footer />
       
       {/* Wallet Required Modal */}
-      <WalletRequiredModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        onWalletConnected={onWalletConnected}
-        actionType={actionType}
-      />
+      {/* Wallet requirement functionality removed */}
     </>
   );
 

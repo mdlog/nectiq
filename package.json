@@ -12,13 +12,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
-    "@dynamic-labs/cosmos": "^4.20.9",
-    "@dynamic-labs/ethereum": "^4.20.9",
-    "@dynamic-labs/sdk-react-core": "^4.20.9",
-    "@dynamic-labs/solana": "^4.20.9",
-    "@dynamic-labs/starknet": "^4.20.9",
-    "@dynamic-labs/sui": "^4.20.9",
-    "@dynamic-labs/wagmi-connector": "^4.20.9",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@ledgerhq/hw-app-eth": "^6.45.10",

@@ -17,9 +17,8 @@ import NotFound from "@/pages/not-found";
 import HowToPlay from "@/pages/how-to-play";
 import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
-import WalletLoginPage from "@/pages/wallet-login";
+
 import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
-import DynamicProvider from "@/providers/DynamicProvider";
 
 
 // Suppress wallet extension conflicts in console
@@ -117,7 +116,7 @@ function Router() {
       {/* Public routes - no authentication required */}
       <Route path="/terms-conditions" component={TermsConditions} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
-      <Route path="/wallet-login" component={WalletLoginPage} />
+
       
       {/* 404 page */}
       <Route component={NotFound} />
@@ -130,15 +129,13 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <DynamicProvider>
-        <TooltipProvider>
-          <div className="min-h-screen bg-background text-foreground">
-            <Toaster />
-            <Router />
-            <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
-          </div>
-        </TooltipProvider>
-      </DynamicProvider>
+      <TooltipProvider>
+        <div className="min-h-screen bg-background text-foreground">
+          <Toaster />
+          <Router />
+          <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
+        </div>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

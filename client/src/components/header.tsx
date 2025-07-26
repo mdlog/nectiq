@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChartLine, Coins, User, Wallet, LogOut, Menu, X, ChevronDown, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
@@ -21,8 +21,7 @@ export function Header() {
     refetchOnReconnect: true,
   });
   
-  // Dynamic Labs context for proper wallet management
-  const { handleLogOut } = useDynamicContext();
+  // Traditional logout functionality
   
   // Native wallet detection - check if user is authenticated
   const isConnected = !!user;
@@ -58,35 +57,9 @@ export function Header() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      console.log('🔐 [LOGOUT] Starting complete wallet disconnect...');
+      console.log('🔐 [LOGOUT] Starting logout...');
       
-      // 1. Disconnect wallet from MetaMask/provider level first
-      if (window.ethereum) {
-        try {
-          // Revoke permissions dari MetaMask
-          await window.ethereum.request({
-            method: 'wallet_revokePermissions',
-            params: [{ eth_accounts: {} }],
-          });
-          console.log('🔐 [LOGOUT] MetaMask permissions revoked');
-        } catch (error) {
-          console.log('🔐 [LOGOUT] MetaMask revoke not available, trying alternative...');
-          try {
-            // Alternative method untuk disconnect
-            await window.ethereum.request({
-              method: 'wallet_requestPermissions',
-              params: [{ eth_accounts: {} }],
-            });
-          } catch (altError) {
-            console.log('🔐 [LOGOUT] MetaMask alternative disconnect:', altError);
-          }
-        }
-      }
-
-      // 2. Logout dari Dynamic Labs
-      await handleLogOut();
-      
-      // 3. Logout dari backend
+      // Backend logout
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
@@ -99,50 +72,29 @@ export function Header() {
         throw new Error('Backend logout failed');
       }
       
-      // 4. Clear all Dynamic Labs session data
-      const keysToRemove = [
-        'dynamic-auth-token',
-        'dynamic-user-data',
-        'dynamic-wallet-data',
-        'dynamic-session',
-        'dynamic-cached-wallet',
-        'dynamic-jwt-token'
-      ];
-      
-      keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
-        sessionStorage.removeItem(key);
-      });
-      
-      // Clear semua keys yang mengandung 'dynamic'
-      Object.keys(localStorage).forEach(key => {
-        if (key.toLowerCase().includes('dynamic')) {
-          localStorage.removeItem(key);
-        }
-      });
-      
-      console.log('🔐 [LOGOUT] All session data cleared');
-      
       return { success: true };
     },
     onSuccess: () => {
-      // Clear all cached data immediately
+      // Clear all cached data
       queryClient.clear();
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       
-      // Remove specific queries to prevent any cached data from persisting
-      queryClient.removeQueries({ queryKey: ['/api/user'] });
-      queryClient.removeQueries({ queryKey: ['/api/predictions/active'] });
-      queryClient.removeQueries({ queryKey: ['/api/rewards/recent'] });
-      queryClient.removeQueries({ queryKey: ['/api/user/referral'] });
+      toast({
+        title: "Logged Out",
+        description: "Successfully logged out of your account",
+      });
       
-      // Invalidate all queries to force fresh data on next login
-      queryClient.invalidateQueries();
-      
-      console.log('🔐 [LOGOUT] All query cache cleared');
+      // Redirect to landing page
+      setLocation('/');
     },
     onError: (error) => {
-      console.error("Logout error:", error);
-    },
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout Failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   const handleDisconnect = async () => {
@@ -184,8 +136,7 @@ export function Header() {
           });
         }
         
-        // Manual Dynamic Labs logout
-        await handleLogOut();
+        // Clear localStorage manually
         
         // Manual backend logout
         await fetch('/api/auth/logout', { 
