@@ -152,7 +152,7 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
       for (let i = dataPoints; i >= 0; i--) {
         const timestamp = (now - (i * intervalMs)) / 1000; // TradingView expects seconds
         
-        // Create realistic volatility based on timeframe
+        // Create realistic volatility based on timeframe - FIXED VALUES
         let volatility;
         switch(selectedTimeframe) {
           case '1m':
@@ -163,13 +163,13 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
             volatility = 0.005; // 0.5% for short timeframes
             break;
           case '1h':
-            volatility = 0.01; // 1% for hourly
+            volatility = 0.008; // 0.8% for hourly (lebih realistis)
             break;
           case '4h':
-            volatility = 0.025; // 2.5% for 4-hourly
+            volatility = 0.015; // 1.5% for 4-hourly (dikurangi dari 2.5%)
             break;
           case '1d':
-            volatility = 0.05; // 5% for daily
+            volatility = 0.025; // 2.5% for daily (dikurangi dari 5%)
             break;
           default:
             volatility = 0.01;
@@ -183,12 +183,12 @@ export default function TradingViewChart({ cryptoId, onPredictionClick }: Tradin
         const price = Math.max(basePrice * priceChange, currentPrice * 0.7);
 
         if (chartType === 'candlestick') {
-          // Generate OHLC data for candlesticks
-          const variation = price * volatility;
-          const open = price + (Math.random() - 0.5) * variation;
-          const close = price + (Math.random() - 0.5) * variation;
-          const high = Math.max(open, close) + Math.random() * variation;
-          const low = Math.min(open, close) - Math.random() * variation;
+          // Generate OHLC data for candlesticks - CONTROLLED RANGE
+          const variation = price * Math.min(volatility, 0.02); // Maksimal 2% variasi per candle
+          const open = price + (Math.random() - 0.5) * variation * 0.5;
+          const close = price + (Math.random() - 0.5) * variation * 0.5;
+          const high = Math.max(open, close) + Math.random() * variation * 0.3; // Maksimal 0.6% ke atas
+          const low = Math.min(open, close) - Math.random() * variation * 0.3;  // Maksimal 0.6% ke bawah
 
           data.push({
             time: timestamp,

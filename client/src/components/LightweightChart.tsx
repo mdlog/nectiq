@@ -78,13 +78,13 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
     const time = new Date(now.getTime() - i * config.duration);
     const timestamp = Math.floor(time.getTime() / 1000);
     
-    // Generate volatility sesuai dengan timeframe yang dipilih
+    // Generate volatility sesuai dengan timeframe yang dipilih - REALISTIS
     const volatilityByTimeframe = {
-      '1H': 0.005 + seededRandom() * 0.010,   // 0.5-1.5% per jam
-      '4H': 0.015 + seededRandom() * 0.025,   // 1.5-4% per 4 jam
-      '1D': 0.025 + seededRandom() * 0.050,   // 2.5-7.5% per hari
-      '1W': 0.100 + seededRandom() * 0.150,   // 10-25% per minggu
-      '1M': 0.200 + seededRandom() * 0.300    // 20-50% per bulan
+      '1H': 0.003 + seededRandom() * 0.007,   // 0.3-1% per jam (realistis untuk crypto)
+      '4H': 0.008 + seededRandom() * 0.012,   // 0.8-2% per 4 jam 
+      '1D': 0.015 + seededRandom() * 0.025,   // 1.5-4% per hari
+      '1W': 0.025 + seededRandom() * 0.035,   // 2.5-6% per minggu (lebih realistis)
+      '1M': 0.040 + seededRandom() * 0.060    // 4-10% per bulan (tidak ekstrem)
     };
     
     const volatility = volatilityByTimeframe[timeframe] || volatilityByTimeframe['1D'];
@@ -93,12 +93,14 @@ function generateOHLCData(currentPrice: number, cryptoId: string, timeframe: Tim
     const priceChange = (seededRandom() - 0.5) * volatility + trend * 0.002;
     basePrice = basePrice * (1 + priceChange);
     
-    // Generate OHLC values
+    // Generate OHLC values dengan range yang lebih terkontrol
     const open = basePrice;
-    const volatilityRange = basePrice * (0.001 + seededRandom() * 0.005);
     
-    const high = open + volatilityRange * seededRandom();
-    const low = open - volatilityRange * seededRandom();
+    // Pastikan volatilitas candlestick tidak berlebihan (maksimal 2% per candle)
+    const candleVolatilityRange = Math.min(basePrice * 0.02, basePrice * (0.005 + seededRandom() * 0.015));
+    
+    const high = open + candleVolatilityRange * seededRandom() * 0.5; // Maksimal 1% ke atas
+    const low = open - candleVolatilityRange * seededRandom() * 0.5;  // Maksimal 1% ke bawah
     const close = low + (high - low) * seededRandom();
     
     data.push({
