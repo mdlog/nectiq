@@ -96,7 +96,40 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
           
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button 
-              onClick={() => setLocation("/")}
+              onClick={async () => {
+                try {
+                  // Try to connect to wallet using Web3Modal or similar
+                  if (typeof window !== 'undefined' && (window as any).ethereum) {
+                    const accounts = await (window as any).ethereum.request({ 
+                      method: 'eth_requestAccounts' 
+                    });
+                    
+                    if (accounts && accounts.length > 0) {
+                      const walletAddress = accounts[0];
+                      
+                      // Authenticate with backend
+                      const response = await fetch('/api/auth/wallet-connect', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ walletAddress })
+                      });
+                      
+                      if (response.ok) {
+                        // Force refresh to update authentication state
+                        window.location.reload();
+                      } else {
+                        const error = await response.json();
+                        console.error('Wallet authentication failed:', error);
+                      }
+                    }
+                  } else {
+                    // No wallet extension detected
+                    window.open('https://metamask.io/download/', '_blank');
+                  }
+                } catch (error) {
+                  console.error('Wallet connection error:', error);
+                }
+              }}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
             >
               Connect Wallet
