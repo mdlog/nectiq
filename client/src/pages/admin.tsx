@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { User, Prediction, Reward, Cryptocurrency } from "@shared/schema";
 import type { LeaderboardEntry } from "@/types";
-import { SimpleAdminAuth } from "@/components/simple-admin-auth";
+
 import { BannerManagement } from "@/components/admin/banner-management";
 import { UserStatistics } from "@/components/admin/user-statistics";
 
@@ -3715,10 +3715,7 @@ export default function AdminPanel() {
                          (predictionsError as any)?.message?.includes("401") ||
                          (activityError as any)?.message?.includes("401");
 
-  // Show simplified authentication if unauthorized
-  if (isUnauthorized) {
-    return <SimpleAdminAuth onAuthSuccess={() => window.location.reload()} />;
-  }
+
 
   if (isUnauthorized) {
     return (
