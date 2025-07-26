@@ -13,9 +13,9 @@ const placeholderContent = {
     gradient: "from-blue-500 to-purple-600",
     accentColor: "blue-400",
     tips: [
-      { icon: TrendingUp, text: "Choose from 10+ cryptocurrencies", color: "text-blue-400" },
+      { icon: TrendingUp, text: "Choose from 15+ cryptocurrencies", color: "text-blue-400" },
       { icon: Clock, text: "Multiple time frames: 1h, 6h, 24h, 7d", color: "text-green-400" },
-      { icon: Award, text: "Up to 5x multiplier for ±0.1% accuracy", color: "text-yellow-400" }
+      { icon: Award, text: "Up to 3x multiplier for ≥99.5% accuracy", color: "text-yellow-400" }
     ]
   },
   rewards: {
