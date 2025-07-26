@@ -62,7 +62,7 @@ export default function HowToPlay() {
     { duration: "1 Hour", multiplier: "1.5x", difficulty: "Easy" },
     { duration: "6 Hours", multiplier: "2x", difficulty: "Medium" },
     { duration: "24 Hours", multiplier: "3x", difficulty: "Hard" },
-    { duration: "7 Days", multiplier: "5x", difficulty: "Expert" }
+    { duration: "7 Days", multiplier: "3x", difficulty: "Expert" }
   ];
 
   const accuracyRewards = [
@@ -567,7 +567,7 @@ export default function HowToPlay() {
                   </div>
                   <h4 className="font-semibold mb-2">Tie Scenario</h4>
                   <p className="text-sm text-muted-foreground">
-                    If predictions are equally accurate (±0.01%), both players get their stakes refunded
+                    If predictions are equally accurate (within 0.01%), both players get their stakes refunded
                   </p>
                 </div>
                 <div className="text-center">

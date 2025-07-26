@@ -25,7 +25,7 @@ const placeholderContent = {
     gradient: "from-green-500 to-emerald-600",
     accentColor: "green-400",
     tips: [
-      { icon: Zap, text: "Perfect predictions: 5x stake reward", color: "text-green-400" },
+      { icon: Zap, text: "Perfect predictions: 3x stake reward", color: "text-green-400" },
       { icon: Trophy, text: "Battle victories: Win opponent stakes", color: "text-purple-400" },
       { icon: Target, text: "Accuracy threshold: 90% minimum", color: "text-blue-400" }
     ]
