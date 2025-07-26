@@ -630,9 +630,28 @@ export default function UserDashboard() {
               <CardContent className="flex-1 flex flex-col p-3 sm:p-4 md:p-6">
                 {activePredictions.length === 0 ? (
                   <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
-                    <Clock className="mx-auto mb-2" size={32} />
-                    <p>No active predictions</p>
-                    <p className="text-sm">Start making predictions to see them here!</p>
+                    <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Target className="w-8 h-8 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2">Make Your First Prediction</h3>
+                    <p className="text-sm text-slate-400 mb-6">Start earning NTIQ rewards</p>
+                    
+                    <div className="space-y-3 text-left max-w-sm mx-auto">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <span className="text-sm text-slate-300">Choose from 15+ cryptocurrencies</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="text-sm text-slate-300">Multiple time frames: 1h, 6h, 24h, 7d</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                        <span className="text-sm text-slate-300">Up to 5x multiplier for ±0.1% accuracy</span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-slate-500 mt-6">Select a cryptocurrency above to get started</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
