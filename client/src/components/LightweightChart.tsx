@@ -237,13 +237,14 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
     const chart = createChart(chartContainerRef.current, chartOptions);
 
     // Enhanced candlestick series options following TradingView best practices
+    // STANDARD FINANCIAL COLORS: GREEN=UP (price increase), RED=DOWN (price decrease)
     const candlestickOptions: CandlestickSeriesPartialOptions = {
-      upColor: '#00d4aa',
-      downColor: '#f84960',
-      borderDownColor: '#f84960',
-      borderUpColor: '#00d4aa',
-      wickDownColor: '#f84960',
-      wickUpColor: '#00d4aa',
+      upColor: '#22c55e',     // Green for price increase (close > open)
+      downColor: '#ef4444',   // Red for price decrease (close < open)
+      borderDownColor: '#ef4444',  // Red border for down candles
+      borderUpColor: '#22c55e',    // Green border for up candles  
+      wickDownColor: '#ef4444',    // Red wick for down candles
+      wickUpColor: '#22c55e',      // Green wick for up candles
       borderVisible: true,
       wickVisible: true,
       priceFormat: {
