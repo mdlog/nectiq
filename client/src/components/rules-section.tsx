@@ -35,7 +35,7 @@ export function RulesSection() {
             <Trophy className="text-success" size={20} />
           </div>
           <h4 className="font-semibold text-slate-200 text-sm mb-1">Earn Rewards</h4>
-          <p className="text-xs text-slate-400">Up to 5x multiplier</p>
+          <p className="text-xs text-slate-400">Up to 3x multiplier</p>
         </div>
       </div>
       
@@ -44,17 +44,17 @@ export function RulesSection() {
         <div className="flex justify-between items-center text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-success"></div>
-            <span className="text-slate-300">Perfect ±0.1%</span>
-            <span className="text-success font-bold">5x</span>
+            <span className="text-slate-300">Perfect ≥99.5%</span>
+            <span className="text-success font-bold">3x</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-warning"></div>
-            <span className="text-slate-300">Great ±1%</span>
-            <span className="text-warning font-bold">3x</span>
+            <span className="text-slate-300">Great ≥95%</span>
+            <span className="text-warning font-bold">2x</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-            <span className="text-slate-300">Good ±5%</span>
+            <span className="text-slate-300">Good ≥90%</span>
             <span className="text-blue-400 font-bold">1.5x</span>
           </div>
         </div>

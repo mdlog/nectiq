@@ -182,7 +182,7 @@ export default function LandingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground text-center">
-                  Get NTIQ tokens for successful predictions with up to 5x multipliers
+                  Get NTIQ tokens for successful predictions with up to 3x multipliers
                 </p>
               </CardContent>
             </Card>

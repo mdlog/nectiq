@@ -66,12 +66,12 @@ export default function HowToPlay() {
   ];
 
   const accuracyRewards = [
-    { range: "±0.1%", multiplier: "5x", reward: "Perfect Prediction", color: "bg-green-500" },
-    { range: "±0.5%", multiplier: "4x", reward: "Excellent", color: "bg-blue-500" },
-    { range: "±1%", multiplier: "3x", reward: "Great", color: "bg-purple-500" },
-    { range: "±2%", multiplier: "2x", reward: "Good", color: "bg-orange-500" },
-    { range: "±5%", multiplier: "1.5x", reward: "Fair", color: "bg-yellow-500" },
-    { range: ">5%", multiplier: "1x", reward: "Base", color: "bg-gray-500" }
+    { range: "≥99.5%", multiplier: "3x", reward: "Perfect Prediction", color: "bg-green-500" },
+    { range: "≥98%", multiplier: "2.5x", reward: "Excellent", color: "bg-blue-500" },
+    { range: "≥95%", multiplier: "2x", reward: "Great", color: "bg-purple-500" },
+    { range: "≥90%", multiplier: "1.5x", reward: "Good", color: "bg-orange-500" },
+    { range: "≥80%", multiplier: "1.2x", reward: "Fair", color: "bg-yellow-500" },
+    { range: "<80%", multiplier: "1x", reward: "Base", color: "bg-gray-500" }
   ];
 
   return (
@@ -167,7 +167,7 @@ export default function HowToPlay() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Select from 8 supported cryptocurrencies and pick your preferred 
+                  Select from 15+ supported cryptocurrencies and pick your preferred 
                   prediction timeframe (1h to 7 days).
                 </p>
               </CardContent>
@@ -319,7 +319,7 @@ export default function HowToPlay() {
                     <Award className="text-green-500" size={24} />
                   </div>
                   <h4 className="font-semibold text-lg mb-2">Earn Rewards</h4>
-                  <p className="text-sm text-muted-foreground">Up to 5x multiplier</p>
+                  <p className="text-sm text-muted-foreground">Up to 3x multiplier</p>
                 </div>
               </div>
 

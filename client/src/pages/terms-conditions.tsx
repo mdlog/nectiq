@@ -120,9 +120,9 @@ export default function TermsConditions() {
                 Rewards are calculated based on prediction accuracy according to our tiered system:
               </p>
               <ul className="list-disc pl-6 space-y-1">
-                <li>Perfect predictions (±0.1%): 5x stake amount</li>
-                <li>Excellent predictions (±1%): 3x stake amount</li>
-                <li>Good predictions (±5%): 1.5x stake amount</li>
+                <li>Perfect predictions (≥99.5%): 3x stake amount</li>
+                <li>Excellent predictions (≥95%): 2x stake amount</li>
+                <li>Good predictions (≥90%): 1.5x stake amount</li>
                 <li>Poor predictions (more than ±5%): 0x stake amount</li>
               </ul>
 
