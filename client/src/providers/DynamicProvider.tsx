@@ -46,10 +46,8 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
           walletConnectors: [
             EthereumWalletConnectors,
             SolanaWalletConnectors,
-          ],
-        walletConnectPreferences: walletConnectProjectId ? {
-          projectId: walletConnectProjectId,
-        } : undefined,
+          ] as any, // Temporary fix for version compatibility
+        walletConnectPreferredChains: walletConnectProjectId ? ['eip155:1'] : undefined,
         // Simplified configuration to avoid CORS issues
         initialAuthenticationMode: 'connect-only',
         appName: 'Nectiq',
@@ -131,9 +129,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
             console.log('🔐 Dynamic: Auth flow cancelled');
           },
 
-          onEmailVerificationCompleted: (args: any) => {
-            console.log('🔐 Dynamic: Email verification completed', args);
-          },
+          // onEmailVerificationCompleted removed in newer versions
           onAuthSuccess: async (args) => {
             console.log('🔐 Dynamic: Authentication successful with signature confirmation', args);
             console.log('🔐 User object:', args.user);
@@ -300,7 +296,7 @@ export default function DynamicProvider({ children }: DynamicProviderProps) {
     {showEmailVerification && pendingWalletAddress && (
       <WalletEmailVerification 
         walletAddress={pendingWalletAddress}
-        onSuccess={async (email, firebaseUid, displayName) => {
+        onSuccess={async (email?: string, firebaseUid?: string, displayName?: string) => {
           console.log('🔥 [FIREBASE] Email verification successful:', { email, firebaseUid, displayName });
           
           // Link wallet to email via API
