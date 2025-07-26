@@ -299,14 +299,7 @@ export class PythPriceService {
     return this.cryptoDataCache.has(cryptoId);
   }
 
-  /**
-   * Clear cache completely
-   */
-  clearCache(): void {
-    this.cryptoDataCache.clear();
-    this.lastCacheUpdate = 0;
-    console.log("🧹 [PYTH] Cache cleared");
-  }
+
 
   /**
    * Refresh cache manually

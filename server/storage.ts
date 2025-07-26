@@ -737,7 +737,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin withdrawal approval methods
-  async updateWithdrawalStatus(withdrawalId: number, status: string, adminId: number, adminNote?: string): Promise<void> {
+  async updateWithdrawalStatusByAdmin(withdrawalId: number, status: string, adminId: number, adminNote?: string): Promise<void> {
     await db
       .update(withdrawals)
       .set({
@@ -2609,9 +2609,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(survivalRounds.id, roundId));
   }
 
-  async getRoundPredictions(roundId: number): Promise<any[]> {
-    return this.getSurvivalPredictions(roundId);
-  }
+
 
   async getSurvivalRound(roundId: number): Promise<any> {
     const [round] = await db
@@ -3282,16 +3280,7 @@ export class MemStorage implements IStorage {
     await balanceService.processTransaction(newUserId, 100, 'referral_bonus', `Welcome bonus from referral code ${referralCode}`);
   }
 
-  async createReferral(referrerId: number, referredId: number, referralCode: string): Promise<void> {
-    await db.insert(referrals).values({
-      referrerId,
-      referredId,
-      referralCode,
-      reward: 100, // 100 NTIQ reward
-      isRewarded: true,
-      createdAt: new Date(),
-    });
-  }
+
 
   async getUserByReferralCode(referralCode: string): Promise<User | undefined> {
     try {
@@ -3321,42 +3310,7 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async getReferralData(userId: number): Promise<any> {
-    try {
-      // Get user's referral code
-      const user = await this.getUser(userId);
-      
-      // Get referral stats (people this user referred)
-      const stats = await this.getReferralStats(userId);
-      
-      // Get list of referred friends
-      const referredUsers = await db.select({
-        id: users.id,
-        username: users.username,
-        joinedAt: referrals.createdAt,
-        reward: referrals.reward
-      })
-      .from(referrals)
-      .innerJoin(users, eq(referrals.referredId, users.id))
-      .where(eq(referrals.referrerId, userId))
-      .orderBy(desc(referrals.createdAt));
 
-      return {
-        referralCode: user?.referralCode,
-        totalReferrals: stats.totalReferrals,
-        totalRewards: stats.totalRewards,
-        referredFriends: referredUsers
-      };
-    } catch (error) {
-      console.error('Error getting referral data:', error);
-      return {
-        referralCode: null,
-        totalReferrals: 0,
-        totalRewards: 0,
-        referredFriends: []
-      };
-    }
-  }
 
 
 
