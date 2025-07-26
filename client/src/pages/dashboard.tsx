@@ -18,8 +18,9 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Target } from "lucide-react";
+import { BarChart3, Target, TrendingUp, Users, Award, Zap } from "lucide-react";
 import type { CryptoPrice } from "@/types";
+import type { User as UserType } from "@shared/schema";
 
 
 
@@ -28,6 +29,15 @@ export default function Dashboard() {
   const [showChart, setShowChart] = useState(false);
   const [showPredictionForm, setShowPredictionForm] = useState(false);
   const [preSelectedForPrediction, setPreSelectedForPrediction] = useState<string | undefined>(undefined);
+  
+  // Check authentication state
+  const { data: user } = useQuery<UserType>({
+    queryKey: ["/api/user"],
+    retry: false,
+    refetchOnMount: true,
+  });
+  
+  const isAuthenticated = !!user;
   
   // Wallet requirement system
   const { isModalOpen, actionType, checkWalletRequired, onWalletConnected, closeModal } = useWalletRequired();
@@ -76,7 +86,106 @@ export default function Dashboard() {
     }, 'prediction');
   };
 
-  return (
+  // Create different content based on authentication state
+  const renderUnauthenticatedHome = () => (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-6">
+        {/* Welcome Section for Unauthenticated Users */}
+        <div className="text-center py-12 mb-8">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">
+            Selamat Datang di Nectiq
+          </h1>
+          <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
+            Platform prediksi harga cryptocurrency dengan reward berbasis akurasi. Prediksi harga, bergabung dalam battle, dan dapatkan token NTIQ.
+          </p>
+        </div>
+
+        {/* Live Prices - Always Visible */}
+        <div className="mb-8">
+          <LivePrices onCryptoSelect={handleCryptoSelect} />
+        </div>
+
+        {/* Chart Section - Always Visible */}
+        {showChart && selectedCrypto && (
+          <Card className="mb-8">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={selectedCrypto.image} 
+                    alt={selectedCrypto.name}
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <div>
+                    <CardTitle className="text-xl">{selectedCrypto.name} ({selectedCrypto.symbol.toUpperCase()})</CardTitle>
+                    <p className="text-sm text-muted-foreground">Real-time Price Chart</p>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-96">
+                <LightweightChart 
+                  cryptoId={selectedCrypto.id}
+                  currentPrice={selectedCrypto.current_price}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Feature Cards for Unauthenticated Users */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="text-center p-6">
+            <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Prediksi Harga</h3>
+            <p className="text-muted-foreground text-sm">
+              Prediksi harga cryptocurrency dengan berbagai timeframe dan dapatkan reward berdasarkan akurasi
+            </p>
+          </Card>
+          
+          <Card className="text-center p-6">
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Mode Battle</h3>
+            <p className="text-muted-foreground text-sm">
+              Tantang pengguna lain dalam battle prediksi dan menangkan hadiah total dari kedua belah pihak
+            </p>
+          </Card>
+          
+          <Card className="text-center p-6">
+            <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Award className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Reward NTIQ</h3>
+            <p className="text-muted-foreground text-sm">
+              Dapatkan token NTIQ sebagai reward prediksi akurat dan gunakan untuk berbagai fitur platform
+            </p>
+          </Card>
+        </div>
+
+        {/* Platform Stats */}
+        <HeroStats />
+
+        {/* Call to Action */}
+        <div className="text-center py-12 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-lg">
+          <h2 className="text-2xl font-bold mb-4">Siap Memulai?</h2>
+          <p className="text-muted-foreground mb-6">
+            Hubungkan wallet Anda dan mulai berpartisipasi dalam platform prediksi cryptocurrency
+          </p>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+
+  const renderAuthenticatedHome = () => (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       
@@ -183,4 +292,7 @@ export default function Dashboard() {
       {/* Wallet requirement functionality removed */}
     </div>
   );
+
+  // Return different content based on authentication
+  return isAuthenticated ? renderAuthenticatedHome() : renderUnauthenticatedHome();
 }

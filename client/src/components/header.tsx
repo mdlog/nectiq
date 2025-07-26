@@ -97,6 +97,86 @@ export function Header() {
     }
   });
 
+  // Direct wallet connection functionality
+  const connectWalletMutation = useMutation({
+    mutationFn: async () => {
+      console.log('🔌 [WALLET-CONNECT] Starting wallet connection...');
+      
+      // Check if MetaMask is installed
+      if (!window.ethereum) {
+        throw new Error('MetaMask not installed');
+      }
+      
+      // Request wallet connection
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      });
+      
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No accounts returned from wallet');
+      }
+      
+      const walletAddress = accounts[0];
+      console.log('🔌 [WALLET-CONNECT] Got wallet address:', walletAddress);
+      
+      // Authenticate with backend
+      const response = await fetch('/api/auth/wallet-connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ walletAddress }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('❌ [WALLET-CONNECT] Backend auth failed:', errorData);
+        throw new Error(`Authentication failed: ${response.status}`);
+      }
+      
+      const authResult = await response.json();
+      console.log('✅ [WALLET-CONNECT] Backend auth successful:', authResult);
+      
+      return { walletAddress, ...authResult };
+    },
+    onSuccess: (data) => {
+      console.log('✅ [WALLET-CONNECT] Complete success:', data);
+      
+      // Clear and refresh queries
+      queryClient.clear();
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      
+      toast({
+        title: "Wallet Connected",
+        description: `Successfully connected wallet ${data.walletAddress.slice(0, 6)}...${data.walletAddress.slice(-4)}`,
+      });
+      
+      // Refresh page to update authentication state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    },
+    onError: (error) => {
+      console.error('❌ [WALLET-CONNECT] Error:', error);
+      
+      let errorMessage = "Failed to connect wallet";
+      if (error.message.includes('MetaMask not installed')) {
+        errorMessage = "MetaMask tidak terinstall. Silakan install MetaMask untuk melanjutkan.";
+      } else if (error.message.includes('User rejected')) {
+        errorMessage = "Connection cancelled by user";
+      } else if (error.message.includes('No accounts')) {
+        errorMessage = "No accounts found in wallet";
+      }
+      
+      toast({
+        title: "Connection Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleDisconnect = async () => {
     try {
       console.log("🔌 Starting complete wallet disconnect process...");
@@ -368,11 +448,14 @@ export function Header() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setLocation('/home')}
+                  onClick={() => connectWalletMutation.mutate()}
+                  disabled={connectWalletMutation.isPending}
                   className="flex items-center space-x-2"
                 >
                   <Wallet size={16} />
-                  <span className="hidden sm:inline">Connect Wallet</span>
+                  <span className="hidden sm:inline">
+                    {connectWalletMutation.isPending ? 'Connecting...' : 'Connect Wallet'}
+                  </span>
                   <span className="sm:hidden">Connect</span>
                 </Button>
                 

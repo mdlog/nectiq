@@ -57,15 +57,9 @@ console.warn = (...args) => {
 function Router() {
   return (
     <Switch>
-      {/* Landing page - no authentication required */}
-      <Route path="/" component={LandingPage} />
-      
-      {/* Protected routes - require authentication */}
-      <Route path="/home">
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      </Route>
+      {/* Home page - conditional content based on authentication */}
+      <Route path="/" component={Dashboard} />
+      <Route path="/home" component={Dashboard} />
       
       <Route path="/user-dashboard">
         <UserDashboard />
@@ -117,10 +111,8 @@ function Router() {
       <Route path="/terms-conditions" component={TermsConditions} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       
-      {/* Redirect old wallet-login route to landing page */}
-      <Route path="/wallet-login">
-        <LandingPage />
-      </Route>
+      {/* Redirect old wallet-login route to home page */}
+      <Route path="/wallet-login" component={Dashboard} />
       
       {/* 404 page */}
       <Route component={NotFound} />
