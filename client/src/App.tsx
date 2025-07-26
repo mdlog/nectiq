@@ -116,7 +116,11 @@ function Router() {
       {/* Public routes - no authentication required */}
       <Route path="/terms-conditions" component={TermsConditions} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
-
+      
+      {/* Redirect old wallet-login route to landing page */}
+      <Route path="/wallet-login">
+        <LandingPage />
+      </Route>
       
       {/* 404 page */}
       <Route component={NotFound} />

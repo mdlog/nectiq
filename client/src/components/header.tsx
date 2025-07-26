@@ -368,7 +368,7 @@ export function Header() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setLocation('/wallet-login')}
+                  onClick={() => setLocation('/home')}
                   className="flex items-center space-x-2"
                 >
                   <Wallet size={16} />
@@ -414,7 +414,7 @@ export function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      onClick={() => setLocation('/wallet-login')}
+                      onClick={() => setLocation('/home')}
                       className="flex items-center space-x-2 p-3 cursor-pointer"
                     >
                       <Wallet className="h-4 w-4" />
@@ -570,7 +570,7 @@ export function Header() {
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    setLocation('/wallet-login');
+                    setLocation('/home');
                     setIsMobileMenuOpen(false);
                   }}
                   className="w-full flex items-center justify-center space-x-2"

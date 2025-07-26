@@ -85,9 +85,14 @@ function LandingHeader() {
   });
 
   const handleGetStarted = () => {
-    // Always redirect to wallet login page to ensure proper authentication
-    // This prevents bypassing login after logout
-    setLocation("/wallet-login");
+    // Check if user is already authenticated
+    if (user) {
+      // If authenticated, go to home page
+      setLocation("/home");
+    } else {
+      // If not authenticated, show login prompt
+      setLocation("/home");
+    }
   };
 
   return (
