@@ -111,6 +111,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
                       const response = await fetch('/api/auth/wallet-connect', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include', // Include cookies in the request
                         body: JSON.stringify({ walletAddress })
                       });
                       

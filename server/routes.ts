@@ -781,6 +781,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Wallet Connect Authentication endpoint
+  app.post("/api/auth/wallet-connect", async (req, res) => {
+    try {
+      const { walletAddress } = req.body;
+      
+      if (!walletAddress) {
+        return res.status(400).json({ message: "Wallet address is required" });
+      }
+
+      const normalizedAddress = normalizeWalletAddress(walletAddress);
+      
+      // Security check for wallet login
+      const { WalletSecurityService } = await import('./walletSecurity');
+      const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
+      
+      if (!securityCheck.success) {
+        return res.status(403).json({ 
+          message: securityCheck.message,
+          securityBlock: true 
+        });
+      }
+
+      // Find or create user by wallet
+      let dbUser = await storage.getUserByWalletAddress(normalizedAddress);
+      if (!dbUser) {
+        const adminWallets = getAdminWalletAddresses();
+        const isAdmin = adminWallets.includes(normalizedAddress);
+        const username = isAdmin ? `Admin_${normalizedAddress.slice(-6)}` : generateRandomUsername();
+        
+        dbUser = await storage.createUser({
+          username,
+          walletAddress: normalizedAddress,
+          authMethod: "wallet",
+          isAdmin
+        });
+        
+        console.log(`🔐 [SERVER] Auto-registered wallet user: ${username}, admin: ${isAdmin}, wallet: ${normalizedAddress.slice(0, 6)}...`);
+      }
+
+      // Set session
+      req.session.userId = dbUser.id;
+      req.session.walletAddress = normalizedAddress;
+      req.session.isAdmin = dbUser.isAdmin;
+      
+      // Save session explicitly
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      console.log(`✅ [WALLET-CONNECT] Session established for user: ${dbUser.username}, session ID: ${req.session.id}`);
+      console.log(`✅ [WALLET-CONNECT] Session details:`, {
+        userId: req.session.userId,
+        walletAddress: req.session.walletAddress,
+        isAdmin: req.session.isAdmin,
+        sessionId: req.session.id
+      });
+
+      res.json({ 
+        success: true, 
+        user: {
+          id: dbUser.id,
+          username: dbUser.username,
+          walletAddress: dbUser.walletAddress,
+          balance: dbUser.balance,
+          isAdmin: dbUser.isAdmin
+        }
+      });
+    } catch (error) {
+      console.error("❌ [WALLET-CONNECT] Error:", error);
+      res.status(500).json({ message: "Failed to authenticate with wallet" });
+    }
+  });
+
   // Dynamic SDK Authentication endpoint
   app.post("/api/auth/dynamic", async (req, res) => {
     try {
