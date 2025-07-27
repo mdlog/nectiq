@@ -95,10 +95,10 @@ export default function Dashboard() {
         {/* Welcome Section for Unauthenticated Users */}
         <div className="text-center py-12 mb-8">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">
-            Selamat Datang di Nectiq
+            Welcome to Nectiq
           </h1>
           <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
-            Platform prediksi harga cryptocurrency dengan reward berbasis akurasi. Prediksi harga, bergabung dalam battle, dan dapatkan token NTIQ.
+            Accuracy-based cryptocurrency price prediction platform. Predict prices, join battles, and earn NTIQ tokens.
           </p>
         </div>
 
@@ -129,7 +129,6 @@ export default function Dashboard() {
               <div className="h-96">
                 <LightweightChart 
                   cryptoId={selectedCrypto.id}
-                  currentPrice={selectedCrypto.current_price}
                 />
               </div>
             </CardContent>
@@ -142,9 +141,9 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Target className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Prediksi Harga</h3>
+            <h3 className="text-lg font-semibold mb-2">Price Prediction</h3>
             <p className="text-muted-foreground text-sm">
-              Prediksi harga cryptocurrency dengan berbagai timeframe dan dapatkan reward berdasarkan akurasi
+              Predict cryptocurrency prices across various timeframes and earn rewards based on accuracy
             </p>
           </Card>
           
@@ -152,9 +151,9 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Users className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Mode Battle</h3>
+            <h3 className="text-lg font-semibold mb-2">Battle Mode</h3>
             <p className="text-muted-foreground text-sm">
-              Tantang pengguna lain dalam battle prediksi dan menangkan hadiah total dari kedua belah pihak
+              Challenge other users in prediction battles and win total rewards from both parties
             </p>
           </Card>
           
@@ -162,9 +161,9 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Award className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Reward NTIQ</h3>
+            <h3 className="text-lg font-semibold mb-2">NTIQ Rewards</h3>
             <p className="text-muted-foreground text-sm">
-              Dapatkan token NTIQ sebagai reward prediksi akurat dan gunakan untuk berbagai fitur platform
+              Earn NTIQ tokens as rewards for accurate predictions and use them for various platform features
             </p>
           </Card>
         </div>
@@ -174,9 +173,9 @@ export default function Dashboard() {
 
         {/* Call to Action */}
         <div className="text-center py-12 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-lg">
-          <h2 className="text-2xl font-bold mb-4">Siap Memulai?</h2>
+          <h2 className="text-2xl font-bold mb-4">Ready to Start?</h2>
           <p className="text-muted-foreground mb-6">
-            Hubungkan wallet Anda dan mulai berpartisipasi dalam platform prediksi cryptocurrency
+            Connect your wallet and start participating in the cryptocurrency prediction platform
           </p>
         </div>
       </main>
