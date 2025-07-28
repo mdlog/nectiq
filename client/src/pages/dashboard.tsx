@@ -109,7 +109,7 @@ export default function Dashboard() {
 
         {/* Chart Section - Always Visible */}
         {showChart && selectedCrypto && (
-          <div className="mb-20">
+          <div className="mb-24">
             <Card>
               <CardContent className="p-0">
                 <div className="h-96">
@@ -123,7 +123,7 @@ export default function Dashboard() {
         )}
 
         {/* Feature Cards for Unauthenticated Users */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-20">
           <Card className="text-center p-6">
             <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Target className="w-6 h-6 text-white" />
