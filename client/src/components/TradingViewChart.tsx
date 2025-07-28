@@ -5,7 +5,6 @@ import useSystemTheme from "@/hooks/useSystemTheme";
 
 interface TradingViewChartProps {
   cryptoId: string;
-  onPredictionClick?: () => void;
 }
 
 // Map cryptocurrency IDs to TradingView symbols
@@ -27,7 +26,7 @@ const cryptoToTradingViewSymbol: Record<string, string> = {
   'bittensor': 'BINANCE:TAOUSDT'
 };
 
-const TradingViewChart = ({ cryptoId, onPredictionClick }: TradingViewChartProps) => {
+const TradingViewChart = ({ cryptoId }: TradingViewChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const systemTheme = useSystemTheme();
@@ -60,7 +59,6 @@ const TradingViewChart = ({ cryptoId, onPredictionClick }: TradingViewChartProps
       support_host: "https://www.tradingview.com",
       details: true,
       hotlist: true,
-      calendar: false,
       studies: [
         "Volume@tv-basicstudies",
         "RSI@tv-basicstudies"
@@ -122,15 +120,6 @@ const TradingViewChart = ({ cryptoId, onPredictionClick }: TradingViewChartProps
               <span className="text-sm text-muted-foreground">TradingView Professional Chart</span>
             </div>
             <div className="flex items-center space-x-2">
-              {onPredictionClick && (
-                <Button 
-                  onClick={onPredictionClick}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-                >
-                  <Target className="w-4 h-4 mr-2" />
-                  Make Prediction
-                </Button>
-              )}
               <Button variant="outline" onClick={toggleFullscreen}>
                 <Minimize2 className="w-4 h-4" />
               </Button>
@@ -166,16 +155,6 @@ const TradingViewChart = ({ cryptoId, onPredictionClick }: TradingViewChartProps
         </div>
         
         <div className="flex items-center space-x-2">
-          {onPredictionClick && (
-            <Button 
-              size="sm"
-              onClick={onPredictionClick}
-              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-            >
-              <Target className="w-4 h-4 mr-1" />
-              Predict
-            </Button>
-          )}
           <Button variant="outline" size="sm" onClick={toggleFullscreen}>
             <Maximize2 className="w-4 h-4" />
           </Button>

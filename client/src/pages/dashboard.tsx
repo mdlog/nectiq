@@ -129,7 +129,6 @@ export default function Dashboard() {
               <div className="h-96">
                 <TradingViewChart 
                   cryptoId={selectedCrypto.id}
-                  onPredictionClick={() => handlePredictClick(selectedCrypto.id)}
                 />
               </div>
             </CardContent>
@@ -203,31 +202,43 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-2 sm:space-y-3 md:space-y-6">
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
-              <Card className="mb-8">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={selectedCrypto.image} 
-                        alt={selectedCrypto.name}
-                        className="w-8 h-8 rounded-full"
-                      />
-                      <div>
-                        <CardTitle className="text-xl">{selectedCrypto.name} ({selectedCrypto.symbol.toUpperCase()})</CardTitle>
-                        <p className="text-sm text-muted-foreground">Real-time Price Chart</p>
+              <>
+                <Card className="mb-8">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={selectedCrypto.image} 
+                          alt={selectedCrypto.name}
+                          className="w-8 h-8 rounded-full"
+                        />
+                        <div>
+                          <CardTitle className="text-xl">{selectedCrypto.name} ({selectedCrypto.symbol.toUpperCase()})</CardTitle>
+                          <p className="text-sm text-muted-foreground">Real-time Price Chart</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-96">
-                    <TradingViewChart
-                      cryptoId={selectedCrypto.id}
-                      onPredictionClick={() => handlePredictClick(selectedCrypto.id)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-96">
+                      <TradingViewChart
+                        cryptoId={selectedCrypto.id}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Tombol Predict di bawah chart */}
+                <div className="mt-4">
+                  <Button 
+                    onClick={() => selectedCrypto && handlePredictClick(selectedCrypto.id)}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                  >
+                    <Target className="w-5 h-5 mr-2" />
+                    Buat Prediksi
+                  </Button>
+                </div>
+              </>
             ) : (
               <Card className="bg-surface-light border-border-subtle">
                 <CardContent className="p-4 sm:p-8 text-center">

@@ -19,7 +19,7 @@ import { DailyChallenges } from "@/components/daily-challenges";
 import LightweightChart from "@/components/LightweightChart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
-import { WalletBalances } from "@/components/wallet-balances";
+// import { WalletBalances } from "@/components/wallet-balances"; // Removed - not needed
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 import { ReferralSystem } from "@/components/ReferralSystem";
 import { LoyaltyTier } from "@/components/loyalty-tier";
@@ -104,8 +104,8 @@ function WithdrawalHistory() {
                 <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <div className="font-medium text-sm">{withdrawal.tokenAmount} {withdrawal.token}</div>
-                <div className="text-xs text-slate-500">{withdrawal.ptsAmount.toLocaleString()} NTIQ</div>
+                <div className="font-medium text-sm">{withdrawal.ntiqAmount} NTIQ</div>
+                <div className="text-xs text-slate-500">${withdrawal.usdAmount}</div>
               </div>
             </div>
             <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
@@ -937,7 +937,8 @@ export default function UserDashboard() {
                       let sourceText = '';
                       let sourceIcon = <Gift size={16} />;
                       
-                      switch (reward.type) {
+                      const rewardType = reward.source || 'prediction';
+                      switch (rewardType) {
                         case 'prediction':
                           sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
                           sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
@@ -973,16 +974,16 @@ export default function UserDashboard() {
                             <div className="relative w-8 h-8 flex-shrink-0">
                               {/* Activity Type Badge */}
                               <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${
-                                reward.type === 'battle' ? 'bg-purple-500' :
-                                reward.type === 'survival' ? 'bg-orange-500' :
-                                reward.type === 'achievement' ? 'bg-yellow-500' :
-                                reward.type === 'daily_challenge' ? 'bg-blue-500' :
+                                rewardType === 'battle' ? 'bg-purple-500' :
+                                rewardType === 'survival' ? 'bg-orange-500' :
+                                rewardType === 'achievement' ? 'bg-yellow-500' :
+                                rewardType === 'daily_challenge' ? 'bg-blue-500' :
                                 'bg-green-500'
                               }`}>
-                                {reward.type === 'battle' ? '⚔' : 
-                                 reward.type === 'survival' ? '🏆' : 
-                                 reward.type === 'achievement' ? '🎯' :
-                                 reward.type === 'daily_challenge' ? '📅' :
+                                {rewardType === 'battle' ? '⚔' : 
+                                 rewardType === 'survival' ? '🏆' : 
+                                 rewardType === 'achievement' ? '🎯' :
+                                 rewardType === 'daily_challenge' ? '📅' :
                                  '📈'}
                               </div>
                               
