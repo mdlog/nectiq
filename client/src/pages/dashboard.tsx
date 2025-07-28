@@ -107,24 +107,21 @@ export default function Dashboard() {
           <LivePrices onCryptoSelect={handleCryptoSelect} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Main Content - Chart Section (Same Layout as Authenticated) */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            {/* Chart Section - Always Visible */}
-            {showChart && selectedCrypto && (
-              <div className="mb-24">
-                <Card>
-                  <CardContent className="p-0">
-                    <TradingViewChart 
-                      cryptoId={selectedCrypto.id}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+        {/* Chart Section - Full Width */}
+        {showChart && selectedCrypto && (
+          <div className="mb-24">
+            <Card>
+              <CardContent className="p-0">
+                <TradingViewChart 
+                  cryptoId={selectedCrypto.id}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-            {/* Feature Cards for Unauthenticated Users */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-20">
+        {/* Feature Cards for Unauthenticated Users - Full Width */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-20">
           <Card className="text-center p-4 sm:p-6">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
               <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -145,28 +142,19 @@ export default function Dashboard() {
             </p>
           </Card>
           
-              <Card className="text-center p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Award className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <h3 className="text-base sm:text-lg font-semibold mb-2">NTIQ Rewards</h3>
-                <p className="text-muted-foreground text-xs sm:text-sm">
-                  Earn NTIQ tokens as rewards for accurate predictions and use them for various platform features
-                </p>
-              </Card>
+          <Card className="text-center p-4 sm:p-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <Award className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-
-            {/* Platform Stats */}
-            <HeroStats />
-          </div>
-          
-          {/* Right Sidebar - Same as Authenticated */}
-          <div className="lg:col-span-1">
-            <div className="flex flex-col space-y-6 h-full min-h-[600px] sticky top-4">
-
-            </div>
-          </div>
+            <h3 className="text-base sm:text-lg font-semibold mb-2">NTIQ Rewards</h3>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              Earn NTIQ tokens as rewards for accurate predictions and use them for various platform features
+            </p>
+          </Card>
         </div>
+
+        {/* Platform Stats - Full Width */}
+        <HeroStats />
       </main>
 
       <Footer />
