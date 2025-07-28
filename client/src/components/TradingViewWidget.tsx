@@ -174,7 +174,7 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
           symbol: pythSymbol,
           interval: selectedTimeframe,
           timezone: "Asia/Jakarta",
-          theme: systemTheme, // Use system theme
+          theme: systemTheme,
           style: "1",
           locale: "id",
           toolbar_bg: systemTheme === "dark" ? "#1f2937" : "#f1f3f6",
@@ -183,7 +183,41 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
           container_id: "tradingview-widget",
           hide_top_toolbar: false,
           hide_legend: false,
+          hide_side_toolbar: true,
           save_image: false,
+          disabled_features: [
+            "use_localstorage_for_settings",
+            "volume_force_overlay", 
+            "create_volume_indicator_by_default",
+            "header_widget_dom_node",
+            "header_widget",
+            "compare_symbol",
+            "border_around_the_chart",
+            "remove_library_container_border",
+            "left_toolbar",
+            "control_bar",
+            "timeframes_toolbar", 
+            "edit_buttons_in_legend",
+            "context_menus",
+            "main_series_scale_menu",
+            "show_logo_on_all_charts",
+            "caption_buttons_text_if_possible",
+            "header_settings",
+            "header_chart_type",
+            "header_resolutions",
+            "header_screenshot", 
+            "header_undo_redo",
+            "header_saveload",
+            "go_to_date",
+            "adaptive_logo",
+            "study_templates",
+            "trading_panel",
+            "order_panel",
+            "dom_widget",
+            "news",
+            "popup_hints",
+            "show_interval_dialog_on_key_press"
+          ],
           studies: [
             "Volume@tv-basicstudies",
             "RSI@tv-basicstudies"
@@ -200,6 +234,66 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
               clearTimeout(retryTimeoutRef.current);
               retryTimeoutRef.current = null;
             }
+            
+            // Remove overlay buttons after chart is ready
+            setTimeout(() => {
+              const removeOverlayButtons = () => {
+                console.log("🔧 [TRADINGVIEW] Attempting to remove overlay buttons...");
+                const container = document.getElementById("tradingview-widget");
+                if (container) {
+                  // Find all possible overlay buttons
+                  const selectors = [
+                    'button[style*="position: absolute"]',
+                    'div[style*="position: absolute"] button',
+                    'button[style*="background"][style*="#"]',
+                    '[style*="z-index"] button',
+                    'button:contains("Make")',
+                    'button:contains("Prediction")',
+                    'iframe + div button',
+                    '[style*="bottom"] button'
+                  ];
+                  
+                  selectors.forEach(selector => {
+                    try {
+                      const elements = container.querySelectorAll(selector);
+                      elements.forEach(el => {
+                        if (el && el.style) {
+                          el.style.display = 'none';
+                          el.style.visibility = 'hidden';
+                          el.style.opacity = '0';
+                          console.log("🗑️ [TRADINGVIEW] Removed overlay button:", el);
+                        }
+                      });
+                    } catch (e) {
+                      console.log("⚠️ [TRADINGVIEW] Could not apply selector:", selector);
+                    }
+                  });
+                  
+                  // Also hide any iframe overlay content
+                  const iframes = container.querySelectorAll('iframe');
+                  iframes.forEach(iframe => {
+                    try {
+                      // Try to access iframe content if same-origin
+                      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                      if (iframeDoc) {
+                        const overlayButtons = iframeDoc.querySelectorAll('button[style*="position: absolute"], [style*="overlay"] button');
+                        overlayButtons.forEach(btn => {
+                          btn.style.display = 'none';
+                          console.log("🗑️ [TRADINGVIEW] Removed iframe overlay button:", btn);
+                        });
+                      }
+                    } catch (e) {
+                      console.log("⚠️ [TRADINGVIEW] Cannot access iframe content (cross-origin)");
+                    }
+                  });
+                }
+              };
+              
+              removeOverlayButtons();
+              // Run again after a delay in case buttons are added dynamically
+              setTimeout(removeOverlayButtons, 1000);
+              setTimeout(removeOverlayButtons, 3000);
+            }, 500);
           }
         });
       } catch (error) {
@@ -300,6 +394,64 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
           id="tradingview-widget" 
           className="w-full h-full"
         />
+        
+        {/* CSS to hide overlay buttons in TradingView widget */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Hide TradingView overlay buttons and prediction buttons */
+            #tradingview-widget iframe {
+              pointer-events: auto;
+            }
+            
+            /* Hide any overlay buttons that might appear on the chart */
+            div[data-testid*="overlay"],
+            div[class*="overlay"],
+            div[class*="prediction"],
+            div[class*="button-overlay"],
+            button[class*="prediction"],
+            button[data-testid*="prediction"],
+            .tradingview-widget-container button[style*="position: absolute"],
+            .tradingview-widget-container div[style*="position: absolute"][style*="z-index"] button,
+            .tradingview-widget-container [class*="overlay-button"],
+            .tradingview-widget-container [id*="prediction"],
+            .tradingview-widget-container [data-name*="prediction"] {
+              display: none !important;
+              visibility: hidden !important;
+              opacity: 0 !important;
+            }
+            
+            /* Specifically target blue prediction-like buttons */
+            .tradingview-widget-container button[style*="background"][style*="blue"],
+            .tradingview-widget-container button[style*="background-color"][style*="rgb(59"],
+            .tradingview-widget-container button[style*="background-color"][style*="#3b"],
+            .tradingview-widget-container div[style*="background"][style*="blue"] button,
+            
+            /* Target cyan/blue overlay buttons positioned at bottom of chart */
+            .tradingview-widget-container button[style*="position: absolute"][style*="bottom"],
+            .tradingview-widget-container div[style*="position: absolute"][style*="bottom"] button,
+            .tradingview-widget-container [style*="background"][style*="cyan"],
+            .tradingview-widget-container [style*="background"][style*="#00"],
+            .tradingview-widget-container [style*="z-index"][style*="position: absolute"] button,
+            
+            /* Target buttons with "Make Prediction" or similar text */
+            .tradingview-widget-container button:contains("Make"),
+            .tradingview-widget-container button:contains("Prediction"),
+            .tradingview-widget-container button:contains("Buat"),
+            .tradingview-widget-container button:contains("Prediksi"),
+            
+            /* Hide any floating overlay elements */
+            .tradingview-widget-container > div[style*="position: absolute"]:not([class*="tradingview"]),
+            .tradingview-widget-container iframe + div[style*="position: absolute"],
+            
+            /* More aggressive targeting of bottom overlay buttons */
+            .tradingview-widget-container [style*="bottom: 0"],
+            .tradingview-widget-container [style*="bottom:0"],
+            .tradingview-widget-container [style*="bottom: 10px"],
+            .tradingview-widget-container [style*="bottom: 20px"] {
+              display: none !important;
+            }
+          `
+        }} />
         
         {/* Loading indicator - Reduced loading time for better UX */}
         {isLoading && !hasError && (
