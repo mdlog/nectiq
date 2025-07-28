@@ -13,7 +13,7 @@ import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
 import { SimpleActivityFeed } from "@/components/simple-activity-feed";
-import TradingViewWidget from "@/components/TradingViewWidget";
+import TradingViewChart from "@/components/TradingViewChart";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -127,8 +127,9 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="h-96">
-                <TradingViewWidget 
+                <TradingViewChart 
                   cryptoId={selectedCrypto.id}
+                  onPredictionClick={() => handlePredictClick(selectedCrypto.id)}
                 />
               </div>
             </CardContent>
@@ -203,7 +204,7 @@ export default function Dashboard() {
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
               <div className="space-y-2 md:space-y-4">
-                <TradingViewWidget
+                <TradingViewChart
                   cryptoId={selectedCrypto.id}
                   onPredictionClick={() => handlePredictClick(selectedCrypto.id)}
                 />

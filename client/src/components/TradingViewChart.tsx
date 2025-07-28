@@ -1,365 +1,199 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData } from 'lightweight-charts';
-import { Button } from '@/components/ui/button';
-import { Expand, Minimize } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Maximize2, Minimize2, Target } from "lucide-react";
+import useSystemTheme from "@/hooks/useSystemTheme";
 
 interface TradingViewChartProps {
   cryptoId: string;
   onPredictionClick?: () => void;
 }
 
-interface PythPriceData {
-  id: string;
-  symbol: string;
-  name: string;
-  current_price: number;
-  confidence_interval: number;
-  last_updated: string;
-}
+// Map cryptocurrency IDs to TradingView symbols
+const cryptoToTradingViewSymbol: Record<string, string> = {
+  'bitcoin': 'BINANCE:BTCUSDT',
+  'ethereum': 'BINANCE:ETHUSDT',
+  'solana': 'BINANCE:SOLUSDT',
+  'binancecoin': 'BINANCE:BNBUSDT',
+  'chainlink': 'BINANCE:LINKUSDT',
+  'avalanche-2': 'BINANCE:AVAXUSDT',
+  'ethereum-classic': 'BINANCE:ETCUSDT',
+  'litecoin': 'BINANCE:LTCUSDT',
+  'bitcoin-cash': 'BINANCE:BCHUSDT',
+  'aptos': 'BINANCE:APTUSDT',
+  'sui': 'BINANCE:SUIUSDT',
+  'hyperliquid': 'BYBIT:HYPEUSDT',
+  'okb': 'OKX:OKBUSDT',
+  'aave': 'BINANCE:AAVEUSDT',
+  'bittensor': 'BINANCE:TAOUSDT'
+};
 
-interface TimeframeOption {
-  value: string;
-  label: string;
-  minutes: number;
-}
-
-const timeframes: TimeframeOption[] = [
-  { value: '1m', label: '1M', minutes: 1 },
-  { value: '5m', label: '5M', minutes: 5 },
-  { value: '15m', label: '15M', minutes: 15 },
-  { value: '1h', label: '1H', minutes: 60 },
-  { value: '4h', label: '4H', minutes: 240 },
-  { value: '1d', label: '1D', minutes: 1440 },
-];
-
-export default function TradingViewChart({ cryptoId, onPredictionClick }: TradingViewChartProps) {
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<'Candlestick'> | ISeriesApi<'Line'> | null>(null);
+const TradingViewChart = ({ cryptoId, onPredictionClick }: TradingViewChartProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedTimeframe, setSelectedTimeframe] = useState('1h');
-  const [chartType, setChartType] = useState<'candlestick' | 'line'>('candlestick');
-  const [cryptoLogo, setCryptoLogo] = useState<string>('');
+  const systemTheme = useSystemTheme();
 
-  // Fetch Pyth Network prices - STATIC CHART (No Real-time Updates)
-  const { data: pythData } = useQuery<PythPriceData[]>({
-    queryKey: ['/api/crypto/pyth-prices'],
-    refetchInterval: false, // DISABLED - No automatic refresh
-    refetchIntervalInBackground: false, // DISABLED - No background updates
-    staleTime: Infinity, // STATIC - Data never becomes stale
-    refetchOnWindowFocus: false, // DISABLED - No refresh on window focus
-    refetchOnMount: true, // Only fetch once on component mount
-  });
+  const symbol = cryptoToTradingViewSymbol[cryptoId] || 'BINANCE:BTCUSDT';
 
-  // Get current crypto data
-  const currentCryptoData = pythData?.find((crypto: PythPriceData) => crypto.id === cryptoId);
-
-  // Fetch crypto data for logo - STATIC CHART (No Real-time Updates)
-  const { data: cryptoData } = useQuery<any[]>({
-    queryKey: ['/api/crypto/prices'],
-    refetchInterval: false, // DISABLED - No automatic refresh
-    refetchIntervalInBackground: false, // DISABLED - No background updates
-    staleTime: Infinity, // STATIC - Data never becomes stale
-    refetchOnWindowFocus: false, // DISABLED - No refresh on window focus
-    refetchOnMount: true, // Only fetch once on component mount
-  });
-
-  // Get crypto logo and metadata
-  const cryptoInfo = cryptoData?.find((c: any) => c.id === cryptoId);
-
-  // Initialize chart
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    if (!containerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, {
-      width: chartContainerRef.current.clientWidth,
-      height: 400,
-      layout: {
-        background: { color: '#0f0f0f' },
-        textColor: '#ffffff',
-      },
-      grid: {
-        vertLines: { color: '#333333' },
-        horzLines: { color: '#333333' },
-      },
-      crosshair: {
-        mode: 1,
-      },
-      rightPriceScale: {
-        borderColor: '#333333',
-        textColor: '#ffffff',
-        visible: false, // Hide right price scale to avoid showing different prices than Live Prices
-      },
-      leftPriceScale: {
-        borderColor: '#333333',
-        textColor: '#ffffff',
-      },
-      timeScale: {
-        borderColor: '#333333',
-      },
+    // Clear any existing content
+    containerRef.current.innerHTML = "";
+
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.type = "text/javascript";
+    script.async = true;
+    
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: symbol,
+      interval: "D",
+      timezone: "Etc/UTC",
+      theme: systemTheme === 'dark' ? "dark" : "light",
+      style: "1", // Candlestick
+      locale: "en",
+      toolbar_bg: systemTheme === 'dark' ? "#1a1a1a" : "#ffffff",
+      enable_publishing: false,
+      allow_symbol_change: true,
+      calendar: false,
+      support_host: "https://www.tradingview.com",
+      details: true,
+      hotlist: true,
+      calendar: false,
+      studies: [
+        "Volume@tv-basicstudies",
+        "RSI@tv-basicstudies"
+      ],
+      container_id: "tradingview_widget"
     });
 
-    chartRef.current = chart;
+    // Create widget container
+    const widgetContainer = document.createElement("div");
+    widgetContainer.className = "tradingview-widget-container__widget";
+    widgetContainer.id = "tradingview_widget";
+    widgetContainer.style.height = "100%";
+    widgetContainer.style.width = "100%";
 
-    // Handle resize
-    const resizeObserver = new ResizeObserver(() => {
-      if (chartRef.current && chartContainerRef.current) {
-        chartRef.current.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-          height: isFullscreen ? window.innerHeight - 100 : 400,
-        });
-      }
-    });
+    containerRef.current.appendChild(widgetContainer);
+    containerRef.current.appendChild(script);
 
-    resizeObserver.observe(chartContainerRef.current);
-
+    // Cleanup function
     return () => {
-      resizeObserver.disconnect();
-      chart.remove();
-    };
-  }, [isFullscreen]);
-
-  // Update chart data based on Pyth Network prices
-  useEffect(() => {
-    if (!chartRef.current || !currentCryptoData) return;
-
-    // Remove existing series
-    if (seriesRef.current) {
-      chartRef.current.removeSeries(seriesRef.current);
-    }
-
-    // Generate historical data with realistic movements - use same price source as Live Prices
-    const generateHistoricalData = () => {
-      const currentPrice = cryptoInfo?.current_price || currentCryptoData.current_price;
-      const timeframeData = timeframes.find(tf => tf.value === selectedTimeframe);
-      const intervalMs = (timeframeData?.minutes || 60) * 60 * 1000;
-      
-      // Determine data span based on timeframe
-      const dataPoints = selectedTimeframe === '1m' ? 60 :
-                         selectedTimeframe === '5m' ? 72 :
-                         selectedTimeframe === '15m' ? 64 :
-                         selectedTimeframe === '1h' ? 48 :
-                         selectedTimeframe === '4h' ? 42 :
-                         selectedTimeframe === '1d' ? 30 : 48;
-
-      const data: any[] = [];
-      const now = Date.now();
-      
-      // Generate realistic price movements
-      let basePrice = currentPrice;
-      
-      for (let i = dataPoints; i >= 0; i--) {
-        const timestamp = (now - (i * intervalMs)) / 1000; // TradingView expects seconds
-        
-        // Create realistic volatility based on timeframe - FIXED VALUES
-        let volatility;
-        switch(selectedTimeframe) {
-          case '1m':
-          case '5m':
-            volatility = 0.002; // 0.2% for very short timeframes
-            break;
-          case '15m':
-            volatility = 0.005; // 0.5% for short timeframes
-            break;
-          case '1h':
-            volatility = 0.008; // 0.8% for hourly (lebih realistis)
-            break;
-          case '4h':
-            volatility = 0.015; // 1.5% for 4-hourly (dikurangi dari 2.5%)
-            break;
-          case '1d':
-            volatility = 0.025; // 2.5% for daily (dikurangi dari 5%)
-            break;
-          default:
-            volatility = 0.01;
-        }
-
-        // Create trend with noise
-        const trendComponent = Math.sin((dataPoints - i) / dataPoints * Math.PI * 2) * 0.05;
-        const noiseComponent = (Math.random() - 0.5) * volatility * 2;
-        const priceChange = 1 + trendComponent + noiseComponent;
-        
-        const price = Math.max(basePrice * priceChange, currentPrice * 0.7);
-
-        if (chartType === 'candlestick') {
-          // Generate OHLC data for candlesticks - CONTROLLED RANGE
-          const variation = price * Math.min(volatility, 0.02); // Maksimal 2% variasi per candle
-          const open = price + (Math.random() - 0.5) * variation * 0.5;
-          const close = price + (Math.random() - 0.5) * variation * 0.5;
-          const high = Math.max(open, close) + Math.random() * variation * 0.3; // Maksimal 0.6% ke atas
-          const low = Math.min(open, close) - Math.random() * variation * 0.3;  // Maksimal 0.6% ke bawah
-
-          data.push({
-            time: timestamp,
-            open,
-            high,
-            low,
-            close,
-          } as CandlestickData);
-        } else {
-          // Line data
-          data.push({
-            time: timestamp,
-            value: price,
-          } as LineData);
-        }
-
-        basePrice = price;
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
       }
-
-      return data;
     };
-
-    // Create appropriate series based on chart type
-    if (chartType === 'candlestick') {
-      const candlestickSeries = chartRef.current.addCandlestickSeries({
-        upColor: '#10b981',
-        downColor: '#ef4444',
-        borderVisible: false,
-        wickUpColor: '#10b981',
-        wickDownColor: '#ef4444',
-      });
-      
-      candlestickSeries.setData(generateHistoricalData() as CandlestickData[]);
-      seriesRef.current = candlestickSeries;
-    } else {
-      const lineSeries = chartRef.current.addLineSeries({
-        color: '#10b981',
-        lineWidth: 2,
-      });
-      
-      lineSeries.setData(generateHistoricalData() as LineData[]);
-      seriesRef.current = lineSeries;
-    }
-
-    console.log(`[TRADINGVIEW] Updated ${chartType} chart for ${cryptoId} (${selectedTimeframe}): $${currentCryptoData.current_price}`);
-  }, [currentCryptoData, selectedTimeframe, chartType, cryptoId]);
+  }, [symbol, systemTheme]);
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
-    if (chartRef.current) {
-      setTimeout(() => {
-        chartRef.current?.applyOptions({
-          height: !isFullscreen ? window.innerHeight - 100 : 400,
-        });
-      }, 100);
-    }
   };
 
-  return (
-    <div className={`bg-surface-dark border border-surface-light rounded-lg ${
-      isFullscreen ? 'fixed inset-0 z-50 m-4' : ''
-    }`}>
-      {/* Chart Header */}
-      <div className="flex items-center justify-between p-4 border-b border-surface-light">
-        <div className="flex items-center space-x-4">
-          {/* Crypto Info */}
-          <div className="flex items-center space-x-3">
-            {cryptoInfo?.image && (
-              <img src={cryptoInfo.image} alt={cryptoId} className="w-8 h-8 rounded-full" />
-            )}
-            <div>
-              <h3 className="font-semibold text-white">
-                {cryptoInfo?.name || currentCryptoData?.name || cryptoId} ({cryptoInfo?.symbol?.toUpperCase() || currentCryptoData?.symbol?.toUpperCase()})
-              </h3>
-              {cryptoInfo && (
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl font-bold text-white">
-                    ${cryptoInfo.current_price.toFixed(2)}
-                  </span>
-                  <span className={`text-sm ${cryptoInfo.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {cryptoInfo.price_change_percentage_24h >= 0 ? '+' : ''}{cryptoInfo.price_change_percentage_24h.toFixed(2)}% (24h)
-                  </span>
-                  <div className="flex items-center space-x-1">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <span className="text-green-400 text-xs">
-                      Real-time
-                    </span>
-                  </div>
-                </div>
+  const getCryptoName = (id: string) => {
+    const names: Record<string, string> = {
+      'bitcoin': 'Bitcoin',
+      'ethereum': 'Ethereum',
+      'solana': 'Solana',
+      'binancecoin': 'BNB',
+      'chainlink': 'Chainlink',
+      'avalanche-2': 'Avalanche',
+      'ethereum-classic': 'Ethereum Classic',
+      'litecoin': 'Litecoin',
+      'bitcoin-cash': 'Bitcoin Cash',
+      'aptos': 'Aptos',
+      'sui': 'Sui',
+      'hyperliquid': 'Hyperliquid',
+      'okb': 'OKB',
+      'aave': 'Aave',
+      'bittensor': 'Bittensor'
+    };
+    return names[id] || 'Unknown';
+  };
+
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background">
+        <div className="h-full flex flex-col">
+          {/* Fullscreen Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center space-x-4">
+              <h2 className="text-xl font-semibold">{getCryptoName(cryptoId)} Chart</h2>
+              <span className="text-sm text-muted-foreground">TradingView Professional Chart</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              {onPredictionClick && (
+                <Button 
+                  onClick={onPredictionClick}
+                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+                >
+                  <Target className="w-4 h-4 mr-2" />
+                  Make Prediction
+                </Button>
               )}
+              <Button variant="outline" onClick={toggleFullscreen}>
+                <Minimize2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          
+          {/* Fullscreen Chart */}
+          <div className="flex-1">
+            <div 
+              ref={containerRef}
+              className="tradingview-widget-container h-full w-full"
+            >
+              <div className="tradingview-widget-container__widget h-full"></div>
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        <div className="flex items-center space-x-4">
-          {/* Chart Type Selector */}
-          <div className="flex items-center space-x-1">
-            <Button
-              variant={chartType === 'line' ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setChartType('line')}
-              className={`px-3 py-1 text-xs ${
-                chartType === 'line'
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-surface-light'
-              }`}
-            >
-              Line
-            </Button>
-            <Button
-              variant={chartType === 'candlestick' ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setChartType('candlestick')}
-              className={`px-3 py-1 text-xs ${
-                chartType === 'candlestick'
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-surface-light'
-              }`}
-            >
-              Candles
-            </Button>
+  return (
+    <div className="relative">
+      {/* Chart Header */}
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <h3 className="text-lg font-semibold">{getCryptoName(cryptoId)}</h3>
+            <span className="text-sm text-muted-foreground">({symbol})</span>
           </div>
-
-          {/* Timeframe Selector */}
-          <div className="flex items-center space-x-1">
-            {timeframes.map((tf) => (
-              <Button
-                key={tf.value}
-                variant={selectedTimeframe === tf.value ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setSelectedTimeframe(tf.value)}
-                className={`px-3 py-1 text-xs ${
-                  selectedTimeframe === tf.value
-                    ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                    : 'text-gray-400 hover:text-white hover:bg-surface-light'
-                }`}
-              >
-                {tf.label}
-              </Button>
-            ))}
+          <div className="text-xs text-muted-foreground bg-green-500/10 text-green-400 px-2 py-1 rounded">
+            TradingView
           </div>
-
-          {/* Fullscreen Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleFullscreen}
-            className="text-white border-surface-light hover:bg-surface-light"
-          >
-            {isFullscreen ? <Minimize size={16} /> : <Expand size={16} />}
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          {onPredictionClick && (
+            <Button 
+              size="sm"
+              onClick={onPredictionClick}
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+            >
+              <Target className="w-4 h-4 mr-1" />
+              Predict
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+            <Maximize2 className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      {/* Chart Container */}
-      <div 
-        ref={chartContainerRef}
-        className={`w-full ${isFullscreen ? 'h-[calc(100vh-200px)]' : 'h-[400px]'}`}
-      />
-
-      {/* Prediction Button */}
-      {onPredictionClick && (
-        <div className="p-4 border-t border-surface-light">
-          <Button
-            onClick={onPredictionClick}
-            className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold py-3"
-          >
-            Make Price Prediction
-          </Button>
+      {/* Chart Content */}
+      <div className="h-96">
+        <div 
+          ref={containerRef}
+          className="tradingview-widget-container h-full w-full"
+          style={{ height: "100%", width: "100%" }}
+        >
+          <div className="tradingview-widget-container__widget h-full"></div>
         </div>
-      )}
+      </div>
     </div>
   );
-}
+};
+
+export default TradingViewChart;
