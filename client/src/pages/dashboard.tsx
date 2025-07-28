@@ -121,40 +121,42 @@ export default function Dashboard() {
         )}
 
         {/* Feature Cards for Unauthenticated Users - Full Width */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-20">
-          <Card className="text-center p-4 sm:p-6">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mt-20 mb-12">
+          <Card className="text-center p-6 sm:p-8">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <Target className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
             </div>
-            <h3 className="text-base sm:text-lg font-semibold mb-2">Price Prediction</h3>
-            <p className="text-muted-foreground text-xs sm:text-sm">
+            <h3 className="text-lg sm:text-xl font-semibold mb-3">Price Prediction</h3>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Predict cryptocurrency prices across various timeframes and earn rewards based on accuracy
             </p>
           </Card>
           
-          <Card className="text-center p-4 sm:p-6">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <Card className="text-center p-6 sm:p-8">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <Users className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
             </div>
-            <h3 className="text-base sm:text-lg font-semibold mb-2">Battle Mode</h3>
-            <p className="text-muted-foreground text-xs sm:text-sm">
+            <h3 className="text-lg sm:text-xl font-semibold mb-3">Battle Mode</h3>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Challenge other users in prediction battles and win total rewards from both parties
             </p>
           </Card>
           
-          <Card className="text-center p-4 sm:p-6">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <Award className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <Card className="text-center p-6 sm:p-8">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <Award className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
             </div>
-            <h3 className="text-base sm:text-lg font-semibold mb-2">NTIQ Rewards</h3>
-            <p className="text-muted-foreground text-xs sm:text-sm">
+            <h3 className="text-lg sm:text-xl font-semibold mb-3">NTIQ Rewards</h3>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Earn NTIQ tokens as rewards for accurate predictions and use them for various platform features
             </p>
           </Card>
         </div>
 
         {/* Platform Stats - Full Width */}
-        <HeroStats />
+        <div className="mt-16">
+          <HeroStats />
+        </div>
       </main>
 
       <Footer />
