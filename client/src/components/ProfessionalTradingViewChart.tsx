@@ -105,7 +105,7 @@ export default function ProfessionalTradingViewChart({
       widgetRef.current = new window.TradingView.widget({
         container_id: containerRef.current.id || 'tradingview-widget',
         width: '100%',
-        height: isFullscreen ? window.innerHeight - 200 : 500,
+        height: isFullscreen ? window.innerHeight - 200 : 700,
         symbol: `BINANCE:${tradingViewSymbol}`,
         interval: selectedInterval,
         timezone: 'Asia/Jakarta',

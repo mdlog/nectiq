@@ -388,7 +388,7 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
 
       {/* TradingView Widget Container */}
       <div className={`tradingview-widget-container bg-gray-900 relative ${
-        isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[500px]'
+        isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[700px]'
       }`}>
         <div 
           id="tradingview-widget" 

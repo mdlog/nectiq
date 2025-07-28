@@ -301,7 +301,7 @@ export default function FallbackChart({ cryptoId, onPredictionClick }: FallbackC
       {/* Chart Container */}  
       <div className={`${
         systemTheme === "dark" ? "bg-gray-900" : "bg-white"
-      } ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[400px]'}`}>
+      } ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[700px]'}`}>
         <Line data={chartData} options={options} />
       </div>
 

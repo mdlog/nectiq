@@ -272,7 +272,7 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
         const newWidth = chartContainerRef.current.clientWidth;
-        const newHeight = isFullscreen ? window.innerHeight - 120 : 400;
+        const newHeight = isFullscreen ? window.innerHeight - 120 : 700;
         
         // Only resize if dimensions actually changed
         chartRef.current.applyOptions({ 
@@ -292,7 +292,7 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
         const { width, height } = entries[0].contentRect;
         chartRef.current.applyOptions({
           width: width,
-          height: isFullscreen ? window.innerHeight - 120 : 400
+          height: isFullscreen ? window.innerHeight - 120 : 700
         });
       });
       
