@@ -1,33 +1,25 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChartLine, Coins, User, Wallet, LogOut, Menu, X, ChevronDown, Copy, Check } from "lucide-react";
+import { ChartLine, Coins, User, LogOut, Menu, X, ChevronDown, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-
+import { RainbowConnectButton } from "@/components/RainbowConnectButton";
+import { useRainbowAuth } from "@/hooks/useRainbowAuth";
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
 import { useState } from 'react';
 import type { User as UserType } from "@shared/schema";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 
 export function Header() {
-  // OPTIMIZED BALANCE UPDATES: Reduced frequency to prevent rate limiting
-  const { data: user } = useQuery<UserType>({
-    queryKey: ["/api/user"],
-    refetchInterval: 10000, // Update every 10 seconds to reduce server load
-    staleTime: 5000, // Consider data fresh for 5 seconds
-    refetchOnMount: true,
-    refetchOnWindowFocus: false, // Disable to reduce unnecessary calls
-    refetchOnReconnect: true,
-  });
+  // Use Rainbow Kit authentication hook
+  const { 
+    user, 
+    isConnected, 
+    address, 
+    logout, 
+    isLoggingOut 
+  } = useRainbowAuth();
   
-  // Traditional logout functionality
-  
-  // Native wallet detection - check if user is authenticated
-  const isConnected = !!user;
-  const address = user?.walletAddress;
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [location, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
@@ -55,243 +47,7 @@ export function Header() {
   };
 
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      console.log('🔐 [LOGOUT] Starting logout...');
-      
-      // Backend logout
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Backend logout failed');
-      }
-      
-      return { success: true };
-    },
-    onSuccess: () => {
-      // Clear all cached data
-      queryClient.clear();
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      
-      toast({
-        title: "Logged Out",
-        description: "Successfully logged out of your account",
-      });
-      
-      // Redirect to landing page
-      setLocation('/');
-    },
-    onError: (error) => {
-      console.error('Logout error:', error);
-      toast({
-        title: "Logout Failed",
-        description: "There was an error logging out. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Direct wallet connection functionality
-  const connectWalletMutation = useMutation({
-    mutationFn: async () => {
-      console.log('🔌 [WALLET-CONNECT] Starting wallet connection...');
-      
-      // Detect mobile device
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      console.log('📱 [WALLET-CONNECT] Is mobile device:', isMobile);
-      
-      // Check if MetaMask is installed
-      if (!window.ethereum) {
-        console.log('❌ [WALLET-CONNECT] No ethereum provider found');
-        
-        if (isMobile) {
-          // On mobile, try to open MetaMask app
-          const mobileWalletUrl = `https://metamask.app.link/dapp/${window.location.host}`;
-          console.log('📲 [WALLET-CONNECT] Opening MetaMask app:', mobileWalletUrl);
-          window.location.href = mobileWalletUrl;
-          return; // Exit early for mobile redirect
-        } else {
-          throw new Error('MetaMask not installed');
-        }
-      }
-      
-      try {
-        // Request wallet connection with timeout for mobile
-        const connectionPromise = window.ethereum.request({
-          method: 'eth_requestAccounts',
-        });
-        
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Connection timeout')), 
-            isMobile ? 15000 : 10000) // Longer timeout for mobile
-        );
-        
-        const accounts = await Promise.race([connectionPromise, timeoutPromise]);
-        
-        if (!accounts || accounts.length === 0) {
-          throw new Error('No accounts returned from wallet');
-        }
-        
-        const walletAddress = accounts[0];
-        console.log('🔌 [WALLET-CONNECT] Got wallet address:', walletAddress);
-        
-        // Authenticate with backend
-        const response = await fetch('/api/auth/wallet-connect', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ 
-            walletAddress,
-            isMobile,
-            userAgent: navigator.userAgent 
-          }),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.text();
-          console.error('❌ [WALLET-CONNECT] Backend auth failed:', errorData);
-          throw new Error(`Authentication failed: ${response.status}`);
-        }
-        
-        const authResult = await response.json();
-        console.log('✅ [WALLET-CONNECT] Backend auth successful:', authResult);
-        
-        return { walletAddress, ...authResult };
-      } catch (error) {
-        console.error('❌ [WALLET-CONNECT] Connection error:', error);
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      console.log('✅ [WALLET-CONNECT] Complete success:', data);
-      
-      // Clear and refresh queries
-      queryClient.clear();
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      
-      toast({
-        title: "Wallet Connected",
-        description: `Successfully connected wallet ${data.walletAddress.slice(0, 6)}...${data.walletAddress.slice(-4)}`,
-      });
-      
-      // Refresh page to update authentication state
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    },
-    onError: (error) => {
-      console.error('❌ [WALLET-CONNECT] Error:', error);
-      
-      let errorMessage = "Failed to connect wallet";
-      if (error.message.includes('MetaMask not installed')) {
-        errorMessage = "MetaMask is not installed. Please install MetaMask to continue.";
-      } else if (error.message.includes('User rejected')) {
-        errorMessage = "Connection cancelled by user";
-      } else if (error.message.includes('No accounts')) {
-        errorMessage = "No accounts found in wallet";
-      } else if (error.message.includes('Connection timeout')) {
-        errorMessage = "Connection timeout. Please try connecting through MetaMask app.";
-      } else if (error.message.includes('4001')) {
-        errorMessage = "User rejected the connection request";
-      } else if (error.message.includes('already processing')) {  
-        errorMessage = "Connection already in progress. Please wait or refresh.";
-      }
-      
-      // Don't show error toast if mobile redirect happened
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile && !window.ethereum) {
-        console.log('📲 [WALLET-CONNECT] Mobile redirect initiated, not showing error toast');
-        return; // Don't show error for mobile redirect
-      }
-      
-      toast({
-        title: "Connection Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleDisconnect = async () => {
-    try {
-      console.log("🔌 Starting complete wallet disconnect process...");
-      
-      // Show loading state
-      toast({
-        title: "Disconnecting...",
-        description: "Completely disconnecting wallet and clearing session",
-      });
-      
-      // Execute complete logout
-      await logoutMutation.mutateAsync();
-      
-      // Show success message
-      toast({
-        title: "Wallet Disconnected",
-        description: "Wallet completely disconnected. Next login will require confirmation.",
-      });
-      
-      // Navigate to landing page
-      setTimeout(() => {
-        setLocation('/');
-        // Force page reload untuk memastikan clean state
-        window.location.href = '/';
-      }, 1000);
-      
-    } catch (error) {
-      console.error("❌ Complete disconnect error:", error);
-      
-      // Fallback: Still perform manual cleanup even if mutation fails
-      try {
-        // Manual MetaMask disconnect
-        if (window.ethereum) {
-          await window.ethereum.request({
-            method: 'wallet_revokePermissions',
-            params: [{ eth_accounts: {} }],
-          });
-        }
-        
-        // Clear localStorage manually
-        
-        // Manual backend logout
-        await fetch('/api/auth/logout', { 
-          method: 'POST',
-          credentials: 'include'
-        });
-        
-        // Clear storage manually
-        localStorage.clear();
-        sessionStorage.clear();
-        queryClient.clear();
-        
-        toast({
-          title: "Wallet Disconnected",
-          description: "Wallet disconnected with fallback method",
-          variant: "destructive",
-        });
-      } catch (fallbackError) {
-        console.error("❌ Fallback disconnect also failed:", fallbackError);
-        toast({
-          title: "Disconnect Error",
-          description: "Error during disconnect, please refresh page",
-          variant: "destructive",
-        });
-      }
-      
-      // Force navigation regardless
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
-    }
-  };
+  // Rainbow Kit handles all wallet connection logic
 
   return (
     <header className="bg-surface border-surface-light border-b">
@@ -476,31 +232,23 @@ export function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      onClick={handleDisconnect}
-                      disabled={logoutMutation.isPending}
+                      onClick={() => logout()}
+                      disabled={isLoggingOut}
                       className="flex items-center space-x-2 p-3 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>{logoutMutation.isPending ? 'Logging out...' : 'Logout'}</span>
+                      <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <Button 
+                <RainbowConnectButton 
                   variant="outline" 
                   size="sm"
-                  onClick={() => connectWalletMutation.mutate()}
-                  disabled={connectWalletMutation.isPending}
                   className="flex items-center space-x-2"
-                >
-                  <Wallet size={16} />
-                  <span className="hidden sm:inline">
-                    {connectWalletMutation.isPending ? 'Connecting...' : 'Connect Wallet'}
-                  </span>
-                  <span className="sm:hidden">Connect</span>
-                </Button>
+                />
                 
                 {/* User Profile Dropdown - Not Connected */}
                 <DropdownMenu>
@@ -539,17 +287,13 @@ export function Header() {
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        console.log('🔌 [DESKTOP-DROPDOWN] Connect Wallet button clicked');
-                        connectWalletMutation.mutate();
-                      }}
-                      disabled={connectWalletMutation.isPending}
-                      className="flex items-center space-x-2 p-3 cursor-pointer"
-                    >
-                      <Wallet className="h-4 w-4" />
-                      <span>{connectWalletMutation.isPending ? 'Connecting...' : 'Connect Wallet'}</span>
-                    </DropdownMenuItem>
+                    <div className="p-3">
+                      <RainbowConnectButton 
+                        variant="default" 
+                        size="sm"
+                        className="w-full"
+                      />
+                    </div>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -580,8 +324,8 @@ export function Header() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleDisconnect}
-                      disabled={logoutMutation.isPending}
+                      onClick={() => logout()}
+                      disabled={isLoggingOut}
                       className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 p-1"
                       title="Disconnect wallet"
                     >
@@ -696,20 +440,13 @@ export function Header() {
 
               {/* Mobile Connect Wallet Button (if not connected) */}
               {!isConnected && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    console.log('🔌 [MOBILE-MENU] Connect Wallet button clicked');
-                    setIsMobileMenuOpen(false);
-                    connectWalletMutation.mutate();
-                  }}
-                  disabled={connectWalletMutation.isPending}
-                  className="w-full flex items-center justify-center space-x-2"
-                >
-                  <Wallet size={16} />
-                  <span>{connectWalletMutation.isPending ? 'Connecting...' : 'Connect Wallet'}</span>
-                </Button>
+                <div className="border-t border-surface-light pt-3 mt-3">
+                  <RainbowConnectButton 
+                    variant="default" 
+                    size="sm"
+                    className="w-full flex items-center justify-center space-x-2"
+                  />
+                </div>
               )}
             </div>
           </div>

@@ -7,7 +7,8 @@ import { LivePrices } from "@/components/live-prices";
 import { TopPredictors } from "@/components/top-predictors";
 import { RecentRewards } from "@/components/recent-rewards";
 
-import { useWalletRequired } from "@/hooks/useWalletRequired";
+import { useRainbowAuth } from "@/hooks/useRainbowAuth";
+import { RainbowConnectButton } from "@/components/RainbowConnectButton";
 
 import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
@@ -30,17 +31,8 @@ export default function Dashboard() {
   const [showPredictionForm, setShowPredictionForm] = useState(false);
   const [preSelectedForPrediction, setPreSelectedForPrediction] = useState<string | undefined>(undefined);
   
-  // Check authentication state
-  const { data: user } = useQuery<UserType>({
-    queryKey: ["/api/user"],
-    retry: false,
-    refetchOnMount: true,
-  });
-  
-  const isAuthenticated = !!user;
-  
-  // Wallet requirement system
-  const { isModalOpen, actionType, checkWalletRequired, onWalletConnected, closeModal } = useWalletRequired();
+  // Use Rainbow Kit authentication
+  const { user, isConnected } = useRainbowAuth();
 
   // Fetch live prices with optimized intervals to prevent rate limiting
   const { data: livePrices = [] } = useQuery<CryptoPrice[]>({
@@ -72,18 +64,20 @@ export default function Dashboard() {
   };
 
   const handlePredictClick = (cryptoId: string) => {
-    // Check if wallet is required before allowing prediction
-    checkWalletRequired(() => {
-      setPreSelectedForPrediction(cryptoId);
-      setShowPredictionForm(true);
-      // Scroll to prediction form
-      setTimeout(() => {
-        const form = document.querySelector('[data-prediction-form]');
-        if (form) {
-          form.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }, 'prediction');
+    // If not connected, user needs to connect wallet first
+    if (!isConnected) {
+      return; // Rainbow Kit button will handle connection
+    }
+    
+    setPreSelectedForPrediction(cryptoId);
+    setShowPredictionForm(true);
+    // Scroll to prediction form
+    setTimeout(() => {
+      const form = document.querySelector('[data-prediction-form]');
+      if (form) {
+        form.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   // Create different content based on authentication state
@@ -282,5 +276,5 @@ export default function Dashboard() {
   );
 
   // Return different content based on authentication
-  return isAuthenticated ? renderAuthenticatedHome() : renderUnauthenticatedHome();
+  return isConnected ? renderAuthenticatedHome() : renderUnauthenticatedHome();
 }

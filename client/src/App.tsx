@@ -1,6 +1,4 @@
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import LandingPage from "@/pages/landing";
@@ -124,15 +122,13 @@ function App() {
   const { showWarning, dismissWarning } = useMobileDetection();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <div className="min-h-screen bg-background text-foreground">
-          <Toaster />
-          <Router />
-          <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
-        </div>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <TooltipProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        <Toaster />
+        <Router />
+        <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
+      </div>
+    </TooltipProvider>
   );
 }
 
