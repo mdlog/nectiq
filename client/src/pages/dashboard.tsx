@@ -91,9 +91,9 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4 md:py-8">
         {/* Welcome Section for Unauthenticated Users */}
-        <div className="text-center py-8 sm:py-12 mb-6 sm:mb-8">
+        <div className="text-center py-4 sm:py-6 mb-4 sm:mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">
             Welcome to Nectiq
           </h1>
@@ -102,28 +102,31 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Live Prices - Always Visible */}
-        <div className="mb-6 sm:mb-8">
+        {/* Live Prices Section - Moved to Top */}
+        <div className="mb-4 sm:mb-6">
           <LivePrices onCryptoSelect={handleCryptoSelect} />
         </div>
 
-        {/* Chart Section - Always Visible */}
-        {showChart && selectedCrypto && (
-          <div className="mb-16 sm:mb-20 lg:mb-24">
-            <Card>
-              <CardContent className="p-0">
-                <div className="h-64 sm:h-80 lg:h-96">
-                  <TradingViewChart 
-                    cryptoId={selectedCrypto.id}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Main Content - Chart Section (Same Layout as Authenticated) */}
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            {/* Chart Section - Always Visible */}
+            {showChart && selectedCrypto && (
+              <div className="mb-24">
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="h-64 sm:h-80 lg:h-96">
+                      <TradingViewChart 
+                        cryptoId={selectedCrypto.id}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
-        {/* Feature Cards for Unauthenticated Users */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 mt-12 sm:mt-16 lg:mt-20">
+            {/* Feature Cards for Unauthenticated Users */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-20">
           <Card className="text-center p-4 sm:p-6">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
               <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -144,33 +147,51 @@ export default function Dashboard() {
             </p>
           </Card>
           
-          <Card className="text-center p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <Award className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <Card className="text-center p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Award className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold mb-2">NTIQ Rewards</h3>
+                <p className="text-muted-foreground text-xs sm:text-sm">
+                  Earn NTIQ tokens as rewards for accurate predictions and use them for various platform features
+                </p>
+              </Card>
             </div>
-            <h3 className="text-base sm:text-lg font-semibold mb-2">NTIQ Rewards</h3>
-            <p className="text-muted-foreground text-xs sm:text-sm">
-              Earn NTIQ tokens as rewards for accurate predictions and use them for various platform features
-            </p>
-          </Card>
-        </div>
 
-        {/* Platform Stats */}
-        <HeroStats />
-
-        {/* Call to Action */}
-        <div className="text-center py-8 sm:py-12 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-lg">
-          <h2 className="text-xl sm:text-2xl font-bold mb-4">Ready to Start?</h2>
-          <p className="text-muted-foreground mb-6 px-4 sm:px-0 text-sm sm:text-base">
-            Connect your wallet and start participating in the cryptocurrency prediction platform
-          </p>
-          <Button 
-            size="lg" 
-            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-sm sm:text-base px-6 sm:px-8"
-            onClick={() => window.location.href = '/wallet-login'}
-          >
-            Connect Wallet
-          </Button>
+            {/* Platform Stats */}
+            <HeroStats />
+          </div>
+          
+          {/* Right Sidebar - Same as Authenticated */}
+          <div className="lg:col-span-1">
+            <div className="flex flex-col space-y-6 h-full min-h-[600px] sticky top-4">
+              {/* Call to Action */}
+              <Card className="text-center p-6 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20">
+                <h2 className="text-xl font-bold mb-4">Ready to Start?</h2>
+                <p className="text-muted-foreground mb-6 text-sm">
+                  Connect your wallet and start participating in the cryptocurrency prediction platform
+                </p>
+                <Button 
+                  size="lg" 
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-sm px-6"
+                  onClick={() => window.location.href = '/wallet-login'}
+                >
+                  Connect Wallet
+                </Button>
+              </Card>
+              
+              {/* Additional info cards can go here */}
+              <Card className="p-6">
+                <h3 className="font-semibold mb-3">Platform Features</h3>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>• Real-time price predictions</li>
+                  <li>• Battle mode competitions</li>
+                  <li>• NTIQ token rewards</li>
+                  <li>• Live leaderboards</li>
+                </ul>
+              </Card>
+            </div>
+          </div>
         </div>
       </main>
 
