@@ -497,11 +497,15 @@ export function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      onClick={() => setLocation('/home')}
+                      onClick={() => {
+                        console.log('🔌 [DESKTOP-DROPDOWN] Connect Wallet button clicked');
+                        connectWalletMutation.mutate();
+                      }}
+                      disabled={connectWalletMutation.isPending}
                       className="flex items-center space-x-2 p-3 cursor-pointer"
                     >
                       <Wallet className="h-4 w-4" />
-                      <span>Connect Wallet</span>
+                      <span>{connectWalletMutation.isPending ? 'Connecting...' : 'Connect Wallet'}</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -653,13 +657,15 @@ export function Header() {
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    setLocation('/home');
+                    console.log('🔌 [MOBILE-MENU] Connect Wallet button clicked');
                     setIsMobileMenuOpen(false);
+                    connectWalletMutation.mutate();
                   }}
+                  disabled={connectWalletMutation.isPending}
                   className="w-full flex items-center justify-center space-x-2"
                 >
                   <Wallet size={16} />
-                  <span>Connect Wallet</span>
+                  <span>{connectWalletMutation.isPending ? 'Connecting...' : 'Connect Wallet'}</span>
                 </Button>
               )}
             </div>
