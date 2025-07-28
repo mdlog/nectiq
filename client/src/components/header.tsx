@@ -102,43 +102,73 @@ export function Header() {
     mutationFn: async () => {
       console.log('🔌 [WALLET-CONNECT] Starting wallet connection...');
       
+      // Detect mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      console.log('📱 [WALLET-CONNECT] Is mobile device:', isMobile);
+      
       // Check if MetaMask is installed
       if (!window.ethereum) {
-        throw new Error('MetaMask not installed');
+        console.log('❌ [WALLET-CONNECT] No ethereum provider found');
+        
+        if (isMobile) {
+          // On mobile, try to open MetaMask app
+          const mobileWalletUrl = `https://metamask.app.link/dapp/${window.location.host}`;
+          console.log('📲 [WALLET-CONNECT] Opening MetaMask app:', mobileWalletUrl);
+          window.location.href = mobileWalletUrl;
+          return; // Exit early for mobile redirect
+        } else {
+          throw new Error('MetaMask not installed');
+        }
       }
       
-      // Request wallet connection
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts',
-      });
-      
-      if (!accounts || accounts.length === 0) {
-        throw new Error('No accounts returned from wallet');
+      try {
+        // Request wallet connection with timeout for mobile
+        const connectionPromise = window.ethereum.request({
+          method: 'eth_requestAccounts',
+        });
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Connection timeout')), 
+            isMobile ? 15000 : 10000) // Longer timeout for mobile
+        );
+        
+        const accounts = await Promise.race([connectionPromise, timeoutPromise]);
+        
+        if (!accounts || accounts.length === 0) {
+          throw new Error('No accounts returned from wallet');
+        }
+        
+        const walletAddress = accounts[0];
+        console.log('🔌 [WALLET-CONNECT] Got wallet address:', walletAddress);
+        
+        // Authenticate with backend
+        const response = await fetch('/api/auth/wallet-connect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            walletAddress,
+            isMobile,
+            userAgent: navigator.userAgent 
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('❌ [WALLET-CONNECT] Backend auth failed:', errorData);
+          throw new Error(`Authentication failed: ${response.status}`);
+        }
+        
+        const authResult = await response.json();
+        console.log('✅ [WALLET-CONNECT] Backend auth successful:', authResult);
+        
+        return { walletAddress, ...authResult };
+      } catch (error) {
+        console.error('❌ [WALLET-CONNECT] Connection error:', error);
+        throw error;
       }
-      
-      const walletAddress = accounts[0];
-      console.log('🔌 [WALLET-CONNECT] Got wallet address:', walletAddress);
-      
-      // Authenticate with backend
-      const response = await fetch('/api/auth/wallet-connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ walletAddress }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('❌ [WALLET-CONNECT] Backend auth failed:', errorData);
-        throw new Error(`Authentication failed: ${response.status}`);
-      }
-      
-      const authResult = await response.json();
-      console.log('✅ [WALLET-CONNECT] Backend auth successful:', authResult);
-      
-      return { walletAddress, ...authResult };
     },
     onSuccess: (data) => {
       console.log('✅ [WALLET-CONNECT] Complete success:', data);
@@ -162,11 +192,24 @@ export function Header() {
       
       let errorMessage = "Failed to connect wallet";
       if (error.message.includes('MetaMask not installed')) {
-        errorMessage = "MetaMask tidak terinstall. Silakan install MetaMask untuk melanjutkan.";
+        errorMessage = "MetaMask is not installed. Please install MetaMask to continue.";
       } else if (error.message.includes('User rejected')) {
         errorMessage = "Connection cancelled by user";
       } else if (error.message.includes('No accounts')) {
         errorMessage = "No accounts found in wallet";
+      } else if (error.message.includes('Connection timeout')) {
+        errorMessage = "Connection timeout. Please try connecting through MetaMask app.";
+      } else if (error.message.includes('4001')) {
+        errorMessage = "User rejected the connection request";
+      } else if (error.message.includes('already processing')) {  
+        errorMessage = "Connection already in progress. Please wait or refresh.";
+      }
+      
+      // Don't show error toast if mobile redirect happened
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && !window.ethereum) {
+        console.log('📲 [WALLET-CONNECT] Mobile redirect initiated, not showing error toast');
+        return; // Don't show error for mobile redirect
       }
       
       toast({
