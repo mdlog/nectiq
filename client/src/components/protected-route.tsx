@@ -49,7 +49,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       hasError: !!error, 
       errorMessage: error?.message,
       location: window.location.pathname,
-      userDetails: user ? { id: user.id, username: user.username } : null
+      userDetails: user && typeof user === 'object' && 'id' in user ? { id: (user as any).id, username: (user as any).username } : null
     });
   }, [user, isLoading, error]);
 
@@ -96,44 +96,92 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
           
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button 
-              onClick={async () => {
+              onClick={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 try {
-                  // Try to connect to wallet using Web3Modal or similar
+                  console.log('🔌 [MOBILE] Connect Wallet button clicked');
+                  
+                  // Enhanced mobile detection and wallet connection
+                  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                  console.log('📱 [MOBILE] Is mobile device:', isMobile);
+                  
                   if (typeof window !== 'undefined' && (window as any).ethereum) {
-                    const accounts = await (window as any).ethereum.request({ 
-                      method: 'eth_requestAccounts' 
-                    });
+                    console.log('💳 [MOBILE] MetaMask detected, requesting accounts...');
+                    
+                    // Enhanced mobile wallet connection with longer timeout
+                    const accounts = await Promise.race([
+                      (window as any).ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                      }),
+                      new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Connection timeout')), 10000)
+                      )
+                    ]);
+                    
+                    console.log('🔐 [MOBILE] Accounts received:', accounts?.length);
                     
                     if (accounts && accounts.length > 0) {
                       const walletAddress = accounts[0];
+                      console.log('💼 [MOBILE] Wallet address:', walletAddress);
                       
                       // Authenticate with backend
                       const response = await fetch('/api/auth/wallet-connect', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include', // Include cookies in the request
-                        body: JSON.stringify({ walletAddress })
+                        headers: { 
+                          'Content-Type': 'application/json',
+                          'User-Agent': navigator.userAgent
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ walletAddress, isMobile })
                       });
                       
+                      console.log('🌐 [MOBILE] Backend response status:', response.status);
+                      
                       if (response.ok) {
+                        console.log('✅ [MOBILE] Authentication successful, reloading...');
                         // Force refresh to update authentication state
                         window.location.reload();
                       } else {
                         const error = await response.json();
-                        console.error('Wallet authentication failed:', error);
+                        console.error('❌ [MOBILE] Wallet authentication failed:', error);
+                        alert(`Connection failed: ${error.message || 'Unknown error'}`);
                       }
                     }
+                  } else if (isMobile) {
+                    // Mobile specific wallet detection
+                    console.log('📲 [MOBILE] No MetaMask detected on mobile, checking alternatives...');
+                    
+                    // Try to detect mobile wallet apps
+                    const mobileWalletUrl = 'https://metamask.app.link/dapp/' + window.location.host;
+                    console.log('🔗 [MOBILE] Opening MetaMask app:', mobileWalletUrl);
+                    
+                    // Open MetaMask mobile app
+                    window.location.href = mobileWalletUrl;
                   } else {
-                    // No wallet extension detected
+                    // Desktop - redirect to MetaMask download
+                    console.log('💻 [DESKTOP] No wallet detected, redirecting to MetaMask download');
                     window.open('https://metamask.io/download/', '_blank');
                   }
                 } catch (error) {
-                  console.error('Wallet connection error:', error);
+                  console.error('❌ [MOBILE] Wallet connection error:', error);
+                  alert(`Connection error: ${error.message || 'Please try again'}`);
                 }
               }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 sm:px-6 py-3 rounded-lg font-semibold transition-colors touch-manipulation"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                WebkitUserSelect: 'none',
+                userSelect: 'none'
+              }}
             >
-              Connect Wallet
+              <span className="flex items-center justify-center">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Connect Wallet
+              </span>
             </button>
             
             <button 
