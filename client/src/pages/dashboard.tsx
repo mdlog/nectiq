@@ -203,12 +203,31 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-2 sm:space-y-3 md:space-y-6">
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
-              <div className="space-y-2 md:space-y-4">
-                <TradingViewChart
-                  cryptoId={selectedCrypto.id}
-                  onPredictionClick={() => handlePredictClick(selectedCrypto.id)}
-                />
-              </div>
+              <Card className="mb-8">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={selectedCrypto.image} 
+                        alt={selectedCrypto.name}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <div>
+                        <CardTitle className="text-xl">{selectedCrypto.name} ({selectedCrypto.symbol.toUpperCase()})</CardTitle>
+                        <p className="text-sm text-muted-foreground">Real-time Price Chart</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-96">
+                    <TradingViewChart
+                      cryptoId={selectedCrypto.id}
+                      onPredictionClick={() => handlePredictClick(selectedCrypto.id)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             ) : (
               <Card className="bg-surface-light border-border-subtle">
                 <CardContent className="p-4 sm:p-8 text-center">
