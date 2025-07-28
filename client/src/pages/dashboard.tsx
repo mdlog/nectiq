@@ -115,11 +115,9 @@ export default function Dashboard() {
               <div className="mb-24">
                 <Card>
                   <CardContent className="p-0">
-                    <div className="h-64 sm:h-80 lg:h-96">
-                      <TradingViewChart 
-                        cryptoId={selectedCrypto.id}
-                      />
-                    </div>
+                    <TradingViewChart 
+                      cryptoId={selectedCrypto.id}
+                    />
                   </CardContent>
                 </Card>
               </div>
@@ -220,11 +218,9 @@ export default function Dashboard() {
               <>
                 <Card>
                   <CardContent className="p-0">
-                    <div className="h-64 sm:h-80 lg:h-96">
-                      <TradingViewChart
-                        cryptoId={selectedCrypto.id}
-                      />
-                    </div>
+                    <TradingViewChart
+                      cryptoId={selectedCrypto.id}
+                    />
                   </CardContent>
                 </Card>
                 

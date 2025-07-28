@@ -452,7 +452,7 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
         ref={chartContainerRef}
         className={`${
           systemTheme === "dark" ? "bg-gray-900" : "bg-white"
-        } ${isFullscreen ? 'h-[calc(100vh-160px)]' : 'h-[400px]'}`}
+        } ${isFullscreen ? 'h-[calc(100vh-160px)]' : 'h-[700px]'}`}
         style={{ width: '100%' }}
       />
 
@@ -472,19 +472,6 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
         </div>
       </div>
 
-      {/* Make Prediction Button - Positioned Below Chart */}
-      {onPredictionClick && (
-        <div className="mt-4">
-          <Button 
-            onClick={onPredictionClick}
-            className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white py-3 text-lg font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-            size="lg"
-          >
-            <Target className="mr-2 h-5 w-5" />
-            Make Prediction
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

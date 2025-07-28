@@ -162,7 +162,7 @@ const TradingViewChart = ({ cryptoId }: TradingViewChartProps) => {
       </div>
 
       {/* Chart Content */}
-      <div className="h-96">
+      <div className="h-[700px]">
         <div 
           ref={containerRef}
           className="tradingview-widget-container h-full w-full"

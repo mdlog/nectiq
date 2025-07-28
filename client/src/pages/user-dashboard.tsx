@@ -1030,11 +1030,9 @@ export default function UserDashboard() {
                         <>
                           <Card>
                             <CardContent className="p-0">
-                              <div className="h-96">
-                                <TradingViewChart
-                                  cryptoId={selectedCrypto.id}
-                                />
-                              </div>
+                              <TradingViewChart
+                                cryptoId={selectedCrypto.id}
+                              />
                             </CardContent>
                           </Card>
                           
