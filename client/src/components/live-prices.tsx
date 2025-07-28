@@ -132,13 +132,14 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   }
 
   return (
-    <div className="bg-surface rounded-lg p-2 border border-surface-light">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-bold flex items-center">
-          <ChartLine className="text-success mr-2" size={16} />
-          Live Prices
-          <span className="ml-2 text-xs bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2 py-0.5 rounded-full font-medium">
-            Pyth Network
+    <div className="bg-surface rounded-lg p-1 sm:p-2 border border-surface-light">
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
+        <h3 className="text-sm sm:text-base font-bold flex items-center">
+          <ChartLine className="text-success mr-1 sm:mr-2" size={14} />
+          <span className="hidden sm:inline">Live Prices</span>
+          <span className="sm:hidden">Prices</span>
+          <span className="ml-1 sm:ml-2 text-xs bg-gradient-to-r from-purple-500 to-blue-500 text-white px-1 sm:px-2 py-0.5 rounded-full font-medium">
+            Pyth
           </span>
         </h3>
         <div className="flex items-center text-xs text-green-400">

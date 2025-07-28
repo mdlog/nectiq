@@ -252,13 +252,13 @@ export function Header() {
 
   return (
     <header className="bg-surface border-surface-light border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <img 
               src={nectiqLogo} 
               alt="Nectiq - Tactics. Timing. Triumph." 
-              className="h-12 rounded-lg p-1" 
+              className="h-8 sm:h-12 rounded-lg p-1" 
               style={{ 
                 backgroundColor: 'var(--surface)',
                 filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',

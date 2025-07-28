@@ -445,7 +445,7 @@ export default function UserDashboard() {
         </div>
 
         {/* Key Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-6 mb-4 sm:mb-6 md:mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           <Card className="bg-surface border-surface-light">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Total Predictions</CardTitle>
@@ -937,7 +937,7 @@ export default function UserDashboard() {
                       let sourceText = '';
                       let sourceIcon = <Gift size={16} />;
                       
-                      const rewardType = reward.source || 'prediction';
+                      const rewardType = 'prediction';
                       switch (rewardType) {
                         case 'prediction':
                           sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
@@ -1715,7 +1715,7 @@ function UserProfile() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-bold text-white">{user.username}</h2>
-                {userTier?.currentTier && getTierIcon(userTier.currentTier)}
+                {userTier && userTier.currentTier && getTierIcon(userTier.currentTier)}
               </div>
               <p className="text-slate-400">Active Member</p>
             </div>

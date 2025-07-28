@@ -93,26 +93,26 @@ export default function Dashboard() {
       
       <main className="container mx-auto px-4 py-8">
         {/* Welcome Section for Unauthenticated Users */}
-        <div className="text-center py-12 mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">
+        <div className="text-center py-8 sm:py-12 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">
             Welcome to Nectiq
           </h1>
-          <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-6 max-w-2xl mx-auto px-4 sm:px-0">
             Accuracy-based cryptocurrency price prediction platform. Predict prices, join battles, and earn NTIQ tokens.
           </p>
         </div>
 
         {/* Live Prices - Always Visible */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <LivePrices onCryptoSelect={handleCryptoSelect} />
         </div>
 
         {/* Chart Section - Always Visible */}
         {showChart && selectedCrypto && (
-          <div className="mb-24">
+          <div className="mb-16 sm:mb-20 lg:mb-24">
             <Card>
               <CardContent className="p-0">
-                <div className="h-96">
+                <div className="h-64 sm:h-80 lg:h-96">
                   <TradingViewChart 
                     cryptoId={selectedCrypto.id}
                   />
@@ -123,33 +123,33 @@ export default function Dashboard() {
         )}
 
         {/* Feature Cards for Unauthenticated Users */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-20">
-          <Card className="text-center p-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Target className="w-6 h-6 text-white" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 mt-12 sm:mt-16 lg:mt-20">
+          <Card className="text-center p-4 sm:p-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Price Prediction</h3>
-            <p className="text-muted-foreground text-sm">
+            <h3 className="text-base sm:text-lg font-semibold mb-2">Price Prediction</h3>
+            <p className="text-muted-foreground text-xs sm:text-sm">
               Predict cryptocurrency prices across various timeframes and earn rewards based on accuracy
             </p>
           </Card>
           
-          <Card className="text-center p-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-6 h-6 text-white" />
+          <Card className="text-center p-4 sm:p-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Battle Mode</h3>
-            <p className="text-muted-foreground text-sm">
+            <h3 className="text-base sm:text-lg font-semibold mb-2">Battle Mode</h3>
+            <p className="text-muted-foreground text-xs sm:text-sm">
               Challenge other users in prediction battles and win total rewards from both parties
             </p>
           </Card>
           
-          <Card className="text-center p-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Award className="w-6 h-6 text-white" />
+          <Card className="text-center p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <Award className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">NTIQ Rewards</h3>
-            <p className="text-muted-foreground text-sm">
+            <h3 className="text-base sm:text-lg font-semibold mb-2">NTIQ Rewards</h3>
+            <p className="text-muted-foreground text-xs sm:text-sm">
               Earn NTIQ tokens as rewards for accurate predictions and use them for various platform features
             </p>
           </Card>
@@ -159,11 +159,18 @@ export default function Dashboard() {
         <HeroStats />
 
         {/* Call to Action */}
-        <div className="text-center py-12 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-lg">
-          <h2 className="text-2xl font-bold mb-4">Ready to Start?</h2>
-          <p className="text-muted-foreground mb-6">
+        <div className="text-center py-8 sm:py-12 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-lg">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Ready to Start?</h2>
+          <p className="text-muted-foreground mb-6 px-4 sm:px-0 text-sm sm:text-base">
             Connect your wallet and start participating in the cryptocurrency prediction platform
           </p>
+          <Button 
+            size="lg" 
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-sm sm:text-base px-6 sm:px-8"
+            onClick={() => window.location.href = '/wallet-login'}
+          >
+            Connect Wallet
+          </Button>
         </div>
       </main>
 
@@ -184,15 +191,15 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Content - Chart Section (Now Takes More Space) */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
               <>
                 <Card>
                   <CardContent className="p-0">
-                    <div className="h-96">
+                    <div className="h-64 sm:h-80 lg:h-96">
                       <TradingViewChart
                         cryptoId={selectedCrypto.id}
                       />
