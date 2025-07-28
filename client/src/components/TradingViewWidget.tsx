@@ -286,7 +286,7 @@ export default function TradingViewWidget({ cryptoId, onPredictionClick }: Tradi
               onClick={onPredictionClick}
               className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2"
             >
-              Buat Prediksi
+              Make Prediction
             </Button>
           )}
           
