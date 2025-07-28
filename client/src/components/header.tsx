@@ -1,4 +1,4 @@
-import { ChartLine, Coins, User, LogOut, Menu, X, ChevronDown, Copy, Check } from "lucide-react";
+import { ChartLine, Coins, User, LogOut, Menu, X, ChevronDown, Copy, Check, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { RainbowConnectButton } from "@/components/RainbowConnectButton";
@@ -150,8 +150,8 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleDisconnect}
-                  disabled={logoutMutation.isPending}
+                  onClick={() => logout()}
+                  disabled={isLoggingOut}
                   className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                   title="Disconnect wallet"
                 >
