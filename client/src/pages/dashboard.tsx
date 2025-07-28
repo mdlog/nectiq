@@ -37,6 +37,13 @@ export default function Dashboard() {
   // Fetch live prices with optimized intervals to prevent rate limiting
   const { data: livePrices = [] } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/prices"],
+    queryFn: async () => {
+      const res = await fetch("/api/crypto/prices", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      return res.json();
+    },
     refetchInterval: 60000, // Reduced to 1 minute to prevent overwhelming server
     refetchIntervalInBackground: false, // Disable background updates
     staleTime: 45000, // 45 seconds stale time
