@@ -182,13 +182,13 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - Chart Section (Now Takes More Space) */}
-          <div className="lg:col-span-2 space-y-2 sm:space-y-3 md:space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             {/* Chart Section */}
             {selectedCrypto && showChart ? (
               <>
-                <Card className="mb-8">
+                <Card>
                   <CardContent className="p-0">
                     <div className="h-96">
                       <TradingViewChart
@@ -199,7 +199,7 @@ export default function Dashboard() {
                 </Card>
                 
                 {/* Tombol Predict di bawah chart */}
-                <div className="mt-4">
+                <div className="mb-6">
                   <Button 
                     onClick={() => selectedCrypto && handlePredictClick(selectedCrypto.id)}
                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
@@ -210,7 +210,7 @@ export default function Dashboard() {
                 </div>
               </>
             ) : (
-              <Card className="bg-surface-light border-border-subtle">
+              <Card className="bg-surface-light border-border-subtle mb-6">
                 <CardContent className="p-4 sm:p-8 text-center">
                   <BarChart3 className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
                   <h3 className="text-base sm:text-lg font-medium text-gray-300 mb-2">
@@ -224,14 +224,10 @@ export default function Dashboard() {
             )}
             
             {/* Active Predictions */}
-            <div className="mt-3 sm:mt-4">
-              <ActivePredictions />
-            </div>
+            <ActivePredictions />
             
             {/* Events Section */}
-            <div className="mt-3 sm:mt-4">
-              <EventsSection />
-            </div>
+            <EventsSection />
           </div>
           
           {/* Right Sidebar */}

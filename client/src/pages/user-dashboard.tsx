@@ -16,7 +16,7 @@ import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
-import LightweightChart from "@/components/LightweightChart";
+import TradingViewChart from "@/components/TradingViewChart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 // import { WalletBalances } from "@/components/wallet-balances"; // Removed - not needed
@@ -1025,90 +1025,37 @@ export default function UserDashboard() {
                     </div>
 
                     {/* Chart Section - Now Takes Full Width */}
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {selectedCrypto && showChart ? (
-                        <div className="space-y-4">
-                          {/* Chart Header Info */}
-                          <Card className="bg-surface border-surface-light">
-                            <CardHeader>
-                              <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center">
-                                  <BarChart3 className="mr-2" size={20} />
-                                  {selectedCrypto.name} ({selectedCrypto.symbol}) - Trading Chart
-                                </CardTitle>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setShowChart(false);
-                                    setSelectedCrypto(null);
-                                  }}
-                                >
-                                  Close Chart
-                                </Button>
-                              </div>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                  <img 
-                                    src={selectedCrypto.image} 
-                                    alt={selectedCrypto.name}
-                                    className="w-10 h-10 rounded-full"
-                                  />
-                                  <div>
-                                    <p className="font-semibold">{selectedCrypto.symbol}</p>
-                                    <p className="text-sm text-slate-400">{selectedCrypto.name}</p>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-lg font-bold">
-                                    ${selectedCrypto.current_price.toLocaleString(undefined, { 
-                                      minimumFractionDigits: 2, 
-                                      maximumFractionDigits: 6 
-                                    })}
-                                  </p>
-                                  <p className={`text-sm ${selectedCrypto.price_change_percentage_24h >= 0 ? 'text-success' : 'text-error'}`}>
-                                    {selectedCrypto.price_change_percentage_24h >= 0 ? '+' : ''}
-                                    {selectedCrypto.price_change_percentage_24h.toFixed(2)}% (24h)
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              <div className="mt-4">
-                                <Button 
-                                  className="w-full"
-                                  onClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
-                                >
-                                  <Target className="mr-2" size={16} />
-                                  Make Prediction for {selectedCrypto.symbol}
-                                </Button>
+                        <>
+                          <Card>
+                            <CardContent className="p-0">
+                              <div className="h-96">
+                                <TradingViewChart
+                                  cryptoId={selectedCrypto.id}
+                                />
                               </div>
                             </CardContent>
                           </Card>
-
-                          {/* TradingView Widget - Full Width */}
-                          <LightweightChart
-                            cryptoId={selectedCrypto.id}
-                            onPredictionClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
-                          />
-                        </div>
+                          
+                          <div className="mb-6">
+                            <Button 
+                              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                              onClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
+                            >
+                              <Target className="mr-2" size={16} />
+                              Make Prediction for {selectedCrypto.symbol}
+                            </Button>
+                          </div>
+                        </>
                       ) : (
-                        <Card className="bg-surface border-surface-light">
+                        <Card className="bg-surface border-surface-light mb-6">
                           <CardContent className="text-center py-12">
                             <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
                             <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
                             <p className="text-slate-400 mb-4">
-                              Click on any cryptocurrency from the Live Prices panel to view its professional TradingView Lightweight Charts with Pyth Network data
+                              Click on any cryptocurrency from the Live Prices panel to view its professional TradingView Charts with Pyth Network data
                             </p>
-                            <div className="text-sm text-slate-500">
-                              <p>• Professional TradingView Lightweight Charts interface</p>
-                              <p>• Real-time Pyth Network price feeds</p>
-                              <p>• Professional OHLC candlestick visualization</p>
-                              <p>• Authentic trading platform appearance</p>
-                              <p>• Fullscreen mode available</p>
-                              <p>• Direct prediction integration</p>
-                            </div>
                           </CardContent>
                         </Card>
                       )}
