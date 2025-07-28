@@ -67,14 +67,14 @@ export function MultiChainWallet() {
       queryClient.invalidateQueries({ queryKey: ["/api/wallet/summary"] });
       setShowAddWallet(false);
       toast({
-        title: "Wallet Berhasil Ditambahkan",
-        description: "Wallet baru telah berhasil terdaftar di sistem",
+        title: "Wallet Successfully Added",
+        description: "New wallet has been successfully registered in the system",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Gagal menambahkan wallet",
+        description: error.message || "Failed to add wallet",
         variant: "destructive",
       });
     },
@@ -99,14 +99,14 @@ export function MultiChainWallet() {
       queryClient.invalidateQueries({ queryKey: ["/api/wallet/summary"] });
       setShowWithdraw(false);
       toast({
-        title: "Withdrawal Request Dibuat",
-        description: "Permintaan penarikan telah disubmit untuk diproses",
+        title: "Withdrawal Request Created",
+        description: "Withdrawal request has been submitted for processing",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Gagal membuat withdrawal request",
+        description: error.message || "Failed to create withdrawal request",
         variant: "destructive",
       });
     },
@@ -115,8 +115,8 @@ export function MultiChainWallet() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Disalin",
-      description: "Address telah disalin ke clipboard",
+      title: "Copied",
+      description: "Address has been copied to clipboard",
     });
   };
 

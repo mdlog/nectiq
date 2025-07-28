@@ -352,24 +352,24 @@ const DatabaseResetButton = () => {
       queryClient.invalidateQueries();
       
       toast({
-        title: "Database Reset Berhasil!",
-        description: "Semua data telah dihapus dan ID direset ke 1",
+        title: "Database Reset Successful!",
+        description: "All data has been deleted and IDs reset to 1",
         variant: "default"
       });
     },
     onError: (error: any) => {
       console.error('❌ Database reset failed:', error);
       
-      let errorMessage = "Terjadi kesalahan saat mereset database";
+      let errorMessage = "An error occurred while resetting the database";
       
       if (error.message?.includes('429') || error.message?.includes('Too many requests')) {
-        errorMessage = "Terlalu banyak permintaan. Silakan tunggu beberapa saat lalu coba lagi.";
+        errorMessage = "Too many requests. Please wait a moment and try again.";
       } else if (error.message?.includes('foreign key constraint')) {
-        errorMessage = "Error constraint database. Sistem sedang mencoba mengatasi masalah ini.";
+        errorMessage = "Database constraint error. System is trying to resolve this issue.";
       }
       
       toast({
-        title: "Reset Database Gagal",
+        title: "Database Reset Failed",
         description: errorMessage,
         variant: "destructive"
       });
@@ -391,8 +391,8 @@ const DatabaseResetButton = () => {
       resetMutation.mutate(confirmationCode);
     } else {
       toast({
-        title: "Kode Konfirmasi Salah",
-        description: "Masukkan kode konfirmasi yang benar",
+        title: "Incorrect Confirmation Code",
+        description: "Enter the correct confirmation code",
         variant: "destructive"
       });
     }
