@@ -163,31 +163,7 @@ export default function Dashboard() {
           {/* Right Sidebar - Same as Authenticated */}
           <div className="lg:col-span-1">
             <div className="flex flex-col space-y-6 h-full min-h-[600px] sticky top-4">
-              {/* Call to Action */}
-              <Card className="text-center p-6 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20">
-                <h2 className="text-xl font-bold mb-4">Ready to Start?</h2>
-                <p className="text-muted-foreground mb-6 text-sm">
-                  Connect your wallet and start participating in the cryptocurrency prediction platform
-                </p>
-                <Button 
-                  size="lg" 
-                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-sm px-6"
-                  onClick={() => window.location.href = '/wallet-login'}
-                >
-                  Connect Wallet
-                </Button>
-              </Card>
-              
-              {/* Additional info cards can go here */}
-              <Card className="p-6">
-                <h3 className="font-semibold mb-3">Platform Features</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• Real-time price predictions</li>
-                  <li>• Battle mode competitions</li>
-                  <li>• NTIQ token rewards</li>
-                  <li>• Live leaderboards</li>
-                </ul>
-              </Card>
+
             </div>
           </div>
         </div>
