@@ -110,22 +110,7 @@ export default function Dashboard() {
         {/* Chart Section - Always Visible */}
         {showChart && selectedCrypto && (
           <Card className="mb-8">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img 
-                    src={selectedCrypto.image} 
-                    alt={selectedCrypto.name}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <div>
-                    <CardTitle className="text-xl">{selectedCrypto.name} ({selectedCrypto.symbol.toUpperCase()})</CardTitle>
-                    <p className="text-sm text-muted-foreground">Real-time Price Chart</p>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <div className="h-96">
                 <TradingViewChart 
                   cryptoId={selectedCrypto.id}
