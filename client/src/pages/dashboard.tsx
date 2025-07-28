@@ -228,14 +228,14 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
                 
-                {/* Tombol Predict di bawah chart */}
+                {/* Make Prediction Button Below Chart */}
                 <div className="mb-6">
                   <Button 
                     onClick={() => selectedCrypto && handlePredictClick(selectedCrypto.id)}
                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                   >
                     <Target className="w-5 h-5 mr-2" />
-                    Buat Prediksi
+                    Make Prediction
                   </Button>
                 </div>
               </>
