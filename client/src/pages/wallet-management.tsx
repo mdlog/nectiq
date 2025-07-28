@@ -82,7 +82,7 @@ export default function WalletManagement() {
               <h4 className="font-semibold mb-2">1. Tambah Wallet</h4>
               <p className="text-sm text-muted-foreground mb-4">
                 Klik "Add Wallet" pada tab chain yang diinginkan, pilih jenis wallet (MetaMask, Phantom, dll) 
-                dan masukkan address wallet Anda.
+                and enter your wallet address.
               </p>
               
               <h4 className="font-semibold mb-2">2. Deposit Otomatis</h4>

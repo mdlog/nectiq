@@ -5244,7 +5244,7 @@ export default function AdminPanel() {
                     <Label htmlFor="timeFilter" className="text-sm font-medium">Filter Waktu</Label>
                     <Select value={leaderboardTimeFilter} onValueChange={(value: "weekly" | "monthly" | "all") => setLeaderboardTimeFilter(value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Pilih periode waktu" />
+                        <SelectValue placeholder="Choose time period" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="weekly">Weekly</SelectItem>
@@ -5274,7 +5274,7 @@ export default function AdminPanel() {
                     <Label htmlFor="sortOrder" className="text-sm font-medium">Order</Label>
                     <Select value={leaderboardSortOrder} onValueChange={(value: "asc" | "desc") => setLeaderboardSortOrder(value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Pilih urutan" />
+                        <SelectValue placeholder="Choose order" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="desc">Tertinggi ke Terendah</SelectItem>
@@ -5485,7 +5485,7 @@ export default function AdminPanel() {
                       <Label htmlFor="tokenFilter" className="text-sm font-medium">Filter per Token</Label>
                       <Select value={transactionTokenFilter} onValueChange={(value: "all" | "ETH" | "USDT" | "USDC") => setTransactionTokenFilter(value)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Pilih token" />
+                          <SelectValue placeholder="Choose token" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Tokens</SelectItem>
@@ -5514,7 +5514,7 @@ export default function AdminPanel() {
 
                     {/* Date Range Start */}
                     <div className="space-y-2">
-                      <Label htmlFor="startDate" className="text-sm font-medium">Tanggal Mulai</Label>
+                      <Label htmlFor="startDate" className="text-sm font-medium">Start Date</Label>
                       <Input
                         type="date"
                         value={transactionDateFilter.startDate}
@@ -5525,7 +5525,7 @@ export default function AdminPanel() {
 
                     {/* Date Range End */}
                     <div className="space-y-2">
-                      <Label htmlFor="endDate" className="text-sm font-medium">Tanggal Selesai</Label>
+                      <Label htmlFor="endDate" className="text-sm font-medium">End Date</Label>
                       <Input
                         type="date"
                         value={transactionDateFilter.endDate}
@@ -5732,7 +5732,7 @@ export default function AdminPanel() {
                           <label className="text-sm font-medium text-slate-300 mb-1 block">Status</label>
                           <Select value={transactionStatusFilter} onValueChange={(value) => setTransactionStatusFilter(value as "all" | "pending" | "completed" | "failed")}>
                             <SelectTrigger className="bg-surface border-slate-600">
-                              <SelectValue placeholder="Pilih status" />
+                              <SelectValue placeholder="Choose status" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">Semua</SelectItem>
@@ -5748,7 +5748,7 @@ export default function AdminPanel() {
                           <label className="text-sm font-medium text-slate-300 mb-1 block">Token</label>
                           <Select value={transactionTokenFilter} onValueChange={(value) => setTransactionTokenFilter(value as "all" | "ETH" | "USDT" | "USDC")}>
                             <SelectTrigger className="bg-surface border-slate-600">
-                              <SelectValue placeholder="Pilih token" />
+                              <SelectValue placeholder="Choose token" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">Semua</SelectItem>
@@ -5765,7 +5765,7 @@ export default function AdminPanel() {
                           <label className="text-sm font-medium text-slate-300 mb-1 block">Jumlah NTIQ</label>
                           <Select value={transactionAmountFilter} onValueChange={(value) => setTransactionAmountFilter(value as "all" | "0-1000" | "1000-10000" | "10000-100000" | "100000+")}>
                             <SelectTrigger className="bg-surface border-slate-600">
-                              <SelectValue placeholder="Pilih range" />
+                              <SelectValue placeholder="Choose range" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">Semua</SelectItem>

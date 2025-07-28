@@ -359,7 +359,7 @@ function AddWalletForm({
         <Label htmlFor="walletType">Wallet Type</Label>
         <Select value={formData.walletType} onValueChange={(value) => setFormData({...formData, walletType: value})}>
           <SelectTrigger>
-            <SelectValue placeholder="Pilih wallet type" />
+            <SelectValue placeholder="Choose wallet type" />
           </SelectTrigger>
           <SelectContent>
             {(walletTypes[chainType as keyof typeof walletTypes] || []).map((type) => (
@@ -439,7 +439,7 @@ function WithdrawForm({
         <Label htmlFor="walletId">From Wallet</Label>
         <Select value={formData.walletId} onValueChange={(value) => setFormData({...formData, walletId: value})}>
           <SelectTrigger>
-            <SelectValue placeholder="Pilih wallet" />
+            <SelectValue placeholder="Choose wallet" />
           </SelectTrigger>
           <SelectContent>
             {wallets.map((wallet) => (
@@ -455,7 +455,7 @@ function WithdrawForm({
         <Label htmlFor="tokenSymbol">Token</Label>
         <Select value={formData.tokenSymbol} onValueChange={(value) => setFormData({...formData, tokenSymbol: value})}>
           <SelectTrigger>
-            <SelectValue placeholder="Pilih token" />
+            <SelectValue placeholder="Choose token" />
           </SelectTrigger>
           <SelectContent>
             {balances.map((balance) => (

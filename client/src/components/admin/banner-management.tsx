@@ -167,13 +167,13 @@ export function BannerManagement() {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        toast({ title: "Error", description: "Pilih file gambar yang valid", variant: "destructive" });
+        toast({ title: "Error", description: "Please select a valid image file", variant: "destructive" });
         return;
       }
       
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast({ title: "Error", description: "Ukuran gambar maksimal 5MB", variant: "destructive" });
+        toast({ title: "Error", description: "Maximum image size is 5MB", variant: "destructive" });
         return;
       }
       
@@ -221,12 +221,12 @@ export function BannerManagement() {
 
   const handleSubmit = () => {
     if (!formData.title) {
-      toast({ title: "Error", description: "Judul banner wajib diisi", variant: "destructive" });
+      toast({ title: "Error", description: "Banner title is required", variant: "destructive" });
       return;
     }
 
     if (!formData.imageUrl) {
-      toast({ title: "Error", description: "Silakan upload gambar terlebih dahulu", variant: "destructive" });
+      toast({ title: "Error", description: "Please upload an image first", variant: "destructive" });
       return;
     }
 
@@ -378,7 +378,7 @@ export function BannerManagement() {
                         
                         {formData.imageUrl && (
                           <div className="text-sm text-green-400">
-                            ✓ Gambar berhasil diupload
+                            ✓ Image successfully uploaded
                           </div>
                         )}
                       </div>
