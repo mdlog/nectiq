@@ -615,19 +615,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Wallet login request:', { address: rawAddress, hasSignature: !!signature, hasMessage: !!message });
       
-      if (!rawAddress) {
-        console.log('Missing wallet address');
-        return res.status(400).json({ message: "Missing wallet address" });
+      if (!rawAddress || !signature || !message) {
+        return res.status(400).json({ message: "Missing address, signature, or message" });
+      }
+
+      try {
+        const recoveredAddress = ethers.verifyMessage(message, signature);
+        if (recoveredAddress.toLowerCase() !== rawAddress.toLowerCase()) {
+          return res.status(403).json({ success: false, message: "Invalid signature" });
+        }
+      } catch (error) {
+        console.error("Signature verification failed:", error);
+        return res.status(403).json({ success: false, message: "Invalid signature format" });
       }
 
       // Normalize wallet address to prevent case-sensitivity issues
       const finalAddress = normalizeWalletAddress(rawAddress);
 
-      // Import WalletSecurityService
-      const { WalletSecurityService } = await import('./walletSecurity');
+      // Import AntiAbuseSystem
+      const { AntiAbuseSystem } = await import('./antiAbuse');
       
       // Perform security check before login
-      const securityCheck = await WalletSecurityService.validateWalletLogin(finalAddress, req);
+      const securityCheck = await AntiAbuseSystem.validateWalletLogin(finalAddress, req);
       
       if (!securityCheck.success) {
         console.log('Security check failed:', securityCheck.message);
@@ -641,23 +650,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Security warning:', securityCheck.message);
       }
 
-      // Check if user exists, if not create one
+      // Check if user exists
       let user = await storage.getUserByWalletAddress(finalAddress);
       if (!user) {
-        // Check if this is admin wallet using environment variable
-        const adminWallets = getAdminWalletAddresses();
-        const isAdmin = adminWallets.includes(finalAddress.toLowerCase());
-        
-        // Auto-register new wallet address with random username
-        const username = isAdmin ? `Admin_${finalAddress.slice(-6)}` : generateRandomUsername();
-        user = await storage.createUser({
-          username: username,
-          walletAddress: finalAddress,
-          authMethod: "wallet",
-          isAdmin: isAdmin
-        });
-        
-        console.log(`Auto-registered new user: ${username} with wallet ${finalAddress.slice(0, 6)}...${finalAddress.slice(-4)}, isAdmin: ${isAdmin}`);
+        return res.status(404).json({ message: "User not found. Please register first." });
       }
 
       // Set session
@@ -784,17 +780,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Wallet Connect Authentication endpoint
   app.post("/api/auth/wallet-connect", async (req, res) => {
     try {
-      const { walletAddress } = req.body;
+      const { walletAddress, signature, message } = req.body;
       
-      if (!walletAddress) {
-        return res.status(400).json({ message: "Wallet address is required" });
+      if (!walletAddress || !signature || !message) {
+        return res.status(400).json({ message: "Missing address, signature, or message" });
+      }
+
+      try {
+        const recoveredAddress = ethers.verifyMessage(message, signature);
+        if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+          return res.status(403).json({ success: false, message: "Invalid signature" });
+        }
+      } catch (error) {
+        console.error("Signature verification failed:", error);
+        return res.status(403).json({ success: false, message: "Invalid signature format" });
       }
 
       const normalizedAddress = normalizeWalletAddress(walletAddress);
       
       // Security check for wallet login
-      const { WalletSecurityService } = await import('./walletSecurity');
-      const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
+      const { AntiAbuseSystem } = await import('./antiAbuse');
+      const securityCheck = await AntiAbuseSystem.validateWalletLogin(normalizedAddress, req);
       
       if (!securityCheck.success) {
         return res.status(403).json({ 
@@ -803,21 +809,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Find or create user by wallet
+      // Find user by wallet
       let dbUser = await storage.getUserByWalletAddress(normalizedAddress);
       if (!dbUser) {
-        const adminWallets = getAdminWalletAddresses();
-        const isAdmin = adminWallets.includes(normalizedAddress);
-        const username = isAdmin ? `Admin_${normalizedAddress.slice(-6)}` : generateRandomUsername();
-        
-        dbUser = await storage.createUser({
-          username,
-          walletAddress: normalizedAddress,
-          authMethod: "wallet",
-          isAdmin
-        });
-        
-        console.log(`🔐 [SERVER] Auto-registered wallet user: ${username}, admin: ${isAdmin}, wallet: ${normalizedAddress.slice(0, 6)}...`);
+        return res.status(404).json({ message: "User not found. Please register first." });
       }
 
       // Set session
@@ -860,7 +855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dynamic SDK Authentication endpoint
   app.post("/api/auth/dynamic", async (req, res) => {
     try {
-      const { user, walletAddress, address, email, userId } = req.body;
+      const { user, walletAddress, address, email, userId, signature, message } = req.body;
       const finalAddress = walletAddress || address || user?.verifiedCredentials?.[0]?.address;
       const userEmail = email || user?.email;
       const dynamicUserId = userId || user?.userId;
@@ -879,6 +874,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing authentication credentials (wallet, email, or user ID)" });
       }
 
+      if (finalAddress) {
+        if (!signature || !message) {
+          return res.status(400).json({ message: "Missing signature or message for wallet-based authentication" });
+        }
+        try {
+          const recoveredAddress = ethers.verifyMessage(message, signature);
+          if (recoveredAddress.toLowerCase() !== finalAddress.toLowerCase()) {
+            return res.status(403).json({ success: false, message: "Invalid signature" });
+          }
+        } catch (error) {
+          console.error("Signature verification failed:", error);
+          return res.status(403).json({ success: false, message: "Invalid signature format" });
+        }
+      }
+
       let dbUser;
       
       // PRIORITY 1: Check if user is already logged in via session
@@ -891,8 +901,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const normalizedAddress = normalizeWalletAddress(finalAddress);
           
           // Security check for wallet
-          const { WalletSecurityService } = await import('./walletSecurity');
-          const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
+          const { AntiAbuseSystem } = await import('./antiAbuse');
+          const securityCheck = await AntiAbuseSystem.validateWalletLogin(normalizedAddress, req);
           
           if (!securityCheck.success) {
             return res.status(403).json({ 
@@ -946,21 +956,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        // Find or create user by wallet
+        // Find user by wallet
         dbUser = await storage.getUserByWalletAddress(normalizedAddress);
         if (!dbUser) {
-          const adminWallets = getAdminWalletAddresses();
-          const isAdmin = adminWallets.includes(normalizedAddress);
-          const username = isAdmin ? `Admin_${normalizedAddress.slice(-6)}` : generateRandomUsername();
-          
-          dbUser = await storage.createUser({
-            username,
-            walletAddress: normalizedAddress,
-            authMethod: "wallet",
-            isAdmin
-          });
-          
-          console.log(`🔐 [SERVER] Auto-registered wallet user: ${username}, admin: ${isAdmin}, wallet: ${normalizedAddress.slice(0, 6)}...`);
+          return res.status(404).json({ message: "User not found. Please register first." });
         }
       }
       
@@ -1187,118 +1186,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Direct admin access route - bypasses all browser extension conflicts
-  app.get("/admin-direct/:token", async (req, res) => {
-    try {
-      const { token } = req.params;
-      const adminToken = "secure-admin-2024";
-      
-      if (token !== adminToken) {
-        return res.redirect("/?error=invalid-access");
-      }
-
-      const adminAddresses = getAdminWalletAddresses();
-      const adminWallet = adminAddresses[0]; // Use first admin address
-      
-      // Create or get admin user
-      let user = await storage.getUserByWalletAddress(adminWallet);
-      if (!user) {
-        user = await storage.createUser({
-          username: `admin_${adminWallet.slice(-6)}`,
-          walletAddress: adminWallet,
-          authMethod: "direct",
-          isAdmin: true
-        });
-      }
-
-      // Set session
-      req.session.userId = user.id;
-      req.session.isAdmin = true;
-
-      // Redirect to admin panel
-      res.redirect("/admin?access=granted");
-    } catch (error) {
-      console.error("Direct admin access error:", error);
-      res.redirect("/?error=auth-failed");
-    }
-  });
-
-  // Simple admin authentication endpoint
-  app.post("/api/admin/authenticate", async (req, res) => {
-    try {
-      const { walletAddress } = req.body;
-      
-      if (!walletAddress) {
-        return res.status(400).json({ message: "Wallet address required" });
-      }
-
-      const adminAddresses = getAdminWalletAddresses();
-      const adminWallet = adminAddresses[0]; // Use first admin address
-      
-      if (walletAddress.toLowerCase() !== adminWallet.toLowerCase()) {
-        return res.status(403).json({ message: "Admin access denied" });
-      }
-
-      // Create or get admin user
-      let user = await storage.getUserByWalletAddress(walletAddress);
-      if (!user) {
-        user = await storage.createUser({
-          username: `admin_${walletAddress.slice(-6)}`,
-          walletAddress: walletAddress,
-          authMethod: "wallet",
-          isAdmin: true
-        });
-      }
-
-      // Set session
-      req.session.userId = user.id;
-      req.session.isAdmin = true;
-      
-      res.json({ success: true, user: user });
-    } catch (error) {
-      console.error("Admin authentication error:", error);
-      res.status(500).json({ message: "Failed to authenticate admin" });
-    }
-  });
-
-  // Simple admin authentication endpoint
-  app.post("/api/admin/simple-auth", async (req, res) => {
-    try {
-      const { walletAddress } = req.body;
-      
-      if (!walletAddress) {
-        return res.status(400).json({ success: false, message: "Wallet address required" });
-      }
-
-      // Check if wallet address is authorized admin
-      const adminAddresses = getAdminWalletAddresses();
-      const isAuthorized = adminAddresses.includes(walletAddress.toLowerCase());
-      
-      if (!isAuthorized) {
-        return res.status(403).json({ success: false, message: "Unauthorized wallet address" });
-      }
-
-      // Find or create admin user
-      let user = await storage.getUserByWalletAddress(walletAddress);
-      if (!user) {
-        user = await storage.createUser({
-          username: `admin_${walletAddress.slice(-6)}`,
-          walletAddress: walletAddress,
-          authMethod: "wallet",
-          isAdmin: true,
-        });
-      }
-
-      // Set session
-      req.session.userId = user.id;
-      req.session.isAdmin = true;
-      
-      res.json({ success: true, message: "Admin access granted" });
-    } catch (error) {
-      console.error("Simple admin auth error:", error);
-      res.status(500).json({ success: false, message: "Authentication failed" });
-    }
-  });
 
   // Secure admin authentication with wallet signature verification
   app.post("/api/admin/wallet-auth", async (req, res) => {

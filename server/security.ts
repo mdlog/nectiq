@@ -95,26 +95,20 @@ export class SecurityValidator {
   // Enhanced SQL injection detection with advanced patterns
   static checkSqlInjection(input: string): boolean {
     const sqlPatterns = [
-      // Standard SQL keywords
+      // Standard SQL keywords used in attacks
       /(\b(union|select|insert|update|delete|drop|create|alter|exec|execute|grant|revoke)\b)/gi,
-      // Comments and delimiters
-      /(--|\/\*|\*\/|;|#)/g,
-      // Boolean-based injection
+      // Comments and delimiters that can be used to manipulate queries
+      /(--|\/\*|\*\/|;)/g,
+      // Boolean-based injection attempts
       /(\b(or|and)\b\s+[\d\w'\"]+\s*[=<>!]+\s*[\d\w'\"]+)/gi,
-      // Special characters often used in injections
-      /('|\"|`|;|\||&|%|<|>|\+|\*)/g,
       // SQL functions commonly used in attacks
       /(\b(char|ascii|substring|concat|length|benchmark|sleep|waitfor|cast|convert|hex|unhex)\b)/gi,
-      // Hexadecimal patterns
-      /(0x[0-9a-f]+)/gi,
       // Time-based injection patterns
       /(\b(waitfor|delay|sleep|benchmark)\b)/gi,
       // UNION-based patterns
       /(\bunion\b\s+(all\s+)?select)/gi,
       // Information schema patterns
-      /(\binformation_schema\b|\bsysobjects\b|\bsyscolumns\b)/gi,
-      // Script injection patterns
-      /(<script|javascript:|vbscript:|on\w+\s*=)/gi
+      /(\binformation_schema\b|\bsysobjects\b|\bsyscolumns\b)/gi
     ];
 
     return sqlPatterns.some(pattern => pattern.test(input));

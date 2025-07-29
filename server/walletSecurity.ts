@@ -72,22 +72,21 @@ export class WalletSecurityService {
         w.deviceFingerprint === deviceFingerprint
       );
 
-      // Temporarily allow login but log for review if suspicious activity detected
+      // If suspicious activity is detected with high confidence, block login
       if (suspiciousWallets.length > 0) {
+        const confidence = 95; // High confidence for device fingerprint match
         await this.recordAbuseDetection(
-          walletAddress, 
-          suspiciousWallets.map(w => w.walletAddress), 
-          85, 
-          'Device fingerprint matches different wallet detected - allowed for review',
+          walletAddress,
+          suspiciousWallets.map(w => w.walletAddress),
+          confidence,
+          'Device fingerprint matches different wallet detected - login blocked',
           req
         );
 
-        // Allow login but mark for review
-        await this.recordWalletFingerprint(walletAddress, req);
         return {
-          success: true,
-          message: 'Login successful - activity flagged for security review',
-          confidence: 85,
+          success: false,
+          message: 'Login blocked due to suspicious activity. Please contact support.',
+          confidence: confidence,
           requiresReview: true,
           suspiciousWallets: suspiciousWallets.map(w => w.walletAddress)
         };
