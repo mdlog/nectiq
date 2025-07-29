@@ -65,7 +65,7 @@ app.get('/api/activities/live', async (req, res) => {
     }
     
     for (const prediction of recentPredictions) {
-      const isCorrect = prediction.accuracy && prediction.accuracy < 5;
+      const isCorrect = prediction.accuracy && Number(prediction.accuracy) < 5;
       const rewardAmount = prediction.rewardAmount || 0;
       const hasEarnings = rewardAmount > prediction.stakeAmount;
       
@@ -86,7 +86,7 @@ app.get('/api/activities/live', async (req, res) => {
 
     // Get recent battles (if available)
     try {
-      const recentBattles = await storage.getBattleHistory(0, 5); // Get recent battles
+      const recentBattles = await storage.getBattleHistory(); // Get recent battles
       for (const battle of recentBattles) {
         if (battle.status === 'completed' && battle.winnerId) {
           activities.push({
