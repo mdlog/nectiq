@@ -6,7 +6,7 @@ import ProtectedRoute from "@/components/protected-route";
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 
-import AdminPanel from "@/pages/admin";
+import AdminPanel from "@/pages/admin-simple";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
 

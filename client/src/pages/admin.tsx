@@ -1103,7 +1103,6 @@ export default function AdminPanel() {
       hasCurrentUser: !!currentUser, 
       isAdmin: currentUser?.isAdmin,
       hasUserError: !!userError,
-      userErrorMessage: userError?.message,
       location: window.location.pathname 
     });
   }, [currentUser, userLoading, userError]);
