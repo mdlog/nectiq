@@ -943,6 +943,12 @@ export default function AdminPanel() {
   const [transactionTokenFilter, setTransactionTokenFilter] = useState<"all" | "ETH" | "USDT" | "USDC">("all");
   const [transactionStatusFilter, setTransactionStatusFilter] = useState<"all" | "pending" | "completed" | "failed">("all");
   const [transactionAmountFilter, setTransactionAmountFilter] = useState<"all" | "0-1000" | "1000-10000" | "10000-100000" | "100000+">("all");
+
+  // Additional admin panel states
+  const [securityPage, setSecurityPage] = useState(1);
+  const [securitySearchTerm, setSecuritySearchTerm] = useState("");
+  const [eventsPage, setEventsPage] = useState(1);
+  const [settingsCategory, setSettingsCategory] = useState("general");
   const [transactionDateFilter, setTransactionDateFilter] = useState({
     startDate: "",
     endDate: ""
@@ -1181,6 +1187,59 @@ export default function AdminPanel() {
     staleTime: 15000, // 15 seconds stale time
     enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
+
+  // Admin leaderboard query
+  const { data: leaderboardData } = useQuery({
+    queryKey: ["/api/admin/leaderboard", { 
+      page: 1, 
+      limit: 50, 
+      sortBy: leaderboardSortField,
+      sortOrder: leaderboardSortOrder 
+    }],
+    refetchInterval: 15000,
+    staleTime: 10000,
+    enabled: !!currentUser?.isAdmin,
+  });
+
+  // Admin events query
+  const { data: eventsData = [] } = useQuery({
+    queryKey: ["/api/admin/events"],
+    refetchInterval: 30000,
+    staleTime: 15000,
+    enabled: !!currentUser?.isAdmin,
+  });
+
+  // Admin security events query
+  const { data: securityEventsData } = useQuery({
+    queryKey: ["/api/admin/security/events", { 
+      page: securityPage, 
+      limit: 20,
+      search: securitySearchTerm 
+    }],
+    refetchInterval: 10000,
+    staleTime: 5000,
+    enabled: !!currentUser?.isAdmin,
+  });
+
+  // Admin system health query
+  const { data: systemHealthData } = useQuery({
+    queryKey: ["/api/admin/system/health"],
+    refetchInterval: 15000,
+    staleTime: 10000,
+    enabled: !!currentUser?.isAdmin,
+  });
+
+  // Helper functions for leaderboard
+  const handleLeaderboardSort = (field: "accuracy" | "rewards" | "streak") => {
+    if (leaderboardSortField === field) {
+      setLeaderboardSortOrder(leaderboardSortOrder === "desc" ? "asc" : "desc");
+    } else {
+      setLeaderboardSortField(field);
+      setLeaderboardSortOrder("desc");
+    }
+  };
+
+  const filteredAndSortedLeaderboard = leaderboardData?.users || [];
 
   // Helper function to get cryptocurrency image URL
   const getCryptoImageUrl = (cryptoId: string) => {
@@ -1592,6 +1651,127 @@ export default function AdminPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/battles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Leaderboard mutations
+  const resetLeaderboardMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("/api/admin/leaderboard/reset", {
+        method: "POST",
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Leaderboard reset successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleExportLeaderboard = () => {
+    if (!leaderboardData || leaderboardData.length === 0) {
+      toast({ title: "No Data", description: "No leaderboard data to export" });
+      return;
+    }
+
+    const csvData = leaderboardData.map((entry: any) => ({
+      Rank: entry.rank,
+      Username: entry.username,
+      "Total Predictions": entry.totalPredictions,
+      "Correct Predictions": entry.correctPredictions,
+      "Accuracy (%)": entry.accuracy,
+      "Total Rewards": entry.totalRewards,
+      "Current Streak": entry.streak || 0,
+    }));
+
+    const csvContent = [
+      Object.keys(csvData[0]).join(","),
+      ...csvData.map(row => Object.values(row).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `leaderboard_export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({ title: "Success", description: "Leaderboard data exported successfully" });
+  };
+
+  // Events mutations
+  const createEventMutation = useMutation({
+    mutationFn: async (eventData: any) => {
+      const response = await apiRequest("/api/admin/events", {
+        method: "POST",
+        body: JSON.stringify(eventData),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Event created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+      setShowEventDialog(false);
+      setEventFormData({
+        title: "",
+        description: "",
+        imageUrl: "",
+        eventType: "announcement",
+        organizer: "",
+        organizerLogo: "",
+        startDate: "",
+        endDate: "",
+        location: "",
+        linkUrl: "",
+        isActive: true,
+        isFeatured: false,
+        priority: 0
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateEventMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await apiRequest(`/api/admin/events/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Event updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+      setShowEventDialog(false);
+      setEditingEvent(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: async (eventId: number) => {
+      const response = await apiRequest(`/api/admin/events/${eventId}`, {
+        method: "DELETE",
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Event deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -5335,6 +5515,76 @@ export default function AdminPanel() {
                           <button 
                             className="text-left hover:text-primary transition-colors"
                             onClick={() => {
+                              console.log("User profile clicked:", user.username);
+                              // Add user profile modal handler here
+                            }}
+                          >
+                            <div className="font-medium text-white">{user.username}</div>
+                            <div className="text-xs text-slate-400">
+                              {user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 'No wallet'}
+                            </div>
+                          </button>
+                        </div>
+
+                        {/* Accuracy with Color Coding */}
+                        <div className="col-span-1 text-center">
+                          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            user.accuracy >= 90 ? 'bg-green-100 text-green-800' :
+                            user.accuracy >= 80 ? 'bg-yellow-100 text-yellow-800' :
+                            user.accuracy >= 70 ? 'bg-orange-100 text-orange-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {user.accuracy.toFixed(1)}%
+                          </div>
+                        </div>
+
+                        {/* Predictions Count */}
+                        <div className="col-span-1 text-center">
+                          <div className="font-medium">{user.totalPredictions}</div>
+                          <div className="text-xs text-slate-400">{user.correctPredictions} correct</div>
+                        </div>
+
+                        {/* Rewards */}
+                        <div className="col-span-1 text-center">
+                          <div className="font-medium text-yellow-400">{user.totalRewards.toLocaleString()} NTIQ</div>
+                        </div>
+
+                        {/* Streak */}
+                        <div className="col-span-1 text-center">
+                          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            user.streak >= 10 ? 'bg-purple-100 text-purple-800' :
+                            user.streak >= 5 ? 'bg-blue-100 text-blue-800' :
+                            user.streak >= 3 ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {user.streak || 0}
+                          </div>
+                        </div>
+
+                        {/* Multiplier */}
+                        <div className="col-span-1 text-center">
+                          <div className="font-medium text-primary">
+                            {user.loyaltyTier === 'platinum' ? '2.5x' :
+                             user.loyaltyTier === 'gold' ? '2.0x' :
+                             user.loyaltyTier === 'silver' ? '1.5x' : '1.0x'}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Empty State */}
+                  {(!leaderboardData || leaderboardData.length === 0) && (
+                    <div className="text-center py-8 text-slate-400">
+                      <Award className="mx-auto mb-2" size={32} />
+                      <p>No leaderboard data available</p>
+                      <p className="text-sm">Leaderboard will be populated as users make predictions</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
                               // Navigate to user profile or show user details
                               toast({
                                 title: "User Profile",

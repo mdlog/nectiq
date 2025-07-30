@@ -143,9 +143,12 @@ export interface IStorage {
   getActiveEvents(): Promise<Event[]>;
   getFeaturedEvents(): Promise<Event[]>;
   getEventsByType(eventType: string): Promise<Event[]>;
-  updateEvent(id: number, event: Partial<InsertEvent>): Promise<void>;
+  updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event>;
   deleteEvent(id: number): Promise<void>;
   getEvent(id: number): Promise<Event | undefined>;
+
+  // Enhanced leaderboard operations
+  getEnhancedLeaderboard(options: any): Promise<any>;
 
   // Referral operations
   createReferral(referrerId: number, referredId: number, referralCode: string): Promise<void>;
@@ -3538,6 +3541,118 @@ export class MemStorage implements IStorage {
       return stats;
     } catch (error) {
       console.error('❌ [PLATFORM STATS] Error:', error);
+      throw error;
+    }
+  }
+
+  // Enhanced leaderboard implementation
+  async getEnhancedLeaderboard(options: any = {}): Promise<any> {
+    const { page = 1, limit = 50, sortBy = 'totalRewards', sortOrder = 'desc' } = options;
+    const offset = (page - 1) * limit;
+
+    try {
+      // Get users with comprehensive stats
+      const allUsers = await db.select().from(users);
+      
+      // Get all data needed for calculations
+      const allPredictions = await db.select().from(predictions);
+      const allBattles = await db.select().from(predictionBattles);
+      const allRewards = await db.select().from(rewards);
+      const allTransactions = await db.select().from(transactionLogs);
+
+      // Calculate enhanced stats for each user
+      const enhancedUsers = allUsers.map(user => {
+        const userPredictions = allPredictions.filter(p => p.userId === user.id);
+        const userBattles = allBattles.filter(b => b.challengerId === user.id || b.challengeeId === user.id);
+        const userRewards = allRewards.filter(r => r.userId === user.id);
+        const userTransactions = allTransactions.filter(t => t.userId === user.id);
+
+        // Calculate battle wins
+        const battleWins = userBattles.filter(b => {
+          if (b.status === 'completed' && b.winnerId) {
+            return b.winnerId === user.id;
+          }
+          return false;
+        }).length;
+
+        // Calculate survival rewards
+        const survivalRewards = userTransactions
+          .filter(t => t.type === 'survival_reward')
+          .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+        // Calculate battle rewards
+        const battleRewards = userTransactions
+          .filter(t => t.type === 'battle_reward')
+          .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+        // Calculate total calculated rewards (all sources)
+        const calculatedTotalRewards = (user.totalRewards || 0) + survivalRewards + battleRewards;
+
+        return {
+          ...user,
+          totalPredictions: userPredictions.length,
+          correctPredictions: userPredictions.filter(p => p.status === 'completed' && Number(p.accuracy) >= 80).length,
+          accuracyRate: userPredictions.length > 0 ? 
+            (userPredictions.filter(p => p.status === 'completed' && Number(p.accuracy) >= 80).length / userPredictions.length * 100) : 0,
+          battleParticipation: userBattles.length,
+          battleWins,
+          battleWinRate: userBattles.length > 0 ? (battleWins / userBattles.length * 100) : 0,
+          survivalRewards,
+          battleRewards,
+          calculatedTotalRewards,
+          lastActivity: user.lastLoginAt || user.createdAt,
+          isVerified: !!(user.email || user.twitterHandle)
+        };
+      });
+
+      // Sort by requested field
+      enhancedUsers.sort((a, b) => {
+        let aVal = a[sortBy];
+        let bVal = b[sortBy];
+        
+        if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+        if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+        
+        if (sortOrder === 'desc') {
+          return bVal > aVal ? 1 : bVal < aVal ? -1 : 0;
+        } else {
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+        }
+      });
+
+      // Apply pagination
+      const paginatedUsers = enhancedUsers.slice(offset, offset + limit);
+
+      return {
+        users: paginatedUsers,
+        total: enhancedUsers.length,
+        page,
+        totalPages: Math.ceil(enhancedUsers.length / limit),
+        sortBy,
+        sortOrder
+      };
+    } catch (error) {
+      console.error('❌ [ENHANCED LEADERBOARD] Error:', error);
+      throw error;
+    }
+  }
+
+  // Update event method to return the updated event
+  async updateEvent(id: number, eventData: Partial<InsertEvent>): Promise<Event> {
+    try {
+      const [updatedEvent] = await db
+        .update(events)
+        .set({ ...eventData, updatedAt: new Date() })
+        .where(eq(events.id, id))
+        .returning();
+
+      if (!updatedEvent) {
+        throw new Error(`Event with id ${id} not found`);
+      }
+
+      return updatedEvent;
+    } catch (error) {
+      console.error('❌ [UPDATE EVENT] Error:', error);
       throw error;
     }
   }
