@@ -4228,7 +4228,84 @@ export default function AdminPanel() {
 
           {/* Statistics Tab - User Analytics Dashboard */}
           <TabsContent value="statistics" className="space-y-6">
-            <UserStatistics />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <Card className="bg-surface border-surface-light">
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <Users className="h-8 w-8 text-blue-400" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-slate-400">Total Users</p>
+                      <p className="text-2xl font-bold text-white">{adminStats?.totalUsers || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-surface border-surface-light">
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <Target className="h-8 w-8 text-green-400" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-slate-400">Total Predictions</p>
+                      <p className="text-2xl font-bold text-white">{adminStats?.totalPredictions || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-surface border-surface-light">
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <Award className="h-8 w-8 text-yellow-400" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-slate-400">Total Rewards</p>
+                      <p className="text-2xl font-bold text-white">{adminStats?.totalRewards || 0} NTIQ</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-surface border-surface-light">
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <Activity className="h-8 w-8 text-purple-400" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-slate-400">Active Users</p>
+                      <p className="text-2xl font-bold text-white">{adminStats?.activeUsers || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Platform Overview */}
+            <Card className="bg-surface border-surface-light">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BarChart3 className="mr-2 text-blue-400" size={20} />
+                  Platform Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-400">{((adminStats?.accuracyAverage || 0) * 100).toFixed(1)}%</div>
+                    <div className="text-sm text-slate-400">Average Accuracy</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-400">{adminStats?.totalStaked || 0}</div>
+                    <div className="text-sm text-slate-400">Total Staked (NTIQ)</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-yellow-400">{usersData?.length || 0}</div>
+                    <div className="text-sm text-slate-400">Registered Users</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* NTIQ Circulation Tracker */}
+            <NTIQCirculationTracker />
           </TabsContent>
 
           {/* Users Tab - Full CRUD Management */}
