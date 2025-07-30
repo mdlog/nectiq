@@ -586,6 +586,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Admin authentication endpoint for admin panel
+  app.get("/api/auth/me", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      // Check admin status
+      const adminWallets = getAdminWalletAddresses();
+      const isAuthorizedAdmin = user.walletAddress && 
+        adminWallets.includes(user.walletAddress.toLowerCase());
+      
+      res.json({
+        id: user.id,
+        username: user.username,
+        walletAddress: user.walletAddress,
+        isAdmin: isAuthorizedAdmin || user.isAdmin,
+        authMethod: user.authMethod,
+        balance: user.balance
+      });
+    } catch (error) {
+      console.error("Auth me error:", error);
+      res.status(500).json({ message: "Authentication error" });
+    }
+  });
+
   // Wallet authentication routes
   app.get("/api/auth/wallet-user", async (req, res) => {
     try {
