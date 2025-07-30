@@ -27,6 +27,7 @@ import { FinancialWallet } from "@/components/financial-wallet";
 import { SurvivalStatus } from "@/components/survival-status";
 import { MultiChainFinancial } from "@/components/multi-chain-financial";
 import { WalletEmailVerification } from "@/components/WalletEmailVerification";
+import { SocialShare, createShareData } from "@/components/SocialShare";
 
 
 // Dynamic function to get crypto image from live API data
@@ -937,7 +938,7 @@ export default function UserDashboard() {
                       let sourceText = '';
                       let sourceIcon = <Gift size={16} />;
                       
-                      const rewardType = 'prediction';
+                      const rewardType = reward.type || 'prediction';
                       switch (rewardType) {
                         case 'prediction':
                           sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
@@ -1001,10 +1002,22 @@ export default function UserDashboard() {
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right flex items-center gap-2">
                             <p className={`text-sm font-semibold ${reward.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                               {reward.amount > 0 ? '+' : ''}{reward.amount} NTIQ
                             </p>
+                            
+                            {/* Share Button for Prediction Wins */}
+                            {reward.amount > 0 && rewardType === 'prediction' && (
+                              <SocialShare
+                                compact={true}
+                                data={createShareData.prediction(
+                                  reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                                  reward.amount,
+                                  parseFloat(reward.accuracy || '0')
+                                )}
+                              />
+                            )}
                           </div>
                         </div>
                       );
@@ -1364,18 +1377,33 @@ function BattlesSection() {
 
                       {/* Win/Loss Indicator */}
                       {battle.status === 'completed' && battle.winnerId && (
-                        <Badge 
-                          variant={battle.winnerId === battle.challengerId && battle.isUserChallenger || 
-                                  battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'default' : 'destructive'}
-                          className={
-                            battle.winnerId === battle.challengerId && battle.isUserChallenger || 
-                            battle.winnerId === battle.challengedId && !battle.isUserChallenger
-                              ? 'bg-success text-white' : 'bg-red-500 text-white'
-                          }
-                        >
-                          {battle.winnerId === battle.challengerId && battle.isUserChallenger || 
-                           battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'Won' : 'Lost'}
-                        </Badge>
+                        <>
+                          <Badge 
+                            variant={battle.winnerId === battle.challengerId && battle.isUserChallenger || 
+                                    battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'default' : 'destructive'}
+                            className={
+                              battle.winnerId === battle.challengerId && battle.isUserChallenger || 
+                              battle.winnerId === battle.challengedId && !battle.isUserChallenger
+                                ? 'bg-success text-white' : 'bg-red-500 text-white'
+                            }
+                          >
+                            {battle.winnerId === battle.challengerId && battle.isUserChallenger || 
+                             battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'Won' : 'Lost'}
+                          </Badge>
+                          
+                          {/* Share Button for Battle Results */}
+                          {(battle.winnerId === battle.challengerId && battle.isUserChallenger || 
+                            battle.winnerId === battle.challengedId && !battle.isUserChallenger) && (
+                            <SocialShare
+                              compact={true}
+                              data={createShareData.battle(
+                                battle.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                                battle.isUserChallenger ? battle.challengedUsername || 'Opponent' : battle.challengerUsername || 'Opponent',
+                                parseFloat(battle.winnerReward || '0')
+                              )}
+                            />
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -1714,7 +1742,7 @@ function UserProfile() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-bold text-white">{user.username}</h2>
-                {userTier && userTier.currentTier && getTierIcon(userTier.currentTier)}
+                {userTier && (userTier as any).currentTier && getTierIcon((userTier as any).currentTier)}
               </div>
               <p className="text-slate-400">Active Member</p>
             </div>

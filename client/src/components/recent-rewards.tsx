@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { RecentReward } from "@/types";
 import { EngagementPlaceholder } from "@/components/engagement-placeholder";
 import { EnhancedSkeleton } from "@/components/enhanced-skeleton";
+import { SocialShare, createShareData } from "@/components/SocialShare";
 
 // Dynamic function to get crypto image from live API data
 function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
@@ -238,7 +239,7 @@ export function RecentRewards() {
                   </p>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right flex flex-col items-end gap-2">
                 <p className={`text-sm font-semibold ${
                   isWin ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                 }`}>
@@ -248,6 +249,43 @@ export function RecentRewards() {
                   <p className="text-xs text-slate-400">
                     {parseFloat(reward.sourceDetails.accuracy || "0").toFixed(1)}% accuracy
                   </p>
+                )}
+                
+                {/* Share Button for Successful Results */}
+                {isWin && (
+                  <SocialShare
+                    compact={true}
+                    data={
+                      reward.type === 'prediction' ? 
+                        createShareData.prediction(
+                          reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                          isWin ? 'Won' : 'Lost',
+                          reward.sourceDetails?.accuracy ? parseFloat(reward.sourceDetails.accuracy) : undefined,
+                          Math.abs(reward.amount),
+                          undefined // timeframe not available in rewards data
+                        ) :
+                      reward.type === 'battle' ?
+                        createShareData.battle(
+                          'won',
+                          reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                          undefined, // opponent name would need to be parsed
+                          Math.abs(reward.amount)
+                        ) :
+                      reward.type === 'survival' ?
+                        createShareData.survival(
+                          1, // position not available in rewards data
+                          1, // round not available in rewards data
+                          0, // eliminated players not available
+                          Math.abs(reward.amount)
+                        ) :
+                        {
+                          type: 'prediction' as const,
+                          title: 'Nectiq Achievement',
+                          result: 'Success',
+                          reward: Math.abs(reward.amount)
+                        }
+                    }
+                  />
                 )}
               </div>
             </div>

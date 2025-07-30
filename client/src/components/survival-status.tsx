@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Trophy, AlertCircle, Clock, Target, TrendingUp, TrendingDown } from "lucide-react";
+import { SocialShare, createShareData } from "@/components/SocialShare";
 
 interface SurvivalStatus {
   tournaments: Array<{
@@ -211,8 +212,20 @@ export function SurvivalStatus() {
                         <Trophy size={16} />
                         <span className="font-semibold">WIN - Tournament Champion!</span>
                       </div>
-                      <div className="text-green-400 font-bold text-sm">
-                        +{tournament.prizePool} NTIQ
+                      <div className="flex items-center gap-3">
+                        <div className="text-green-400 font-bold text-sm">
+                          +{tournament.prizePool} NTIQ
+                        </div>
+                        {/* Share Button for Tournament Win */}
+                        <SocialShare
+                          compact={true}
+                          data={createShareData.survival(
+                            tournament.finalPosition || 1,
+                            tournament.round,
+                            tournament.totalParticipants - tournament.remainingParticipants,
+                            tournament.prizePool
+                          )}
+                        />
                       </div>
                     </div>
                     {tournament.wonAt && (
