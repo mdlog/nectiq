@@ -77,8 +77,8 @@ const NTIQCirculationTracker = () => {
         <CardTitle className="flex items-center gap-2">
           <Coins className="h-5 w-5 text-yellow-500" />
           NTIQ Circulation Tracking
-          <Badge variant={circulationQuery.data?.systemHealth?.autoDistributionWorking ? "default" : "destructive"}>
-            {circulationQuery.data?.systemHealth?.autoDistributionWorking ? "HEALTHY" : "ERROR"}
+          <Badge variant={(circulationQuery.data as any)?.systemHealth?.autoDistributionWorking ? "default" : "destructive"}>
+            {(circulationQuery.data as any)?.systemHealth?.autoDistributionWorking ? "HEALTHY" : "ERROR"}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -106,7 +106,7 @@ const NTIQCirculationTracker = () => {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold text-yellow-600">
-                    {circulationQuery.data.totalNTIQCirculation.toLocaleString()}
+                    {(circulationQuery.data as any)?.totalNTIQCirculation?.toLocaleString() || '0'}
                   </div>
                   <p className="text-xs text-muted-foreground">Total NTIQ in Circulation</p>
                 </CardContent>
@@ -115,7 +115,7 @@ const NTIQCirculationTracker = () => {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold text-green-600">
-                    {circulationQuery.data.distributionAccuracy}%
+                    {(circulationQuery.data as any)?.distributionAccuracy || '0'}%
                   </div>
                   <p className="text-xs text-muted-foreground">Distribution Accuracy</p>
                 </CardContent>
@@ -124,7 +124,7 @@ const NTIQCirculationTracker = () => {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold text-blue-600">
-                    {circulationQuery.data.totalUsers}
+                    {(circulationQuery.data as any)?.totalUsers || '0'}
                   </div>
                   <p className="text-xs text-muted-foreground">Total Users</p>
                 </CardContent>
