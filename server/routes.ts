@@ -8821,19 +8821,36 @@ Manual balance correction required IMMEDIATELY!`;
     try {
       const { referralCode, newUserId } = req.body;
       
+      console.log(`🎯 [REFERRAL-ENDPOINT] Processing referral - Code: ${referralCode}, New User: ${newUserId}`);
+      
       if (!referralCode || !newUserId) {
-        return res.status(400).json({ message: 'Missing referral code or user ID' });
+        console.log(`❌ [REFERRAL-ENDPOINT] Missing required fields - Code: ${referralCode}, User: ${newUserId}`);
+        return res.status(400).json({ message: 'Referral code and new user ID are required' });
       }
 
-      // Process referral using storage function
+      // Process the referral using storage function
       await storage.processReferral(referralCode, newUserId);
-
-      res.json({ success: true, message: 'Referral processed successfully' });
+      
+      console.log(`✅ [REFERRAL-ENDPOINT] Referral processed successfully`);
+      res.json({ 
+        success: true, 
+        message: 'Referral processed successfully',
+        rewards: {
+          referrer: 100,
+          newUser: 100
+        }
+      });
     } catch (error) {
-      console.error('Error processing referral:', error);
-      res.status(500).json({ message: 'Failed to process referral' });
+      console.error('❌ [REFERRAL-ENDPOINT] Error processing referral:', error);
+      res.status(500).json({ 
+        message: error.message || 'Failed to process referral'
+      });
     }
   });
+
+
+
+  // ===== END OF REFERRAL ENDPOINTS =====
 
   // ==================== LOYALTY PROGRAM ENDPOINTS ====================
   

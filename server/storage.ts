@@ -3268,19 +3268,44 @@ export class MemStorage implements IStorage {
   }
 
   async processReferral(referralCode: string, newUserId: number): Promise<void> {
+    console.log(`🎯 [REFERRAL] Processing referral - Code: ${referralCode}, New User: ${newUserId}`);
+    
     // Find the referrer by referral code
     const referrer = await this.getUserByReferralCode(referralCode);
     if (!referrer) {
+      console.log(`❌ [REFERRAL] Invalid referral code: ${referralCode}`);
       throw new Error('Invalid referral code');
     }
 
+    console.log(`✅ [REFERRAL] Found referrer - ID: ${referrer.id}, Username: ${referrer.username}`);
+
     // Create referral record
     await this.createReferral(referrer.id, newUserId, referralCode);
+    console.log(`✅ [REFERRAL] Created referral record`);
 
+    // Import BalanceService properly
+    const { BalanceService } = await import('./services/balanceService.js');
+    
     // Award rewards to both users (100 NTIQ each)
-    const balanceService = new BalanceService();
-    await balanceService.processTransaction(referrer.id, 100, 'referral_reward', `Referral bonus for inviting user ${newUserId}`);
-    await balanceService.processTransaction(newUserId, 100, 'referral_bonus', `Welcome bonus from referral code ${referralCode}`);
+    console.log(`💰 [REFERRAL] Awarding rewards - 100 NTIQ each`);
+    
+    await BalanceService.processTransaction({
+      userId: referrer.id,
+      type: 'referral_reward',
+      amount: 100,
+      description: `Referral bonus for inviting user ${newUserId}`,
+      relatedId: newUserId
+    }, this);
+    
+    await BalanceService.processTransaction({
+      userId: newUserId,
+      type: 'referral_bonus', 
+      amount: 100,
+      description: `Welcome bonus from referral code ${referralCode}`,
+      relatedId: referrer.id
+    }, this);
+
+    console.log(`🎉 [REFERRAL] Referral process completed successfully!`);
   }
 
 
