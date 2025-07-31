@@ -9,8 +9,33 @@ import { EnhancedSkeleton } from "@/components/enhanced-skeleton";
 
 // Dynamic function to get crypto image from live API data
 function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
-  const cryptoData = cryptoPrices?.find(crypto => crypto.id === cryptoId);
-  return cryptoData?.image || `https://coin-images.coingecko.com/coins/images/1/large/${cryptoId}.png`;
+  // Try to find crypto by multiple matching methods
+  const cryptoData = cryptoPrices?.find(crypto => 
+    crypto.id === cryptoId.toLowerCase() || 
+    crypto.symbol?.toLowerCase() === cryptoId.toLowerCase() ||
+    crypto.name?.toLowerCase() === cryptoId.toLowerCase() ||
+    crypto.id === cryptoId.replace(/\s+/g, '-').toLowerCase()
+  );
+  
+  // Return authentic image URL from API data or fallback
+  if (cryptoData?.image) {
+    return cryptoData.image;
+  }
+  
+  // Enhanced fallback mapping for common cryptocurrencies
+  const fallbackMapping: Record<string, string> = {
+    'bitcoin-cash': 'https://coin-images.coingecko.com/coins/images/780/large/bitcoin-cash-circle.png',
+    'bitcoin': 'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png',
+    'ethereum': 'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png',
+    'binancecoin': 'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
+    'solana': 'https://coin-images.coingecko.com/coins/images/4128/large/solana.png',
+    'cardano': 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png',
+    'dogecoin': 'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png',
+    'litecoin': 'https://coin-images.coingecko.com/coins/images/2/large/litecoin.png',
+  };
+  
+  const normalizedId = cryptoId.toLowerCase().replace(/\s+/g, '-');
+  return fallbackMapping[normalizedId] || `https://coin-images.coingecko.com/coins/images/1/large/${normalizedId}.png`;
 }
 
 function getCryptoIcon(crypto: string): string {
@@ -25,8 +50,20 @@ function getCryptoIcon(crypto: string): string {
     litecoin: "LTC",
     "matic-network": "MATIC",
     hyperliquid: "HYPE",
+    "bitcoin-cash": "BCH",
+    "bitcoin cash": "BCH",
+    "ethereum-classic": "ETC",
+    "ethereum classic": "ETC",
+    aptos: "APT",
+    sui: "SUI",
+    aave: "AAVE",
+    bittensor: "TAO",
+    "avalanche-2": "AVAX",
+    avalanche: "AVAX",
   };
-  return icons[crypto] || crypto.toUpperCase().slice(0, 4);
+  
+  const normalizedCrypto = crypto.toLowerCase().replace(/\s+/g, '-');
+  return icons[normalizedCrypto] || icons[crypto.toLowerCase()] || crypto.toUpperCase().slice(0, 4);
 }
 
 function getCryptoColor(crypto: string): string {
@@ -41,8 +78,20 @@ function getCryptoColor(crypto: string): string {
     litecoin: "bg-gray-500",
     "matic-network": "bg-purple-600",
     hyperliquid: "bg-green-500",
+    "bitcoin-cash": "bg-green-600",
+    "bitcoin cash": "bg-green-600",
+    "ethereum-classic": "bg-green-700",
+    "ethereum classic": "bg-green-700",
+    aptos: "bg-red-500",
+    sui: "bg-blue-400",
+    aave: "bg-pink-600",
+    bittensor: "bg-purple-700",
+    "avalanche-2": "bg-red-600",
+    avalanche: "bg-red-600",
   };
-  return colors[crypto] || "bg-gray-500";
+  
+  const normalizedCrypto = crypto.toLowerCase().replace(/\s+/g, '-');
+  return colors[normalizedCrypto] || colors[crypto.toLowerCase()] || "bg-gray-500";
 }
 
 function calculateAccuracy(predicted: string, current: string): number {
@@ -206,12 +255,18 @@ export function ActivePredictions() {
       {paginatedPredictions.length > 0 && (
         <div className="space-y-4">
           {paginatedPredictions.map((prediction) => {
+            // Enhanced debugging for cryptocurrency matching
+            console.log(`🔍 [PREDICTION-DEBUG] Processing prediction for: ${prediction.cryptocurrency}`);
+            console.log(`📊 [CRYPTO-DATA] Available cryptoPrices:`, cryptoPrices?.map(c => ({ id: c.id, symbol: c.symbol, name: c.name, image: c.image })));
+            
             // Get live current price from Pyth Network data
             const cryptoMatch = cryptoPrices.find(crypto => 
               crypto.id === prediction.cryptocurrency.toLowerCase() || 
               crypto.symbol.toLowerCase() === prediction.cryptocurrency.toLowerCase() ||
               crypto.name.toLowerCase() === prediction.cryptocurrency.toLowerCase()
             );
+            console.log(`🎯 [MATCH-RESULT] Crypto match for ${prediction.cryptocurrency}:`, cryptoMatch ? { id: cryptoMatch.id, symbol: cryptoMatch.symbol, name: cryptoMatch.name, image: cryptoMatch.image } : 'No match found');
+            
             const liveCurrentPrice = cryptoMatch?.current_price || prediction.currentPrice;
             
             const accuracy = calculateAccuracy(prediction.predictedPrice, liveCurrentPrice.toString());
@@ -229,12 +284,17 @@ export function ActivePredictions() {
                         alt={prediction.cryptocurrency}
                         className="w-8 h-8 rounded-full object-cover"
                         onError={(e) => {
+                          console.log(`🔴 [LOGO-ERROR] Failed to load image for ${prediction.cryptocurrency}:`, getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || []));
                           const target = e.target as HTMLImageElement;
                           const fallback = target.nextElementSibling as HTMLElement;
                           if (fallback) {
                             target.style.display = 'none';
                             fallback.style.display = 'flex';
+                            console.log(`🔄 [LOGO-FALLBACK] Using fallback icon for ${prediction.cryptocurrency}: ${getCryptoIcon(prediction.cryptocurrency)}`);
                           }
+                        }}
+                        onLoad={() => {
+                          console.log(`✅ [LOGO-SUCCESS] Successfully loaded image for ${prediction.cryptocurrency}:`, getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || []));
                         }}
                       />
                       <div className={`w-8 h-8 ${getCryptoColor(prediction.cryptocurrency)} rounded-full hidden items-center justify-center text-white text-sm font-bold`}>
