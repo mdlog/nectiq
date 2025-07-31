@@ -27,6 +27,8 @@ interface AdminStats {
 interface User {
   id: number;
   username: string;
+  email?: string | null;
+  emailVerified?: boolean;
   walletAddress: string | null;
   balance: number;
   isAdmin: boolean;
@@ -282,7 +284,7 @@ export default function AdminPanel() {
 
   // Helper function untuk mencari harga cryptocurrency
   const getCryptoPrice = (cryptoId: string) => {
-    if (!cryptoPrices) return null;
+    if (!cryptoPrices || !Array.isArray(cryptoPrices)) return null;
     const crypto = cryptoPrices.find((c: any) => c.id === cryptoId);
     return crypto;
   };
@@ -290,7 +292,8 @@ export default function AdminPanel() {
   // Filter functions
   const filteredUsers = usersData?.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.walletAddress?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.walletAddress?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredPredictions = predictions?.filter(prediction => {
@@ -696,7 +699,7 @@ export default function AdminPanel() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
                     <Input
-                      placeholder="Search users by username or wallet address..."
+                      placeholder="Search users by username, email, or wallet address..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 bg-slate-700 border-slate-600 text-white"
@@ -715,6 +718,7 @@ export default function AdminPanel() {
                       <TableRow>
                         <TableHead>ID</TableHead>
                         <TableHead>Username</TableHead>
+                        <TableHead>Email</TableHead>
                         <TableHead>Wallet Address</TableHead>
                         <TableHead>Balance</TableHead>
                         <TableHead>Admin</TableHead>
@@ -728,6 +732,20 @@ export default function AdminPanel() {
                         <TableRow key={user.id}>
                           <TableCell>{user.id}</TableCell>
                           <TableCell className="font-medium">{user.username}</TableCell>
+                          <TableCell className="text-sm">
+                            {user.email ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-300">{user.email}</span>
+                                {user.emailVerified && (
+                                  <Badge variant="default" className="bg-green-600 text-xs">
+                                    ✓ Verified
+                                  </Badge>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-slate-500 italic">No email</span>
+                            )}
+                          </TableCell>
                           <TableCell className="font-mono text-xs">
                             {user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 'N/A'}
                           </TableCell>
@@ -1291,7 +1309,7 @@ export default function AdminPanel() {
                   <div className="text-center py-8">
                     <div className="text-slate-400">Loading transactions...</div>
                   </div>
-                ) : transactionsData && transactionsData.length > 0 ? (
+                ) : transactionsData && Array.isArray(transactionsData) && transactionsData.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1306,7 +1324,7 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {transactionsData.slice(0, 20).map((transaction: any) => (
+                      {(Array.isArray(transactionsData) ? transactionsData : []).slice(0, 20).map((transaction: any) => (
                         <TableRow key={transaction.id}>
                           <TableCell>{transaction.id}</TableCell>
                           <TableCell>{transaction.userId}</TableCell>
@@ -1414,7 +1432,7 @@ export default function AdminPanel() {
                   <div className="text-center py-8">
                     <div className="text-slate-400">Loading security events...</div>
                   </div>
-                ) : securityEvents && securityEvents.length > 0 ? (
+                ) : securityEvents && Array.isArray(securityEvents) && securityEvents.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1427,7 +1445,7 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {securityEvents.slice(0, 20).map((event: any) => (
+                      {(Array.isArray(securityEvents) ? securityEvents : []).slice(0, 20).map((event: any) => (
                         <TableRow key={event.id}>
                           <TableCell className="text-xs text-slate-400">
                             {new Date(event.timestamp).toLocaleString()}
