@@ -777,8 +777,18 @@ export default function AdminPanel() {
                         </div>
                         <div className="flex gap-2">
                           <Button 
-                            onClick={() => addCryptoMutation.mutate(newCrypto)}
-                            disabled={addCryptoMutation.isPending}
+                            onClick={() => {
+                              // Format data according to backend expectation
+                              const cryptoData = {
+                                cryptoId: newCrypto.id,
+                                name: newCrypto.name,
+                                symbol: newCrypto.symbol,
+                                image: newCrypto.image,
+                                pythFeedId: newCrypto.pythFeedId
+                              };
+                              addCryptoMutation.mutate(cryptoData);
+                            }}
+                            disabled={addCryptoMutation.isPending || !newCrypto.id || !newCrypto.name || !newCrypto.symbol || !newCrypto.pythFeedId}
                             className="bg-blue-600 hover:bg-blue-700"
                           >
                             {addCryptoMutation.isPending ? "Adding..." : "Add Cryptocurrency"}
