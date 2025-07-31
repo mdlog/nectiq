@@ -41,7 +41,7 @@ interface User {
 interface Prediction {
   id: number;
   userId: number;
-  cryptoId: string;
+  cryptocurrency: string; // Sesuai dengan field dari backend
   predictedPrice: number;
   actualPrice: number | null;
   timeframe: string;
@@ -289,10 +289,20 @@ export default function AdminPanel() {
     return crypto;
   };
 
-  // Helper function untuk mendapatkan info cryptocurrency
+  // Helper function untuk mendapatkan info cryptocurrency dari database admin
   const getCryptoInfo = (cryptoId: string) => {
-    if (!cryptoPrices || !Array.isArray(cryptoPrices)) return null;
-    const crypto = cryptoPrices.find((c: any) => c.id === cryptoId);
+    if (!cryptocurrencies || !Array.isArray(cryptocurrencies)) {
+      // Fallback ke cryptoPrices jika cryptocurrencies tidak tersedia
+      if (!cryptoPrices || !Array.isArray(cryptoPrices)) return null;
+      const crypto = cryptoPrices.find((c: any) => c.id === cryptoId);
+      return crypto ? {
+        name: crypto.name,
+        symbol: crypto.symbol?.toUpperCase(),
+        image: crypto.image
+      } : null;
+    }
+    
+    const crypto = cryptocurrencies.find((c: Cryptocurrency) => c.id === cryptoId);
     return crypto ? {
       name: crypto.name,
       symbol: crypto.symbol?.toUpperCase(),
@@ -1143,7 +1153,7 @@ export default function AdminPanel() {
                           <TableCell>{prediction.userId}</TableCell>
                           <TableCell>
                             {(() => {
-                              const cryptoInfo = getCryptoInfo(prediction.cryptoId);
+                              const cryptoInfo = getCryptoInfo(prediction.cryptocurrency);
                               return cryptoInfo ? (
                                 <div className="flex items-center space-x-2">
                                   <img 
@@ -1161,7 +1171,7 @@ export default function AdminPanel() {
                                   </div>
                                 </div>
                               ) : (
-                                <span className="font-mono text-slate-400">{prediction.cryptoId}</span>
+                                <span className="font-mono text-slate-400">{prediction.cryptocurrency}</span>
                               );
                             })()}
                           </TableCell>
