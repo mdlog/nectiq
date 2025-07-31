@@ -289,6 +289,17 @@ export default function AdminPanel() {
     return crypto;
   };
 
+  // Helper function untuk mendapatkan info cryptocurrency
+  const getCryptoInfo = (cryptoId: string) => {
+    if (!cryptoPrices || !Array.isArray(cryptoPrices)) return null;
+    const crypto = cryptoPrices.find((c: any) => c.id === cryptoId);
+    return crypto ? {
+      name: crypto.name,
+      symbol: crypto.symbol?.toUpperCase(),
+      image: crypto.image
+    } : null;
+  };
+
   // Filter functions
   const filteredUsers = usersData?.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -332,17 +343,21 @@ export default function AdminPanel() {
     if (!predictions) return;
     const csvContent = [
       ["ID", "User ID", "Crypto", "Predicted Price", "Actual Price", "Timeframe", "Stake", "Status", "Reward"].join(","),
-      ...predictions.map(prediction => [
-        prediction.id,
-        prediction.userId,
-        prediction.cryptoId,
-        prediction.predictedPrice,
-        prediction.actualPrice || "N/A",
-        prediction.timeframe,
-        prediction.stakeAmount,
-        prediction.status,
-        prediction.reward || "N/A"
-      ].join(","))
+      ...predictions.map(prediction => {
+        const cryptoInfo = getCryptoInfo(prediction.cryptoId);
+        const cryptoDisplay = cryptoInfo ? `${cryptoInfo.name} (${cryptoInfo.symbol})` : prediction.cryptoId;
+        return [
+          prediction.id,
+          prediction.userId,
+          cryptoDisplay,
+          prediction.predictedPrice,
+          prediction.actualPrice || "N/A",
+          prediction.timeframe,
+          prediction.stakeAmount,
+          prediction.status,
+          prediction.reward || "N/A"
+        ].join(",");
+      })
     ].join("\n");
     
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -1126,7 +1141,30 @@ export default function AdminPanel() {
                         <TableRow key={prediction.id}>
                           <TableCell>{prediction.id}</TableCell>
                           <TableCell>{prediction.userId}</TableCell>
-                          <TableCell className="font-mono">{prediction.cryptoId}</TableCell>
+                          <TableCell>
+                            {(() => {
+                              const cryptoInfo = getCryptoInfo(prediction.cryptoId);
+                              return cryptoInfo ? (
+                                <div className="flex items-center space-x-2">
+                                  <img 
+                                    src={cryptoInfo.image} 
+                                    alt={cryptoInfo.name}
+                                    className="w-6 h-6 rounded-full"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="%23666"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="8">${cryptoInfo.symbol}</text></svg>`;
+                                    }}
+                                  />
+                                  <div>
+                                    <div className="font-medium text-white">{cryptoInfo.name}</div>
+                                    <div className="text-xs text-slate-400">{cryptoInfo.symbol}</div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="font-mono text-slate-400">{prediction.cryptoId}</span>
+                              );
+                            })()}
+                          </TableCell>
                           <TableCell>${prediction.predictedPrice.toLocaleString()}</TableCell>
                           <TableCell>
                             {prediction.actualPrice ? `$${prediction.actualPrice.toLocaleString()}` : 'Pending'}
