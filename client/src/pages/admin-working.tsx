@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -343,11 +343,21 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-slate-900 text-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            Nectiq Admin Panel
-          </h1>
-          <p className="text-slate-400 mt-2">Comprehensive platform management dashboard</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+              Nectiq Admin Panel
+            </h1>
+            <p className="text-slate-400 mt-2">Comprehensive platform management dashboard</p>
+          </div>
+          <Button
+            onClick={() => window.location.href = '/'}
+            variant="outline"
+            className="bg-slate-800 border-slate-600 text-white hover:bg-slate-700 hover:text-blue-400 transition-colors"
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Kembali ke Home
+          </Button>
         </div>
 
         {/* Tabs */}
