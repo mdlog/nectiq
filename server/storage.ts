@@ -198,6 +198,15 @@ export interface IStorage {
 
   // Live Activity operations
   getLiveActivities(limit?: number): Promise<any[]>;
+
+  // Referral system operations
+  generateReferralCode(userId: number): Promise<string>;
+  processReferral(referralCode: string, newUserId: number): Promise<void>;
+  getReferralData(userId: number): Promise<any>;
+  createReferral(data: any): Promise<any>;
+
+  // Platform statistics operations  
+  getPlatformStats(): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3760,6 +3769,264 @@ export class MemStorage implements IStorage {
       console.error('❌ [UPDATE EVENT] Error:', error);
       throw error;
     }
+  }
+
+  // ==================== REFERRAL SYSTEM METHODS ====================
+  
+  async generateReferralCode(userId: number): Promise<string> {
+    try {
+      const user = await this.getUser(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Generate a unique 8-character referral code
+      let code: string;
+      let isUnique = false;
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      do {
+        code = Math.random().toString(36).substring(2, 10).toUpperCase();
+        const existing = await db.select().from(users).where(eq(users.referralCode, code)).limit(1);
+        isUnique = existing.length === 0;
+        attempts++;
+      } while (!isUnique && attempts < maxAttempts);
+
+      if (!isUnique) {
+        throw new Error('Failed to generate unique referral code');
+      }
+
+      // Update user with new referral code
+      await db.update(users).set({ referralCode: code }).where(eq(users.id, userId));
+      
+      console.log('✅ [GENERATE-REFERRAL] Generated code:', code, 'for user:', userId);
+      return code;
+    } catch (error) {
+      console.error('❌ [GENERATE-REFERRAL] Error:', error);
+      throw error;
+    }
+  }
+
+  async processReferral(referralCode: string, newUserId: number): Promise<void> {
+    try {
+      console.log('🎯 [PROCESS-REFERRAL] Starting process:', { referralCode, newUserId });
+      
+      // Find referrer by code
+      const [referrer] = await db
+        .select()
+        .from(users)
+        .where(and(
+          eq(users.referralCode, referralCode),
+          eq(users.isActive, true)
+        ))
+        .limit(1);
+
+      if (!referrer) {
+        throw new Error('Invalid referral code or referrer not active');
+      }
+
+      // Verify new user exists
+      const newUser = await this.getUser(newUserId);
+      if (!newUser) {
+        throw new Error('New user not found');
+      }
+
+      // Check if user already has a referrer
+      if (newUser.referredBy) {
+        throw new Error('User already has a referrer');
+      }
+
+      // Prevent self-referral
+      if (referrer.id === newUserId) {
+        throw new Error('Cannot refer yourself');
+      }
+
+      console.log('🔄 [PROCESS-REFERRAL] Valid referral detected:', {
+        referrerId: referrer.id,
+        referrerUsername: referrer.username,
+        newUserId,
+        newUserUsername: newUser.username
+      });
+
+      // Update new user with referrer info
+      await db
+        .update(users)
+        .set({ referredBy: referrer.id })
+        .where(eq(users.id, newUserId));
+
+      // Award bonuses using BalanceService
+      const REFERRAL_BONUS = 100; // 100 NTIQ for both users
+
+      // Award referrer bonus
+      await BalanceService.addBalance(
+        referrer.id,
+        REFERRAL_BONUS,
+        'referral_reward',
+        `Referral bonus for bringing ${newUser.username}`,
+        'NTIQ'
+      );
+
+      // Award new user bonus  
+      await BalanceService.addBalance(
+        newUserId,
+        REFERRAL_BONUS,
+        'referral_bonus',
+        `Welcome bonus for using referral code ${referralCode}`,
+        'NTIQ'
+      );
+
+      console.log('💰 [PROCESS-REFERRAL] Bonuses awarded:', {
+        referrerBonus: REFERRAL_BONUS,
+        newUserBonus: REFERRAL_BONUS,
+        referrerId: referrer.id,
+        newUserId
+      });
+
+      console.log('✅ [PROCESS-REFERRAL] Referral processing completed successfully');
+    } catch (error) {
+      console.error('❌ [PROCESS-REFERRAL] Error:', error);
+      throw error;
+    }
+  }
+
+  async getReferralData(userId: number): Promise<any> {
+    try {
+      const user = await this.getUser(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Get referred users count
+      const referredUsers = await db
+        .select({ id: users.id, username: users.username, createdAt: users.createdAt })
+        .from(users)
+        .where(eq(users.referredBy, userId));
+
+      // Calculate total referral earnings
+      const referralEarnings = await db
+        .select()
+        .from(transactionLogs)
+        .where(and(
+          eq(transactionLogs.userId, userId),
+          eq(transactionLogs.type, 'referral_reward')
+        ));
+
+      const totalEarnings = referralEarnings.reduce((sum, tx) => sum + Number(tx.amount), 0);
+
+      return {
+        referralCode: user.referralCode,
+        referredCount: referredUsers.length,
+        referredUsers: referredUsers.map(u => ({
+          username: u.username,
+          joinedAt: u.createdAt
+        })),
+        totalEarnings,
+        bonusPerReferral: 100
+      };
+    } catch (error) {
+      console.error('❌ [GET-REFERRAL-DATA] Error:', error);
+      throw error;
+    }
+  }
+
+  async createReferral(data: any): Promise<any> {
+    try {
+      // This method can be used for creating referral records if needed
+      // For now, referrals are handled through user.referredBy field
+      console.log('🎯 [CREATE-REFERRAL] Creating referral record:', data);
+      
+      // Implementation can be extended if separate referrals table is needed
+      return { success: true, message: 'Referral handled through user referredBy field' };
+    } catch (error) {
+      console.error('❌ [CREATE-REFERRAL] Error:', error);
+      throw error;
+    }
+  }
+
+  // ==================== PLATFORM STATISTICS METHODS ====================
+  
+  async getPlatformStats(): Promise<any> {
+    try {
+      // Get comprehensive platform statistics
+      const [totalUsers] = await db.select({ count: count() }).from(users);
+      const [totalPredictions] = await db.select({ count: count() }).from(predictions);
+      const [totalBattles] = await db.select({ count: count() }).from(predictionBattles);
+      const [totalTournaments] = await db.select({ count: count() }).from(survivalTournaments);
+      const [totalDeposits] = await db.select({ count: count() }).from(deposits);
+      const [totalWithdrawals] = await db.select({ count: count() }).from(withdrawals);
+
+      // Get active users (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const [activeUsers] = await db
+        .select({ count: count() })
+        .from(users)
+        .where(gte(users.lastLoginAt, thirtyDaysAgo));
+
+      // Get total platform balance
+      const allUsers = await db.select({ balance: users.balance }).from(users);
+      const totalBalance = allUsers.reduce((sum, user) => sum + (user.balance || 0), 0);
+
+      return {
+        users: {
+          total: totalUsers.count,
+          active: activeUsers.count,
+          totalBalance
+        },
+        gaming: {
+          predictions: totalPredictions.count,
+          battles: totalBattles.count,
+          tournaments: totalTournaments.count
+        },
+        transactions: {
+          deposits: totalDeposits.count,
+          withdrawals: totalWithdrawals.count
+        },
+        lastUpdated: new Date()
+      };
+    } catch (error) {
+      console.error('❌ [GET-PLATFORM-STATS] Error:', error);
+      throw error;
+    }
+  }
+
+  async getComprehensiveRewards(userId: number, limit: number = 10): Promise<any[]> {
+    try {
+      const transactions = await db
+        .select()
+        .from(transactionLogs)
+        .where(eq(transactionLogs.userId, userId))
+        .orderBy(desc(transactionLogs.createdAt))
+        .limit(limit);
+
+      return transactions.map(tx => ({
+        id: tx.id,
+        type: tx.type,
+        amount: Number(tx.amount),
+        description: tx.description,
+        token: tx.token || 'NTIQ',
+        createdAt: tx.createdAt,
+        source: this.getRewardSource(tx.type)
+      }));
+    } catch (error) {
+      console.error('❌ [GET-COMPREHENSIVE-REWARDS] Error:', error);
+      throw error;
+    }
+  }
+
+  private getRewardSource(type: string): string {
+    const sourceMap: { [key: string]: string } = {
+      'prediction_reward': 'Price Prediction',
+      'battle_reward': 'Battle Victory',
+      'survival_tournament_reward': 'Survival Tournament',
+      'referral_reward': 'Referral Program',
+      'referral_bonus': 'Welcome Bonus',
+      'achievement_reward': 'Achievement',
+      'daily_challenge_reward': 'Daily Challenge'
+    };
+    return sourceMap[type] || 'Other';
   }
 }
 

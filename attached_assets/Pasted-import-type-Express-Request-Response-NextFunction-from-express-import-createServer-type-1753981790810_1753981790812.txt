@@ -586,38 +586,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Admin authentication endpoint for admin panel
-  app.get("/api/auth/me", async (req, res) => {
-    try {
-      const userId = (req as any).session?.userId;
-      if (!userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(401).json({ message: "User not found" });
-      }
-
-      // Check admin status
-      const adminWallets = getAdminWalletAddresses();
-      const isAuthorizedAdmin = user.walletAddress && 
-        adminWallets.includes(user.walletAddress.toLowerCase());
-      
-      res.json({
-        id: user.id,
-        username: user.username,
-        walletAddress: user.walletAddress,
-        isAdmin: isAuthorizedAdmin || user.isAdmin,
-        authMethod: user.authMethod,
-        balance: user.balance
-      });
-    } catch (error) {
-      console.error("Auth me error:", error);
-      res.status(500).json({ message: "Authentication error" });
-    }
-  });
-
   // Wallet authentication routes
   app.get("/api/auth/wallet-user", async (req, res) => {
     try {
@@ -758,26 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Normalize wallet address
       const normalizedAddress = normalizeWalletAddress(walletAddress);
       
-      // ✅ CRITICAL DUPLICATION FIX: Check for multiple users with same wallet
-      const allUsersWithWallet = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
-      
-      if (allUsersWithWallet.length > 1) {
-        console.log(`🚨 [DUPLICATION-FIX] Found ${allUsersWithWallet.length} users with wallet ${normalizedAddress}`);
-        
-        // Keep the user with email or the first one created, delete others
-        const userToKeep = allUsersWithWallet.find(u => u.email) || allUsersWithWallet[0];
-        const usersToDelete = allUsersWithWallet.filter(u => u.id !== userToKeep.id);
-        
-        console.log(`🔧 [DUPLICATION-FIX] Keeping user ID ${userToKeep.id} (${userToKeep.username}), deleting ${usersToDelete.length} duplicates`);
-        
-        // Delete duplicate users
-        for (const duplicateUser of usersToDelete) {
-          await db.delete(users).where(eq(users.id, duplicateUser.id));
-          console.log(`🗑️ [DUPLICATION-FIX] Deleted duplicate user ID ${duplicateUser.id} (${duplicateUser.username})`);
-        }
-      }
-      
-      // Find user by wallet address (should be unique now)
+      // Find user by wallet address
       const user = await storage.getUserByWalletAddress(normalizedAddress);
       if (!user) {
         return res.status(404).json({ message: "User not found with this wallet address" });
@@ -829,101 +778,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error linking wallet with email:", error);
       res.status(500).json({ message: "Failed to link wallet with email" });
-    }
-  });
-
-  // Wallet Connect Authentication endpoint
-  app.post("/api/auth/wallet-connect", async (req, res) => {
-    try {
-      const { walletAddress } = req.body;
-      
-      if (!walletAddress) {
-        return res.status(400).json({ message: "Wallet address is required" });
-      }
-
-      const normalizedAddress = normalizeWalletAddress(walletAddress);
-      
-      // Security check for wallet login
-      const { WalletSecurityService } = await import('./walletSecurity');
-      const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
-      
-      if (!securityCheck.success) {
-        return res.status(403).json({ 
-          message: securityCheck.message,
-          securityBlock: true 
-        });
-      }
-
-      // ✅ CRITICAL DUPLICATION FIX: Check for multiple users with same wallet
-      const allUsersWithWallet = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
-      
-      if (allUsersWithWallet.length > 1) {
-        console.log(`🚨 [DUPLICATION-FIX] Found ${allUsersWithWallet.length} users with wallet ${normalizedAddress}`);
-        
-        // Keep the user with email or the first one created, delete others
-        const userToKeep = allUsersWithWallet.find(u => u.email) || allUsersWithWallet[0];
-        const usersToDelete = allUsersWithWallet.filter(u => u.id !== userToKeep.id);
-        
-        console.log(`🔧 [DUPLICATION-FIX] Keeping user ID ${userToKeep.id} (${userToKeep.username}), deleting ${usersToDelete.length} duplicates`);
-        
-        // Delete duplicate users
-        for (const duplicateUser of usersToDelete) {
-          await db.delete(users).where(eq(users.id, duplicateUser.id));
-          console.log(`🗑️ [DUPLICATION-FIX] Deleted duplicate user ID ${duplicateUser.id} (${duplicateUser.username})`);
-        }
-      }
-
-      // Find or create user by wallet
-      let dbUser = await storage.getUserByWalletAddress(normalizedAddress);
-      if (!dbUser) {
-        const adminWallets = getAdminWalletAddresses();
-        const isAdmin = adminWallets.includes(normalizedAddress);
-        const username = isAdmin ? `Admin_${normalizedAddress.slice(-6)}` : generateRandomUsername();
-        
-        dbUser = await storage.createUser({
-          username,
-          walletAddress: normalizedAddress,
-          authMethod: "wallet",
-          isAdmin
-        });
-        
-        console.log(`🔐 [SERVER] Auto-registered wallet user: ${username}, admin: ${isAdmin}, wallet: ${normalizedAddress.slice(0, 6)}...`);
-      }
-
-      // Set session
-      req.session.userId = dbUser.id;
-      req.session.walletAddress = normalizedAddress;
-      req.session.isAdmin = dbUser.isAdmin;
-      
-      // Save session explicitly
-      await new Promise<void>((resolve, reject) => {
-        req.session.save((err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-
-      console.log(`✅ [WALLET-CONNECT] Session established for user: ${dbUser.username}, session ID: ${req.session.id}`);
-      console.log(`✅ [WALLET-CONNECT] Session details:`, {
-        userId: req.session.userId,
-        walletAddress: req.session.walletAddress,
-        isAdmin: req.session.isAdmin,
-        sessionId: req.session.id
-      });
-
-      res.json({ 
-        success: true, 
-        user: {
-          id: dbUser.id,
-          username: dbUser.username,
-          walletAddress: dbUser.walletAddress,
-          balance: dbUser.balance,
-          isAdmin: dbUser.isAdmin
-        }
-      });
-    } catch (error) {
-      console.error("❌ [WALLET-CONNECT] Error:", error);
-      res.status(500).json({ message: "Failed to authenticate with wallet" });
     }
   });
 
@@ -1014,25 +868,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             message: securityCheck.message,
             securityBlock: true 
           });
-        }
-
-        // ✅ CRITICAL DUPLICATION FIX: Check for multiple users with same wallet
-        const allUsersWithWallet = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
-        
-        if (allUsersWithWallet.length > 1) {
-          console.log(`🚨 [DUPLICATION-FIX] Found ${allUsersWithWallet.length} users with wallet ${normalizedAddress}`);
-          
-          // Keep the user with email or the first one created, delete others
-          const userToKeep = allUsersWithWallet.find(u => u.email) || allUsersWithWallet[0];
-          const usersToDelete = allUsersWithWallet.filter(u => u.id !== userToKeep.id);
-          
-          console.log(`🔧 [DUPLICATION-FIX] Keeping user ID ${userToKeep.id} (${userToKeep.username}), deleting ${usersToDelete.length} duplicates`);
-          
-          // Delete duplicate users
-          for (const duplicateUser of usersToDelete) {
-            await db.delete(users).where(eq(users.id, duplicateUser.id));
-            console.log(`🗑️ [DUPLICATION-FIX] Deleted duplicate user ID ${duplicateUser.id} (${duplicateUser.username})`);
-          }
         }
 
         // Find or create user by wallet
@@ -1276,118 +1111,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Direct admin access route - bypasses all browser extension conflicts
-  app.get("/admin-direct/:token", async (req, res) => {
-    try {
-      const { token } = req.params;
-      const adminToken = "secure-admin-2024";
-      
-      if (token !== adminToken) {
-        return res.redirect("/?error=invalid-access");
-      }
-
-      const adminAddresses = getAdminWalletAddresses();
-      const adminWallet = adminAddresses[0]; // Use first admin address
-      
-      // Create or get admin user
-      let user = await storage.getUserByWalletAddress(adminWallet);
-      if (!user) {
-        user = await storage.createUser({
-          username: `admin_${adminWallet.slice(-6)}`,
-          walletAddress: adminWallet,
-          authMethod: "direct",
-          isAdmin: true
-        });
-      }
-
-      // Set session
-      req.session.userId = user.id;
-      req.session.isAdmin = true;
-
-      // Redirect to admin panel
-      res.redirect("/admin?access=granted");
-    } catch (error) {
-      console.error("Direct admin access error:", error);
-      res.redirect("/?error=auth-failed");
-    }
-  });
-
-  // Simple admin authentication endpoint
-  app.post("/api/admin/authenticate", async (req, res) => {
-    try {
-      const { walletAddress } = req.body;
-      
-      if (!walletAddress) {
-        return res.status(400).json({ message: "Wallet address required" });
-      }
-
-      const adminAddresses = getAdminWalletAddresses();
-      const adminWallet = adminAddresses[0]; // Use first admin address
-      
-      if (walletAddress.toLowerCase() !== adminWallet.toLowerCase()) {
-        return res.status(403).json({ message: "Admin access denied" });
-      }
-
-      // Create or get admin user
-      let user = await storage.getUserByWalletAddress(walletAddress);
-      if (!user) {
-        user = await storage.createUser({
-          username: `admin_${walletAddress.slice(-6)}`,
-          walletAddress: walletAddress,
-          authMethod: "wallet",
-          isAdmin: true
-        });
-      }
-
-      // Set session
-      req.session.userId = user.id;
-      req.session.isAdmin = true;
-      
-      res.json({ success: true, user: user });
-    } catch (error) {
-      console.error("Admin authentication error:", error);
-      res.status(500).json({ message: "Failed to authenticate admin" });
-    }
-  });
-
-  // Simple admin authentication endpoint
-  app.post("/api/admin/simple-auth", async (req, res) => {
-    try {
-      const { walletAddress } = req.body;
-      
-      if (!walletAddress) {
-        return res.status(400).json({ success: false, message: "Wallet address required" });
-      }
-
-      // Check if wallet address is authorized admin
-      const adminAddresses = getAdminWalletAddresses();
-      const isAuthorized = adminAddresses.includes(walletAddress.toLowerCase());
-      
-      if (!isAuthorized) {
-        return res.status(403).json({ success: false, message: "Unauthorized wallet address" });
-      }
-
-      // Find or create admin user
-      let user = await storage.getUserByWalletAddress(walletAddress);
-      if (!user) {
-        user = await storage.createUser({
-          username: `admin_${walletAddress.slice(-6)}`,
-          walletAddress: walletAddress,
-          authMethod: "wallet",
-          isAdmin: true,
-        });
-      }
-
-      // Set session
-      req.session.userId = user.id;
-      req.session.isAdmin = true;
-      
-      res.json({ success: true, message: "Admin access granted" });
-    } catch (error) {
-      console.error("Simple admin auth error:", error);
-      res.status(500).json({ success: false, message: "Authentication failed" });
-    }
-  });
 
   // Secure admin authentication with wallet signature verification
   app.post("/api/admin/wallet-auth", async (req, res) => {
@@ -3017,26 +2740,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user reward history for dashboard with enhanced sourceDetails format
-  app.get("/api/user/rewards/history", async (req, res) => {
-    try {
-      const userId = (req as any).session?.userId;
-      console.log(`🔍 [REWARD-HISTORY] API endpoint called for userId: ${userId}`);
-      if (!userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      // Get comprehensive reward history for user dashboard
-      const rewardHistory = await storage.getUserRewardHistory(userId, 20);
-      console.log(`✅ [REWARD-HISTORY] Successfully fetched ${rewardHistory.length} reward history items`);
-      
-      res.json(rewardHistory);
-    } catch (error) {
-      console.error("Error fetching user reward history:", error);
-      res.status(500).json({ message: "Failed to get reward history" });
-    }
-  });
-
   // Get recent prediction results (both wins and losses) including battles and survival
   app.get("/api/rewards/recent", async (req, res) => {
     try {
@@ -4266,270 +3969,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ===== DANGEROUS: DATABASE RESET ENDPOINT =====
-  app.post('/api/admin/reset-database', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // Enhanced IP detection for admin bypass
-      const forwardedFor = req.headers['x-forwarded-for'] as string;
-      const realIP = req.headers['x-real-ip'] as string;
-      const clientIP = forwardedFor?.split(',')[0]?.trim() || 
-                      realIP || 
-                      req.ip || 
-                      req.connection.remoteAddress || 
-                      'unknown';
-      
-      // Expanded admin IP whitelist for database reset operations
-      const RESET_ADMIN_IPS = new Set([
-        '127.0.0.1', 'localhost', '::1',
-        '172.31.128.37', '172.31.128.107', 
-        '180.249.63.149', // User's real IP
-        '10.81.0.0/16' // Replit internal network range
-      ]);
-      
-      // Check if IP is in admin whitelist or Replit internal network
-      const isAdminIP = RESET_ADMIN_IPS.has(clientIP) || 
-                       ADMIN_IP_WHITELIST.has(clientIP) ||
-                       clientIP.startsWith('10.81.') ||
-                       clientIP.startsWith('172.31.');
-      
-      console.log('🔧 [RESET] Enhanced admin IP check:', {
-        clientIP,
-        forwardedFor,
-        realIP,
-        isAdminIP,
-        skipRateLimit: true // Always skip for database reset
-      });
-      
-      // Check for admin bypass headers
-      const adminOperation = req.headers['x-admin-operation'];
-      const bypassRateLimit = req.headers['x-bypass-rate-limit'];
-      const adminIpOverride = req.headers['x-admin-ip-override'];
-      
-      console.log('🔧 [RESET] Admin bypass headers detected:', {
-        adminOperation,
-        bypassRateLimit,
-        adminIpOverride
-      });
-      
-      // Always bypass rate limiting for database reset operations
-      console.log('🔓 [RESET] Rate limiting completely bypassed for database reset operation');
-      
-      // Call requireAdmin middleware
-      await new Promise<void>((resolve, reject) => {
-        requireAdmin(req, res, (err?: any) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-      
-      const { confirmationCode } = req.body;
-      
-      // Require special confirmation code for security
-      if (confirmationCode !== 'RESET_ALL_DATA_CONFIRMED') {
-        return res.status(400).json({ 
-          error: 'Invalid confirmation code',
-          message: 'Database reset requires proper confirmation code'
-        });
-      }
-
-      // Set extended timeout for database reset operation with admin bypass
-      const resetTimeout = adminOperation === 'database-reset' ? 600000 : 300000; // 10 minutes for admin reset
-      res.setTimeout(resetTimeout);
-      
-      console.log(`⏱️ [RESET] Timeout set to ${resetTimeout/1000} seconds for admin operation`);
-      
-      // Disable keep-alive for this operation to prevent connection issues
-      res.setHeader('Connection', 'close');
-      
-      console.log('🚨 [RESET] CRITICAL: Database reset initiated by admin user:', req.session.userId);
-      console.log('🚨 [RESET] This will DELETE ALL DATA from the database');
-      
-      // Get table counts before deletion for logging
-      const beforeCounts = {
-        users: await db.select().from(users).then(r => r.length),
-        predictions: await db.select().from(predictions).then(r => r.length),
-        predictionBattles: await db.select().from(predictionBattles).then(r => r.length),
-        transactionLogs: await db.select().from(transactionLogs).then(r => r.length),
-        deposits: await db.select().from(deposits).then(r => r.length),
-        withdrawals: await db.select().from(withdrawals).then(r => r.length),
-        rewards: await db.select().from(rewards).then(r => r.length),
-        achievements: await db.select().from(achievements).then(r => r.length),
-        dailyChallenges: await db.select().from(dailyChallenges).then(r => r.length),
-        survivalTournaments: await db.select().from(survivalTournaments).then(r => r.length),
-        banners: await db.select().from(banners).then(r => r.length)
-      };
-      
-      console.log('📊 [RESET] Data counts before deletion:', beforeCounts);
-      
-      // Enhanced retry mechanism for database operations with comprehensive error handling
-      const retryOperation = async (operation: () => Promise<void>, maxRetries = 5, operationName = 'Database Operation') => {
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          try {
-            console.log(`🔄 [RESET] ${operationName} - Attempt ${attempt}/${maxRetries}`);
-            await operation();
-            console.log(`✅ [RESET] ${operationName} - Success on attempt ${attempt}`);
-            return; // Success, exit retry loop
-          } catch (error: any) {
-            console.log(`⚠️ [RESET] ${operationName} - Attempt ${attempt}/${maxRetries} failed:`, {
-              message: error.message,
-              code: error.code,
-              sqlState: error.sqlState,
-              routine: error.routine
-            });
-            
-            // Enhanced error categorization
-            const isRetryable = 
-              error.code === 'ENOTFOUND' ||
-              error.code === 'ECONNREFUSED' ||
-              error.code === 'ETIMEDOUT' ||
-              error.code === '23503' || // Foreign key violation
-              error.code === '23505' || // Unique violation
-              error.message?.includes('timeout') ||
-              error.message?.includes('connection') ||
-              error.message?.includes('network') ||
-              error.message?.includes('constraint') ||
-              error.message?.includes('locked') ||
-              (attempt < 3 && (error.message?.includes('rate limit') || error.message?.includes('429')));
-            
-            if (attempt === maxRetries || !isRetryable) {
-              console.error(`💥 [RESET] ${operationName} - Final failure after ${attempt} attempts:`, error);
-              throw error;
-            }
-            
-            // Dynamic delay based on error type
-            let delay = 1000; // Base delay
-            if (error.message?.includes('rate limit') || error.message?.includes('429')) {
-              delay = Math.pow(2, attempt) * 1500; // Exponential backoff for rate limits
-            } else if (error.code === '23503' || error.message?.includes('constraint')) {
-              delay = 500; // Short delay for constraint issues
-            } else if (error.message?.includes('connection') || error.message?.includes('timeout')) {
-              delay = 3000 * attempt; // Linear backoff for connection issues
-            } else {
-              delay = 1000 * Math.pow(2, attempt - 1); // Standard exponential backoff
-            }
-            
-            console.log(`⏳ [RESET] ${operationName} - Waiting ${delay}ms before retry...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-          }
-        }
-      };
-
-      // NEW APPROACH: Use TRUNCATE CASCADE (no session_replication_role needed)
-      console.log('🔧 [RESET] Using TRUNCATE CASCADE approach - no foreign key disabling required');
-      
-      // Use TRUNCATE CASCADE for complete database reset
-      const tablesToTruncate = [
-        'user_achievements',
-        'survival_participants', 
-        'survival_predictions',
-        'transaction_logs',
-        'rewards',
-        'daily_challenges', 
-        'deposits',
-        'withdrawals',
-        'prediction_battles',
-        'predictions',
-        'survival_tournaments',
-        'banners',
-        'achievements',
-        'cryptocurrencies',
-        'users'
-      ];
-
-      let clearedTables = 0;
-      for (const tableName of tablesToTruncate) {
-        await retryOperation(async () => {
-          try {
-            await db.execute(sql.raw(`TRUNCATE TABLE ${tableName} RESTART IDENTITY CASCADE`));
-            console.log(`✅ [RESET] ${tableName} table truncated with RESTART IDENTITY CASCADE`);
-            clearedTables++;
-          } catch (error: any) {
-            console.log(`⚠️ [RESET] Could not truncate ${tableName} (${error.message}) - trying DELETE`);
-            // Try fallback DELETE if TRUNCATE fails
-            await db.execute(sql.raw(`DELETE FROM ${tableName}`));
-            console.log(`✅ [RESET] ${tableName} table cleared with DELETE`);
-            clearedTables++;
-          }
-        }, 5, `Clear Table: ${tableName}`);
-      }
-      
-      console.log(`✅ [RESET] Successfully cleared ${clearedTables} tables using TRUNCATE CASCADE approach`);
-      
-      const afterCounts = {
-        users: await db.select().from(users).then(r => r.length),
-        predictions: await db.select().from(predictions).then(r => r.length),
-        predictionBattles: await db.select().from(predictionBattles).then(r => r.length),
-        transactionLogs: await db.select().from(transactionLogs).then(r => r.length),
-        deposits: await db.select().from(deposits).then(r => r.length),
-        withdrawals: await db.select().from(withdrawals).then(r => r.length),
-        rewards: await db.select().from(rewards).then(r => r.length),
-        achievements: await db.select().from(achievements).then(r => r.length),
-        dailyChallenges: await db.select().from(dailyChallenges).then(r => r.length),
-        survivalTournaments: await db.select().from(survivalTournaments).then(r => r.length),
-        banners: await db.select().from(banners).then(r => r.length)
-      };
-      
-      console.log('✅ [RESET] Database reset completed successfully');
-      console.log('📊 [RESET] Data counts after deletion:', afterCounts);
-      console.log('🔄 [RESET] All ID sequences reset to start from 1');
-      
-      // Log this critical action for audit
-      console.log('🔐 [SECURITY] CRITICAL ACTION: Complete database reset performed by admin');
-      
-      res.json({
-        success: true,
-        message: 'Database reset completed successfully',
-        beforeCounts,
-        afterCounts,
-        resetDate: new Date().toISOString()
-      });
-      
-    } catch (error) {
-      console.error('❌ [RESET] Critical error during database reset:', error);
-      console.error('❌ [RESET] Error details:', error instanceof Error ? error.message : 'Unknown error');
-      console.error('❌ [RESET] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      
-      // Enhanced error handling for different types of errors
-      let errorMessage = 'Unknown error';
-      let statusCode = 500;
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-        
-        // Check for rate limiting errors
-        if (error.message.includes('Too many requests') || error.message.includes('429')) {
-          console.log('🔄 [RESET] Rate limiting detected, but continuing with admin bypass');
-          statusCode = 429;
-          errorMessage = 'Rate limiting encountered. Admin operations should bypass this automatically.';
-        }
-        
-        // Check for database connection errors
-        if (error.message.includes('connection') || error.message.includes('timeout')) {
-          errorMessage = 'Database connection issue. Please try again in a few moments.';
-        }
-        
-        // Check for permission errors
-        if (error.message.includes('permission') || error.message.includes('denied')) {
-          errorMessage = 'Database permission error. Admin access required.';
-        }
-      }
-      
-      // Log detailed error information for debugging
-      console.log('🔧 [RESET] Enhanced error analysis:', {
-        originalError: error,
-        errorType: error instanceof Error ? error.constructor.name : typeof error,
-        statusCode,
-        finalMessage: errorMessage
-      });
-      
-      res.status(statusCode).json({ 
-        error: 'Failed to reset database',
-        message: errorMessage,
-        timestamp: new Date().toISOString(),
-        retryable: statusCode === 429 || errorMessage.includes('connection')
-      });
-    }
-  });
 
   // Event management endpoints
   app.get("/api/events", async (req, res) => {
@@ -8759,71 +8198,23 @@ Manual balance correction required IMMEDIATELY!`;
   app.post('/api/user/referral/generate', requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = req.session?.userId;
-      console.log('🎯 [REFERRAL-GENERATE-PRIMARY] Starting generation for userId:', userId);
-      
       if (!userId) {
-        console.log('❌ [REFERRAL-GENERATE-PRIMARY] No userId in session');
         return res.status(401).json({ message: 'Authentication required' });
       }
 
       // Check if user already has a referral code
-      console.log('🔍 [REFERRAL-GENERATE-PRIMARY] Checking existing code for user:', userId);
       const user = await storage.getUser(userId);
-      console.log('🔍 [REFERRAL-GENERATE-PRIMARY] User found:', user ? 'YES' : 'NO', user?.referralCode ? `(has code: ${user.referralCode})` : '(no code)');
-      
       if (user?.referralCode) {
-        console.log('✅ [REFERRAL-GENERATE-PRIMARY] Returning existing code:', user.referralCode);
         // Return existing referral code instead of error
         return res.json({ referralCode: user.referralCode, success: true });
       }
 
       // Generate unique referral code using storage function
-      console.log('🔄 [REFERRAL-GENERATE-PRIMARY] Generating new referral code...');
       const code = await storage.generateReferralCode(userId);
-      console.log('✅ [REFERRAL-GENERATE-PRIMARY] Generated new code:', code);
-
-      // Verify the code was saved
-      const updatedUser = await storage.getUser(userId);
-      console.log('🔍 [REFERRAL-GENERATE-PRIMARY] Verification - user now has code:', updatedUser?.referralCode);
 
       res.json({ referralCode: code, success: true });
     } catch (error) {
-      console.error('❌ [REFERRAL-GENERATE-PRIMARY] Error generating referral code:', error);
-      console.error('❌ [REFERRAL-GENERATE-PRIMARY] Error details:', {
-        message: error.message,
-        stack: error.stack?.substring(0, 500),
-        userId: req.session?.userId
-      });
-      res.status(500).json({ message: 'Failed to generate referral code' });
-    }
-  });
-
-  // Generate referral code (alternative endpoint)
-  app.post('/api/auth/generate-referral', requireAuth, async (req: Request, res: Response) => {
-    try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ message: 'Authentication required' });
-      }
-
-      console.log('🎯 [REFERRAL-GENERATE] User ID:', userId);
-
-      // Check if user already has a referral code
-      const user = await storage.getUser(userId);
-      if (user?.referralCode) {
-        console.log('✅ [REFERRAL-GENERATE] User already has code:', user.referralCode);
-        // Return existing referral code instead of error
-        return res.json({ referralCode: user.referralCode, success: true });
-      }
-
-      // Generate unique referral code using storage function
-      console.log('🔄 [REFERRAL-GENERATE] Generating new code...');
-      const code = await storage.generateReferralCode(userId);
-      console.log('✅ [REFERRAL-GENERATE] Code generated:', code);
-
-      res.json({ referralCode: code, success: true });
-    } catch (error) {
-      console.error('❌ [REFERRAL-GENERATE] Error generating referral code:', error);
+      console.error('Error generating referral code:', error);
       res.status(500).json({ message: 'Failed to generate referral code' });
     }
   });
@@ -8845,43 +8236,20 @@ Manual balance correction required IMMEDIATELY!`;
       const { code } = req.params;
       console.log('🔍 [REFERRAL-VALIDATION] Code received:', code);
       
-      // Enhanced input validation
-      if (!code || typeof code !== 'string' || code.length < 3 || code.length > 20) {
-        console.log('❌ [REFERRAL-VALIDATION] Invalid code format:', code);
-        return res.status(400).json({ 
-          valid: false,
-          message: 'Invalid referral code format' 
-        });
+      if (!code) {
+        return res.status(400).json({ message: 'Referral code is required' });
       }
 
-      // Sanitize code input - only allow alphanumeric characters
-      const sanitizedCode = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-      if (sanitizedCode !== code.toUpperCase()) {
-        console.log('❌ [REFERRAL-VALIDATION] Code contains invalid characters:', code);
-        return res.status(400).json({ 
-          valid: false,
-          message: 'Referral code contains invalid characters' 
-        });
-      }
-
-      // Direct database query with enhanced security
-      const [referrer] = await db.select({
-        id: users.id,
-        username: users.username,
-        walletAddress: users.walletAddress,
-        isActive: users.isActive
-      })
+      // Direct database query instead of storage method
+      const [referrer] = await db.select()
         .from(users)
-        .where(and(
-          eq(users.referralCode, sanitizedCode),
-          eq(users.isActive, true) // Only allow active users
-        ))
+        .where(eq(users.referralCode, code))
         .limit(1);
       
-      console.log('🔍 [REFERRAL-VALIDATION] Found referrer:', referrer ? 'YES' : 'NO');
+      console.log('🔍 [REFERRAL-VALIDATION] Found referrer:', referrer);
       
       if (!referrer) {
-        console.log('🔍 [REFERRAL-VALIDATION] No active referrer found for code:', sanitizedCode);
+        console.log('🔍 [REFERRAL-VALIDATION] No referrer found for code:', code);
         return res.status(400).json({ 
           valid: false, 
           message: 'Invalid referral code' 
@@ -8889,7 +8257,7 @@ Manual balance correction required IMMEDIATELY!`;
       }
 
       console.log('✅ [REFERRAL-VALIDATION] Valid referral code found:', {
-        code: sanitizedCode,
+        code,
         referrerId: referrer.id,
         referrerUsername: referrer.username
       });
@@ -8911,59 +8279,20 @@ Manual balance correction required IMMEDIATELY!`;
   app.post('/api/auth/process-referral', async (req: Request, res: Response) => {
     try {
       const { referralCode, newUserId } = req.body;
-      console.log('🎯 [PROCESS-REFERRAL] Starting process:', { referralCode, newUserId });
       
-      // Enhanced input validation
       if (!referralCode || !newUserId) {
-        console.log('❌ [PROCESS-REFERRAL] Missing required fields');
         return res.status(400).json({ message: 'Missing referral code or user ID' });
       }
 
-      // Validate user ID is a positive number
-      if (!Number.isInteger(newUserId) || newUserId <= 0) {
-        console.log('❌ [PROCESS-REFERRAL] Invalid user ID:', newUserId);
-        return res.status(400).json({ message: 'Invalid user ID' });
-      }
-
-      // Sanitize referral code
-      const sanitizedCode = referralCode.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-      if (sanitizedCode !== referralCode.toUpperCase() || sanitizedCode.length < 3) {
-        console.log('❌ [PROCESS-REFERRAL] Invalid referral code format:', referralCode);
-        return res.status(400).json({ message: 'Invalid referral code format' });
-      }
-
-      // Verify new user exists and is valid
-      const newUser = await storage.getUser(newUserId);
-      if (!newUser) {
-        console.log('❌ [PROCESS-REFERRAL] New user not found:', newUserId);
-        return res.status(400).json({ message: 'User not found' });
-      }
-
-      // Check if user already used a referral code
-      if (newUser.referredBy) {
-        console.log('❌ [PROCESS-REFERRAL] User already referred by someone:', newUserId);
-        return res.status(400).json({ message: 'User already used a referral code' });
-      }
-
-      // Process referral using storage function with comprehensive logging
-      console.log('🔄 [PROCESS-REFERRAL] Processing referral...');
-      await storage.processReferral(sanitizedCode, newUserId);
-      console.log('✅ [PROCESS-REFERRAL] Referral processed successfully');
+      // Process referral using storage function
+      await storage.processReferral(referralCode, newUserId);
 
       res.json({ success: true, message: 'Referral processed successfully' });
-    } catch (error: any) {
-      console.error('❌ [PROCESS-REFERRAL] Error processing referral:', error);
-      console.error('❌ [PROCESS-REFERRAL] Error details:', {
-        message: error?.message,
-        stack: error?.stack?.substring(0, 500)
-      });
+    } catch (error) {
+      console.error('Error processing referral:', error);
       res.status(500).json({ message: 'Failed to process referral' });
     }
   });
-
-
-
-  // ===== END OF REFERRAL ENDPOINTS =====
 
   // ==================== LOYALTY PROGRAM ENDPOINTS ====================
   
@@ -9298,217 +8627,6 @@ Manual balance correction required IMMEDIATELY!`;
         message: "Admin wallet configuration not available",
         error: "Environment variables not properly configured"
       });
-    }
-  });
-
-  // ==================== ADMIN LEADERBOARD ENDPOINTS ====================
-  
-  // Admin: Get enhanced leaderboard with detailed stats
-  app.get("/api/admin/leaderboard", requireAdmin, async (req, res) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const sortBy = (req.query.sortBy as string) || 'totalRewards';
-      const sortOrder = (req.query.sortOrder as string) || 'desc';
-      
-      const leaderboard = await storage.getEnhancedLeaderboard({
-        page,
-        limit,
-        sortBy,
-        sortOrder
-      });
-
-      res.json(leaderboard);
-    } catch (error) {
-      console.error("Error fetching admin leaderboard:", error);
-      res.status(500).json({ message: "Failed to fetch leaderboard" });
-    }
-  });
-
-  // ==================== ADMIN EVENTS ENDPOINTS ====================
-  
-  // Admin: Get all events
-  app.get("/api/admin/events", requireAdmin, async (req, res) => {
-    try {
-      const events = await storage.getAllEvents();
-      res.json(events);
-    } catch (error) {
-      console.error("Error fetching events:", error);
-      res.status(500).json({ message: "Failed to fetch events" });
-    }
-  });
-
-  // Admin: Create new event
-  app.post("/api/admin/events", requireAdmin, async (req, res) => {
-    try {
-      const eventData = req.body;
-      const event = await storage.createEvent(eventData);
-      
-      auditLog("EVENT_CREATED", { 
-        eventId: event.id,
-        title: event.title,
-        createdBy: req.session.userId 
-      }, req);
-      
-      res.json(event);
-    } catch (error) {
-      console.error("Error creating event:", error);
-      res.status(500).json({ message: "Failed to create event" });
-    }
-  });
-
-  // Admin: Update event
-  app.put("/api/admin/events/:id", requireAdmin, async (req, res) => {
-    try {
-      const eventId = parseInt(req.params.id);
-      const eventData = req.body;
-      
-      const event = await storage.updateEvent(eventId, eventData);
-      
-      auditLog("EVENT_UPDATED", { 
-        eventId,
-        changes: eventData,
-        updatedBy: req.session.userId 
-      }, req);
-      
-      res.json(event);
-    } catch (error) {
-      console.error("Error updating event:", error);
-      res.status(500).json({ message: "Failed to update event" });
-    }
-  });
-
-  // Admin: Delete event
-  app.delete("/api/admin/events/:id", requireAdmin, async (req, res) => {
-    try {
-      const eventId = parseInt(req.params.id);
-      await storage.deleteEvent(eventId);
-      
-      auditLog("EVENT_DELETED", { 
-        eventId,
-        deletedBy: req.session.userId 
-      }, req);
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      res.status(500).json({ message: "Failed to delete event" });
-    }
-  });
-
-  // ==================== ADMIN SECURITY ENDPOINTS ====================
-  
-  // Admin: Get security events
-  app.get("/api/admin/security/events", requireAdmin, async (req, res) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const search = req.query.search as string || '';
-      
-      // Return recent security audit logs
-      const filteredLogs = securityAuditLogs
-        .filter(log => 
-          !search || 
-          log.event.toLowerCase().includes(search.toLowerCase()) ||
-          log.ip?.includes(search) ||
-          JSON.stringify(log.details).toLowerCase().includes(search.toLowerCase())
-        )
-        .slice((page - 1) * limit, page * limit);
-
-      res.json({
-        events: filteredLogs,
-        total: securityAuditLogs.length,
-        page,
-        totalPages: Math.ceil(securityAuditLogs.length / limit)
-      });
-    } catch (error) {
-      console.error("Error fetching security events:", error);
-      res.status(500).json({ message: "Failed to fetch security events" });
-    }
-  });
-
-  // Admin: Get security settings
-  app.get("/api/admin/security/settings", requireAdmin, async (req, res) => {
-    try {
-      const settings = {
-        autoBlockSuspiciousIp: true,
-        autoAlertHighValue: true,
-        autoLogGeoLocation: true,
-        rateLimitEnabled: true,
-        maxLoginAttempts: 5,
-        sessionTimeout: 24,
-        requireEmailVerification: false
-      };
-      
-      res.json(settings);
-    } catch (error) {
-      console.error("Error fetching security settings:", error);
-      res.status(500).json({ message: "Failed to fetch security settings" });
-    }
-  });
-
-  // Admin: Update security settings
-  app.post("/api/admin/security/settings", requireAdmin, async (req, res) => {
-    try {
-      const settings = req.body;
-      
-      auditLog("SECURITY_SETTINGS_UPDATED", { 
-        settings,
-        updatedBy: req.session.userId 
-      }, req);
-      
-      res.json({ success: true, message: "Security settings updated" });
-    } catch (error) {
-      console.error("Error updating security settings:", error);
-      res.status(500).json({ message: "Failed to update security settings" });
-    }
-  });
-
-  // Admin: Block IP address
-  app.post("/api/admin/security/block-ip", requireAdmin, async (req, res) => {
-    try {
-      const { ip, reason } = req.body;
-      
-      auditLog("IP_BLOCKED", { 
-        blockedIp: ip,
-        reason,
-        blockedBy: req.session.userId 
-      }, req);
-      
-      res.json({ success: true, message: `IP ${ip} blocked successfully` });
-    } catch (error) {
-      console.error("Error blocking IP:", error);
-      res.status(500).json({ message: "Failed to block IP" });
-    }
-  });
-
-  // ==================== ADMIN SYSTEM HEALTH ENDPOINTS ====================
-  
-  // Admin: Get system health metrics
-  app.get("/api/admin/system/health", requireAdmin, async (req, res) => {
-    try {
-      const health = {
-        database: {
-          status: 'healthy',
-          responseTime: '< 10ms',
-          connections: 5
-        },
-        api: {
-          status: 'healthy',
-          uptime: process.uptime(),
-          memory: process.memoryUsage()
-        },
-        external: {
-          pythNetwork: 'healthy',
-          etherscan: 'healthy',
-          coingecko: 'healthy'
-        }
-      };
-      
-      res.json(health);
-    } catch (error) {
-      console.error("Error fetching system health:", error);
-      res.status(500).json({ message: "Failed to fetch system health" });
     }
   });
 
