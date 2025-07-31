@@ -8759,23 +8759,41 @@ Manual balance correction required IMMEDIATELY!`;
   app.post('/api/user/referral/generate', requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = req.session?.userId;
+      console.log('🎯 [REFERRAL-GENERATE-PRIMARY] Starting generation for userId:', userId);
+      
       if (!userId) {
+        console.log('❌ [REFERRAL-GENERATE-PRIMARY] No userId in session');
         return res.status(401).json({ message: 'Authentication required' });
       }
 
       // Check if user already has a referral code
+      console.log('🔍 [REFERRAL-GENERATE-PRIMARY] Checking existing code for user:', userId);
       const user = await storage.getUser(userId);
+      console.log('🔍 [REFERRAL-GENERATE-PRIMARY] User found:', user ? 'YES' : 'NO', user?.referralCode ? `(has code: ${user.referralCode})` : '(no code)');
+      
       if (user?.referralCode) {
+        console.log('✅ [REFERRAL-GENERATE-PRIMARY] Returning existing code:', user.referralCode);
         // Return existing referral code instead of error
         return res.json({ referralCode: user.referralCode, success: true });
       }
 
       // Generate unique referral code using storage function
+      console.log('🔄 [REFERRAL-GENERATE-PRIMARY] Generating new referral code...');
       const code = await storage.generateReferralCode(userId);
+      console.log('✅ [REFERRAL-GENERATE-PRIMARY] Generated new code:', code);
+
+      // Verify the code was saved
+      const updatedUser = await storage.getUser(userId);
+      console.log('🔍 [REFERRAL-GENERATE-PRIMARY] Verification - user now has code:', updatedUser?.referralCode);
 
       res.json({ referralCode: code, success: true });
     } catch (error) {
-      console.error('Error generating referral code:', error);
+      console.error('❌ [REFERRAL-GENERATE-PRIMARY] Error generating referral code:', error);
+      console.error('❌ [REFERRAL-GENERATE-PRIMARY] Error details:', {
+        message: error.message,
+        stack: error.stack?.substring(0, 500),
+        userId: req.session?.userId
+      });
       res.status(500).json({ message: 'Failed to generate referral code' });
     }
   });

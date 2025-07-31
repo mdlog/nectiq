@@ -3324,15 +3324,27 @@ export class MemStorage implements IStorage {
   }
 
   async generateReferralCode(userId: number): Promise<string> {
+    console.log('🎯 [STORAGE] generateReferralCode called for userId:', userId);
+    
     // Generate unique referral code
     const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    console.log('🎲 [STORAGE] Generated code:', code);
     
-    // Update user with referral code
-    await db.update(users)
-      .set({ referralCode: code })
-      .where(eq(users.id, userId));
-
-    return code;
+    try {
+      // Update user with referral code
+      console.log('🔄 [STORAGE] Updating user with referral code...');
+      const result = await db.update(users)
+        .set({ referralCode: code })
+        .where(eq(users.id, userId));
+      
+      console.log('✅ [STORAGE] Update result:', result);
+      console.log('✅ [STORAGE] Referral code saved successfully:', code);
+      
+      return code;
+    } catch (error) {
+      console.error('❌ [STORAGE] Error updating user with referral code:', error);
+      throw error;
+    }
   }
 
   async processReferral(referralCode: string, newUserId: number): Promise<void> {
