@@ -8760,6 +8760,36 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
+  // Generate referral code (alternative endpoint)
+  app.post('/api/auth/generate-referral', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      console.log('🎯 [REFERRAL-GENERATE] User ID:', userId);
+
+      // Check if user already has a referral code
+      const user = await storage.getUser(userId);
+      if (user?.referralCode) {
+        console.log('✅ [REFERRAL-GENERATE] User already has code:', user.referralCode);
+        // Return existing referral code instead of error
+        return res.json({ referralCode: user.referralCode, success: true });
+      }
+
+      // Generate unique referral code using storage function
+      console.log('🔄 [REFERRAL-GENERATE] Generating new code...');
+      const code = await storage.generateReferralCode(userId);
+      console.log('✅ [REFERRAL-GENERATE] Code generated:', code);
+
+      res.json({ referralCode: code, success: true });
+    } catch (error) {
+      console.error('❌ [REFERRAL-GENERATE] Error generating referral code:', error);
+      res.status(500).json({ message: 'Failed to generate referral code' });
+    }
+  });
+
   // Simple test endpoint to validate database connection - PLACED EARLY IN ROUTE REGISTRATION
   app.get('/api/test/referral/:code', (req: Request, res: Response) => {
     console.log('🧪 [TEST-HIT] Route accessed successfully!', req.params.code);
