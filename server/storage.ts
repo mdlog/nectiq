@@ -114,9 +114,6 @@ export interface IStorage {
   createAdminLog(log: any): Promise<any>;
   getAdminLogs(filters?: any): Promise<any[]>;
 
-  // Platform statistics operations
-  getPlatformStats(): Promise<any>;
-
   // Transaction log operations
   createTransactionLog(transaction: any): Promise<any>;
   getTransactionLogs(filters?: any): Promise<any[]>;
@@ -149,6 +146,12 @@ export interface IStorage {
 
   // Enhanced leaderboard operations
   getEnhancedLeaderboard(options: any): Promise<any>;
+
+  // Comprehensive rewards operations
+  getComprehensiveRewards(userId: number, limit?: number): Promise<any[]>;
+
+  // Platform statistics operations  
+  getPlatformStats(): Promise<any>;
 
   // Referral operations
   createReferral(referrerId: number, referredId: number, referralCode: string): Promise<void>;
