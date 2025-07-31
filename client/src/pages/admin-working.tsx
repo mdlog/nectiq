@@ -353,158 +353,273 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-              Nectiq Admin Panel
-            </h1>
-            <p className="text-slate-400 mt-2">Comprehensive platform management dashboard</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Professional Header */}
+      <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  Nectiq Admin Panel
+                </h1>
+                <p className="text-slate-300 text-sm">Platform Management Dashboard</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-2 px-3 py-1 bg-slate-700/50 rounded-full">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-sm text-slate-300">System Online</span>
+              </div>
+              <Button
+                onClick={() => window.location.href = '/'}
+                variant="outline"
+                size="sm"
+                className="bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white transition-all duration-200"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Kembali ke Home
+              </Button>
+            </div>
           </div>
-          <Button
-            onClick={() => window.location.href = '/'}
-            variant="outline"
-            className="bg-slate-800 border-slate-600 text-white hover:bg-slate-700 hover:text-blue-400 transition-colors"
-          >
-            <Home className="h-4 w-4 mr-2" />
-            Kembali ke Home
-          </Button>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-8">{/* Content wrapper moved here */}
+
+        {/* Professional Navigation */}
+        <div className="mb-8">
+          <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-2">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="bg-transparent w-full grid grid-cols-3 lg:grid-cols-9 gap-2 h-auto p-0">
+                <TabsTrigger 
+                  value="statistics" 
+                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                >
+                  <BarChart3 className="h-6 w-6 mb-1" />
+                  Statistics
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="users" 
+                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                >
+                  <Users className="h-6 w-6 mb-1" />
+                  Users
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="cryptocurrencies" 
+                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-yellow-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                >
+                  <Database className="h-6 w-6 mb-1" />
+                  Crypto
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="predictions" 
+                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                >
+                  <TrendingUp className="h-6 w-6 mb-1" />
+                  Predictions
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="leaderboard" 
+                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                >
+                  <Trophy className="h-6 w-6 mb-1" />
+                  Leaderboard
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="transactions" 
+                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-500 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                >
+                  <DollarSign className="h-6 w-6 mb-1" />
+                  Transactions
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="security" 
+                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-pink-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                >
+                  <Lock className="h-6 w-6 mb-1" />
+                  Security
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="events" 
+                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                >
+                  <Calendar className="h-6 w-6 mb-1" />
+                  Events
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="settings" 
+                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-violet-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                >
+                  <Settings className="h-6 w-6 mb-1" />
+                  Settings
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 bg-slate-800/50 border border-slate-700">
-            <TabsTrigger value="statistics" className="data-[state=active]:bg-blue-600">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Statistics
-            </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-green-600">
-              <Users className="h-4 w-4 mr-2" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="cryptocurrencies" className="data-[state=active]:bg-yellow-600">
-              <Database className="h-4 w-4 mr-2" />
-              Crypto
-            </TabsTrigger>
-            <TabsTrigger value="predictions" className="data-[state=active]:bg-purple-600">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Predictions
-            </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-orange-600">
-              <Trophy className="h-4 w-4 mr-2" />
-              Leaderboard
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="data-[state=active]:bg-red-600">
-              <DollarSign className="h-4 w-4 mr-2" />
-              Transactions
-            </TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-pink-600">
-              <Lock className="h-4 w-4 mr-2" />
-              Security
-            </TabsTrigger>
-            <TabsTrigger value="events" className="data-[state=active]:bg-indigo-600">
-              <Calendar className="h-4 w-4 mr-2" />
-              Events
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-violet-600">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">{/* Moved content to new wrapper */}
 
           {/* Statistics Tab */}
-          <TabsContent value="statistics" className="space-y-6">
+          <TabsContent value="statistics" className="space-y-8">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="bg-slate-800 border-slate-700">
+              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Users className="h-8 w-8 text-blue-400" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-slate-400">Total Users</p>
-                      <p className="text-2xl font-bold text-white">
-                        {statsLoading ? "Loading..." : (adminStats?.totalUsers || 0)}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-400 mb-2">Total Users</p>
+                      <p className="text-3xl font-bold text-white">
+                        {statsLoading ? (
+                          <div className="animate-pulse bg-slate-600 h-8 w-16 rounded"></div>
+                        ) : (adminStats?.totalUsers || 0)}
                       </p>
+                    </div>
+                    <div className="p-3 bg-blue-500/20 rounded-xl">
+                      <Users className="h-8 w-8 text-blue-400" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="bg-slate-800 border-slate-700">
+              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300">
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <TrendingUp className="h-8 w-8 text-green-400" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-slate-400">Total Predictions</p>
-                      <p className="text-2xl font-bold text-white">
-                        {statsLoading ? "Loading..." : (adminStats?.totalPredictions || 0)}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-400 mb-2">Total Predictions</p>
+                      <p className="text-3xl font-bold text-white">
+                        {statsLoading ? (
+                          <div className="animate-pulse bg-slate-600 h-8 w-16 rounded"></div>
+                        ) : (adminStats?.totalPredictions || 0)}
                       </p>
+                    </div>
+                    <div className="p-3 bg-green-500/20 rounded-xl">
+                      <TrendingUp className="h-8 w-8 text-green-400" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-800 border-slate-700">
+              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm hover:shadow-xl hover:shadow-yellow-500/10 transition-all duration-300">
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Award className="h-8 w-8 text-yellow-400" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-slate-400">Total Rewards</p>
-                      <p className="text-2xl font-bold text-white">
-                        {statsLoading ? "Loading..." : `${adminStats?.totalRewards || 0} NTIQ`}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-400 mb-2">Total Rewards</p>
+                      <p className="text-3xl font-bold text-white">
+                        {statsLoading ? (
+                          <div className="animate-pulse bg-slate-600 h-8 w-20 rounded"></div>
+                        ) : `${adminStats?.totalRewards || 0}`}
                       </p>
+                      <p className="text-xs text-yellow-400 font-medium">NTIQ</p>
+                    </div>
+                    <div className="p-3 bg-yellow-500/20 rounded-xl">
+                      <Award className="h-8 w-8 text-yellow-400" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-800 border-slate-700">
+              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
                 <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <Activity className="h-8 w-8 text-purple-400" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-slate-400">Active Users</p>
-                      <p className="text-2xl font-bold text-white">
-                        {statsLoading ? "Loading..." : (adminStats?.activeUsers || 0)}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-400 mb-2">Active Users</p>
+                      <p className="text-3xl font-bold text-white">
+                        {statsLoading ? (
+                          <div className="animate-pulse bg-slate-600 h-8 w-16 rounded"></div>
+                        ) : (adminStats?.activeUsers || 0)}
                       </p>
+                    </div>
+                    <div className="p-3 bg-purple-500/20 rounded-xl">
+                      <Activity className="h-8 w-8 text-purple-400" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Platform Overview */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BarChart3 className="mr-2 text-blue-400" size={20} />
-                  Platform Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-400">
-                      {statsLoading ? "Loading..." : `${((adminStats?.accuracyAverage || 0) * 100).toFixed(1)}%`}
+            {/* Enhanced Platform Overview */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-white">
+                    <BarChart3 className="mr-3 h-6 w-6 text-blue-400" />
+                    Platform Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-green-500/20 rounded-lg">
+                          <TrendingUp className="h-5 w-5 text-green-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-400">Average Accuracy</p>
+                          <p className="text-lg font-bold text-white">
+                            {statsLoading ? "Loading..." : `${((adminStats?.accuracyAverage || 0) * 100).toFixed(1)}%`}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm text-slate-400">Average Accuracy</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-400">
-                      {statsLoading ? "Loading..." : (adminStats?.totalStaked || 0)}
+                    <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-blue-500/20 rounded-lg">
+                          <DollarSign className="h-5 w-5 text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-400">Total Staked</p>
+                          <p className="text-lg font-bold text-white">
+                            {statsLoading ? "Loading..." : (adminStats?.totalStaked || 0)} NTIQ
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm text-slate-400">Total Staked (NTIQ)</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-yellow-400">
-                      {usersLoading ? "Loading..." : (usersData?.length || 0)}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-white">
+                    <Database className="mr-3 h-6 w-6 text-yellow-400" />
+                    System Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-green-500/20 rounded-lg">
+                          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-400">Platform Status</p>
+                          <p className="text-lg font-bold text-green-400">Online</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm text-slate-400">Registered Users</div>
+                    <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-yellow-500/20 rounded-lg">
+                          <Users className="h-5 w-5 text-yellow-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-400">Registered Users</p>
+                          <p className="text-lg font-bold text-white">
+                            {usersLoading ? "Loading..." : (usersData?.length || 0)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Users Tab */}
