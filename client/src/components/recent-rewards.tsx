@@ -157,89 +157,90 @@ export function RecentRewards() {
           }
           
           return (
-            <div key={reward.id} className={`flex items-center justify-between p-3 rounded-lg ${
+            <div key={reward.id} className={`p-3 rounded-lg ${
               isWin ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
                     : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
             }`}>
-              <div className="flex items-center space-x-3">
-                <div className="relative w-8 h-8 flex-shrink-0">
-                  {/* Activity Type Badge */}
-                  <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${
-                    reward.type === 'battle' ? 'bg-purple-500' :
-                    reward.type === 'survival' ? 'bg-orange-500' :
-                    reward.type === 'achievement' ? 'bg-yellow-500' :
-                    reward.type === 'daily_challenge' ? 'bg-blue-500' :
-                    'bg-green-500'
-                  }`}>
-                    {reward.type === 'battle' ? '⚔' : 
-                     reward.type === 'survival' ? '🏆' : 
-                     reward.type === 'achievement' ? '🎯' :
-                     reward.type === 'daily_challenge' ? '📅' :
-                     '📈'}
-                  </div>
-                  
-                  {reward.cryptocurrency ? (
-                    <>
-                      <img 
-                        src={getCryptoImageUrl(reward.cryptocurrency, cryptoPrices || [])} 
-                        alt={reward.cryptocurrency}
-                        className="w-8 h-8 rounded-full object-cover"
-                        onError={(e) => {
-                          // Fallback icon based on win/loss
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const fallback = target.nextElementSibling as HTMLDivElement;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
+              {/* Main Content Row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="relative w-8 h-8 flex-shrink-0">
+                    {/* Activity Type Badge */}
+                    <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${
+                      reward.type === 'battle' ? 'bg-purple-500' :
+                      reward.type === 'survival' ? 'bg-orange-500' :
+                      reward.type === 'achievement' ? 'bg-yellow-500' :
+                      reward.type === 'daily_challenge' ? 'bg-blue-500' :
+                      'bg-green-500'
+                    }`}>
+                      {reward.type === 'battle' ? '⚔' : 
+                       reward.type === 'survival' ? '🏆' : 
+                       reward.type === 'achievement' ? '🎯' :
+                       reward.type === 'daily_challenge' ? '📅' :
+                       '📈'}
+                    </div>
+                    
+                    {reward.cryptocurrency ? (
+                      <>
+                        <img 
+                          src={getCryptoImageUrl(reward.cryptocurrency, cryptoPrices || [])} 
+                          alt={reward.cryptocurrency}
+                          className="w-8 h-8 rounded-full object-cover"
+                          onError={(e) => {
+                            // Fallback icon based on win/loss
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLDivElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          isWin ? 'bg-green-500' : 'bg-red-500'
+                        }`} style={{ display: 'none' }}>
+                          {sourceIcon}
+                        </div>
+                      </>
+                    ) : (
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isWin ? 'bg-green-500' : 'bg-red-500'
-                      }`} style={{ display: 'none' }}>
+                        isWin ? 'bg-green-500' : 'bg-blue-500'
+                      }`}>
                         {sourceIcon}
                       </div>
-                    </>
-                  ) : (
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      isWin ? 'bg-green-500' : 'bg-blue-500'
-                    }`}>
-                      {sourceIcon}
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                      {sourceText}
+                    </p>
+                    
+                    {/* Prediction Details for Prediction Type */}
+                    {reward.type === 'prediction' && reward.sourceDetails && (
+                      <div className="mt-1 space-y-1">
+                        {/* Predicted vs Actual Price */}
+                        {(reward.sourceDetails.predictedPrice || reward.sourceDetails.actualPrice) && (
+                          <div className="flex items-center space-x-2 text-xs">
+                            <Target size={10} className="text-blue-500" />
+                            <span className="text-gray-600 dark:text-gray-400">
+                              Predicted: {formatPrice(parseFloat(reward.sourceDetails.predictedPrice || "0"))}
+                            </span>
+                            {reward.sourceDetails.actualPrice && (
+                              <>
+                                <span className="text-gray-500">→</span>
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  Actual: {formatPrice(parseFloat(reward.sourceDetails.actualPrice))}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      {formatTimeAgo(reward.createdAt)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                    {sourceText}
-                  </p>
-                  
-                  {/* Prediction Details for Prediction Type */}
-                  {reward.type === 'prediction' && reward.sourceDetails && (
-                    <div className="mt-1 space-y-1">
-                      {/* Predicted vs Actual Price */}
-                      {(reward.sourceDetails.predictedPrice || reward.sourceDetails.actualPrice) && (
-                        <div className="flex items-center space-x-2 text-xs">
-                          <Target size={10} className="text-blue-500" />
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Predicted: {formatPrice(parseFloat(reward.sourceDetails.predictedPrice || "0"))}
-                          </span>
-                          {reward.sourceDetails.actualPrice && (
-                            <>
-                              <span className="text-gray-500">→</span>
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Actual: {formatPrice(parseFloat(reward.sourceDetails.actualPrice))}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    {formatTimeAgo(reward.createdAt)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
                 <div className="text-right flex flex-col items-end">
                   <p className={`text-sm font-semibold ${
                     isWin ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
@@ -252,46 +253,48 @@ export function RecentRewards() {
                     </p>
                   )}
                 </div>
-                
-                {/* Share Button for Successful Results - Positioned separately */}
-                {isWin && (
-                  <div className="ml-2">
-                    <SocialShare
-                      compact={true}
-                      data={
-                        reward.type === 'prediction' ? 
-                          createShareData.prediction(
-                            reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
-                            isWin ? 'Won' : 'Lost',
-                            reward.sourceDetails?.accuracy ? parseFloat(reward.sourceDetails.accuracy) : undefined,
-                            Math.abs(reward.amount),
-                            undefined // timeframe not available in rewards data
-                          ) :
-                        reward.type === 'battle' ?
-                          createShareData.battle(
-                            'won',
-                            reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
-                            undefined, // opponent name would need to be parsed
-                            Math.abs(reward.amount)
-                          ) :
-                        reward.type === 'survival' ?
-                          createShareData.survival(
-                            1, // position not available in rewards data
-                            1, // round not available in rewards data
-                            0, // eliminated players not available
-                            Math.abs(reward.amount)
-                          ) :
-                          {
-                            type: 'prediction' as const,
-                            title: 'Nectiq Achievement',
-                            result: 'Success',
-                            reward: Math.abs(reward.amount)
-                          }
-                      }
-                    />
-                  </div>
-                )}
               </div>
+              
+              {/* Share Button Row - Full width below */}
+              {isWin && (
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                  <SocialShare
+                    compact={false}
+                    data={
+                      reward.type === 'prediction' ? 
+                        createShareData.predictionWithDetails(
+                          reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                          isWin ? 'Won' : 'Lost',
+                          reward.sourceDetails?.accuracy ? parseFloat(reward.sourceDetails.accuracy) : undefined,
+                          Math.abs(reward.amount),
+                          undefined, // timeframe not available in rewards data
+                          reward.sourceDetails?.predictedPrice ? parseFloat(reward.sourceDetails.predictedPrice) : undefined,
+                          reward.sourceDetails?.actualPrice ? parseFloat(reward.sourceDetails.actualPrice) : undefined
+                        ) :
+                      reward.type === 'battle' ?
+                        createShareData.battle(
+                          'won',
+                          reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                          undefined, // opponent name would need to be parsed
+                          Math.abs(reward.amount)
+                        ) :
+                      reward.type === 'survival' ?
+                        createShareData.survival(
+                          1, // position not available in rewards data
+                          1, // round not available in rewards data
+                          0, // eliminated players not available
+                          Math.abs(reward.amount)
+                        ) :
+                        {
+                          type: 'prediction' as const,
+                          title: 'Nectiq Achievement',
+                          result: 'Success',
+                          reward: Math.abs(reward.amount)
+                        }
+                    }
+                  />
+                </div>
+              )}
             </div>
           );
         })}
