@@ -758,7 +758,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Normalize wallet address
       const normalizedAddress = normalizeWalletAddress(walletAddress);
       
-      // Find user by wallet address
+      // ✅ CRITICAL DUPLICATION FIX: Check for multiple users with same wallet
+      const allUsersWithWallet = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
+      
+      if (allUsersWithWallet.length > 1) {
+        console.log(`🚨 [DUPLICATION-FIX] Found ${allUsersWithWallet.length} users with wallet ${normalizedAddress}`);
+        
+        // Keep the user with email or the first one created, delete others
+        const userToKeep = allUsersWithWallet.find(u => u.email) || allUsersWithWallet[0];
+        const usersToDelete = allUsersWithWallet.filter(u => u.id !== userToKeep.id);
+        
+        console.log(`🔧 [DUPLICATION-FIX] Keeping user ID ${userToKeep.id} (${userToKeep.username}), deleting ${usersToDelete.length} duplicates`);
+        
+        // Delete duplicate users
+        for (const duplicateUser of usersToDelete) {
+          await db.delete(users).where(eq(users.id, duplicateUser.id));
+          console.log(`🗑️ [DUPLICATION-FIX] Deleted duplicate user ID ${duplicateUser.id} (${duplicateUser.username})`);
+        }
+      }
+      
+      // Find user by wallet address (should be unique now)
       const user = await storage.getUserByWalletAddress(normalizedAddress);
       if (!user) {
         return res.status(404).json({ message: "User not found with this wallet address" });
@@ -833,6 +852,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: securityCheck.message,
           securityBlock: true 
         });
+      }
+
+      // ✅ CRITICAL DUPLICATION FIX: Check for multiple users with same wallet
+      const allUsersWithWallet = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
+      
+      if (allUsersWithWallet.length > 1) {
+        console.log(`🚨 [DUPLICATION-FIX] Found ${allUsersWithWallet.length} users with wallet ${normalizedAddress}`);
+        
+        // Keep the user with email or the first one created, delete others
+        const userToKeep = allUsersWithWallet.find(u => u.email) || allUsersWithWallet[0];
+        const usersToDelete = allUsersWithWallet.filter(u => u.id !== userToKeep.id);
+        
+        console.log(`🔧 [DUPLICATION-FIX] Keeping user ID ${userToKeep.id} (${userToKeep.username}), deleting ${usersToDelete.length} duplicates`);
+        
+        // Delete duplicate users
+        for (const duplicateUser of usersToDelete) {
+          await db.delete(users).where(eq(users.id, duplicateUser.id));
+          console.log(`🗑️ [DUPLICATION-FIX] Deleted duplicate user ID ${duplicateUser.id} (${duplicateUser.username})`);
+        }
       }
 
       // Find or create user by wallet
@@ -976,6 +1014,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             message: securityCheck.message,
             securityBlock: true 
           });
+        }
+
+        // ✅ CRITICAL DUPLICATION FIX: Check for multiple users with same wallet
+        const allUsersWithWallet = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
+        
+        if (allUsersWithWallet.length > 1) {
+          console.log(`🚨 [DUPLICATION-FIX] Found ${allUsersWithWallet.length} users with wallet ${normalizedAddress}`);
+          
+          // Keep the user with email or the first one created, delete others
+          const userToKeep = allUsersWithWallet.find(u => u.email) || allUsersWithWallet[0];
+          const usersToDelete = allUsersWithWallet.filter(u => u.id !== userToKeep.id);
+          
+          console.log(`🔧 [DUPLICATION-FIX] Keeping user ID ${userToKeep.id} (${userToKeep.username}), deleting ${usersToDelete.length} duplicates`);
+          
+          // Delete duplicate users
+          for (const duplicateUser of usersToDelete) {
+            await db.delete(users).where(eq(users.id, duplicateUser.id));
+            console.log(`🗑️ [DUPLICATION-FIX] Deleted duplicate user ID ${duplicateUser.id} (${duplicateUser.username})`);
+          }
         }
 
         // Find or create user by wallet
