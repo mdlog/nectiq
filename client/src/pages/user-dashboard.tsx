@@ -202,7 +202,7 @@ export default function UserDashboard() {
   });
 
   const { data: recentRewards = [], isLoading: rewardsLoading, error: rewardsError } = useQuery<RecentReward[]>({
-    queryKey: ["/api/rewards/recent"],
+    queryKey: ["/api/user/rewards/history"],
     enabled: !!user,
     retry: false,
     throwOnError: false,
@@ -1007,14 +1007,19 @@ export default function UserDashboard() {
                               {reward.amount > 0 ? '+' : ''}{reward.amount} NTIQ
                             </p>
                             
-                            {/* Share Button for Prediction Wins */}
-                            {reward.amount > 0 && rewardType === 'prediction' && (
+                            {/* Share Button for Prediction Wins with Enhanced Details */}
+                            {reward.amount > 0 && rewardType === 'prediction' && reward.sourceDetails && (
                               <SocialShare
                                 compact={true}
-                                data={createShareData.prediction(
+                                data={createShareData.predictionWithDetails(
                                   reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
                                   reward.amount,
-                                  parseFloat(reward.accuracy || '0')
+                                  parseFloat(reward.accuracy || '0'),
+                                  {
+                                    predictedPrice: reward.sourceDetails.predictedPrice,
+                                    actualPrice: reward.sourceDetails.actualPrice,
+                                    accuracy: reward.sourceDetails.accuracy
+                                  }
                                 )}
                               />
                             )}

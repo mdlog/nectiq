@@ -1108,6 +1108,71 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  // Get user reward history for dashboard (similar to Recent Rewards format)
+  async getUserRewardHistory(userId: number, limit: number = 20): Promise<any[]> {
+    try {
+      console.log(`🔍 [STORAGE] Getting reward history for user ${userId}, limit: ${limit}`);
+      
+      // Get recent prediction results (completed predictions)
+      const recentPredictions = await db.select({
+        id: predictions.id,
+        userId: predictions.userId,
+        cryptocurrency: predictions.cryptocurrency,
+        predictedPrice: predictions.predictedPrice,
+        actualPrice: predictions.actualPrice,
+        stakeAmount: predictions.stakeAmount,
+        rewardAmount: predictions.rewardAmount,
+        accuracy: predictions.accuracy,
+        completed: predictions.completed,
+        completedAt: predictions.completedAt,
+        createdAt: predictions.createdAt
+      })
+      .from(predictions)
+      .where(
+        and(
+          eq(predictions.userId, userId),
+          eq(predictions.completed, true)
+        )
+      )
+      .orderBy(desc(predictions.completedAt))
+      .limit(limit);
+
+      const rewardHistory = recentPredictions.map((prediction) => {
+        const isWin = prediction.rewardAmount > 0;
+        const netResult = isWin ? prediction.rewardAmount : -prediction.stakeAmount;
+        
+        return {
+          id: `prediction_${prediction.id}`,
+          type: 'prediction',
+          userId: userId,
+          predictionId: prediction.id,
+          amount: netResult,
+          description: isWin 
+            ? `Won ${prediction.rewardAmount} NTIQ - ${prediction.accuracy}% accuracy` 
+            : `Lost ${prediction.stakeAmount} NTIQ - ${prediction.accuracy}% accuracy`,
+          createdAt: prediction.completedAt || prediction.createdAt,
+          cryptocurrency: prediction.cryptocurrency,
+          accuracy: prediction.accuracy || "0",
+          isWin: isWin,
+          stakeAmount: prediction.stakeAmount,
+          rewardAmount: prediction.rewardAmount || 0,
+          // Enhanced sourceDetails format matching Recent Rewards
+          sourceDetails: {
+            predictedPrice: prediction.predictedPrice ? prediction.predictedPrice.toString() : null,
+            actualPrice: prediction.actualPrice ? prediction.actualPrice.toString() : null,
+            accuracy: prediction.accuracy || "0"
+          }
+        };
+      });
+
+      console.log(`✅ [STORAGE] Successfully fetched ${rewardHistory.length} reward history items`);
+      return rewardHistory;
+    } catch (error) {
+      console.error('[STORAGE] Error fetching user reward history:', error);
+      throw error;
+    }
+  }
+
   // Transaction log operations
   async createTransactionLog(transaction: any): Promise<any> {
     const [newTransaction] = await db.insert(transactionLogs).values(transaction).returning();

@@ -59,7 +59,14 @@ export function SocialShare({ data, compact = false }: SocialShareProps) {
         text += `🔮 Result: ${data.result}\n`;
         if (data.accuracy) text += `🎯 Accuracy: ${data.accuracy.toFixed(2)}%\n`;
         if (data.reward) text += `💰 Reward: ${data.reward} NTIQ\n`;
-        if (data.timeframe) text += `⏰ Timeframe: ${data.timeframe}\n`;
+        if (data.timeframe) {
+          // Check if timeframe contains price prediction details
+          if (data.timeframe.includes('Predicted:')) {
+            text += `📊 ${data.timeframe}\n`;
+          } else {
+            text += `⏰ Timeframe: ${data.timeframe}\n`;
+          }
+        }
         text += `\n🚀 Join the crypto prediction game!`;
         break;
         
@@ -243,6 +250,16 @@ export const createShareData = {
     reward,
     crypto,
     timeframe
+  }),
+
+  predictionWithDetails: (crypto: string, reward: number, accuracy: number, details: { predictedPrice?: string | null, actualPrice?: string | null, accuracy?: string }): ShareData => ({
+    type: 'prediction',
+    title: `${crypto} Prediction ${accuracy >= 90 ? 'Perfect!' : accuracy >= 70 ? 'Successful!' : 'Completed'}`,
+    result: `Won ${reward} NTIQ with ${accuracy.toFixed(1)}% accuracy`,
+    accuracy,
+    reward,
+    crypto,
+    timeframe: details.predictedPrice && details.actualPrice ? `Predicted: $${parseFloat(details.predictedPrice).toLocaleString()} → Actual: $${parseFloat(details.actualPrice).toLocaleString()}` : undefined
   }),
   
   battle: (result: 'won' | 'lost' | 'tie', crypto: string, opponent?: string, reward?: number): ShareData => ({

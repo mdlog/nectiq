@@ -3017,6 +3017,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user reward history for dashboard with enhanced sourceDetails format
+  app.get("/api/user/rewards/history", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      console.log(`🔍 [REWARD-HISTORY] API endpoint called for userId: ${userId}`);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Get comprehensive reward history for user dashboard
+      const rewardHistory = await storage.getUserRewardHistory(userId, 20);
+      console.log(`✅ [REWARD-HISTORY] Successfully fetched ${rewardHistory.length} reward history items`);
+      
+      res.json(rewardHistory);
+    } catch (error) {
+      console.error("Error fetching user reward history:", error);
+      res.status(500).json({ message: "Failed to get reward history" });
+    }
+  });
+
   // Get recent prediction results (both wins and losses) including battles and survival
   app.get("/api/rewards/recent", async (req, res) => {
     try {
