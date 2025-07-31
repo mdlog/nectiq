@@ -99,14 +99,6 @@ export function Header() {
             >
               Leaderboard
             </button>
-            <button 
-              onClick={() => setLocation('/how-to-play')} 
-              className={`transition-colors ${
-                location === '/how-to-play' ? "text-white font-bold" : "text-slate-300 hover:text-white"
-              }`}
-            >
-              How to Play
-            </button>
 
             {user?.isAdmin && (
               <button 
@@ -380,17 +372,6 @@ export function Header() {
                   }`}
                 >
                   Leaderboard
-                </button>
-                <button 
-                  onClick={() => {
-                    setLocation('/how-to-play');
-                    setIsMobileMenuOpen(false);
-                  }} 
-                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    location === '/how-to-play' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
-                  }`}
-                >
-                  How to Play
                 </button>
 
                 {user?.isAdmin && (
