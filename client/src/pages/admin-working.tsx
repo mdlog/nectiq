@@ -184,9 +184,10 @@ export default function AdminPanel() {
 
   const addCryptoMutation = useMutation({
     mutationFn: async (cryptoData: any) => {
+      console.log('🔧 Sending cryptocurrency data:', cryptoData);
       return apiRequest("/api/admin/cryptocurrencies", {
         method: "POST",
-        body: cryptoData,
+        body: JSON.stringify(cryptoData),
       });
     },
     onSuccess: () => {
