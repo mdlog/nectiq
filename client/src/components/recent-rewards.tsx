@@ -239,53 +239,57 @@ export function RecentRewards() {
                   </p>
                 </div>
               </div>
-              <div className="text-right flex flex-col items-end gap-2">
-                <p className={`text-sm font-semibold ${
-                  isWin ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                }`}>
-                  {isWin ? `+${Math.abs(reward.amount)}` : `-${Math.abs(reward.amount)}`} NTIQ
-                </p>
-                {reward.sourceDetails?.accuracy && (
-                  <p className="text-xs text-slate-400">
-                    {parseFloat(reward.sourceDetails.accuracy || "0").toFixed(1)}% accuracy
+              <div className="flex items-center justify-between">
+                <div className="text-right flex flex-col items-end">
+                  <p className={`text-sm font-semibold ${
+                    isWin ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {isWin ? `+${Math.abs(reward.amount)}` : `-${Math.abs(reward.amount)}`} NTIQ
                   </p>
-                )}
+                  {reward.sourceDetails?.accuracy && (
+                    <p className="text-xs text-slate-400">
+                      {parseFloat(reward.sourceDetails.accuracy || "0").toFixed(1)}% accuracy
+                    </p>
+                  )}
+                </div>
                 
-                {/* Share Button for Successful Results */}
+                {/* Share Button for Successful Results - Positioned separately */}
                 {isWin && (
-                  <SocialShare
-                    compact={true}
-                    data={
-                      reward.type === 'prediction' ? 
-                        createShareData.prediction(
-                          reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
-                          isWin ? 'Won' : 'Lost',
-                          reward.sourceDetails?.accuracy ? parseFloat(reward.sourceDetails.accuracy) : undefined,
-                          Math.abs(reward.amount),
-                          undefined // timeframe not available in rewards data
-                        ) :
-                      reward.type === 'battle' ?
-                        createShareData.battle(
-                          'won',
-                          reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
-                          undefined, // opponent name would need to be parsed
-                          Math.abs(reward.amount)
-                        ) :
-                      reward.type === 'survival' ?
-                        createShareData.survival(
-                          1, // position not available in rewards data
-                          1, // round not available in rewards data
-                          0, // eliminated players not available
-                          Math.abs(reward.amount)
-                        ) :
-                        {
-                          type: 'prediction' as const,
-                          title: 'Nectiq Achievement',
-                          result: 'Success',
-                          reward: Math.abs(reward.amount)
-                        }
-                    }
-                  />
+                  <div className="ml-2">
+                    <SocialShare
+                      compact={true}
+                      data={
+                        reward.type === 'prediction' ? 
+                          createShareData.prediction(
+                            reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                            isWin ? 'Won' : 'Lost',
+                            reward.sourceDetails?.accuracy ? parseFloat(reward.sourceDetails.accuracy) : undefined,
+                            Math.abs(reward.amount),
+                            undefined // timeframe not available in rewards data
+                          ) :
+                        reward.type === 'battle' ?
+                          createShareData.battle(
+                            'won',
+                            reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                            undefined, // opponent name would need to be parsed
+                            Math.abs(reward.amount)
+                          ) :
+                        reward.type === 'survival' ?
+                          createShareData.survival(
+                            1, // position not available in rewards data
+                            1, // round not available in rewards data
+                            0, // eliminated players not available
+                            Math.abs(reward.amount)
+                          ) :
+                          {
+                            type: 'prediction' as const,
+                            title: 'Nectiq Achievement',
+                            result: 'Success',
+                            reward: Math.abs(reward.amount)
+                          }
+                      }
+                    />
+                  </div>
                 )}
               </div>
             </div>
