@@ -117,6 +117,12 @@ export default function AdminPanel() {
     refetchInterval: 30000,
   });
 
+  // Query untuk data harga real-time
+  const { data: cryptoPrices } = useQuery({
+    queryKey: ["/api/crypto/pyth-prices"],
+    refetchInterval: 3000, // Update setiap 3 detik
+  });
+
   // Mutations for admin actions
   const addUserMutation = useMutation({
     mutationFn: async (userData: any) => {
@@ -272,6 +278,13 @@ export default function AdminPanel() {
     } finally {
       setIsFetchingLogo(false);
     }
+  };
+
+  // Helper function untuk mencari harga cryptocurrency
+  const getCryptoPrice = (cryptoId: string) => {
+    if (!cryptoPrices) return null;
+    const crypto = cryptoPrices.find((c: any) => c.id === cryptoId);
+    return crypto;
   };
 
   // Filter functions
@@ -820,68 +833,80 @@ export default function AdminPanel() {
                   </div>
                 ) : cryptocurrencies && cryptocurrencies.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {cryptocurrencies.map((crypto) => (
-                      <Card key={crypto.id} className="bg-slate-700 border-slate-600">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <img 
-                                src={crypto.image} 
-                                alt={crypto.name}
-                                className="w-10 h-10 rounded-full"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="%23666"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="8">${crypto.symbol}</text></svg>`;
-                                }}
-                              />
-                              <div>
-                                <h3 className="font-semibold text-white">{crypto.name}</h3>
-                                <p className="text-sm text-slate-400">{crypto.symbol}</p>
-                                <p className="text-xs text-slate-500">
-                                  {crypto.pythFeedId ? "Pyth Network" : "No Feed"}
-                                </p>
-                              </div>
-                            </div>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button size="sm" variant="destructive">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="bg-slate-800 border-slate-700">
-                                <DialogHeader>
-                                  <DialogTitle className="text-red-400 flex items-center">
-                                    <AlertTriangle className="mr-2" size={20} />
-                                    Delete Cryptocurrency
-                                  </DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <Alert className="border-red-600/50 bg-red-950/20">
-                                    <AlertTriangle className="h-4 w-4 text-red-400" />
-                                    <AlertDescription className="text-red-300">
-                                      Are you sure you want to delete <strong>{crypto.name} ({crypto.symbol})</strong>?
-                                      This will remove all associated data and predictions.
-                                    </AlertDescription>
-                                  </Alert>
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="destructive"
-                                      onClick={() => deleteCryptoMutation.mutate(crypto.id)}
-                                      disabled={deleteCryptoMutation.isPending}
-                                    >
-                                      {deleteCryptoMutation.isPending ? "Deleting..." : "Delete Cryptocurrency"}
-                                    </Button>
-                                    <DialogTrigger asChild>
-                                      <Button variant="outline">Cancel</Button>
-                                    </DialogTrigger>
-                                  </div>
+                    {cryptocurrencies.map((crypto) => {
+                      const priceData = getCryptoPrice(crypto.id);
+                      return (
+                        <Card key={crypto.id} className="bg-slate-700 border-slate-600">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <img 
+                                  src={crypto.image} 
+                                  alt={crypto.name}
+                                  className="w-10 h-10 rounded-full"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="%23666"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="8">${crypto.symbol}</text></svg>`;
+                                  }}
+                                />
+                                <div>
+                                  <h3 className="font-semibold text-white">{crypto.name}</h3>
+                                  <p className="text-sm text-slate-400">{crypto.symbol}</p>
+                                  {priceData ? (
+                                    <div className="text-xs">
+                                      <p className="text-green-400 font-semibold">
+                                        ${priceData.current_price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
+                                      </p>
+                                      <p className="text-slate-500">Pyth Network • Live</p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-slate-500">
+                                      {crypto.pythFeedId ? "Pyth Network" : "No Feed"}
+                                    </p>
+                                  )}
                                 </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                              </div>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button size="sm" variant="destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="bg-slate-800 border-slate-700">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-red-400 flex items-center">
+                                      <AlertTriangle className="mr-2" size={20} />
+                                      Delete Cryptocurrency
+                                    </DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <Alert className="border-red-600/50 bg-red-950/20">
+                                      <AlertTriangle className="h-4 w-4 text-red-400" />
+                                      <AlertDescription className="text-red-300">
+                                        Are you sure you want to delete <strong>{crypto.name} ({crypto.symbol})</strong>?
+                                        This will remove all associated data and predictions.
+                                      </AlertDescription>
+                                    </Alert>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="destructive"
+                                        onClick={() => deleteCryptoMutation.mutate(crypto.id)}
+                                        disabled={deleteCryptoMutation.isPending}
+                                      >
+                                        {deleteCryptoMutation.isPending ? "Deleting..." : "Delete Cryptocurrency"}
+                                      </Button>
+                                      <DialogTrigger asChild>
+                                        <Button variant="outline">Cancel</Button>
+                                      </DialogTrigger>
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8">
