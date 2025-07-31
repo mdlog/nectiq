@@ -255,11 +255,11 @@ export function RecentRewards() {
                 </div>
               </div>
               
-              {/* Share Button Row - Full width below */}
+              {/* Simple Share Button Row - Full width below */}
               {isWin && (
                 <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                   <SocialShare
-                    compact={false}
+                    compact={true}
                     data={
                       reward.type === 'prediction' ? 
                         createShareData.predictionWithDetails(
