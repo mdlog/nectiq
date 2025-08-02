@@ -542,7 +542,11 @@ const DatabaseResetButton = () => {
                   id="confirmationCode"
                   type="text"
                   value={confirmationCode}
-                  onChange={(e) => setConfirmationCode(e.target.value)}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    console.log('🔍 Confirmation code changed:', { newValue, isExactRESET: newValue === 'RESET' });
+                    setConfirmationCode(newValue);
+                  }}
                   placeholder="Type RESET to confirm..."
                   className="border-red-300 focus:border-red-500"
                   disabled={resetMutation.isPending}
@@ -559,7 +563,10 @@ const DatabaseResetButton = () => {
                 </Button>
                 <Button 
                   variant="destructive" 
-                  onClick={handleFinalReset}
+                  onClick={() => {
+                    console.log('🚀 Button clicked with confirmationCode:', confirmationCode);
+                    handleFinalReset();
+                  }}
                   disabled={resetMutation.isPending || confirmationCode !== 'RESET'}
                   className="bg-red-600 hover:bg-red-700"
                 >
