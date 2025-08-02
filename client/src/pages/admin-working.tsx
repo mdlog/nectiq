@@ -1530,7 +1530,9 @@ export default function AdminPanel() {
                             }
                           </TableCell>
                           <TableCell>
-                            {transaction.usdAmount 
+                            {transaction.type === 'withdrawal' && transaction.netAmount
+                              ? `${parseFloat(transaction.netAmount).toFixed(6)} ${transaction.token}`
+                              : transaction.usdAmount 
                               ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}`
                               : `${(transaction.amount / 1000).toFixed(6)} ${transaction.token}`
                             }

@@ -3817,6 +3817,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: sql`'withdrawal'`.as('type'),
           amount: withdrawals.ntiqAmount,
           usdAmount: withdrawals.usdAmount,
+          netAmount: withdrawals.netAmount,
+          feeAmount: withdrawals.feeAmount,
           status: withdrawals.status,
           token: withdrawals.tokenType,
           toAddress: withdrawals.toWalletAddress,
