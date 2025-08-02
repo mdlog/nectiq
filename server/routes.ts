@@ -3873,6 +3873,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📊 [ADMIN-TRANSACTIONS] Total combined transactions: ${allTransactions.length}`);
       console.log(`📊 [ADMIN-TRANSACTIONS] Sample transaction:`, allTransactions[0]);
       
+      // Debug hash mapping specifically
+      const transactionsWithHash = allTransactions.filter(tx => tx.hash);
+      console.log(`🔍 [HASH-DEBUG] Transactions with hash: ${transactionsWithHash.length}`);
+      if (transactionsWithHash.length > 0) {
+        console.log(`🔍 [HASH-DEBUG] Sample hash transaction:`, {
+          id: transactionsWithHash[0].id,
+          type: transactionsWithHash[0].type,
+          hash: transactionsWithHash[0].hash,
+          transactionHash: transactionsWithHash[0].transactionHash
+        });
+      }
+      
       res.json(allTransactions.slice(0, 100)); // Return latest 100 transactions
     } catch (error) {
       console.error("❌ [ADMIN-TRANSACTIONS] Error fetching admin transactions:", error);
