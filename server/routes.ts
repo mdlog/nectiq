@@ -6921,7 +6921,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/deposits/create", async (req, res) => {
     try {
       const session = req.session as any;
+      console.log('🔍 [SESSION-DEBUG] Create deposit endpoint access attempt:', {
+        sessionExists: !!session,
+        sessionId: session?.id,
+        userId: session?.userId,
+        sessionKeys: Object.keys(session || {}),
+        cookies: req.headers.cookie?.substring(0, 100) + '...',
+        requestBody: req.body
+      });
+      
       if (!session?.userId) {
+        console.log('❌ [SESSION-DEBUG] Authentication failed for create deposit endpoint');
         return res.status(401).json({ message: "Authentication required" });
       }
 
@@ -7034,7 +7044,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user/deposits", async (req, res) => {
     try {
       const session = req.session as any;
+      console.log('🔍 [SESSION-DEBUG] Deposit endpoint access attempt:', {
+        sessionExists: !!session,
+        sessionId: session?.id,
+        userId: session?.userId,
+        sessionKeys: Object.keys(session || {}),
+        cookies: req.headers.cookie?.substring(0, 100) + '...'
+      });
+      
       if (!session?.userId) {
+        console.log('❌ [SESSION-DEBUG] Authentication failed for deposits endpoint');
         return res.status(401).json({ message: "Authentication required" });
       }
 
