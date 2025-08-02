@@ -227,6 +227,11 @@ export default function AdminPanel() {
   const { data: usersData, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
     refetchInterval: 30000,
+    onSuccess: (data) => {
+      console.log("🔍 [ADMIN-USERS] Sample user data:", data?.[0]);
+      console.log("🔍 [ADMIN-USERS] First user ID field:", data?.[0]?.id);
+      console.log("🔍 [ADMIN-USERS] First user UID field:", data?.[0]?.uid);
+    }
   });
 
   const { data: predictions, isLoading: predictionsLoading } = useQuery<Prediction[]>({
