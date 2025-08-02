@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -213,6 +213,11 @@ export default function AdminPanel() {
     ntiqRewards: 0
   });
 
+  // Real-time hash monitoring state
+  const [recentHashUpdates, setRecentHashUpdates] = useState<Set<string>>(new Set());
+  const [lastTransactionSnapshot, setLastTransactionSnapshot] = useState<any[]>([]);
+  const realtimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Queries
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
@@ -241,7 +246,7 @@ export default function AdminPanel() {
 
   const { data: transactionsData, isLoading: transactionsLoading } = useQuery({
     queryKey: ["/api/admin/transactions"],
-    refetchInterval: 30000,
+    refetchInterval: 5000, // Update setiap 5 detik untuk real-time hash monitoring
   });
 
   const { data: securityEvents, isLoading: securityLoading } = useQuery({
@@ -816,6 +821,73 @@ export default function AdminPanel() {
     URL.revokeObjectURL(url);
     toast({ title: "Successfully", description: "Predictions exported successfully" });
   };
+
+  // ✨ Real-time hash monitoring system
+  useEffect(() => {
+    if (!transactionsData || !Array.isArray(transactionsData)) return;
+
+    // Compare current data with previous snapshot
+    if (lastTransactionSnapshot.length > 0) {
+      const hashUpdates: string[] = [];
+      
+      transactionsData.forEach((currentTx: any) => {
+        const previousTx = lastTransactionSnapshot.find((prev: any) => prev.id === currentTx.id);
+        
+        if (previousTx) {
+          // Check if hash was updated from empty/null to a real hash
+          const prevHash = previousTx.hash || '';
+          const currentHash = currentTx.hash || '';
+          
+          if (!prevHash && currentHash && currentHash !== '3' && currentHash.startsWith('0x')) {
+            hashUpdates.push(`NTIQ-${currentTx.uniqueTransactionId || currentTx.id.toString().padStart(8, '0')}`);
+            
+            // Show success toast for hash update
+            toast({
+              title: "🔗 Hash Updated!",
+              description: `Transaction ${currentTx.type} has been processed and hash is now available`,
+            });
+          }
+          
+          // Check if status changed from processing to completed
+          if (previousTx.status === 'processing' && currentTx.status === 'completed') {
+            toast({
+              title: "✅ Transaction Completed!",
+              description: `${currentTx.type} for ${currentTx.username || `User ${currentTx.userId}`} has been completed`,
+            });
+          }
+        }
+      });
+
+      // Track recently updated hashes
+      if (hashUpdates.length > 0) {
+        setRecentHashUpdates(prev => {
+          const newSet = new Set(prev);
+          hashUpdates.forEach(id => newSet.add(id));
+          
+          // Clear after 10 seconds
+          setTimeout(() => {
+            setRecentHashUpdates(current => {
+              const updatedSet = new Set(current);
+              hashUpdates.forEach(id => updatedSet.delete(id));
+              return updatedSet;
+            });
+          }, 10000);
+          
+          return newSet;
+        });
+      }
+    }
+
+    // Update snapshot for next comparison
+    setLastTransactionSnapshot([...transactionsData]);
+
+    // Cleanup function
+    return () => {
+      if (realtimeIntervalRef.current) {
+        clearInterval(realtimeIntervalRef.current);
+      }
+    };
+  }, [transactionsData, toast]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -1992,30 +2064,41 @@ export default function AdminPanel() {
                             </Badge>
                           </TableCell>
                           <TableCell className="font-mono text-xs">
-                            {transaction.hash && transaction.hash !== '3' && (transaction.hash.startsWith('0x') && transaction.hash.length >= 42) ? (
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1 px-2 py-1 bg-purple-900/50 rounded-md">
-                                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                                  <span className="text-purple-300 text-xs font-medium">
-                                    {getChainDisplayName(transaction.token)}
+                            {(() => {
+                              const uniqueId = transaction.uniqueTransactionId || transaction.id.toString().padStart(8, '0');
+                              const transactionId = `NTIQ-${uniqueId}`;
+                              const isRecentlyUpdated = recentHashUpdates.has(transactionId);
+                              
+                              return transaction.hash && transaction.hash !== '3' && (transaction.hash.startsWith('0x') && transaction.hash.length >= 42) ? (
+                                <div className={`flex items-center gap-2 ${isRecentlyUpdated ? 'animate-pulse bg-green-900/20 p-2 rounded-lg border border-green-500/30' : ''}`}>
+                                  {isRecentlyUpdated && (
+                                    <div className="flex items-center gap-1 px-2 py-1 bg-green-600/80 rounded-md animate-bounce">
+                                      <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+                                      <span className="text-green-100 text-xs font-bold">NEW!</span>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-1 px-2 py-1 bg-purple-900/50 rounded-md">
+                                    <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                                    <span className="text-purple-300 text-xs font-medium">
+                                      {getChainDisplayName(transaction.token)}
+                                    </span>
+                                  </div>
+                                  <a
+                                    href={getBlockchainExplorerUrl(transaction.hash, transaction.token)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer"
+                                    title={`View transaction on ${getExplorerName(transaction.token)}`}
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </a>
+                                  <span className="text-xs text-slate-400 font-mono">
+                                    {transaction.hash.slice(0, 8)}...{transaction.hash.slice(-6)}
                                   </span>
                                 </div>
-                                <a
-                                  href={getBlockchainExplorerUrl(transaction.hash, transaction.token)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer"
-                                  title={`View transaction on ${getExplorerName(transaction.token)}`}
-                                >
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </a>
-                                <span className="text-xs text-slate-400 font-mono">
-                                  {transaction.hash.slice(0, 8)}...{transaction.hash.slice(-6)}
-                                </span>
-                              </div>
-                            ) : transaction.hash === '3' ? (
+                              ) : transaction.hash === '3' ? (
                               <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-1 px-2 py-1 bg-orange-900/50 rounded-md">
                                   <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
@@ -2030,7 +2113,8 @@ export default function AdminPanel() {
                                   <span className="text-slate-400 text-xs font-medium">Pending</span>
                                 </div>
                               </div>
-                            )}
+                            );
+                            })()}
                           </TableCell>
                           <TableCell className="text-xs text-slate-400">
                             {new Date(transaction.createdAt).toLocaleDateString()}
