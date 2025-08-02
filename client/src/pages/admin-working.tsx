@@ -1911,7 +1911,8 @@ export default function AdminPanel() {
                               <div 
                                 className="px-2 py-1 bg-slate-700 rounded-md font-mono text-sm cursor-pointer hover:bg-slate-600 transition-colors"
                                 onClick={() => {
-                                  const transactionId = `NTIQ-${transaction.type.toUpperCase()}-${transaction.id.toString().padStart(6, '0')}`;
+                                  const uniqueId = transaction.uniqueTransactionId || transaction.id.toString().padStart(8, '0');
+                                  const transactionId = `NTIQ-${uniqueId}`;
                                   navigator.clipboard.writeText(transactionId);
                                   toast({ 
                                     title: "Copied!", 
@@ -1920,15 +1921,17 @@ export default function AdminPanel() {
                                 }}
                                 title="Click to copy transaction ID"
                               >
-                                #{transaction.id.toString().padStart(6, '0')}
+                                #{transaction.uniqueTransactionId || transaction.id.toString().padStart(8, '0')}
                               </div>
                               <div className="text-xs text-slate-400">
-                                {transaction.type === 'deposit' ? 'DEP' : 'WDL'}
+                                {transaction.type === 'deposit' ? 'DEP' : 
+                                 transaction.type === 'withdrawal' ? 'WDL' : 'PUR'}
                               </div>
                               <Copy 
                                 className="w-3 h-3 text-slate-400 hover:text-slate-200 cursor-pointer" 
                                 onClick={() => {
-                                  const transactionId = `NTIQ-${transaction.type.toUpperCase()}-${transaction.id.toString().padStart(6, '0')}`;
+                                  const uniqueId = transaction.uniqueTransactionId || transaction.id.toString().padStart(8, '0');
+                                  const transactionId = `NTIQ-${uniqueId}`;
                                   navigator.clipboard.writeText(transactionId);
                                   toast({ 
                                     title: "Copied!", 

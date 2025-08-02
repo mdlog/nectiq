@@ -3813,6 +3813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allWithdrawals = await db
         .select({
           id: withdrawals.id,
+          uniqueTransactionId: withdrawals.uniqueTransactionId,
           userId: withdrawals.userId,
           type: sql`'withdrawal'`.as('type'),
           amount: withdrawals.ntiqAmount,
@@ -3836,6 +3837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allDeposits = await db
         .select({
           id: deposits.id,
+          uniqueTransactionId: deposits.uniqueTransactionId,
           userId: deposits.userId,
           type: sql`'deposit'`.as('type'),
           amount: deposits.ntiqAmount, // Use correct column name from deposits table

@@ -72,6 +72,7 @@ export const rewards = pgTable("rewards", {
 // Multi-Chain Deposits Table
 export const deposits = pgTable("deposits", {
   id: serial("id").primaryKey(),
+  uniqueTransactionId: varchar("unique_transaction_id", { length: 8 }).notNull().unique(), // 8-digit unique random ID
   userId: integer("user_id").notNull().references(() => users.id),
   fromWalletAddress: varchar("from_wallet_address", { length: 42 }).notNull(), // User's wallet address
   toWalletAddress: varchar("to_wallet_address", { length: 42 }).notNull(), // Admin wallet address
@@ -92,6 +93,7 @@ export const deposits = pgTable("deposits", {
 
 export const withdrawals = pgTable("withdrawals", {
   id: serial("id").primaryKey(),
+  uniqueTransactionId: varchar("unique_transaction_id", { length: 8 }).notNull().unique(), // 8-digit unique random ID
   userId: integer("user_id").notNull().references(() => users.id),
   ntiqAmount: integer("ntiq_amount").notNull(), // NTIQ amount to withdraw
   usdAmount: numeric("usd_amount", { precision: 18, scale: 6 }).notNull(), // USD equivalent (ntiqAmount * 0.01)
