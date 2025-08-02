@@ -845,6 +845,8 @@ export const parlayPredictionCoins = pgTable("parlay_prediction_coins", {
   parlayId: integer("parlay_id").notNull().references(() => parlayPredictions.id),
   cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(),
   prediction: varchar("prediction", { length: 10 }).notNull(), // "up" or "down"
+  duration: varchar("duration", { length: 10 }).notNull(), // 1h, 6h, 24h, 7d - per coin duration
+  targetTime: timestamp("target_time").notNull(), // When this specific coin prediction ends
   startPrice: numeric("start_price", { precision: 18, scale: 8 }).notNull(),
   endPrice: numeric("end_price", { precision: 18, scale: 8 }),
   isCorrect: boolean("is_correct"),
@@ -1034,6 +1036,7 @@ export const insertParlayPredictionCoinSchema = createInsertSchema(parlayPredict
 }).extend({
   prediction: z.enum(["up", "down"]),
   cryptocurrency: z.enum(["bitcoin", "ethereum", "binancecoin", "cardano", "solana"]),
+  duration: z.enum(["1h", "6h", "24h", "7d"]),
 });
 
 export type ParlayPrediction = typeof parlayPredictions.$inferSelect;

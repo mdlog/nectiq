@@ -17,6 +17,7 @@ import type { User } from "@shared/schema";
 interface CoinPrediction {
   cryptocurrency: string;
   prediction: "up" | "down";
+  duration: string; // Individual duration for each coin
   startPrice: number;
 }
 
@@ -35,6 +36,8 @@ interface ParlayPrediction {
   coins: Array<{
     cryptocurrency: string;
     prediction: string;
+    duration: string;
+    targetTime: string;
     startPrice: number;
     endPrice?: number;
     isCorrect?: boolean;
@@ -61,7 +64,7 @@ export default function ParlayPage() {
   const queryClient = useQueryClient();
   
   const [stakeAmount, setStakeAmount] = useState("50");
-  const [selectedDuration, setSelectedDuration] = useState("24h");
+  // Removed selectedDuration as each coin now has individual duration
   const [coinPredictions, setCoinPredictions] = useState<CoinPrediction[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [activeTab, setActiveTab] = useState("create");
@@ -139,6 +142,7 @@ export default function ParlayPage() {
       {
         cryptocurrency: "bitcoin",
         prediction: "up",
+        duration: "24h", // Default duration
         startPrice: 0
       }
     ]);
@@ -153,7 +157,7 @@ export default function ParlayPage() {
     updated[index] = { ...updated[index], [field]: value };
     
     // Update start price when crypto changes
-    if (field === "cryptocurrency" && cryptoPrices) {
+    if (field === "cryptocurrency" && cryptoPrices && Array.isArray(cryptoPrices)) {
       const crypto = cryptoPrices.find((c: any) => c.id === value);
       if (crypto) {
         updated[index].startPrice = crypto.current_price;
@@ -164,10 +168,17 @@ export default function ParlayPage() {
   };
 
   const calculateTotalMultiplier = () => {
-    const coinCount = coinPredictions.length;
-    const durationMultiplier = durations.find(d => d.value === selectedDuration)?.multiplier || 1;
-    const baseMultiplier = 1.5;
-    return Math.pow(baseMultiplier, coinCount) * durationMultiplier;
+    if (coinPredictions.length === 0) return 1;
+    
+    // Calculate multiplier based on each coin's individual duration
+    let totalMultiplier = 1;
+    coinPredictions.forEach(coin => {
+      const durationMultiplier = durations.find(d => d.value === coin.duration)?.multiplier || 1;
+      const baseMultiplier = 1.5; // Base multiplier per coin
+      totalMultiplier *= baseMultiplier * durationMultiplier;
+    });
+    
+    return totalMultiplier;
   };
 
   const handleCreateParlay = () => {
@@ -209,7 +220,7 @@ export default function ParlayPage() {
 
     // Set start prices from current market data
     const coinsWithPrices = coinPredictions.map(coin => {
-      const crypto = cryptoPrices?.find((c: any) => c.id === coin.cryptocurrency);
+      const crypto = Array.isArray(cryptoPrices) ? cryptoPrices.find((c: any) => c.id === coin.cryptocurrency) : null;
       return {
         ...coin,
         startPrice: crypto?.current_price || 0
@@ -218,7 +229,6 @@ export default function ParlayPage() {
 
     createParlayMutation.mutate({
       stakeAmount: parseFloat(stakeAmount),
-      duration: selectedDuration,
       coins: coinsWithPrices
     });
   };
@@ -253,7 +263,7 @@ export default function ParlayPage() {
 
   // Initialize start prices when crypto prices are loaded
   useEffect(() => {
-    if (cryptoPrices && coinPredictions.length > 0) {
+    if (cryptoPrices && Array.isArray(cryptoPrices) && coinPredictions.length > 0) {
       const updatedPredictions = coinPredictions.map(coin => {
         const crypto = cryptoPrices.find((c: any) => c.id === coin.cryptocurrency);
         return {
@@ -439,19 +449,10 @@ export default function ParlayPage() {
               </div>
               
               <div className="space-y-2">
-                <Label>Duration</Label>
-                <Select value={selectedDuration} onValueChange={setSelectedDuration}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {durations.map((duration) => (
-                      <SelectItem key={duration.value} value={duration.value}>
-                        {duration.label} ({duration.multiplier}x)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Instructions</Label>
+                <div className="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                  Each coin can have different duration. Set individual timeframes below for maximum flexibility.
+                </div>
               </div>
             </div>
 
@@ -472,7 +473,7 @@ export default function ParlayPage() {
 
               {coinPredictions.map((coin, index) => (
                 <Card key={index} className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                     <div className="space-y-2">
                       <Label>Cryptocurrency</Label>
                       <Select
@@ -495,8 +496,27 @@ export default function ParlayPage() {
                     <div className="space-y-2">
                       <Label>Current Price</Label>
                       <div className="h-10 px-3 py-2 border rounded-md bg-muted flex items-center">
-                        ${cryptoPrices?.find((c: any) => c.id === coin.cryptocurrency)?.current_price?.toFixed(2) || "Loading..."}
+                        ${Array.isArray(cryptoPrices) ? cryptoPrices.find((c: any) => c.id === coin.cryptocurrency)?.current_price?.toFixed(2) || "Loading..." : "Loading..."}
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Duration</Label>
+                      <Select
+                        value={coin.duration}
+                        onValueChange={(value) => updateCoinPrediction(index, "duration", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {durations.map((duration) => (
+                            <SelectItem key={duration.value} value={duration.value}>
+                              {duration.label} ({duration.multiplier}x)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
