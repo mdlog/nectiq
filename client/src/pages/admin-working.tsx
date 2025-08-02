@@ -1643,7 +1643,7 @@ export default function AdminPanel() {
                             </Badge>
                           </TableCell>
                           <TableCell className="font-mono text-xs">
-                            {transaction.hash && transaction.hash !== '3' && transaction.hash.length > 10 ? (
+                            {transaction.hash && transaction.hash !== '3' && (transaction.hash.startsWith('0x') && transaction.hash.length >= 42) ? (
                               <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-1 px-2 py-1 bg-purple-900/50 rounded-md">
                                   <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
