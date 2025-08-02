@@ -593,11 +593,11 @@ export default function BattlesPage() {
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center space-x-4">
-                    <div className="flex items-center text-sm text-gray-900 dark:text-white font-medium">
-                      <DollarSign className="w-4 h-4 mr-1" />
+                    <div className="flex items-center text-sm text-gray-800 dark:text-gray-200 font-medium">
+                      <DollarSign className="w-4 h-4 mr-1 text-gray-600 dark:text-gray-300" />
                       Stake: {battle.stakeAmount} NTIQ
                     </div>
-                    <div className="text-sm text-gray-900 dark:text-white font-medium">
+                    <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">
                       Duration: {battle.timeframe}
                     </div>
                   </div>
@@ -1012,11 +1012,11 @@ export default function BattlesPage() {
 
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                           <div className="flex items-center space-x-4">
-                            <div className="flex items-center text-sm text-gray-900 dark:text-white font-medium">
-                              <DollarSign className="w-4 h-4 mr-1" />
+                            <div className="flex items-center text-sm text-gray-800 dark:text-gray-200 font-medium">
+                              <DollarSign className="w-4 h-4 mr-1 text-gray-600 dark:text-gray-300" />
                               Stake: {battle.stakeAmount} NTIQ
                             </div>
-                            <div className="text-sm text-gray-900 dark:text-white font-medium">
+                            <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">
                               Duration: {battle.timeframe}
                             </div>
                           </div>
