@@ -400,7 +400,7 @@ export default function AdminPanel() {
           console.log(`🔍 [USDC-DEBUG] Starting USDC withdrawal for ${cryptoAmount} ${tokenSymbol}`);
           
           const tokenAddresses = {
-            'USDC': '0xA0b86a33E6417aE82a66c62E9Cc47bE1473E7dF4', // Sepolia USDC testnet
+            'USDC': '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8', // Sepolia USDC testnet (official)
             'USDT': '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'  // Sepolia USDT testnet
           };
           
@@ -419,27 +419,25 @@ export default function AdminPanel() {
           console.log(`🔍 [USDC-DEBUG] Amount in wei: ${amountInWei.toString()}`);
           console.log(`🔍 [USDC-DEBUG] Calling writeContract...`);
           
-          // TEMPORARY: Since testnet USDC might not be available, simulate transaction for testing
-          console.log(`⚠️ [USDC-SIMULATION] Admin wallet might not have USDC testnet tokens`);
-          console.log(`⚠️ [USDC-SIMULATION] For testing purposes, generating simulation hash`);
-          
-          // Generate a realistic looking transaction hash for testing
-          const simulatedHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-          console.log(`🎭 [USDC-SIMULATION] Generated test hash: ${simulatedHash}`);
+          // Show current wallet info and USDC contract details
+          console.log(`🔍 [USDC-INFO] Using official Sepolia USDC contract: ${tokenAddress}`);
+          console.log(`🔍 [USDC-INFO] Connected wallet: ${address}`);
+          console.log(`🔍 [USDC-INFO] Chain: ${chain?.name} (ID: ${chain?.id})`);
           
           // Ask user to check their wallet for actual USDC balance
           toast({
-            title: "USDC Withdrawal Testing",
-            description: `Silakan cek apakah wallet admin memiliki ${cryptoAmount} USDC di Sepolia testnet. Jika tidak ada, withdrawal akan gagal.`,
+            title: "USDC Withdrawal Ready",
+            description: `Menggunakan USDC testnet resmi Sepolia. Pastikan wallet memiliki ${cryptoAmount} USDC untuk transaksi.`,
             variant: "default",
           });
 
           // Add button to get testnet USDC if needed
-          console.log(`💡 [USDC-HELP] Untuk mendapatkan USDC testnet Sepolia:`);
+          console.log(`💡 [USDC-HELP] Cara mendapatkan USDC testnet Sepolia:`);
           console.log(`💡 [USDC-HELP] 1. Visit: https://faucet.circle.com/`);
           console.log(`💡 [USDC-HELP] 2. Connect wallet: ${address}`);
           console.log(`💡 [USDC-HELP] 3. Select Sepolia testnet`);
           console.log(`💡 [USDC-HELP] 4. Request USDC testnet tokens`);
+          console.log(`💡 [USDC-HELP] 5. Contract USDC: ${tokenAddress}`);
           
           try {
             console.log(`🔄 [USDC-DEBUG] About to call writeContract with params:`, {
