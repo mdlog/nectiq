@@ -6993,7 +6993,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const deposits = await storage.getUserDeposits(session.userId, 20);
-      res.json(deposits);
+      
+      // Transform field names to match frontend interface
+      const transformedDeposits = deposits.map(deposit => ({
+        ...deposit,
+        amountUSD: deposit.amountUsd || deposit.amount_usd, // Map to frontend field name
+        chainName: deposit.chainName,
+        tokenType: deposit.tokenType,
+        ntiqAmount: deposit.ntiqAmount,
+        ethPriceSnapshot: deposit.ethPriceSnapshot
+      }));
+      
+      res.json(transformedDeposits);
     } catch (error) {
       console.error("Error fetching user deposits:", error);
       res.status(500).json({ message: "Failed to fetch deposits" });
