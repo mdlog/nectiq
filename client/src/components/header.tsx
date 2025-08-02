@@ -84,6 +84,14 @@ export function Header() {
               Battles
             </button>
             <button 
+              onClick={() => setLocation('/parlay')} 
+              className={`transition-colors ${
+                location === '/parlay' ? "text-white font-bold" : "text-slate-300 hover:text-white"
+              }`}
+            >
+              Parlay
+            </button>
+            <button 
               onClick={() => setLocation('/survival')} 
               className={`transition-colors ${
                 location === '/survival' ? "text-white font-bold" : "text-slate-300 hover:text-white"
@@ -350,6 +358,17 @@ export function Header() {
                   }`}
                 >
                   Battles
+                </button>
+                <button 
+                  onClick={() => {
+                    setLocation('/parlay');
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    location === '/parlay' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
+                  }`}
+                >
+                  Parlay
                 </button>
                 <button 
                   onClick={() => {
