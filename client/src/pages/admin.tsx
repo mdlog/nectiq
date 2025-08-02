@@ -673,7 +673,7 @@ function WithdrawalApprovalCard({ withdrawal }: WithdrawalApprovalCardProps) {
 
   return (
     <>
-      <div className="flex items-center justify-between p-4 bg-surface rounded-lg border">
+      <div className="flex items-center justify-between p-4 bg-surface rounded-lg border border-yellow-500/20 hover:border-yellow-500/40 transition-all">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
             <span className="text-white font-semibold">
@@ -1342,11 +1342,11 @@ export default function AdminPanel() {
 
   const { data: transactionWithdrawals = [] } = useQuery({
     queryKey: ["/api/admin/withdrawals"], 
-    retry: 2,
-    retryDelay: 1000,
-    refetchInterval: 1000, // Ultra-fast updates every 1 second
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchInterval: 2000, // Enhanced polling for real-time updates
     refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
+    staleTime: 5000, // Reduced stale time for fresh data
     enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
@@ -2282,6 +2282,40 @@ export default function AdminPanel() {
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+  // Real-time notifications for new transactions
+  const [lastWithdrawalCount, setLastWithdrawalCount] = useState(0);
+  const [lastDepositCount, setLastDepositCount] = useState(0);
+  
+  React.useEffect(() => {
+    if (Array.isArray(transactionWithdrawals) && transactionWithdrawals.length > lastWithdrawalCount && lastWithdrawalCount > 0) {
+      const newWithdrawals = transactionWithdrawals.slice(0, transactionWithdrawals.length - lastWithdrawalCount);
+      newWithdrawals.forEach(withdrawal => {
+        if (withdrawal.status === 'pending') {
+          toast({
+            title: "🚨 New Withdrawal Request",
+            description: `${withdrawal.username || `User ${withdrawal.userId}`} requested withdrawal of ${withdrawal.ntiqAmount?.toLocaleString() || 0} NTIQ`,
+            duration: 10000,
+          });
+        }
+      });
+    }
+    setLastWithdrawalCount(Array.isArray(transactionWithdrawals) ? transactionWithdrawals.length : 0);
+  }, [transactionWithdrawals.length]);
+
+  React.useEffect(() => {
+    if (Array.isArray(transactionDeposits) && transactionDeposits.length > lastDepositCount && lastDepositCount > 0) {
+      const newDeposits = transactionDeposits.slice(0, transactionDeposits.length - lastDepositCount);
+      newDeposits.forEach(deposit => {
+        toast({
+          title: "💰 New Deposit Detected",
+          description: `${deposit.username || `User ${deposit.userId}`} deposited ${deposit.ntiqAmount?.toLocaleString() || 0} NTIQ via ${deposit.tokenType}`,
+          duration: 8000,
+        });
+      });
+    }
+    setLastDepositCount(Array.isArray(transactionDeposits) ? transactionDeposits.length : 0);
+  }, [transactionDeposits.length]);
 
   // Enhanced transaction filtering and processing
   const allTransactions = [
@@ -5943,8 +5977,114 @@ export default function AdminPanel() {
                     </div>
                   </div>
 
-                  {/* Recent Transactions Overview */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Enhanced Transaction Management Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Deposit Monitoring System */}
+                    <Card className="bg-surface-light">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center">
+                          <TrendingDown className="mr-2" size={18} />
+                          Recent Deposits
+                          <Badge variant="outline" className="ml-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            Live
+                          </Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {(() => {
+                            const deposits = filteredTransactions.filter(t => t.type === 'deposit').slice(0, 5);
+                            return deposits.length === 0 ? (
+                              <div className="text-center py-4 text-slate-400">
+                                <TrendingDown className="mx-auto mb-2" size={24} />
+                                <p className="text-sm">No recent deposits</p>
+                              </div>
+                            ) : (
+                              deposits.map((deposit: any) => (
+                                <div key={deposit.id} className="flex items-center justify-between p-3 bg-surface rounded-lg border border-green-500/20">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                      <span className="text-white text-sm font-semibold">
+                                        {deposit.username?.[0]?.toUpperCase() || 'U'}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">{deposit.username || `User ${deposit.userId}`}</p>
+                                      <p className="text-sm text-slate-400">
+                                        {deposit.amount?.toLocaleString()} NTIQ • {deposit.token}
+                                      </p>
+                                      {deposit.hash && (
+                                        <p className="text-xs text-green-400 font-mono">
+                                          {deposit.hash.substring(0, 10)}...{deposit.hash.substring(deposit.hash.length - 6)}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <Badge 
+                                      variant="outline" 
+                                      className={
+                                        deposit.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                        deposit.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                      }
+                                    >
+                                      {deposit.status}
+                                    </Badge>
+                                    <p className="text-xs text-slate-400 mt-1">
+                                      {new Date(deposit.createdAt).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))
+                            );
+                          })()}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Enhanced Withdrawal Approval System */}
+                    <Card className="bg-surface-light">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center">
+                          <DollarSign className="mr-2" size={18} />
+                          Withdrawal Approval
+                          <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                            {Array.isArray(transactionWithdrawals) ? transactionWithdrawals.filter((w: any) => w.status === 'pending').length : 0} Pending
+                          </Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {!Array.isArray(transactionWithdrawals) || transactionWithdrawals.length === 0 ? (
+                            <div className="text-center py-4 text-slate-400">
+                              <DollarSign className="mx-auto mb-2" size={24} />
+                              <p className="text-sm">No withdrawal requests</p>
+                            </div>
+                          ) : (
+                            <>
+                              {/* Pending withdrawals first */}
+                              {transactionWithdrawals
+                                .filter((w: any) => w.status === 'pending')
+                                .slice(0, 3)
+                                .map((withdrawal: any) => (
+                                  <WithdrawalApprovalCard key={withdrawal.id} withdrawal={withdrawal} />
+                                ))
+                              }
+                              {/* Then processing/recent ones */}
+                              {transactionWithdrawals
+                                .filter((w: any) => w.status !== 'pending')
+                                .slice(0, 5)
+                                .map((withdrawal: any) => (
+                                  <WithdrawalApprovalCard key={withdrawal.id} withdrawal={withdrawal} />
+                                ))
+                              }
+                            </>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
                     {/* Recent Purchases */}
                     <Card className="bg-surface-light">
                       <CardHeader>
@@ -5955,13 +6095,13 @@ export default function AdminPanel() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                          {!Array.isArray(purchases) || purchases.length === 0 ? (
+                          {!Array.isArray(transactionPurchases) || transactionPurchases.length === 0 ? (
                             <div className="text-center py-4 text-slate-400">
                               <Coins className="mx-auto mb-2" size={24} />
                               <p className="text-sm">No purchases yet</p>
                             </div>
                           ) : (
-                            purchases.slice(0, 5).map((purchase: any) => (
+                            transactionPurchases.slice(0, 5).map((purchase: any) => (
                               <div key={purchase.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
                                 <div className="flex items-center space-x-3">
                                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -5985,30 +6125,6 @@ export default function AdminPanel() {
                                   </p>
                                 </div>
                               </div>
-                            ))
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Withdrawal Approval System */}
-                    <Card className="bg-surface-light">
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center">
-                          <DollarSign className="mr-2" size={18} />
-                          Withdrawal Approval System
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
-                          {!Array.isArray(withdrawals) || withdrawals.length === 0 ? (
-                            <div className="text-center py-4 text-slate-400">
-                              <DollarSign className="mx-auto mb-2" size={24} />
-                              <p className="text-sm">No withdrawal requests</p>
-                            </div>
-                          ) : (
-                            withdrawals.slice(0, 8).map((withdrawal: any) => (
-                              <WithdrawalApprovalCard key={withdrawal.id} withdrawal={withdrawal} />
                             ))
                           )}
                         </div>
