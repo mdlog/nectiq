@@ -90,6 +90,38 @@ const getExplorerName = (token: string): string => {
   }
 };
 
+const getChainDisplayName = (token: string): string => {
+  const lowerToken = token.toLowerCase();
+  
+  switch (lowerToken) {
+    case 'eth':
+    case 'usdc':
+    case 'usdt':
+      return 'Sepolia';
+    case 'bnb':
+      return 'BSC Testnet';
+    case 'matic':
+    case 'pol':
+      return 'Mumbai';
+    case 'avax':
+      return 'Fuji';
+    case 'sol':
+      return 'Solana Devnet';
+    case 'ada':
+      return 'Cardano Preprod';
+    case 'dot':
+      return 'Polkadot';
+    case 'xrp':
+      return 'XRPL Testnet';
+    case 'doge':
+      return 'Dogecoin Testnet';
+    case 'btc':
+      return 'Bitcoin Testnet';
+    default:
+      return 'Sepolia';
+  }
+};
+
 interface AdminStats {
   totalUsers: number;
   totalPredictions: number;
@@ -1485,15 +1517,25 @@ export default function AdminPanel() {
                           </TableCell>
                           <TableCell className="font-mono text-xs">
                             {transaction.hash ? (
-                              <a
-                                href={getBlockchainExplorerUrl(transaction.hash, transaction.token)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-400 hover:text-blue-300 underline cursor-pointer"
-                                title={`View transaction on ${getExplorerName(transaction.token)}`}
-                              >
-                                {`${transaction.hash.slice(0, 10)}...`}
-                              </a>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 px-2 py-1 bg-purple-900/50 rounded-md">
+                                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                                  <span className="text-purple-300 text-xs font-medium">
+                                    {getChainDisplayName(transaction.token)}
+                                  </span>
+                                </div>
+                                <a
+                                  href={getBlockchainExplorerUrl(transaction.hash, transaction.token)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer"
+                                  title={`View transaction on ${getExplorerName(transaction.token)}`}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </a>
+                              </div>
                             ) : 'N/A'}
                           </TableCell>
                           <TableCell className="text-xs text-slate-400">
