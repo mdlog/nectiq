@@ -227,11 +227,6 @@ export default function AdminPanel() {
   const { data: usersData, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
     refetchInterval: 30000,
-    onSuccess: (data) => {
-      console.log("🔍 [ADMIN-USERS] Sample user data:", data?.[0]);
-      console.log("🔍 [ADMIN-USERS] First user ID field:", data?.[0]?.id);
-      console.log("🔍 [ADMIN-USERS] First user UID field:", data?.[0]?.uid);
-    }
   });
 
   const { data: predictions, isLoading: predictionsLoading } = useQuery<Prediction[]>({
@@ -1255,7 +1250,7 @@ export default function AdminPanel() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>ID</TableHead>
+                        <TableHead>UID</TableHead>
                         <TableHead>Username</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Wallet Address</TableHead>
@@ -1269,7 +1264,7 @@ export default function AdminPanel() {
                     <TableBody>
                       {filteredUsers.map((user) => (
                         <TableRow key={user.id}>
-                          <TableCell>{user.id}</TableCell>
+                          <TableCell>{user.uid}</TableCell>
                           <TableCell className="font-medium">{user.username}</TableCell>
                           <TableCell className="text-sm">
                             {user.email ? (
