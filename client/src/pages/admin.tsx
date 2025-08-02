@@ -5651,7 +5651,7 @@ export default function AdminPanel() {
                   })}
 
                   {/* Empty State */}
-                  {(!leaderboardData || leaderboardData.length === 0) && (
+                  {(!leaderboardData || !leaderboardData.users || leaderboardData.users.length === 0) && (
                     <div className="text-center py-8 text-slate-400">
                       <Award className="mx-auto mb-2" size={32} />
                       <p>No leaderboard data available</p>

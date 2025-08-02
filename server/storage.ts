@@ -535,7 +535,8 @@ export class DatabaseStorage implements IStorage {
     }).from(users).where(eq(users.isAdmin, false)).orderBy(desc(users.totalRewards)).limit(limit);
   }
 
-  async getEnhancedLeaderboard(limit: number = 10): Promise<any[]> {
+  async getEnhancedLeaderboard(options: any = {}): Promise<any> {
+    const { page = 1, limit = 10, sortBy = 'totalRewards', sortOrder = 'desc' } = options;
     // Get users with basic data
     const usersData = await db.select({
       id: users.id,
@@ -631,14 +632,60 @@ export class DatabaseStorage implements IStorage {
       };
     }));
 
-    // Sort by calculated total rewards (including survival + battle) and apply limit
-    return enhancedUsers
-      .sort((a, b) => b.totalRewards - a.totalRewards) // Now sorting by corrected totalRewards
-      .slice(0, limit)
-      .map((user, index) => ({
+    // Apply sorting based on sortBy parameter
+    let sortedUsers = [...enhancedUsers];
+    
+    switch (sortBy) {
+      case 'accuracy':
+        sortedUsers.sort((a, b) => {
+          const aAccuracy = a.totalPredictions > 0 ? (a.correctPredictions / a.totalPredictions) * 100 : 0;
+          const bAccuracy = b.totalPredictions > 0 ? (b.correctPredictions / b.totalPredictions) * 100 : 0;
+          return sortOrder === 'desc' ? bAccuracy - aAccuracy : aAccuracy - bAccuracy;
+        });
+        break;
+      case 'rewards':
+      case 'totalRewards':
+        sortedUsers.sort((a, b) => {
+          return sortOrder === 'desc' ? b.totalRewards - a.totalRewards : a.totalRewards - b.totalRewards;
+        });
+        break;
+      case 'streak':
+      case 'totalPredictions':
+        sortedUsers.sort((a, b) => {
+          return sortOrder === 'desc' ? b.totalPredictions - a.totalPredictions : a.totalPredictions - b.totalPredictions;
+        });
+        break;
+      default:
+        sortedUsers.sort((a, b) => b.totalRewards - a.totalRewards);
+    }
+    
+    // Apply pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedUsers = sortedUsers.slice(startIndex, endIndex);
+    
+    // Add ranks and additional leaderboard stats
+    const usersWithRanks = paginatedUsers.map((user, index) => {
+      const accuracy = user.totalPredictions > 0 ? (user.correctPredictions / user.totalPredictions) * 100 : 0;
+      const streak = user.totalPredictions; // Using totalPredictions as streak for now
+      const avgMultiplier = accuracy >= 95 ? 2.5 : accuracy >= 85 ? 2.0 : accuracy >= 75 ? 1.5 : 1.0;
+      
+      return {
         ...user,
-        rank: index + 1
-      }));
+        rank: startIndex + index + 1,
+        accuracy: accuracy,
+        streak: streak,
+        avgMultiplier: avgMultiplier
+      };
+    });
+    
+    return {
+      users: usersWithRanks,
+      totalUsers: sortedUsers.length,
+      totalPages: Math.ceil(sortedUsers.length / limit),
+      currentPage: page,
+      hasMore: endIndex < sortedUsers.length
+    };
   }
 
   async resetLeaderboard(): Promise<void> {
