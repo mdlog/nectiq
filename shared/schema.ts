@@ -3,7 +3,7 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
+export const users: any = pgTable("users", {
   id: serial("id").primaryKey(),
   uid: varchar("uid", { length: 9 }).notNull().unique(),
   username: text("username").notNull().unique(),
@@ -414,7 +414,7 @@ export const battleSpectators = pgTable("battle_spectators", {
   leftAt: timestamp("left_at"),
 });
 
-export const battleComments: any = pgTable("battle_comments", {
+export const battleComments = pgTable("battle_comments", {
   id: serial("id").primaryKey(),
   battleId: integer("battle_id").references(() => predictionBattles.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
@@ -824,6 +824,33 @@ export const insertUserSchema = createInsertSchema(users).omit({
   totalRewards: true,
 });
 
+// Parlay Predictions System
+export const parlayPredictions = pgTable("parlay_predictions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  stakeAmount: integer("stake_amount").notNull(), // Minimum 50 NTIQ
+  targetTime: timestamp("target_time").notNull(),
+  duration: varchar("duration", { length: 10 }).notNull(), // 1h, 6h, 24h, 7d
+  totalMultiplier: numeric("total_multiplier", { precision: 5, scale: 2 }).notNull().default("1.00"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, active, completed, failed
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  rewardAmount: integer("reward_amount").default(0),
+  totalCoinCount: integer("total_coin_count").notNull(),
+  correctPredictions: integer("correct_predictions").default(0),
+});
+
+export const parlayPredictionCoins = pgTable("parlay_prediction_coins", {
+  id: serial("id").primaryKey(),
+  parlayId: integer("parlay_id").notNull().references(() => parlayPredictions.id),
+  cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(),
+  prediction: varchar("prediction", { length: 10 }).notNull(), // "up" or "down"
+  startPrice: numeric("start_price", { precision: 18, scale: 8 }).notNull(),
+  endPrice: numeric("end_price", { precision: 18, scale: 8 }),
+  isCorrect: boolean("is_correct"),
+  coinMultiplier: numeric("coin_multiplier", { precision: 5, scale: 2 }).notNull().default("1.50"), // Standard multiplier for each coin
+});
+
 // Deposits Relations
 export const depositsRelations = relations(deposits, ({ one }) => ({
   user: one(users, {
@@ -970,6 +997,50 @@ export const insertBannerSchema = createInsertSchema(banners).omit({
 });
 export type InsertBanner = z.infer<typeof insertBannerSchema>;
 export type Banner = typeof banners.$inferSelect;
+
+// Parlay relations
+export const parlayPredictionsRelations = relations(parlayPredictions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [parlayPredictions.userId],
+    references: [users.id],
+  }),
+  coins: many(parlayPredictionCoins),
+}));
+
+export const parlayPredictionCoinsRelations = relations(parlayPredictionCoins, ({ one }) => ({
+  parlay: one(parlayPredictions, {
+    fields: [parlayPredictionCoins.parlayId],
+    references: [parlayPredictions.id],
+  }),
+}));
+
+// Parlay types and schemas
+export const insertParlayPredictionSchema = createInsertSchema(parlayPredictions).omit({
+  id: true,
+  userId: true,
+  status: true,
+  completedAt: true,
+  createdAt: true,
+  rewardAmount: true,
+  correctPredictions: true,
+}).extend({
+  duration: z.enum(["1h", "6h", "24h", "7d"]),
+});
+
+export const insertParlayPredictionCoinSchema = createInsertSchema(parlayPredictionCoins).omit({
+  id: true,
+  endPrice: true,
+  isCorrect: true,
+}).extend({
+  prediction: z.enum(["up", "down"]),
+  cryptocurrency: z.enum(["bitcoin", "ethereum", "binancecoin", "cardano", "solana"]),
+});
+
+export type ParlayPrediction = typeof parlayPredictions.$inferSelect;
+export type InsertParlayPrediction = z.infer<typeof insertParlayPredictionSchema>;
+
+export type ParlayPredictionCoin = typeof parlayPredictionCoins.$inferSelect;
+export type InsertParlayPredictionCoin = z.infer<typeof insertParlayPredictionCoinSchema>;
 
 // Event types
 export const insertEventSchema = createInsertSchema(events).omit({ 

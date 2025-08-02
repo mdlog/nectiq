@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, deposits, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleComments, battleReactions, battleSpectators, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, monthlyTierRewards, tierPromotions, predictionReactions, predictionComments, userVerifications, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, deposits, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleComments, battleReactions, battleSpectators, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, monthlyTierRewards, tierPromotions, predictionReactions, predictionComments, userVerifications, parlayPredictions, parlayPredictionCoins, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction, type ParlayPrediction, type InsertParlayPrediction, type ParlayPredictionCoin, type InsertParlayPredictionCoin } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 import { BalanceService } from "./services/balanceService.js";
@@ -209,6 +209,15 @@ export interface IStorage {
 
   // Platform statistics operations  
   getPlatformStats(): Promise<any>;
+
+  // Parlay operations
+  createParlayPrediction(parlay: InsertParlayPrediction): Promise<ParlayPrediction>;
+  createParlayPredictionCoin(coin: InsertParlayPredictionCoin): Promise<ParlayPredictionCoin>;
+  getUserParlayPredictions(userId: number): Promise<any[]>;
+  getAllParlayPredictions(): Promise<any[]>;
+  getParlayPrediction(id: number): Promise<any>;
+  updateParlayPredictionResult(id: number, status: string, rewardAmount: number, correctPredictions: number): Promise<void>;
+  getActiveParlayPredictions(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4103,6 +4112,184 @@ export class MemStorage implements IStorage {
       'daily_challenge_reward': 'Daily Challenge'
     };
     return sourceMap[type] || 'Other';
+  }
+
+  // Parlay operations implementation
+  async createParlayPrediction(parlay: InsertParlayPrediction): Promise<ParlayPrediction> {
+    const [newParlay] = await db
+      .insert(parlayPredictions)
+      .values(parlay)
+      .returning();
+    return newParlay;
+  }
+
+  async createParlayPredictionCoin(coin: InsertParlayPredictionCoin): Promise<ParlayPredictionCoin> {
+    const [newCoin] = await db
+      .insert(parlayPredictionCoins)
+      .values(coin)
+      .returning();
+    return newCoin;
+  }
+
+  async getUserParlayPredictions(userId: number): Promise<any[]> {
+    const result = await db
+      .select({
+        id: parlayPredictions.id,
+        stakeAmount: parlayPredictions.stakeAmount,
+        targetTime: parlayPredictions.targetTime,
+        duration: parlayPredictions.duration,
+        totalMultiplier: parlayPredictions.totalMultiplier,
+        status: parlayPredictions.status,
+        completedAt: parlayPredictions.completedAt,
+        createdAt: parlayPredictions.createdAt,
+        rewardAmount: parlayPredictions.rewardAmount,
+        totalCoinCount: parlayPredictions.totalCoinCount,
+        correctPredictions: parlayPredictions.correctPredictions,
+      })
+      .from(parlayPredictions) 
+      .where(eq(parlayPredictions.userId, userId))
+      .orderBy(desc(parlayPredictions.createdAt));
+
+    // Get coins for each parlay
+    for (const parlay of result) {
+      const coins = await db
+        .select()
+        .from(parlayPredictionCoins)
+        .where(eq(parlayPredictionCoins.parlayId, parlay.id));
+      (parlay as any).coins = coins;
+    }
+
+    return result;
+  }
+
+  async getAllParlayPredictions(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: parlayPredictions.id,
+        userId: parlayPredictions.userId,
+        stakeAmount: parlayPredictions.stakeAmount,
+        targetTime: parlayPredictions.targetTime,
+        duration: parlayPredictions.duration,
+        totalMultiplier: parlayPredictions.totalMultiplier,
+        status: parlayPredictions.status,
+        completedAt: parlayPredictions.completedAt,
+        createdAt: parlayPredictions.createdAt,
+        rewardAmount: parlayPredictions.rewardAmount,
+        totalCoinCount: parlayPredictions.totalCoinCount,
+        correctPredictions: parlayPredictions.correctPredictions,
+        username: users.username,
+        uid: users.uid,
+      })
+      .from(parlayPredictions)
+      .leftJoin(users, eq(parlayPredictions.userId, users.id))
+      .orderBy(desc(parlayPredictions.createdAt));
+
+    // Get coins for each parlay
+    for (const parlay of result) {
+      const coins = await db
+        .select()
+        .from(parlayPredictionCoins)
+        .where(eq(parlayPredictionCoins.parlayId, parlay.id));
+      (parlay as any).coins = coins;
+    }
+
+    return result;
+  }
+
+  async getParlayPrediction(id: number): Promise<any> {
+    const [parlay] = await db
+      .select({
+        id: parlayPredictions.id,
+        userId: parlayPredictions.userId,
+        stakeAmount: parlayPredictions.stakeAmount,
+        targetTime: parlayPredictions.targetTime,
+        duration: parlayPredictions.duration,
+        totalMultiplier: parlayPredictions.totalMultiplier,
+        status: parlayPredictions.status,
+        completedAt: parlayPredictions.completedAt,
+        createdAt: parlayPredictions.createdAt,
+        rewardAmount: parlayPredictions.rewardAmount,
+        totalCoinCount: parlayPredictions.totalCoinCount,
+        correctPredictions: parlayPredictions.correctPredictions,
+        username: users.username,
+        uid: users.uid,
+      })
+      .from(parlayPredictions)
+      .leftJoin(users, eq(parlayPredictions.userId, users.id))
+      .where(eq(parlayPredictions.id, id));
+
+    if (!parlay) return undefined;
+
+    // Get coins for this parlay
+    const coins = await db
+      .select()
+      .from(parlayPredictionCoins)
+      .where(eq(parlayPredictionCoins.parlayId, id));
+    
+    return { ...parlay, coins };
+  }
+
+  async updateParlayPredictionResult(id: number, status: string, rewardAmount: number, correctPredictions: number): Promise<void> {
+    await db
+      .update(parlayPredictions)
+      .set({ 
+        status, 
+        rewardAmount, 
+        correctPredictions,
+        completedAt: new Date()
+      })
+      .where(eq(parlayPredictions.id, id));
+  }
+
+  async getActiveParlayPredictions(): Promise<any[]> {
+    const now = new Date();
+    const result = await db
+      .select({
+        id: parlayPredictions.id,
+        userId: parlayPredictions.userId,
+        stakeAmount: parlayPredictions.stakeAmount,
+        targetTime: parlayPredictions.targetTime,
+        duration: parlayPredictions.duration,
+        totalMultiplier: parlayPredictions.totalMultiplier,
+        status: parlayPredictions.status,
+        completedAt: parlayPredictions.completedAt,
+        createdAt: parlayPredictions.createdAt,
+        rewardAmount: parlayPredictions.rewardAmount,
+        totalCoinCount: parlayPredictions.totalCoinCount,
+        correctPredictions: parlayPredictions.correctPredictions,
+      })
+      .from(parlayPredictions)
+      .where(
+        and(
+          eq(parlayPredictions.status, 'active'),
+          lte(parlayPredictions.targetTime, now)
+        )
+      );
+
+    // Get coins for each parlay
+    for (const parlay of result) {
+      const coins = await db
+        .select()
+        .from(parlayPredictionCoins)
+        .where(eq(parlayPredictionCoins.parlayId, parlay.id));
+      (parlay as any).coins = coins;
+    }
+
+    return result;
+  }
+
+  async getPlatformStats(): Promise<any> {
+    const [userCount] = await db.select({ count: count() }).from(users);
+    const [predictionCount] = await db.select({ count: count() }).from(predictions);
+    const totalRewardsResult = await db.select({ 
+      total: sql<number>`sum(${users.totalRewards})` 
+    }).from(users);
+    
+    return {
+      totalUsers: userCount.count,
+      totalPredictions: predictionCount.count,
+      totalRewards: totalRewardsResult[0]?.total || 0
+    };
   }
 }
 

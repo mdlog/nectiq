@@ -9,6 +9,7 @@ import UserDashboard from "@/pages/user-dashboard";
 import AdminPanel from "@/pages/admin-working";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
+import ParlayPage from "@/pages/parlay";
 
 import SurvivalGame from "@/pages/survival-game";
 import NotFound from "@/pages/not-found";
@@ -92,6 +93,12 @@ function Router() {
       <Route path="/leaderboard">
         <ProtectedRoute>
           <Leaderboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/parlay">
+        <ProtectedRoute>
+          <ParlayPage />
         </ProtectedRoute>
       </Route>
       

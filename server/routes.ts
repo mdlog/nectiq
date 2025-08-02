@@ -15,7 +15,7 @@ import { predictionService } from "./services/predictionService";
 const pythPriceService = new PythPriceService();
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
-import { insertPredictionSchema, insertCryptocurrencySchema, insertDepositSchema, insertWithdrawalSchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions, deposits, withdrawals, rewards, achievements, dailyChallenges, banners, cryptocurrencies, cryptoTransactions, purchases } from "@shared/schema";
+import { insertPredictionSchema, insertCryptocurrencySchema, insertDepositSchema, insertWithdrawalSchema, insertParlayPredictionSchema, insertParlayPredictionCoinSchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions, deposits, withdrawals, rewards, achievements, dailyChallenges, banners, cryptocurrencies, cryptoTransactions, purchases, parlayPredictions, parlayPredictionCoins } from "@shared/schema";
 import { eq, and, or, desc, sql } from "drizzle-orm";
 import { z } from "zod";
 import { ethers } from "ethers";
@@ -9867,6 +9867,149 @@ Manual balance correction required IMMEDIATELY!`;
     } catch (error) {
       console.error("Error fetching system health:", error);
       res.status(500).json({ message: "Failed to fetch system health" });
+    }
+  });
+
+  // ==================== PARLAY PREDICTION ENDPOINTS ====================
+
+  // Create parlay prediction
+  app.post("/api/parlay/create", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { stakeAmount, duration, coins } = req.body;
+
+      // Validate minimum stake
+      if (parseFloat(stakeAmount) < 50) {
+        return res.status(400).json({ message: "Minimum stake is 50 NTIQ" });
+      }
+
+      // Validate coins array
+      if (!coins || !Array.isArray(coins) || coins.length < 2) {
+        return res.status(400).json({ message: "At least 2 coins required for parlay" });
+      }
+
+      // Check user balance
+      const user = await storage.getUser(session.userId);
+      if (!user || user.balance < parseFloat(stakeAmount)) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      // Calculate target time based on duration
+      const now = new Date();
+      const targetTime = new Date(now);
+      
+      switch (duration) {
+        case '1h':
+          targetTime.setHours(targetTime.getHours() + 1);
+          break;
+        case '6h':
+          targetTime.setHours(targetTime.getHours() + 6);
+          break;
+        case '24h':
+          targetTime.setHours(targetTime.getHours() + 24);
+          break;
+        case '7d':
+          targetTime.setDate(targetTime.getDate() + 7);
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid duration" });
+      }
+
+      // Calculate total multiplier based on number of coins
+      const coinCount = coins.length;
+      const baseMultiplier = 1.5;
+      const totalMultiplier = Math.pow(baseMultiplier, coinCount);
+
+      // Create parlay prediction
+      const parlay = await storage.createParlayPrediction({
+        userId: session.userId,
+        stakeAmount: parseFloat(stakeAmount),
+        targetTime,
+        duration,
+        totalMultiplier,
+        totalCoinCount: coinCount,
+        status: 'active'
+      });
+
+      // Create coin predictions
+      for (const coin of coins) {
+        await storage.createParlayPredictionCoin({
+          parlayId: parlay.id,
+          cryptocurrency: coin.cryptocurrency,
+          prediction: coin.prediction,
+          startPrice: coin.startPrice
+        });
+      }
+
+      // Deduct stake from user balance
+      await BalanceService.processTransaction({
+        userId: session.userId,
+        type: 'parlay_stake',
+        amount: -parseFloat(stakeAmount),
+        description: `Parlay prediction stake - ${coinCount} coins`,
+        relatedId: parlay.id
+      }, storage);
+
+      res.json({ 
+        success: true, 
+        parlay: { ...parlay, coins },
+        message: "Parlay prediction created successfully" 
+      });
+
+    } catch (error) {
+      console.error("Error creating parlay prediction:", error);
+      res.status(500).json({ message: "Failed to create parlay prediction" });
+    }
+  });
+
+  // Get user's parlay predictions
+  app.get("/api/parlay/user", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const parlays = await storage.getUserParlayPredictions(session.userId);
+      res.json(parlays);
+
+    } catch (error) {
+      console.error("Error fetching user parlay predictions:", error);
+      res.status(500).json({ message: "Failed to fetch parlay predictions" });
+    }
+  });
+
+  // Get all parlay predictions (admin)
+  app.get("/api/parlay/all", async (req, res) => {
+    try {
+      const parlays = await storage.getAllParlayPredictions();
+      res.json(parlays);
+
+    } catch (error) {
+      console.error("Error fetching all parlay predictions:", error);
+      res.status(500).json({ message: "Failed to fetch parlay predictions" });
+    }
+  });
+
+  // Get specific parlay prediction
+  app.get("/api/parlay/:id", async (req, res) => {
+    try {
+      const parlayId = parseInt(req.params.id);
+      const parlay = await storage.getParlayPrediction(parlayId);
+      
+      if (!parlay) {
+        return res.status(404).json({ message: "Parlay not found" });
+      }
+
+      res.json(parlay);
+
+    } catch (error) {
+      console.error("Error fetching parlay prediction:", error);
+      res.status(500).json({ message: "Failed to fetch parlay prediction" });
     }
   });
 
