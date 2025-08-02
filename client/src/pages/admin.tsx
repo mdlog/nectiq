@@ -1330,16 +1330,18 @@ export default function AdminPanel() {
     }
   };
 
-  const { data: transactionPurchases = [] } = useQuery({
-    queryKey: ["/api/admin/purchases"],
-    retry: 2,
-    retryDelay: 1000,
-    refetchInterval: 1000, // Ultra-fast updates every 1 second
+  // ✅ NEW: Unified transaction data query using the comprehensive /api/admin/transactions endpoint
+  const { data: allTransactionsData = [], isLoading: transactionsLoading, error: transactionsError, refetch: refetchTransactions } = useQuery({
+    queryKey: ["/api/admin/transactions"],
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
     refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
+    staleTime: 5000, // 5 seconds stale time for fresh data
     enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
+  // ✅ LEGACY: Keep individual queries for backward compatibility
   const { data: transactionWithdrawals = [] } = useQuery({
     queryKey: ["/api/admin/withdrawals"], 
     retry: 3,
@@ -1350,15 +1352,9 @@ export default function AdminPanel() {
     enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
   });
 
-  const { data: transactionDeposits = [] } = useQuery({
-    queryKey: ["/api/admin/deposits"], 
-    retry: 2,
-    retryDelay: 1000,
-    refetchInterval: 1000, // Ultra-fast updates every 1 second
-    refetchIntervalInBackground: true,
-    staleTime: 30000, // 30 seconds
-    enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
-  });
+  // ✅ DERIVED: Extract data types from unified query
+  const transactionPurchases = (allTransactionsData || []).filter((tx: any) => tx.type === 'purchase');
+  const transactionDeposits = (allTransactionsData || []).filter((tx: any) => tx.type === 'deposit');
 
   const { data: events = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/events"],
@@ -2317,41 +2313,22 @@ export default function AdminPanel() {
     setLastDepositCount(Array.isArray(transactionDeposits) ? transactionDeposits.length : 0);
   }, [transactionDeposits.length]);
 
-  // Enhanced transaction filtering and processing
-  const allTransactions = [
-    ...(Array.isArray(transactionPurchases) ? transactionPurchases.map((p: any) => ({
-      ...p,
-      type: 'purchase' as const,
-      token: p.paymentToken || 'ETH',
-      status: p.status || 'completed',
-      amount: p.ptsAmount,
-      hash: p.txHash || null,
-      timestamp: p.createdAt
-    })) : []),
-    ...(Array.isArray(transactionWithdrawals) ? transactionWithdrawals.map((w: any) => ({
-      ...w,
-      type: 'withdrawal' as const,
-      token: w.tokenType || 'ETH', // Fix: use tokenType instead of paymentToken
-      status: w.status || 'pending',
-      amount: w.ntiqAmount, // Fix: use ntiqAmount instead of ptsAmount
-      hash: w.transactionHash || null, // Fix: use transactionHash instead of txHash
-      timestamp: w.createdAt,
-      networkName: w.chainName, // Add networkName mapping from chainName
-      chainName: w.chainName // Ensure chainName is available for explorer URL mapping
-    })) : []),
-    ...(Array.isArray(transactionDeposits) ? transactionDeposits.map((d: any) => ({
-      ...d,
-      type: 'deposit' as const,
-      token: d.tokenType || 'ETH',
-      status: d.status || 'pending',
-      amount: d.ntiqAmount,
-      hash: d.transactionHash || null,
-      timestamp: d.createdAt,
-      paymentAmount: d.amountUSD,
-      paymentToken: d.tokenType,
-      networkName: d.chainName
-    })) : [])
-  ];
+  // ✅ NEW: Enhanced transaction filtering using unified data from /api/admin/transactions
+  const allTransactions = Array.isArray(allTransactionsData) 
+    ? allTransactionsData.map((tx: any) => ({
+        ...tx,
+        // Normalize field names for consistent display
+        amount: tx.amount || 0,
+        hash: tx.transactionHash || null,
+        timestamp: tx.createdAt,
+        usdAmount: tx.usdAmount || null,
+        // Keep original fields for backward compatibility
+        ntiqAmount: tx.amount,
+        tokenType: tx.token,
+        chainName: tx.chainName || 'Unknown',
+        networkName: tx.chainName || 'Unknown'
+      }))
+    : [];
 
   const filteredTransactions = (allTransactions || []).filter(tx => {
     // Type filter
@@ -6085,43 +6062,47 @@ export default function AdminPanel() {
                       </CardContent>
                     </Card>
 
-                    {/* Recent Purchases */}
+                    {/* ✅ NEW: Recent Deposits */}
                     <Card className="bg-surface-light">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center">
-                          <Coins className="mr-2" size={18} />
-                          Recent Purchases
+                          <TrendingDown className="mr-2" size={18} />
+                          Recent Deposits
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                          {!Array.isArray(transactionPurchases) || transactionPurchases.length === 0 ? (
+                          {!Array.isArray(transactionDeposits) || transactionDeposits.length === 0 ? (
                             <div className="text-center py-4 text-slate-400">
-                              <Coins className="mx-auto mb-2" size={24} />
-                              <p className="text-sm">No purchases yet</p>
+                              <TrendingDown className="mx-auto mb-2" size={24} />
+                              <p className="text-sm">No deposits yet</p>
                             </div>
                           ) : (
-                            transactionPurchases.slice(0, 5).map((purchase: any) => (
-                              <div key={purchase.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
+                            transactionDeposits.slice(0, 5).map((deposit: any) => (
+                              <div key={deposit.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
                                 <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
                                     <span className="text-white text-sm font-semibold">
-                                      {purchase.username?.[0]?.toUpperCase() || 'U'}
+                                      {deposit.username?.[0]?.toUpperCase() || 'U'}
                                     </span>
                                   </div>
                                   <div>
-                                    <p className="font-medium">{purchase.username}</p>
+                                    <p className="font-medium">{deposit.username || `User ${deposit.userId}`}</p>
                                     <p className="text-sm text-slate-400">
-                                      {purchase.ptsAmount.toLocaleString()} NTIQ • {purchase.paymentToken}
+                                      {(deposit.amount || 0).toLocaleString()} NTIQ • {deposit.token || 'ETH'}
                                     </p>
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                    {purchase.status}
+                                  <Badge variant="outline" className={
+                                    deposit.status === 'completed' ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                                    deposit.status === 'pending' ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                                    "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                  }>
+                                    {deposit.status}
                                   </Badge>
                                   <p className="text-xs text-slate-400 mt-1">
-                                    {new Date(purchase.createdAt).toLocaleDateString()}
+                                    {new Date(deposit.createdAt || deposit.timestamp).toLocaleDateString()}
                                   </p>
                                 </div>
                               </div>
@@ -6251,21 +6232,47 @@ export default function AdminPanel() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Type</TableHead>
-                            <TableHead>User</TableHead>
-                            <TableHead>UID</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Token</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Tx Hash</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
+                      {/* ✅ NEW: Loading and Error States for Unified Transaction Data */}
+                      {transactionsLoading && (
+                        <div className="text-center py-8">
+                          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+                          <p className="text-slate-400">Loading transaction data...</p>
+                        </div>
+                      )}
+
+                      {transactionsError && (
+                        <Alert variant="destructive" className="mb-4">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertDescription>
+                            Failed to load transaction data: {transactionsError?.message}
+                            <Button 
+                              onClick={() => refetchTransactions()} 
+                              variant="outline" 
+                              size="sm" 
+                              className="ml-2"
+                            >
+                              Retry
+                            </Button>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {!transactionsLoading && !transactionsError && (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Type</TableHead>
+                              <TableHead>User</TableHead>
+                              <TableHead>UID</TableHead>
+                              <TableHead>Amount</TableHead>
+                              <TableHead>Token</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Tx Hash</TableHead>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
                           {paginatedTransactions.map((transaction) => (
                             <TableRow 
                               key={`${transaction.type}-${transaction.id}`}
@@ -6480,7 +6487,8 @@ export default function AdminPanel() {
                             </TableRow>
                           )}
                         </TableBody>
-                      </Table>
+                        </Table>
+                      )}
 
                       {/* Enhanced Pagination */}
                       {filteredTransactions.length > transactionsPerPage && (

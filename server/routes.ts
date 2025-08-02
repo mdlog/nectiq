@@ -3831,12 +3831,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: purchases.id,
           userId: purchases.userId,
           type: sql`'purchase'`.as('type'),
-          amount: purchases.ntiqAmount,
-          usdAmount: purchases.amountUSD,
+          amount: purchases.ptsAmount, // Use correct field name
+          usdAmount: sql`NULL`.as('usdAmount'), // Purchase doesn't have USD amount in same way
           status: purchases.status,
           token: purchases.paymentToken,
           toAddress: sql`NULL`.as('toAddress'),
-          transactionHash: purchases.transactionHash,
+          transactionHash: sql`NULL`.as('transactionHash'), // Purchase doesn't have transaction hash  
           createdAt: purchases.createdAt,
           username: users.username,
           walletAddress: users.walletAddress,
