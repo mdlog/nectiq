@@ -2381,19 +2381,30 @@ export default function AdminPanel() {
 
   // ✅ NEW: Enhanced transaction filtering using unified data from /api/admin/transactions
   const allTransactions = Array.isArray(allTransactionsData) 
-    ? allTransactionsData.map((tx: any) => ({
-        ...tx,
-        // Normalize field names for consistent display
-        amount: tx.amount || 0,
-        hash: tx.transactionHash || null,
-        timestamp: tx.createdAt,
-        usdAmount: tx.usdAmount || null,
-        // Keep original fields for backward compatibility
-        ntiqAmount: tx.amount,
-        tokenType: tx.token,
-        chainName: tx.chainName || 'Unknown',
-        networkName: tx.chainName || 'Unknown'
-      }))
+    ? allTransactionsData.map((tx: any) => {
+        console.log('🔍 [HASH-DEBUG] Processing transaction:', {
+          id: tx.id,
+          type: tx.type,
+          originalHash: tx.hash,
+          transactionHash: tx.transactionHash,
+          hasHash: !!tx.hash,
+          hasTransactionHash: !!tx.transactionHash
+        });
+        
+        return {
+          ...tx,
+          // Normalize field names for consistent display
+          amount: tx.amount || 0,
+          hash: tx.hash || tx.transactionHash || null, // Use hash first, fallback to transactionHash
+          timestamp: tx.createdAt,
+          usdAmount: tx.usdAmount || null,
+          // Keep original fields for backward compatibility
+          ntiqAmount: tx.amount,
+          tokenType: tx.token,
+          chainName: tx.chainName || 'Unknown',
+          networkName: tx.chainName || 'Unknown'
+        };
+      })
     : [];
 
   const filteredTransactions = (allTransactions || []).filter(tx => {
