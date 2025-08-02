@@ -6997,13 +6997,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transform field names to match frontend interface
       const transformedDeposits = deposits.map(deposit => ({
         ...deposit,
-        amountUSD: deposit.amountUsd || deposit.amount_usd, // Map to frontend field name
+        amountUSD: deposit.amountUSD ? deposit.amountUSD.toString() : "0", // Convert numeric to string
         chainName: deposit.chainName,
         tokenType: deposit.tokenType,
         ntiqAmount: deposit.ntiqAmount,
-        ethPriceSnapshot: deposit.ethPriceSnapshot
+        ethPriceSnapshot: deposit.ethPriceSnapshot ? deposit.ethPriceSnapshot.toString() : null
       }));
       
+      // Add cache-busting header to ensure fresh data
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.json(transformedDeposits);
     } catch (error) {
       console.error("Error fetching user deposits:", error);

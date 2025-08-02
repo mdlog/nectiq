@@ -403,20 +403,28 @@ export function MultiChainFinancial() {
 
   // Function to format deposit history display - show token amount that user actually paid (including fee)
   const formatDepositDisplay = (deposit: DepositData): string => {
+    // Safety check for amountUSD
+    if (!deposit.amountUSD || deposit.amountUSD === "NaN" || isNaN(parseFloat(deposit.amountUSD))) {
+      return `0.00 ${deposit.tokenType}`;
+    }
+    
     if (deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') {
       // Use calculateTokenAmountForHistory to get amount with fee included
-      const amountWithFee = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
+      const parsedAmount = parseFloat(deposit.amountUSD);
+      const amountWithFee = calculateTokenAmountForHistory(parsedAmount, deposit.tokenType, deposit.ethPriceSnapshot);
       return `${amountWithFee} ${deposit.tokenType}`;
     }
     
     if (deposit.tokenType === 'ETH') {
       // Calculate ETH amount from USD amount with fee included
-      const ethAmount = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
+      const parsedAmount = parseFloat(deposit.amountUSD);
+      const ethAmount = calculateTokenAmountForHistory(parsedAmount, deposit.tokenType, deposit.ethPriceSnapshot);
       return `${ethAmount} ETH`;
     }
     
     // For other tokens, also use calculateTokenAmountForHistory
-    const amountWithFee = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
+    const parsedAmount = parseFloat(deposit.amountUSD);
+    const amountWithFee = calculateTokenAmountForHistory(parsedAmount, deposit.tokenType, deposit.ethPriceSnapshot);
     return `${amountWithFee} ${deposit.tokenType}`;
   };
 
