@@ -1643,7 +1643,7 @@ export default function AdminPanel() {
                             </Badge>
                           </TableCell>
                           <TableCell className="font-mono text-xs">
-                            {transaction.hash ? (
+                            {transaction.hash && transaction.hash !== '3' && transaction.hash.length > 10 ? (
                               <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-1 px-2 py-1 bg-purple-900/50 rounded-md">
                                   <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
@@ -1662,8 +1662,26 @@ export default function AdminPanel() {
                                     <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                   </svg>
                                 </a>
+                                <span className="text-xs text-slate-400 font-mono">
+                                  {transaction.hash.slice(0, 8)}...{transaction.hash.slice(-6)}
+                                </span>
                               </div>
-                            ) : 'N/A'}
+                            ) : transaction.hash === '3' ? (
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 px-2 py-1 bg-orange-900/50 rounded-md">
+                                  <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                                  <span className="text-orange-300 text-xs font-medium">Invalid Hash</span>
+                                </div>
+                                <span className="text-xs text-slate-500">Database contains placeholder value</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/50 rounded-md">
+                                  <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                                  <span className="text-slate-400 text-xs font-medium">Pending</span>
+                                </div>
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell className="text-xs text-slate-400">
                             {new Date(transaction.createdAt).toLocaleDateString()}
