@@ -1239,7 +1239,7 @@ export default function AdminPanel() {
     }
   };
 
-  const filteredAndSortedLeaderboard = leaderboardData?.users || [];
+  const filteredAndSortedLeaderboard = Array.isArray(leaderboardData) ? leaderboardData : (leaderboardData?.users || []);
 
   // Helper function to get cryptocurrency image URL
   const getCryptoImageUrl = (cryptoId: string) => {
@@ -5651,7 +5651,7 @@ export default function AdminPanel() {
                   })}
 
                   {/* Empty State */}
-                  {(!leaderboardData || !leaderboardData.users || leaderboardData.users.length === 0) && (
+                  {(!filteredAndSortedLeaderboard || filteredAndSortedLeaderboard.length === 0) && (
                     <div className="text-center py-8 text-slate-400">
                       <Award className="mx-auto mb-2" size={32} />
                       <p>No leaderboard data available</p>

@@ -2969,8 +2969,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get enhanced leaderboard with battle and survival data
-  app.get("/api/leaderboard", async (req, res) => {
+  // Get enhanced leaderboard with battle and survival data (both endpoints)
+  const handleLeaderboard = async (req: any, res: any) => {
     try {
       const filter = req.query.filter as string || 'alltime';
       const limit = parseInt(req.query.limit as string) || 50;
@@ -3076,6 +3076,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching enhanced leaderboard:", error);
       res.status(500).json({ message: "Failed to get leaderboard" });
+    }
+  };
+
+  // Register both endpoints for leaderboard
+  app.get("/api/leaderboard", handleLeaderboard);
+  app.get("/api/admin/leaderboard", async (req, res) => {
+    // Skip admin check for leaderboard endpoint, allow any authenticated user
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Continue with normal leaderboard handler
+      await handleLeaderboard(req, res);
+    } catch (error) {
+      console.error("Admin leaderboard error:", error);
+      res.status(500).json({ message: "Failed to get admin leaderboard" });
     }
   });
 
