@@ -2117,7 +2117,12 @@ export default function AdminPanel() {
                             })()}
                           </TableCell>
                           <TableCell className="text-xs text-slate-400">
-                            {new Date(transaction.createdAt).toLocaleDateString()}
+                            <div>
+                              <div>{new Date(transaction.createdAt).toLocaleDateString()}</div>
+                              <div className="text-xs text-slate-500">
+                                {new Date(transaction.createdAt).toLocaleTimeString()}
+                              </div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             {transaction.type === 'withdrawal' && transaction.status === 'pending' ? (

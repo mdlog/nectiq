@@ -541,9 +541,12 @@ function TransactionList({ transactions, type }: { transactions: TransactionData
               </Badge>
               <span className="font-medium">{tx.amount} {tx.tokenSymbol}</span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {new Date(tx.createdAt).toLocaleDateString()}
-            </p>
+            <div className="text-sm text-muted-foreground">
+              <div>{new Date(tx.createdAt).toLocaleDateString()}</div>
+              <div className="text-xs opacity-75">
+                {new Date(tx.createdAt).toLocaleTimeString()}
+              </div>
+            </div>
           </div>
           {tx.transactionHash && tx.transactionHash !== '3' && (tx.transactionHash.startsWith('0x') && tx.transactionHash.length >= 42) ? (
             <Button 
