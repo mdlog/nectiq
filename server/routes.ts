@@ -326,6 +326,17 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     const userId = (req as any).session?.userId;
+    
+    // DEBUG: Log session details for troubleshooting
+    console.log("🔍 [SESSION-DEBUG] Admin endpoint access attempt:");
+    console.log("   Session exists:", !!req.session);
+    console.log("   Session ID:", req.sessionID || 'NONE');
+    console.log("   User ID in session:", userId);
+    console.log("   Session isAdmin:", (req as any).session?.isAdmin);
+    console.log("   Session data keys:", req.session ? Object.keys(req.session) : 'NO SESSION');
+    console.log("   Cookies:", req.headers.cookie ? req.headers.cookie.substring(0, 100) + '...' : 'NO COOKIES');
+    console.log("   Request URL:", req.url);
+    
     if (!userId) {
       // Record failed attempt
       adminAttempts.set(clientIP, { 
@@ -3707,6 +3718,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Get all withdrawals (transaction monitoring)
   app.get("/api/admin/withdrawals", requireAdmin, async (req, res) => {
     try {
+      console.log("🔍 [WITHDRAWALS-DEBUG] Admin withdrawals endpoint accessed:");
+      console.log("   Admin User ID:", (req as any).session?.userId);
+      console.log("   Admin isAdmin:", (req as any).session?.isAdmin);
+      console.log("   Request headers:", {
+        userAgent: req.headers['user-agent'],
+        cookies: req.headers.cookie ? 'HAS COOKIES' : 'NO COOKIES',
+        referer: req.headers.referer
+      });
+      
       // Get withdrawals directly from database with user information
       const allWithdrawals = await db
         .select({
