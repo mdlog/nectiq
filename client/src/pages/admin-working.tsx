@@ -175,9 +175,9 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("statistics");
   
   // Web3 hooks
-  const { isConnected } = useAccount();
-  const { writeContract } = useWriteContract();
-  const { sendTransaction } = useSendTransaction();
+  const { isConnected, address, chain } = useAccount();
+  const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
+  const { sendTransaction, isPending: isSendPending, error: sendError } = useSendTransaction();
   
   // State for various admin functions
   const [searchTerm, setSearchTerm] = useState("");
@@ -368,6 +368,13 @@ export default function AdminPanel() {
           throw new Error('Please connect wallet to approve withdrawals');
         }
 
+        // Additional debugging info
+        console.log(`🔍 [WALLET-DEBUG] Connected: ${isConnected}`);
+        console.log(`🔍 [WALLET-DEBUG] Address: ${address}`);
+        console.log(`🔍 [WALLET-DEBUG] Chain: ${chain?.name} (ID: ${chain?.id})`);
+        console.log(`🔍 [WALLET-DEBUG] Write pending: ${isWritePending}`);
+        console.log(`🔍 [WALLET-DEBUG] Send pending: ${isSendPending}`);
+
         // Prepare transaction parameters
         const cryptoAmount = withdrawal.netAmount || (withdrawal.amount / 1000).toString(); // Use netAmount or fallback
         const tokenSymbol = withdrawal.token;
@@ -390,6 +397,8 @@ export default function AdminPanel() {
           transactionHash = tx || '';
         } else {
           // For ERC-20 tokens (USDC, USDT)
+          console.log(`🔍 [USDC-DEBUG] Starting USDC withdrawal for ${cryptoAmount} ${tokenSymbol}`);
+          
           const tokenAddresses = {
             'USDC': '0xA0b86a33E6417aE82a66c62E9Cc47bE1473E7dF4', // Sepolia USDC testnet
             'USDT': '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'  // Sepolia USDT testnet
@@ -400,26 +409,58 @@ export default function AdminPanel() {
             throw new Error(`Unsupported token: ${tokenSymbol}`);
           }
 
+          console.log(`🔍 [USDC-DEBUG] Token address: ${tokenAddress}`);
+          console.log(`🔍 [USDC-DEBUG] Recipient: ${recipientAddress}`);
+          
           // ERC-20 transfer function
           const decimals = tokenSymbol === 'USDC' || tokenSymbol === 'USDT' ? 6 : 18;
-          const tx = await writeContract({
-            address: tokenAddress as `0x${string}`,
-            abi: [
-              {
-                name: 'transfer',
-                type: 'function',
-                inputs: [
-                  { name: 'to', type: 'address' },
-                  { name: 'amount', type: 'uint256' }
-                ],
-                outputs: [{ name: '', type: 'bool' }],
-                stateMutability: 'nonpayable'
-              }
-            ],
-            functionName: 'transfer',
-            args: [recipientAddress as `0x${string}`, parseUnits(cryptoAmount, decimals)]
-          });
-          transactionHash = tx || '';
+          const amountInWei = parseUnits(cryptoAmount, decimals);
+          
+          console.log(`🔍 [USDC-DEBUG] Amount in wei: ${amountInWei.toString()}`);
+          console.log(`🔍 [USDC-DEBUG] Calling writeContract...`);
+          
+          try {
+            console.log(`🔄 [USDC-DEBUG] About to call writeContract with params:`, {
+              address: tokenAddress,
+              functionName: 'transfer',
+              args: [recipientAddress, amountInWei.toString()],
+              decimals,
+              chainId: chain?.id
+            });
+
+            // Wait a moment to ensure wallet is ready
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const tx = await writeContract({
+              address: tokenAddress as `0x${string}`,
+              abi: [
+                {
+                  name: 'transfer',
+                  type: 'function',
+                  inputs: [
+                    { name: 'to', type: 'address' },
+                    { name: 'amount', type: 'uint256' }
+                  ],
+                  outputs: [{ name: '', type: 'bool' }],
+                  stateMutability: 'nonpayable'
+                }
+              ],
+              functionName: 'transfer',
+              args: [recipientAddress as `0x${string}`, amountInWei]
+            });
+            
+            console.log(`✅ [USDC-DEBUG] Transaction submitted successfully: ${tx}`);
+            console.log(`✅ [USDC-DEBUG] Transaction type:`, typeof tx);
+            transactionHash = tx || '';
+          } catch (writeError) {
+            console.error(`❌ [USDC-DEBUG] WriteContract error details:`, {
+              error: writeError,
+              message: writeError?.message,
+              code: writeError?.code,
+              reason: writeError?.reason
+            });
+            throw writeError;
+          }
         }
 
         // First, update status to processing with hash
