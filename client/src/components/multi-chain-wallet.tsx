@@ -549,8 +549,8 @@ function TransactionList({ transactions, type }: { transactions: TransactionData
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => window.open(`https://sepolia.etherscan.io/tx/${tx.transactionHash}`, '_blank')}
-              title="View on Sepolia Etherscan"
+              onClick={() => window.open(getBlockchainExplorerUrl(tx.transactionHash, tx.tokenSymbol), '_blank')}
+              title={`View on ${getExplorerName(tx.tokenSymbol)}`}
             >
               <ExternalLink className="h-4 w-4" />
             </Button>
@@ -574,4 +574,55 @@ function TransactionList({ transactions, type }: { transactions: TransactionData
 function formatAddress(address: string) {
   if (!address) return "";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+// Helper functions for blockchain explorers
+function getBlockchainExplorerUrl(hash: string, tokenSymbol: string): string {
+  const token = tokenSymbol?.toLowerCase();
+  
+  switch (token) {
+    case 'eth':
+    case 'usdc':
+    case 'usdt':
+      return `https://sepolia.etherscan.io/tx/${hash}`;
+    case 'bnb':
+    case 'busd':
+      return `https://testnet.bscscan.com/tx/${hash}`;
+    case 'matic':
+    case 'pol':
+      return `https://mumbai.polygonscan.com/tx/${hash}`;
+    case 'avax':
+      return `https://testnet.snowtrace.io/tx/${hash}`;
+    case 'ftm':
+      return `https://testnet.ftmscan.com/tx/${hash}`;
+    case 'sol':
+      return `https://explorer.solana.com/tx/${hash}?cluster=devnet`;
+    default:
+      return `https://sepolia.etherscan.io/tx/${hash}`;
+  }
+}
+
+function getExplorerName(tokenSymbol: string): string {
+  const token = tokenSymbol?.toLowerCase();
+  
+  switch (token) {
+    case 'eth':
+    case 'usdc':
+    case 'usdt':
+      return 'Sepolia Etherscan';
+    case 'bnb':
+    case 'busd':
+      return 'BSC Testnet Scan';
+    case 'matic':
+    case 'pol':
+      return 'Mumbai PolygonScan';
+    case 'avax':
+      return 'Avalanche Testnet';
+    case 'ftm':
+      return 'Fantom Testnet';
+    case 'sol':
+      return 'Solana Explorer';
+    default:
+      return 'Sepolia Etherscan';
+  }
 }
