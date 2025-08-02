@@ -3880,6 +3880,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...allWithdrawals.map(tx => ({
           ...tx,
           hash: tx.transactionHash, // Map transactionHash to hash for frontend
+          tokenAmount: tx.usdAmount, // Amount in USD/token
+          ntiqAmount: tx.amount, // Amount in NTIQ
           timestamp: tx.createdAt,
           networkName: tx.type === 'withdrawal' ? 'Ethereum' : null,
           chainName: tx.type === 'withdrawal' ? 'Ethereum' : null
@@ -3887,6 +3889,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...allDeposits.map(tx => ({
           ...tx,
           hash: tx.transactionHash, // Map transactionHash to hash for frontend
+          tokenAmount: tx.usdAmount, // Amount in USD/token
+          ntiqAmount: tx.amount, // Amount in NTIQ
           timestamp: tx.createdAt,
           networkName: 'Ethereum',
           chainName: 'Ethereum'
@@ -3894,6 +3898,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...allPurchases.map(tx => ({
           ...tx,
           hash: tx.transactionHash, // Map transactionHash to hash for frontend
+          tokenAmount: null, // Purchases don't have token amounts
+          ntiqAmount: tx.amount, // Amount in NTIQ/PTS
           timestamp: tx.createdAt,
           networkName: null, // Purchases are internal
           chainName: null

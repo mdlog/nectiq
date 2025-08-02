@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -356,8 +356,8 @@ export default function AdminPanel() {
     const csvContent = [
       ["ID", "User ID", "Crypto", "Predicted Price", "Actual Price", "Timeframe", "Stake", "Status", "Reward"].join(","),
       ...predictions.map(prediction => {
-        const cryptoInfo = getCryptoInfo(prediction.cryptoId);
-        const cryptoDisplay = cryptoInfo ? `${cryptoInfo.name} (${cryptoInfo.symbol})` : prediction.cryptoId;
+        const cryptoInfo = getCryptoInfo(prediction.cryptocurrency);
+        const cryptoDisplay = cryptoInfo ? `${cryptoInfo.name} (${cryptoInfo.symbol})` : prediction.cryptocurrency;
         return [
           prediction.id,
           prediction.userId,
@@ -1374,38 +1374,86 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(Array.isArray(transactionsData) ? transactionsData : []).slice(0, 20).map((transaction: any) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>{transaction.id}</TableCell>
-                          <TableCell>{transaction.userId}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              transaction.type === 'deposit' ? 'default' :
-                              transaction.type === 'withdrawal' ? 'destructive' :
-                              'secondary'
-                            }>
-                              {transaction.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{transaction.amount}</TableCell>
-                          <TableCell>{transaction.token}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              transaction.status === 'completed' ? 'default' :
-                              transaction.status === 'pending' ? 'secondary' :
-                              'destructive'
-                            }>
-                              {transaction.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-mono text-xs">
-                            {transaction.hash ? `${transaction.hash.slice(0, 10)}...` : 'N/A'}
-                          </TableCell>
-                          <TableCell className="text-xs text-slate-400">
-                            {new Date(transaction.createdAt).toLocaleDateString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {(Array.isArray(transactionsData) ? transactionsData : []).slice(0, 20).map((transaction: any) => {
+                        // Helper functions untuk format data
+                        const formatAmount = (amount: number) => {
+                          return new Intl.NumberFormat('id-ID').format(amount) + ' NTIQ';
+                        };
+                        
+                        const formatTokenAmount = (tokenAmount: number, token: string) => {
+                          const decimals = token === 'ETH' || token === 'BNB' || token === 'MATIC' ? 6 : 2;
+                          return tokenAmount.toFixed(decimals) + ' ' + token;
+                        };
+                        
+                        const getExplorerUrl = (hash: string, token: string) => {
+                          const explorers = {
+                            'ETH': 'https://etherscan.io/tx/',
+                            'BNB': 'https://bscscan.com/tx/',
+                            'MATIC': 'https://polygonscan.com/tx/',
+                            'USDC': 'https://etherscan.io/tx/',
+                            'USDT': 'https://etherscan.io/tx/'
+                          };
+                          return (explorers[token as keyof typeof explorers] || 'https://etherscan.io/tx/') + hash;
+                        };
+                        
+                        return (
+                          <TableRow key={transaction.id}>
+                            <TableCell>{transaction.id}</TableCell>
+                            <TableCell className="font-medium">
+                              {transaction.username || `User ${transaction.userId}`}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                transaction.type === 'deposit' ? 'default' :
+                                transaction.type === 'withdrawal' ? 'destructive' :
+                                'secondary'
+                              }>
+                                {transaction.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-semibold text-green-400">
+                              {formatAmount(transaction.amount || transaction.ntiqAmount || 0)}
+                            </TableCell>
+                            <TableCell className="font-mono text-blue-400">
+                              {transaction.tokenAmount ? 
+                                formatTokenAmount(transaction.tokenAmount, transaction.token || 'ETH') : 
+                                (transaction.token || 'ETH')
+                              }
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                transaction.status === 'completed' ? 'default' :
+                                transaction.status === 'pending' ? 'secondary' :
+                                'destructive'
+                              }>
+                                {transaction.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-xs">
+                              {transaction.hash ? (
+                                <a 
+                                  href={getExplorerUrl(transaction.hash, transaction.token || 'ETH')}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300 underline flex items-center gap-1 group"
+                                >
+                                  {transaction.hash.slice(0, 8)}...
+                                  <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </a>
+                              ) : 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-xs text-slate-400">
+                              {transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString('id-ID', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : '-'}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 ) : (
