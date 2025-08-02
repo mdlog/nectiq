@@ -3824,7 +3824,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: withdrawals.status,
           token: withdrawals.tokenType,
           toAddress: withdrawals.toWalletAddress,
-          transactionHash: withdrawals.transactionHash,
+          hash: withdrawals.transactionHash, // Map transaction_hash to hash for frontend compatibility
+          transactionHash: withdrawals.transactionHash, // Keep original for debugging
           createdAt: withdrawals.createdAt,
           username: users.username,
           walletAddress: users.walletAddress,
