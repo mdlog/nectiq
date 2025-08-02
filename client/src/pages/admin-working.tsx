@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -194,6 +194,16 @@ export default function AdminPanel() {
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState("");
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  
+  // Transaction filter and pagination states
+  const [transactionFilter, setTransactionFilter] = useState({
+    type: 'all', // all, deposit, withdrawal
+    status: 'all', // all, pending, completed, failed
+    token: 'all', // all, ETH, USDC, USDT, etc
+    dateRange: 'all' // all, today, week, month
+  });
+  const [transactionPage, setTransactionPage] = useState(1);
+  const [transactionLimit] = useState(10); // Items per page
 
   // Queries
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
@@ -656,6 +666,53 @@ export default function AdminPanel() {
     if (filterTimeframe !== "all" && prediction.timeframe !== filterTimeframe) return false;
     return true;
   });
+
+  // Filter transactions based on filters
+  const filteredTransactions = transactionsData && Array.isArray(transactionsData) ? transactionsData.filter((transaction: any) => {
+    // Filter by type
+    if (transactionFilter.type !== 'all' && transaction.type !== transactionFilter.type) return false;
+    
+    // Filter by status
+    if (transactionFilter.status !== 'all' && transaction.status !== transactionFilter.status) return false;
+    
+    // Filter by token
+    if (transactionFilter.token !== 'all' && transaction.token?.toLowerCase() !== transactionFilter.token.toLowerCase()) return false;
+    
+    // Filter by date range
+    if (transactionFilter.dateRange !== 'all') {
+      const transactionDate = new Date(transaction.createdAt);
+      const now = new Date();
+      
+      switch (transactionFilter.dateRange) {
+        case 'today':
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          if (transactionDate < today) return false;
+          break;
+        case 'week':
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (transactionDate < weekAgo) return false;
+          break;
+        case 'month':
+          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          if (transactionDate < monthAgo) return false;
+          break;
+      }
+    }
+    
+    return true;
+  }) : [];
+
+  // Get paginated transactions
+  const totalTransactions = filteredTransactions.length;
+  const totalPages = Math.ceil(totalTransactions / transactionLimit);
+  const startIndex = (transactionPage - 1) * transactionLimit;
+  const endIndex = startIndex + transactionLimit;
+  const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+  // Get unique tokens for filter dropdown
+  const availableTokens = transactionsData && Array.isArray(transactionsData) 
+    ? [...new Set(transactionsData.map((t: any) => t.token).filter(Boolean))]
+    : [];
 
   // Export functions
   const exportUsers = () => {
@@ -1672,19 +1729,101 @@ export default function AdminPanel() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <DollarSign className="mr-2" size={20} />
-                    Recent Transactions
+                    Recent Transactions ({totalTransactions})
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Filter className="mr-2" size={16} />
-                      Filter
-                    </Button>
                     <Button variant="outline" size="sm">
                       <Download className="mr-2" size={16} />
                       Export
                     </Button>
                   </div>
                 </CardTitle>
+                
+                {/* Filter Controls */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label className="text-white text-sm">Type</Label>
+                    <Select 
+                      value={transactionFilter.type} 
+                      onValueChange={(value) => {
+                        setTransactionFilter(prev => ({ ...prev, type: value }));
+                        setTransactionPage(1); // Reset to first page
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-slate-700 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="deposit">Deposit</SelectItem>
+                        <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-white text-sm">Status</Label>
+                    <Select 
+                      value={transactionFilter.status} 
+                      onValueChange={(value) => {
+                        setTransactionFilter(prev => ({ ...prev, status: value }));
+                        setTransactionPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-slate-700 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-white text-sm">Token</Label>
+                    <Select 
+                      value={transactionFilter.token} 
+                      onValueChange={(value) => {
+                        setTransactionFilter(prev => ({ ...prev, token: value }));
+                        setTransactionPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-slate-700 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="all">All Tokens</SelectItem>
+                        {availableTokens.map((token: string) => (
+                          <SelectItem key={token} value={token}>{token.toUpperCase()}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-white text-sm">Date Range</Label>
+                    <Select 
+                      value={transactionFilter.dateRange} 
+                      onValueChange={(value) => {
+                        setTransactionFilter(prev => ({ ...prev, dateRange: value }));
+                        setTransactionPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-slate-700 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="week">This Week</SelectItem>
+                        <SelectItem value="month">This Month</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {transactionsLoading ? (
@@ -1707,7 +1846,7 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(Array.isArray(transactionsData) ? transactionsData : []).slice(0, 20).map((transaction: any) => (
+                      {paginatedTransactions.map((transaction: any) => (
                         <TableRow key={transaction.id}>
                           <TableCell>{transaction.id}</TableCell>
                           <TableCell>{transaction.username || `User ${transaction.userId}`}</TableCell>
@@ -1834,6 +1973,83 @@ export default function AdminPanel() {
                     <DollarSign className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-slate-300 mb-2">No Transactions</h3>
                     <p className="text-slate-400">Transaction history will appear here</p>
+                  </div>
+                )}
+                
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-between border-t border-slate-700 pt-4">
+                    <div className="text-sm text-slate-400">
+                      Showing {startIndex + 1}-{Math.min(endIndex, totalTransactions)} of {totalTransactions} transactions
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTransactionPage(prev => Math.max(1, prev - 1))}
+                        disabled={transactionPage === 1}
+                        className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (transactionPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (transactionPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = transactionPage - 2 + i;
+                          }
+                          
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={transactionPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setTransactionPage(pageNum)}
+                              className={`min-w-[40px] ${
+                                transactionPage === pageNum 
+                                  ? "bg-blue-600 border-blue-600 text-white hover:bg-blue-700" 
+                                  : "bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                              }`}
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                        
+                        {totalPages > 5 && transactionPage < totalPages - 2 && (
+                          <>
+                            <span className="text-slate-400 px-2">...</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setTransactionPage(totalPages)}
+                              className="min-w-[40px] bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                            >
+                              {totalPages}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTransactionPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={transactionPage === totalPages}
+                        className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
