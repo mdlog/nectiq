@@ -830,7 +830,6 @@ export const parlayPredictions = pgTable("parlay_predictions", {
   userId: integer("user_id").notNull().references(() => users.id),
   stakeAmount: integer("stake_amount").notNull(), // Minimum 50 NTIQ
   targetTime: timestamp("target_time").notNull(),
-  duration: varchar("duration", { length: 10 }).notNull(), // 1h, 6h, 24h, 7d
   totalMultiplier: numeric("total_multiplier", { precision: 5, scale: 2 }).notNull().default("1.00"),
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, active, completed, failed
   completedAt: timestamp("completed_at"),
@@ -1025,8 +1024,6 @@ export const insertParlayPredictionSchema = createInsertSchema(parlayPredictions
   createdAt: true,
   rewardAmount: true,
   correctPredictions: true,
-}).extend({
-  duration: z.enum(["1h", "6h", "24h", "7d"]),
 });
 
 export const insertParlayPredictionCoinSchema = createInsertSchema(parlayPredictionCoins).omit({
@@ -1035,7 +1032,7 @@ export const insertParlayPredictionCoinSchema = createInsertSchema(parlayPredict
   isCorrect: true,
 }).extend({
   prediction: z.enum(["up", "down"]),
-  cryptocurrency: z.enum(["bitcoin", "ethereum", "binancecoin", "cardano", "solana"]),
+  cryptocurrency: z.enum(["bitcoin", "ethereum", "binancecoin", "cardano", "solana", "ethereum-classic", "bittensor"]),
   duration: z.enum(["1h", "6h", "24h", "7d"]),
 });
 

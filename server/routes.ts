@@ -9934,6 +9934,15 @@ Manual balance correction required IMMEDIATELY!`;
       const totalMultiplier = Math.pow(baseMultiplier, coinCount);
 
       // Create parlay prediction (no global duration field needed)
+      console.log("🔍 [PARLAY] Creating parlay with data:", {
+        userId: session.userId,
+        stakeAmount: parseFloat(stakeAmount),
+        targetTime,
+        totalMultiplier,
+        totalCoinCount: coinCount,
+        status: 'active'
+      });
+      
       const parlay = await storage.createParlayPrediction({
         userId: session.userId,
         stakeAmount: parseFloat(stakeAmount),
