@@ -399,14 +399,26 @@ export default function AdminPanel() {
   if (transactionsError) console.log('🔍 [ADMIN-DEBUG] Transactions error:', transactionsError);
   if (statsError) console.log('🔍 [ADMIN-DEBUG] Stats error:', statsError);
 
-  // Use effect to handle initial loading
+  // Use effect to handle initial loading - make it more responsive
   useEffect(() => {
+    // Set a minimum loading time, but also check if critical data has loaded
     const timer = setTimeout(() => {
       setIsPageLoading(false);
-    }, 2000); // Wait 2 seconds for initial data load
+    }, 1500); // Reduced to 1.5 seconds
+
+    // Also set loading to false if we have stats data
+    if (adminStats && !statsLoading) {
+      const earlyTimer = setTimeout(() => {
+        setIsPageLoading(false);
+      }, 500);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(earlyTimer);
+      };
+    }
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [adminStats, statsLoading]);
 
   // Show loading screen during initial load
   if (isPageLoading) {
@@ -416,10 +428,28 @@ export default function AdminPanel() {
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
           <h2 className="text-2xl font-bold text-white mb-2">Loading Admin Panel</h2>
           <p className="text-slate-400">Initializing dashboard components...</p>
+          <div className="mt-4 text-xs text-slate-500">
+            Debugging: {statsLoading ? 'Stats Loading...' : 'Stats Ready'} | 
+            {transactionsLoading ? 'Transactions Loading...' : 'Transactions Ready'}
+          </div>
         </div>
       </div>
     );
   }
+
+  // Debug: Check if we have any errors that might prevent rendering
+  const hasErrors = statsError || transactionsError;
+  console.log('🔍 [ADMIN-RENDER] Loading states:', { 
+    statsLoading, 
+    transactionsLoading, 
+    hasErrors,
+    isPageLoading,
+    statsData: !!adminStats,
+    transactionsData: !!transactionsData
+  });
+
+  // Emergency fallback if main component fails to render
+  try {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -1979,4 +2009,37 @@ export default function AdminPanel() {
       </div>
     </div>
   );
+  } catch (error) {
+    console.error('🚨 [ADMIN-ERROR] Component render failed:', error);
+    
+    // Emergency fallback UI
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="h-8 w-8 text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Admin Panel Error</h2>
+          <p className="text-slate-400 mb-6">Something went wrong loading the admin panel. Please try refreshing the page.</p>
+          <div className="space-y-3">
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="w-full bg-blue-600 hover:bg-blue-500"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Page
+            </Button>
+            <Button 
+              onClick={() => window.location.href = '/'} 
+              variant="outline"
+              className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
