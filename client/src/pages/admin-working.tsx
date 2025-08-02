@@ -1366,8 +1366,8 @@ export default function AdminPanel() {
                         <TableHead>ID</TableHead>
                         <TableHead>User</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Token</TableHead>
+                        <TableHead>NTIQ Amount</TableHead>
+                        <TableHead>Crypto Amount</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Hash</TableHead>
                         <TableHead>Date</TableHead>
@@ -1387,8 +1387,18 @@ export default function AdminPanel() {
                               {transaction.type}
                             </Badge>
                           </TableCell>
-                          <TableCell>{transaction.amount}</TableCell>
-                          <TableCell>{transaction.token}</TableCell>
+                          <TableCell>
+                            {transaction.type === 'deposit' 
+                              ? `${transaction.amount.toLocaleString()} NTIQ`
+                              : `${transaction.amount.toLocaleString()} NTIQ`
+                            }
+                          </TableCell>
+                          <TableCell>
+                            {transaction.usdAmount 
+                              ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}`
+                              : `${(transaction.amount / 1000).toFixed(6)} ${transaction.token}`
+                            }
+                          </TableCell>
                           <TableCell>
                             <Badge variant={
                               transaction.status === 'completed' ? 'default' :
