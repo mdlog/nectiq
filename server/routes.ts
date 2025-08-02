@@ -3845,11 +3845,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`📊 [ADMIN-TRANSACTIONS] Found ${allPurchases.length} purchases`);
 
-      // Combine all transactions
+      // Combine all transactions and map transactionHash to hash for frontend compatibility
       const allTransactions = [
-        ...allWithdrawals,
-        ...allDeposits,
-        ...allPurchases
+        ...allWithdrawals.map(tx => ({
+          ...tx,
+          hash: tx.transactionHash, // Map transactionHash to hash for frontend
+          timestamp: tx.createdAt,
+          networkName: tx.type === 'withdrawal' ? 'Ethereum' : null,
+          chainName: tx.type === 'withdrawal' ? 'Ethereum' : null
+        })),
+        ...allDeposits.map(tx => ({
+          ...tx,
+          hash: tx.transactionHash, // Map transactionHash to hash for frontend
+          timestamp: tx.createdAt,
+          networkName: 'Ethereum',
+          chainName: 'Ethereum'
+        })),
+        ...allPurchases.map(tx => ({
+          ...tx,
+          hash: tx.transactionHash, // Map transactionHash to hash for frontend
+          timestamp: tx.createdAt,
+          networkName: null, // Purchases are internal
+          chainName: null
+        }))
       ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       console.log(`📊 [ADMIN-TRANSACTIONS] Total combined transactions: ${allTransactions.length}`);
