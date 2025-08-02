@@ -9880,7 +9880,7 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const { stakeAmount, duration, coins } = req.body;
+      const { stakeAmount, coins } = req.body;
 
       // Validate minimum stake
       if (parseFloat(stakeAmount) < 50) {
@@ -9892,56 +9892,83 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(400).json({ message: "At least 2 coins required for parlay" });
       }
 
+      // Validate each coin has required fields
+      for (const coin of coins) {
+        if (!coin.cryptocurrency || !coin.prediction || !coin.duration || coin.startPrice === undefined) {
+          return res.status(400).json({ message: "Each coin must have cryptocurrency, prediction, duration, and startPrice" });
+        }
+        
+        // Validate duration format
+        if (!['1h', '6h', '24h', '7d'].includes(coin.duration)) {
+          return res.status(400).json({ message: "Invalid duration. Must be 1h, 6h, 24h, or 7d" });
+        }
+      }
+
       // Check user balance
       const user = await storage.getUser(session.userId);
       if (!user || user.balance < parseFloat(stakeAmount)) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
 
-      // Calculate target time based on duration
+      // Calculate target time based on the longest duration among coins
       const now = new Date();
-      const targetTime = new Date(now);
+      let maxDurationHours = 0;
       
-      switch (duration) {
-        case '1h':
-          targetTime.setHours(targetTime.getHours() + 1);
-          break;
-        case '6h':
-          targetTime.setHours(targetTime.getHours() + 6);
-          break;
-        case '24h':
-          targetTime.setHours(targetTime.getHours() + 24);
-          break;
-        case '7d':
-          targetTime.setDate(targetTime.getDate() + 7);
-          break;
-        default:
-          return res.status(400).json({ message: "Invalid duration" });
+      for (const coin of coins) {
+        let durationHours = 0;
+        switch (coin.duration) {
+          case '1h': durationHours = 1; break;
+          case '6h': durationHours = 6; break;
+          case '24h': durationHours = 24; break;
+          case '7d': durationHours = 24 * 7; break;
+        }
+        maxDurationHours = Math.max(maxDurationHours, durationHours);
       }
+      
+      const targetTime = new Date(now);
+      targetTime.setHours(targetTime.getHours() + maxDurationHours);
 
       // Calculate total multiplier based on number of coins
       const coinCount = coins.length;
       const baseMultiplier = 1.5;
       const totalMultiplier = Math.pow(baseMultiplier, coinCount);
 
-      // Create parlay prediction
+      // Create parlay prediction (no global duration field needed)
       const parlay = await storage.createParlayPrediction({
         userId: session.userId,
         stakeAmount: parseFloat(stakeAmount),
         targetTime,
-        duration,
         totalMultiplier,
         totalCoinCount: coinCount,
         status: 'active'
       });
 
-      // Create coin predictions
+      // Create coin predictions with individual durations and target times
       for (const coin of coins) {
+        // Calculate individual target time for each coin
+        const coinTargetTime = new Date(now);
+        switch (coin.duration) {
+          case '1h':
+            coinTargetTime.setHours(coinTargetTime.getHours() + 1);
+            break;
+          case '6h':
+            coinTargetTime.setHours(coinTargetTime.getHours() + 6);
+            break;
+          case '24h':
+            coinTargetTime.setHours(coinTargetTime.getHours() + 24);
+            break;
+          case '7d':
+            coinTargetTime.setDate(coinTargetTime.getDate() + 7);
+            break;
+        }
+
         await storage.createParlayPredictionCoin({
           parlayId: parlay.id,
           cryptocurrency: coin.cryptocurrency,
           prediction: coin.prediction,
-          startPrice: coin.startPrice
+          startPrice: coin.startPrice,
+          duration: coin.duration,
+          targetTime: coinTargetTime
         });
       }
 
