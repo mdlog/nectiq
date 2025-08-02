@@ -3792,10 +3792,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("   Cookies:", req.headers.cookie || "NO COOKIES");
       console.log("   Request URL:", req.url);
       
-      // TEMPORARY: Skip auth check for debugging transactions
-      const skipAuth = true; // Change to false for production
-      
-      if (!skipAuth && !req.session?.user?.isAdmin) {
+      // Check admin access via session
+      if (!req.session?.isAdmin && !req.session?.user?.isAdmin) {
         console.log("[SECURITY AUDIT]", new Date().toISOString(), "- ADMIN_ACCESS_DENIED_NO_SESSION", {
           ip: req.ip,
           userAgent: req.headers['user-agent'],

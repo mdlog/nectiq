@@ -80,10 +80,14 @@ export default function AdminPanel() {
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
-  // Queries
-  const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
+  // Queries dengan error handling yang lebih baik
+  const { data: adminStats, isLoading: statsLoading, error: statsError } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     refetchInterval: 30000,
+    retry: (failureCount, error: any) => {
+      console.log('📊 [ADMIN-STATS] Query failed:', error?.message);
+      return failureCount < 2;
+    },
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery<User[]>({
@@ -106,9 +110,17 @@ export default function AdminPanel() {
     refetchInterval: 15000,
   });
 
-  const { data: transactionsData, isLoading: transactionsLoading } = useQuery({
+  const { data: transactionsData, isLoading: transactionsLoading, error: transactionsError } = useQuery({
     queryKey: ["/api/admin/transactions"],
     refetchInterval: 30000,
+    retry: (failureCount, error: any) => {
+      console.log('💳 [ADMIN-TRANSACTIONS] Query failed:', error?.message);
+      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
+        console.log('🔐 [AUTH] Authentication error detected, stopping retry');
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 
   const { data: securityEvents, isLoading: securityLoading } = useQuery({
@@ -381,6 +393,11 @@ export default function AdminPanel() {
     URL.revokeObjectURL(url);
     toast({ title: "Successfully", description: "Predictions exported successfully" });
   };
+
+  // Debug logging untuk troubleshooting
+  console.log('🔍 [ADMIN-DEBUG] Transactions error:', transactionsError);
+  console.log('🔍 [ADMIN-DEBUG] Transactions data:', transactionsData);
+  console.log('🔍 [ADMIN-DEBUG] Stats error:', statsError);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -1358,6 +1375,16 @@ export default function AdminPanel() {
                 {transactionsLoading ? (
                   <div className="text-center py-8">
                     <div className="text-slate-400">Loading transactions...</div>
+                  </div>
+                ) : transactionsError ? (
+                  <div className="text-center py-8">
+                    <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-red-300 mb-2">Error Loading Transactions</h3>
+                    <p className="text-slate-400">
+                      {transactionsError?.message?.includes('Authentication') 
+                        ? 'Please connect your admin wallet to access this data.' 
+                        : 'Failed to load transaction data. Please try refreshing the page.'}
+                    </p>
                   </div>
                 ) : transactionsData && Array.isArray(transactionsData) && transactionsData.length > 0 ? (
                   <Table>
