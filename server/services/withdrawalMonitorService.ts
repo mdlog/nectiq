@@ -22,7 +22,7 @@ interface EtherscanResponse {
 export class WithdrawalMonitorService {
   private intervalId: NodeJS.Timeout | null = null;
   private readonly CHECK_INTERVAL = 30000; // 30 seconds
-  private readonly ETHERSCAN_API_KEY = 'YourApiKeyToken'; // Free API key placeholder
+  private readonly ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || 'J2DPX5HHQKYKX3E17WPMWKH9PYYFMY6IQF'; // Valid API key
 
   async start() {
     console.log('🚀 [WITHDRAWAL-MONITOR] Starting automated withdrawal hash detection...');
@@ -54,8 +54,8 @@ export class WithdrawalMonitorService {
       
       // Filter withdrawals that need hash detection
       const pendingWithdrawals = allWithdrawals.filter(w => 
-        w.status === 'processing' && 
-        (!w.hash || w.hash === '3' || w.hash === 'pending')
+        (w.status === 'processing' || w.status === 'pending') && 
+        (!w.transactionHash || w.transactionHash === '3' || w.transactionHash === 'pending' || !w.transactionHash.startsWith('0x'))
       );
       
       if (pendingWithdrawals.length === 0) {
@@ -77,7 +77,7 @@ export class WithdrawalMonitorService {
     try {
       console.log(`🔍 [WITHDRAWAL-MONITOR] Searching hash for withdrawal ${withdrawal.uniqueTransactionId}`);
       
-      if (!withdrawal.toAddress) {
+      if (!withdrawal.toWalletAddress) {
         console.log(`⚠️ [WITHDRAWAL-MONITOR] Withdrawal ${withdrawal.uniqueTransactionId} has no target address, skipping`);
         return;
       }
@@ -90,20 +90,20 @@ export class WithdrawalMonitorService {
       console.log(`🔍 [WITHDRAWAL-MONITOR] Searching from ${new Date(searchStartTime * 1000).toISOString()} to ${new Date(searchEndTime * 1000).toISOString()}`);
 
       // Determine network and API URL
-      const network = this.getNetworkFromToken(withdrawal.token);
+      const network = this.getNetworkFromToken(withdrawal.tokenType);
       const apiUrl = this.getApiUrl(network);
       
       if (!apiUrl) {
-        console.log(`⚠️ [WITHDRAWAL-MONITOR] Unsupported network for token ${withdrawal.token}`);
+        console.log(`⚠️ [WITHDRAWAL-MONITOR] Unsupported network for token ${withdrawal.tokenType}`);
         return;
       }
 
-      console.log(`🌐 [WITHDRAWAL-MONITOR] Using ${network} network for ${withdrawal.token} token`);
+      console.log(`🌐 [WITHDRAWAL-MONITOR] Using ${network} network for ${withdrawal.tokenType} token`);
 
       // Search for transactions
       let foundHash = null;
       
-      if (withdrawal.token.toUpperCase() === 'USDC' || withdrawal.token.toUpperCase() === 'USDT') {
+      if (withdrawal.tokenType.toUpperCase() === 'USDC' || withdrawal.tokenType.toUpperCase() === 'USDT') {
         // Token transfers
         foundHash = await this.searchTokenTransfer(apiUrl, withdrawal, searchStartTime, searchEndTime);
       } else {
@@ -129,7 +129,7 @@ export class WithdrawalMonitorService {
         params: {
           module: 'account',
           action: 'txlist',
-          address: withdrawal.toAddress,
+          address: withdrawal.toWalletAddress,
           startblock: 0,
           endblock: 99999999,
           page: 1,
@@ -146,14 +146,14 @@ export class WithdrawalMonitorService {
       }
 
       const transactions = response.data.result || [];
-      console.log(`📊 [WITHDRAWAL-MONITOR] Found ${transactions.length} transactions for address ${withdrawal.toAddress}`);
+      console.log(`📊 [WITHDRAWAL-MONITOR] Found ${transactions.length} transactions for address ${withdrawal.toWalletAddress}`);
 
       // Filter transactions within timeframe and to correct address
       const relevantTxs = transactions.filter(tx => 
         parseInt(tx.timeStamp) >= startTime &&
         parseInt(tx.timeStamp) <= endTime &&
         tx.isError === '0' &&
-        tx.to.toLowerCase() === withdrawal.toAddress.toLowerCase()
+        tx.to.toLowerCase() === withdrawal.toWalletAddress.toLowerCase()
       );
 
       console.log(`⏰ [WITHDRAWAL-MONITOR] ${relevantTxs.length} transactions in timeframe`);
@@ -190,7 +190,7 @@ export class WithdrawalMonitorService {
         params: {
           module: 'account',
           action: 'tokentx',
-          address: withdrawal.toAddress,
+          address: withdrawal.toWalletAddress,
           startblock: 0,
           endblock: 99999999,
           page: 1,
@@ -205,12 +205,12 @@ export class WithdrawalMonitorService {
       }
 
       const tokenTxs = response.data.result || [];
-      console.log(`📊 [WITHDRAWAL-MONITOR] Found ${tokenTxs.length} token transactions for address ${withdrawal.toAddress}`);
+      console.log(`📊 [WITHDRAWAL-MONITOR] Found ${tokenTxs.length} token transactions for address ${withdrawal.toWalletAddress}`);
 
       const relevantTxs = tokenTxs.filter(tx => 
         parseInt(tx.timeStamp) >= startTime &&
         parseInt(tx.timeStamp) <= endTime &&
-        tx.to.toLowerCase() === withdrawal.toAddress.toLowerCase()
+        tx.to.toLowerCase() === withdrawal.toWalletAddress.toLowerCase()
       );
 
       console.log(`⏰ [WITHDRAWAL-MONITOR] ${relevantTxs.length} token transactions in timeframe`);
@@ -220,7 +220,7 @@ export class WithdrawalMonitorService {
       for (const tx of relevantTxs) {
         const tokenSymbol = (tx as any).tokenSymbol?.toLowerCase();
         
-        if (tokenSymbol === withdrawal.token.toLowerCase()) {
+        if (tokenSymbol === withdrawal.tokenType.toLowerCase()) {
           const tokenDecimals = parseInt((tx as any).tokenDecimal || '6');
           const txValueTokens = parseFloat(tx.value) / Math.pow(10, tokenDecimals);
           
