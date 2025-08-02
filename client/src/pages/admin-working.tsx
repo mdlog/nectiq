@@ -184,9 +184,6 @@ export default function AdminPanel() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isFetchingLogo, setIsFetchingLogo] = useState(false);
   const [processingWithdrawal, setProcessingWithdrawal] = useState<number | null>(null);
-  const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [selectedWithdrawal, setSelectedWithdrawal] = useState<number | null>(null);
-  const [rejectNote, setRejectNote] = useState('');
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState("");
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
@@ -348,12 +345,6 @@ export default function AdminPanel() {
 
   // Withdrawal action handler
   const handleWithdrawalAction = async (withdrawalId: number, action: 'approve' | 'reject') => {
-    if (action === 'reject') {
-      setSelectedWithdrawal(withdrawalId);
-      setShowRejectDialog(true);
-      return;
-    }
-    
     setProcessingWithdrawal(withdrawalId);
     
     try {
@@ -361,54 +352,17 @@ export default function AdminPanel() {
         method: 'POST',
       });
       
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-      toast({ 
-        title: "Success", 
-        description: `Withdrawal ${action}d successfully` 
-      });
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+        toast({ 
+          title: "Success", 
+          description: `Withdrawal ${action}d successfully` 
+        });
+      }
     } catch (error: any) {
       toast({ 
         title: "Error", 
         description: error.message || `Failed to ${action} withdrawal`,
-        variant: "destructive" 
-      });
-    } finally {
-      setProcessingWithdrawal(null);
-    }
-  };
-
-  // Handle rejection with admin note
-  const handleRejectWithdrawal = async () => {
-    if (!selectedWithdrawal || !rejectNote.trim()) {
-      toast({ 
-        title: "Error", 
-        description: "Admin note is required for rejection",
-        variant: "destructive" 
-      });
-      return;
-    }
-    
-    setProcessingWithdrawal(selectedWithdrawal);
-    
-    try {
-      const response = await apiRequest(`/api/admin/withdrawals/${selectedWithdrawal}/reject`, {
-        method: 'POST',
-        body: JSON.stringify({ adminNote: rejectNote.trim() }),
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-      toast({ 
-        title: "Success", 
-        description: "Withdrawal rejected successfully" 
-      });
-      
-      setShowRejectDialog(false);
-      setSelectedWithdrawal(null);
-      setRejectNote('');
-    } catch (error: any) {
-      toast({ 
-        title: "Error", 
-        description: error.message || "Failed to reject withdrawal",
         variant: "destructive" 
       });
     } finally {
@@ -2113,51 +2067,6 @@ export default function AdminPanel() {
             </Card>
           </TabsContent>
         </Tabs>
-        
-        {/* Withdrawal Rejection Dialog */}
-        <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-          <DialogContent className="bg-slate-800 border-slate-700">
-            <DialogHeader>
-              <DialogTitle className="text-white">Reject Withdrawal</DialogTitle>
-              <DialogDescription className="text-slate-400">
-                Please provide a reason for rejecting this withdrawal request.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-slate-300">Admin Note</label>
-                <textarea
-                  value={rejectNote}
-                  onChange={(e) => setRejectNote(e.target.value)}
-                  placeholder="Enter reason for rejection..."
-                  className="w-full mt-1 p-3 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  rows={3}
-                  required
-                />
-              </div>
-              <div className="flex gap-3 justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowRejectDialog(false);
-                    setSelectedWithdrawal(null);
-                    setRejectNote('');
-                  }}
-                  disabled={processingWithdrawal === selectedWithdrawal}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleRejectWithdrawal}
-                  disabled={!rejectNote.trim() || processingWithdrawal === selectedWithdrawal}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  {processingWithdrawal === selectedWithdrawal ? 'Processing...' : 'Reject Withdrawal'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
