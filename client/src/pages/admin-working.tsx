@@ -77,6 +77,8 @@ export default function AdminPanel() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isFetchingLogo, setIsFetchingLogo] = useState(false);
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState("");
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   // Queries
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
@@ -1781,39 +1783,31 @@ export default function AdminPanel() {
                           <Input
                             placeholder="RESET"
                             className="bg-slate-700 border-slate-600 text-white"
-                            id="reset-confirmation-input"
+                            value={resetConfirmText}
                             onChange={(e) => {
                               const value = e.target.value;
                               console.log('🔍 [RESET-DEBUG] Input changed:', { value, isRESET: value === 'RESET' });
-                              const button = document.getElementById('reset-confirm-button');
-                              if (button) {
-                                button.disabled = value !== 'RESET';
-                                console.log('🔘 [RESET-DEBUG] Button disabled:', button.disabled);
-                              }
+                              setResetConfirmText(value);
                             }}
                           />
                         </div>
                         <div className="flex gap-2">
                           <Button 
-                            id="reset-confirm-button"
                             variant="destructive" 
-                            disabled
-                            onClick={async (e) => {
+                            disabled={resetConfirmText !== 'RESET' || isResetting}
+                            className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                            onClick={async () => {
                               console.log('🔥 [RESET-DEBUG] Confirm Reset button clicked!');
-                              e.preventDefault();
-                              e.stopPropagation();
                               
-                              const input = document.getElementById('reset-confirmation-input') as HTMLInputElement;
-                              console.log('🔍 [RESET-DEBUG] Input element found:', !!input);
-                              console.log('🔍 [RESET-DEBUG] Input value:', input?.value);
-                              
-                              if (input?.value !== 'RESET') {
-                                console.log('❌ [RESET-DEBUG] Invalid confirmation code:', input?.value);
+                              if (resetConfirmText !== 'RESET') {
+                                console.log('❌ [RESET-DEBUG] Invalid confirmation code:', resetConfirmText);
                                 return;
                               }
                               
                               console.log('🚀 [RESET-DEBUG] Starting reset process...');
-                              console.log('🔍 [RESET-DEBUG] Input value:', input?.value);
+                              console.log('🔍 [RESET-DEBUG] Confirm text:', resetConfirmText);
+                              
+                              setIsResetting(true);
                               
                               try {
                                 console.log('📡 [RESET-DEBUG] Making API call to /api/admin/reset-database');
@@ -1845,19 +1839,33 @@ export default function AdminPanel() {
                                 
                                 if (response.ok && result.success) {
                                   console.log('🎉 [RESET-DEBUG] Reset successful!');
-                                  alert('Database reset successfully! Page will reload...');
-                                  setTimeout(() => window.location.reload(), 1000);
+                                  toast({ 
+                                    title: "Database Reset Successful", 
+                                    description: "All data has been cleared. Page will reload...",
+                                    variant: "default"
+                                  });
+                                  setTimeout(() => window.location.reload(), 2000);
                                 } else {
                                   console.error('❌ [RESET-DEBUG] Reset failed:', result);
-                                  alert('Reset failed: ' + (result.message || result.error || 'Unknown error'));
+                                  toast({ 
+                                    title: "Reset Failed", 
+                                    description: result.message || result.error || 'Unknown error',
+                                    variant: "destructive"
+                                  });
                                 }
-                              } catch (error) {
+                              } catch (error: any) {
                                 console.error('❌ [RESET-DEBUG] Network/Fetch error:', error);
-                                alert('Reset failed (network error): ' + error.message);
+                                toast({ 
+                                  title: "Network Error", 
+                                  description: 'Reset failed: ' + error.message,
+                                  variant: "destructive"
+                                });
+                              } finally {
+                                setIsResetting(false);
                               }
                             }}
                           >
-                            Confirm Reset
+{isResetting ? "Resetting..." : "Confirm Reset"}
                           </Button>
                           <DialogTrigger asChild>
                             <Button variant="outline">Cancel</Button>
