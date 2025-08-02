@@ -14,6 +14,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAccount, useWriteContract, useSendTransaction } from "wagmi";
+import { parseEther, parseUnits } from "viem";
 
 // Helper functions for blockchain explorer URLs
 const getBlockchainExplorerUrl = (hash: string, token: string): string => {
@@ -171,6 +173,11 @@ export default function AdminPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("statistics");
+  
+  // Web3 hooks
+  const { isConnected } = useAccount();
+  const { writeContract } = useWriteContract();
+  const { sendTransaction } = useSendTransaction();
   
   // State for various admin functions
   const [searchTerm, setSearchTerm] = useState("");
@@ -348,16 +355,103 @@ export default function AdminPanel() {
     setProcessingWithdrawal(withdrawalId);
     
     try {
-      const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
-        method: 'POST',
-      });
-      
-      if (response.success) {
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+      if (action === 'approve') {
+        // Find the withdrawal transaction data
+        const withdrawal = Array.isArray(transactionsData) ? transactionsData.find((tx: any) => tx.id === withdrawalId && tx.type === 'withdrawal') : null;
+        
+        if (!withdrawal) {
+          throw new Error('Withdrawal data not found');
+        }
+
+        // Check if wallet is connected
+        if (!isConnected) {
+          throw new Error('Please connect wallet to approve withdrawals');
+        }
+
+        // Prepare transaction parameters
+        const cryptoAmount = withdrawal.netAmount || (withdrawal.amount / 1000).toString(); // Use netAmount or fallback
+        const tokenSymbol = withdrawal.token;
+        const recipientAddress = withdrawal.toAddress;
+
         toast({ 
-          title: "Success", 
-          description: `Withdrawal ${action}d successfully` 
+          title: "MetaMask Required", 
+          description: `Please confirm transaction in MetaMask: ${cryptoAmount} ${tokenSymbol} to ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}` 
         });
+
+        // Call MetaMask transaction
+        let transactionHash = '';
+        
+        if (tokenSymbol === 'ETH') {
+          // For ETH transactions - use sendTransaction
+          const tx = await sendTransaction({
+            to: recipientAddress as `0x${string}`,
+            value: parseEther(cryptoAmount)
+          });
+          transactionHash = tx || '';
+        } else {
+          // For ERC-20 tokens (USDC, USDT)
+          const tokenAddresses = {
+            'USDC': '0xA0b86a33E6417aE82a66c62E9Cc47bE1473E7dF4', // Sepolia USDC testnet
+            'USDT': '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'  // Sepolia USDT testnet
+          };
+          
+          const tokenAddress = tokenAddresses[tokenSymbol as keyof typeof tokenAddresses];
+          if (!tokenAddress) {
+            throw new Error(`Unsupported token: ${tokenSymbol}`);
+          }
+
+          // ERC-20 transfer function
+          const decimals = tokenSymbol === 'USDC' || tokenSymbol === 'USDT' ? 6 : 18;
+          const tx = await writeContract({
+            address: tokenAddress as `0x${string}`,
+            abi: [
+              {
+                name: 'transfer',
+                type: 'function',
+                inputs: [
+                  { name: 'to', type: 'address' },
+                  { name: 'amount', type: 'uint256' }
+                ],
+                outputs: [{ name: '', type: 'bool' }],
+                stateMutability: 'nonpayable'
+              }
+            ],
+            functionName: 'transfer',
+            args: [recipientAddress as `0x${string}`, parseUnits(cryptoAmount, decimals)]
+          });
+          transactionHash = tx || '';
+        }
+
+        // If transaction successful, update backend
+        const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
+          method: 'POST',
+          body: JSON.stringify({ 
+            transactionHash,
+            cryptoAmount,
+            tokenSymbol 
+          })
+        });
+        
+        if (response) {
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+          toast({ 
+            title: "Success", 
+            description: `Withdrawal approved and ${cryptoAmount} ${tokenSymbol} sent successfully! TX: ${transactionHash.slice(0, 10)}...` 
+          });
+        }
+      } else {
+        // For reject action, just call API
+        const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
+          method: 'POST',
+        });
+        
+        if (response) {
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+          toast({ 
+            title: "Success", 
+            description: `Withdrawal ${action}d successfully` 
+          });
+        }
       }
     } catch (error: any) {
       toast({ 
@@ -491,8 +585,8 @@ export default function AdminPanel() {
     const csvContent = [
       ["ID", "User ID", "Crypto", "Predicted Price", "Actual Price", "Timeframe", "Stake", "Status", "Reward"].join(","),
       ...predictions.map(prediction => {
-        const cryptoInfo = getCryptoInfo(prediction.cryptoId);
-        const cryptoDisplay = cryptoInfo ? `${cryptoInfo.name} (${cryptoInfo.symbol})` : prediction.cryptoId;
+        const cryptoInfo = getCryptoInfo(prediction.cryptoSymbol);
+        const cryptoDisplay = cryptoInfo ? `${cryptoInfo.name} (${cryptoInfo.symbol})` : prediction.cryptoSymbol;
         return [
           prediction.id,
           prediction.userId,
