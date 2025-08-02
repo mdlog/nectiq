@@ -396,7 +396,7 @@ export default function AdminPanel() {
           });
           transactionHash = tx || '';
         } else {
-          // For ERC-20 tokens (USDC, USDT)
+          // For ERC-20 tokens (USDC, USDT) - Simulation mode untuk testing
           console.log(`🔍 [USDC-DEBUG] Starting USDC withdrawal for ${cryptoAmount} ${tokenSymbol}`);
           
           const tokenAddresses = {
@@ -419,6 +419,28 @@ export default function AdminPanel() {
           console.log(`🔍 [USDC-DEBUG] Amount in wei: ${amountInWei.toString()}`);
           console.log(`🔍 [USDC-DEBUG] Calling writeContract...`);
           
+          // TEMPORARY: Since testnet USDC might not be available, simulate transaction for testing
+          console.log(`⚠️ [USDC-SIMULATION] Admin wallet might not have USDC testnet tokens`);
+          console.log(`⚠️ [USDC-SIMULATION] For testing purposes, generating simulation hash`);
+          
+          // Generate a realistic looking transaction hash for testing
+          const simulatedHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+          console.log(`🎭 [USDC-SIMULATION] Generated test hash: ${simulatedHash}`);
+          
+          // Ask user to check their wallet for actual USDC balance
+          toast({
+            title: "USDC Withdrawal Testing",
+            description: `Silakan cek apakah wallet admin memiliki ${cryptoAmount} USDC di Sepolia testnet. Jika tidak ada, withdrawal akan gagal.`,
+            variant: "default",
+          });
+
+          // Add button to get testnet USDC if needed
+          console.log(`💡 [USDC-HELP] Untuk mendapatkan USDC testnet Sepolia:`);
+          console.log(`💡 [USDC-HELP] 1. Visit: https://faucet.circle.com/`);
+          console.log(`💡 [USDC-HELP] 2. Connect wallet: ${address}`);
+          console.log(`💡 [USDC-HELP] 3. Select Sepolia testnet`);
+          console.log(`💡 [USDC-HELP] 4. Request USDC testnet tokens`);
+          
           try {
             console.log(`🔄 [USDC-DEBUG] About to call writeContract with params:`, {
               address: tokenAddress,
@@ -430,6 +452,8 @@ export default function AdminPanel() {
 
             // Wait a moment to ensure wallet is ready
             await new Promise(resolve => setTimeout(resolve, 500));
+            
+            console.log(`🔍 [USDC-DEBUG] Attempting real transaction...`);
             
             const tx = await writeContract({
               address: tokenAddress as `0x${string}`,
@@ -459,6 +483,17 @@ export default function AdminPanel() {
               code: writeError?.code,
               reason: writeError?.reason
             });
+            
+            // Check if error is due to insufficient balance
+            if (writeError?.message?.includes('insufficient') || writeError?.message?.includes('balance')) {
+              console.log(`💡 [USDC-DEBUG] Detected insufficient balance - wallet needs USDC testnet tokens`);
+              toast({
+                title: "Insufficient USDC Balance",
+                description: "Wallet admin tidak memiliki cukup USDC di Sepolia testnet. Silakan deposit USDC testnet terlebih dahulu.",
+                variant: "destructive",
+              });
+            }
+            
             throw writeError;
           }
         }
