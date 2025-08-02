@@ -701,7 +701,14 @@ export class DatabaseStorage implements IStorage {
   async createDeposit(deposit: any): Promise<any> {
     try {
       console.log('🔧 [STORAGE] Creating deposit in database:', deposit);
-      const [newDeposit] = await db.insert(deposits).values(deposit).returning();
+      
+      // Generate unique 8-digit transaction ID if not provided
+      const uniqueTransactionId = deposit.uniqueTransactionId || Math.floor(10000000 + Math.random() * 90000000).toString();
+      
+      const [newDeposit] = await db.insert(deposits).values({
+        ...deposit,
+        uniqueTransactionId
+      }).returning();
       console.log('✅ [STORAGE] Deposit created successfully:', newDeposit);
       return newDeposit;
     } catch (error) {
@@ -773,9 +780,15 @@ export class DatabaseStorage implements IStorage {
 
   // Multi-chain Withdrawal operations
   async createWithdrawal(insertWithdrawal: InsertWithdrawal): Promise<Withdrawal> {
+    // Generate unique 8-digit transaction ID if not provided
+    const uniqueTransactionId = insertWithdrawal.uniqueTransactionId || Math.floor(10000000 + Math.random() * 90000000).toString();
+    
     const [withdrawal] = await db
       .insert(withdrawals)
-      .values(insertWithdrawal)
+      .values({
+        ...insertWithdrawal,
+        uniqueTransactionId
+      })
       .returning();
     return withdrawal;
   }
