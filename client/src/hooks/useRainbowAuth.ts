@@ -51,7 +51,7 @@ export function useRainbowAuth() {
       
       toast({
         title: "Wallet Connected",
-        description: `Successfully connected to ${address?.slice(0, 6)}...${address?.slice(-4)}`,
+        description: address ? `Successfully connected to ${address.slice(0, 6)}...${address.slice(-4)}` : "Successfully connected to wallet",
       });
 
       // Refresh user data
