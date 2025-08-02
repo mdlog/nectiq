@@ -9,6 +9,7 @@ Preferred communication style: Simple, everyday language.
 ```
 
 ## Recent Changes
+- **Transaction Hash Validation System (2025-08-02)**: Implemented comprehensive hash validation across admin panel and user components. Invalid placeholder hashes ("3") now display as warning badges, while valid Ethereum hashes (0x... format) show proper explorer links to Sepolia testnet. Applied to both `admin-working.tsx` and `multi-chain-wallet.tsx` components.
 - **Transaction Hash Explorer Links (2025-08-02)**: Implemented clickable transaction hash links in admin panel that redirect to appropriate blockchain explorers. Fixed to use testnet explorers (Sepolia Etherscan, BSC Testnet, Mumbai PolygonScan, etc.) instead of mainnet.
 - **Transaction Display Enhancement (2025-08-02)**: Updated transaction table format to show "NTIQ Amount" (received/withdrawn NTIQ) and "Crypto Amount" (crypto paid/received), with username display instead of user ID.
 - **Database Reset Fix (2025-08-02)**: Fixed disabled reset database button in admin panel Settings tab. Added proper input validation, dynamic button state management, and debug logging to `admin-working.tsx`.

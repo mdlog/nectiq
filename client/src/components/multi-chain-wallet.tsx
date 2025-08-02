@@ -545,13 +545,26 @@ function TransactionList({ transactions, type }: { transactions: TransactionData
               {new Date(tx.createdAt).toLocaleDateString()}
             </p>
           </div>
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => window.open(`https://etherscan.io/tx/${tx.transactionHash}`, '_blank')}
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+          {tx.transactionHash && tx.transactionHash !== '3' && (tx.transactionHash.startsWith('0x') && tx.transactionHash.length >= 42) ? (
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => window.open(`https://sepolia.etherscan.io/tx/${tx.transactionHash}`, '_blank')}
+              title="View on Sepolia Etherscan"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          ) : tx.transactionHash === '3' ? (
+            <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/50 rounded-md">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              <span className="text-orange-600 dark:text-orange-400 text-xs font-medium">Invalid Hash</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-700/50 rounded-md">
+              <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
+              <span className="text-slate-600 dark:text-slate-400 text-xs font-medium">Pending</span>
+            </div>
+          )}
         </div>
       ))}
     </div>
