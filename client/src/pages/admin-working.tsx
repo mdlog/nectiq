@@ -205,6 +205,14 @@ export default function AdminPanel() {
   const [transactionPage, setTransactionPage] = useState(1);
   const [transactionLimit] = useState(10); // Items per page
 
+  // Financial summary state
+  const [financialSummary, setFinancialSummary] = useState({
+    totalDeposits: 0,
+    totalWithdrawals: 0,
+    pendingTransactions: 0,
+    ntiqRewards: 0
+  });
+
   // Queries
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
@@ -713,6 +721,44 @@ export default function AdminPanel() {
   const availableTokens = transactionsData && Array.isArray(transactionsData) 
     ? [...new Set(transactionsData.map((t: any) => t.token).filter(Boolean))]
     : [];
+
+  // Calculate financial summary from transactions data
+  const calculateFinancialSummary = () => {
+    if (!transactionsData || !Array.isArray(transactionsData)) {
+      return {
+        totalDeposits: 0,
+        totalWithdrawals: 0,
+        pendingTransactions: 0,
+        ntiqRewards: adminStats?.totalRewards || 0
+      };
+    }
+
+    let totalDeposits = 0;
+    let totalWithdrawals = 0;
+    let pendingTransactions = 0;
+
+    transactionsData.forEach((transaction: any) => {
+      if (transaction.type === 'deposit' && transaction.status === 'completed') {
+        totalDeposits += parseFloat(transaction.usdAmount || transaction.amount || 0);
+      } else if (transaction.type === 'withdrawal' && transaction.status === 'completed') {
+        totalWithdrawals += parseFloat(transaction.usdAmount || transaction.amount || 0);
+      }
+      
+      if (transaction.status === 'pending') {
+        pendingTransactions += 1;
+      }
+    });
+
+    return {
+      totalDeposits: Math.round(totalDeposits * 100) / 100, // Round to 2 decimal places
+      totalWithdrawals: Math.round(totalWithdrawals * 100) / 100,
+      pendingTransactions,
+      ntiqRewards: adminStats?.totalRewards || 0
+    };
+  };
+
+  // Update financial summary when data changes
+  const currentFinancialSummary = calculateFinancialSummary();
 
   // Export functions
   const exportUsers = () => {
@@ -1680,7 +1726,10 @@ export default function AdminPanel() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-green-100 text-sm font-medium">Total Deposits</p>
-                      <p className="text-3xl font-bold text-white">$0</p>
+                      <p className="text-3xl font-bold text-white">
+                        ${currentFinancialSummary.totalDeposits.toLocaleString()}
+                      </p>
+                      <p className="text-green-200 text-xs mt-1">Completed deposits</p>
                     </div>
                     <CheckCircle className="h-12 w-12 text-green-400" />
                   </div>
@@ -1692,7 +1741,10 @@ export default function AdminPanel() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-red-100 text-sm font-medium">Total Withdrawals</p>
-                      <p className="text-3xl font-bold text-white">$0</p>
+                      <p className="text-3xl font-bold text-white">
+                        ${currentFinancialSummary.totalWithdrawals.toLocaleString()}
+                      </p>
+                      <p className="text-red-200 text-xs mt-1">Completed withdrawals</p>
                     </div>
                     <XCircle className="h-12 w-12 text-red-400" />
                   </div>
@@ -1704,7 +1756,10 @@ export default function AdminPanel() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-blue-100 text-sm font-medium">NTIQ Rewards</p>
-                      <p className="text-3xl font-bold text-white">{adminStats?.totalRewards || 0}</p>
+                      <p className="text-3xl font-bold text-white">
+                        {currentFinancialSummary.ntiqRewards.toLocaleString()}
+                      </p>
+                      <p className="text-blue-200 text-xs mt-1">Total rewards distributed</p>
                     </div>
                     <Coins className="h-12 w-12 text-blue-400" />
                   </div>
@@ -1716,7 +1771,10 @@ export default function AdminPanel() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-yellow-100 text-sm font-medium">Pending Transactions</p>
-                      <p className="text-3xl font-bold text-white">0</p>
+                      <p className="text-3xl font-bold text-white">
+                        {currentFinancialSummary.pendingTransactions}
+                      </p>
+                      <p className="text-yellow-200 text-xs mt-1">Awaiting approval</p>
                     </div>
                     <Clock className="h-12 w-12 text-yellow-400" />
                   </div>
