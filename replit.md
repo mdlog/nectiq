@@ -8,6 +8,10 @@ Nectiq is a gamified cryptocurrency price prediction platform. It enables users 
 Preferred communication style: Simple, everyday language.
 ```
 
+## Recent Changes
+- **Database Reset Fix (2025-08-02)**: Fixed disabled reset database button in admin panel Settings tab. Added proper input validation, dynamic button state management, and debug logging to `admin-working.tsx`.
+- **Project Cleanup (2025-08-02)**: Removed unused admin files (`admin.tsx`, `admin-simple.tsx`). Only `admin-working.tsx` remains as the active admin panel implementation.
+
 ## System Architecture
 Nectiq features a modern React frontend and a Node.js/Express backend with a PostgreSQL database.
 
