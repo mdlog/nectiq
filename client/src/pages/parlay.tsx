@@ -7,8 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Minus, TrendingUp, TrendingDown, Clock, Target, Coins, Award } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Minus, TrendingUp, TrendingDown, Clock, Target, Coins, Award, Search, Filter, Trophy, Users, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import type { User } from "@shared/schema";
 
 interface CoinPrediction {
@@ -61,6 +64,9 @@ export default function ParlayPage() {
   const [selectedDuration, setSelectedDuration] = useState("24h");
   const [coinPredictions, setCoinPredictions] = useState<CoinPrediction[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [activeTab, setActiveTab] = useState("create");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Fetch user data
   const { data: user } = useQuery<User>({
@@ -70,9 +76,11 @@ export default function ParlayPage() {
 
   // Fetch current crypto prices
   const { data: cryptoPrices } = useQuery({
-    queryKey: ["/api/crypto/prices"],
-    refetchInterval: 2000,
-    staleTime: 1000
+    queryKey: ["/api/crypto/pyth-prices"],
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
+    staleTime: 500,
+    retry: 3
   });
 
   // Fetch user's parlay predictions
@@ -257,35 +265,142 @@ export default function ParlayPage() {
     }
   }, [cryptoPrices]);
 
-  return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Parlay Predictions
-        </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Create multi-coin predictions with exponential rewards. The more coins you predict correctly, 
-          the higher your multiplier!
-        </p>
-      </div>
+  // Filter parlays based on search and filters
+  const filteredParlays = (userParlays || []).filter((parlay: ParlayPrediction) => {
+    const matchesSearch = parlay.coins?.some(coin => 
+      coin.cryptocurrency.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const matchesStatus = statusFilter === 'all' || parlay.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-      {/* User Balance */}
-      {user && (
-        <Card className="max-w-md mx-auto">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Your Balance</span>
-              <span className="text-2xl font-bold text-green-600">
-                {user.balance.toLocaleString()} NTIQ
-              </span>
+  // Parlay statistics
+  const parlayStats = {
+    totalParlays: userParlays?.length || 0,
+    activeParlays: userParlays?.filter(p => p.status === 'active').length || 0,
+    completedParlays: userParlays?.filter(p => p.status === 'completed').length || 0,
+    totalStaked: userParlays?.reduce((sum, p) => sum + p.stakeAmount, 0) || 0
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <Header />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Header */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <Target className="h-10 w-10 text-gray-800 dark:text-white" />
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-white">
+              Parlay Predictions
+            </h1>
+          </div>
+          <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            Create multi-coin predictions with exponential rewards. The more coins you predict correctly, 
+            the higher your multiplier!
+          </p>
+        </div>
+
+        {/* Parlay Statistics */}
+        {user && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Trophy className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
+                <div className="text-3xl font-black text-white dark:text-white">
+                  {parlayStats.totalParlays}
+                </div>
+                <div className="text-sm text-white dark:text-white font-bold">Total Parlays</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Clock className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                <div className="text-3xl font-black text-white dark:text-white">
+                  {parlayStats.activeParlays}
+                </div>
+                <div className="text-sm text-white dark:text-white font-bold">Active</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Award className="h-6 w-6 text-blue-500 mx-auto mb-2" />
+                <div className="text-3xl font-black text-white dark:text-white">
+                  {parlayStats.completedParlays}
+                </div>
+                <div className="text-sm text-white dark:text-white font-bold">Completed</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4 text-center">
+                <DollarSign className="h-6 w-6 text-purple-500 mx-auto mb-2" />
+                <div className="text-3xl font-black text-white dark:text-white">
+                  {parlayStats.totalStaked.toLocaleString()}
+                </div>
+                <div className="text-sm text-white dark:text-white font-bold">Total Staked NTIQ</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* User Balance */}
+        {user && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Your Balance</span>
+                <span className="text-2xl font-bold text-green-600">
+                  {user.balance.toLocaleString()} NTIQ
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Search and Filters */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search parlays by cryptocurrency..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-48">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Create Parlay Section */}
-      <Card className="max-w-4xl mx-auto">
+        {/* Parlay Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="create">Create Parlay</TabsTrigger>
+            <TabsTrigger value="active">Active Parlays</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="create" className="mt-8">
+            {/* Create Parlay Section */}
+            <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -464,100 +579,176 @@ export default function ParlayPage() {
           </CardContent>
         )}
       </Card>
+          </TabsContent>
 
-      {/* User's Parlay History */}
-      <Card className="max-w-6xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5" />
-            Your Parlay Predictions
-          </CardTitle>
-          <CardDescription>
-            Track your multi-coin predictions and results
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingParlays ? (
-            <div className="text-center py-8">Loading your parlays...</div>
-          ) : userParlays && userParlays.length > 0 ? (
+          <TabsContent value="active" className="mt-8">
+            {/* Active Parlays */}
             <div className="space-y-4">
-              {userParlays.map((parlay) => (
-                <Card key={parlay.id} className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold">Parlay #{parlay.id}</h3>
-                        <Badge variant={getStatusBadgeVariant(parlay.status)}>
-                          {parlay.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {parlay.totalCoinCount} coins • {parlay.totalMultiplier.toFixed(2)}x multiplier
-                      </p>
-                    </div>
-                    <div className="text-right space-y-1">
-                      <div className="font-semibold">
-                        {parlay.stakeAmount} NTIQ
-                      </div>
-                      {parlay.status === "active" && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {formatTimeRemaining(parlay.targetTime)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Coin Predictions */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {parlay.coins.map((coin, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {cryptocurrencies.find(c => c.id === coin.cryptocurrency)?.symbol || coin.cryptocurrency.toUpperCase()}
-                          </span>
-                          {coin.prediction === "up" ? (
-                            <TrendingUp className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <TrendingDown className="h-4 w-4 text-red-500" />
-                          )}
-                        </div>
-                        <div className="text-right text-sm">
-                          <div>${coin.startPrice.toFixed(2)}</div>
-                          {coin.endPrice && (
-                            <div className={`font-semibold ${coin.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                              ${coin.endPrice.toFixed(2)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Result */}
-                  {parlay.status === "completed" && (
-                    <div className="mt-4 p-3 bg-muted rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span>Result:</span>
-                        <span className={`font-semibold ${parlay.rewardAmount && parlay.rewardAmount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {parlay.correctPredictions}/{parlay.totalCoinCount} correct
-                          {parlay.rewardAmount && parlay.rewardAmount > 0 && ` • +${parlay.rewardAmount} NTIQ`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+              {loadingParlays ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 dark:text-gray-400 mt-4">Loading active parlays...</p>
+                </div>
+              ) : userParlays?.filter(p => p.status === 'active').length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      No active parlays
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      You don't have any active parlay predictions at the moment.
+                    </p>
+                  </CardContent>
                 </Card>
-              ))}
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {userParlays?.filter(p => p.status === 'active').map((parlay) => (
+                    <Card key={parlay.id} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                              <h3 className="font-semibold">Parlay #{parlay.id}</h3>
+                              <Badge variant="default" className="bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                                Active
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {parlay.totalCoinCount} coins • {parlay.totalMultiplier.toFixed(2)}x multiplier
+                            </p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <div className="font-semibold">
+                              {parlay.stakeAmount} NTIQ
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              {formatTimeRemaining(parlay.targetTime)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Coin Predictions */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {parlay.coins.map((coin, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">
+                                  {cryptocurrencies.find(c => c.id === coin.cryptocurrency)?.symbol || coin.cryptocurrency.toUpperCase()}
+                                </span>
+                                {coin.prediction === "up" ? (
+                                  <TrendingUp className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <TrendingDown className="h-4 w-4 text-red-500" />
+                                )}
+                              </div>
+                              <div className="text-right text-sm">
+                                <div>${coin.startPrice.toFixed(2)}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No parlay predictions yet</p>
-              <p className="text-sm">Create your first multi-coin prediction above!</p>
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-8">
+            {/* History */}
+            <div className="space-y-4">
+              {loadingParlays ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 dark:text-gray-400 mt-4">Loading parlay history...</p>
+                </div>
+              ) : userParlays?.filter(p => p.status === 'completed').length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Award className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      No completed parlays
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      Your completed parlay predictions will appear here.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {userParlays?.filter(p => p.status === 'completed').map((parlay) => (
+                    <Card key={parlay.id} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                              <h3 className="font-semibold">Parlay #{parlay.id}</h3>
+                              <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100">
+                                Completed
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {parlay.totalCoinCount} coins • {parlay.totalMultiplier.toFixed(2)}x multiplier
+                            </p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <div className="font-semibold">
+                              {parlay.stakeAmount} NTIQ
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Coin Predictions */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                          {parlay.coins.map((coin, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">
+                                  {cryptocurrencies.find(c => c.id === coin.cryptocurrency)?.symbol || coin.cryptocurrency.toUpperCase()}
+                                </span>
+                                {coin.prediction === "up" ? (
+                                  <TrendingUp className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <TrendingDown className="h-4 w-4 text-red-500" />
+                                )}
+                              </div>
+                              <div className="text-right text-sm">
+                                <div>${coin.startPrice.toFixed(2)}</div>
+                                {coin.endPrice && (
+                                  <div className={`font-semibold ${coin.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                                    ${coin.endPrice.toFixed(2)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Result */}
+                        <div className="p-3 bg-muted rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <span>Result:</span>
+                            <span className={`font-semibold ${parlay.rewardAmount && parlay.rewardAmount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {parlay.correctPredictions}/{parlay.totalCoinCount} correct
+                              {parlay.rewardAmount && parlay.rewardAmount > 0 && ` • +${parlay.rewardAmount} NTIQ`}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </TabsContent>
+        </Tabs>
+      
+      </main>
+      
+      <Footer />
     </div>
   );
 }
