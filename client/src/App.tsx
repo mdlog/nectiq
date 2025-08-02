@@ -8,6 +8,7 @@ import UserDashboard from "@/pages/user-dashboard";
 
 import AdminPanel from "@/pages/admin-working";
 import AdminSimpleTest from "@/pages/admin-simple-test";
+import AdminStable from "@/pages/admin-stable";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
 
@@ -102,7 +103,8 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
-      <Route path="/admin" component={AdminPanel} />
+      <Route path="/admin" component={AdminStable} />
+      <Route path="/admin-full" component={AdminPanel} />
       <Route path="/admin-simple" component={AdminSimpleTest} />
       
 
