@@ -277,14 +277,10 @@ survivalRoundService;
 // Initialize automated audit system to prevent reward/balance inconsistencies
 console.log('🔧 Audit system temporarily disabled for debugging...');
 
-// Initialize automated withdrawal system if enabled
-console.log('🔧 Initializing Automated Withdrawal System...');
-try {
-  const { setupAutomatedWithdrawals } = await import('./withdrawal-scheduler.js');
-  setupAutomatedWithdrawals(storage as any);
-} catch (error) {
-  console.error('❌ Failed to initialize automated withdrawal system:', error);
-}
+// ❌ AUTOMATED WITHDRAWAL SYSTEM DISABLED - Manual approval required
+console.log('🚫 Automated Withdrawal System DISABLED - All withdrawals require manual approval');
+console.log('✅ All withdrawals will be processed through admin panel approval system');
+// Auto withdrawal disabled permanently to require manual admin approval
 
 // Initialize automated deposit monitoring system
 console.log('🔧 Initializing Automated Deposit Monitoring System...');
