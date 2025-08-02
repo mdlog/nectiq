@@ -1377,7 +1377,7 @@ export default function AdminPanel() {
                       {(Array.isArray(transactionsData) ? transactionsData : []).slice(0, 20).map((transaction: any) => (
                         <TableRow key={transaction.id}>
                           <TableCell>{transaction.id}</TableCell>
-                          <TableCell>{transaction.userId}</TableCell>
+                          <TableCell>{transaction.username || `User ${transaction.userId}`}</TableCell>
                           <TableCell>
                             <Badge variant={
                               transaction.type === 'deposit' ? 'default' :
