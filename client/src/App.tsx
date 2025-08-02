@@ -102,8 +102,8 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
-      <Route path="/admin" component={AdminSimpleTest} />
-      <Route path="/admin-full" component={AdminPanel} />
+      <Route path="/admin" component={AdminPanel} />
+      <Route path="/admin-simple" component={AdminSimpleTest} />
       
 
       

@@ -394,10 +394,9 @@ export default function AdminPanel() {
     toast({ title: "Successfully", description: "Predictions exported successfully" });
   };
 
-  // Debug logging untuk troubleshooting
-  console.log('🔍 [ADMIN-DEBUG] Transactions error:', transactionsError);
-  console.log('🔍 [ADMIN-DEBUG] Transactions data:', transactionsData);
-  console.log('🔍 [ADMIN-DEBUG] Stats error:', statsError);
+  // Debug logging untuk troubleshooting (hanya jika ada error)
+  if (transactionsError) console.log('🔍 [ADMIN-DEBUG] Transactions error:', transactionsError);
+  if (statsError) console.log('🔍 [ADMIN-DEBUG] Stats error:', statsError);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
