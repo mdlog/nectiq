@@ -6314,6 +6314,7 @@ export default function AdminPanel() {
                         <Table>
                           <TableHeader>
                             <TableRow>
+                              <TableHead>ID</TableHead>
                               <TableHead>Type</TableHead>
                               <TableHead>User</TableHead>
                               <TableHead>UID</TableHead>
@@ -6326,12 +6327,20 @@ export default function AdminPanel() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                          {paginatedTransactions.map((transaction) => (
+                          {(() => {
+                            console.log('📊 [TABLE-DEBUG] Rendering transactions:', paginatedTransactions.length);
+                            console.log('📊 [TABLE-DEBUG] Sample transaction:', paginatedTransactions[0]);
+                            return paginatedTransactions.map((transaction) => {
+                              console.log('📊 [TABLE-DEBUG] Transaction:', transaction.id, transaction.type, transaction.status);
+                              return (
                             <TableRow 
                               key={`${transaction.type}-${transaction.id}`}
                               className="hover:bg-surface/50 transition-colors cursor-pointer"
                               title={`Status: ${transaction.status} • ${transaction.hash ? `TxID: ${transaction.hash}` : 'Internal ID: ' + transaction.id} • Chain: ${transaction.token === 'ETH' ? 'Ethereum' : 'Internal'}`}
                             >
+                              <TableCell className="font-mono text-xs">
+                                {transaction.id}
+                              </TableCell>
                               <TableCell>
                                 <Badge 
                                   variant="outline" 
@@ -6579,10 +6588,12 @@ export default function AdminPanel() {
                                 </div>
                               </TableCell>
                             </TableRow>
-                          ))}
+                              );
+                            });
+                          })()}
                           {filteredTransactions.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={9} className="text-center py-8 text-gray-900 dark:text-white">
+                              <TableCell colSpan={10} className="text-center py-8 text-gray-900 dark:text-white">
                                 <div className="flex flex-col items-center">
                                   <FileText className="mb-2" size={32} />
                                   <p className="font-medium">Tidak ada transaksi ditemukan</p>
