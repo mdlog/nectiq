@@ -1798,8 +1798,15 @@ export default function AdminPanel() {
                             id="reset-confirm-button"
                             variant="destructive" 
                             disabled
-                            onClick={async () => {
+                            onClick={async (e) => {
+                              console.log('🔥 [RESET-DEBUG] Confirm Reset button clicked!');
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
                               const input = document.getElementById('reset-confirmation-input') as HTMLInputElement;
+                              console.log('🔍 [RESET-DEBUG] Input element found:', !!input);
+                              console.log('🔍 [RESET-DEBUG] Input value:', input?.value);
+                              
                               if (input?.value !== 'RESET') {
                                 console.log('❌ [RESET-DEBUG] Invalid confirmation code:', input?.value);
                                 return;
