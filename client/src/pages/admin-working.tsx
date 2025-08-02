@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1906,7 +1906,39 @@ export default function AdminPanel() {
                     <TableBody>
                       {paginatedTransactions.map((transaction: any) => (
                         <TableRow key={transaction.id}>
-                          <TableCell>{transaction.id}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="px-2 py-1 bg-slate-700 rounded-md font-mono text-sm cursor-pointer hover:bg-slate-600 transition-colors"
+                                onClick={() => {
+                                  const transactionId = `NTIQ-${transaction.type.toUpperCase()}-${transaction.id.toString().padStart(6, '0')}`;
+                                  navigator.clipboard.writeText(transactionId);
+                                  toast({ 
+                                    title: "Copied!", 
+                                    description: `Transaction ID ${transactionId} copied to clipboard` 
+                                  });
+                                }}
+                                title="Click to copy transaction ID"
+                              >
+                                #{transaction.id.toString().padStart(6, '0')}
+                              </div>
+                              <div className="text-xs text-slate-400">
+                                {transaction.type === 'deposit' ? 'DEP' : 'WDL'}
+                              </div>
+                              <Copy 
+                                className="w-3 h-3 text-slate-400 hover:text-slate-200 cursor-pointer" 
+                                onClick={() => {
+                                  const transactionId = `NTIQ-${transaction.type.toUpperCase()}-${transaction.id.toString().padStart(6, '0')}`;
+                                  navigator.clipboard.writeText(transactionId);
+                                  toast({ 
+                                    title: "Copied!", 
+                                    description: `Transaction ID ${transactionId} copied to clipboard` 
+                                  });
+                                }}
+                                title="Copy transaction ID"
+                              />
+                            </div>
+                          </TableCell>
                           <TableCell>{transaction.username || `User ${transaction.userId}`}</TableCell>
                           <TableCell>
                             <Badge variant={
