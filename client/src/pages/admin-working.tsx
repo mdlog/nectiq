@@ -23,28 +23,38 @@ const getBlockchainExplorerUrl = (hash: string, token: string): string => {
     case 'eth':
     case 'usdc':
     case 'usdt':
-      return `https://etherscan.io/tx/${hash}`;
+      // Use Sepolia testnet explorer for Ethereum transactions
+      return `https://sepolia.etherscan.io/tx/${hash}`;
     case 'bnb':
-      return `https://bscscan.com/tx/${hash}`;
+      // Use BSC testnet
+      return `https://testnet.bscscan.com/tx/${hash}`;
     case 'matic':
     case 'pol':
-      return `https://polygonscan.com/tx/${hash}`;
+      // Use Polygon Mumbai testnet
+      return `https://mumbai.polygonscan.com/tx/${hash}`;
     case 'avax':
-      return `https://snowtrace.io/tx/${hash}`;
+      // Use Avalanche Fuji testnet
+      return `https://testnet.snowtrace.io/tx/${hash}`;
     case 'sol':
-      return `https://solscan.io/tx/${hash}`;
+      // Solana devnet
+      return `https://solscan.io/tx/${hash}?cluster=devnet`;
     case 'ada':
-      return `https://cardanoscan.io/transaction/${hash}`;
+      // Cardano testnet
+      return `https://preprod.cardanoscan.io/transaction/${hash}`;
     case 'dot':
       return `https://polkascan.io/polkadot/transaction/${hash}`;
     case 'xrp':
-      return `https://xrpscan.com/tx/${hash}`;
+      // XRP testnet
+      return `https://testnet.xrpl.org/transactions/${hash}`;
     case 'doge':
-      return `https://dogechain.info/tx/${hash}`;
+      // Dogecoin testnet
+      return `https://sochain.com/tx/DOGETEST/${hash}`;
     case 'btc':
-      return `https://blockstream.info/tx/${hash}`;
+      // Bitcoin testnet
+      return `https://blockstream.info/testnet/tx/${hash}`;
     default:
-      return `https://etherscan.io/tx/${hash}`; // Default to Ethereum
+      // Default to Sepolia testnet
+      return `https://sepolia.etherscan.io/tx/${hash}`;
   }
 };
 
@@ -55,28 +65,28 @@ const getExplorerName = (token: string): string => {
     case 'eth':
     case 'usdc':
     case 'usdt':
-      return 'Etherscan';
+      return 'Sepolia Etherscan';
     case 'bnb':
-      return 'BSCScan';
+      return 'BSC Testnet';
     case 'matic':
     case 'pol':
-      return 'PolygonScan';
+      return 'Mumbai PolygonScan';
     case 'avax':
-      return 'Snowtrace';
+      return 'Fuji Snowtrace';
     case 'sol':
-      return 'Solscan';
+      return 'Solscan Devnet';
     case 'ada':
-      return 'CardanoScan';
+      return 'Cardano Preprod';
     case 'dot':
       return 'PolkaScan';
     case 'xrp':
-      return 'XRPScan';
+      return 'XRPL Testnet';
     case 'doge':
-      return 'DogeChain';
+      return 'DogeChain Testnet';
     case 'btc':
-      return 'Blockstream';
+      return 'Bitcoin Testnet';
     default:
-      return 'Etherscan';
+      return 'Sepolia Etherscan';
   }
 };
 

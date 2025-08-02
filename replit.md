@@ -9,6 +9,8 @@ Preferred communication style: Simple, everyday language.
 ```
 
 ## Recent Changes
+- **Transaction Hash Explorer Links (2025-08-02)**: Implemented clickable transaction hash links in admin panel that redirect to appropriate blockchain explorers. Fixed to use testnet explorers (Sepolia Etherscan, BSC Testnet, Mumbai PolygonScan, etc.) instead of mainnet.
+- **Transaction Display Enhancement (2025-08-02)**: Updated transaction table format to show "NTIQ Amount" (received/withdrawn NTIQ) and "Crypto Amount" (crypto paid/received), with username display instead of user ID.
 - **Database Reset Fix (2025-08-02)**: Fixed disabled reset database button in admin panel Settings tab. Added proper input validation, dynamic button state management, and debug logging to `admin-working.tsx`.
 - **Project Cleanup (2025-08-02)**: Removed unused admin files (`admin.tsx`, `admin-simple.tsx`). Only `admin-working.tsx` remains as the active admin panel implementation.
 
