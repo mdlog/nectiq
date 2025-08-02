@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -79,16 +79,11 @@ export default function AdminPanel() {
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState("");
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(true);
 
-  // Queries dengan error handling yang lebih baik
-  const { data: adminStats, isLoading: statsLoading, error: statsError } = useQuery<AdminStats>({
+  // Queries
+  const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     refetchInterval: 30000,
-    retry: (failureCount, error: any) => {
-      console.log('📊 [ADMIN-STATS] Query failed:', error?.message);
-      return failureCount < 2;
-    },
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery<User[]>({
@@ -111,17 +106,9 @@ export default function AdminPanel() {
     refetchInterval: 15000,
   });
 
-  const { data: transactionsData, isLoading: transactionsLoading, error: transactionsError } = useQuery({
+  const { data: transactionsData, isLoading: transactionsLoading } = useQuery({
     queryKey: ["/api/admin/transactions"],
     refetchInterval: 30000,
-    retry: (failureCount, error: any) => {
-      console.log('💳 [ADMIN-TRANSACTIONS] Query failed:', error?.message);
-      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
-        console.log('🔐 [AUTH] Authentication error detected, stopping retry');
-        return false;
-      }
-      return failureCount < 2;
-    },
   });
 
   const { data: securityEvents, isLoading: securityLoading } = useQuery({
@@ -369,8 +356,8 @@ export default function AdminPanel() {
     const csvContent = [
       ["ID", "User ID", "Crypto", "Predicted Price", "Actual Price", "Timeframe", "Stake", "Status", "Reward"].join(","),
       ...predictions.map(prediction => {
-        const cryptoInfo = getCryptoInfo(prediction.cryptocurrency);
-        const cryptoDisplay = cryptoInfo ? `${cryptoInfo.name} (${cryptoInfo.symbol})` : prediction.cryptocurrency;
+        const cryptoInfo = getCryptoInfo(prediction.cryptoId);
+        const cryptoDisplay = cryptoInfo ? `${cryptoInfo.name} (${cryptoInfo.symbol})` : prediction.cryptoId;
         return [
           prediction.id,
           prediction.userId,
@@ -394,71 +381,6 @@ export default function AdminPanel() {
     URL.revokeObjectURL(url);
     toast({ title: "Successfully", description: "Predictions exported successfully" });
   };
-
-  // Debug logging untuk troubleshooting (hanya jika ada error)
-  if (transactionsError) console.log('🔍 [ADMIN-DEBUG] Transactions error:', transactionsError);
-  if (statsError) console.log('🔍 [ADMIN-DEBUG] Stats error:', statsError);
-
-  // Use effect to handle initial loading - make it more responsive
-  useEffect(() => {
-    // Set a minimum loading time, but also check if critical data has loaded
-    const timer = setTimeout(() => {
-      setIsPageLoading(false);
-    }, 1500); // Reduced to 1.5 seconds
-
-    // Also set loading to false if we have stats data
-    if (adminStats && !statsLoading) {
-      const earlyTimer = setTimeout(() => {
-        setIsPageLoading(false);
-      }, 500);
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(earlyTimer);
-      };
-    }
-
-    return () => clearTimeout(timer);
-  }, [adminStats, statsLoading]);
-
-  // Show loading screen during initial load
-  if (isPageLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-          <h2 className="text-2xl font-bold text-white mb-2">Loading Admin Panel</h2>
-          <p className="text-slate-400">Initializing dashboard components...</p>
-          <div className="mt-4 text-xs text-slate-500">
-            Debugging: {statsLoading ? 'Stats Loading...' : 'Stats Ready'} | 
-            {transactionsLoading ? 'Transactions Loading...' : 'Transactions Ready'}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Debug: Check if we have any errors that might prevent rendering
-  const hasErrors = statsError || transactionsError;
-  console.log('🔍 [ADMIN-RENDER] Loading states:', { 
-    statsLoading, 
-    transactionsLoading, 
-    hasErrors,
-    isPageLoading,
-    statsData: !!adminStats,
-    transactionsData: !!transactionsData
-  });
-
-  // Emergency fallback if main component fails to render
-  try {
-    console.log('🔧 [ADMIN-RENDER-START] Starting admin panel render...');
-    console.log('🔧 [ADMIN-DATA-CHECK]', {
-      statsData: adminStats,
-      transactionsData: transactionsData,
-      usersData: usersData,
-      statsLoading,
-      transactionsLoading,
-      usersLoading
-    });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -1437,16 +1359,6 @@ export default function AdminPanel() {
                   <div className="text-center py-8">
                     <div className="text-slate-400">Loading transactions...</div>
                   </div>
-                ) : transactionsError ? (
-                  <div className="text-center py-8">
-                    <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-red-300 mb-2">Error Loading Transactions</h3>
-                    <p className="text-slate-400">
-                      {transactionsError?.message?.includes('Authentication') 
-                        ? 'Please connect your admin wallet to access this data.' 
-                        : 'Failed to load transaction data. Please try refreshing the page.'}
-                    </p>
-                  </div>
                 ) : transactionsData && Array.isArray(transactionsData) && transactionsData.length > 0 ? (
                   <Table>
                     <TableHeader>
@@ -1462,86 +1374,38 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(Array.isArray(transactionsData) ? transactionsData : []).slice(0, 20).map((transaction: any) => {
-                        // Helper functions untuk format data
-                        const formatAmount = (amount: number) => {
-                          return new Intl.NumberFormat('id-ID').format(amount) + ' NTIQ';
-                        };
-                        
-                        const formatTokenAmount = (tokenAmount: number, token: string) => {
-                          const decimals = token === 'ETH' || token === 'BNB' || token === 'MATIC' ? 6 : 2;
-                          return tokenAmount.toFixed(decimals) + ' ' + token;
-                        };
-                        
-                        const getExplorerUrl = (hash: string, token: string) => {
-                          const explorers = {
-                            'ETH': 'https://etherscan.io/tx/',
-                            'BNB': 'https://bscscan.com/tx/',
-                            'MATIC': 'https://polygonscan.com/tx/',
-                            'USDC': 'https://etherscan.io/tx/',
-                            'USDT': 'https://etherscan.io/tx/'
-                          };
-                          return (explorers[token as keyof typeof explorers] || 'https://etherscan.io/tx/') + hash;
-                        };
-                        
-                        return (
-                          <TableRow key={transaction.id}>
-                            <TableCell>{transaction.id}</TableCell>
-                            <TableCell className="font-medium">
-                              {transaction.username || `User ${transaction.userId}`}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={
-                                transaction.type === 'deposit' ? 'default' :
-                                transaction.type === 'withdrawal' ? 'destructive' :
-                                'secondary'
-                              }>
-                                {transaction.type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="font-semibold text-green-400">
-                              {formatAmount(transaction.amount || transaction.ntiqAmount || 0)}
-                            </TableCell>
-                            <TableCell className="font-mono text-blue-400">
-                              {transaction.tokenAmount ? 
-                                formatTokenAmount(transaction.tokenAmount, transaction.token || 'ETH') : 
-                                (transaction.token || 'ETH')
-                              }
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={
-                                transaction.status === 'completed' ? 'default' :
-                                transaction.status === 'pending' ? 'secondary' :
-                                'destructive'
-                              }>
-                                {transaction.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="font-mono text-xs">
-                              {transaction.hash ? (
-                                <a 
-                                  href={getExplorerUrl(transaction.hash, transaction.token || 'ETH')}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-400 hover:text-blue-300 underline flex items-center gap-1 group"
-                                >
-                                  {transaction.hash.slice(0, 8)}...
-                                  <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </a>
-                              ) : 'N/A'}
-                            </TableCell>
-                            <TableCell className="text-xs text-slate-400">
-                              {transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString('id-ID', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }) : '-'}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {(Array.isArray(transactionsData) ? transactionsData : []).slice(0, 20).map((transaction: any) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell>{transaction.id}</TableCell>
+                          <TableCell>{transaction.userId}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              transaction.type === 'deposit' ? 'default' :
+                              transaction.type === 'withdrawal' ? 'destructive' :
+                              'secondary'
+                            }>
+                              {transaction.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{transaction.amount}</TableCell>
+                          <TableCell>{transaction.token}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              transaction.status === 'completed' ? 'default' :
+                              transaction.status === 'pending' ? 'secondary' :
+                              'destructive'
+                            }>
+                              {transaction.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {transaction.hash ? `${transaction.hash.slice(0, 10)}...` : 'N/A'}
+                          </TableCell>
+                          <TableCell className="text-xs text-slate-400">
+                            {new Date(transaction.createdAt).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 ) : (
@@ -2018,37 +1882,4 @@ export default function AdminPanel() {
       </div>
     </div>
   );
-  } catch (error) {
-    console.error('🚨 [ADMIN-ERROR] Component render failed:', error);
-    
-    // Emergency fallback UI
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="h-8 w-8 text-red-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Admin Panel Error</h2>
-          <p className="text-slate-400 mb-6">Something went wrong loading the admin panel. Please try refreshing the page.</p>
-          <div className="space-y-3">
-            <Button 
-              onClick={() => window.location.reload()} 
-              className="w-full bg-blue-600 hover:bg-blue-500"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Page
-            </Button>
-            <Button 
-              onClick={() => window.location.href = '/'} 
-              variant="outline"
-              className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
-            >
-              <Home className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 }
