@@ -3814,10 +3814,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: cryptoTransactions.status,
           token: cryptoTransactions.paymentToken, // Fixed: Use correct column name
           toAddress: cryptoTransactions.userAddress, // Fixed: Use correct column name
-          transactionHash: cryptoTransactions.transactionHash,
+          hash: cryptoTransactions.transactionHash, // Map transaction_hash to hash for frontend compatibility
+          transactionHash: cryptoTransactions.transactionHash, // Keep original for debugging
           createdAt: cryptoTransactions.createdAt,
           username: users.username,
           walletAddress: users.walletAddress,
+          uid: users.id, // Add UID field for admin panel
         })
         .from(cryptoTransactions)
         .leftJoin(users, eq(cryptoTransactions.userId, users.id));
