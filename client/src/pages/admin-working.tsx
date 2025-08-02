@@ -1781,10 +1781,57 @@ export default function AdminPanel() {
                           <Input
                             placeholder="RESET"
                             className="bg-slate-700 border-slate-600 text-white"
+                            id="reset-confirmation-input"
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              console.log('🔍 [RESET-DEBUG] Input changed:', { value, isRESET: value === 'RESET' });
+                              const button = document.getElementById('reset-confirm-button');
+                              if (button) {
+                                button.disabled = value !== 'RESET';
+                                console.log('🔘 [RESET-DEBUG] Button disabled:', button.disabled);
+                              }
+                            }}
                           />
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="destructive" disabled>
+                          <Button 
+                            id="reset-confirm-button"
+                            variant="destructive" 
+                            disabled
+                            onClick={async () => {
+                              const input = document.getElementById('reset-confirmation-input') as HTMLInputElement;
+                              if (input?.value !== 'RESET') {
+                                console.log('❌ [RESET-DEBUG] Invalid confirmation code:', input?.value);
+                                return;
+                              }
+                              
+                              console.log('🚀 [RESET-DEBUG] Attempting database reset...');
+                              try {
+                                const response = await fetch('/api/admin/reset-database', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Admin-Operation': 'database-reset'
+                                  },
+                                  credentials: 'include',
+                                  body: JSON.stringify({ confirmationCode: 'RESET' })
+                                });
+                                
+                                const result = await response.json();
+                                console.log('✅ [RESET-DEBUG] Reset response:', result);
+                                
+                                if (response.ok) {
+                                  alert('Database reset successfully!');
+                                  window.location.reload();
+                                } else {
+                                  alert('Reset failed: ' + (result.message || 'Unknown error'));
+                                }
+                              } catch (error) {
+                                console.error('❌ [RESET-DEBUG] Reset error:', error);
+                                alert('Reset failed: ' + error.message);
+                              }
+                            }}
+                          >
                             Confirm Reset
                           </Button>
                           <DialogTrigger asChild>
