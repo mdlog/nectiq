@@ -1383,6 +1383,11 @@ export default function AdminPanel() {
     }
   };
 
+  // ✅ DEBUG: Check user admin status
+  console.log('🔍 [AUTH-DEBUG] Current user:', currentUser);
+  console.log('🔍 [AUTH-DEBUG] Is admin?', currentUser?.isAdmin);
+  console.log('🔍 [AUTH-DEBUG] Query enabled?', !!currentUser?.isAdmin);
+
   // ✅ NEW: Unified transaction data query using the comprehensive /api/admin/transactions endpoint
   const { data: allTransactionsData = [], isLoading: transactionsLoading, error: transactionsError, refetch: refetchTransactions } = useQuery({
     queryKey: ["/api/admin/transactions"],
@@ -1392,6 +1397,14 @@ export default function AdminPanel() {
     refetchIntervalInBackground: true,
     staleTime: 5000, // 5 seconds stale time for fresh data
     enabled: !!currentUser?.isAdmin, // Only enabled when admin is authenticated
+    onSuccess: (data) => {
+      console.log('🔍 [TRANSACTIONS-DEBUG] Query success, data received:', data);
+      console.log('🔍 [TRANSACTIONS-DEBUG] Data length:', data?.length || 0);
+      console.log('🔍 [TRANSACTIONS-DEBUG] First item:', data?.[0]);
+    },
+    onError: (error) => {
+      console.log('❌ [TRANSACTIONS-DEBUG] Query error:', error);
+    }
   });
 
   // ✅ LEGACY: Keep individual queries for backward compatibility
