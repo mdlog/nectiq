@@ -2228,10 +2228,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid predicted price range" });
       }
 
-      // Validate stake amount (must be integer between 1-10000)
+      // Validate stake amount (must be integer between 50-10000)
       const numStakeAmount = Number(stakeAmount);
-      if (isNaN(numStakeAmount) || !Number.isInteger(numStakeAmount) || numStakeAmount < 1 || numStakeAmount > 10000) {
-        return res.status(400).json({ message: "Stake amount must be between 1-10000 NTIQ" });
+      if (isNaN(numStakeAmount) || !Number.isInteger(numStakeAmount) || numStakeAmount < 50 || numStakeAmount > 10000) {
+        return res.status(400).json({ message: "Stake amount must be between 50-10000 NTIQ" });
       }
 
       // Validate timeframe
@@ -2454,8 +2454,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Missing required fields' });
       }
 
-      if (stakeAmount < 1 || stakeAmount > 500) {
-        return res.status(400).json({ message: 'Stake amount must be between 1 and 500 NTIQ' });
+      if (stakeAmount < 50 || stakeAmount > 500) {
+        return res.status(400).json({ message: 'Stake amount must be between 50 and 500 NTIQ' });
       }
 
       // Check user balance
@@ -7357,6 +7357,11 @@ Manual balance correction required IMMEDIATELY!`;
       // Validate required fields
       if (!title || !cryptocurrency || !entryFee || !maxParticipants) {
         return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      // Validate minimum entry fee
+      if (entryFee < 50) {
+        return res.status(400).json({ message: 'Minimum entry fee is 50 NTIQ' });
       }
 
       // Validate user has enough balance for entry fee

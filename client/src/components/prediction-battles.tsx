@@ -847,7 +847,7 @@ export function PredictionBattles() {
                 <label className="text-sm font-medium">Stake Amount (NTIQ)</label>
                 <Input
                   type="number"
-                  min="1"
+                  min="50"
                   max="500"
                   value={createForm.stakeAmount}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, stakeAmount: parseInt(e.target.value) || 0 }))}

@@ -28,9 +28,22 @@ interface Battle {
   challengedPrediction?: string;
   stakeAmount: number;
   targetTime: string;
+  timeframe: string;
   status: string;
   timeLeft: number;
   currentPrice?: number;
+  winnerId?: number;
+  createdAt: string;
+  completedAt?: string;
+  rewardAmount?: number;
+  challenger?: {
+    id: number;
+    username: string;
+  };
+  challenged?: {
+    id: number;
+    username: string;
+  };
 }
 
 interface BattleStats {
@@ -58,7 +71,7 @@ export default function BattlesPage() {
   const [createBattleForm, setCreateBattleForm] = useState({
     cryptocurrency: '',
     timeframe: '',
-    stakeAmount: 0,
+    stakeAmount: 50,
     challengerPrediction: 0
   });
 
@@ -99,7 +112,7 @@ export default function BattlesPage() {
   });
 
   // Filter battles based on search and filters
-  const filteredBattles = battles.filter((battle: Battle) => {
+  const filteredBattles = (battles as Battle[]).filter((battle: Battle) => {
     const matchesSearch = battle.cryptocurrency.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          battle.challengerUsername?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          battle.challengedUsername?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -117,7 +130,7 @@ export default function BattlesPage() {
   const activeBattles = filteredBattles.filter((battle: Battle) => battle.status === 'active');
 
   const getCryptoImageUrl = (cryptoId: string) => {
-    const crypto = cryptos.find((c: any) => c.id === cryptoId);
+    const crypto = (cryptos as any[]).find((c: any) => c.id === cryptoId);
     return crypto?.image || `https://assets.coingecko.com/coins/images/1/large/${cryptoId}.png`;
   };
 
@@ -789,10 +802,10 @@ export default function BattlesPage() {
                   <Input
                     id="stakeAmount"
                     type="number"
-                    min="1"
+                    min="50"
                     max="500"
                     value={createBattleForm.stakeAmount}
-                    onChange={(e) => setCreateBattleForm(prev => ({ ...prev, stakeAmount: parseInt(e.target.value) || 0 }))}
+                    onChange={(e) => setCreateBattleForm(prev => ({ ...prev, stakeAmount: parseInt(e.target.value) || 50 }))}
                     placeholder="Enter stake amount..."
                   />
                 </div>

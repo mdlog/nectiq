@@ -91,7 +91,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
       cryptocurrency: preSelectedCrypto as any || undefined,
       timeframe: "24h",
       predictedPrice: "",
-      stakeAmount: 0,
+      stakeAmount: 50,
     },
   });
 
