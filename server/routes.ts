@@ -3728,6 +3728,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Get withdrawals directly from database with user information
+      console.log("🔍 [WITHDRAWALS-DEBUG] Starting withdrawal query...");
+      
       const allWithdrawals = await db
         .select({
           id: withdrawals.id,
@@ -3754,6 +3756,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .leftJoin(users, eq(withdrawals.userId, users.id))
         .orderBy(desc(withdrawals.createdAt))
         .limit(100);
+      
+      console.log("🔍 [WITHDRAWALS-DEBUG] Query completed:");
+      console.log("   Total withdrawals found:", allWithdrawals.length);
+      
+      if (allWithdrawals.length > 0) {
+        console.log("   Sample withdrawal:", {
+          id: allWithdrawals[0].id,
+          userId: allWithdrawals[0].userId,
+          username: allWithdrawals[0].username,
+          amount: allWithdrawals[0].ntiqAmount,
+          status: allWithdrawals[0].status
+        });
+      }
       
       res.json(allWithdrawals);
     } catch (error) {
