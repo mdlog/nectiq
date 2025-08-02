@@ -1531,7 +1531,9 @@ export default function AdminPanel() {
                           </TableCell>
                           <TableCell>
                             {transaction.type === 'withdrawal' && transaction.netAmount
-                              ? `${parseFloat(transaction.netAmount).toFixed(3)} ${transaction.token}`
+                              ? `${parseFloat(transaction.netAmount).toFixed(3)} ${transaction.token}` // Untuk withdrawal: tampilkan setelah dipotong fee
+                              : transaction.type === 'deposit' && transaction.usdAmount
+                              ? `${parseFloat(transaction.usdAmount).toFixed(3)} ${transaction.token}` // Untuk deposit: tampilkan jumlah yang dibayar
                               : transaction.usdAmount 
                               ? `${parseFloat(transaction.usdAmount).toFixed(3)} ${transaction.token}`
                               : `${(transaction.amount / 1000).toFixed(3)} ${transaction.token}`
