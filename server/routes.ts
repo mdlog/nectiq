@@ -3839,7 +3839,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: deposits.userId,
           type: sql`'deposit'`.as('type'),
           amount: deposits.ntiqAmount, // Use correct column name from deposits table
-          usdAmount: deposits.amountUSD, // Use amount_usd from deposits table
+          usdAmount: deposits.amountUSD, // Use amount_usd from deposits table (correct column name)
+          ethPriceSnapshot: deposits.ethPriceSnapshot, // ✅ CRITICAL: Add ethPriceSnapshot field for frontend calculations
           status: deposits.status,
           token: deposits.tokenType, // Use token_type from deposits table
           toAddress: deposits.toWalletAddress, // Use to_wallet_address from deposits table

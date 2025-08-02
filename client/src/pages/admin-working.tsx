@@ -1654,12 +1654,20 @@ export default function AdminPanel() {
                           </TableCell>
                           <TableCell>
                             {transaction.type === 'withdrawal' && transaction.netAmount
-                              ? `${parseFloat(transaction.netAmount).toFixed(3)} ${transaction.token}` // Untuk withdrawal: tampilkan setelah dipotong fee
+                              ? `${parseFloat(transaction.netAmount).toFixed(6)} ${transaction.token}` // Untuk withdrawal: tampilkan setelah dipotong fee
+                              : transaction.type === 'deposit' && transaction.usdAmount && transaction.token === 'ETH'
+                              ? (() => {
+                                  // Untuk deposit ETH: hitung crypto amount yang benar berdasarkan USD / harga snapshot
+                                  // Menggunakan data historis dari database yang disimpan di ethPriceSnapshot
+                                  const ethPriceSnapshot = transaction.ethPriceSnapshot || 3477; // Harga ETH saat deposit dari database
+                                  const cryptoAmount = parseFloat(transaction.usdAmount) / ethPriceSnapshot;
+                                  return `${cryptoAmount.toFixed(6)} ${transaction.token}`;
+                                })()
                               : transaction.type === 'deposit' && transaction.usdAmount
-                              ? `${parseFloat(transaction.usdAmount).toFixed(3)} ${transaction.token}` // Untuk deposit: tampilkan jumlah yang dibayar
+                              ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}` // Untuk token USDC/USDT
                               : transaction.usdAmount 
-                              ? `${parseFloat(transaction.usdAmount).toFixed(3)} ${transaction.token}`
-                              : `${(transaction.amount / 1000).toFixed(3)} ${transaction.token}`
+                              ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}`
+                              : `${(transaction.amount / 1000).toFixed(6)} ${transaction.token}`
                             }
                           </TableCell>
                           <TableCell>
