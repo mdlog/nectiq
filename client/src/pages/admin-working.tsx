@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -194,11 +194,6 @@ export default function AdminPanel() {
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState("");
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
-  const [updateData, setUpdateData] = useState({ 
-    transactionHash: '', 
-    adminNote: '', 
-    status: 'processing' 
-  });
 
   // Queries
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
@@ -353,16 +348,6 @@ export default function AdminPanel() {
         variant: "destructive" 
       });
     },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async () => {
-      // This is just a placeholder, actual functionality is in handleCompleteWithdrawal
-      return Promise.resolve();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-    }
   });
 
   // Withdrawal action handler
@@ -530,68 +515,33 @@ export default function AdminPanel() {
         // Invalidate queries to show processing status
         queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
 
-        // Enhanced transaction monitoring with multiple retries
-        const checkTransactionStatus = async (attempts = 0, maxAttempts = 12) => {
+        // Wait for transaction confirmation (in background)
+        setTimeout(async () => {
           try {
-            console.log(`🔍 [TX-MONITOR] Checking transaction status - Attempt ${attempts + 1}/${maxAttempts}`);
-            
-            // Use Etherscan API without API key (limited but functional)
-            const response = await fetch(`https://sepolia.etherscan.io/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}`);
+            // Check transaction status after delay to simulate real blockchain confirmation
+            const response = await fetch(`https://sepolia.etherscan.io/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=YourApiKeyToken`);
             const data = await response.json();
             
-            console.log(`📊 [TX-MONITOR] API Response:`, data);
-            
-            if (data.status === '1' && data.result?.status === '1') {
-              // Transaction successful - update to completed
-              console.log(`✅ [TX-MONITOR] Transaction confirmed on blockchain!`);
-              
+            if (data.status === '1' && data.result.status === '1') {
+              // Transaction successful
               await apiRequest(`/api/admin/withdrawals/${withdrawalId}/complete`, {
                 method: 'POST',
                 body: JSON.stringify({ 
                   transactionHash,
-                  confirmed: true,
-                  adminNote: 'Auto-confirmed via blockchain verification'
+                  confirmed: true
                 })
               });
               
               queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
               toast({ 
-                title: "✅ Transaction Confirmed", 
-                description: `Withdrawal ID ${withdrawalId} confirmed on blockchain! Hash: ${transactionHash.slice(0, 20)}...` 
-              });
-              return;
-            } else if (data.status === '1' && data.result?.status === '0') {
-              // Transaction failed
-              console.log(`❌ [TX-MONITOR] Transaction failed on blockchain`);
-              toast({ 
-                title: "❌ Transaction Failed", 
-                description: `Withdrawal transaction failed on blockchain. Please check manually.`,
-                variant: "destructive"
-              });
-              return;
-            } else if (attempts < maxAttempts) {
-              // Transaction still pending - retry
-              console.log(`⏳ [TX-MONITOR] Transaction still pending, retrying in 10 seconds...`);
-              setTimeout(() => checkTransactionStatus(attempts + 1, maxAttempts), 10000);
-            } else {
-              // Max attempts reached
-              console.log(`⚠️ [TX-MONITOR] Max attempts reached, transaction may need manual verification`);
-              toast({ 
-                title: "⚠️ Manual Verification Required", 
-                description: `Transaction monitoring timed out. Please verify withdrawal ${withdrawalId} manually on blockchain.`,
-                variant: "destructive"
+                title: "Transaction Confirmed", 
+                description: `Withdrawal completed! Transaction confirmed on blockchain.` 
               });
             }
           } catch (error) {
-            console.error(`❌ [TX-MONITOR] Error checking transaction status:`, error);
-            if (attempts < maxAttempts) {
-              setTimeout(() => checkTransactionStatus(attempts + 1, maxAttempts), 15000);
-            }
+            console.error('Error checking transaction status:', error);
           }
-        };
-
-        // Start monitoring after 10 seconds
-        setTimeout(() => checkTransactionStatus(), 10000);
+        }, 10000); // Check after 10 seconds
       } else {
         // For reject action, just call API
         const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
@@ -614,52 +564,6 @@ export default function AdminPanel() {
       });
     } finally {
       setProcessingWithdrawal(null);
-    }
-  };
-
-  // Handle withdrawal completion
-  const handleCompleteWithdrawal = async (withdrawalId: number) => {
-    if (!updateData.transactionHash.trim()) {
-      toast({
-        title: "Error",
-        description: "Transaction hash is required to complete withdrawal",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      console.log(`🔄 [COMPLETE-WD] Completing withdrawal ${withdrawalId} with hash: ${updateData.transactionHash}`);
-
-      await apiRequest(`/api/admin/withdrawals/${withdrawalId}/complete`, {
-        method: 'POST',
-        body: JSON.stringify({
-          transactionHash: updateData.transactionHash,
-          adminNote: updateData.adminNote || 'Manual completion via admin panel',
-          confirmed: true
-        })
-      });
-
-      // Reset form
-      setUpdateData({ transactionHash: '', adminNote: '', status: 'processing' });
-
-      // Refresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-
-      toast({
-        title: "✅ Withdrawal Completed",
-        description: `Withdrawal ID ${withdrawalId} marked as completed with verified transaction hash.`
-      });
-
-      console.log(`✅ [COMPLETE-WD] Successfully completed withdrawal ${withdrawalId}`);
-
-    } catch (error) {
-      console.error(`❌ [COMPLETE-WD] Error completing withdrawal ${withdrawalId}:`, error);
-      toast({
-        title: "Error",
-        description: "Failed to complete withdrawal. Please try again.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -1916,54 +1820,6 @@ export default function AdminPanel() {
                                 >
                                   Reject
                                 </button>
-                              </div>
-                            ) : transaction.type === 'withdrawal' && transaction.status === 'processing' ? (
-                              <div className="flex gap-2">
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <button className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
-                                      Complete
-                                    </button>
-                                  </DialogTrigger>
-                                  <DialogContent className="bg-slate-800 border-slate-700">
-                                    <DialogHeader>
-                                      <DialogTitle className="text-white">Complete Withdrawal</DialogTitle>
-                                      <DialogDescription className="text-slate-300">
-                                        Mark withdrawal ID {transaction.id} as completed with verified transaction hash
-                                      </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                      <div className="grid gap-2">
-                                        <Label className="text-white">Transaction Hash</Label>
-                                        <Input
-                                          value={updateData.transactionHash}
-                                          onChange={(e) => setUpdateData({...updateData, transactionHash: e.target.value})}
-                                          className="bg-slate-700 border-slate-600 text-white"
-                                          placeholder="0x... (Enter verified transaction hash)"
-                                        />
-                                      </div>
-                                      <div className="grid gap-2">
-                                        <Label className="text-white">Admin Note</Label>
-                                        <Input
-                                          value={updateData.adminNote}
-                                          onChange={(e) => setUpdateData({...updateData, adminNote: e.target.value})}
-                                          className="bg-slate-700 border-slate-600 text-white"
-                                          placeholder="Manual completion confirmation"
-                                        />
-                                      </div>
-                                    </div>
-                                    <DialogFooter>
-                                      <Button 
-                                        onClick={() => handleCompleteWithdrawal(transaction.id)}
-                                        disabled={updateMutation.isPending}
-                                        className="bg-blue-600 hover:bg-blue-700"
-                                      >
-                                        {updateMutation.isPending ? "Completing..." : "✅ Complete Withdrawal"}
-                                      </Button>
-                                    </DialogFooter>
-                                  </DialogContent>
-                                </Dialog>
-                                <span className="text-xs text-slate-400">Processing</span>
                               </div>
                             ) : (
                               <span className="text-xs text-muted-foreground">-</span>
