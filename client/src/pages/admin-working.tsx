@@ -1657,14 +1657,20 @@ export default function AdminPanel() {
                               ? `${parseFloat(transaction.netAmount).toFixed(6)} ${transaction.token}` // Untuk withdrawal: tampilkan setelah dipotong fee
                               : transaction.type === 'deposit' && transaction.usdAmount && transaction.token === 'ETH'
                               ? (() => {
-                                  // Untuk deposit ETH: hitung crypto amount yang benar berdasarkan USD / harga snapshot
+                                  // Untuk deposit ETH: hitung crypto amount yang benar berdasarkan USD / harga snapshot + fee 2%
                                   // Menggunakan data historis dari database yang disimpan di ethPriceSnapshot
                                   const ethPriceSnapshot = transaction.ethPriceSnapshot || 3477; // Harga ETH saat deposit dari database
-                                  const cryptoAmount = parseFloat(transaction.usdAmount) / ethPriceSnapshot;
-                                  return `${cryptoAmount.toFixed(6)} ${transaction.token}`;
+                                  const baseCryptoAmount = parseFloat(transaction.usdAmount) / ethPriceSnapshot;
+                                  const cryptoAmountWithFee = baseCryptoAmount * 1.02; // Tambahkan fee 2% sesuai user dashboard
+                                  return `${cryptoAmountWithFee.toFixed(6)} ${transaction.token}`;
                                 })()
                               : transaction.type === 'deposit' && transaction.usdAmount
-                              ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}` // Untuk token USDC/USDT
+                              ? (() => {
+                                  // Untuk deposit USDC/USDT: tambahkan fee 2% sesuai user dashboard
+                                  const baseAmount = parseFloat(transaction.usdAmount);
+                                  const amountWithFee = baseAmount * 1.02; // Tambahkan fee 2%
+                                  return `${amountWithFee.toFixed(6)} ${transaction.token}`;
+                                })() // Untuk token USDC/USDT dengan fee 2%
                               : transaction.usdAmount 
                               ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}`
                               : `${(transaction.amount / 1000).toFixed(6)} ${transaction.token}`
