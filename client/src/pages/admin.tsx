@@ -387,12 +387,12 @@ const DatabaseResetButton = () => {
   };
 
   const handleFinalReset = () => {
-    if (confirmationCode === 'RESET_ALL_DATA_CONFIRMED') {
+    if (confirmationCode === 'RESET') {
       resetMutation.mutate(confirmationCode);
     } else {
       toast({
         title: "Incorrect Confirmation Code",
-        description: "Enter the correct confirmation code",
+        description: "Please type 'RESET' to confirm database reset",
         variant: "destructive"
       });
     }
