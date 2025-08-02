@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useAccount, useWriteContract, useSendTransaction } from "wagmi";
+import { useAccount, useWriteContract, useSendTransaction, useWaitForTransaction } from "wagmi";
 import { parseEther, parseUnits } from "viem";
 
 // Helper functions for blockchain explorer URLs
@@ -422,8 +422,8 @@ export default function AdminPanel() {
           transactionHash = tx || '';
         }
 
-        // If transaction successful, update backend
-        const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
+        // First, update status to processing with hash
+        await apiRequest(`/api/admin/withdrawals/${withdrawalId}/processing`, {
           method: 'POST',
           body: JSON.stringify({ 
             transactionHash,
@@ -431,14 +431,43 @@ export default function AdminPanel() {
             tokenSymbol 
           })
         });
-        
-        if (response) {
-          queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-          toast({ 
-            title: "Success", 
-            description: `Withdrawal approved and ${cryptoAmount} ${tokenSymbol} sent successfully! TX: ${transactionHash.slice(0, 10)}...` 
-          });
-        }
+
+        // Show processing message
+        toast({ 
+          title: "Transaction Submitted", 
+          description: `Transaction submitted to blockchain: ${transactionHash.slice(0, 10)}... Waiting for confirmation...` 
+        });
+
+        // Invalidate queries to show processing status
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+
+        // Wait for transaction confirmation (in background)
+        setTimeout(async () => {
+          try {
+            // Check transaction status after delay to simulate real blockchain confirmation
+            const response = await fetch(`https://sepolia.etherscan.io/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=YourApiKeyToken`);
+            const data = await response.json();
+            
+            if (data.status === '1' && data.result.status === '1') {
+              // Transaction successful
+              await apiRequest(`/api/admin/withdrawals/${withdrawalId}/complete`, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                  transactionHash,
+                  confirmed: true
+                })
+              });
+              
+              queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+              toast({ 
+                title: "Transaction Confirmed", 
+                description: `Withdrawal completed! Transaction confirmed on blockchain.` 
+              });
+            }
+          } catch (error) {
+            console.error('Error checking transaction status:', error);
+          }
+        }, 10000); // Check after 10 seconds
       } else {
         // For reject action, just call API
         const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {

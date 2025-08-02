@@ -3992,6 +3992,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Set withdrawal to processing with transaction hash
+  app.post("/api/admin/withdrawals/:id/processing", requireAdmin, async (req, res) => {
+    try {
+      const withdrawalId = parseInt(req.params.id);
+      const adminId = req.session.userId;
+      const { transactionHash, cryptoAmount, tokenSymbol } = req.body;
+
+      console.log(`📋 [WITHDRAWAL-PROCESSING] Processing withdrawal ${withdrawalId} with hash: ${transactionHash}`);
+
+      auditLog("withdrawal_processing", {
+        withdrawalId,
+        adminId,
+        transactionHash: transactionHash || "No transaction hash",
+        cryptoAmount,
+        tokenSymbol
+      }, req);
+
+      // Update withdrawal to processing with real transaction hash
+      await db.update(withdrawals)
+        .set({
+          status: 'processing',
+          transactionHash,
+          processedBy: adminId,
+          processedAt: new Date()
+        })
+        .where(eq(withdrawals.id, withdrawalId));
+      
+      // Broadcast to admin clients
+      broadcastToAdmins({
+        type: 'withdrawal_processing',
+        withdrawalId,
+        status: 'processing',
+        transactionHash,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ message: "Withdrawal set to processing with transaction hash" });
+    } catch (error) {
+      console.error("Error setting withdrawal to processing:", error);
+      res.status(500).json({ message: "Failed to update withdrawal status" });
+    }
+  });
+
   // Admin: Complete withdrawal (mark as completed)
   app.post("/api/admin/withdrawals/:id/complete", requireAdmin, async (req, res) => {
     try {
