@@ -450,6 +450,15 @@ export default function AdminPanel() {
 
   // Emergency fallback if main component fails to render
   try {
+    console.log('🔧 [ADMIN-RENDER-START] Starting admin panel render...');
+    console.log('🔧 [ADMIN-DATA-CHECK]', {
+      statsData: adminStats,
+      transactionsData: transactionsData,
+      usersData: usersData,
+      statsLoading,
+      transactionsLoading,
+      usersLoading
+    });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
