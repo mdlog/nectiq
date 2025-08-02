@@ -25,6 +25,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { survivalRoundService } from "./services/survivalRoundService";
 import { storage } from "./storage";
 import { DepositMonitorService } from "./services/depositMonitorService.js";
+import { withdrawalMonitorService } from "./services/withdrawalMonitorService.js";
 import { initializeDepositExpiryService } from "./services/deposit-expiry-service";
 
 const app = express();
@@ -300,6 +301,15 @@ try {
   console.log('✅ Deposit expiry monitoring system started successfully');
 } catch (error) {
   console.error('❌ Failed to initialize deposit expiry service:', error);
+}
+
+// Initialize Withdrawal Hash Detection Service
+try {
+  console.log('🔧 Initializing Withdrawal Hash Detection Service...');
+  await withdrawalMonitorService.start();
+  console.log('✅ Withdrawal hash detection system started successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize withdrawal hash detection service:', error);
 }
 
 (async () => {

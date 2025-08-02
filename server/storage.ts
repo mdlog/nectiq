@@ -82,7 +82,9 @@ export interface IStorage {
   // Multi-chain Withdrawal operations
   createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
   getUserWithdrawals(userId: number, limit?: number): Promise<Withdrawal[]>;
+  getAllWithdrawals(): Promise<Withdrawal[]>;
   updateWithdrawalStatus(id: number, status: string, transactionHash?: string, adminNote?: string, processedBy?: number): Promise<void>;
+  updateWithdrawalHash(uniqueTransactionId: string, hash: string, status: string): Promise<void>;
 
   // Purchase operations
   createPurchase(purchase: InsertPurchase): Promise<Purchase>;
@@ -797,6 +799,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(withdrawals).where(eq(withdrawals.userId, userId)).orderBy(desc(withdrawals.createdAt)).limit(limit);
   }
 
+  async getAllWithdrawals(): Promise<Withdrawal[]> {
+    return await db.select().from(withdrawals).orderBy(desc(withdrawals.createdAt));
+  }
+
   async updateWithdrawalStatus(id: number, status: string, transactionHash?: string, adminNote?: string, processedBy?: number): Promise<void> {
     const updateData: any = { status };
     if (transactionHash) updateData.transactionHash = transactionHash;
@@ -809,6 +815,16 @@ export class DatabaseStorage implements IStorage {
     await db.update(withdrawals)
       .set(updateData)
       .where(eq(withdrawals.id, id));
+  }
+
+  async updateWithdrawalHash(uniqueTransactionId: string, hash: string, status: string): Promise<void> {
+    await db.update(withdrawals)
+      .set({ 
+        transactionHash: hash,
+        status: status,
+        processedAt: new Date()
+      })
+      .where(eq(withdrawals.uniqueTransactionId, uniqueTransactionId));
   }
 
   // Admin withdrawal approval methods
