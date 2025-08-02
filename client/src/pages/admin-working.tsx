@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,7 @@ export default function AdminPanel() {
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState("");
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   // Queries dengan error handling yang lebih baik
   const { data: adminStats, isLoading: statsLoading, error: statsError } = useQuery<AdminStats>({
@@ -397,6 +398,28 @@ export default function AdminPanel() {
   // Debug logging untuk troubleshooting (hanya jika ada error)
   if (transactionsError) console.log('🔍 [ADMIN-DEBUG] Transactions error:', transactionsError);
   if (statsError) console.log('🔍 [ADMIN-DEBUG] Stats error:', statsError);
+
+  // Use effect to handle initial loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+    }, 2000); // Wait 2 seconds for initial data load
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loading screen during initial load
+  if (isPageLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-white mb-2">Loading Admin Panel</h2>
+          <p className="text-slate-400">Initializing dashboard components...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

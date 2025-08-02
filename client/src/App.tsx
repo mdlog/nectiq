@@ -103,8 +103,8 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
-      <Route path="/admin" component={AdminStable} />
-      <Route path="/admin-full" component={AdminPanel} />
+      <Route path="/admin" component={AdminPanel} />
+      <Route path="/admin-stable" component={AdminStable} />
       <Route path="/admin-simple" component={AdminSimpleTest} />
       
 
