@@ -1531,10 +1531,10 @@ export default function AdminPanel() {
                           </TableCell>
                           <TableCell>
                             {transaction.type === 'withdrawal' && transaction.netAmount
-                              ? `${parseFloat(transaction.netAmount).toFixed(6)} ${transaction.token}`
+                              ? `${parseFloat(transaction.netAmount).toFixed(3)} ${transaction.token}`
                               : transaction.usdAmount 
-                              ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}`
-                              : `${(transaction.amount / 1000).toFixed(6)} ${transaction.token}`
+                              ? `${parseFloat(transaction.usdAmount).toFixed(3)} ${transaction.token}`
+                              : `${(transaction.amount / 1000).toFixed(3)} ${transaction.token}`
                             }
                           </TableCell>
                           <TableCell>
