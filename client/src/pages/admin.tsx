@@ -992,6 +992,59 @@ export default function AdminPanel() {
   });
   const [showEventDialog, setShowEventDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any>(null);
+
+  // Withdrawal approval system state for table actions
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState<any>(null);
+  const [actionType, setActionType] = useState<"approve" | "reject" | "complete">("approve");
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [adminNote, setAdminNote] = useState("");
+  const [transactionHash, setTransactionHash] = useState("");
+
+  // Approval mutation for table actions
+  const approvalMutation = useMutation({
+    mutationFn: async ({ action, note, hash }: { action: string; note?: string; hash?: string }) => {
+      if (!selectedWithdrawal) throw new Error("No withdrawal selected");
+      const endpoint = `/api/admin/withdrawals/${selectedWithdrawal.id}/${action}`;
+      const payload: any = {};
+      if (note) payload.adminNote = note;
+      if (hash) payload.transactionHash = hash;
+      
+      return await apiRequest(endpoint, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" }
+      });
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/withdrawals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+      toast({
+        title: "Success",
+        description: variables.action === "approve" ? "Withdrawal approved" : 
+                    variables.action === "reject" ? "Withdrawal rejected" : 
+                    "Withdrawal completed"
+      });
+      setShowApprovalDialog(false);
+      setAdminNote("");
+      setTransactionHash("");
+      setSelectedWithdrawal(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || `Failed to ${actionType} withdrawal`,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const confirmAction = () => {
+    approvalMutation.mutate({
+      action: actionType,
+      note: adminNote,
+      hash: transactionHash
+    });
+  };
   const [securityPage, setSecurityPage] = useState(1);
   const [securityEventsPerPage] = useState(20);
   const [securitySearchQuery, setSecuritySearchQuery] = useState("");
@@ -6450,8 +6503,58 @@ export default function AdminPanel() {
                                 })}
                               </TableCell>
                               <TableCell>
-                                <div className="flex items-center space-x-2">
-                                  {transaction.status === 'pending' && (
+                                <div className="flex items-center space-x-1">
+                                  {/* Withdrawal-specific approve/reject buttons */}
+                                  {transaction.type === 'withdrawal' && transaction.status === 'pending' && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setSelectedWithdrawal(transaction);
+                                          setActionType("approve");
+                                          setShowApprovalDialog(true);
+                                        }}
+                                        className="text-xs px-2 py-1 bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+                                        title="Approve withdrawal"
+                                      >
+                                        ✓ Approve
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setSelectedWithdrawal(transaction);
+                                          setActionType("reject");
+                                          setShowApprovalDialog(true);
+                                        }}
+                                        className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                                        title="Reject withdrawal"
+                                      >
+                                        ✗ Reject
+                                      </Button>
+                                    </>
+                                  )}
+                                  
+                                  {/* Processing withdrawal complete button */}
+                                  {transaction.type === 'withdrawal' && transaction.status === 'processing' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setSelectedWithdrawal(transaction);
+                                        setActionType("complete");
+                                        setShowApprovalDialog(true);
+                                      }}
+                                      className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                                      title="Mark as completed"
+                                    >
+                                      ✓ Complete
+                                    </Button>
+                                  )}
+                                  
+                                  {/* General pending transactions */}
+                                  {transaction.type !== 'withdrawal' && transaction.status === 'pending' && (
                                     <Button
                                       size="sm"
                                       variant="outline"
@@ -6461,6 +6564,8 @@ export default function AdminPanel() {
                                       Force Complete
                                     </Button>
                                   )}
+                                  
+                                  {/* Failed transactions rollback */}
                                   {transaction.status === 'failed' && (
                                     <Button
                                       size="sm"
@@ -9586,6 +9691,114 @@ export default function AdminPanel() {
           </div>
         </div>
       )}
+
+      {/* Withdrawal Approval Dialog */}
+      <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === "approve" ? "Approve Withdrawal" :
+               actionType === "reject" ? "Reject Withdrawal" :
+               "Complete Withdrawal"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedWithdrawal && (
+                <div className="space-y-2 mt-2">
+                  <div className="flex justify-between">
+                    <span>Amount:</span>
+                    <span className="font-medium">{selectedWithdrawal.amount} {selectedWithdrawal.tokenSymbol}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>User:</span>
+                    <span className="font-medium">{selectedWithdrawal.username}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Wallet:</span>
+                    <span className="font-mono text-xs">{selectedWithdrawal.walletAddress}</span>
+                  </div>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {actionType === "reject" && (
+              <div className="space-y-2">
+                <Label htmlFor="admin-note">Reason for rejection *</Label>
+                <textarea
+                  id="admin-note"
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  placeholder="Explain why this withdrawal is being rejected..."
+                  className="w-full p-2 border rounded-md dark:bg-gray-800 dark:text-white min-h-[80px]"
+                  required
+                />
+              </div>
+            )}
+            
+            {(actionType === "approve" || actionType === "complete") && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="transaction-hash">
+                    Transaction Hash {actionType === "complete" ? "*" : "(Optional)"}
+                  </Label>
+                  <input
+                    id="transaction-hash"
+                    type="text"
+                    value={transactionHash}
+                    onChange={(e) => setTransactionHash(e.target.value)}
+                    placeholder="0x..."
+                    className="w-full p-2 border rounded-md dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="admin-note-optional">Admin Note (Optional)</Label>
+                  <textarea
+                    id="admin-note-optional"
+                    value={adminNote}
+                    onChange={(e) => setAdminNote(e.target.value)}
+                    placeholder="Any additional notes..."
+                    className="w-full p-2 border rounded-md dark:bg-gray-800 dark:text-white min-h-[60px]"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowApprovalDialog(false);
+                setAdminNote("");
+                setTransactionHash("");
+                setSelectedWithdrawal(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmAction}
+              disabled={
+                approvalMutation.isPending ||
+                (actionType === "reject" && !adminNote.trim()) ||
+                (actionType === "complete" && !transactionHash.trim())
+              }
+              className={
+                actionType === "approve" ? "bg-green-600 hover:bg-green-700" :
+                actionType === "reject" ? "bg-red-600 hover:bg-red-700" :
+                "bg-blue-600 hover:bg-blue-700"
+              }
+            >
+              {approvalMutation.isPending ? "Processing..." : 
+               actionType === "approve" ? "Approve" :
+               actionType === "reject" ? "Reject" :
+               "Complete"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
