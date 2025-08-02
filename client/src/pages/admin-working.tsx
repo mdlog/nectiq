@@ -15,6 +15,71 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+// Helper functions for blockchain explorer URLs
+const getBlockchainExplorerUrl = (hash: string, token: string): string => {
+  const lowerToken = token.toLowerCase();
+  
+  switch (lowerToken) {
+    case 'eth':
+    case 'usdc':
+    case 'usdt':
+      return `https://etherscan.io/tx/${hash}`;
+    case 'bnb':
+      return `https://bscscan.com/tx/${hash}`;
+    case 'matic':
+    case 'pol':
+      return `https://polygonscan.com/tx/${hash}`;
+    case 'avax':
+      return `https://snowtrace.io/tx/${hash}`;
+    case 'sol':
+      return `https://solscan.io/tx/${hash}`;
+    case 'ada':
+      return `https://cardanoscan.io/transaction/${hash}`;
+    case 'dot':
+      return `https://polkascan.io/polkadot/transaction/${hash}`;
+    case 'xrp':
+      return `https://xrpscan.com/tx/${hash}`;
+    case 'doge':
+      return `https://dogechain.info/tx/${hash}`;
+    case 'btc':
+      return `https://blockstream.info/tx/${hash}`;
+    default:
+      return `https://etherscan.io/tx/${hash}`; // Default to Ethereum
+  }
+};
+
+const getExplorerName = (token: string): string => {
+  const lowerToken = token.toLowerCase();
+  
+  switch (lowerToken) {
+    case 'eth':
+    case 'usdc':
+    case 'usdt':
+      return 'Etherscan';
+    case 'bnb':
+      return 'BSCScan';
+    case 'matic':
+    case 'pol':
+      return 'PolygonScan';
+    case 'avax':
+      return 'Snowtrace';
+    case 'sol':
+      return 'Solscan';
+    case 'ada':
+      return 'CardanoScan';
+    case 'dot':
+      return 'PolkaScan';
+    case 'xrp':
+      return 'XRPScan';
+    case 'doge':
+      return 'DogeChain';
+    case 'btc':
+      return 'Blockstream';
+    default:
+      return 'Etherscan';
+  }
+};
+
 interface AdminStats {
   totalUsers: number;
   totalPredictions: number;
@@ -1409,7 +1474,17 @@ export default function AdminPanel() {
                             </Badge>
                           </TableCell>
                           <TableCell className="font-mono text-xs">
-                            {transaction.hash ? `${transaction.hash.slice(0, 10)}...` : 'N/A'}
+                            {transaction.hash ? (
+                              <a
+                                href={getBlockchainExplorerUrl(transaction.hash, transaction.token)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 underline cursor-pointer"
+                                title={`View transaction on ${getExplorerName(transaction.token)}`}
+                              >
+                                {`${transaction.hash.slice(0, 10)}...`}
+                              </a>
+                            ) : 'N/A'}
                           </TableCell>
                           <TableCell className="text-xs text-slate-400">
                             {new Date(transaction.createdAt).toLocaleDateString()}
