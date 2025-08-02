@@ -401,19 +401,23 @@ export function MultiChainFinancial() {
     return "0.000000";
   };
 
-  // Function to format deposit history display - show token amount instead of confusing USD amount
+  // Function to format deposit history display - show token amount that user actually paid (including fee)
   const formatDepositDisplay = (deposit: DepositData): string => {
     if (deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') {
-      return `${parseFloat(deposit.amountUSD).toFixed(2)} ${deposit.tokenType}`;
+      // Use calculateTokenAmountForHistory to get amount with fee included
+      const amountWithFee = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
+      return `${amountWithFee} ${deposit.tokenType}`;
     }
     
     if (deposit.tokenType === 'ETH') {
-      // Calculate ETH amount from USD amount
+      // Calculate ETH amount from USD amount with fee included
       const ethAmount = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
       return `${ethAmount} ETH`;
     }
     
-    return `${parseFloat(deposit.amountUSD).toFixed(2)} ${deposit.tokenType}`;
+    // For other tokens, also use calculateTokenAmountForHistory
+    const amountWithFee = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
+    return `${amountWithFee} ${deposit.tokenType}`;
   };
 
   // Function to calculate withdrawal amount for different tokens
