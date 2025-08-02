@@ -21,7 +21,7 @@ const createPredictionFormSchema = (availableCryptos: string[]) => z.object({
   predictedPrice: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
     message: "Please enter a valid price",
   }),
-  stakeAmount: z.number().min(1, "Minimum stake is 1 NTIQ"),
+  stakeAmount: z.number().min(50, "Minimum stake is 50 NTIQ"),
 });
 
 type PredictionFormData = {
