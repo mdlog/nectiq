@@ -3741,6 +3741,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get all transactions (combined withdrawals, deposits, purchases)
+  app.get("/api/admin/transactions", requireAdmin, async (req, res) => {
+    try {
+      console.log("📊 [ADMIN-TRANSACTIONS] Fetching all transactions for admin panel...");
+      
+      // Get all withdrawals with user information
+      const allWithdrawals = await db
+        .select({
+          id: withdrawals.id,
+          userId: withdrawals.userId,
+          type: sql`'withdrawal'`.as('type'),
+          amount: withdrawals.ntiqAmount,
+          usdAmount: withdrawals.usdAmount,
+          status: withdrawals.status,
+          token: withdrawals.tokenType,
+          toAddress: withdrawals.toWalletAddress,
+          transactionHash: withdrawals.transactionHash,
+          createdAt: withdrawals.createdAt,
+          username: users.username,
+          walletAddress: users.walletAddress,
+        })
+        .from(withdrawals)
+        .leftJoin(users, eq(withdrawals.userId, users.id));
+
+      console.log(`📊 [ADMIN-TRANSACTIONS] Found ${allWithdrawals.length} withdrawals`);
+      
+      // Get all deposits with user information  
+      const allDeposits = await db
+        .select({
+          id: cryptoTransactions.id,
+          userId: cryptoTransactions.userId,
+          type: sql`'deposit'`.as('type'),
+          amount: cryptoTransactions.amountNTIQ,
+          usdAmount: cryptoTransactions.amountUSD,
+          status: cryptoTransactions.status,
+          token: cryptoTransactions.tokenType,
+          toAddress: cryptoTransactions.toWalletAddress,
+          transactionHash: cryptoTransactions.transactionHash,
+          createdAt: cryptoTransactions.createdAt,
+          username: users.username,
+          walletAddress: users.walletAddress,
+        })
+        .from(cryptoTransactions)
+        .leftJoin(users, eq(cryptoTransactions.userId, users.id))
+        .where(eq(cryptoTransactions.type, 'deposit'));
+
+      console.log(`📊 [ADMIN-TRANSACTIONS] Found ${allDeposits.length} deposits`);
+
+      // Get all purchases with user information
+      const allPurchases = await db
+        .select({
+          id: purchases.id,
+          userId: purchases.userId,
+          type: sql`'purchase'`.as('type'),
+          amount: purchases.ntiqAmount,
+          usdAmount: purchases.amountUSD,
+          status: purchases.status,
+          token: purchases.paymentToken,
+          toAddress: sql`NULL`.as('toAddress'),
+          transactionHash: purchases.transactionHash,
+          createdAt: purchases.createdAt,
+          username: users.username,
+          walletAddress: users.walletAddress,
+        })
+        .from(purchases)
+        .leftJoin(users, eq(purchases.userId, users.id));
+
+      console.log(`📊 [ADMIN-TRANSACTIONS] Found ${allPurchases.length} purchases`);
+
+      // Combine all transactions
+      const allTransactions = [
+        ...allWithdrawals,
+        ...allDeposits,
+        ...allPurchases
+      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      console.log(`📊 [ADMIN-TRANSACTIONS] Total combined transactions: ${allTransactions.length}`);
+      console.log(`📊 [ADMIN-TRANSACTIONS] Sample transaction:`, allTransactions[0]);
+      
+      res.json(allTransactions.slice(0, 100)); // Return latest 100 transactions
+    } catch (error) {
+      console.error("❌ [ADMIN-TRANSACTIONS] Error fetching admin transactions:", error);
+      res.status(500).json({ message: "Failed to get transactions" });
+    }
+  });
+
   // Admin: Approve withdrawal request
   app.post("/api/admin/withdrawals/:id/approve", requireAdmin, async (req, res) => {
     try {
