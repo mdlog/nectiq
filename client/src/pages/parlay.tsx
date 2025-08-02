@@ -44,13 +44,7 @@ interface ParlayPrediction {
   }>;
 }
 
-const cryptocurrencies = [
-  { id: "bitcoin", name: "Bitcoin", symbol: "BTC" },
-  { id: "ethereum", name: "Ethereum", symbol: "ETH" },
-  { id: "binancecoin", name: "BNB", symbol: "BNB" },
-  { id: "cardano", name: "Cardano", symbol: "ADA" },
-  { id: "solana", name: "Solana", symbol: "SOL" }
-];
+// Dynamic cryptocurrencies from live prices - will be populated from API
 
 const durations = [
   { value: "1h", label: "1 Hour", multiplier: 1.2 },
@@ -484,11 +478,13 @@ export default function ParlayPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {cryptocurrencies.map((crypto) => (
+                          {Array.isArray(cryptoPrices) ? cryptoPrices.map((crypto: any) => (
                             <SelectItem key={crypto.id} value={crypto.id}>
                               {crypto.name} ({crypto.symbol})
                             </SelectItem>
-                          ))}
+                          )) : (
+                            <SelectItem value="loading" disabled>Loading cryptocurrencies...</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -655,7 +651,7 @@ export default function ParlayPage() {
                             <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                               <div className="flex items-center gap-2">
                                 <span className="font-medium">
-                                  {cryptocurrencies.find(c => c.id === coin.cryptocurrency)?.symbol || coin.cryptocurrency.toUpperCase()}
+                                  {Array.isArray(cryptoPrices) ? cryptoPrices.find((c: any) => c.id === coin.cryptocurrency)?.symbol : coin.cryptocurrency || coin.cryptocurrency.toUpperCase()}
                                 </span>
                                 {coin.prediction === "up" ? (
                                   <TrendingUp className="h-4 w-4 text-green-500" />
@@ -727,7 +723,7 @@ export default function ParlayPage() {
                             <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                               <div className="flex items-center gap-2">
                                 <span className="font-medium">
-                                  {cryptocurrencies.find(c => c.id === coin.cryptocurrency)?.symbol || coin.cryptocurrency.toUpperCase()}
+                                  {Array.isArray(cryptoPrices) ? cryptoPrices.find((c: any) => c.id === coin.cryptocurrency)?.symbol : coin.cryptocurrency || coin.cryptocurrency.toUpperCase()}
                                 </span>
                                 {coin.prediction === "up" ? (
                                   <TrendingUp className="h-4 w-4 text-green-500" />
