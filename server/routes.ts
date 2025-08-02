@@ -3809,19 +3809,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: cryptoTransactions.id,
           userId: cryptoTransactions.userId,
           type: sql`'deposit'`.as('type'),
-          amount: cryptoTransactions.amountNTIQ,
-          usdAmount: cryptoTransactions.amountUSD,
+          amount: cryptoTransactions.ntiqAmount, // Fixed: Use correct column name
+          usdAmount: sql`NULL`.as('usdAmount'), // No USD amount in crypto_transactions
           status: cryptoTransactions.status,
-          token: cryptoTransactions.tokenType,
-          toAddress: cryptoTransactions.toWalletAddress,
+          token: cryptoTransactions.paymentToken, // Fixed: Use correct column name
+          toAddress: cryptoTransactions.userAddress, // Fixed: Use correct column name
           transactionHash: cryptoTransactions.transactionHash,
           createdAt: cryptoTransactions.createdAt,
           username: users.username,
           walletAddress: users.walletAddress,
         })
         .from(cryptoTransactions)
-        .leftJoin(users, eq(cryptoTransactions.userId, users.id))
-        .where(eq(cryptoTransactions.type, 'deposit'));
+        .leftJoin(users, eq(cryptoTransactions.userId, users.id));
 
       console.log(`📊 [ADMIN-TRANSACTIONS] Found ${allDeposits.length} deposits`);
 
@@ -3836,7 +3835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: purchases.status,
           token: purchases.paymentToken,
           toAddress: sql`NULL`.as('toAddress'),
-          transactionHash: sql`NULL`.as('transactionHash'), // Purchase doesn't have transaction hash  
+          transactionHash: purchases.transactionHash, // Fixed: purchases table has transactionHash  
           createdAt: purchases.createdAt,
           username: users.username,
           walletAddress: users.walletAddress,
