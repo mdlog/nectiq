@@ -3933,6 +3933,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const withdrawalId = parseInt(req.params.id);
       const adminId = req.session.userId;
       const { adminNote } = req.body;
+      
+      console.log('🔍 [SESSION-DEBUG] Admin withdrawal approve endpoint access:', {
+        sessionExists: !!req.session,
+        sessionId: req.session.id,
+        userId: req.session.userId,
+        adminId,
+        withdrawalId,
+        sessionKeys: Object.keys(req.session || {}),
+        cookies: req.headers.cookie?.substring(0, 100) + '...'
+      });
 
       auditLog("withdrawal_approved", {
         withdrawalId,
