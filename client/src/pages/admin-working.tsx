@@ -183,6 +183,7 @@ export default function AdminPanel() {
   const [filterTimeframe, setFilterTimeframe] = useState("all");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isFetchingLogo, setIsFetchingLogo] = useState(false);
+  const [processingWithdrawal, setProcessingWithdrawal] = useState<number | null>(null);
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState("");
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
@@ -341,6 +342,33 @@ export default function AdminPanel() {
       });
     },
   });
+
+  // Withdrawal action handler
+  const handleWithdrawalAction = async (withdrawalId: number, action: 'approve' | 'reject') => {
+    setProcessingWithdrawal(withdrawalId);
+    
+    try {
+      const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
+        method: 'POST',
+      });
+      
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+        toast({ 
+          title: "Success", 
+          description: `Withdrawal ${action}d successfully` 
+        });
+      }
+    } catch (error: any) {
+      toast({ 
+        title: "Error", 
+        description: error.message || `Failed to ${action} withdrawal`,
+        variant: "destructive" 
+      });
+    } finally {
+      setProcessingWithdrawal(null);
+    }
+  };
 
   // Fetch crypto logo from CoinGecko
   const fetchCryptoLogo = async () => {
@@ -1478,6 +1506,7 @@ export default function AdminPanel() {
                         <TableHead>Status</TableHead>
                         <TableHead>Hash</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1540,6 +1569,28 @@ export default function AdminPanel() {
                           </TableCell>
                           <TableCell className="text-xs text-slate-400">
                             {new Date(transaction.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            {transaction.type === 'withdrawal' && transaction.status === 'pending' ? (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleWithdrawalAction(transaction.id, 'approve')}
+                                  className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+                                  disabled={processingWithdrawal === transaction.id}
+                                >
+                                  {processingWithdrawal === transaction.id ? 'Processing...' : 'Approve'}
+                                </button>
+                                <button
+                                  onClick={() => handleWithdrawalAction(transaction.id, 'reject')}
+                                  className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+                                  disabled={processingWithdrawal === transaction.id}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
