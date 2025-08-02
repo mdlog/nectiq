@@ -1659,7 +1659,12 @@ export default function AdminPanel() {
                       {filteredPredictions.slice(0, 20).map((prediction) => (
                         <TableRow key={prediction.id}>
                           <TableCell>{prediction.id}</TableCell>
-                          <TableCell>{prediction.userId}</TableCell>
+                          <TableCell>
+                            <div className="font-medium text-white">
+                              {prediction.username || `User ${prediction.userId}`}
+                            </div>
+                            <div className="text-xs text-slate-400">ID: {prediction.userId}</div>
+                          </TableCell>
                           <TableCell>
                             {(() => {
                               const cryptoInfo = getCryptoInfo(prediction.cryptocurrency);
