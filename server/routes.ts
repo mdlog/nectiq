@@ -3803,26 +3803,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`📊 [ADMIN-TRANSACTIONS] Found ${allWithdrawals.length} withdrawals`);
       
-      // Get all deposits with user information  
+      // Get all deposits with user information (using correct deposits table)
       const allDeposits = await db
         .select({
-          id: cryptoTransactions.id,
-          userId: cryptoTransactions.userId,
+          id: deposits.id,
+          userId: deposits.userId,
           type: sql`'deposit'`.as('type'),
-          amount: cryptoTransactions.ntiqAmount, // Fixed: Use correct column name
-          usdAmount: sql`NULL`.as('usdAmount'), // No USD amount in crypto_transactions
-          status: cryptoTransactions.status,
-          token: cryptoTransactions.paymentToken, // Fixed: Use correct column name
-          toAddress: cryptoTransactions.userAddress, // Fixed: Use correct column name
-          hash: cryptoTransactions.transactionHash, // Map transaction_hash to hash for frontend compatibility
-          transactionHash: cryptoTransactions.transactionHash, // Keep original for debugging
-          createdAt: cryptoTransactions.createdAt,
+          amount: deposits.ntiqAmount, // Use correct column name from deposits table
+          usdAmount: deposits.amountUsd, // Use amount_usd from deposits table
+          status: deposits.status,
+          token: deposits.tokenType, // Use token_type from deposits table
+          toAddress: deposits.toWalletAddress, // Use to_wallet_address from deposits table
+          hash: deposits.transactionHash, // Map transaction_hash to hash for frontend compatibility
+          transactionHash: deposits.transactionHash, // Keep original for debugging
+          createdAt: deposits.createdAt,
           username: users.username,
           walletAddress: users.walletAddress,
-          uid: users.id, // Add UID field for admin panel
+          uid: users.uid, // Use users.uid instead of users.id
+          chainName: deposits.chainName, // Add chain name for better display
         })
-        .from(cryptoTransactions)
-        .leftJoin(users, eq(cryptoTransactions.userId, users.id));
+        .from(deposits)
+        .leftJoin(users, eq(deposits.userId, users.id));
 
       console.log(`📊 [ADMIN-TRANSACTIONS] Found ${allDeposits.length} deposits`);
 
