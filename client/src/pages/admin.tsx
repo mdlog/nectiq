@@ -515,10 +515,10 @@ const DatabaseResetButton = () => {
               <Alert className="border-red-200 bg-red-50">
                 <Shield className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-800">
-                  <strong>Enter confirmation code to proceed:</strong>
+                  <strong>Type "RESET" to confirm:</strong>
                   <br />
                   <code className="text-sm bg-red-100 px-2 py-1 rounded mt-1 inline-block">
-                    RESET_ALL_DATA_CONFIRMED
+                    RESET
                   </code>
                 </AlertDescription>
               </Alert>
@@ -543,7 +543,7 @@ const DatabaseResetButton = () => {
                   type="text"
                   value={confirmationCode}
                   onChange={(e) => setConfirmationCode(e.target.value)}
-                  placeholder="Enter confirmation code..."
+                  placeholder="Type RESET to confirm..."
                   className="border-red-300 focus:border-red-500"
                   disabled={resetMutation.isPending}
                 />
@@ -560,7 +560,7 @@ const DatabaseResetButton = () => {
                 <Button 
                   variant="destructive" 
                   onClick={handleFinalReset}
-                  disabled={resetMutation.isPending || confirmationCode !== 'RESET_ALL_DATA_CONFIRMED'}
+                  disabled={resetMutation.isPending || confirmationCode !== 'RESET'}
                   className="bg-red-600 hover:bg-red-700"
                 >
                   {resetMutation.isPending ? (
