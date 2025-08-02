@@ -4585,11 +4585,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { confirmationCode } = req.body;
       
-      // Require special confirmation code for security
-      if (confirmationCode !== 'RESET_ALL_DATA_CONFIRMED') {
+      // Require special confirmation code for security (must match UI)
+      if (confirmationCode !== 'RESET') {
         return res.status(400).json({ 
           error: 'Invalid confirmation code',
-          message: 'Database reset requires proper confirmation code'
+          message: 'Please type "RESET" to confirm database reset'
         });
       }
 
