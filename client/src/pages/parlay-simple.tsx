@@ -42,14 +42,17 @@ export default function ParlaySimple() {
 
   console.log("📊 [PARLAY] Cryptos loaded:", cryptos.length);
 
-  // Fetch user's active parlays
-  const { data: userParlays = [], isLoading: parlaysLoading } = useQuery({
+  // Fetch user's active parlays (with safe error handling)
+  const { data: userParlays = [], isLoading: parlaysLoading, error: parlaysError } = useQuery({
     queryKey: ["/api/parlay/user"],
-    refetchInterval: 10000,
-    retry: 1,
+    refetchInterval: 30000,
+    retry: 0,
     retryOnMount: false,
-    refetchOnWindowFocus: false
-  }) as { data: any[], isLoading: boolean };
+    refetchOnWindowFocus: false,
+    enabled: true
+  });
+
+  console.log("📊 [PARLAY] User parlays:", { count: userParlays?.length || 0, loading: parlaysLoading, error: parlaysError });
 
   // Calculate duration multiplier
   const getDurationMultiplier = (duration: string) => {
@@ -194,38 +197,47 @@ export default function ParlaySimple() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Parlay Cards Section */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Active Parlays Section */}
-            {userParlays.length > 0 && (
+            {/* Active Parlays Section - Safe rendering */}
+            {!parlaysError && Array.isArray(userParlays) && userParlays.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Your Active Parlays ({userParlays.length})</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {userParlays.slice(0, 3).map((parlay: any) => (
-                    <div key={parlay.id} className="bg-gray-800 p-4 rounded border-l-4 border-blue-500">
-                      <div className="flex justify-between items-start mb-2">
-                        <Badge variant="secondary">{parlay.multiplier.toFixed(2)}x Multiplier</Badge>
-                        <span className="text-sm text-gray-400">
-                          {new Date(parlay.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-400">Stake:</span>
-                          <span className="ml-2 font-semibold">{parlay.stakeAmount} NTIQ</span>
+                  {userParlays.slice(0, 3).map((parlay: any) => {
+                    try {
+                      return (
+                        <div key={parlay?.id || Math.random()} className="bg-gray-800 p-4 rounded border-l-4 border-blue-500">
+                          <div className="flex justify-between items-start mb-2">
+                            <Badge variant="secondary">
+                              {parlay?.multiplier ? `${parlay.multiplier.toFixed(2)}x` : 'N/A'} Multiplier
+                            </Badge>
+                            <span className="text-sm text-gray-400">
+                              {parlay?.createdAt ? new Date(parlay.createdAt).toLocaleDateString() : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-400">Stake:</span>
+                              <span className="ml-2 font-semibold">{parlay?.stakeAmount || 0} NTIQ</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-400">Potential Win:</span>
+                              <span className="ml-2 font-semibold text-green-400">
+                                {parlay?.potentialWin || 0} NTIQ
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-xs text-gray-500">
+                            {parlay?.coins?.length || 0} predictions • Expires: {parlay?.expiresAt ? new Date(parlay.expiresAt).toLocaleString() : 'N/A'}
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-gray-400">Potential Win:</span>
-                          <span className="ml-2 font-semibold text-green-400">
-                            {parlay.potentialWin} NTIQ
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-2 text-xs text-gray-500">
-                        {parlay.coins?.length || 0} predictions • Expires: {new Date(parlay.expiresAt).toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    } catch (err) {
+                      console.error("Error rendering parlay:", err);
+                      return null;
+                    }
+                  })}
                   {userParlays.length > 3 && (
                     <p className="text-center text-gray-400 text-sm">
                       +{userParlays.length - 3} more active parlays
