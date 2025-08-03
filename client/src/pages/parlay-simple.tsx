@@ -598,9 +598,9 @@ export default function ParlaySimple() {
                       </TabsList>
                       
                       {/* Active Parlays Tab */}
-                      <TabsContent value="active" className="space-y-4 mt-4">
+                      <TabsContent value="active" className="mt-4">
                         {activeParlays.length > 0 ? (
-                          <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {activeParlays.slice(0, 5).map((parlay: any) => {
                       // Calculate potential win using server data structure
                       const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
@@ -813,9 +813,9 @@ export default function ParlaySimple() {
                       </TabsContent>
                       
                       {/* Completed Parlays Tab */}
-                      <TabsContent value="completed" className="space-y-4 mt-4">
+                      <TabsContent value="completed" className="mt-4">
                         {completedParlays.length > 0 ? (
-                          <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {completedParlays.slice(0, 5).map((parlay: any) => {
                             // Calculate potential win using server data structure
                             const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
