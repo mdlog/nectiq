@@ -4116,19 +4116,47 @@ export class MemStorage implements IStorage {
 
   // Parlay operations implementation
   async createParlayPrediction(parlay: InsertParlayPrediction): Promise<ParlayPrediction> {
-    const [newParlay] = await db
-      .insert(parlayPredictions)
-      .values(parlay)
-      .returning();
-    return newParlay;
+    try {
+      console.log("🔍 [STORAGE] Creating parlay with data:", JSON.stringify(parlay, null, 2));
+      
+      const [newParlay] = await db
+        .insert(parlayPredictions)
+        .values(parlay)
+        .returning();
+        
+      console.log("✅ [STORAGE] Successfully created parlay:", newParlay);
+      return newParlay;
+    } catch (error) {
+      console.error("❌ [STORAGE] Error creating parlay:", error);
+      console.error("❌ [STORAGE] Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
   }
 
   async createParlayPredictionCoin(coin: InsertParlayPredictionCoin): Promise<ParlayPredictionCoin> {
-    const [newCoin] = await db
-      .insert(parlayPredictionCoins)
-      .values(coin)
-      .returning();
-    return newCoin;
+    try {
+      console.log("🔍 [STORAGE] Creating parlay coin with data:", JSON.stringify(coin, null, 2));
+      
+      const [newCoin] = await db
+        .insert(parlayPredictionCoins)
+        .values(coin)
+        .returning();
+        
+      console.log("✅ [STORAGE] Successfully created parlay coin:", newCoin);
+      return newCoin;
+    } catch (error) {
+      console.error("❌ [STORAGE] Error creating parlay coin:", error);
+      console.error("❌ [STORAGE] Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
   }
 
   async getUserParlayPredictions(userId: number): Promise<any[]> {
