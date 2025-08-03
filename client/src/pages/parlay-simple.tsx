@@ -435,6 +435,69 @@ export default function ParlaySimple() {
             </Card>
 
           </div>
+
+          {/* Summary Section - Right Column */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Parlay Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Stake Amount (NTIQ)</label>
+                  <Input
+                    type="number"
+                    placeholder="Minimum 50 NTIQ"
+                    value={stakeAmount}
+                    onChange={(e) => setStakeAmount(e.target.value)}
+                    min="50"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Cards:</span>
+                    <span>{parlayCards.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Multiplier:</span>
+                    <Badge variant="secondary">{totalMultiplier.toFixed(2)}x</Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Stake:</span>
+                    <span>{stakeAmount || 0} NTIQ</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-lg border-t border-gray-600 pt-2">
+                    <span>Potential Win:</span>
+                    <span className="text-green-400">{potentialWin.toFixed(0)} NTIQ</span>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleSubmit} 
+                  className="w-full" 
+                  size="lg"
+                  disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
+                >
+                  {createParlayMutation.isPending ? "Creating..." : "Create Parlay"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Info Card */}
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-2">How Parlay Works</h3>
+                <ul className="text-sm text-gray-400 space-y-1">
+                  <li>• Combine 2-5 cryptocurrency predictions</li>
+                  <li>• Each coin has individual duration</li>
+                  <li>• Multipliers compound for higher rewards</li>
+                  <li>• All predictions must be correct to win</li>
+                  <li>• Minimum stake: 50 NTIQ</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Second Row: Full Width Parlay History */}
@@ -998,73 +1061,7 @@ export default function ParlaySimple() {
             })()}
         </div>
 
-        {/* Summary Section moved back to original position */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2"></div> {/* Empty space for alignment */}
-          
-          {/* Summary Section */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Parlay Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Stake Amount (NTIQ)</label>
-                  <Input
-                    type="number"
-                    placeholder="Minimum 50 NTIQ"
-                    value={stakeAmount}
-                    onChange={(e) => setStakeAmount(e.target.value)}
-                    min="50"
-                  />
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Cards:</span>
-                    <span>{parlayCards.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Total Multiplier:</span>
-                    <Badge variant="secondary">{totalMultiplier.toFixed(2)}x</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Stake:</span>
-                    <span>{stakeAmount || 0} NTIQ</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-lg border-t border-gray-600 pt-2">
-                    <span>Potential Win:</span>
-                    <span className="text-green-400">{potentialWin.toFixed(0)} NTIQ</span>
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={handleSubmit} 
-                  className="w-full" 
-                  size="lg"
-                  disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
-                >
-                  {createParlayMutation.isPending ? "Creating..." : "Create Parlay"}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Info Card */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">How Parlay Works</h3>
-                <ul className="text-sm text-gray-400 space-y-1">
-                  <li>• Combine 2-5 cryptocurrency predictions</li>
-                  <li>• Each coin has individual duration</li>
-                  <li>• Multipliers compound for higher rewards</li>
-                  <li>• All predictions must be correct to win</li>
-                  <li>• Minimum stake: 50 NTIQ</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
       </main>
       
       <Footer />
