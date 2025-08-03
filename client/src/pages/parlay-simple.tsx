@@ -234,9 +234,30 @@ export default function ParlaySimple() {
                       // Calculate expires at from targetTime 
                       const expiresAt = parlay?.targetTime || parlay?.expiresAt;
                       
+                      // Get coin prediction details
+                      const coinPredictions = parlay?.coins || [];
+                      
+                      // Helper function to determine win/lose status
+                      const getPredictionStatus = (coin: any, currentPrice: number) => {
+                        if (!coin.startPrice || !currentPrice) return 'pending';
+                        
+                        const startPrice = parseFloat(coin.startPrice);
+                        const isUp = coin.prediction === 'up';
+                        const priceChanged = currentPrice > startPrice;
+                        
+                        // Check if duration has passed
+                        const now = new Date();
+                        const targetTime = new Date(coin.targetTime);
+                        const durationPassed = now >= targetTime;
+                        
+                        if (!durationPassed) return 'active';
+                        
+                        return (isUp === priceChanged) ? 'win' : 'lose';
+                      };
+                      
                       return (
                         <div key={parlay?.id || Math.random()} className="bg-gray-800 p-4 rounded border-l-4 border-blue-500">
-                          <div className="flex justify-between items-start mb-2">
+                          <div className="flex justify-between items-start mb-3">
                             <Badge variant="secondary">
                               {multiplier ? `${parseFloat(multiplier).toFixed(2)}x` : 'N/A'} Multiplier
                             </Badge>
@@ -244,7 +265,9 @@ export default function ParlaySimple() {
                               {parlay?.createdAt ? new Date(parlay.createdAt).toLocaleDateString() : 'N/A'}
                             </span>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          
+                          {/* Stakes and Potential Win */}
+                          <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                             <div>
                               <span className="text-gray-400">Stake:</span>
                               <span className="ml-2 font-semibold">{parlay?.stakeAmount || 0} NTIQ</span>
@@ -256,8 +279,68 @@ export default function ParlaySimple() {
                               </span>
                             </div>
                           </div>
-                          <div className="mt-2 text-xs text-gray-500">
-                            {parlay?.coins?.length || parlay?.totalCoinCount || 0} predictions • Expires: {expiresAt ? new Date(expiresAt).toLocaleString() : 'N/A'}
+                          
+                          {/* Coin Predictions Details */}
+                          {coinPredictions.length > 0 && (
+                            <div className="space-y-2 mb-3">
+                              <h4 className="text-xs font-semibold text-gray-300">Predictions ({coinPredictions.length}):</h4>
+                              {coinPredictions.map((coin: any, index: number) => {
+                                // Find current price for this cryptocurrency
+                                const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                                const currentPrice = currentCrypto?.current_price || 0;
+                                const startPrice = parseFloat(coin.startPrice || '0');
+                                const status = getPredictionStatus(coin, currentPrice);
+                                
+                                // Price change calculation
+                                const priceChange = startPrice ? ((currentPrice - startPrice) / startPrice * 100) : 0;
+                                const isPositiveChange = priceChange > 0;
+                                
+                                return (
+                                  <div key={index} className="bg-gray-700 p-2 rounded text-xs">
+                                    <div className="flex justify-between items-center mb-1">
+                                      <span className="font-semibold text-blue-300 capitalize">
+                                        {coin.cryptocurrency} 
+                                        <span className={`ml-1 px-1 rounded ${coin.prediction === 'up' ? 'bg-green-600' : 'bg-red-600'}`}>
+                                          {coin.prediction === 'up' ? '↑' : '↓'}
+                                        </span>
+                                      </span>
+                                      <span className="text-gray-400">{coin.duration}</span>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                      <div>
+                                        <span className="text-gray-400">Start:</span>
+                                        <span className="ml-1 font-mono">${startPrice.toLocaleString()}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-400">Current:</span>
+                                        <span className="ml-1 font-mono">${currentPrice.toLocaleString()}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-between items-center mt-1">
+                                      <span className={`text-xs ${isPositiveChange ? 'text-green-400' : 'text-red-400'}`}>
+                                        {isPositiveChange ? '+' : ''}{priceChange.toFixed(2)}%
+                                      </span>
+                                      <Badge 
+                                        variant={status === 'win' ? 'default' : status === 'lose' ? 'destructive' : 'secondary'}
+                                        className="text-xs"
+                                      >
+                                        {status === 'win' ? '✓ WIN' : status === 'lose' ? '✗ LOSE' : status === 'active' ? '⏳ ACTIVE' : '⌛ PENDING'}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      Expires: {coin.targetTime ? new Date(coin.targetTime).toLocaleString() : 'N/A'}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          
+                          <div className="text-xs text-gray-500 border-t border-gray-600 pt-2">
+                            Total Expires: {expiresAt ? new Date(expiresAt).toLocaleString() : 'N/A'}
                           </div>
                         </div>
                       );
