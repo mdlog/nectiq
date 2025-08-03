@@ -4165,7 +4165,6 @@ export class MemStorage implements IStorage {
         id: parlayPredictions.id,
         stakeAmount: parlayPredictions.stakeAmount,
         targetTime: parlayPredictions.targetTime,
-        duration: parlayPredictions.duration,
         totalMultiplier: parlayPredictions.totalMultiplier,
         status: parlayPredictions.status,
         completedAt: parlayPredictions.completedAt,
