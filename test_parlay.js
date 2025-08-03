@@ -1,5 +1,5 @@
 // Test parlay creation request manually
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 async function testParlayCreation() {
   try {
