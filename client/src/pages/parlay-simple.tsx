@@ -139,8 +139,36 @@ export default function ParlaySimple() {
     console.log("🗑️ [PARLAY] Removed card:", id);
   };
 
+  // Check for duplicate cryptocurrency selection
+  const isDuplicateCryptocurrency = (id: string, cryptocurrency: string) => {
+    return parlayCards.some(card => 
+      card.id !== id && 
+      card.cryptocurrency === cryptocurrency && 
+      cryptocurrency !== ''
+    );
+  };
+
+  // Get list of already selected cryptocurrencies (excluding current card)
+  const getSelectedCryptocurrencies = (excludeCardId: string) => {
+    return parlayCards
+      .filter(card => card.id !== excludeCardId && card.cryptocurrency !== '')
+      .map(card => card.cryptocurrency);
+  };
+
   // Update parlay card
   const updateParlayCard = (id: string, field: keyof ParlayCard, value: any) => {
+    // Validate cryptocurrency selection for duplicates
+    if (field === 'cryptocurrency' && value !== '') {
+      if (isDuplicateCryptocurrency(id, value)) {
+        toast({
+          title: "Cryptocurrency Already Selected",
+          description: "Each coin can only be selected once per parlay. Please choose a different cryptocurrency.",
+          variant: "destructive"
+        });
+        return; // Don't update if duplicate
+      }
+    }
+
     setParlayCards(parlayCards.map(card => {
       if (card.id === id) {
         const updatedCard = { ...card, [field]: value };
@@ -204,6 +232,29 @@ export default function ParlaySimple() {
       toast({
         title: "Invalid Stake Amount",
         description: "Minimum stake amount is 50 NTIQ",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check for incomplete cards
+    const incompleteCards = parlayCards.filter(card => !card.cryptocurrency);
+    if (incompleteCards.length > 0) {
+      toast({
+        title: "Incomplete Predictions",
+        description: "Please select cryptocurrency for all prediction cards",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check for duplicate cryptocurrencies
+    const selectedCryptos = parlayCards.map(card => card.cryptocurrency);
+    const uniqueCryptos = new Set(selectedCryptos);
+    if (selectedCryptos.length !== uniqueCryptos.size) {
+      toast({
+        title: "Duplicate Cryptocurrencies",
+        description: "Each cryptocurrency can only be selected once per parlay",
         variant: "destructive"
       });
       return;
@@ -291,14 +342,24 @@ export default function ParlaySimple() {
                         <SelectValue placeholder="Select cryptocurrency" />
                       </SelectTrigger>
                       <SelectContent>
-                        {cryptos.map((crypto) => (
-                          <SelectItem key={crypto.id} value={crypto.id}>
-                            <div className="flex items-center gap-2">
-                              <img src={crypto.image} alt={crypto.name} className="w-5 h-5" />
-                              <span>{crypto.name} (${crypto.current_price.toFixed(2)})</span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                        {cryptos.map((crypto) => {
+                          const isAlreadySelected = getSelectedCryptocurrencies(card.id).includes(crypto.id);
+                          return (
+                            <SelectItem 
+                              key={crypto.id} 
+                              value={crypto.id}
+                              disabled={isAlreadySelected}
+                            >
+                              <div className="flex items-center gap-2">
+                                <img src={crypto.image} alt={crypto.name} className="w-5 h-5" />
+                                <span className={isAlreadySelected ? "text-gray-500" : ""}>
+                                  {crypto.name} (${crypto.current_price.toFixed(2)})
+                                  {isAlreadySelected && " - Already Selected"}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
