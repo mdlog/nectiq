@@ -9875,12 +9875,15 @@ Manual balance correction required IMMEDIATELY!`;
   // Create parlay prediction
   app.post("/api/parlay/create", async (req, res) => {
     try {
+      console.log("🔍 [PARLAY] Request body:", JSON.stringify(req.body, null, 2));
+      
       const session = req.session as any;
       if (!session?.userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
       const { stakeAmount, coins } = req.body;
+      console.log("🔍 [PARLAY] Extracted data:", { stakeAmount, coins, sessionUserId: session.userId });
 
       // Validate minimum stake
       if (parseFloat(stakeAmount) < 50) {
@@ -9938,7 +9941,7 @@ Manual balance correction required IMMEDIATELY!`;
         userId: session.userId,
         stakeAmount: parseFloat(stakeAmount),
         targetTime,
-        totalMultiplier,
+        totalMultiplier: Number(totalMultiplier.toFixed(2)),
         totalCoinCount: coinCount,
         status: 'active'
       });
@@ -9947,7 +9950,7 @@ Manual balance correction required IMMEDIATELY!`;
         userId: session.userId,
         stakeAmount: parseFloat(stakeAmount),
         targetTime,
-        totalMultiplier,
+        totalMultiplier: totalMultiplier.toString(),
         totalCoinCount: coinCount,
         status: 'active'
       });
@@ -9997,8 +10000,16 @@ Manual balance correction required IMMEDIATELY!`;
       });
 
     } catch (error) {
-      console.error("Error creating parlay prediction:", error);
-      res.status(500).json({ message: "Failed to create parlay prediction" });
+      console.error("❌ [PARLAY] Error creating parlay prediction:", error);
+      console.error("❌ [PARLAY] Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      res.status(500).json({ 
+        message: "Failed to create parlay prediction",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
