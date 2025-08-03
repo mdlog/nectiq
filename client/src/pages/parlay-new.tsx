@@ -45,6 +45,8 @@ interface ActiveParlay {
 }
 
 export default function ParlayNew() {
+  console.log("🚀 [PARLAY] Component rendering...");
+  
   const [parlayCards, setParlayCards] = useState<ParlayCard[]>([]);
   const [stakeAmount, setStakeAmount] = useState("");
   const [totalMultiplier, setTotalMultiplier] = useState(1);
