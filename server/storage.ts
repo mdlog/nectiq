@@ -218,6 +218,8 @@ export interface IStorage {
   getParlayPrediction(id: number): Promise<any>;
   updateParlayPredictionResult(id: number, status: string, rewardAmount: number, correctPredictions: number): Promise<void>;
   getActiveParlayPredictions(): Promise<any[]>;
+  updateParlayPredictionCoinEndPrice(coinId: number, endPrice: number, isCorrect: boolean): Promise<void>;
+  getExpiredParlayPredictionCoins(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {

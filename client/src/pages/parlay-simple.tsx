@@ -33,8 +33,18 @@ export default function ParlaySimple() {
   const [parlayCards, setParlayCards] = useState<ParlayCard[]>([]);
   const [stakeAmount, setStakeAmount] = useState("");
   const [totalMultiplier, setTotalMultiplier] = useState(1);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Update current time every second for countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Fetch live crypto prices
   const { data: cryptos = [], isLoading: cryptosLoading } = useQuery({
@@ -66,6 +76,36 @@ export default function ParlaySimple() {
       case '7d': return 3.0;
       default: return 1;
     }
+  };
+
+  // Format countdown timer
+  const formatCountdown = (targetTime: string | Date) => {
+    const target = new Date(targetTime);
+    const now = currentTime;
+    const diff = target.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      return "00:00:00"; // Expired
+    }
+
+    const totalSeconds = Math.floor(diff / 1000);
+    const days = Math.floor(totalSeconds / (24 * 60 * 60));
+    const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (days > 0) {
+      return `${days}d ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+  };
+
+  // Check if countdown has expired
+  const isCountdownExpired = (targetTime: string | Date) => {
+    const target = new Date(targetTime);
+    const now = currentTime;
+    return now.getTime() >= target.getTime();
   };
 
   // Update total multiplier when cards change
@@ -367,7 +407,9 @@ export default function ParlaySimple() {
                                           {coin.prediction === 'up' ? '↑' : '↓'}
                                         </span>
                                       </span>
-                                      <span className="text-gray-400">{coin.duration}</span>
+                                      <span className={`text-xs font-mono ${isCountdownExpired(coin.targetTime) ? 'text-red-400' : 'text-green-400'}`}>
+                                        {isCountdownExpired(coin.targetTime) ? 'EXPIRED' : formatCountdown(coin.targetTime)}
+                                      </span>
                                     </div>
                                     
                                     <div className="grid grid-cols-2 gap-2 text-xs">
@@ -398,8 +440,11 @@ export default function ParlaySimple() {
                                       </Badge>
                                     </div>
                                     
-                                    <div className="text-xs text-gray-500 mt-1">
-                                      Expires: {coin.targetTime ? new Date(coin.targetTime).toLocaleString() : 'N/A'}
+                                    <div className="text-xs mt-1 flex justify-between items-center">
+                                      <span className="text-gray-500">Time:</span>
+                                      <span className={`font-mono font-bold ${isCountdownExpired(coin.targetTime) ? 'text-red-400' : 'text-green-400'}`}>
+                                        {isCountdownExpired(coin.targetTime) ? 'EXPIRED' : formatCountdown(coin.targetTime)}
+                                      </span>
                                     </div>
                                   </div>
                                 );
@@ -407,8 +452,11 @@ export default function ParlaySimple() {
                             </div>
                           )}
                           
-                          <div className="text-xs text-gray-500 border-t border-gray-600 pt-2">
-                            Total Expires: {expiresAt ? new Date(expiresAt).toLocaleString() : 'N/A'}
+                          <div className="text-xs border-t border-gray-600 pt-2 flex justify-between items-center">
+                            <span className="text-gray-500">Total Parlay:</span>
+                            <span className={`font-mono font-bold ${isCountdownExpired(expiresAt) ? 'text-red-400' : 'text-green-400'}`}>
+                              {expiresAt ? (isCountdownExpired(expiresAt) ? 'EXPIRED' : formatCountdown(expiresAt)) : 'N/A'}
+                            </span>
                           </div>
                         </div>
                       );
