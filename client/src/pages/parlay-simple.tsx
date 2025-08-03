@@ -435,76 +435,6 @@ export default function ParlaySimple() {
             </Card>
 
           </div>
-          
-          {/* Summary Section - Back to right column */}  
-          <div className="space-y-6">
-            {/* Parlay Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5" />
-                  Parlay Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span>Predictions:</span>
-                    <span className="font-medium">{parlayCards.length}/5</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Stake:</span>
-                    <span className="font-medium">{stake} NTIQ</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Multiplier:</span>
-                    <span className="font-bold text-green-400">{totalMultiplier.toFixed(2)}x</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2">
-                    <span>Potential Win:</span>
-                    <span className="font-bold text-green-400">{(stake * totalMultiplier).toFixed(0)} NTIQ</span>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={handleCreateParlay}
-                  disabled={parlayCards.length < 2 || stake < 50 || isSubmitting}
-                  className="w-full mt-4"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <TrendingUp className="mr-2 h-4 w-4" />
-                      Create Parlay ({stake} NTIQ)
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* How Parlay Works */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Info className="h-5 w-5" />
-                  How Parlay Works
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-gray-300">
-                  <li>• Add 2-5 crypto predictions</li>
-                  <li>• Each prediction has individual duration</li>
-                  <li>• Multipliers compound for higher rewards</li>
-                  <li>• All predictions must be correct to win</li>
-                  <li>• Minimum stake: 50 NTIQ</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         {/* Second Row: Full Width Parlay History */}
@@ -1068,7 +998,73 @@ export default function ParlaySimple() {
             })()}
         </div>
 
+        {/* Summary Section moved back to original position */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2"></div> {/* Empty space for alignment */}
+          
+          {/* Summary Section */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Parlay Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Stake Amount (NTIQ)</label>
+                  <Input
+                    type="number"
+                    placeholder="Minimum 50 NTIQ"
+                    value={stakeAmount}
+                    onChange={(e) => setStakeAmount(e.target.value)}
+                    min="50"
+                  />
+                </div>
 
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Cards:</span>
+                    <span>{parlayCards.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Multiplier:</span>
+                    <Badge variant="secondary">{totalMultiplier.toFixed(2)}x</Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Stake:</span>
+                    <span>{stakeAmount || 0} NTIQ</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-lg border-t border-gray-600 pt-2">
+                    <span>Potential Win:</span>
+                    <span className="text-green-400">{potentialWin.toFixed(0)} NTIQ</span>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleSubmit} 
+                  className="w-full" 
+                  size="lg"
+                  disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
+                >
+                  {createParlayMutation.isPending ? "Creating..." : "Create Parlay"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Info Card */}
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-2">How Parlay Works</h3>
+                <ul className="text-sm text-gray-400 space-y-1">
+                  <li>• Combine 2-5 cryptocurrency predictions</li>
+                  <li>• Each coin has individual duration</li>
+                  <li>• Multipliers compound for higher rewards</li>
+                  <li>• All predictions must be correct to win</li>
+                  <li>• Minimum stake: 50 NTIQ</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
       
       <Footer />
