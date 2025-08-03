@@ -291,9 +291,11 @@ export default function ParlaySimple() {
           <p className="text-xl text-blue-200">Combine multiple predictions for exponential rewards</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Parlay Input Section - Single Card */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-8">
+          {/* Top Section - Create Parlay + Summary */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Parlay Input Section - Single Card */}
+            <div className="lg:col-span-2 space-y-6">
             {/* Single Parlay Input Card */}
             <Card className="min-h-[600px]">
               <CardHeader>
@@ -433,80 +435,154 @@ export default function ParlaySimple() {
               </CardContent>
             </Card>
 
-            {/* Parlay History Section - Tab-based Active vs Completed */}
-            {!parlaysError && safeParlays.length > 0 && (() => {
-              // Helper function to determine parlay status using DATABASE isCorrect
-              const getParlayStatus = (parlay: any) => {
-                const coinPredictions = parlay?.coins || [];
-                if (coinPredictions.length === 0) return 'pending';
+          </div>
+          
+          {/* Sidebar Summary */}
+          <div className="space-y-6">
+            {/* Parlay Summary Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Parlay Summary</CardTitle>
+                <p className="text-xs text-gray-400">Stake Amount (NTIQ)</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded">
+                  <span className="text-sm">Minimum 50 NTIQ</span>
+                  <Input
+                    type="number"
+                    placeholder="50"
+                    value={stakeAmount}
+                    onChange={(e) => setStakeAmount(Number(e.target.value))}
+                    min="50"
+                    className="w-20 h-8 text-right"
+                  />
+                </div>
                 
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Cards:</span>
+                    <span>{parlayCards.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Multiplier:</span>
+                    <span className="text-purple-400 font-semibold">×{totalMultiplier.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Stake:</span>
+                    <span>{stakeAmount || 0} NTIQ</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-lg border-t border-gray-600 pt-2">
+                    <span>Potential Win:</span>
+                    <span className="text-green-400">{potentialWin.toFixed(0)} NTIQ</span>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleSubmit} 
+                  className="w-full" 
+                  size="lg"
+                  disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
+                >
+                  {createParlayMutation.isPending ? "Creating..." : "Create Parlay"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Info Card */}
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-2">How Parlay Works</h3>
+                <ul className="text-sm text-gray-400 space-y-1">
+                  <li>• Combine 2-5 cryptocurrency predictions</li>
+                  <li>• Each coin has individual duration</li>
+                  <li>• Multipliers compound for higher rewards</li>
+                  <li>• All predictions must be correct to win</li>
+                  <li>• Minimum stake: 50 NTIQ</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Bottom Section - Full Width Parlay History */}
+          <div className="w-full">
+            {/* Your Parlay History - Full Width */}
+            {parlaysLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                <p>Loading your parlay history...</p>
+              </div>
+            ) : parlaysError ? (
+              <div className="text-center py-8 text-red-400">
+                <p>Error loading parlay history</p>
+              </div>
+            ) : (() => {
+              // Logic komponen history disini
+              const safeParlays = parlaysData || [];
+              
+              // Calculate parlay status
+              const getParlayStatus = (parlay: any) => {
+                if (!parlay || !parlay.coins) return 'pending';
+                
+                const coins = Array.isArray(parlay.coins) ? parlay.coins : [];
+                
+                let allWin = true;
                 let hasActivePredictions = false;
                 let hasLosePredictions = false;
-                let allWin = true;
                 
-                for (const coin of coinPredictions) {
-                  if (!coin.startPrice) continue;
+                for (const coin of coins) {
+                  if (!coin) continue;
                   
-                  // Check if duration has passed
                   const now = new Date();
                   const targetTime = new Date(coin.targetTime);
-                  const durationPassed = now >= targetTime;
                   
-                  if (!durationPassed) {
-                    // Still active - prediction hasn't expired yet
+                  if (targetTime > now) {
                     hasActivePredictions = true;
-                    allWin = false;
+                    continue;
+                  }
+                  
+                  if (coin.isCorrect !== undefined && coin.isCorrect !== null) {
+                    if (!coin.isCorrect) {
+                      hasLosePredictions = true;
+                      break;
+                    }
                   } else {
-                    // Duration has passed - check database result
-                    // CRITICAL: Use database isCorrect field set by ParlayProcessorService
-                    if (coin.isCorrect !== null && coin.isCorrect !== undefined) {
-                      // Database has processed result - most reliable
-                      if (!coin.isCorrect) {
-                        hasLosePredictions = true;
-                        break; // If any loses, entire parlay loses
-                      }
+                    const startPrice = parseFloat(coin.startPrice);
+                    const isUp = coin.prediction === 'up';
+                    
+                    let finalPrice;
+                    if (coin.endPrice) {
+                      finalPrice = parseFloat(coin.endPrice);
                     } else {
-                      // Not yet processed by ParlayProcessorService - calculate manually as fallback
-                      const startPrice = parseFloat(coin.startPrice);
-                      const isUp = coin.prediction === 'up';
-                      
-                      let finalPrice;
-                      if (coin.endPrice) {
-                        finalPrice = parseFloat(coin.endPrice);
-                      } else {
-                        const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
-                        finalPrice = currentCrypto?.current_price || 0;
-                      }
-                      
-                      if (!finalPrice) continue;
-                      
-                      const priceChanged = finalPrice > startPrice;
-                      const isCorrect = (isUp === priceChanged);
-                      
-                      if (!isCorrect) {
-                        hasLosePredictions = true;
-                        break; // If any loses, entire parlay loses
-                      }
+                      const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                      finalPrice = currentCrypto?.current_price || 0;
+                    }
+                    
+                    if (!finalPrice) continue;
+                    
+                    const priceChanged = finalPrice > startPrice;
+                    const isCorrect = (isUp === priceChanged);
+                    
+                    if (!isCorrect) {
+                      hasLosePredictions = true;
+                      break;
                     }
                   }
                 }
                 
-                // Return overall status
-                if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire parlay loses
-                if (hasActivePredictions) return 'active'; // Still has active predictions
-                if (allWin && !hasActivePredictions) return 'win'; // All won and none active
+                if (hasLosePredictions) return 'lose';
+                if (hasActivePredictions) return 'active';
+                if (allWin && !hasActivePredictions) return 'win';
                 return 'pending';
               };
               
-              // Separate parlays into active and completed based on overall status
               const activeParlays = safeParlays.filter((parlay: any) => {
                 const status = getParlayStatus(parlay);
-                return status === 'active' || status === 'pending'; // Only truly active parlays
+                return status === 'active' || status === 'pending';
               });
               
               const completedParlays = safeParlays.filter((parlay: any) => {
                 const status = getParlayStatus(parlay);
-                return status === 'win' || status === 'lose'; // Completed parlays (won or lost)
+                return status === 'win' || status === 'lose';
               });
               
               return (
@@ -1055,6 +1131,291 @@ export default function ParlaySimple() {
                 </ul>
               </CardContent>
             </Card>
+          </div>
+          </div>
+          
+          {/* Bottom Section - Full Width Parlay History */}
+          <div className="w-full">
+            {/* Your Parlay History - Full Width */}
+            {parlaysLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                <p>Loading your parlay history...</p>
+              </div>
+            ) : parlaysError ? (
+              <div className="text-center py-8 text-red-400">
+                <p>Error loading parlay history</p>
+              </div>
+            ) : (() => {
+              // Logic komponen history disini
+              const safeParlays = parlaysData || [];
+              
+              // Calculate parlay status
+              const getParlayStatus = (parlay: any) => {
+                if (!parlay || !parlay.coins) return 'pending';
+                
+                const coins = Array.isArray(parlay.coins) ? parlay.coins : [];
+                
+                let allWin = true;
+                let hasActivePredictions = false;
+                let hasLosePredictions = false;
+                
+                for (const coin of coins) {
+                  if (!coin) continue;
+                  
+                  const now = new Date();
+                  const targetTime = new Date(coin.targetTime);
+                  
+                  if (targetTime > now) {
+                    hasActivePredictions = true;
+                    continue;
+                  }
+                  
+                  if (coin.isCorrect !== undefined && coin.isCorrect !== null) {
+                    if (!coin.isCorrect) {
+                      hasLosePredictions = true;
+                      break;
+                    }
+                  } else {
+                    const startPrice = parseFloat(coin.startPrice);
+                    const isUp = coin.prediction === 'up';
+                    
+                    let finalPrice;
+                    if (coin.endPrice) {
+                      finalPrice = parseFloat(coin.endPrice);
+                    } else {
+                      const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                      finalPrice = currentCrypto?.current_price || 0;
+                    }
+                    
+                    if (!finalPrice) continue;
+                    
+                    const priceChanged = finalPrice > startPrice;
+                    const isCorrect = (isUp === priceChanged);
+                    
+                    if (!isCorrect) {
+                      hasLosePredictions = true;
+                      break;
+                    }
+                  }
+                }
+                
+                if (hasLosePredictions) return 'lose';
+                if (hasActivePredictions) return 'active';
+                if (allWin && !hasActivePredictions) return 'win';
+                return 'pending';
+              };
+              
+              const activeParlays = safeParlays.filter((parlay: any) => {
+                const status = getParlayStatus(parlay);
+                return status === 'active' || status === 'pending';
+              });
+              
+              const completedParlays = safeParlays.filter((parlay: any) => {
+                const status = getParlayStatus(parlay);
+                return status === 'win' || status === 'lose';
+              });
+              
+              return (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your Parlay History</CardTitle>
+                    <p className="text-sm text-gray-400">Manage and track your parlay predictions</p>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs defaultValue="active" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="active" className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                          Active ({activeParlays.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="completed" className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                          History ({completedParlays.length})
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="active" className="space-y-4 mt-4">
+                        {activeParlays.length > 0 ? (
+                          <div className="space-y-4">
+                            {activeParlays.slice(0, 5).map((parlay: any) => {
+                              const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
+                              const calculatedPotentialWin = parlay?.stakeAmount && multiplier ? 
+                                Math.round(parlay.stakeAmount * parseFloat(multiplier)) : 0;
+                              const coinPredictions = parlay?.coins || [];
+                              
+                              return (
+                                <div key={parlay.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                                  <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-purple-400 font-semibold">×{parseFloat(multiplier).toFixed(2)} Multiplier</span>
+                                        <span className="text-xs text-blue-400 bg-blue-400/20 px-2 py-1 rounded">ACTIVE</span>
+                                      </div>
+                                      <p className="text-sm text-gray-400">
+                                        Stake: <span className="text-white font-medium">{parlay.stakeAmount} NTIQ</span>
+                                      </p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-sm text-gray-400">Potential Win</p>
+                                      <p className="text-green-400 font-semibold">{calculatedPotentialWin.toLocaleString()} NTIQ</p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="text-sm text-gray-400 mb-2">
+                                    <span className="font-medium">Predictions ({coinPredictions.length}):</span>
+                                  </div>
+                                  
+                                  <div className="space-y-2">
+                                    {coinPredictions.map((coin: any, coinIndex: number) => {
+                                      const crypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                                      const targetDate = new Date(coin.targetTime);
+                                      const now = new Date();
+                                      const isExpired = targetDate <= now;
+                                      
+                                      return (
+                                        <div key={coinIndex} className="flex justify-between items-center bg-gray-700/50 px-3 py-2 rounded">
+                                          <div className="flex items-center gap-2">
+                                            {crypto?.image && (
+                                              <img src={crypto.image} alt={crypto.name} className="w-5 h-5 rounded-full" />
+                                            )}
+                                            <span className="font-medium">{crypto?.name || coin.cryptocurrency}</span>
+                                            <span className={`text-xs px-2 py-1 rounded ${
+                                              coin.prediction === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                            }`}>
+                                              {coin.prediction.toUpperCase()}
+                                            </span>
+                                          </div>
+                                          <div className="text-right text-xs">
+                                            <div className="text-gray-400">
+                                              {isExpired ? 'Expired' : `Expires: ${targetDate.toLocaleDateString()} ${targetDate.toLocaleTimeString()}`}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-gray-400">
+                            <p>No active parlays found.</p>
+                          </div>
+                        )}
+                      </TabsContent>
+                      
+                      <TabsContent value="completed" className="space-y-4 mt-4">
+                        {completedParlays.length > 0 ? (
+                          <div className="space-y-4">
+                            {completedParlays.slice(0, 10).map((parlay: any) => {
+                              const parlayStatus = getParlayStatus(parlay);
+                              const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
+                              const coinPredictions = parlay?.coins || [];
+                              
+                              return (
+                                <div key={parlay.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                                  <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-purple-400 font-semibold">×{parseFloat(multiplier).toFixed(2)} Multiplier</span>
+                                        <span className={`text-xs px-2 py-1 rounded ${
+                                          parlayStatus === 'win' ? 'text-green-400 bg-green-400/20' : 'text-red-400 bg-red-400/20'
+                                        }`}>
+                                          {parlayStatus === 'win' ? 'WON' : 'LOST'}
+                                        </span>
+                                      </div>
+                                      <p className="text-sm text-gray-400">
+                                        Stake: <span className="text-white font-medium">{parlay.stakeAmount} NTIQ</span>
+                                      </p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-sm text-gray-400">
+                                        {parlayStatus === 'win' ? 'Won' : 'Lost'}
+                                      </p>
+                                      <p className={`font-semibold ${
+                                        parlayStatus === 'win' ? 'text-green-400' : 'text-red-400'
+                                      }`}>
+                                        {parlayStatus === 'win' 
+                                          ? `${Math.round(parlay.stakeAmount * parseFloat(multiplier)).toLocaleString()} NTIQ`
+                                          : `${parlay.stakeAmount} NTIQ`
+                                        }
+                                      </p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="text-sm text-gray-400 mb-2">
+                                    <span className="font-medium">Predictions ({coinPredictions.length}):</span>
+                                  </div>
+                                  
+                                  <div className="space-y-2">
+                                    {coinPredictions.map((coin: any, coinIndex: number) => {
+                                      const crypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                                      
+                                      let coinResult = 'unknown';
+                                      if (coin.isCorrect !== undefined && coin.isCorrect !== null) {
+                                        coinResult = coin.isCorrect ? 'correct' : 'incorrect';
+                                      } else if (coin.endPrice) {
+                                        const startPrice = parseFloat(coin.startPrice);
+                                        const endPrice = parseFloat(coin.endPrice);
+                                        const isUp = coin.prediction === 'up';
+                                        const priceChanged = endPrice > startPrice;
+                                        coinResult = (isUp === priceChanged) ? 'correct' : 'incorrect';
+                                      }
+                                      
+                                      return (
+                                        <div key={coinIndex} className="flex justify-between items-center bg-gray-700/50 px-3 py-2 rounded">
+                                          <div className="flex items-center gap-2">
+                                            {crypto?.image && (
+                                              <img src={crypto.image} alt={crypto.name} className="w-5 h-5 rounded-full" />
+                                            )}
+                                            <span className="font-medium">{crypto?.name || coin.cryptocurrency}</span>
+                                            <span className={`text-xs px-2 py-1 rounded ${
+                                              coin.prediction === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                            }`}>
+                                              {coin.prediction.toUpperCase()}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <div className="text-right text-xs">
+                                              <div className="text-gray-400">
+                                                Start: ${parseFloat(coin.startPrice).toLocaleString()}
+                                              </div>
+                                              {coin.endPrice && (
+                                                <div className="text-gray-400 flex items-center gap-1">
+                                                  End: ${parseFloat(coin.endPrice).toLocaleString()}
+                                                  <span className="text-xs">📷 SNAPSHOT</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            {coinResult !== 'unknown' && (
+                                              <span className={`text-xs px-2 py-1 rounded ${
+                                                coinResult === 'correct' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                              }`}>
+                                                {coinResult === 'correct' ? '✓' : '✗'}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-gray-400">
+                            <p>No completed parlays found.</p>
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </div>
         </div>
       </main>
