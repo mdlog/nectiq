@@ -9934,10 +9934,20 @@ Manual balance correction required IMMEDIATELY!`;
       const targetTime = new Date(now);
       targetTime.setHours(targetTime.getHours() + maxDurationHours);
 
-      // Calculate total multiplier based on number of coins
-      const coinCount = coins.length;
+      // Calculate total multiplier based on each coin's duration
       const baseMultiplier = 1.5;
-      const totalMultiplier = Math.pow(baseMultiplier, coinCount);
+      let totalMultiplier = 1;
+      
+      for (const coin of coins) {
+        let durationMultiplier = 1.2; // Default for 1h
+        switch (coin.duration) {
+          case '1h': durationMultiplier = 1.2; break;
+          case '6h': durationMultiplier = 1.5; break;
+          case '24h': durationMultiplier = 2.0; break;
+          case '7d': durationMultiplier = 3.0; break;
+        }
+        totalMultiplier *= baseMultiplier * durationMultiplier;
+      }
 
       // Create parlay prediction (no global duration field needed)
       console.log("🔍 [PARLAY] Creating parlay with data:", {
