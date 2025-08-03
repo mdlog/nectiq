@@ -25,6 +25,25 @@ interface ParlayCard {
   startPrice: number;
 }
 
+interface ActiveParlay {
+  id: string;
+  stakeAmount: number;
+  multiplier: number;
+  potentialWin: number;
+  status: 'active' | 'completed' | 'failed';
+  createdAt: string;
+  expiresAt: string;
+  coins: {
+    cryptocurrency: string;
+    prediction: 'up' | 'down';
+    duration: string;
+    startPrice: number;
+    currentPrice?: number;
+    targetPrice?: number;
+    isWinning?: boolean;
+  }[];
+}
+
 export default function ParlayNew() {
   const [parlayCards, setParlayCards] = useState<ParlayCard[]>([]);
   const [stakeAmount, setStakeAmount] = useState("");
@@ -36,6 +55,12 @@ export default function ParlayNew() {
   const { data: cryptos = [] } = useQuery({
     queryKey: ["/api/crypto/pyth-prices"],
     refetchInterval: 2000
+  });
+
+  // Fetch user's active parlays
+  const { data: userParlays = [], isLoading: parlaysLoading } = useQuery({
+    queryKey: ["/api/parlay/user"],
+    refetchInterval: 10000
   });
 
   // Create parlay mutation
@@ -182,10 +207,118 @@ export default function ParlayNew() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Create Parlay Prediction</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Parlay Predictions</h1>
           <p className="text-muted-foreground">
-            Combine multiple cryptocurrency predictions for higher rewards
+            Create and monitor your multi-coin predictions for higher rewards
           </p>
+        </div>
+
+        {/* Active Parlays Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-semibold">Your Active Parlays</h2>
+            {!parlaysLoading && (
+              <Badge variant="secondary">
+                {userParlays.length} {userParlays.length === 1 ? 'Active' : 'Active'}
+              </Badge>
+            )}
+          </div>
+          
+          {parlaysLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-muted-foreground">Loading your parlays...</p>
+              </div>
+            </div>
+          ) : userParlays.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {userParlays.map((parlay: ActiveParlay) => (
+                <Card key={parlay.id} className="border-l-4 border-l-blue-500">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">Parlay #{parlay.id.slice(-6)}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          {parlay.coins.length} coins • {parlay.multiplier.toFixed(2)}x
+                        </p>
+                      </div>
+                      <Badge 
+                        variant={parlay.status === 'active' ? 'default' : 
+                                parlay.status === 'completed' ? 'secondary' : 'destructive'}
+                      >
+                        {parlay.status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Stake:</span>
+                      <span className="font-medium">{parlay.stakeAmount} NTIQ</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Potential Win:</span>
+                      <span className="font-medium text-green-600">{parlay.potentialWin.toFixed(0)} NTIQ</span>
+                    </div>
+                    <div className="space-y-2">
+                      {parlay.coins.map((coin, index) => {
+                        const crypto = cryptos.find((c: Cryptocurrency) => c.id === coin.cryptocurrency);
+                        return (
+                          <div key={index} className="flex items-center justify-between text-xs bg-muted p-2 rounded">
+                            <div className="flex items-center gap-2">
+                              {crypto && <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />}
+                              <span className="font-medium">{crypto?.symbol.toUpperCase()}</span>
+                              <Badge 
+                                variant="outline" 
+                                className={coin.prediction === 'up' ? 'text-green-600' : 'text-red-600'}
+                              >
+                                {coin.prediction === 'up' ? '↗' : '↘'}
+                              </Badge>
+                            </div>
+                            <span className="text-muted-foreground">{coin.duration}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="text-xs text-muted-foreground pt-2 border-t">
+                      Expires: {new Date(parlay.expiresAt).toLocaleDateString()} {new Date(parlay.expiresAt).toLocaleTimeString()}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="border-dashed border-2">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="text-center max-w-md">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+                    <TrendingUp className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No Active Parlays</h3>
+                  <p className="text-muted-foreground mb-4">
+                    You don't have any active parlay predictions yet. Create your first multi-coin prediction below to get started.
+                  </p>
+                  <Button 
+                    onClick={() => {
+                      // Scroll to create section
+                      const createSection = document.querySelector('#create-parlay-section');
+                      if (createSection) {
+                        createSection.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    variant="outline"
+                  >
+                    Create Your First Parlay
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Create New Parlay Section */}
+        <div id="create-parlay-section" className="mb-6">
+          <h2 className="text-2xl font-semibold mb-4">Create New Parlay</h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
