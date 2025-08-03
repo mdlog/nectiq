@@ -5,7 +5,7 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { storage } from "./storage";
+import { storage, DatabaseStorage } from "./storage";
 import { db } from "./db";
 import { cryptoService } from "./services/cryptoService";
 import { PythPriceService } from "./services/PythPriceService.js";
@@ -25,6 +25,7 @@ import { calculateAntiGamingMetrics, getPredictionDeadline, formatCountdown } fr
 import { SurvivalRoundService } from "./services/survivalRoundService.js";
 import { BalanceService } from "./services/balanceService.js";
 import AutomatedDepositSecurity from './automated-deposit-security.js';
+import { requireAuth as requireWalletAuth } from './simpleAuth.js';
 
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
@@ -9948,14 +9949,38 @@ Manual balance correction required IMMEDIATELY!`;
         status: 'active'
       });
       
-      const parlay = await storage.createParlayPrediction({
-        userId: user.id,
-        stakeAmount: parseFloat(stakeAmount),
-        targetTime,
-        totalMultiplier: totalMultiplier.toString(),
-        totalCoinCount: coinCount,
-        status: 'active'
-      });
+      // Debug storage methods
+      console.log("🔍 [PARLAY] Storage methods available:", Object.getOwnPropertyNames(storage));
+      console.log("🔍 [PARLAY] Storage type:", typeof storage);
+      console.log("🔍 [PARLAY] createParlayPrediction method type:", typeof storage.createParlayPrediction);
+      
+      // Try creating a new instance to avoid circular dependency issues
+      console.log("🔍 [PARLAY] DatabaseStorage constructor:", typeof DatabaseStorage);
+      console.log("🔍 [PARLAY] DatabaseStorage prototype methods:", Object.getOwnPropertyNames(DatabaseStorage.prototype));
+      
+      const dbStorage = new DatabaseStorage();
+      console.log("🔍 [PARLAY] New storage methods available:", Object.getOwnPropertyNames(dbStorage));
+      console.log("🔍 [PARLAY] New storage prototype:", Object.getPrototypeOf(dbStorage));
+      console.log("🔍 [PARLAY] New storage createParlayPrediction method type:", typeof dbStorage.createParlayPrediction);
+      
+      // Let's try direct method access
+      console.log("🔍 [PARLAY] Trying direct method access:", 'createParlayPrediction' in dbStorage);
+      console.log("🔍 [PARLAY] All enumerable props:", Object.keys(dbStorage));
+      console.log("🔍 [PARLAY] All props (including non-enumerable):", Object.getOwnPropertyNames(dbStorage));
+      
+      // Use direct database operations as workaround for storage method issue
+      console.log("🔍 [PARLAY] Using direct database operation as workaround");
+      const [parlay] = await db
+        .insert(parlayPredictions)
+        .values({
+          userId: user.id,
+          stakeAmount: parseFloat(stakeAmount),
+          targetTime,
+          totalMultiplier: totalMultiplier.toString(),
+          totalCoinCount: coinCount,
+          status: 'active'
+        })
+        .returning();
 
       // Create coin predictions with individual durations and target times
       for (const coin of coins) {
@@ -9976,14 +10001,16 @@ Manual balance correction required IMMEDIATELY!`;
             break;
         }
 
-        await storage.createParlayPredictionCoin({
-          parlayId: parlay.id,
-          cryptocurrency: coin.cryptocurrency,
-          prediction: coin.prediction,
-          startPrice: coin.startPrice,
-          duration: coin.duration,
-          targetTime: coinTargetTime
-        });
+        await db
+          .insert(parlayPredictionCoins)
+          .values({
+            parlayId: parlay.id,
+            cryptocurrency: coin.cryptocurrency,
+            prediction: coin.prediction,
+            startPrice: coin.startPrice,
+            duration: coin.duration,
+            targetTime: coinTargetTime
+          });
       }
 
       // Deduct stake from user balance

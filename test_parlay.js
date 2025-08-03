@@ -23,10 +23,11 @@ async function testParlayCreation() {
       ]
     };
     
-    const response = await fetch('http://localhost:5173/api/parlay/create', {
+    const response = await fetch('http://localhost:5000/api/parlay/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-wallet-address': '0xeebdf3f08b5748d46b1113a0b3f2cacaa333532f',
       },
       body: JSON.stringify(data)
     });
