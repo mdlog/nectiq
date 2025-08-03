@@ -9871,183 +9871,113 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
-  // ==================== PARLAY PREDICTION ENDPOINTS ====================
+  // ==================== PARLAY PREDICTION ENDPOINTS (REBUILT) ====================
 
-  // Create parlay prediction
+  // Create parlay prediction - REBUILT & SIMPLIFIED
   app.post("/api/parlay/create", requireAuth, async (req, res) => {
+    console.log("🔥 [PARLAY-NEW] Starting parlay creation - REBUILT VERSION");
+    
     try {
-      console.log("🔍 [PARLAY] Request body:", JSON.stringify(req.body, null, 2));
+      const user = req.user as any;
+      const { stakeAmount, coins } = req.body;
       
-      const session = req.session as any;
-      const user = req.user as any; // Set by requireAuth middleware
-      console.log("🔍 [PARLAY] Session debug:", { 
-        hasSession: !!session, 
-        userId: session?.userId, 
-        userFromMiddleware: user ? 'present' : 'missing' 
+      console.log("🔍 [PARLAY-NEW] Input validation:", { 
+        userId: user.id, 
+        stakeAmount, 
+        coinCount: coins?.length 
       });
 
-      const { stakeAmount, coins } = req.body;
-      console.log("🔍 [PARLAY] Extracted data:", { stakeAmount, coins, userId: user.id });
-
-      // Validate minimum stake
-      if (parseFloat(stakeAmount) < 50) {
+      // Basic validations
+      if (!stakeAmount || parseFloat(stakeAmount) < 50) {
         return res.status(400).json({ message: "Minimum stake is 50 NTIQ" });
       }
 
-      // Validate coins array
       if (!coins || !Array.isArray(coins) || coins.length < 2) {
-        return res.status(400).json({ message: "At least 2 coins required for parlay" });
+        return res.status(400).json({ message: "At least 2 coins required" });
       }
 
-      // Validate each coin has required fields
-      for (const coin of coins) {
-        if (!coin.cryptocurrency || !coin.prediction || !coin.duration || coin.startPrice === undefined) {
-          return res.status(400).json({ message: "Each coin must have cryptocurrency, prediction, duration, and startPrice" });
-        }
-        
-        // Validate duration format
-        if (!['1h', '6h', '24h', '7d'].includes(coin.duration)) {
-          return res.status(400).json({ message: "Invalid duration. Must be 1h, 6h, 24h, or 7d" });
-        }
-      }
-
-      // Check user balance (user is already available from requireAuth middleware)
-      if (!user || user.balance < parseFloat(stakeAmount)) {
+      // Check user balance
+      if (user.balance < parseFloat(stakeAmount)) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
 
-      // Calculate target time based on the longest duration among coins
-      const now = new Date();
-      let maxDurationHours = 0;
-      
-      for (const coin of coins) {
-        let durationHours = 0;
-        switch (coin.duration) {
-          case '1h': durationHours = 1; break;
-          case '6h': durationHours = 6; break;
-          case '24h': durationHours = 24; break;
-          case '7d': durationHours = 24 * 7; break;
-        }
-        maxDurationHours = Math.max(maxDurationHours, durationHours);
-      }
-      
-      const targetTime = new Date(now);
-      targetTime.setHours(targetTime.getHours() + maxDurationHours);
+      console.log("✅ [PARLAY-NEW] Basic validation passed");
 
-      // Calculate total multiplier based on each coin's duration
-      const baseMultiplier = 1.5;
+      // Simple multiplier calculation
       let totalMultiplier = 1;
+      const durationMultipliers = { '1h': 1.2, '6h': 1.5, '24h': 2.0, '7d': 3.0 };
       
       for (const coin of coins) {
-        let durationMultiplier = 1.2; // Default for 1h
-        switch (coin.duration) {
-          case '1h': durationMultiplier = 1.2; break;
-          case '6h': durationMultiplier = 1.5; break;
-          case '24h': durationMultiplier = 2.0; break;
-          case '7d': durationMultiplier = 3.0; break;
-        }
-        totalMultiplier *= baseMultiplier * durationMultiplier;
+        const baseCoinMultiplier = 1.5;
+        const durationMultiplier = durationMultipliers[coin.duration] || 1.2;
+        const coinMultiplier = baseCoinMultiplier * durationMultiplier;
+        totalMultiplier *= coinMultiplier;
       }
 
-      // Create parlay prediction (no global duration field needed)
-      console.log("🔍 [PARLAY] Creating parlay with data:", {
-        userId: user.id,
-        stakeAmount: parseFloat(stakeAmount),
-        targetTime,
-        totalMultiplier: Number(totalMultiplier.toFixed(2)),
-        totalCoinCount: coinCount,
-        status: 'active'
-      });
+      console.log("🔍 [PARLAY-NEW] Multiplier calculated:", totalMultiplier);
+
+      // Create parlay record
+      const stake = parseFloat(stakeAmount);
+      const targetTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
       
-      // Debug storage methods
-      console.log("🔍 [PARLAY] Storage methods available:", Object.getOwnPropertyNames(storage));
-      console.log("🔍 [PARLAY] Storage type:", typeof storage);
-      console.log("🔍 [PARLAY] createParlayPrediction method type:", typeof storage.createParlayPrediction);
-      
-      // Try creating a new instance to avoid circular dependency issues
-      console.log("🔍 [PARLAY] DatabaseStorage constructor:", typeof DatabaseStorage);
-      console.log("🔍 [PARLAY] DatabaseStorage prototype methods:", Object.getOwnPropertyNames(DatabaseStorage.prototype));
-      
-      const dbStorage = new DatabaseStorage();
-      console.log("🔍 [PARLAY] New storage methods available:", Object.getOwnPropertyNames(dbStorage));
-      console.log("🔍 [PARLAY] New storage prototype:", Object.getPrototypeOf(dbStorage));
-      console.log("🔍 [PARLAY] New storage createParlayPrediction method type:", typeof dbStorage.createParlayPrediction);
-      
-      // Let's try direct method access
-      console.log("🔍 [PARLAY] Trying direct method access:", 'createParlayPrediction' in dbStorage);
-      console.log("🔍 [PARLAY] All enumerable props:", Object.keys(dbStorage));
-      console.log("🔍 [PARLAY] All props (including non-enumerable):", Object.getOwnPropertyNames(dbStorage));
-      
-      // Use direct database operations as workaround for storage method issue
-      console.log("🔍 [PARLAY] Using direct database operation as workaround");
-      const [parlay] = await db
+      const [newParlay] = await db
         .insert(parlayPredictions)
         .values({
           userId: user.id,
-          stakeAmount: parseFloat(stakeAmount),
+          stakeAmount: stake,
           targetTime,
           totalMultiplier: totalMultiplier.toString(),
-          totalCoinCount: coinCount,
+          totalCoinCount: coins.length,
           status: 'active'
         })
         .returning();
 
-      // Create coin predictions with individual durations and target times
+      console.log("✅ [PARLAY-NEW] Main parlay record created:", newParlay.id);
+
+      // Create coin predictions
       for (const coin of coins) {
-        // Calculate individual target time for each coin
-        const coinTargetTime = new Date(now);
+        const coinTargetTime = new Date();
         switch (coin.duration) {
-          case '1h':
-            coinTargetTime.setHours(coinTargetTime.getHours() + 1);
-            break;
-          case '6h':
-            coinTargetTime.setHours(coinTargetTime.getHours() + 6);
-            break;
-          case '24h':
-            coinTargetTime.setHours(coinTargetTime.getHours() + 24);
-            break;
-          case '7d':
-            coinTargetTime.setDate(coinTargetTime.getDate() + 7);
-            break;
+          case '1h': coinTargetTime.setHours(coinTargetTime.getHours() + 1); break;
+          case '6h': coinTargetTime.setHours(coinTargetTime.getHours() + 6); break;
+          case '24h': coinTargetTime.setHours(coinTargetTime.getHours() + 24); break;
+          case '7d': coinTargetTime.setDate(coinTargetTime.getDate() + 7); break;
         }
 
-        await db
-          .insert(parlayPredictionCoins)
-          .values({
-            parlayId: parlay.id,
-            cryptocurrency: coin.cryptocurrency,
-            prediction: coin.prediction,
-            startPrice: coin.startPrice,
-            duration: coin.duration,
-            targetTime: coinTargetTime
-          });
+        await db.insert(parlayPredictionCoins).values({
+          parlayId: newParlay.id,
+          cryptocurrency: coin.cryptocurrency,
+          prediction: coin.prediction,
+          startPrice: coin.startPrice,
+          duration: coin.duration,
+          targetTime: coinTargetTime
+        });
       }
 
-      // Deduct stake from user balance
+      console.log("✅ [PARLAY-NEW] All coin predictions created");
+
+      // Deduct balance
       await BalanceService.processTransaction({
         userId: user.id,
         type: 'parlay_stake',
-        amount: -parseFloat(stakeAmount),
-        description: `Parlay prediction stake - ${coinCount} coins`,
-        relatedId: parlay.id
+        amount: -stake,
+        description: `Parlay stake - ${coins.length} coins`,
+        relatedId: newParlay.id
       }, storage);
+
+      console.log("✅ [PARLAY-NEW] Balance deducted successfully");
 
       res.json({ 
         success: true, 
-        parlay: { ...parlay, coins },
-        message: "Parlay prediction created successfully" 
+        parlay: newParlay,
+        message: "Parlay created successfully!" 
       });
 
     } catch (error) {
-      console.error("❌ [PARLAY] Error creating parlay prediction:", error);
-      console.error("❌ [PARLAY] Error details:", {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
+      console.error("❌ [PARLAY-NEW] Creation failed:", error);
       res.status(500).json({ 
-        message: "Failed to create parlay prediction",
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: "Failed to create parlay",
+        error: error.message 
       });
     }
   });
