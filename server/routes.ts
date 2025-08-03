@@ -8890,11 +8890,29 @@ Manual balance correction required IMMEDIATELY!`;
     }
   }, 60000); // Check every minute
 
+  // Test endpoint to manually trigger parlay processor
+  app.post('/api/test-parlay-processor', async (req, res) => {
+    try {
+      console.log('🔍 [TEST] Starting manual parlay processor test...');
+      const { ParlayProcessorService } = await import('./services/parlayProcessorService.js');
+      console.log('🔍 [TEST] Successfully imported ParlayProcessorService');
+      const parlayProcessor = new ParlayProcessorService();
+      console.log('🔍 [TEST] Successfully created ParlayProcessorService instance');
+      await parlayProcessor.processExpiredParlayPredictions();
+      console.log('🔍 [TEST] Successfully executed processExpiredParlayPredictions');
+      res.json({ success: true, message: 'Parlay processor executed successfully' });
+    } catch (error) {
+      console.error("❌ [TEST] Error in manual parlay processing:", error);
+      res.status(500).json({ success: false, error: error.message, stack: error.stack });
+    }
+  });
+
   // Start background task to check expired parlay predictions every 30 seconds
   setInterval(async () => {
     try {
+      console.log('🔍 [INTERVAL] Parlay processor interval triggered at', new Date().toISOString());
       const { ParlayProcessorService } = await import('./services/parlayProcessorService.js');
-      const parlayProcessor = new ParlayProcessorService(storage);
+      const parlayProcessor = new ParlayProcessorService();
       await parlayProcessor.processExpiredParlayPredictions();
     } catch (error) {
       console.error("Error in parlay processing background task:", error);

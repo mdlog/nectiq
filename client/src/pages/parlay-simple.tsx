@@ -394,8 +394,8 @@ export default function ParlaySimple() {
                                 const targetTime = new Date(coin.targetTime);
                                 const durationPassed = now >= targetTime;
                                 
-                                // Use end price (snapshot at target time) if duration passed, otherwise use live price
-                                const displayPrice = durationPassed && coin.endPrice ? 
+                                // CRITICAL: Always use endPrice if available (snapshot is permanent), otherwise use live price
+                                const displayPrice = coin.endPrice ? 
                                   parseFloat(coin.endPrice) : liveCurrentPrice;
                                 
                                 const status = getPredictionStatus(coin, liveCurrentPrice);
@@ -425,10 +425,10 @@ export default function ParlaySimple() {
                                       </div>
                                       <div>
                                         <span className="text-gray-400">
-                                          {durationPassed ? 'Final:' : 'Current:'}
+                                          {coin.endPrice ? 'Final:' : 'Current:'}
                                         </span>
                                         <span className="ml-1 font-mono">${displayPrice.toLocaleString()}</span>
-                                        {durationPassed && (
+                                        {coin.endPrice && (
                                           <span className="ml-1 text-xs text-orange-400">📸</span>
                                         )}
                                       </div>
