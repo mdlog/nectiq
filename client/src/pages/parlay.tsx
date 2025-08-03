@@ -179,13 +179,10 @@ export default function ParlayPage() {
   const calculateTotalMultiplier = () => {
     if (coinPredictions.length === 0) return 1;
     
-    // Calculate multiplier based on each coin's individual duration
-    let totalMultiplier = 1;
-    coinPredictions.forEach(coin => {
-      const durationMultiplier = durations.find(d => d.value === coin.duration)?.multiplier || 1;
-      const baseMultiplier = 1.5; // Base multiplier per coin
-      totalMultiplier *= baseMultiplier * durationMultiplier;
-    });
+    // Calculate multiplier consistent with backend: baseMultiplier^coinCount
+    const coinCount = coinPredictions.length;
+    const baseMultiplier = 1.5;
+    const totalMultiplier = Math.pow(baseMultiplier, coinCount);
     
     return totalMultiplier;
   };
