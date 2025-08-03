@@ -374,7 +374,7 @@ export default function ParlaySimple() {
                                 onClick={() => updateParlayCard(card.id, 'prediction', 'up')}
                                 variant={card.prediction === 'up' ? 'default' : 'outline'}
                                 size="sm"
-                                className="h-9"
+                                className={`h-9 ${card.prediction === 'up' ? 'bg-green-600 hover:bg-green-700 text-white' : 'border-green-600 text-green-600 hover:bg-green-600 hover:text-white'}`}
                               >
                                 <TrendingUp className="w-3 h-3" />
                               </Button>
@@ -382,7 +382,7 @@ export default function ParlaySimple() {
                                 onClick={() => updateParlayCard(card.id, 'prediction', 'down')}
                                 variant={card.prediction === 'down' ? 'default' : 'outline'}
                                 size="sm"
-                                className="h-9"
+                                className={`h-9 ${card.prediction === 'down' ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-red-600 text-red-600 hover:bg-red-600 hover:text-white'}`}
                               >
                                 <TrendingDown className="w-3 h-3" />
                               </Button>
