@@ -237,7 +237,7 @@ export default function ParlaySimple() {
                       // Get coin prediction details
                       const coinPredictions = parlay?.coins || [];
                       
-                      // Helper function to determine win/lose status
+                      // Helper function to determine win/lose status for individual coin
                       const getPredictionStatus = (coin: any, currentPrice: number) => {
                         if (!coin.startPrice || !currentPrice) return 'pending';
                         
@@ -255,12 +255,65 @@ export default function ParlaySimple() {
                         return (isUp === priceChanged) ? 'win' : 'lose';
                       };
                       
+                      // Calculate overall parlay status: IF ANY SINGLE PREDICTION LOSES, ENTIRE PARLAY LOSES
+                      const getOverallParlayStatus = () => {
+                        if (coinPredictions.length === 0) return 'pending';
+                        
+                        let hasActivePredictions = false;
+                        let hasLosePredictions = false;
+                        let allWin = true;
+                        
+                        for (const coin of coinPredictions) {
+                          const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                          const currentPrice = currentCrypto?.current_price || 0;
+                          const status = getPredictionStatus(coin, currentPrice);
+                          
+                          if (status === 'lose') {
+                            hasLosePredictions = true;
+                            break; // If any loses, entire parlay loses
+                          } else if (status === 'active' || status === 'pending') {
+                            hasActivePredictions = true;
+                            allWin = false;
+                          } else if (status !== 'win') {
+                            allWin = false;
+                          }
+                        }
+                        
+                        // Return overall status
+                        if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire parlay loses
+                        if (hasActivePredictions) return 'active';
+                        if (allWin) return 'win';
+                        return 'pending';
+                      };
+                      
+                      const overallStatus = getOverallParlayStatus();
+                      
+                      // Get border color based on overall status
+                      const getBorderColor = (status: string) => {
+                        switch (status) {
+                          case 'win': return 'border-green-500';
+                          case 'lose': return 'border-red-500';
+                          case 'active': return 'border-blue-500';
+                          default: return 'border-gray-500';
+                        }
+                      };
+                      
                       return (
-                        <div key={parlay?.id || Math.random()} className="bg-gray-800 p-4 rounded border-l-4 border-blue-500">
+                        <div key={parlay?.id || Math.random()} className={`bg-gray-800 p-4 rounded border-l-4 ${getBorderColor(overallStatus)}`}>
                           <div className="flex justify-between items-start mb-3">
-                            <Badge variant="secondary">
-                              {multiplier ? `${parseFloat(multiplier).toFixed(2)}x` : 'N/A'} Multiplier
-                            </Badge>
+                            <div className="flex gap-2">
+                              <Badge variant="secondary">
+                                {multiplier ? `${parseFloat(multiplier).toFixed(2)}x` : 'N/A'} Multiplier
+                              </Badge>
+                              <Badge 
+                                variant={overallStatus === 'win' ? 'default' : overallStatus === 'lose' ? 'destructive' : 'secondary'}
+                                className="font-semibold"
+                              >
+                                {overallStatus === 'win' ? '🏆 PARLAY WIN' : 
+                                 overallStatus === 'lose' ? '💔 PARLAY LOST' : 
+                                 overallStatus === 'active' ? '⏳ ACTIVE' : '⌛ PENDING'}
+                              </Badge>
+                            </div>
                             <span className="text-sm text-gray-400">
                               {parlay?.createdAt ? new Date(parlay.createdAt).toLocaleDateString() : 'N/A'}
                             </span>
