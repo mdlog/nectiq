@@ -510,13 +510,17 @@ export default function ParlaySimple() {
               });
               
               return (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Your Parlay History</CardTitle>
-                    <p className="text-sm text-gray-400">Manage and track your parlay predictions</p>
-                  </CardHeader>
-                  <CardContent>
-                    <Tabs defaultValue="active" className="w-full">
+                <div className="space-y-6">
+                  {/* Full-width header section */}
+                  <div className="w-full">
+                    <h2 className="text-2xl font-bold text-white mb-2">Your Parlay History</h2>
+                    <p className="text-sm text-gray-400 mb-6">Manage and track your parlay predictions</p>
+                  </div>
+                  
+                  {/* Card wrapper for content */}
+                  <Card>
+                    <CardContent className="pt-6">
+                      <Tabs defaultValue="active" className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="active" className="flex items-center gap-2">
                           <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
@@ -986,8 +990,9 @@ export default function ParlaySimple() {
                         )}
                       </TabsContent>
                     </Tabs>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               );
             })()}
 
