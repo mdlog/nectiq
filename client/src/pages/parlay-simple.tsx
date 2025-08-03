@@ -689,6 +689,17 @@ export default function ParlaySimple() {
                             // Get coin prediction details
                             const coinPredictions = parlay?.coins || [];
                             
+                            // DEBUG: Log parlay data in History tab for troubleshooting
+                            if (coinPredictions.length > 0) {
+                              console.log(`🔍 [HISTORY-DEBUG] Parlay ${parlay.id} coins data:`, coinPredictions.map(coin => ({
+                                crypto: coin.cryptocurrency,
+                                startPrice: coin.startPrice,
+                                endPrice: coin.endPrice,
+                                isCorrect: coin.isCorrect,
+                                hasEndPrice: !!coin.endPrice
+                              })));
+                            }
+                            
                             // Helper function to determine win/lose status for individual coin
                             const getPredictionStatus = (coin: any, currentPrice: number) => {
                               if (!coin.startPrice || !currentPrice) return 'pending';
@@ -716,9 +727,19 @@ export default function ParlaySimple() {
                               let allWin = true;
                               
                               for (const coin of coinPredictions) {
-                                const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
-                                const currentPrice = currentCrypto?.current_price || 0;
-                                const status = getPredictionStatus(coin, currentPrice);
+                                let status;
+                                
+                                // CRITICAL: For completed parlays, ALWAYS use database isCorrect field if available
+                                if (coin.isCorrect !== null && coin.isCorrect !== undefined) {
+                                  // Use permanent database result (most reliable)
+                                  status = coin.isCorrect ? 'win' : 'lose';
+                                } else {
+                                  // Fallback: calculate from current/end price
+                                  const finalPrice = coin.endPrice ? 
+                                    parseFloat(coin.endPrice) : 
+                                    (cryptos.find(c => c.id === coin.cryptocurrency)?.current_price || 0);
+                                  status = getPredictionStatus(coin, finalPrice);
+                                }
                                 
                                 if (status === 'lose') {
                                   hasLosePredictions = true;
