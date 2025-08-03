@@ -22,7 +22,7 @@ interface EtherscanResponse {
 export class WithdrawalMonitorService {
   private intervalId: NodeJS.Timeout | null = null;
   private readonly CHECK_INTERVAL = 30000; // 30 seconds
-  private readonly ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || 'J2DPX5HHQKYKX3E17WPMWKH9PYYFMY6IQF'; // Valid API key
+  private readonly ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || 'YOUR_API_KEY_HERE';
 
   async start() {
     console.log('🚀 [WITHDRAWAL-MONITOR] Starting automated withdrawal hash detection...');

@@ -7,7 +7,7 @@ class DepositMonitorService {
   private isRunning = false;
   private intervalId: NodeJS.Timeout | null = null;
   private readonly CHECK_INTERVAL = 60000; // Check every 1 minute
-  private readonly ETHERSCAN_API_KEY = 'FAJBQ6GECUEU2ZMKAQRH61XRCPQEIWKA7Z';
+  private readonly ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || 'YOUR_API_KEY_HERE';
 
   static getInstance(): DepositMonitorService {
     if (!DepositMonitorService.instance) {
