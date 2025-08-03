@@ -9871,110 +9871,104 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
-  // ==================== PARLAY PREDICTION ENDPOINTS (REBUILT) ====================
+  // ==================== PARLAY PREDICTION ENDPOINTS (FRESH START) ====================
 
-  // Create parlay prediction - REBUILT & SIMPLIFIED
+  // Create new parlay prediction - Clean implementation
   app.post("/api/parlay/create", requireAuth, async (req, res) => {
-    console.log("🔥 [PARLAY-NEW] Starting parlay creation - REBUILT VERSION");
+    console.log("🟢 [PARLAY-CLEAN] Starting fresh parlay creation");
     
     try {
       const user = req.user as any;
       const { stakeAmount, coins } = req.body;
       
-      console.log("🔍 [PARLAY-NEW] Input validation:", { 
-        userId: user.id, 
+      console.log("🟢 [PARLAY-CLEAN] Request data:", { 
+        userId: user?.id, 
         stakeAmount, 
-        coinCount: coins?.length 
+        coinCount: Array.isArray(coins) ? coins.length : 'not array'
       });
 
-      // Basic validations
-      if (!stakeAmount || parseFloat(stakeAmount) < 50) {
+      // Validate inputs
+      if (!stakeAmount || isNaN(parseFloat(stakeAmount)) || parseFloat(stakeAmount) < 50) {
+        console.log("❌ [PARLAY-CLEAN] Invalid stake amount");
         return res.status(400).json({ message: "Minimum stake is 50 NTIQ" });
       }
 
       if (!coins || !Array.isArray(coins) || coins.length < 2) {
-        return res.status(400).json({ message: "At least 2 coins required" });
+        console.log("❌ [PARLAY-CLEAN] Invalid coins array");
+        return res.status(400).json({ message: "At least 2 coins required for parlay" });
       }
 
-      // Check user balance
-      if (user.balance < parseFloat(stakeAmount)) {
+      if (!user || user.balance < parseFloat(stakeAmount)) {
+        console.log("❌ [PARLAY-CLEAN] Insufficient balance");
         return res.status(400).json({ message: "Insufficient balance" });
       }
 
-      console.log("✅ [PARLAY-NEW] Basic validation passed");
+      console.log("✅ [PARLAY-CLEAN] All validations passed");
 
-      // Simple multiplier calculation
+      // Calculate multiplier
       let totalMultiplier = 1;
-      const durationMultipliers = { '1h': 1.2, '6h': 1.5, '24h': 2.0, '7d': 3.0 };
+      const durationMap = { '1h': 1.2, '6h': 1.5, '24h': 2.0, '7d': 3.0 };
       
       for (const coin of coins) {
-        const baseCoinMultiplier = 1.5;
-        const durationMultiplier = durationMultipliers[coin.duration] || 1.2;
-        const coinMultiplier = baseCoinMultiplier * durationMultiplier;
+        const coinMultiplier = 1.5 * (durationMap[coin.duration] || 1.2);
         totalMultiplier *= coinMultiplier;
       }
 
-      console.log("🔍 [PARLAY-NEW] Multiplier calculated:", totalMultiplier);
+      console.log("🟢 [PARLAY-CLEAN] Total multiplier:", totalMultiplier);
 
-      // Create parlay record
+      // Create parlay in database
       const stake = parseFloat(stakeAmount);
-      const targetTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+      const now = new Date();
+      const targetTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       
-      const [newParlay] = await db
-        .insert(parlayPredictions)
-        .values({
-          userId: user.id,
-          stakeAmount: stake,
-          targetTime,
-          totalMultiplier: totalMultiplier.toString(),
-          totalCoinCount: coins.length,
-          status: 'active'
-        })
-        .returning();
+      const [parlay] = await db.insert(parlayPredictions).values({
+        userId: user.id,
+        stakeAmount: stake,
+        targetTime,
+        totalMultiplier: totalMultiplier.toFixed(2),
+        totalCoinCount: coins.length,
+        status: 'active'
+      }).returning();
 
-      console.log("✅ [PARLAY-NEW] Main parlay record created:", newParlay.id);
+      console.log("✅ [PARLAY-CLEAN] Parlay created with ID:", parlay.id);
 
       // Create coin predictions
       for (const coin of coins) {
-        const coinTargetTime = new Date();
-        switch (coin.duration) {
-          case '1h': coinTargetTime.setHours(coinTargetTime.getHours() + 1); break;
-          case '6h': coinTargetTime.setHours(coinTargetTime.getHours() + 6); break;
-          case '24h': coinTargetTime.setHours(coinTargetTime.getHours() + 24); break;
-          case '7d': coinTargetTime.setDate(coinTargetTime.getDate() + 7); break;
-        }
+        const coinTargetTime = new Date(now);
+        const hours = { '1h': 1, '6h': 6, '24h': 24, '7d': 168 }[coin.duration] || 1;
+        coinTargetTime.setHours(coinTargetTime.getHours() + hours);
 
         await db.insert(parlayPredictionCoins).values({
-          parlayId: newParlay.id,
+          parlayId: parlay.id,
           cryptocurrency: coin.cryptocurrency,
           prediction: coin.prediction,
-          startPrice: coin.startPrice,
+          startPrice: coin.startPrice.toString(),
           duration: coin.duration,
           targetTime: coinTargetTime
         });
       }
 
-      console.log("✅ [PARLAY-NEW] All coin predictions created");
+      console.log("✅ [PARLAY-CLEAN] All coin predictions created");
 
       // Deduct balance
       await BalanceService.processTransaction({
         userId: user.id,
         type: 'parlay_stake',
         amount: -stake,
-        description: `Parlay stake - ${coins.length} coins`,
-        relatedId: newParlay.id
+        description: `Parlay prediction - ${coins.length} coins`,
+        relatedId: parlay.id
       }, storage);
 
-      console.log("✅ [PARLAY-NEW] Balance deducted successfully");
+      console.log("✅ [PARLAY-CLEAN] Balance deducted successfully");
 
       res.json({ 
         success: true, 
-        parlay: newParlay,
-        message: "Parlay created successfully!" 
+        parlay,
+        message: "Parlay created successfully"
       });
 
     } catch (error) {
-      console.error("❌ [PARLAY-NEW] Creation failed:", error);
+      console.error("❌ [PARLAY-CLEAN] Error:", error);
       res.status(500).json({ 
         message: "Failed to create parlay",
         error: error.message 
@@ -9982,50 +9976,30 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
-  // Get user's parlay predictions
-  app.get("/api/parlay/user", async (req, res) => {
+  // Get user parlays
+  app.get("/api/parlay/user", requireAuth, async (req, res) => {
     try {
-      const session = req.session as any;
-      if (!session?.userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const parlays = await storage.getUserParlayPredictions(session.userId);
-      res.json(parlays);
-
-    } catch (error) {
-      console.error("Error fetching user parlay predictions:", error);
-      res.status(500).json({ message: "Failed to fetch parlay predictions" });
-    }
-  });
-
-  // Get all parlay predictions (admin)
-  app.get("/api/parlay/all", async (req, res) => {
-    try {
-      const parlays = await storage.getAllParlayPredictions();
-      res.json(parlays);
-
-    } catch (error) {
-      console.error("Error fetching all parlay predictions:", error);
-      res.status(500).json({ message: "Failed to fetch parlay predictions" });
-    }
-  });
-
-  // Get specific parlay prediction
-  app.get("/api/parlay/:id", async (req, res) => {
-    try {
-      const parlayId = parseInt(req.params.id);
-      const parlay = await storage.getParlayPrediction(parlayId);
+      const user = req.user as any;
       
-      if (!parlay) {
-        return res.status(404).json({ message: "Parlay not found" });
+      const parlays = await db
+        .select()
+        .from(parlayPredictions)
+        .where(eq(parlayPredictions.userId, user.id))
+        .orderBy(desc(parlayPredictions.createdAt));
+
+      // Get coins for each parlay
+      for (const parlay of parlays) {
+        const coins = await db
+          .select()
+          .from(parlayPredictionCoins)
+          .where(eq(parlayPredictionCoins.parlayId, parlay.id));
+        parlay.coins = coins;
       }
 
-      res.json(parlay);
-
+      res.json(parlays);
     } catch (error) {
-      console.error("Error fetching parlay prediction:", error);
-      res.status(500).json({ message: "Failed to fetch parlay prediction" });
+      console.error("Error fetching user parlays:", error);
+      res.status(500).json({ message: "Failed to fetch parlays" });
     }
   });
 

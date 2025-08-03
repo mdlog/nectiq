@@ -9,7 +9,7 @@ import UserDashboard from "@/pages/user-dashboard";
 import AdminPanel from "@/pages/admin-working";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
-import ParlayPage from "@/pages/parlay";
+import ParlayPage from "@/pages/parlay-new";
 
 import SurvivalGame from "@/pages/survival-game";
 import NotFound from "@/pages/not-found";
