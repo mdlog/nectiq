@@ -266,33 +266,71 @@ export default function ParlaySimple() {
 
             {/* Parlay History Section - Tab-based Active vs Completed */}
             {!parlaysError && safeParlays.length > 0 && (() => {
-              // Separate parlays into active and completed
-              const activeParlays = safeParlays.filter((parlay: any) => {
+              // Helper function to determine parlay status
+              const getParlayStatus = (parlay: any) => {
                 const coinPredictions = parlay?.coins || [];
-                if (coinPredictions.length === 0) return false;
+                if (coinPredictions.length === 0) return 'pending';
                 
-                // Check if any coin is still active (not expired)
-                const hasActivePredictions = coinPredictions.some((coin: any) => {
+                let hasActivePredictions = false;
+                let hasLosePredictions = false;
+                let allWin = true;
+                
+                for (const coin of coinPredictions) {
+                  if (!coin.startPrice) continue;
+                  
+                  const startPrice = parseFloat(coin.startPrice);
+                  const isUp = coin.prediction === 'up';
+                  
+                  // Check if duration has passed
                   const now = new Date();
                   const targetTime = new Date(coin.targetTime);
-                  return now < targetTime; // Still active if target time hasn't passed
-                });
+                  const durationPassed = now >= targetTime;
+                  
+                  if (!durationPassed) {
+                    // Still active
+                    hasActivePredictions = true;
+                    allWin = false;
+                  } else {
+                    // Duration has passed, use endPrice if available (from ParlayProcessorService)
+                    // or fall back to current live price
+                    let finalPrice;
+                    if (coin.endPrice) {
+                      // Use the saved end price from database (snapshot taken by ParlayProcessorService)
+                      finalPrice = parseFloat(coin.endPrice);
+                    } else {
+                      // Fall back to current live price if endPrice not yet set
+                      const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                      finalPrice = currentCrypto?.current_price || 0;
+                    }
+                    
+                    if (!finalPrice) continue;
+                    
+                    const priceChanged = finalPrice > startPrice;
+                    const isCorrect = (isUp === priceChanged);
+                    
+                    if (!isCorrect) {
+                      hasLosePredictions = true;
+                      break; // If any loses, entire parlay loses
+                    }
+                  }
+                }
                 
-                return hasActivePredictions;
+                // Return overall status
+                if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire parlay loses
+                if (hasActivePredictions) return 'active'; // Still has active predictions
+                if (allWin && !hasActivePredictions) return 'win'; // All won and none active
+                return 'pending';
+              };
+              
+              // Separate parlays into active and completed based on overall status
+              const activeParlays = safeParlays.filter((parlay: any) => {
+                const status = getParlayStatus(parlay);
+                return status === 'active' || status === 'pending'; // Only truly active parlays
               });
               
               const completedParlays = safeParlays.filter((parlay: any) => {
-                const coinPredictions = parlay?.coins || [];
-                if (coinPredictions.length === 0) return false;
-                
-                // Check if all coins are completed (expired)
-                const allCompleted = coinPredictions.every((coin: any) => {
-                  const now = new Date();
-                  const targetTime = new Date(coin.targetTime);
-                  return now >= targetTime; // Completed if target time has passed
-                });
-                
-                return allCompleted;
+                const status = getParlayStatus(parlay);
+                return status === 'win' || status === 'lose'; // Completed parlays (won or lost)
               });
               
               return (
