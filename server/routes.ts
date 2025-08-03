@@ -1568,7 +1568,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      const fullPath = path.join(uploadDir, fileName);
+      // SECURITY: Prevent path traversal attacks
+      const sanitizedFileName = path.basename(fileName).replace(/[^a-zA-Z0-9.-]/g, '');
+      if (!sanitizedFileName || sanitizedFileName.startsWith('.')) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid filename' 
+        });
+      }
+      
+      const fullPath = path.join(uploadDir, sanitizedFileName);
+      
+      // SECURITY: Validate file path is within upload directory
+      const normalizedPath = path.normalize(fullPath);
+      if (!normalizedPath.startsWith(path.normalize(uploadDir))) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid file path' 
+        });
+      }
+      
       fs.writeFileSync(fullPath, req.file.buffer);
 
       // Update user profile photo in database

@@ -151,8 +151,14 @@ export async function getAchievementStats(req: Request, res: Response) {
 // Get global achievement leaderboard
 export async function getAchievementLeaderboard(req: Request, res: Response) {
   try {
-    const limit = parseInt(req.query.limit as string) || 50;
-    const type = req.query.type as string || 'accuracy'; // accuracy, rewards, count
+    // SECURITY: Validate and limit the limit parameter to prevent DoS
+    const rawLimit = parseInt(req.query.limit as string) || 50;
+    const limit = Math.min(Math.max(rawLimit, 1), 1000); // Max 1000 records
+    
+    // SECURITY: Validate type parameter to prevent injection
+    const allowedTypes = ['accuracy', 'rewards', 'count'];
+    const type = allowedTypes.includes(req.query.type as string) ? 
+                 req.query.type as string : 'accuracy';
 
     let orderBy;
     switch (type) {

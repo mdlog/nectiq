@@ -1,10 +1,19 @@
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../simpleAuth';
 import { db } from '../db';
 import { users, predictions, rewards } from '../../shared/schema';
 import { eq, and, gte, lte, sql, desc, count } from 'drizzle-orm';
 
-export async function getUserStatistics(req: Request, res: Response) {
+export async function getUserStatistics(req: AuthenticatedRequest, res: Response) {
   try {
+    // SECURITY: Require admin authentication
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Admin access required for user statistics' 
+      });
+    }
+    
     console.log('Getting user statistics...');
     const timeRange = req.query.range as string || '7d';
 
@@ -78,9 +87,18 @@ export async function getUserStatistics(req: Request, res: Response) {
   }
 }
 
-export async function getUserGrowthMetrics(req: Request, res: Response) {
+export async function getUserGrowthMetrics(req: AuthenticatedRequest, res: Response) {
   try {
-    const days = parseInt(req.query.days as string) || 30;
+    // SECURITY: Require admin authentication
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Admin access required for growth metrics' 
+      });
+    }
+    
+    // SECURITY: Validate and limit days parameter
+    const days = Math.min(Math.max(parseInt(req.query.days as string) || 30, 1), 365);
     const now = new Date();
     const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 

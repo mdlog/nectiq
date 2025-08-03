@@ -24,13 +24,23 @@ function getAdminWallets(): string[] {
   return [];
 }
 
-// Encrypt sensitive data
+// Encrypt sensitive data with secure algorithm
 function encryptWalletAddress(address: string): string {
-  const key = process.env.ADMIN_SECRET_KEY || 'default-fallback-key-change-this';
-  const cipher = crypto.createCipher('aes-256-cbc', key);
+  const key = process.env.ADMIN_SECRET_KEY;
+  if (!key || key === 'default-fallback-key-change-this') {
+    throw new Error('🚨 SECURITY: Valid ADMIN_SECRET_KEY required in environment');
+  }
+  
+  // Use secure GCM mode instead of deprecated CBC
+  const algorithm = 'aes-256-gcm';
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipherGCM(algorithm, Buffer.from(key, 'hex'), iv);
+  
   let encrypted = cipher.update(address, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  return encrypted;
+  
+  // Include IV in result for proper decryption
+  return iv.toString('hex') + ':' + encrypted;
 }
 
 // Admin verification with multiple security layers
@@ -53,10 +63,16 @@ async function isAuthorizedAdmin(walletAddress: string): Promise<boolean> {
     console.error('Error checking admin status:', error);
   }
   
-  // Layer 3: Hardcoded fallback (encrypted) - ONLY for emergency access
-  const emergencyAdmin = '0x4c6165286739696849fb3e77a16b0639d762c5b6';
-  if (normalizedAddress === emergencyAdmin.toLowerCase()) {
-    console.warn('🔒 Emergency admin access used - Review security logs');
+  // Layer 3: Environment-based emergency admin (more secure)
+  const emergencyAdmin = process.env.EMERGENCY_ADMIN_WALLET?.toLowerCase();
+  if (emergencyAdmin && normalizedAddress === emergencyAdmin) {
+    console.warn('🔒 Emergency admin access used - Review security logs immediately');
+    // Log security event untuk audit trail
+    console.error('🚨 EMERGENCY ADMIN ACCESS DETECTED', {
+      wallet: walletAddress,
+      timestamp: new Date().toISOString(),
+      source: 'isAuthorizedAdmin'
+    });
     return true;
   }
   

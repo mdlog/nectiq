@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Target, Zap, CheckCircle } from 'lucide-react';
+import { sanitizeInput } from '../lib/security';
 
 interface SocialPreviewProps {
   prediction: {
@@ -63,7 +64,7 @@ export function SocialPreview({ prediction, message }: SocialPreviewProps) {
 
           {/* Message Preview */}
           <div className="text-sm leading-relaxed border-l-4 border-blue-500 pl-3 py-2 bg-blue-50 dark:bg-blue-950">
-            {message}
+            {sanitizeInput(message)}
           </div>
 
           {/* Stats */}
