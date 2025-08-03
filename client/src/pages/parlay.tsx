@@ -181,13 +181,20 @@ export default function ParlayPage() {
     
     // Calculate multiplier based on each coin's individual duration multiplier
     let totalMultiplier = 1;
+    console.log("🔍 [MULTIPLIER] Calculating total multiplier for coins:", coinPredictions);
+    
     coinPredictions.forEach(coin => {
       const durationData = durations.find(d => d.value === coin.duration);
       const durationMultiplier = durationData?.multiplier || 1.2; // Default to 1h multiplier
       const baseMultiplier = 1.5; // Base multiplier per coin
-      totalMultiplier *= baseMultiplier * durationMultiplier;
+      const coinMultiplier = baseMultiplier * durationMultiplier;
+      
+      console.log(`🔍 [MULTIPLIER] ${coin.cryptocurrency} (${coin.duration}): base=${baseMultiplier} × duration=${durationMultiplier} = ${coinMultiplier}`);
+      
+      totalMultiplier *= coinMultiplier;
     });
     
+    console.log("🔍 [MULTIPLIER] Final total multiplier:", totalMultiplier);
     return totalMultiplier;
   };
 
