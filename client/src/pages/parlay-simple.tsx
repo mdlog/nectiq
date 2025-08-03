@@ -291,7 +291,8 @@ export default function ParlaySimple() {
           <p className="text-xl text-blue-200">Combine multiple predictions for exponential rewards</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* First Row: Create Parlay and Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Parlay Input Section - Single Card */}
           <div className="lg:col-span-2 space-y-6">
             {/* Single Parlay Input Card */}
@@ -433,8 +434,13 @@ export default function ParlaySimple() {
               </CardContent>
             </Card>
 
-            {/* Parlay History Section - Tab-based Active vs Completed */}
-            {!parlaysError && safeParlays.length > 0 && (() => {
+          </div>
+        </div>
+
+        {/* Second Row: Full Width Parlay History */}
+        <div className="w-full">
+          {/* Parlay History Section - Tab-based Active vs Completed */}
+          {!parlaysError && safeParlays.length > 0 && (() => {
               // Helper function to determine parlay status using DATABASE isCorrect
               const getParlayStatus = (parlay: any) => {
                 const coinPredictions = parlay?.coins || [];
@@ -990,10 +996,12 @@ export default function ParlaySimple() {
                 </Card>
               );
             })()}
+        </div>
 
-
-          </div>
-
+        {/* Summary Section moved back to original position */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2"></div> {/* Empty space for alignment */}
+          
           {/* Summary Section */}
           <div className="space-y-6">
             <Card>
