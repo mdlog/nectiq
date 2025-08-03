@@ -291,26 +291,34 @@ export default function ParlaySimple() {
                     hasActivePredictions = true;
                     allWin = false;
                   } else {
-                    // Duration has passed, use endPrice if available (from ParlayProcessorService)
-                    // or fall back to current live price
-                    let finalPrice;
-                    if (coin.endPrice) {
-                      // Use the saved end price from database (snapshot taken by ParlayProcessorService)
-                      finalPrice = parseFloat(coin.endPrice);
+                    // Duration has passed, check if ParlayProcessorService already set isCorrect
+                    if (coin.isCorrect !== null && coin.isCorrect !== undefined) {
+                      // Use the processed result from ParlayProcessorService (most reliable)
+                      if (!coin.isCorrect) {
+                        hasLosePredictions = true;
+                        break; // If any loses, entire parlay loses
+                      }
                     } else {
-                      // Fall back to current live price if endPrice not yet set
-                      const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
-                      finalPrice = currentCrypto?.current_price || 0;
-                    }
-                    
-                    if (!finalPrice) continue;
-                    
-                    const priceChanged = finalPrice > startPrice;
-                    const isCorrect = (isUp === priceChanged);
-                    
-                    if (!isCorrect) {
-                      hasLosePredictions = true;
-                      break; // If any loses, entire parlay loses
+                      // Fall back to manual calculation if not yet processed
+                      let finalPrice;
+                      if (coin.endPrice) {
+                        // Use the saved end price from database (snapshot taken by ParlayProcessorService)
+                        finalPrice = parseFloat(coin.endPrice);
+                      } else {
+                        // Fall back to current live price if endPrice not yet set
+                        const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                        finalPrice = currentCrypto?.current_price || 0;
+                      }
+                      
+                      if (!finalPrice) continue;
+                      
+                      const priceChanged = finalPrice > startPrice;
+                      const isCorrect = (isUp === priceChanged);
+                      
+                      if (!isCorrect) {
+                        hasLosePredictions = true;
+                        break; // If any loses, entire parlay loses
+                      }
                     }
                   }
                 }
