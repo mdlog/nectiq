@@ -226,6 +226,11 @@ export default function ParlaySimple() {
                 <CardContent className="space-y-4">
                   {safeParlays.slice(0, 3).map((parlay: any) => {
                     try {
+                      // Calculate potential win if not present in data
+                      const calculatedPotentialWin = parlay?.potentialWin || 
+                        (parlay?.stakeAmount && parlay?.multiplier ? 
+                          (parlay.stakeAmount * parlay.multiplier).toFixed(0) : 0);
+                      
                       return (
                         <div key={parlay?.id || Math.random()} className="bg-gray-800 p-4 rounded border-l-4 border-blue-500">
                           <div className="flex justify-between items-start mb-2">
@@ -244,7 +249,7 @@ export default function ParlaySimple() {
                             <div>
                               <span className="text-gray-400">Potential Win:</span>
                               <span className="ml-2 font-semibold text-green-400">
-                                {parlay?.potentialWin || 0} NTIQ
+                                {calculatedPotentialWin} NTIQ
                               </span>
                             </div>
                           </div>
