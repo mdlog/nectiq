@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Plus, TrendingUp, TrendingDown } from "lucide-react";
+import { Trash2, Plus, TrendingUp, TrendingDown, Calculator, X, AlertCircle, Info as InfoIcon, Zap } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
@@ -437,7 +437,156 @@ export default function ParlaySimple() {
           </div>
         </div>
 
-        {/* Second Row: Full Width Parlay History */}
+        {/* Second Row: Full Width Parlay Summary */}
+        <div className="w-full mb-8">
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Calculator className="w-5 h-5" />
+                Parlay Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Parlay Cards Display */}
+              {parlayCards.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-white">Your Predictions ({parlayCards.length})</h3>
+                    <Button 
+                      onClick={addPredictionCard}
+                      variant="outline"
+                      size="sm"
+                      className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Card
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {parlayCards.map((card, index) => (
+                      <div key={card.id} className="bg-gray-700/50 border border-gray-600 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="text-sm font-medium text-gray-300">Prediction #{index + 1}</h4>
+                          <Button
+                            onClick={() => removePredictionCard(card.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 p-1 h-auto"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="text-gray-400">Crypto: </span>
+                            <span className="text-white font-medium">
+                              {cryptos.find(c => c.id === card.cryptocurrency)?.name || 'Select...'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Direction: </span>
+                            <span className={`font-medium ${card.direction === 'up' ? 'text-green-400' : card.direction === 'down' ? 'text-red-400' : 'text-gray-400'}`}>
+                              {card.direction === 'up' ? '↗ UP' : card.direction === 'down' ? '↘ DOWN' : 'Select...'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Duration: </span>
+                            <span className="text-white font-medium">
+                              {card.duration ? durationOptions.find(d => d.value === card.duration)?.label : 'Select...'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Current Price Display */}
+                        {card.cryptocurrency && cryptos.find(c => c.id === card.cryptocurrency) && (
+                          <div className="text-center bg-gray-700/50 rounded p-2 mt-2">
+                            <span className="text-xs text-gray-400">Current: </span>
+                            <span className="font-medium">
+                              ${cryptos.find(c => c.id === card.cryptocurrency)?.current_price.toFixed(2) || 'Loading...'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Help Text */}
+              {parlayCards.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">Click "Add Prediction" to start building your parlay</p>
+                  <p className="text-sm text-gray-500 mt-1">Minimum 2 predictions required</p>
+                </div>
+              )}
+
+              {/* Summary Stats */}
+              {parlayCards.length > 0 && (
+                <div className="bg-gray-700/30 rounded-lg p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-blue-400">{parlayCards.length}</div>
+                      <div className="text-xs text-gray-400">Predictions</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-400">{multiplier.toFixed(2)}x</div>
+                      <div className="text-xs text-gray-400">Multiplier</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-yellow-400">50</div>
+                      <div className="text-xs text-gray-400">Min. Stake</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-purple-400">{(50 * multiplier).toFixed(0)}</div>
+                      <div className="text-xs text-gray-400">Potential Win</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Create Parlay Button */}
+              {parlayCards.length > 0 && (
+                <Button 
+                  onClick={handleCreateParlay}
+                  disabled={parlayCards.length < 2 || !parlayCards.every(card => 
+                    card.cryptocurrency && card.direction && card.duration
+                  ) || createParlayMutation.isPending}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {createParlayMutation.isPending ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Creating...
+                    </div>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 mr-2" />
+                      Create Parlay (50 NTIQ)
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* How Parlays Work */}
+              <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+                <h4 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
+                  <InfoIcon className="w-4 h-4" />
+                  How Parlays Work
+                </h4>
+                <ul className="text-sm text-blue-200 space-y-1">
+                  <li>• Each prediction adds to your multiplier</li>
+                  <li>• Multipliers compound for higher rewards</li>
+                  <li>• All predictions must be correct to win</li>
+                  <li>• Minimum stake: 50 NTIQ</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Third Row: Full Width Parlay History */}
         <div className="w-full">
           {/* Parlay History Section - Tab-based Active vs Completed */}
           {!parlaysError && safeParlays.length > 0 && (() => {
@@ -998,73 +1147,7 @@ export default function ParlaySimple() {
             })()}
         </div>
 
-        {/* Summary Section moved back to original position */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2"></div> {/* Empty space for alignment */}
-          
-          {/* Summary Section */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Parlay Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Stake Amount (NTIQ)</label>
-                  <Input
-                    type="number"
-                    placeholder="Minimum 50 NTIQ"
-                    value={stakeAmount}
-                    onChange={(e) => setStakeAmount(e.target.value)}
-                    min="50"
-                  />
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Cards:</span>
-                    <span>{parlayCards.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Total Multiplier:</span>
-                    <Badge variant="secondary">{totalMultiplier.toFixed(2)}x</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Stake:</span>
-                    <span>{stakeAmount || 0} NTIQ</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-lg border-t border-gray-600 pt-2">
-                    <span>Potential Win:</span>
-                    <span className="text-green-400">{potentialWin.toFixed(0)} NTIQ</span>
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={handleSubmit} 
-                  className="w-full" 
-                  size="lg"
-                  disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
-                >
-                  {createParlayMutation.isPending ? "Creating..." : "Create Parlay"}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Info Card */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">How Parlay Works</h3>
-                <ul className="text-sm text-gray-400 space-y-1">
-                  <li>• Combine 2-5 cryptocurrency predictions</li>
-                  <li>• Each coin has individual duration</li>
-                  <li>• Multipliers compound for higher rewards</li>
-                  <li>• All predictions must be correct to win</li>
-                  <li>• Minimum stake: 50 NTIQ</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
       </main>
       
       <Footer />
