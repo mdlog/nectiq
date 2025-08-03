@@ -52,7 +52,8 @@ export default function ParlaySimple() {
     enabled: true
   });
 
-  console.log("📊 [PARLAY] User parlays:", { count: userParlays?.length || 0, loading: parlaysLoading, error: parlaysError });
+  const safeParlays = Array.isArray(userParlays) ? userParlays : [];
+  console.log("📊 [PARLAY] User parlays:", { count: safeParlays.length, loading: parlaysLoading, error: parlaysError });
 
   // Calculate duration multiplier
   const getDurationMultiplier = (duration: string) => {
@@ -198,13 +199,13 @@ export default function ParlaySimple() {
           {/* Parlay Cards Section */}
           <div className="lg:col-span-2 space-y-6">
             {/* Active Parlays Section - Safe rendering */}
-            {!parlaysError && Array.isArray(userParlays) && userParlays.length > 0 && (
+            {!parlaysError && safeParlays.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Your Active Parlays ({userParlays.length})</CardTitle>
+                  <CardTitle>Your Active Parlays ({safeParlays.length})</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {userParlays.slice(0, 3).map((parlay: any) => {
+                  {safeParlays.slice(0, 3).map((parlay: any) => {
                     try {
                       return (
                         <div key={parlay?.id || Math.random()} className="bg-gray-800 p-4 rounded border-l-4 border-blue-500">
@@ -238,9 +239,9 @@ export default function ParlaySimple() {
                       return null;
                     }
                   })}
-                  {userParlays.length > 3 && (
+                  {safeParlays.length > 3 && (
                     <p className="text-center text-gray-400 text-sm">
-                      +{userParlays.length - 3} more active parlays
+                      +{safeParlays.length - 3} more active parlays
                     </p>
                   )}
                 </CardContent>
