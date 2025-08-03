@@ -254,6 +254,12 @@ export default function ParlaySimple() {
                   <Plus className="w-4 h-4 mr-2" />
                   Add Prediction Card ({parlayCards.length}/5)
                 </Button>
+                
+                {parlayCards.length === 0 && (
+                  <div className="text-center mt-4">
+                    <p className="text-gray-400">No prediction cards added yet. Click "Add Prediction Card" to start.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -568,13 +574,7 @@ export default function ParlaySimple() {
               </Card>
             ))}
 
-            {parlayCards.length === 0 && (
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <p className="text-gray-400">No prediction cards added yet. Click "Add Prediction Card" to start.</p>
-                </CardContent>
-              </Card>
-            )}
+
           </div>
 
           {/* Summary Section */}
