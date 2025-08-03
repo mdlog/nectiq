@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Plus, TrendingUp, TrendingDown } from "lucide-react";
 import { Header } from "@/components/header";
@@ -263,7 +264,7 @@ export default function ParlaySimple() {
               </CardContent>
             </Card>
 
-            {/* Parlay History Section - Separated Active vs Completed */}
+            {/* Parlay History Section - Tab-based Active vs Completed */}
             {!parlaysError && safeParlays.length > 0 && (() => {
               // Separate parlays into active and completed
               const activeParlays = safeParlays.filter((parlay: any) => {
@@ -295,19 +296,29 @@ export default function ParlaySimple() {
               });
               
               return (
-                <div className="space-y-6">
-                  {/* Active Parlays Section */}
-                  {activeParlays.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <span className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
-                          Active Parlays ({activeParlays.length})
-                        </CardTitle>
-                        <p className="text-sm text-gray-400">Parlay predictions that are still running</p>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {activeParlays.slice(0, 5).map((parlay: any) => {
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your Parlay History</CardTitle>
+                    <p className="text-sm text-gray-400">Manage and track your parlay predictions</p>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs defaultValue="active" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="active" className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                          Active ({activeParlays.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="completed" className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                          History ({completedParlays.length})
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      {/* Active Parlays Tab */}
+                      <TabsContent value="active" className="space-y-4 mt-4">
+                        {activeParlays.length > 0 ? (
+                          <div className="space-y-4">
+                            {activeParlays.slice(0, 5).map((parlay: any) => {
                     try {
                       // Calculate potential win using server data structure
                       const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
@@ -507,28 +518,26 @@ export default function ParlaySimple() {
                       console.error("Error rendering parlay:", err);
                       return null;
                     }
-                        })}
-                        {activeParlays.length > 5 && (
-                          <p className="text-center text-gray-400 text-sm">
-                            +{activeParlays.length - 5} more active parlays
-                          </p>
+                            })}
+                            {activeParlays.length > 5 && (
+                              <p className="text-center text-gray-400 text-sm">
+                                +{activeParlays.length - 5} more active parlays
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <p className="text-gray-400">No active parlays at the moment</p>
+                            <p className="text-sm text-gray-500 mt-2">Create a new parlay prediction to get started</p>
+                          </div>
                         )}
-                      </CardContent>
-                    </Card>
-                  )}
-                  
-                  {/* Completed Parlays Section */}
-                  {completedParlays.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <span className="w-3 h-3 bg-gray-500 rounded-full"></span>
-                          Completed Parlays ({completedParlays.length})
-                        </CardTitle>
-                        <p className="text-sm text-gray-400">Parlay predictions that have finished</p>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {completedParlays.slice(0, 5).map((parlay: any) => {
+                      </TabsContent>
+                      
+                      {/* Completed Parlays Tab */}
+                      <TabsContent value="completed" className="space-y-4 mt-4">
+                        {completedParlays.length > 0 ? (
+                          <div className="space-y-4">
+                            {completedParlays.slice(0, 5).map((parlay: any) => {
                           try {
                             // Calculate potential win using server data structure
                             const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
@@ -721,16 +730,23 @@ export default function ParlaySimple() {
                             console.error("Error rendering completed parlay:", err);
                             return null;
                           }
-                        })}
-                        {completedParlays.length > 5 && (
-                          <p className="text-center text-gray-400 text-sm">
-                            +{completedParlays.length - 5} more completed parlays
-                          </p>
+                            })}
+                            {completedParlays.length > 5 && (
+                              <p className="text-center text-gray-400 text-sm">
+                                +{completedParlays.length - 5} more completed parlays
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <p className="text-gray-400">No completed parlays yet</p>
+                            <p className="text-sm text-gray-500 mt-2">Your completed parlay history will appear here</p>
+                          </div>
                         )}
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
               );
             })()}
 
