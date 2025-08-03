@@ -198,6 +198,21 @@ export default function ParlaySimple() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Parlay Cards Section */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Add Card Button */}
+            <Card>
+              <CardContent className="pt-6">
+                <Button 
+                  onClick={addParlayCard} 
+                  className="w-full" 
+                  variant="outline"
+                  disabled={parlayCards.length >= 5}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Prediction Card ({parlayCards.length}/5)
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Active Parlays Section - Safe rendering */}
             {!parlaysError && safeParlays.length > 0 && (
               <Card>
@@ -247,20 +262,6 @@ export default function ParlaySimple() {
                 </CardContent>
               </Card>
             )}
-            {/* Add Card Button */}
-            <Card>
-              <CardContent className="pt-6">
-                <Button 
-                  onClick={addParlayCard} 
-                  className="w-full" 
-                  variant="outline"
-                  disabled={parlayCards.length >= 5}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Prediction Card ({parlayCards.length}/5)
-                </Button>
-              </CardContent>
-            </Card>
 
             {/* Parlay Cards */}
             {parlayCards.map((card) => (
