@@ -510,30 +510,26 @@ export default function ParlaySimple() {
               });
               
               return (
-                <div className="space-y-6">
-                  {/* Full-width header section */}
-                  <div className="w-full">
-                    <h2 className="text-2xl font-bold text-white mb-2">Your Parlay History</h2>
-                    <p className="text-sm text-gray-400 mb-4">Manage and track your parlay predictions</p>
-                  </div>
-                  
-                  {/* Full-width tabs */}
-                  <Tabs defaultValue="active" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-6">
-                      <TabsTrigger value="active" className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                        Active ({activeParlays.length})
-                      </TabsTrigger>
-                      <TabsTrigger value="completed" className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
-                        History ({completedParlays.length})
-                      </TabsTrigger>
-                    </TabsList>
-                  
-                    {/* Active Parlays Tab */}
-                    <TabsContent value="active" className="space-y-4 mt-0">
-                      <Card>
-                        <CardContent className="pt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your Parlay History</CardTitle>
+                    <p className="text-sm text-gray-400">Manage and track your parlay predictions</p>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs defaultValue="active" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="active" className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                          Active ({activeParlays.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="completed" className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                          History ({completedParlays.length})
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      {/* Active Parlays Tab */}
+                      <TabsContent value="active" className="space-y-4 mt-4">
                         {activeParlays.length > 0 ? (
                           <div className="space-y-4">
                             {activeParlays.slice(0, 5).map((parlay: any) => {
@@ -745,14 +741,10 @@ export default function ParlaySimple() {
                             <p className="text-sm text-gray-500 mt-2">Create a new parlay prediction to get started</p>
                           </div>
                         )}
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
+                      </TabsContent>
                       
-                    {/* Completed Parlays Tab */}
-                    <TabsContent value="completed" className="space-y-4 mt-0">
-                      <Card>
-                        <CardContent className="pt-6">
+                      {/* Completed Parlays Tab */}
+                      <TabsContent value="completed" className="space-y-4 mt-4">
                         {completedParlays.length > 0 ? (
                           <div className="space-y-4">
                             {completedParlays.slice(0, 5).map((parlay: any) => {
@@ -992,11 +984,10 @@ export default function ParlaySimple() {
                             <p className="text-sm text-gray-500 mt-2">Your completed parlay history will appear here</p>
                           </div>
                         )}
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-                  </Tabs>
-                </div>
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
               );
             })()}
 
