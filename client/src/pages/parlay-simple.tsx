@@ -340,12 +340,22 @@ export default function ParlaySimple() {
                               {coinPredictions.map((coin: any, index: number) => {
                                 // Find current price for this cryptocurrency
                                 const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
-                                const currentPrice = currentCrypto?.current_price || 0;
+                                const liveCurrentPrice = currentCrypto?.current_price || 0;
                                 const startPrice = parseFloat(coin.startPrice || '0');
-                                const status = getPredictionStatus(coin, currentPrice);
                                 
-                                // Price change calculation
-                                const priceChange = startPrice ? ((currentPrice - startPrice) / startPrice * 100) : 0;
+                                // Check if duration has passed to determine which price to use
+                                const now = new Date();
+                                const targetTime = new Date(coin.targetTime);
+                                const durationPassed = now >= targetTime;
+                                
+                                // Use end price (snapshot at target time) if duration passed, otherwise use live price
+                                const displayPrice = durationPassed && coin.endPrice ? 
+                                  parseFloat(coin.endPrice) : liveCurrentPrice;
+                                
+                                const status = getPredictionStatus(coin, liveCurrentPrice);
+                                
+                                // Price change calculation using appropriate price
+                                const priceChange = startPrice ? ((displayPrice - startPrice) / startPrice * 100) : 0;
                                 const isPositiveChange = priceChange > 0;
                                 
                                 return (
@@ -366,8 +376,13 @@ export default function ParlaySimple() {
                                         <span className="ml-1 font-mono">${startPrice.toLocaleString()}</span>
                                       </div>
                                       <div>
-                                        <span className="text-gray-400">Current:</span>
-                                        <span className="ml-1 font-mono">${currentPrice.toLocaleString()}</span>
+                                        <span className="text-gray-400">
+                                          {durationPassed ? 'Final:' : 'Current:'}
+                                        </span>
+                                        <span className="ml-1 font-mono">${displayPrice.toLocaleString()}</span>
+                                        {durationPassed && (
+                                          <span className="ml-1 text-xs text-orange-400">📸</span>
+                                        )}
                                       </div>
                                     </div>
                                     

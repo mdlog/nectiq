@@ -4268,6 +4268,35 @@ export class MemStorage implements IStorage {
       .where(eq(parlayPredictions.id, id));
   }
 
+  // Update endPrice for individual coin predictions when they expire
+  async updateParlayPredictionCoinEndPrice(coinId: number, endPrice: number, isCorrect: boolean): Promise<void> {
+    await db
+      .update(parlayPredictionCoins)
+      .set({ 
+        endPrice: endPrice.toString(),
+        isCorrect
+      })
+      .where(eq(parlayPredictionCoins.id, coinId));
+  }
+
+  // Get parlay prediction coins that have expired but don't have endPrice set
+  async getExpiredParlayPredictionCoins(): Promise<any[]> {
+    const now = new Date();
+    const result = await db
+      .select()
+      .from(parlayPredictionCoins)
+      .leftJoin(parlayPredictions, eq(parlayPredictionCoins.parlayId, parlayPredictions.id))
+      .where(
+        and(
+          lte(parlayPredictionCoins.targetTime, now),
+          isNull(parlayPredictionCoins.endPrice),
+          eq(parlayPredictions.status, 'active')
+        )
+      );
+    
+    return result;
+  }
+
   async getActiveParlayPredictions(): Promise<any[]> {
     const now = new Date();
     const result = await db

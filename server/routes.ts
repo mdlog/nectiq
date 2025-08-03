@@ -8890,6 +8890,17 @@ Manual balance correction required IMMEDIATELY!`;
     }
   }, 60000); // Check every minute
 
+  // Start background task to check expired parlay predictions every 30 seconds
+  setInterval(async () => {
+    try {
+      const { ParlayProcessorService } = await import('./services/parlayProcessorService.js');
+      const parlayProcessor = new ParlayProcessorService(storage);
+      await parlayProcessor.processExpiredParlayPredictions();
+    } catch (error) {
+      console.error("Error in parlay processing background task:", error);
+    }
+  }, 30000); // Check every 30 seconds
+
   // Static file serving for uploads
   app.use('/uploads', express.static(path.join(process.cwd(), 'server', 'uploads')));
 
