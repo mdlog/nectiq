@@ -25,6 +25,25 @@ interface ParlayCard {
   startPrice: number;
 }
 
+interface ActiveParlay {
+  id: string;
+  stakeAmount: number;
+  multiplier: number;
+  potentialWin: number;
+  status: 'active' | 'completed' | 'failed';
+  createdAt: string;
+  expiresAt: string;
+  coins: {
+    cryptocurrency: string;
+    prediction: 'up' | 'down';
+    duration: string;
+    startPrice: number;
+    currentPrice?: number;
+    targetPrice?: number;
+    isWinning?: boolean;
+  }[];
+}
+
 export default function ParlayWorking() {
   console.log("🚀 [PARLAY] ParlayWorking component rendering...");
   
@@ -41,6 +60,15 @@ export default function ParlayWorking() {
   }) as { data: Cryptocurrency[], isLoading: boolean };
 
   console.log("📊 [PARLAY] Cryptos data:", { count: cryptos.length, loading: cryptosLoading });
+
+  // Fetch user's active parlays
+  const { data: userParlays = [], isLoading: parlaysLoading } = useQuery({
+    queryKey: ["/api/parlay/user"],
+    refetchInterval: 10000,
+    retry: 1,
+    retryOnMount: false,
+    refetchOnWindowFocus: false
+  }) as { data: ActiveParlay[], isLoading: boolean };
 
   // Calculate duration multiplier
   const getDurationMultiplier = (duration: string) => {
@@ -121,6 +149,7 @@ export default function ParlayWorking() {
       });
       setParlayCards([]);
       setStakeAmount("");
+      queryClient.invalidateQueries({ queryKey: ["/api/parlay/user"] });
     },
     onError: (error: any) => {
       console.error("❌ [PARLAY] Creation failed:", error);
@@ -184,6 +213,77 @@ export default function ParlayWorking() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Parlay Cards Section */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Active Parlays Section */}
+            {userParlays.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-white">Active Parlays</h2>
+                {userParlays.map((parlay) => (
+                  <Card key={parlay.id} className="border-blue-500/20">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg">Parlay #{parlay.id}</CardTitle>
+                        <Badge 
+                          variant={parlay.status === 'active' ? 'default' : 
+                                  parlay.status === 'completed' ? 'secondary' : 'destructive'}
+                        >
+                          {parlay.status.toUpperCase()}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-sm text-gray-400">Stake Amount</div>
+                          <div className="text-lg font-semibold">{parlay.stakeAmount} NTIQ</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-400">Potential Win</div>
+                          <div className="text-lg font-semibold text-green-400">{parlay.potentialWin} NTIQ</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-400">Multiplier</div>
+                          <div className="text-lg font-semibold">{parlay.multiplier.toFixed(2)}x</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-400">Expires</div>
+                          <div className="text-lg font-semibold">
+                            {new Date(parlay.expiresAt).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Show coins in this parlay */}
+                      <div className="mt-4">
+                        <div className="text-sm text-gray-400 mb-2">Predictions</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {parlay.coins.map((coin, index) => {
+                            const crypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                            return (
+                              <div key={index} className="bg-gray-800 p-3 rounded flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  {crypto && (
+                                    <img src={crypto.image} alt={coin.cryptocurrency} className="w-5 h-5" />
+                                  )}
+                                  <span className="font-medium">
+                                    {crypto?.symbol.toUpperCase() || coin.cryptocurrency}
+                                  </span>
+                                  <Badge variant={coin.prediction === 'up' ? 'default' : 'secondary'}>
+                                    {coin.prediction === 'up' ? '↗' : '↘'}
+                                  </Badge>
+                                </div>
+                                <div className="text-sm text-gray-400">
+                                  {coin.duration}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
             {/* Add Card Button */}
             <Card>
               <CardContent className="pt-6">
