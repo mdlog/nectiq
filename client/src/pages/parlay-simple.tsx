@@ -292,132 +292,146 @@ export default function ParlaySimple() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Parlay Cards Section */}
+          {/* Parlay Input Section - Single Card */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Add Card Button */}
+            {/* Single Parlay Input Card */}
             <Card>
-              <CardContent className="pt-6">
-                <Button 
-                  onClick={addParlayCard} 
-                  className="w-full" 
-                  variant="outline"
-                  disabled={parlayCards.length >= 5}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Prediction Card ({parlayCards.length}/5)
-                </Button>
-                
+              <CardHeader>
+                <CardTitle className="text-xl">Create Parlay Prediction</CardTitle>
+                <CardDescription>Add multiple predictions in one simple form</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Add Prediction Button */}
+                <div className="flex justify-between items-center">
+                  <Button 
+                    onClick={addParlayCard} 
+                    variant="outline"
+                    disabled={parlayCards.length >= 5}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Prediction ({parlayCards.length}/5)
+                  </Button>
+                  {parlayCards.length > 0 && (
+                    <p className="text-sm text-gray-400">{parlayCards.length} prediction(s) added</p>
+                  )}
+                </div>
+
+                {/* Predictions List - Compact Display */}
+                {parlayCards.length > 0 && (
+                  <div className="space-y-3">
+                    {parlayCards.map((card, index) => (
+                      <div key={card.id} className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-medium">Prediction #{index + 1}</h4>
+                          <Button 
+                            onClick={() => removeParlayCard(card.id)} 
+                            variant="destructive" 
+                            size="sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {/* Cryptocurrency Selection */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-400 mb-1 block">Cryptocurrency</label>
+                            <Select
+                              value={card.cryptocurrency}
+                              onValueChange={(value) => updateParlayCard(card.id, 'cryptocurrency', value)}
+                            >
+                              <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Select crypto" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {cryptos.map((crypto) => {
+                                  const isAlreadySelected = getSelectedCryptocurrencies(card.id).includes(crypto.id);
+                                  return (
+                                    <SelectItem 
+                                      key={crypto.id} 
+                                      value={crypto.id}
+                                      disabled={isAlreadySelected}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
+                                        <span className={isAlreadySelected ? "text-gray-500" : ""}>
+                                          {crypto.symbol?.toUpperCase()} (${crypto.current_price.toFixed(2)})
+                                          {isAlreadySelected && " - Selected"}
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Prediction Direction - Compact */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-400 mb-1 block">Direction</label>
+                            <div className="grid grid-cols-2 gap-1">
+                              <Button
+                                onClick={() => updateParlayCard(card.id, 'prediction', 'up')}
+                                variant={card.prediction === 'up' ? 'default' : 'outline'}
+                                size="sm"
+                                className="h-9"
+                              >
+                                <TrendingUp className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                onClick={() => updateParlayCard(card.id, 'prediction', 'down')}
+                                variant={card.prediction === 'down' ? 'default' : 'outline'}
+                                size="sm"
+                                className="h-9"
+                              >
+                                <TrendingDown className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Duration Selection */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-400 mb-1 block">Duration</label>
+                            <Select
+                              value={card.duration}
+                              onValueChange={(value) => updateParlayCard(card.id, 'duration', value as ParlayCard['duration'])}
+                            >
+                              <SelectTrigger className="h-9">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1h">1h (1.2x)</SelectItem>
+                                <SelectItem value="6h">6h (1.5x)</SelectItem>
+                                <SelectItem value="24h">24h (2.0x)</SelectItem>
+                                <SelectItem value="7d">7d (3.0x)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        {/* Current Price Display - Compact */}
+                        {card.cryptocurrency && (
+                          <div className="text-center bg-gray-700/50 rounded p-2">
+                            <span className="text-xs text-gray-400">Current: </span>
+                            <span className="font-medium">
+                              ${cryptos.find(c => c.id === card.cryptocurrency)?.current_price.toFixed(2) || 'Loading...'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Help Text */}
                 {parlayCards.length === 0 && (
-                  <div className="text-center mt-4">
-                    <p className="text-gray-400">No prediction cards added yet. Click "Add Prediction Card" to start.</p>
+                  <div className="text-center py-8">
+                    <p className="text-gray-400">Click "Add Prediction" to start building your parlay</p>
+                    <p className="text-sm text-gray-500 mt-1">Minimum 2 predictions required</p>
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* Parlay Cards - Show input forms immediately after Add Card Button */}
-            {parlayCards.map((card) => (
-              <Card key={card.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-lg">Prediction #{parlayCards.indexOf(card) + 1}</CardTitle>
-                    <Button 
-                      onClick={() => removeParlayCard(card.id)} 
-                      variant="destructive" 
-                      size="sm"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Cryptocurrency Selection */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Cryptocurrency</label>
-                    <Select
-                      value={card.cryptocurrency}
-                      onValueChange={(value) => updateParlayCard(card.id, 'cryptocurrency', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select cryptocurrency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cryptos.map((crypto) => {
-                          const isAlreadySelected = getSelectedCryptocurrencies(card.id).includes(crypto.id);
-                          return (
-                            <SelectItem 
-                              key={crypto.id} 
-                              value={crypto.id}
-                              disabled={isAlreadySelected}
-                            >
-                              <div className="flex items-center gap-2">
-                                <img src={crypto.image} alt={crypto.name} className="w-5 h-5" />
-                                <span className={isAlreadySelected ? "text-gray-500" : ""}>
-                                  {crypto.name} (${crypto.current_price.toFixed(2)})
-                                  {isAlreadySelected && " - Already Selected"}
-                                </span>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Prediction Direction */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Prediction</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        onClick={() => updateParlayCard(card.id, 'prediction', 'up')}
-                        variant={card.prediction === 'up' ? 'default' : 'outline'}
-                        className="flex items-center gap-2"
-                      >
-                        <TrendingUp className="w-4 h-4" />
-                        Price Up
-                      </Button>
-                      <Button
-                        onClick={() => updateParlayCard(card.id, 'prediction', 'down')}
-                        variant={card.prediction === 'down' ? 'default' : 'outline'}
-                        className="flex items-center gap-2"
-                      >
-                        <TrendingDown className="w-4 h-4" />
-                        Price Down
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Duration Selection */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Duration</label>
-                    <Select
-                      value={card.duration}
-                      onValueChange={(value) => updateParlayCard(card.id, 'duration', value as ParlayCard['duration'])}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1h">1 Hour (1.2x)</SelectItem>
-                        <SelectItem value="6h">6 Hours (1.5x)</SelectItem>
-                        <SelectItem value="24h">24 Hours (2.0x)</SelectItem>
-                        <SelectItem value="7d">7 Days (3.0x)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Show current price */}
-                  {card.cryptocurrency && (
-                    <div className="bg-gray-800 p-3 rounded">
-                      <div className="text-sm text-gray-400">Current Price</div>
-                      <div className="text-lg font-semibold">
-                        ${cryptos.find(c => c.id === card.cryptocurrency)?.current_price.toFixed(2) || 'Loading...'}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
 
             {/* Parlay History Section - Tab-based Active vs Completed */}
             {!parlaysError && safeParlays.length > 0 && (() => {
