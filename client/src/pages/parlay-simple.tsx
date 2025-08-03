@@ -226,16 +226,19 @@ export default function ParlaySimple() {
                 <CardContent className="space-y-4">
                   {safeParlays.slice(0, 3).map((parlay: any) => {
                     try {
-                      // Calculate potential win if not present in data
-                      const calculatedPotentialWin = parlay?.potentialWin || 
-                        (parlay?.stakeAmount && parlay?.multiplier ? 
-                          (parlay.stakeAmount * parlay.multiplier).toFixed(0) : 0);
+                      // Calculate potential win using server data structure
+                      const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
+                      const calculatedPotentialWin = parlay?.stakeAmount && multiplier ? 
+                        Math.round(parlay.stakeAmount * parseFloat(multiplier)) : 0;
+                      
+                      // Calculate expires at from targetTime 
+                      const expiresAt = parlay?.targetTime || parlay?.expiresAt;
                       
                       return (
                         <div key={parlay?.id || Math.random()} className="bg-gray-800 p-4 rounded border-l-4 border-blue-500">
                           <div className="flex justify-between items-start mb-2">
                             <Badge variant="secondary">
-                              {parlay?.multiplier ? `${parlay.multiplier.toFixed(2)}x` : 'N/A'} Multiplier
+                              {multiplier ? `${parseFloat(multiplier).toFixed(2)}x` : 'N/A'} Multiplier
                             </Badge>
                             <span className="text-sm text-gray-400">
                               {parlay?.createdAt ? new Date(parlay.createdAt).toLocaleDateString() : 'N/A'}
@@ -254,7 +257,7 @@ export default function ParlaySimple() {
                             </div>
                           </div>
                           <div className="mt-2 text-xs text-gray-500">
-                            {parlay?.coins?.length || 0} predictions • Expires: {parlay?.expiresAt ? new Date(parlay.expiresAt).toLocaleString() : 'N/A'}
+                            {parlay?.coins?.length || parlay?.totalCoinCount || 0} predictions • Expires: {expiresAt ? new Date(expiresAt).toLocaleString() : 'N/A'}
                           </div>
                         </div>
                       );
