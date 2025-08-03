@@ -293,9 +293,9 @@ export default function ParlaySimple() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Parlay Input Section - Single Card */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 flex flex-col">
             {/* Single Parlay Input Card */}
-            <Card>
+            <Card className="flex-1">
               <CardHeader>
                 <CardTitle className="text-xl">Create Parlay Prediction</CardTitle>
                 <CardDescription>Add multiple predictions in one simple form</CardDescription>
@@ -1043,8 +1043,8 @@ export default function ParlaySimple() {
             </Card>
 
             {/* Info Card */}
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="h-full">
+              <CardContent className="pt-6 h-full flex flex-col">
                 <h3 className="font-semibold mb-2">How Parlay Works</h3>
                 <ul className="text-sm text-gray-400 space-y-1">
                   <li>• Combine 2-5 cryptocurrency predictions</li>
