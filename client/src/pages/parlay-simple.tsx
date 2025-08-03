@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -533,7 +533,6 @@ export default function ParlaySimple() {
                         {activeParlays.length > 0 ? (
                           <div className="space-y-4">
                             {activeParlays.slice(0, 5).map((parlay: any) => {
-                    try {
                       // Calculate potential win using server data structure
                       const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
                       const calculatedPotentialWin = parlay?.stakeAmount && multiplier ? 
@@ -728,10 +727,7 @@ export default function ParlaySimple() {
                           </div>
                         </div>
                       );
-                    } catch (err) {
-                      console.error("Error rendering parlay:", err);
-                      return null;
-                    }
+
                             })}
                             {activeParlays.length > 5 && (
                               <p className="text-center text-gray-400 text-sm">
@@ -752,7 +748,6 @@ export default function ParlaySimple() {
                         {completedParlays.length > 0 ? (
                           <div className="space-y-4">
                             {completedParlays.slice(0, 5).map((parlay: any) => {
-                          try {
                             // Calculate potential win using server data structure
                             const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
                             const calculatedPotentialWin = parlay?.stakeAmount && multiplier ? 
@@ -975,10 +970,7 @@ export default function ParlaySimple() {
                                 </div>
                               </div>
                             );
-                          } catch (err) {
-                            console.error("Error rendering completed parlay:", err);
-                            return null;
-                          }
+
                             })}
                             {completedParlays.length > 5 && (
                               <p className="text-center text-gray-400 text-sm">
