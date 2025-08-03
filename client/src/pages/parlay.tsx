@@ -236,6 +236,29 @@ export default function ParlayPage() {
       };
     });
 
+    console.log("🔍 [PARLAY-CREATE] Final data before submission:", {
+      stakeAmount: parseFloat(stakeAmount),
+      coins: coinsWithPrices,
+      originalCoinPredictions: coinPredictions,
+      userBalance: user.balance,
+      cryptoPricesAvailable: Array.isArray(cryptoPrices) && cryptoPrices.length > 0
+    });
+
+    // Validate each coin has proper duration format
+    const invalidCoins = coinsWithPrices.filter(coin => 
+      !coin.duration || !["1h", "6h", "24h", "7d"].includes(coin.duration)
+    );
+    
+    if (invalidCoins.length > 0) {
+      console.error("❌ [PARLAY-CREATE] Invalid duration format in coins:", invalidCoins);
+      toast({
+        title: "Invalid Duration",
+        description: `Some coins have invalid duration format`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     createParlayMutation.mutate({
       stakeAmount: parseFloat(stakeAmount),
       coins: coinsWithPrices
