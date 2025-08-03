@@ -792,24 +792,38 @@ export default function ParlaySimple() {
                                   <div className="space-y-2 mb-3">
                                     <h4 className="text-xs font-semibold text-gray-300">Final Results ({coinPredictions.length}):</h4>
                                     {coinPredictions.map((coin: any, index: number) => {
-                                      // Find current price for this cryptocurrency
-                                      const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
-                                      const liveCurrentPrice = currentCrypto?.current_price || 0;
                                       const startPrice = parseFloat(coin.startPrice || '0');
                                       
-                                      // Check if duration has passed to determine which price to use
-                                      const now = new Date();
-                                      const targetTime = new Date(coin.targetTime);
-                                      const durationPassed = now >= targetTime;
+                                      // CRITICAL: For completed parlays, ALWAYS use endPrice if available (permanent snapshot)
+                                      // Never use live prices for historical data!
+                                      let finalPrice;
+                                      let isHistoricalSnapshot = false;
                                       
-                                      // CRITICAL: Always use endPrice if available (snapshot is permanent), otherwise use live price
-                                      const displayPrice = coin.endPrice ? 
-                                        parseFloat(coin.endPrice) : liveCurrentPrice;
+                                      if (coin.endPrice) {
+                                        // Use permanent snapshot price from ParlayProcessorService
+                                        finalPrice = parseFloat(coin.endPrice);
+                                        isHistoricalSnapshot = true;
+                                      } else {
+                                        // Fallback to current live price if endPrice not yet set
+                                        const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                                        finalPrice = currentCrypto?.current_price || 0;
+                                      }
                                       
-                                      const status = getPredictionStatus(coin, liveCurrentPrice);
+                                      // Calculate status using FINAL PRICE (not live price) for accuracy
+                                      const isUp = coin.prediction === 'up';
+                                      const priceChanged = finalPrice > startPrice;
+                                      let status;
                                       
-                                      // Price change calculation using appropriate price
-                                      const priceChange = startPrice ? ((displayPrice - startPrice) / startPrice * 100) : 0;
+                                      // Use database isCorrect if available (most reliable)
+                                      if (coin.isCorrect !== null && coin.isCorrect !== undefined) {
+                                        status = coin.isCorrect ? 'win' : 'lose';
+                                      } else {
+                                        // Fallback calculation
+                                        status = (isUp === priceChanged) ? 'win' : 'lose';
+                                      }
+                                      
+                                      // Price change calculation using FINAL PRICE (not live price)
+                                      const priceChange = startPrice ? ((finalPrice - startPrice) / startPrice * 100) : 0;
                                       const isPositiveChange = priceChange > 0;
                                       
                                       return (
@@ -821,8 +835,8 @@ export default function ParlaySimple() {
                                                 {coin.prediction === 'up' ? '↑' : '↓'}
                                               </span>
                                             </span>
-                                            <span className="text-xs font-mono text-red-400">
-                                              FINISHED
+                                            <span className={`text-xs font-mono ${isHistoricalSnapshot ? 'text-orange-400' : 'text-red-400'}`}>
+                                              {isHistoricalSnapshot ? 'SNAPSHOT' : 'FINISHED'}
                                             </span>
                                           </div>
                                           
@@ -833,9 +847,9 @@ export default function ParlaySimple() {
                                             </div>
                                             <div>
                                               <span className="text-gray-400">Final:</span>
-                                              <span className="ml-1 font-mono">${displayPrice.toLocaleString()}</span>
-                                              {coin.endPrice && (
-                                                <span className="ml-1 text-xs text-orange-400">📸</span>
+                                              <span className="ml-1 font-mono">${finalPrice.toLocaleString()}</span>
+                                              {isHistoricalSnapshot && (
+                                                <span className="ml-1 text-xs text-orange-400" title="Price locked by system">🔒</span>
                                               )}
                                             </div>
                                           </div>
