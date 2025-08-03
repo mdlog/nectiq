@@ -89,19 +89,30 @@ export default function ParlayPage() {
   // Create parlay mutation
   const createParlayMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log("🔍 [PARLAY-DEBUG] Sending to API:", data);
+      
       const response = await fetch("/api/parlay/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
         credentials: "include"
       });
+      
+      console.log("🔍 [PARLAY-DEBUG] Response status:", response.status);
+      console.log("🔍 [PARLAY-DEBUG] Response ok:", response.ok);
+      
       if (!response.ok) {
         const error = await response.json();
+        console.error("❌ [PARLAY-DEBUG] Error response:", error);
         throw new Error(error.message || "Failed to create parlay");
       }
-      return response.json();
+      
+      const result = await response.json();
+      console.log("✅ [PARLAY-DEBUG] Success response:", result);
+      return result;
     },
     onSuccess: () => {
+      console.log("✅ [PARLAY-DEBUG] Mutation success");
       toast({
         title: "Success!",
         description: "Parlay prediction created successfully"
@@ -113,9 +124,13 @@ export default function ParlayPage() {
       setStakeAmount("50");
     },
     onError: (error: Error) => {
+      console.error("❌ [PARLAY-DEBUG] Mutation error:", error);
+      console.error("❌ [PARLAY-DEBUG] Error message:", error.message);
+      console.error("❌ [PARLAY-DEBUG] Error stack:", error.stack);
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create parlay prediction",
         variant: "destructive"
       });
     }
