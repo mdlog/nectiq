@@ -38,6 +38,7 @@ export class BalanceService {
         case 'prediction_stake':
         case 'battle_create':
         case 'survival_entry':
+        case 'parlay_stake':
           // Deduct amounts
           newBalance = user.balance - Math.abs(amount);
           transactionAmount = -Math.abs(amount);
@@ -57,6 +58,7 @@ export class BalanceService {
         case 'deposit_credit':
         case 'referral_reward':
         case 'referral_bonus':
+        case 'parlay_reward':
           // Add amounts
           newBalance = user.balance + Math.abs(amount);
           transactionAmount = Math.abs(amount);
