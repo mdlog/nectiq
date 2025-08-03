@@ -295,7 +295,7 @@ export default function ParlaySimple() {
           {/* Parlay Input Section - Single Card */}
           <div className="lg:col-span-2 space-y-6">
             {/* Single Parlay Input Card */}
-            <Card>
+            <Card className="min-h-[600px]">
               <CardHeader>
                 <CardTitle className="text-xl">Create Parlay Prediction</CardTitle>
                 <CardDescription>Add multiple predictions in one simple form</CardDescription>
