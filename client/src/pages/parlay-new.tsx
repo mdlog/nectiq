@@ -51,18 +51,11 @@ export default function ParlayNew() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Debug parlays error
-  useEffect(() => {
-    if (parlaysError) {
-      console.error("🔥 [PARLAY] Error fetching user parlays:", parlaysError);
-    }
-  }, [parlaysError]);
-
   // Fetch live crypto prices
   const { data: cryptos = [] } = useQuery({
     queryKey: ["/api/crypto/pyth-prices"],
     refetchInterval: 2000
-  });
+  }) as { data: any[] };
 
   // Fetch user's active parlays
   const { data: userParlays = [], isLoading: parlaysLoading, error: parlaysError } = useQuery({
@@ -71,7 +64,14 @@ export default function ParlayNew() {
     retry: 1,
     retryOnMount: false,
     refetchOnWindowFocus: false
-  });
+  }) as { data: ActiveParlay[], isLoading: boolean, error: any };
+
+  // Debug parlays error
+  useEffect(() => {
+    if (parlaysError) {
+      console.error("🔥 [PARLAY] Error fetching user parlays:", parlaysError);
+    }
+  }, [parlaysError]);
 
   // Create parlay mutation
   const createParlayMutation = useMutation({
