@@ -9873,17 +9873,20 @@ Manual balance correction required IMMEDIATELY!`;
   // ==================== PARLAY PREDICTION ENDPOINTS ====================
 
   // Create parlay prediction
-  app.post("/api/parlay/create", async (req, res) => {
+  app.post("/api/parlay/create", requireAuth, async (req, res) => {
     try {
       console.log("🔍 [PARLAY] Request body:", JSON.stringify(req.body, null, 2));
       
       const session = req.session as any;
-      if (!session?.userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
+      const user = req.user as any; // Set by requireAuth middleware
+      console.log("🔍 [PARLAY] Session debug:", { 
+        hasSession: !!session, 
+        userId: session?.userId, 
+        userFromMiddleware: user ? 'present' : 'missing' 
+      });
 
       const { stakeAmount, coins } = req.body;
-      console.log("🔍 [PARLAY] Extracted data:", { stakeAmount, coins, sessionUserId: session.userId });
+      console.log("🔍 [PARLAY] Extracted data:", { stakeAmount, coins, userId: user.id });
 
       // Validate minimum stake
       if (parseFloat(stakeAmount) < 50) {
@@ -9907,8 +9910,7 @@ Manual balance correction required IMMEDIATELY!`;
         }
       }
 
-      // Check user balance
-      const user = await storage.getUser(session.userId);
+      // Check user balance (user is already available from requireAuth middleware)
       if (!user || user.balance < parseFloat(stakeAmount)) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
@@ -9938,7 +9940,7 @@ Manual balance correction required IMMEDIATELY!`;
 
       // Create parlay prediction (no global duration field needed)
       console.log("🔍 [PARLAY] Creating parlay with data:", {
-        userId: session.userId,
+        userId: user.id,
         stakeAmount: parseFloat(stakeAmount),
         targetTime,
         totalMultiplier: Number(totalMultiplier.toFixed(2)),
@@ -9947,7 +9949,7 @@ Manual balance correction required IMMEDIATELY!`;
       });
       
       const parlay = await storage.createParlayPrediction({
-        userId: session.userId,
+        userId: user.id,
         stakeAmount: parseFloat(stakeAmount),
         targetTime,
         totalMultiplier: totalMultiplier.toString(),
@@ -9986,7 +9988,7 @@ Manual balance correction required IMMEDIATELY!`;
 
       // Deduct stake from user balance
       await BalanceService.processTransaction({
-        userId: session.userId,
+        userId: user.id,
         type: 'parlay_stake',
         amount: -parseFloat(stakeAmount),
         description: `Parlay prediction stake - ${coinCount} coins`,
