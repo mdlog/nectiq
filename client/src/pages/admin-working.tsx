@@ -1706,7 +1706,7 @@ export default function AdminPanel() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {prediction.reward ? `${prediction.reward} NTIQ` : 'N/A'}
+                            {prediction.rewardAmount ? `${prediction.rewardAmount} NTIQ` : 'N/A'}
                           </TableCell>
                           <TableCell className="text-xs text-slate-400">
                             {new Date(prediction.createdAt).toLocaleDateString()}
