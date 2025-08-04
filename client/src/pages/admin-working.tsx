@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ChevronLeft, ChevronRight, Copy, KeyRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -194,6 +194,9 @@ export default function AdminPanel() {
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState("");
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  const [twoFACode, setTwoFACode] = useState('');
+  const [twoFAStep, setTwoFAStep] = useState(false);
+  const [twoFAToken, setTwoFAToken] = useState('');
   
   // Transaction filter and pagination states
   const [transactionFilter, setTransactionFilter] = useState({
@@ -217,6 +220,68 @@ export default function AdminPanel() {
   const [recentHashUpdates, setRecentHashUpdates] = useState<Set<string>>(new Set());
   const [lastTransactionSnapshot, setLastTransactionSnapshot] = useState<any[]>([]);
   const realtimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Generate 6-digit 2FA code
+  const generate2FACode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  // Send 2FA code to admin (simplified - just logs for now)
+  const send2FACode = async () => {
+    const code = generate2FACode();
+    const token = Date.now().toString(); // Simple token based on timestamp
+    setTwoFAToken(token);
+    
+    // In real implementation, send code via email/SMS
+    console.log('🔐 [2FA] Generated code for database reset:', code);
+    
+    // Store code temporarily (in real app, store on server)
+    sessionStorage.setItem(`2fa_code_${token}`, code);
+    sessionStorage.setItem(`2fa_time_${token}`, Date.now().toString());
+    
+    toast({
+      title: "2FA Code Generated",
+      description: `Security code: ${code} (Check console for demo)`,
+      variant: "default"
+    });
+    
+    setTwoFAStep(true);
+  };
+
+  // Verify 2FA code
+  const verify2FACode = (inputCode: string): boolean => {
+    if (!twoFAToken) return false;
+    
+    const storedCode = sessionStorage.getItem(`2fa_code_${twoFAToken}`);
+    const storedTime = sessionStorage.getItem(`2fa_time_${twoFAToken}`);
+    
+    if (!storedCode || !storedTime) return false;
+    
+    // Check if code is expired (5 minutes)
+    const codeAge = Date.now() - parseInt(storedTime);
+    if (codeAge > 5 * 60 * 1000) {
+      toast({
+        title: "2FA Code Expired",
+        description: "Please generate a new code",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    return storedCode === inputCode;
+  };
+
+  // Reset 2FA state
+  const reset2FAState = () => {
+    setTwoFACode('');
+    setTwoFAStep(false);
+    setTwoFAToken('');
+    setResetConfirmText('');
+    if (twoFAToken) {
+      sessionStorage.removeItem(`2fa_code_${twoFAToken}`);
+      sessionStorage.removeItem(`2fa_time_${twoFAToken}`);
+    }
+  };
 
   // Queries
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
@@ -2588,40 +2653,101 @@ export default function AdminPanel() {
                         Reset Database
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-slate-800 border-slate-700">
+                    <DialogContent className="bg-slate-800 border-slate-700 max-w-md">
                       <DialogHeader>
                         <DialogTitle className="text-red-400 flex items-center">
-                          <AlertTriangle className="mr-2" size={20} />
-                          Confirm Database Reset
+                          {!twoFAStep ? (
+                            <>
+                              <AlertTriangle className="mr-2" size={20} />
+                              Confirm Database Reset
+                            </>
+                          ) : (
+                            <>
+                              <KeyRound className="mr-2" size={20} />
+                              2FA Security Verification
+                            </>
+                          )}
                         </DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
                         <Alert className="border-red-600/50 bg-red-950/20">
                           <AlertTriangle className="h-4 w-4 text-red-400" />
                           <AlertDescription className="text-red-300">
-                            This action cannot be undone. All users, predictions, transactions, and settings will be permanently deleted.
+                            {!twoFAStep 
+                              ? "This action cannot be undone. All users, predictions, transactions, and settings will be permanently deleted."
+                              : "Enter the 6-digit security code to complete database reset."
+                            }
                           </AlertDescription>
                         </Alert>
-                        <div>
-                          <Label className="text-white">Type "RESET" to confirm</Label>
-                          <Input
-                            placeholder="RESET"
-                            className="bg-slate-700 border-slate-600 text-white"
-                            value={resetConfirmText}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              console.log('🔍 [RESET-DEBUG] Input changed:', { value, isRESET: value === 'RESET' });
-                              setResetConfirmText(value);
-                            }}
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="destructive" 
-                            disabled={resetConfirmText !== 'RESET' || isResetting}
-                            className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
-                            onClick={async () => {
-                              console.log('🔥 [RESET-DEBUG] Confirm Reset button clicked!');
+
+                        {!twoFAStep ? (
+                          <>
+                            <div>
+                              <Label className="text-white">Type "RESET" to confirm</Label>
+                              <Input
+                                placeholder="RESET"
+                                className="bg-slate-700 border-slate-600 text-white"
+                                value={resetConfirmText}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  console.log('🔍 [RESET-DEBUG] Input changed:', { value, isRESET: value === 'RESET' });
+                                  setResetConfirmText(value);
+                                }}
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="destructive" 
+                                disabled={resetConfirmText !== 'RESET'}
+                                className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                                onClick={send2FACode}
+                              >
+                                <KeyRound className="mr-2" size={16} />
+                                Send 2FA Code
+                              </Button>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" onClick={reset2FAState}>Cancel</Button>
+                              </DialogTrigger>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <Label className="text-white">Enter 6-digit Security Code</Label>
+                              <Input
+                                placeholder="123456"
+                                maxLength={6}
+                                className="bg-slate-700 border-slate-600 text-white text-center text-lg tracking-widest"
+                                value={twoFACode}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\D/g, ''); // Only numbers
+                                  setTwoFACode(value);
+                                }}
+                              />
+                              <p className="text-xs text-slate-400 mt-1">
+                                Code expires in 5 minutes. Check console for demo code.
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="destructive" 
+                                disabled={twoFACode.length !== 6 || isResetting}
+                                className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                                onClick={async () => {
+                                  console.log('🔐 [2FA] Verifying code:', twoFACode);
+                                  
+                                  if (!verify2FACode(twoFACode)) {
+                                    toast({
+                                      title: "Invalid 2FA Code",
+                                      description: "Please check your code and try again",
+                                      variant: "destructive"
+                                    });
+                                    return;
+                                  }
+
+                                  console.log('✅ [2FA] Code verified successfully');
+                                  console.log('🚀 [RESET-DEBUG] Starting database reset with 2FA...');
+                                  console.log('🔥 [RESET-DEBUG] Confirm Reset button clicked!');
                               
                               if (resetConfirmText !== 'RESET') {
                                 console.log('❌ [RESET-DEBUG] Invalid confirmation code:', resetConfirmText);
@@ -2684,17 +2810,29 @@ export default function AdminPanel() {
                                   description: 'Reset failed: ' + error.message,
                                   variant: "destructive"
                                 });
-                              } finally {
-                                setIsResetting(false);
-                              }
-                            }}
-                          >
-{isResetting ? "Resetting..." : "Confirm Reset"}
-                          </Button>
-                          <DialogTrigger asChild>
-                            <Button variant="outline">Cancel</Button>
-                          </DialogTrigger>
-                        </div>
+                                  } finally {
+                                    setIsResetting(false);
+                                    reset2FAState();
+                                  }
+                                }}
+                              >
+                                {isResetting ? "Resetting..." : "Confirm Reset"}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                onClick={() => {
+                                  setTwoFAStep(false);
+                                  setTwoFACode('');
+                                }}
+                              >
+                                Back
+                              </Button>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" onClick={reset2FAState}>Cancel</Button>
+                              </DialogTrigger>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </DialogContent>
                   </Dialog>
