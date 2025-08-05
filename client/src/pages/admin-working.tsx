@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useAccount, useWriteContract, useSendTransaction, useWaitForTransaction } from "wagmi";
+import { useAccount, useWriteContract, useSendTransaction } from "wagmi";
 import { parseEther, parseUnits } from "viem";
 
 // Helper functions for blockchain explorer URLs
@@ -857,155 +857,279 @@ export default function AdminPanel() {
 
   // Export functions
   const exportUsers = () => {
-    if (!usersData) return;
+    if (!usersData || !Array.isArray(usersData)) return;
     const csvContent = [
-      ["ID", "Username", "Wallet Address", "Balance", "Admin", "Total Predictions", "Total Rewards"].join(","),
-      ...usersData.map(user => [
-        user.id,
-        user.username,
+      ["ID", "UID", "Username", "Wallet Address", "Balance", "Admin", "Total Predictions", "Total Rewards", "Battle Rewards", "Survival Rewards", "Created At", "Last Login"].join(","),
+      ...usersData.map((user: any) => [
+        user.id || "N/A",
+        user.uid || "N/A",
+        user.username || "N/A",
         user.walletAddress || "N/A",
-        user.balance,
+        user.balance || 0,
         user.isAdmin ? "Yes" : "No",
-        user.totalPredictions,
-        user.totalRewards
+        user.totalPredictions || 0,
+        user.totalRewards || 0,
+        user.battleRewards || 0,
+        user.survivalRewards || 0,
+        user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A",
+        user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
     
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "users_export.csv";
+    a.download = `users_export_${timestamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Successfully", description: "Users exported successfully" });
+    toast({ title: "Success", description: "Users exported successfully" });
   };
 
   const exportPredictions = () => {
-    if (!predictions) return;
+    if (!predictions || !Array.isArray(predictions)) return;
     const csvContent = [
-      ["ID", "User ID", "Crypto", "Predicted Price", "Actual Price", "Timeframe", "Stake", "Status", "Reward"].join(","),
-      ...predictions.map(prediction => {
-        const cryptoInfo = getCryptoInfo(prediction.cryptoSymbol);
-        const cryptoDisplay = cryptoInfo ? `${cryptoInfo.name} (${cryptoInfo.symbol})` : prediction.cryptoSymbol;
+      ["ID", "User ID", "Username", "Cryptocurrency", "Predicted Direction", "Predicted Price", "Actual Price", "Timeframe", "Stake Amount", "Status", "Reward", "Accuracy", "Created At", "Target Time", "Processed At"].join(","),
+      ...predictions.map((prediction: any) => {
+        const cryptoInfo = getCryptoInfo(prediction.cryptocurrency || prediction.cryptoSymbol);
+        const cryptoDisplay = cryptoInfo ? `${cryptoInfo.name} (${cryptoInfo.symbol})` : (prediction.cryptocurrency || prediction.cryptoSymbol || "N/A");
         return [
-          prediction.id,
-          prediction.userId,
+          prediction.id || "N/A",
+          prediction.userId || "N/A",
+          prediction.username || "N/A",
           cryptoDisplay,
-          prediction.predictedPrice,
+          prediction.predictedDirection || "N/A",
+          prediction.predictedPrice || "N/A",
           prediction.actualPrice || "N/A",
-          prediction.timeframe,
-          prediction.stakeAmount,
-          prediction.status,
-          prediction.reward || "N/A"
+          prediction.timeframe || "N/A",
+          prediction.stakeAmount || 0,
+          prediction.status || "N/A",
+          prediction.reward || 0,
+          prediction.accuracy ? `${prediction.accuracy}%` : "N/A",
+          prediction.createdAt ? new Date(prediction.createdAt).toLocaleDateString() : "N/A",
+          prediction.targetTime ? new Date(prediction.targetTime).toLocaleDateString() : "N/A",
+          prediction.processedAt ? new Date(prediction.processedAt).toLocaleDateString() : "N/A"
         ].join(",");
       })
     ].join("\n");
     
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "predictions_export.csv";
+    a.download = `predictions_export_${timestamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Successfully", description: "Predictions exported successfully" });
+    toast({ title: "Success", description: "Predictions exported successfully" });
   };
 
   // Export Parlay Predictions CSV
   const exportParlayPredictions = () => {
-    if (!parlayDetailedData) return;
+    if (!parlayData || !Array.isArray(parlayData)) return;
     const csvContent = [
-      ["Parlay ID", "User", "Cryptocurrency", "Prediction", "Duration", "Start Price", "End Price", "Status", "Stake Amount", "Multiplier", "Target Time", "Created At"].join(","),
-      ...parlayDetailedData.map(parlay => [
-        parlay.parlayId,
-        parlay.username,
-        parlay.cryptocurrency,
-        parlay.prediction,
-        parlay.duration,
+      ["Parlay ID", "User ID", "Username", "Coin ID", "Cryptocurrency", "Prediction", "Duration", "Start Price", "End Price", "Is Correct", "Coin Status", "Parlay Status", "Stake Amount", "Total Multiplier", "Coin Multiplier", "Reward Amount", "Total Coin Count", "Correct Predictions", "Target Time", "Created At"].join(","),
+      ...parlayData.map((parlay: any) => [
+        parlay.parlayId || "N/A",
+        parlay.userId || "N/A",
+        parlay.username || "N/A",
+        parlay.coinId || "N/A",
+        parlay.cryptocurrency || "N/A",
+        parlay.prediction || "N/A",
+        parlay.duration || "N/A",
         parlay.startPrice || "N/A",
         parlay.endPrice || "N/A",
-        parlay.coinStatus,
-        parlay.stakeAmount,
-        parlay.coinMultiplier,
-        parlay.coinTargetTime,
-        new Date(parlay.createdAt).toLocaleDateString()
+        parlay.isCorrect !== null ? (parlay.isCorrect ? "Yes" : "No") : "N/A",
+        parlay.coinStatus || "N/A",
+        parlay.parlayStatus || "N/A",
+        parlay.stakeAmount || 0,
+        parlay.totalMultiplier || "N/A",
+        parlay.coinMultiplier || "N/A",
+        parlay.rewardAmount || 0,
+        parlay.totalCoinCount || 0,
+        parlay.correctPredictions || 0,
+        parlay.coinTargetTime ? new Date(parlay.coinTargetTime).toLocaleDateString() : "N/A",
+        parlay.createdAt ? new Date(parlay.createdAt).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
     
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "parlay_predictions_export.csv";
+    a.download = `parlay_predictions_export_${timestamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Successfully", description: "Parlay predictions exported successfully" });
+    toast({ title: "Success", description: "Parlay predictions exported successfully" });
   };
 
   // Export Transactions CSV
   const exportTransactions = () => {
-    if (!transactionsData) return;
+    if (!transactionsData || !Array.isArray(transactionsData)) return;
     const csvContent = [
-      ["ID", "User", "Type", "Amount", "USD Amount", "Net Amount", "Fee", "Status", "Token", "Address", "Hash", "Created At"].join(","),
-      ...transactionsData.map(tx => [
-        tx.id,
+      ["ID", "User ID", "Username", "Type", "Amount", "USD Amount", "Net Amount", "Fee Amount", "Status", "Token", "From Address", "To Address", "Hash", "Unique Transaction ID", "Confirmation Count", "Block Number", "Network", "Created At", "Updated At", "Processed At"].join(","),
+      ...(transactionsData as any[]).map((tx: any) => [
+        tx.id || "N/A",
+        tx.userId || "N/A",
         tx.username || "N/A",
-        tx.type,
-        tx.amount,
+        tx.type || "N/A",
+        tx.amount || 0,
         tx.usdAmount || "N/A",
         tx.netAmount || "N/A",
         tx.feeAmount || "N/A",
-        tx.status,
-        tx.token,
+        tx.status || "N/A",
+        tx.token || "N/A",
+        tx.fromAddress || "N/A",
         tx.toAddress || "N/A",
         tx.hash || "N/A",
-        new Date(tx.createdAt).toLocaleDateString()
+        tx.uniqueTransactionId || "N/A",
+        tx.confirmationCount || 0,
+        tx.blockNumber || "N/A",
+        tx.network || "N/A",
+        tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : "N/A",
+        tx.updatedAt ? new Date(tx.updatedAt).toLocaleDateString() : "N/A",
+        tx.processedAt ? new Date(tx.processedAt).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
     
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "transactions_export.csv";
+    a.download = `transactions_export_${timestamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Successfully", description: "Transactions exported successfully" });
+    toast({ title: "Success", description: "Transactions exported successfully" });
   };
 
   // Export Cryptocurrencies CSV
   const exportCryptocurrencies = () => {
-    if (!cryptocurrenciesData) return;
+    if (!cryptocurrencies || !Array.isArray(cryptocurrencies)) return;
     const csvContent = [
-      ["ID", "Name", "Symbol", "Image URL", "Pyth Feed ID"].join(","),
-      ...cryptocurrenciesData.map(crypto => [
-        crypto.id,
-        crypto.name,
-        crypto.symbol,
-        crypto.image,
-        crypto.pythFeedId || "N/A"
-      ].join(","))
+      ["ID", "Name", "Symbol", "Image URL", "Pyth Feed ID", "Current Price", "Price Change 24h", "Market Cap", "Total Volume", "Confidence Interval", "Last Updated", "Source"].join(","),
+      ...cryptocurrencies.map((crypto: any) => {
+        const priceData = getCryptoPrice(crypto.id);
+        return [
+          crypto.id || "N/A",
+          crypto.name || "N/A",
+          crypto.symbol || "N/A",
+          crypto.image || "N/A",
+          crypto.pythFeedId || "N/A",
+          priceData?.current_price || "N/A",
+          priceData?.price_change_percentage_24h || "N/A",
+          priceData?.market_cap || "N/A",
+          priceData?.total_volume || "N/A",
+          priceData?.confidence_interval || "N/A",
+          priceData?.last_updated ? new Date(priceData.last_updated).toLocaleDateString() : "N/A",
+          priceData?.source || "N/A"
+        ].join(",");
+      })
     ].join("\n");
     
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "cryptocurrencies_export.csv";
+    a.download = `cryptocurrencies_export_${timestamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Successfully", description: "Cryptocurrencies exported successfully" });
+    toast({ title: "Success", description: "Cryptocurrencies exported successfully" });
+  };
+
+  // Export Battles CSV
+  const exportBattles = () => {
+    if (!battles || !Array.isArray(battles)) return;
+    const csvContent = [
+      ["ID", "Creator ID", "Creator Username", "Opponent ID", "Opponent Username", "Cryptocurrency", "Timeframe", "Stake Amount", "Status", "Winner ID", "Winner Username", "Creator Prediction", "Opponent Prediction", "Creator Start Price", "Opponent Start Price", "Creator End Price", "Opponent End Price", "Creator Accuracy", "Opponent Accuracy", "Created At", "Ended At"].join(","),
+      ...battles.map((battle: any) => [
+        battle.id || "N/A",
+        battle.creatorId || "N/A",
+        battle.creatorUsername || "N/A",
+        battle.opponentId || "N/A",
+        battle.opponentUsername || "N/A",
+        battle.cryptocurrency || "N/A",
+        battle.timeframe || "N/A",
+        battle.stakeAmount || 0,
+        battle.status || "N/A",
+        battle.winnerId || "N/A",
+        battle.winnerUsername || "N/A",
+        battle.creatorPrediction || "N/A",
+        battle.opponentPrediction || "N/A",
+        battle.creatorStartPrice || "N/A",
+        battle.opponentStartPrice || "N/A",
+        battle.creatorEndPrice || "N/A",
+        battle.opponentEndPrice || "N/A",
+        battle.creatorAccuracy ? `${battle.creatorAccuracy}%` : "N/A",
+        battle.opponentAccuracy ? `${battle.opponentAccuracy}%` : "N/A",
+        battle.createdAt ? new Date(battle.createdAt).toLocaleDateString() : "N/A",
+        battle.endedAt ? new Date(battle.endedAt).toLocaleDateString() : "N/A"
+      ].join(","))
+    ].join("\n");
+    
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `battles_export_${timestamp}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Success", description: "Battles exported successfully" });
+  };
+
+  // Export Survival CSV
+  const exportSurvival = () => {
+    if (!survival || !Array.isArray(survival)) return;
+    const csvContent = [
+      ["ID", "User ID", "Username", "Round", "Cryptocurrency", "Prediction", "Duration", "Start Price", "End Price", "Is Correct", "Status", "Stake Amount", "Reward Amount", "Elimination Round", "Tournament ID", "Created At", "Target Time", "Processed At"].join(","),
+      ...survival.map((survivalItem: any) => [
+        survivalItem.id || "N/A",
+        survivalItem.userId || "N/A",
+        survivalItem.username || "N/A",
+        survivalItem.round || "N/A",
+        survivalItem.cryptocurrency || "N/A",
+        survivalItem.prediction || "N/A",
+        survivalItem.duration || "N/A",
+        survivalItem.startPrice || "N/A",
+        survivalItem.endPrice || "N/A",
+        survivalItem.isCorrect !== null ? (survivalItem.isCorrect ? "Yes" : "No") : "N/A",
+        survivalItem.status || "N/A",
+        survivalItem.stakeAmount || 0,
+        survivalItem.rewardAmount || 0,
+        survivalItem.eliminationRound || "N/A",
+        survivalItem.tournamentId || "N/A",
+        survivalItem.createdAt ? new Date(survivalItem.createdAt).toLocaleDateString() : "N/A",
+        survivalItem.targetTime ? new Date(survivalItem.targetTime).toLocaleDateString() : "N/A",
+        survivalItem.processedAt ? new Date(survivalItem.processedAt).toLocaleDateString() : "N/A"
+      ].join(","))
+    ].join("\n");
+    
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `survival_export_${timestamp}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Success", description: "Survival exported successfully" });
   };
 
   // Export Leaderboard CSV
   const exportLeaderboard = () => {
     if (!leaderboardData || !Array.isArray(leaderboardData)) return;
     const csvContent = [
-      ["Rank", "Username", "Total Predictions", "Accuracy", "Total Rewards", "Regular Rewards", "Battle Rewards", "Survival Rewards", "Total Battles", "Won Battles", "Battle Win Rate", "Total Survival", "Won Survival", "Survival Win Rate"].join(","),
-      ...leaderboardData.map((user, index) => [
+      ["Rank", "User ID", "Username", "Wallet Address", "Balance", "Total Predictions", "Accuracy", "Total Rewards", "Regular Rewards", "Battle Rewards", "Survival Rewards", "Total Battles", "Won Battles", "Battle Win Rate", "Total Survival", "Won Survival", "Survival Win Rate", "Last Active", "Joined Date"].join(","),
+      ...leaderboardData.map((user: any, index: number) => [
         index + 1,
-        user.username,
+        user.id || "N/A",
+        user.username || "N/A",
+        user.walletAddress || "N/A",
+        user.balance || 0,
         user.totalPredictions || 0,
         user.accuracy ? `${user.accuracy.toFixed(1)}%` : "0%",
         user.totalRewards || 0,
@@ -1017,18 +1141,21 @@ export default function AdminPanel() {
         user.totalBattles > 0 ? `${((user.wonBattles || 0) / user.totalBattles * 100).toFixed(1)}%` : "0%",
         user.totalSurvivalTournaments || 0,
         user.wonSurvivalTournaments || 0,
-        user.totalSurvivalTournaments > 0 ? `${((user.wonSurvivalTournaments || 0) / user.totalSurvivalTournaments * 100).toFixed(1)}%` : "0%"
+        user.totalSurvivalTournaments > 0 ? `${((user.wonSurvivalTournaments || 0) / user.totalSurvivalTournaments * 100).toFixed(1)}%` : "0%",
+        user.lastActive ? new Date(user.lastActive).toLocaleDateString() : "N/A",
+        user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
     
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "leaderboard_export.csv";
+    a.download = `leaderboard_export_${timestamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Successfully", description: "Leaderboard exported successfully" });
+    toast({ title: "Success", description: "Leaderboard exported successfully" });
   };
 
   // ✨ Real-time hash monitoring system
