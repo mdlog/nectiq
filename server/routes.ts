@@ -3460,6 +3460,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // NEW: Admin endpoint for detailed parlay view (one row per coin)
+  app.get("/api/admin/parlays/detailed", requireAdmin, async (req, res) => {
+    try {
+      console.log("🔍 [ADMIN-PARLAYS-DETAILED] Endpoint accessed successfully");
+      
+      // Join parlays with their coins to create one row per coin
+      const detailedResult = await db.execute(sql`
+        SELECT 
+          p.id as "parlayId",
+          p.user_id as "userId",
+          p.stake_amount as "stakeAmount", 
+          p.target_time as "parlayTargetTime",
+          p.total_multiplier as "totalMultiplier",
+          p.status as "parlayStatus",
+          p.completed_at as "completedAt",
+          p.created_at as "createdAt",
+          p.reward_amount as "rewardAmount",
+          p.total_coin_count as "totalCoinCount",
+          p.correct_predictions as "correctPredictions",
+          p.result,
+          u.username,
+          u.uid,
+          c.id as "coinId",
+          c.cryptocurrency,
+          c.prediction,
+          c.duration,
+          c.start_price as "startPrice",
+          c.end_price as "endPrice",
+          c.is_correct as "isCorrect",
+          c.target_time as "coinTargetTime",
+          c.coin_multiplier as "coinMultiplier"
+        FROM parlay_predictions p
+        LEFT JOIN users u ON p.user_id = u.id  
+        LEFT JOIN parlay_prediction_coins c ON p.id = c.parlay_id
+        ORDER BY p.created_at DESC, c.id ASC
+      `);
+      
+      console.log(`📊 [ADMIN-PARLAYS-DETAILED] Found ${detailedResult.rows.length} coin predictions across parlays`);
+      
+      // Process the data to make it more readable
+      const processedRows = detailedResult.rows.map((row: any) => ({
+        parlayId: row.parlayId,
+        userId: row.userId,
+        username: row.username || `User ${row.userId}`,
+        stakeAmount: row.stakeAmount,
+        totalMultiplier: row.totalMultiplier,
+        parlayStatus: row.parlayStatus,
+        rewardAmount: row.rewardAmount,
+        totalCoinCount: row.totalCoinCount,
+        correctPredictions: row.correctPredictions,
+        createdAt: row.createdAt,
+        
+        // Coin specific data
+        coinId: row.coinId,
+        cryptocurrency: row.cryptocurrency,
+        prediction: row.prediction,
+        duration: row.duration,
+        startPrice: row.startPrice,
+        endPrice: row.endPrice,
+        isCorrect: row.isCorrect,
+        coinTargetTime: row.coinTargetTime,
+        coinMultiplier: row.coinMultiplier,
+        
+        // Status indicators
+        coinStatus: row.isCorrect === null ? 'pending' : 
+                   row.isCorrect === true ? 'correct' : 'incorrect'
+      }));
+      
+      console.log(`✅ [ADMIN-PARLAYS-DETAILED] Processed ${processedRows.length} detailed rows`);
+      if (processedRows.length > 0) {
+        console.log(`📊 [ADMIN-PARLAYS-DETAILED] Sample detailed row:`, {
+          parlayId: processedRows[0].parlayId,
+          username: processedRows[0].username,
+          cryptocurrency: processedRows[0].cryptocurrency,
+          prediction: processedRows[0].prediction,
+          coinStatus: processedRows[0].coinStatus
+        });
+      }
+      
+      res.json(processedRows);
+    } catch (error) {
+      console.error("❌ [ADMIN-PARLAYS-DETAILED] Error fetching detailed parlay data:", error);
+      res.status(500).json({ message: "Failed to get detailed parlay data" });
+    }
+  });
+
   app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers(); // Get all users including admins for stats

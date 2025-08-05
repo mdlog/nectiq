@@ -331,9 +331,9 @@ export default function AdminPanel() {
     refetchInterval: 3000, // Update setiap 3 detik
   });
 
-  // Query untuk data parlay predictions - paksa enabled
+  // Query untuk data parlay predictions - gunakan detailed endpoint
   const { data: parlayData, isLoading: parlayLoading, refetch: refetchParlays } = useQuery({
-    queryKey: ["/api/admin/parlays"],
+    queryKey: ["/api/admin/parlays/detailed"],
     refetchInterval: 15000, // Lebih sering
     enabled: true, // Paksa aktif
     staleTime: 0, // Tidak ada cache
@@ -342,13 +342,13 @@ export default function AdminPanel() {
 
   // Debug: Tambahkan effect untuk debug parlay data
   useEffect(() => {
-    console.log('🔍 [PARLAY-DEBUG] Query state:', { 
+    console.log('🔍 [PARLAY-DETAILED-DEBUG] Query state:', { 
       parlayData, 
       parlayLoading, 
       dataLength: parlayData?.length 
     });
     if (parlayData) {
-      console.log('📊 [PARLAY-DEBUG] Sample parlay data:', parlayData[0]);
+      console.log('📊 [PARLAY-DETAILED-DEBUG] Sample detailed data:', parlayData[0]);
     }
   }, [parlayData, parlayLoading]);
 
@@ -1898,57 +1898,81 @@ export default function AdminPanel() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>ID</TableHead>
+                        <TableHead>Parlay ID</TableHead>
                         <TableHead>User</TableHead>
-                        <TableHead>Predictions</TableHead>
-                        <TableHead>Stake</TableHead>
-                        <TableHead>Multiplier</TableHead>
+                        <TableHead>Cryptocurrency</TableHead>
+                        <TableHead>Prediction</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Start Price</TableHead>
+                        <TableHead>End Price</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Potential/Actual Reward</TableHead>
+                        <TableHead>Coin Result</TableHead>
+                        <TableHead>Stake Amount</TableHead>
                         <TableHead>Created</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {parlayData.slice(0, 20).map((parlay: any) => (
-                        <TableRow key={parlay.id}>
-                          <TableCell>{parlay.id}</TableCell>
+                      {parlayData.slice(0, 50).map((coin: any) => (
+                        <TableRow key={`${coin.parlayId}-${coin.coinId}`}>
+                          <TableCell>
+                            <div className="font-medium text-white">#{coin.parlayId}</div>
+                            <div className="text-xs text-slate-400">
+                              {coin.correctPredictions}/{coin.totalCoinCount} correct
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <div className="font-medium text-white">
-                              {parlay.username || `User ${parlay.userId}`}
+                              {coin.username || `User ${coin.userId}`}
                             </div>
-                            <div className="text-xs text-slate-400">ID: {parlay.userId}</div>
+                            <div className="text-xs text-slate-400">ID: {coin.userId}</div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-xs">
-                              <div className="font-medium text-white">{parlay.predictionCount} coins</div>
-                              <div className="text-slate-400">
-                                {parlay.result === 'completed' ? 
-                                  `${parlay.correctPredictions}/${parlay.predictionCount} correct` : 
-                                  'In progress'
-                                }
-                              </div>
+                            <div className="font-medium text-white capitalize">
+                              {coin.cryptocurrency || 'Unknown'}
                             </div>
                           </TableCell>
-                          <TableCell>{parlay.stakeAmount} NTIQ</TableCell>
                           <TableCell>
-                            <Badge variant="secondary">{parlay.multiplier}x</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              parlay.status === 'completed' ? 'default' : 
-                              parlay.status === 'active' ? 'secondary' : 'outline'
-                            }>
-                              {parlay.status}
+                            <Badge variant={coin.prediction === 'up' ? 'default' : 'destructive'}>
+                              {coin.prediction?.toUpperCase() || 'N/A'}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {parlay.rewardAmount ? 
-                              <span className="text-green-400 font-semibold">{parlay.rewardAmount} NTIQ</span> :
-                              <span className="text-slate-400">{Math.round(parlay.stakeAmount * parlay.multiplier)} NTIQ</span>
-                            }
+                            <span className="text-slate-300">{coin.duration || 'N/A'}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-blue-400 font-mono">
+                              ${coin.startPrice ? parseFloat(coin.startPrice).toFixed(4) : '0.0000'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-green-400 font-mono">
+                              {coin.endPrice ? `$${parseFloat(coin.endPrice).toFixed(4)}` : 'Pending'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              coin.parlayStatus === 'completed' ? 'default' : 
+                              coin.parlayStatus === 'active' ? 'secondary' : 'outline'
+                            }>
+                              {coin.parlayStatus}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              coin.coinStatus === 'correct' ? 'default' : 
+                              coin.coinStatus === 'incorrect' ? 'destructive' : 'outline'
+                            }>
+                              {coin.coinStatus === 'correct' ? '✓ Correct' : 
+                               coin.coinStatus === 'incorrect' ? '✗ Wrong' : '⏳ Pending'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-yellow-400 font-semibold">
+                              {coin.stakeAmount} NTIQ
+                            </span>
                           </TableCell>
                           <TableCell className="text-xs text-slate-400">
-                            {new Date(parlay.createdAt).toLocaleDateString()}
+                            {new Date(coin.createdAt).toLocaleDateString()}
                           </TableCell>
                         </TableRow>
                       ))}
