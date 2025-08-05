@@ -8,7 +8,7 @@ export const users: any = pgTable("users", {
   uid: varchar("uid", { length: 9 }).notNull().unique(),
   username: text("username").notNull().unique(),
   password: text("password"),
-  walletAddress: text("wallet_address"),
+  walletAddress: text("wallet_address").unique(),
   authMethod: varchar("auth_method", { length: 20 }).notNull().default("password"), // "password" or "wallet"
   isAdmin: boolean("is_admin").notNull().default(false),
   balance: integer("balance").notNull().default(1000),
