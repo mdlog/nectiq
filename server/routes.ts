@@ -3399,24 +3399,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes - protected by wallet-based authentication
   app.get("/api/admin/parlays", requireAdmin, async (req, res) => {
     try {
-      const parlays = await storage.getAllParlayPredictions();
-      
-      // Enrich parlay data with user information and prediction counts
+      // Direct database query to bypass storage method issues
+      const parlaysWithUsers = await db
+        .select({
+          id: parlayPredictions.id,
+          userId: parlayPredictions.userId,
+          stakeAmount: parlayPredictions.stakeAmount,
+          targetTime: parlayPredictions.targetTime,
+          duration: parlayPredictions.duration,
+          totalMultiplier: parlayPredictions.totalMultiplier,
+          status: parlayPredictions.status,
+          completedAt: parlayPredictions.completedAt,
+          createdAt: parlayPredictions.createdAt,
+          rewardAmount: parlayPredictions.rewardAmount,
+          totalCoinCount: parlayPredictions.totalCoinCount,
+          correctPredictions: parlayPredictions.correctPredictions,
+          username: users.username,
+          uid: users.uid,
+        })
+        .from(parlayPredictions)
+        .leftJoin(users, eq(parlayPredictions.userId, users.id))
+        .orderBy(desc(parlayPredictions.createdAt));
+
+      // Get coins for each parlay
       const enrichedParlays = await Promise.all(
-        parlays.map(async (parlay: any) => {
-          const user = await storage.getUserById(parlay.userId);
-          const coins = await storage.getParlayCoins(parlay.id);
-          
-          let correctPredictions = 0;
-          coins.forEach((coin: any) => {
-            if (coin.isCorrect === true) correctPredictions++;
-          });
+        parlaysWithUsers.map(async (parlay: any) => {
+          const coins = await db
+            .select()
+            .from(parlayPredictionCoins)
+            .where(eq(parlayPredictionCoins.parlayId, parlay.id));
           
           return {
             ...parlay,
-            username: user?.username,
-            predictionCount: coins.length,
-            correctPredictions
+            coins,
+            predictionCount: coins.length
           };
         })
       );
