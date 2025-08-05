@@ -3399,47 +3399,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes - protected by wallet-based authentication
   app.get("/api/admin/parlays", requireAdmin, async (req, res) => {
     try {
-      // Direct database query to bypass storage method issues
-      const parlaysWithUsers = await db
-        .select({
-          id: parlayPredictions.id,
-          userId: parlayPredictions.userId,
-          stakeAmount: parlayPredictions.stakeAmount,
-          targetTime: parlayPredictions.targetTime,
-          duration: parlayPredictions.duration,
-          totalMultiplier: parlayPredictions.totalMultiplier,
-          status: parlayPredictions.status,
-          completedAt: parlayPredictions.completedAt,
-          createdAt: parlayPredictions.createdAt,
-          rewardAmount: parlayPredictions.rewardAmount,
-          totalCoinCount: parlayPredictions.totalCoinCount,
-          correctPredictions: parlayPredictions.correctPredictions,
-          username: users.username,
-          uid: users.uid,
-        })
-        .from(parlayPredictions)
-        .leftJoin(users, eq(parlayPredictions.userId, users.id))
-        .orderBy(desc(parlayPredictions.createdAt));
+      console.log("🔍 [ADMIN-PARLAYS] Endpoint accessed successfully");
+      
+      // Use raw SQL to match database schema (snake_case columns)
+      const parlaysResult = await db.execute(sql`
+        SELECT 
+          p.id,
+          p.user_id as "userId",
+          p.stake_amount as "stakeAmount", 
+          p.target_time as "targetTime",
+          p.duration,
+          p.total_multiplier as "totalMultiplier",
+          p.status,
+          p.completed_at as "completedAt",
+          p.created_at as "createdAt",
+          p.reward_amount as "rewardAmount",
+          p.total_coin_count as "totalCoinCount",
+          p.correct_predictions as "correctPredictions",
+          u.username,
+          u.uid
+        FROM parlay_predictions p
+        LEFT JOIN users u ON p.user_id = u.id  
+        ORDER BY p.created_at DESC
+      `);
+      
+      console.log(`📊 [ADMIN-PARLAYS] Found ${parlaysResult.rows.length} parlay predictions`);
 
       // Get coins for each parlay
       const enrichedParlays = await Promise.all(
-        parlaysWithUsers.map(async (parlay: any) => {
-          const coins = await db
-            .select()
-            .from(parlayPredictionCoins)
-            .where(eq(parlayPredictionCoins.parlayId, parlay.id));
+        parlaysResult.rows.map(async (parlay: any) => {
+          const coinsResult = await db.execute(sql`
+            SELECT * FROM parlay_prediction_coins 
+            WHERE parlay_id = ${parlay.id}
+          `);
           
           return {
             ...parlay,
-            coins,
-            predictionCount: coins.length
+            coins: coinsResult.rows,
+            predictionCount: coinsResult.rows.length
           };
         })
       );
       
+      console.log(`✅ [ADMIN-PARLAYS] Enriched ${enrichedParlays.length} parlays with coin data`);
+      if (enrichedParlays.length > 0) {
+        console.log(`📊 [ADMIN-PARLAYS] Sample parlay:`, {
+          id: enrichedParlays[0].id,
+          username: enrichedParlays[0].username,
+          stakeAmount: enrichedParlays[0].stakeAmount,
+          predictionCount: enrichedParlays[0].predictionCount
+        });
+      }
+      
       res.json(enrichedParlays);
     } catch (error) {
-      console.error("Error fetching admin parlays:", error);
+      console.error("❌ [ADMIN-PARLAYS] Error fetching admin parlays:", error);
       res.status(500).json({ message: "Failed to get parlay data" });
     }
   });
