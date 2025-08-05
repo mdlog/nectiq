@@ -1211,24 +1211,12 @@ export class DatabaseStorage implements IStorage {
       console.log(`🔍 [STORAGE] Getting reward history for user ${userId}, limit: ${limit}`);
       
       // Get recent prediction results (completed predictions)
-      const recentPredictions = await db.select({
-        id: predictions.id,
-        userId: predictions.userId,
-        cryptocurrency: predictions.cryptocurrency,
-        predictedPrice: predictions.predictedPrice,
-        actualPrice: predictions.actualPrice,
-        stakeAmount: predictions.stakeAmount,
-        rewardAmount: predictions.rewardAmount,
-        accuracy: predictions.accuracy,
-        completed: predictions.completed,
-        completedAt: predictions.completedAt,
-        createdAt: predictions.createdAt
-      })
+      const recentPredictions = await db.select()
       .from(predictions)
       .where(
         and(
           eq(predictions.userId, userId),
-          eq(predictions.completed, true)
+          eq(predictions.status, 'completed')
         )
       )
       .orderBy(desc(predictions.completedAt))
