@@ -331,11 +331,26 @@ export default function AdminPanel() {
     refetchInterval: 3000, // Update setiap 3 detik
   });
 
-  // Query untuk data parlay predictions
-  const { data: parlayData, isLoading: parlayLoading } = useQuery({
+  // Query untuk data parlay predictions - paksa enabled
+  const { data: parlayData, isLoading: parlayLoading, refetch: refetchParlays } = useQuery({
     queryKey: ["/api/admin/parlays"],
-    refetchInterval: 30000,
+    refetchInterval: 15000, // Lebih sering
+    enabled: true, // Paksa aktif
+    staleTime: 0, // Tidak ada cache
+    gcTime: 0, // Tidak ada cache 
   });
+
+  // Debug: Tambahkan effect untuk debug parlay data
+  useEffect(() => {
+    console.log('🔍 [PARLAY-DEBUG] Query state:', { 
+      parlayData, 
+      parlayLoading, 
+      dataLength: parlayData?.length 
+    });
+    if (parlayData) {
+      console.log('📊 [PARLAY-DEBUG] Sample parlay data:', parlayData[0]);
+    }
+  }, [parlayData, parlayLoading]);
 
   // Mutations for admin actions
   const addUserMutation = useMutation({
