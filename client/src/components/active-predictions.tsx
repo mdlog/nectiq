@@ -304,7 +304,7 @@ export function ActivePredictions() {
                     <div>
                       <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
                       <p className="text-xs text-slate-400">
-                        {isExpired ? "Expired" : <CountdownTimer timeLeft={prediction.timeLeft} format="compact" />}
+                        {isExpired ? "Expired" : <CountdownTimer timeLeft={prediction.timeLeft} predictionId={prediction.id} format="compact" />}
                       </p>
                     </div>
                   </div>
