@@ -3397,6 +3397,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes - protected by wallet-based authentication
+  app.get("/api/admin/parlays", requireAdmin, async (req, res) => {
+    try {
+      const parlays = await storage.getAllParlayPredictions();
+      
+      // Enrich parlay data with user information and prediction counts
+      const enrichedParlays = await Promise.all(
+        parlays.map(async (parlay: any) => {
+          const user = await storage.getUserById(parlay.userId);
+          const coins = await storage.getParlayCoins(parlay.id);
+          
+          let correctPredictions = 0;
+          coins.forEach((coin: any) => {
+            if (coin.isCorrect === true) correctPredictions++;
+          });
+          
+          return {
+            ...parlay,
+            username: user?.username,
+            predictionCount: coins.length,
+            correctPredictions
+          };
+        })
+      );
+      
+      res.json(enrichedParlays);
+    } catch (error) {
+      console.error("Error fetching admin parlays:", error);
+      res.status(500).json({ message: "Failed to get parlay data" });
+    }
+  });
+
   app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers(); // Get all users including admins for stats

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
-import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ChevronLeft, ChevronRight, Copy, KeyRound } from "lucide-react";
+import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ChevronLeft, ChevronRight, Copy, KeyRound, Target, Gamepad2, Layers } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -173,6 +173,7 @@ export default function AdminPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("statistics");
+  const [predictionSubTab, setPredictionSubTab] = useState("predictions");
   
   // Web3 hooks
   const { isConnected, address, chain } = useAccount();
@@ -328,6 +329,12 @@ export default function AdminPanel() {
   const { data: cryptoPrices } = useQuery({
     queryKey: ["/api/crypto/pyth-prices"],
     refetchInterval: 3000, // Update setiap 3 detik
+  });
+
+  // Query untuk data parlay predictions
+  const { data: parlayData, isLoading: parlayLoading } = useQuery({
+    queryKey: ["/api/admin/parlays"],
+    refetchInterval: 30000,
   });
 
   // Mutations for admin actions
@@ -1653,74 +1660,110 @@ export default function AdminPanel() {
 
           {/* Predictions Tab */}
           <TabsContent value="predictions" className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <TrendingUp className="mr-2" size={20} />
-                    All Predictions ({filteredPredictions?.length || 0})
-                  </div>
-                  <Button onClick={exportPredictions} variant="outline" size="sm">
-                    <Download className="mr-2" size={16} />
-                    Export CSV
-                  </Button>
-                </CardTitle>
-                
-                {/* Filters */}
-                <div className="mt-4 flex gap-4">
-                  <div>
-                    <Label className="text-white">Status Filter</Label>
-                    <Select value={filterStatus} onValueChange={setFilterStatus}>
-                      <SelectTrigger className="w-40 bg-slate-700 border-slate-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-700 border-slate-600">
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="expired">Expired</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-white">Timeframe Filter</Label>
-                    <Select value={filterTimeframe} onValueChange={setFilterTimeframe}>
-                      <SelectTrigger className="w-40 bg-slate-700 border-slate-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-700 border-slate-600">
-                        <SelectItem value="all">All Timeframes</SelectItem>
-                        <SelectItem value="1h">1 Hour</SelectItem>
-                        <SelectItem value="6h">6 Hours</SelectItem>
-                        <SelectItem value="24h">24 Hours</SelectItem>
-                        <SelectItem value="7d">7 Days</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {predictionsLoading ? (
-                  <div className="text-center py-8">
-                    <div className="text-slate-400">Loading predictions...</div>
-                  </div>
-                ) : filteredPredictions && filteredPredictions.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead>Crypto</TableHead>
-                        <TableHead>Predicted Price</TableHead>
-                        <TableHead>Actual Price</TableHead>
-                        <TableHead>Timeframe</TableHead>
-                        <TableHead>Stake</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Reward</TableHead>
-                        <TableHead>Created</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+            {/* Sub-navigation for Prediction Types */}
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-2">
+              <Tabs value={predictionSubTab} onValueChange={setPredictionSubTab} className="w-full">
+                <TabsList className="bg-transparent w-full grid grid-cols-4 gap-2 h-auto p-0">
+                  <TabsTrigger 
+                    value="predictions" 
+                    className="flex-col h-16 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                  >
+                    <TrendingUp className="h-5 w-5 mb-1" />
+                    Predictions
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="battles" 
+                    className="flex-col h-16 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                  >
+                    <Swords className="h-5 w-5 mb-1" />
+                    Battles
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="parlays" 
+                    className="flex-col h-16 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                  >
+                    <Layers className="h-5 w-5 mb-1" />
+                    Parlays
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="survival" 
+                    className="flex-col h-16 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                  >
+                    <Target className="h-5 w-5 mb-1" />
+                    Survival
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Regular Predictions Sub-Tab */}
+                <TabsContent value="predictions" className="mt-6">
+                  <Card className="bg-slate-800 border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <TrendingUp className="mr-2" size={20} />
+                          Regular Predictions ({filteredPredictions?.length || 0})
+                        </div>
+                        <Button onClick={exportPredictions} variant="outline" size="sm">
+                          <Download className="mr-2" size={16} />
+                          Export CSV
+                        </Button>
+                      </CardTitle>
+                      
+                      {/* Filters */}
+                      <div className="mt-4 flex gap-4">
+                        <div>
+                          <Label className="text-white">Status Filter</Label>
+                          <Select value={filterStatus} onValueChange={setFilterStatus}>
+                            <SelectTrigger className="w-40 bg-slate-700 border-slate-600 text-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-700 border-slate-600">
+                              <SelectItem value="all">All Status</SelectItem>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="expired">Expired</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-white">Timeframe Filter</Label>
+                          <Select value={filterTimeframe} onValueChange={setFilterTimeframe}>
+                            <SelectTrigger className="w-40 bg-slate-700 border-slate-600 text-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-700 border-slate-600">
+                              <SelectItem value="all">All Timeframes</SelectItem>
+                              <SelectItem value="1h">1 Hour</SelectItem>
+                              <SelectItem value="6h">6 Hours</SelectItem>
+                              <SelectItem value="24h">24 Hours</SelectItem>
+                              <SelectItem value="7d">7 Days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {predictionsLoading ? (
+                        <div className="text-center py-8">
+                          <div className="text-slate-400">Loading predictions...</div>
+                        </div>
+                      ) : filteredPredictions && filteredPredictions.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>ID</TableHead>
+                              <TableHead>User</TableHead>
+                              <TableHead>Crypto</TableHead>
+                              <TableHead>Predicted Price</TableHead>
+                              <TableHead>Actual Price</TableHead>
+                              <TableHead>Timeframe</TableHead>
+                              <TableHead>Stake</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Reward</TableHead>
+                              <TableHead>Created</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
                       {filteredPredictions.slice(0, 20).map((prediction) => (
                         <TableRow key={prediction.id}>
                           <TableCell>{prediction.id}</TableCell>
@@ -1791,7 +1834,152 @@ export default function AdminPanel() {
             </Card>
           </TabsContent>
 
-          {/* Leaderboard Tab */}
+          {/* Battles Sub-Tab */}
+          <TabsContent value="battles" className="mt-6">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Swords className="mr-2" size={20} />
+                    Prediction Battles (0)
+                  </div>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2" size={16} />
+                    Export CSV
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Swords className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-300 mb-2">No Battles Yet</h3>
+                  <p className="text-slate-400">Prediction battles will appear here when users start challenging each other</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Parlays Sub-Tab */}
+          <TabsContent value="parlays" className="mt-6">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Layers className="mr-2" size={20} />
+                    Parlay Predictions ({parlayData?.length || 0})
+                  </div>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2" size={16} />
+                    Export CSV
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {parlayLoading ? (
+                  <div className="text-center py-8">
+                    <div className="text-slate-400">Loading parlay predictions...</div>
+                  </div>
+                ) : parlayData && parlayData.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead>Predictions</TableHead>
+                        <TableHead>Stake</TableHead>
+                        <TableHead>Multiplier</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Potential/Actual Reward</TableHead>
+                        <TableHead>Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {parlayData.slice(0, 20).map((parlay: any) => (
+                        <TableRow key={parlay.id}>
+                          <TableCell>{parlay.id}</TableCell>
+                          <TableCell>
+                            <div className="font-medium text-white">
+                              {parlay.username || `User ${parlay.userId}`}
+                            </div>
+                            <div className="text-xs text-slate-400">ID: {parlay.userId}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-xs">
+                              <div className="font-medium text-white">{parlay.predictionCount} coins</div>
+                              <div className="text-slate-400">
+                                {parlay.result === 'completed' ? 
+                                  `${parlay.correctPredictions}/${parlay.predictionCount} correct` : 
+                                  'In progress'
+                                }
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{parlay.stakeAmount} NTIQ</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{parlay.multiplier}x</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              parlay.status === 'completed' ? 'default' : 
+                              parlay.status === 'active' ? 'secondary' : 'outline'
+                            }>
+                              {parlay.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {parlay.rewardAmount ? 
+                              <span className="text-green-400 font-semibold">{parlay.rewardAmount} NTIQ</span> :
+                              <span className="text-slate-400">{Math.round(parlay.stakeAmount * parlay.multiplier)} NTIQ</span>
+                            }
+                          </TableCell>
+                          <TableCell className="text-xs text-slate-400">
+                            {new Date(parlay.createdAt).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8">
+                    <Layers className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-300 mb-2">No Parlays</h3>
+                    <p className="text-slate-400">Parlay predictions will appear here when users create them</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Survival Sub-Tab */}
+          <TabsContent value="survival" className="mt-6">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Target className="mr-2" size={20} />
+                    Survival Tournaments (0)
+                  </div>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2" size={16} />
+                    Export CSV
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-300 mb-2">No Tournaments</h3>
+                  <p className="text-slate-400">Survival tournaments will appear here when they are active</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+        </Tabs>
+      </div>
+    </TabsContent>
+
+    {/* Leaderboard Tab */}
           <TabsContent value="leaderboard" className="space-y-6">
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>

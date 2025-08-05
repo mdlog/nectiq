@@ -4200,6 +4200,7 @@ export class MemStorage implements IStorage {
         targetTime: parlayPredictions.targetTime,
         duration: parlayPredictions.duration,
         totalMultiplier: parlayPredictions.totalMultiplier,
+        multiplier: parlayPredictions.totalMultiplier, // Alias for frontend compatibility
         status: parlayPredictions.status,
         completedAt: parlayPredictions.completedAt,
         createdAt: parlayPredictions.createdAt,
@@ -4213,16 +4214,25 @@ export class MemStorage implements IStorage {
       .leftJoin(users, eq(parlayPredictions.userId, users.id))
       .orderBy(desc(parlayPredictions.createdAt));
 
-    // Get coins for each parlay
+    // Get coins for each parlay and add predictionCount
     for (const parlay of result) {
       const coins = await db
         .select()
         .from(parlayPredictionCoins)
         .where(eq(parlayPredictionCoins.parlayId, parlay.id));
       (parlay as any).coins = coins;
+      (parlay as any).predictionCount = coins.length;
     }
 
     return result;
+  }
+
+  async getParlayCoins(parlayId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(parlayPredictionCoins)
+      .where(eq(parlayPredictionCoins.parlayId, parlayId))
+      .orderBy(parlayPredictionCoins.createdAt);
   }
 
   async getParlayPrediction(id: number): Promise<any> {
