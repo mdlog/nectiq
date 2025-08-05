@@ -215,6 +215,8 @@ export interface IStorage {
   createParlayPredictionCoin(coin: InsertParlayPredictionCoin): Promise<ParlayPredictionCoin>;
   getUserParlayPredictions(userId: number): Promise<any[]>;
   getAllParlayPredictions(): Promise<any[]>;
+  getParlayCoins(parlayId: number): Promise<any[]>;
+  getAllParlayPredictions(): Promise<any[]>;
   getParlayPrediction(id: number): Promise<any>;
   updateParlayPredictionResult(id: number, status: string, rewardAmount: number, correctPredictions: number): Promise<void>;
   getActiveParlayPredictions(): Promise<any[]>;
