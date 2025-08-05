@@ -2067,7 +2067,7 @@ export default function AdminPanel() {
                   <div className="text-center py-8">
                     <div className="text-slate-400">Loading leaderboard...</div>
                   </div>
-                ) : leaderboardData && (leaderboardData as any).users && (leaderboardData as any).users.length > 0 ? (
+                ) : leaderboardData && Array.isArray(leaderboardData) && leaderboardData.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -2076,11 +2076,12 @@ export default function AdminPanel() {
                         <TableHead>Accuracy</TableHead>
                         <TableHead>Total Rewards</TableHead>
                         <TableHead>Predictions</TableHead>
-                        <TableHead>Streak</TableHead>
+                        <TableHead>Battles</TableHead>
+                        <TableHead>Survival</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {((leaderboardData as any).users || []).slice(0, 10).map((user: any, index: number) => (
+                      {(leaderboardData as any[]).slice(0, 10).map((user: any, index: number) => (
                         <TableRow key={user.id}>
                           <TableCell>
                             <div className="flex items-center">
@@ -2096,11 +2097,49 @@ export default function AdminPanel() {
                               {user.accuracy ? `${user.accuracy.toFixed(1)}%` : '0%'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{user.totalRewards || 0} NTIQ</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="font-semibold text-yellow-400">
+                                {user.totalRewards || 0} NTIQ
+                              </div>
+                              <div className="text-xs space-y-1">
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400">Regular:</span>
+                                  <span className="text-green-400">
+                                    {Math.max(0, (user.totalRewards || 0) - (user.battleRewards || 0) - (user.survivalRewards || 0))} NTIQ
+                                  </span>
+                                </div>
+                                {(user.battleRewards && user.battleRewards > 0) && (
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400">Battle:</span>
+                                    <span className="text-blue-400">{user.battleRewards} NTIQ</span>
+                                  </div>
+                                )}
+                                {(user.survivalRewards && user.survivalRewards > 0) && (
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400">Survival:</span>
+                                    <span className="text-purple-400">{user.survivalRewards} NTIQ</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
                           <TableCell>{user.totalPredictions || 0}</TableCell>
                           <TableCell>
-                            {user.currentStreak >= 5 ? "🔥" : user.accuracy >= 90 ? "⭐" : ""} 
-                            {user.currentStreak || 0}
+                            <div className="text-center">
+                              <div className="text-sm font-medium">{user.wonBattles || 0}/{user.totalBattles || 0}</div>
+                              <div className="text-xs text-slate-400">
+                                {user.totalBattles > 0 ? `${((user.wonBattles || 0) / user.totalBattles * 100).toFixed(1)}%` : '0%'}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-center">
+                              <div className="text-sm font-medium">{user.wonSurvivalTournaments || 0}/{user.totalSurvivalTournaments || 0}</div>
+                              <div className="text-xs text-slate-400">
+                                {user.totalSurvivalTournaments > 0 ? `${((user.wonSurvivalTournaments || 0) / user.totalSurvivalTournaments * 100).toFixed(1)}%` : '0%'}
+                              </div>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
