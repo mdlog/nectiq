@@ -912,6 +912,125 @@ export default function AdminPanel() {
     toast({ title: "Successfully", description: "Predictions exported successfully" });
   };
 
+  // Export Parlay Predictions CSV
+  const exportParlayPredictions = () => {
+    if (!parlayDetailedData) return;
+    const csvContent = [
+      ["Parlay ID", "User", "Cryptocurrency", "Prediction", "Duration", "Start Price", "End Price", "Status", "Stake Amount", "Multiplier", "Target Time", "Created At"].join(","),
+      ...parlayDetailedData.map(parlay => [
+        parlay.parlayId,
+        parlay.username,
+        parlay.cryptocurrency,
+        parlay.prediction,
+        parlay.duration,
+        parlay.startPrice || "N/A",
+        parlay.endPrice || "N/A",
+        parlay.coinStatus,
+        parlay.stakeAmount,
+        parlay.coinMultiplier,
+        parlay.coinTargetTime,
+        new Date(parlay.createdAt).toLocaleDateString()
+      ].join(","))
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "parlay_predictions_export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Successfully", description: "Parlay predictions exported successfully" });
+  };
+
+  // Export Transactions CSV
+  const exportTransactions = () => {
+    if (!transactionsData) return;
+    const csvContent = [
+      ["ID", "User", "Type", "Amount", "USD Amount", "Net Amount", "Fee", "Status", "Token", "Address", "Hash", "Created At"].join(","),
+      ...transactionsData.map(tx => [
+        tx.id,
+        tx.username || "N/A",
+        tx.type,
+        tx.amount,
+        tx.usdAmount || "N/A",
+        tx.netAmount || "N/A",
+        tx.feeAmount || "N/A",
+        tx.status,
+        tx.token,
+        tx.toAddress || "N/A",
+        tx.hash || "N/A",
+        new Date(tx.createdAt).toLocaleDateString()
+      ].join(","))
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "transactions_export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Successfully", description: "Transactions exported successfully" });
+  };
+
+  // Export Cryptocurrencies CSV
+  const exportCryptocurrencies = () => {
+    if (!cryptocurrenciesData) return;
+    const csvContent = [
+      ["ID", "Name", "Symbol", "Image URL", "Pyth Feed ID"].join(","),
+      ...cryptocurrenciesData.map(crypto => [
+        crypto.id,
+        crypto.name,
+        crypto.symbol,
+        crypto.image,
+        crypto.pythFeedId || "N/A"
+      ].join(","))
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "cryptocurrencies_export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Successfully", description: "Cryptocurrencies exported successfully" });
+  };
+
+  // Export Leaderboard CSV
+  const exportLeaderboard = () => {
+    if (!leaderboardData || !Array.isArray(leaderboardData)) return;
+    const csvContent = [
+      ["Rank", "Username", "Total Predictions", "Accuracy", "Total Rewards", "Regular Rewards", "Battle Rewards", "Survival Rewards", "Total Battles", "Won Battles", "Battle Win Rate", "Total Survival", "Won Survival", "Survival Win Rate"].join(","),
+      ...leaderboardData.map((user, index) => [
+        index + 1,
+        user.username,
+        user.totalPredictions || 0,
+        user.accuracy ? `${user.accuracy.toFixed(1)}%` : "0%",
+        user.totalRewards || 0,
+        Math.max(0, (user.totalRewards || 0) - (user.battleRewards || 0) - (user.survivalRewards || 0)),
+        user.battleRewards || 0,
+        user.survivalRewards || 0,
+        user.totalBattles || 0,
+        user.wonBattles || 0,
+        user.totalBattles > 0 ? `${((user.wonBattles || 0) / user.totalBattles * 100).toFixed(1)}%` : "0%",
+        user.totalSurvivalTournaments || 0,
+        user.wonSurvivalTournaments || 0,
+        user.totalSurvivalTournaments > 0 ? `${((user.wonSurvivalTournaments || 0) / user.totalSurvivalTournaments * 100).toFixed(1)}%` : "0%"
+      ].join(","))
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "leaderboard_export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Successfully", description: "Leaderboard exported successfully" });
+  };
+
   // ✨ Real-time hash monitoring system
   useEffect(() => {
     if (!transactionsData || !Array.isArray(transactionsData)) return;
@@ -1479,20 +1598,25 @@ export default function AdminPanel() {
                     <Database className="mr-2" size={20} />
                     Cryptocurrency Management ({cryptocurrencies?.length || 0})
                   </div>
-                  <Dialog open={showAddCrypto} onOpenChange={(open) => {
-                    setShowAddCrypto(open);
-                    if (!open) {
-                      // Reset form when dialog closes
-                      setNewCrypto({ id: "", name: "", symbol: "", image: "", pythFeedId: "" });
-                      setFetchedLogoUrl("");
-                    }
-                  }}>
-                    <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        <Plus className="mr-2" size={16} />
-                        Add New Cryptocurrency
-                      </Button>
-                    </DialogTrigger>
+                  <div className="flex gap-2">
+                    <Button onClick={exportCryptocurrencies} variant="outline" size="sm">
+                      <Download className="mr-2" size={16} />
+                      Export CSV
+                    </Button>
+                    <Dialog open={showAddCrypto} onOpenChange={(open) => {
+                      setShowAddCrypto(open);
+                      if (!open) {
+                        // Reset form when dialog closes
+                        setNewCrypto({ id: "", name: "", symbol: "", image: "", pythFeedId: "" });
+                        setFetchedLogoUrl("");
+                      }
+                    }}>
+                      <DialogTrigger asChild>
+                        <Button className="bg-blue-600 hover:bg-blue-700">
+                          <Plus className="mr-2" size={16} />
+                          Add New Cryptocurrency
+                        </Button>
+                      </DialogTrigger>
                     <DialogContent className="bg-slate-800 border-slate-700">
                       <DialogHeader>
                         <DialogTitle className="text-white">Add New Cryptocurrency</DialogTitle>
@@ -1608,6 +1732,7 @@ export default function AdminPanel() {
                       </div>
                     </DialogContent>
                   </Dialog>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1888,7 +2013,7 @@ export default function AdminPanel() {
                     <Swords className="mr-2" size={20} />
                     Prediction Battles (0)
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button onClick={() => {}} variant="outline" size="sm">
                     <Download className="mr-2" size={16} />
                     Export CSV
                   </Button>
@@ -1913,7 +2038,7 @@ export default function AdminPanel() {
                     <Layers className="mr-2" size={20} />
                     Parlay Predictions ({parlayData?.length || 0})
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button onClick={exportParlayPredictions} variant="outline" size="sm">
                     <Download className="mr-2" size={16} />
                     Export CSV
                   </Button>
@@ -2028,7 +2153,7 @@ export default function AdminPanel() {
                     <Target className="mr-2" size={20} />
                     Survival Tournaments (0)
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button onClick={() => {}} variant="outline" size="sm">
                     <Download className="mr-2" size={16} />
                     Export CSV
                   </Button>
@@ -2057,7 +2182,7 @@ export default function AdminPanel() {
                     <Trophy className="mr-2" size={20} />
                     Platform Leaderboard
                   </div>
-                  <Button variant="outline">
+                  <Button onClick={exportLeaderboard} variant="outline">
                     Export CSV
                   </Button>
                 </CardTitle>
@@ -2228,7 +2353,7 @@ export default function AdminPanel() {
                     Recent Transactions ({totalTransactions})
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button onClick={exportTransactions} variant="outline" size="sm">
                       <Download className="mr-2" size={16} />
                       Export
                     </Button>
