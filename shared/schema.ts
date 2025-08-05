@@ -832,6 +832,7 @@ export const parlayPredictions = pgTable("parlay_predictions", {
   targetTime: timestamp("target_time").notNull(),
   totalMultiplier: numeric("total_multiplier", { precision: 5, scale: 2 }).notNull().default("1.00"),
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, active, completed, failed
+  result: varchar("result", { length: 10 }), // win, lose
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   rewardAmount: integer("reward_amount").default(0),
