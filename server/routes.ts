@@ -3402,13 +3402,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("🔍 [ADMIN-PARLAYS] Endpoint accessed successfully");
       
       // Use raw SQL to match database schema (snake_case columns)
+      console.log("🔍 [ADMIN-PARLAYS] Executing main parlay query...");
       const parlaysResult = await db.execute(sql`
         SELECT 
           p.id,
           p.user_id as "userId",
           p.stake_amount as "stakeAmount", 
           p.target_time as "targetTime",
-          p.duration,
           p.total_multiplier as "totalMultiplier",
           p.status,
           p.completed_at as "completedAt",
@@ -3416,6 +3416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           p.reward_amount as "rewardAmount",
           p.total_coin_count as "totalCoinCount",
           p.correct_predictions as "correctPredictions",
+          p.result,
           u.username,
           u.uid
         FROM parlay_predictions p
@@ -3424,6 +3425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `);
       
       console.log(`📊 [ADMIN-PARLAYS] Found ${parlaysResult.rows.length} parlay predictions`);
+      console.log(`🔍 [ADMIN-PARLAYS] Sample parlay data:`, parlaysResult.rows[0]);
 
       // Get coins for each parlay
       const enrichedParlays = await Promise.all(
