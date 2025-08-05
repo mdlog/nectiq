@@ -1,7 +1,13 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import path from "path";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import dotenv from "dotenv";
 import { db } from "./db.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 import { predictions, users, cryptocurrencies } from "../shared/schema.js";
 import { eq, desc } from "drizzle-orm";
 
@@ -211,6 +217,9 @@ app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 // Serve static files from attached_assets
 app.use('/attached_assets', express.static('attached_assets'));
+
+// Serve uploaded files (profile photos, banners, etc.)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Simple rate limiting middleware - adjusted for development
 const rateLimitMap = new Map();

@@ -1568,8 +1568,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      // SECURITY: Prevent path traversal attacks
-      const sanitizedFileName = path.basename(fileName).replace(/[^a-zA-Z0-9.-]/g, '');
+      // SECURITY: Prevent path traversal attacks but keep underscores
+      const sanitizedFileName = path.basename(fileName).replace(/[^a-zA-Z0-9._-]/g, '');
       if (!sanitizedFileName || sanitizedFileName.startsWith('.')) {
         return res.status(400).json({ 
           success: false, 
@@ -1590,8 +1590,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       fs.writeFileSync(fullPath, req.file.buffer);
 
-      // Update user profile photo in database
-      await storage.updateProfilePhoto(session.userId, filePath);
+      // Update user profile photo in database with the correct path
+      const profilePhotoUrl = `/uploads/${sanitizedFileName}`;
+      await storage.updateProfilePhoto(session.userId, profilePhotoUrl);
+
+      console.log('📷 [PROFILE-UPLOAD] File saved:', {
+        originalName: req.file.originalname,
+        savedAs: sanitizedFileName,
+        fullPath,
+        profilePhotoUrl,
+        userId: session.userId
+      });
 
       // Get updated user data
       const updatedUser = await storage.getUser(session.userId);
@@ -1605,7 +1614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         message: "Profile photo updated successfully",
-        profilePhoto: filePath,
+        profilePhoto: profilePhotoUrl,
         user: updatedUser 
       });
     } catch (error) {
