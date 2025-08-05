@@ -33,6 +33,7 @@ import { storage } from "./storage";
 import { DepositMonitorService } from "./services/depositMonitorService.js";
 import { withdrawalMonitorService } from "./services/withdrawalMonitorService.js";
 import { initializeDepositExpiryService } from "./services/deposit-expiry-service";
+import { ParlayProcessorService } from "./services/parlayProcessorService.js";
 
 const app = express();
 
@@ -319,6 +320,27 @@ try {
   console.log('✅ Withdrawal hash detection system started successfully');
 } catch (error) {
   console.error('❌ Failed to initialize withdrawal hash detection service:', error);
+}
+
+// Initialize Parlay Processor Service for automatic parlay completion
+try {
+  console.log('🔧 Initializing Parlay Processor Service...');
+  const parlayProcessorService = new ParlayProcessorService();
+  
+  // Start periodic processing every 30 seconds
+  setInterval(async () => {
+    try {
+      await parlayProcessorService.processExpiredParlayPredictions();
+    } catch (error) {
+      console.error('❌ [PARLAY-PROCESSOR] Periodic processing error:', error);
+    }
+  }, 30000); // 30 seconds
+  
+  // Run initial processing
+  await parlayProcessorService.processExpiredParlayPredictions();
+  console.log('✅ Parlay processor service started successfully - processing every 30 seconds');
+} catch (error) {
+  console.error('❌ Failed to initialize parlay processor service:', error);
 }
 
 (async () => {
