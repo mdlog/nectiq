@@ -145,6 +145,9 @@ interface User {
   totalPredictions: number;
   correctPredictions: number;
   totalRewards: number;
+  battleRewards?: number;
+  survivalRewards?: number;
+  uid?: string;
 }
 
 interface Prediction {
@@ -1377,7 +1380,34 @@ export default function AdminPanel() {
                             </Badge>
                           </TableCell>
                           <TableCell>{user.totalPredictions}</TableCell>
-                          <TableCell>{user.totalRewards} NTIQ</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="font-semibold text-yellow-400">
+                                {user.totalRewards} NTIQ
+                              </div>
+                              <div className="text-xs space-y-1">
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400">Regular:</span>
+                                  <span className="text-green-400">
+                                    {Math.max(0, user.totalRewards - (user.battleRewards || 0) - (user.survivalRewards || 0))} NTIQ
+                                  </span>
+                                </div>
+                                {(user.battleRewards && user.battleRewards > 0) && (
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400">Battle:</span>
+                                    <span className="text-blue-400">{user.battleRewards} NTIQ</span>
+                                  </div>
+                                )}
+                                {(user.survivalRewards && user.survivalRewards > 0) && (
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400">Survival:</span>
+                                    <span className="text-purple-400">{user.survivalRewards} NTIQ</span>
+                                  </div>
+                                )}
+                                {/* Note: Parlay rewards included in regular predictions */}
+                              </div>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
                               <Button
