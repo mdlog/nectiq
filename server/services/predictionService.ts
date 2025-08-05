@@ -68,6 +68,7 @@ export class PredictionService {
             // Also create reward record for backwards compatibility
             await storage.createReward({
               userId: prediction.userId,
+              cryptocurrency: prediction.cryptocurrency,
               predictionId: predictionId,
               amount: rewardAmount,
               description: `${prediction.cryptocurrency.toUpperCase()} Prediction Reward (${accuracy.toFixed(2)}% accuracy)`
@@ -104,38 +105,56 @@ export class PredictionService {
   }
 
   /**
-   * Calculate accuracy multiplier based on accuracy percentage:
+   * Calculate accuracy multiplier based on accuracy percentage (NEW SYSTEM):
    * - ≥ 99.5%: 3.0x multiplier
-   * - ≥ 98%: 2.5x multiplier  
-   * - ≥ 95%: 2.0x multiplier
-   * - ≥ 90%: 1.0x multiplier (minimal threshold for reward)
-   * - < 90%: 0x multiplier (no reward - below minimal accuracy)
+   * - ≥ 98%: 2.0x multiplier  
+   * - ≥ 95%: 1.5x multiplier
+   * - ≥ 90%: 0.9x multiplier (User rugi 10% stake, platform untung 10%)
+   * - < 90%: 0x multiplier (Stake hangus, platform untung 100%)
    */
   private calculateAccuracyMultiplier(accuracy: number): number {
     if (accuracy >= 99.5) {
       return 3.0; // Perfect prediction: 3x stake
     } else if (accuracy >= 98) {
-      return 2.5; // Excellent prediction: 2.5x stake
+      return 2.0; // Excellent prediction: 2x stake (was 2.5x)
     } else if (accuracy >= 95) {
-      return 2.0; // Great prediction: 2x stake
+      return 1.5; // Great prediction: 1.5x stake (was 2x)
     } else if (accuracy >= 90) {
-      return 1.0; // Good prediction: 1x stake (break-even)
+      return 0.9; // Good prediction: 0.9x stake (user rugi 10%, platform untung 10%)
     }
     
-    return 0; // Below minimal accuracy - no reward
+    return 0; // Below minimal accuracy - stake hangus (platform untung 100%)
   }
 
   /**
-   * Calculate reward based on accuracy percentage with new multipliers:
+   * Calculate reward based on accuracy percentage with NEW SYSTEM:
    * - ≥ 99.5%: 3.0x multiplier
-   * - ≥ 98%: 2.5x multiplier  
-   * - ≥ 95%: 2.0x multiplier
-   * - ≥ 90%: 1.0x multiplier (minimal threshold for reward)
-   * - < 90%: 0x multiplier (no reward - below minimal accuracy)
+   * - ≥ 98%: 2.0x multiplier  
+   * - ≥ 95%: 1.5x multiplier
+   * - ≥ 90%: 0.9x multiplier (User rugi 10% stake, platform untung 10%)
+   * - < 90%: 0x multiplier (Stake hangus, platform untung 100%)
+   * 
+   * Fee dari Winnings: Untuk reward 1.5x, 2.0x, 3.0x - ambil 3-5% dari reward
+   * Untuk 0.9x multiplier: fee sudah tercakup dalam loss 10%
    */
   private calculateReward(stakeAmount: number, accuracy: number): number {
     const multiplier = this.calculateAccuracyMultiplier(accuracy);
-    return Math.floor(stakeAmount * multiplier);
+    const grossReward = stakeAmount * multiplier;
+    
+    // Platform fee system: 3-5% dari reward untuk winning predictions (1.5x, 2.0x, 3.0x)
+    // Untuk 0.9x multiplier: fee sudah tercakup dalam loss 10%
+    let netReward = grossReward;
+    
+    if (multiplier >= 1.5) {
+      const platformFeeRate = 0.04; // 4% platform fee untuk winning predictions
+      const platformFee = grossReward * platformFeeRate;
+      netReward = grossReward - platformFee;
+      
+      console.log(`💰 PLATFORM FEE: ${platformFeeRate * 100}% fee applied to ${multiplier}x multiplier reward`);
+      console.log(`💰 Gross Reward: ${grossReward} NTIQ, Platform Fee: ${platformFee} NTIQ, Net Reward: ${netReward} NTIQ`);
+    }
+    
+    return Math.floor(netReward);
   }
 
   getTargetTime(timeframe: string): Date {
