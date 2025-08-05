@@ -1608,15 +1608,22 @@ function UserProfile() {
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ [PROFILE-UPLOAD] Upload successful:', data);
       toast({
         title: "Profile Photo Updated",
         description: "Your profile photo has been successfully updated.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       setSelectedFile(null);
+      // Reset file input
+      const fileInput = document.getElementById('photo-upload') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
     },
     onError: (error: any) => {
+      console.error('❌ [PROFILE-UPLOAD] Upload failed:', error);
       toast({
         title: "Upload Failed",
         description: error.message || "Failed to upload profile photo",
@@ -1636,6 +1643,10 @@ function UserProfile() {
           description: "Only JPEG, PNG, and GIF files are allowed.",
           variant: "destructive",
         });
+        // Reset input value
+        if (event.target) {
+          event.target.value = '';
+        }
         return;
       }
 
@@ -1646,21 +1657,33 @@ function UserProfile() {
           description: "File size must be less than 5MB.",
           variant: "destructive",
         });
+        // Reset input value
+        if (event.target) {
+          event.target.value = '';
+        }
         return;
       }
 
+      console.log('📷 [PROFILE-UPLOAD] File selected:', file.name, 'Size:', (file.size / (1024 * 1024)).toFixed(2), 'MB');
       setSelectedFile(file);
     }
   };
 
   const handlePhotoUpload = () => {
     if (selectedFile) {
+      console.log('🚀 [PROFILE-UPLOAD] Starting upload for:', selectedFile.name);
       uploadPhotoMutation.mutate(selectedFile);
     }
   };
 
   const handlePhotoCancel = () => {
+    console.log('❌ [PROFILE-UPLOAD] Upload cancelled');
     setSelectedFile(null);
+    // Reset file input
+    const fileInput = document.getElementById('photo-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   const handleUsernameEdit = () => {
@@ -1719,13 +1742,22 @@ function UserProfile() {
         <CardContent className="p-6">
           <div className="flex items-center space-x-4 mb-6">
             <div className="relative">
-              {user?.profilePhoto ? (
+              {selectedFile ? (
+                // Show preview when file is selected
+                <img
+                  src={URL.createObjectURL(selectedFile)}
+                  alt="Profile Preview"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-primary"
+                />
+              ) : user?.profilePhoto ? (
+                // Show current profile photo
                 <img
                   src={user.profilePhoto}
                   alt="Profile"
                   className="w-16 h-16 rounded-full object-cover border-2 border-primary"
                 />
               ) : (
+                // Show default avatar
                 <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
                   <UserCircle className="text-white" size={32} />
                 </div>
@@ -1740,8 +1772,9 @@ function UserProfile() {
               <label
                 htmlFor="photo-upload"
                 className="absolute -bottom-1 -right-1 bg-primary hover:bg-primary/80 text-white rounded-full p-1 cursor-pointer transition-colors"
+                title="Change profile photo"
               >
-                <Upload size={12} />
+                {selectedFile ? <Check size={12} /> : <Upload size={12} />}
               </label>
             </div>
             <div>
