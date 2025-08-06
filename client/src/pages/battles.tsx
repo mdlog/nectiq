@@ -776,7 +776,9 @@ export default function BattlesPage() {
                         <SelectItem key={crypto.id} value={crypto.id}>
                           <div className="flex items-center gap-2">
                             <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
-                            {crypto.name} ({crypto.symbol.toUpperCase()})
+                            <span>
+                              {crypto.symbol?.toUpperCase()} (${crypto.current_price.toFixed(2)})
+                            </span>
                           </div>
                         </SelectItem>
                       ))}
