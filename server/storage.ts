@@ -1219,16 +1219,16 @@ export class DatabaseStorage implements IStorage {
         .from(predictions)
         .where(
           and(
-            eq(predictions.userId, userId),
+            eq(predictions.user_id, userId),
             eq(predictions.status, 'completed')
           )
         )
-        .orderBy(desc(predictions.completedAt))
+        .orderBy(desc(predictions.completed_at))
         .limit(Math.ceil(limit / 2)); // Reserve space for other types
 
       recentPredictions.forEach((prediction) => {
-        const isWin = prediction.rewardAmount > 0;
-        const netResult = isWin ? prediction.rewardAmount : -prediction.stakeAmount;
+        const isWin = prediction.reward_amount > 0;
+        const netResult = isWin ? prediction.reward_amount : -prediction.stake_amount;
         
         allRewards.push({
           id: `prediction_${prediction.id}`,
@@ -1237,17 +1237,17 @@ export class DatabaseStorage implements IStorage {
           predictionId: prediction.id,
           amount: netResult,
           description: isWin 
-            ? `Won ${prediction.rewardAmount} NTIQ - ${prediction.accuracy}% accuracy` 
-            : `Lost ${prediction.stakeAmount} NTIQ - ${prediction.accuracy}% accuracy`,
-          createdAt: prediction.completedAt || prediction.createdAt,
+            ? `Won ${prediction.reward_amount} NTIQ - ${prediction.accuracy}% accuracy` 
+            : `Lost ${prediction.stake_amount} NTIQ - ${prediction.accuracy}% accuracy`,
+          createdAt: prediction.completed_at || prediction.created_at,
           cryptocurrency: prediction.cryptocurrency,
           accuracy: prediction.accuracy || "0",
           isWin: isWin,
-          stakeAmount: prediction.stakeAmount,
-          rewardAmount: prediction.rewardAmount || 0,
+          stakeAmount: prediction.stake_amount,
+          rewardAmount: prediction.reward_amount || 0,
           sourceDetails: {
-            predictedPrice: prediction.predictedPrice ? prediction.predictedPrice.toString() : null,
-            actualPrice: prediction.actualPrice ? prediction.actualPrice.toString() : null,
+            predictedPrice: prediction.predicted_price ? prediction.predicted_price.toString() : null,
+            actualPrice: prediction.actual_price ? prediction.actual_price.toString() : null,
             accuracy: prediction.accuracy || "0"
           }
         });
@@ -1257,8 +1257,8 @@ export class DatabaseStorage implements IStorage {
       const battleRewards = await db.select({
         id: transactionLogs.id,
         amount: transactionLogs.amount,
-        createdAt: transactionLogs.createdAt,
-        relatedId: transactionLogs.relatedId,
+        createdAt: transactionLogs.created_at,
+        relatedId: transactionLogs.related_id,
         type: transactionLogs.type
       })
       .from(transactionLogs)
@@ -1269,7 +1269,7 @@ export class DatabaseStorage implements IStorage {
           eq(transactionLogs.status, 'completed')
         )
       )
-      .orderBy(desc(transactionLogs.createdAt))
+      .orderBy(desc(transactionLogs.created_at))
       .limit(10);
 
       for (const battleReward of battleRewards) {
@@ -1464,7 +1464,7 @@ export class DatabaseStorage implements IStorage {
 
   async getTransactionLogs(filters: any = {}): Promise<any[]> {
     let query = db.select().from(transactionLogs)
-      .leftJoin(users, eq(transactionLogs.userId, users.id));
+      .leftJoin(users, eq(transactionLogs.user_id, users.id));
     
     if (filters.type && filters.type !== 'all') {
       query = query.where(eq(transactionLogs.type, filters.type));
