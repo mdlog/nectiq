@@ -52,6 +52,14 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Firebase**: For linking wallet addresses with Gmail verification.
 
 ## Recent Updates (August 6, 2025)
+### Parlay Mechanism Documentation Update ✅
+- **Corrected Parlay Logic**: Updated documentation to reflect actual UP/DOWN prediction system
+- **Snapshot Mechanism**: Clarified price comparison between creation time vs expiration time
+- **All-or-Nothing Rule**: Documented that single wrong prediction causes entire parlay loss
+- **Simplified Multipliers**: Removed complex accuracy bonuses, using fixed multipliers per coin count
+- **Example Scenarios**: Added winning and losing parlay examples for better understanding
+
+## Recent Updates (August 6, 2025)
 ### Admin Panel Statistics Enhancement Completed ✅
 - **SQL Aggregation**: Replaced memory calculations with direct database SQL queries for accuracy
 - **Total NTIQ Circulating**: Added new statistics card to track total tokens distributed to users

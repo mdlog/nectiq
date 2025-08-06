@@ -109,57 +109,85 @@
 ## 3. Parlay Prediction
 
 ### Mekanisme
-- **Fungsi**: Prediksi multiple cryptocurrency sekaligus (2-5 coins)
-- **Requirement**: Semua prediksi harus benar untuk menang
+- **Fungsi**: Prediksi arah pergerakan harga multiple cryptocurrency sekaligus (2-5 coins)
+- **Format**: Pilih UP atau DOWN untuk setiap coin
+- **Requirement**: Semua prediksi harus benar untuk menang (jika ada 1 salah, parlay kalah)
+- **Snapshot System**: Harga diambil saat create parlay vs harga saat durasi selesai
 - **Minimum Stake**: 25 NTIQ per coin
 - **Maximum Stake**: 2,000 NTIQ per coin
 - **Timeframe**: Sama untuk semua coins dalam 1 parlay
 
 ### Cara Bergabung
 1. Pilih 2-5 cryptocurrency
-2. Set timeframe yang sama untuk semua
-3. Masukkan target harga untuk setiap coin
+2. Set timeframe yang sama untuk semua (1 jam, 6 jam, 24 jam)
+3. Untuk setiap coin, pilih prediksi: **UP** atau **DOWN**
 4. Set stake amount per coin
 5. Konfirmasi parlay bet
+6. Sistem mengambil snapshot harga saat create parlay
 
 ### Sistem Multiplier Parlay
-| Jumlah Coins | Base Multiplier | Bonus Multiplier |
-|--------------|-----------------|------------------|
-| 2 Coins | 1.8x | +0.2x accuracy bonus |
-| 3 Coins | 2.5x | +0.3x accuracy bonus |
-| 4 Coins | 3.5x | +0.4x accuracy bonus |
-| 5 Coins | 5.0x | +0.5x accuracy bonus |
+| Jumlah Coins | Base Multiplier | Risk Level |
+|--------------|-----------------|------------|
+| 2 Coins | 1.8x | Medium |
+| 3 Coins | 2.5x | High |
+| 4 Coins | 3.5x | Very High |
+| 5 Coins | 5.0x | Extreme |
 
-### Accuracy Bonus
-- **Rata-rata akurasi ≥ 95%**: +50% dari bonus multiplier
-- **Rata-rata akurasi ≥ 90%**: +25% dari bonus multiplier
-- **Rata-rata akurasi < 90%**: No bonus
+### Cara Menentukan Pemenang
+- **WIN**: Semua coin harus sesuai prediksi (UP/DOWN)
+- **LOSE**: Jika ada 1 saja yang salah, seluruh parlay kalah
+- **Tidak ada akurasi persentase** - hanya WIN/LOSE berdasarkan arah pergerakan
 
 ### Fee Platform
 - **Platform Fee**: 6% dari total reward untuk parlay yang menang
-- **Semua prediksi harus akurasi ≥ 80%** untuk dianggap menang
+- **Fee hanya dikenakan** jika parlay menang (semua prediksi benar)
 
 ### Contoh Parlay Prediction
-**Scenario**: 3-coin parlay (Bitcoin, Ethereum, Solana) - 24 jam
+
+#### Scenario 1: Parlay Menang (3-coin parlay - 1 jam)
+**Setup Parlay**:
+- **Stake per coin**: 100 NTIQ
+- **Total Stake**: 300 NTIQ
+- **Duration**: 1 jam
+
+**Harga saat Create Parlay (Snapshot Awal)**:
+| Coin | Harga Create | Prediksi User |
+|------|-------------|---------------|
+| Bitcoin | $67,000 | UP |
+| Ethereum | $3,200 | DOWN |
+| Solana | $180 | UP |
+
+**Harga saat Durasi Selesai (Snapshot Akhir)**:
+| Coin | Harga Akhir | Hasil | Status |
+|------|------------|-------|--------|
+| Bitcoin | $67,300 | UP ✅ | Benar |
+| Ethereum | $3,150 | DOWN ✅ | Benar |
+| Solana | $182 | UP ✅ | Benar |
+
+**Perhitungan**:
+- **Result**: MENANG (semua prediksi benar)
+- **Base Multiplier**: 2.5x (3 coins)
+- **Gross Reward**: 300 × 2.5 = 750 NTIQ
+- **Platform Fee**: 750 × 6% = 45 NTIQ
+- **Net Reward**: 750 - 45 = 705 NTIQ
+- **Profit**: 705 - 300 = 405 NTIQ
+
+#### Scenario 2: Parlay Kalah (3-coin parlay - 1 jam)
+**Setup Parlay**:
 - **Stake per coin**: 100 NTIQ
 - **Total Stake**: 300 NTIQ
 
-**Prediksi vs Hasil**:
-| Coin | Target | Aktual | Akurasi |
-|------|--------|--------|---------|
-| Bitcoin | $67,000 | $66,500 | 92.5% |
-| Ethereum | $3,200 | $3,180 | 93.8% |
-| Solana | $180 | $178 | 94.4% |
+**Harga saat Create vs Selesai**:
+| Coin | Harga Create | Prediksi | Harga Akhir | Hasil | Status |
+|------|-------------|----------|------------|-------|--------|
+| Bitcoin | $67,000 | UP | $67,200 | UP ✅ | Benar |
+| Ethereum | $3,200 | DOWN | $3,180 | DOWN ✅ | Benar |
+| Solana | $180 | UP | $178 | DOWN ❌ | **SALAH** |
 
-**Perhitungan**:
-- **Rata-rata Akurasi**: (92.5% + 93.8% + 94.4%) ÷ 3 = 93.6%
-- **Base Multiplier**: 2.5x (3 coins)
-- **Bonus Multiplier**: 0.3x × 25% = 0.075x (akurasi ≥ 90%)
-- **Total Multiplier**: 2.5x + 0.075x = 2.575x
-- **Gross Reward**: 300 × 2.575 = 772.5 NTIQ
-- **Platform Fee**: 772.5 × 6% = 46.35 NTIQ
-- **Net Reward**: 772.5 - 46.35 = 726.15 NTIQ
-- **Profit**: 726.15 - 300 = 426.15 NTIQ
+**Result**: 
+- **KALAH** (1 prediksi salah = seluruh parlay kalah)
+- **Reward**: 0 NTIQ
+- **Loss**: -300 NTIQ (kehilangan seluruh stake)
 
 ---
 
@@ -271,19 +299,19 @@ Contoh:
 
 #### Activity 3: Parlay 2-coin (Solana + BNB 1h)
 - **Stake**: 150 NTIQ per coin = 300 NTIQ total
-- **Result**: Both predictions correct
-- **Average Akurasi**: 91.5%
-- **Multiplier**: 1.8x + 0.05x bonus = 1.85x
-- **Gross**: 555 NTIQ
-- **Fee**: 33.3 NTIQ
-- **Net**: 521.7 NTIQ
-- **Balance**: 1,454 - 300 + 521.7 = 1,675.7 NTIQ
+- **Predictions**: Solana UP, BNB DOWN
+- **Results**: Solana UP ✅, BNB DOWN ✅ (kedua benar)
+- **Multiplier**: 1.8x (2 coins)
+- **Gross**: 300 × 1.8 = 540 NTIQ
+- **Fee**: 540 × 6% = 32.4 NTIQ
+- **Net**: 540 - 32.4 = 507.6 NTIQ
+- **Balance**: 1,454 - 300 + 507.6 = 1,661.6 NTIQ
 
 #### Total Day Performance
 - **Starting**: 1,000 NTIQ
-- **Ending**: 1,675.7 NTIQ
-- **Profit**: 675.7 NTIQ (67.57% gain)
-- **Total Fees Paid**: 79.3 NTIQ
+- **Ending**: 1,661.6 NTIQ
+- **Profit**: 661.6 NTIQ (66.16% gain)
+- **Total Fees Paid**: 78.4 NTIQ
 
 ---
 
@@ -300,9 +328,10 @@ Contoh:
 - **Conservative Stakes**: Start dengan stakes kecil
 
 ### Untuk Parlays
-- **Correlation**: Pilih coins yang movement-nya tidak berkorelasi
-- **Conservative Targets**: Lebih baik akurasi tinggi daripada target agresif
-- **Maximum 3 coins**: Untuk pemula, stick to 2-3 coins
+- **Diversifikasi**: Pilih coins yang movement-nya tidak berkorelasi
+- **Analisa Trend**: Perhatikan trend masing-masing coin secara independent
+- **Conservative Approach**: Mulai dengan 2 coins untuk pemula
+- **All-or-Nothing**: Ingat bahwa 1 prediksi salah = kalah semua
 
 ### Untuk Survival Tournaments
 - **Entry Timing**: Daftar early untuk mempersiapkan strategi
