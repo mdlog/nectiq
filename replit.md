@@ -79,11 +79,13 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Indonesian Language**: All content provided in Bahasa Indonesia for better user comprehension
 
 ### Enhanced User Education ✅
-- **Formula Breakdown**: Clear explanation of "Potential Win = Stake × Multiplier" with practical examples
+- **Corrected Formula**: Updated to actual formula "(1.5 × Duration Multiplier)^Number_of_Predictions"
+- **Duration Impact Discovery**: Duration multipliers (1h=1.2x, 6h=1.5x, 24h=2.0x, 7d=3.0x) dramatically affect final multiplier
+- **Comprehensive Examples**: Added detailed calculations showing massive differences between durations
+- **Extreme Multipliers**: 5 predictions × 7 days = potential 1,845.28x multiplier
 - **Fee Impact Visualization**: Side-by-side comparison of winning vs losing scenarios including fee calculations
-- **Multiplier System**: Complete breakdown of 2.0x to 5.0x multipliers based on prediction count
-- **Stake Examples**: Various stake amounts (50-1,000+ NTIQ) with corresponding potential wins
 - **All-or-Nothing Rule**: Clear visual explanation of parlay win/lose conditions
+- **Strategic Education**: Added tips about duration selection impact on risk vs reward
 
 ### Admin Panel Statistics Enhancement Completed ✅
 - **SQL Aggregation**: Replaced memory calculations with direct database SQL queries for accuracy

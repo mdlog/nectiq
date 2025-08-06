@@ -506,29 +506,42 @@ export default function HowToPlay() {
                   <CardHeader>
                     <CardTitle className="flex items-center text-emerald-600">
                       <TrendingUp className="mr-2 h-5 w-5" />
-                      Multipliers & Rewards
+                      Sistem Multiplier
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground mb-4">
-                      Fixed multipliers based on number of predictions in your parlay:
+                      Multiplier dihitung berdasarkan jumlah prediksi DAN duration:
                     </p>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-emerald-500/10 rounded-lg">
-                        <span className="font-medium">2 Predictions</span>
-                        <span className="text-emerald-600 font-bold">2.0x</span>
+                    
+                    {/* Duration Multipliers */}
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
+                      <h5 className="font-semibold mb-3">Duration Multiplier:</h5>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                        <div className="text-center p-2 bg-emerald-500/20 rounded">
+                          <div className="font-bold">1 Jam</div>
+                          <div className="text-emerald-600">1.2x</div>
+                        </div>
+                        <div className="text-center p-2 bg-emerald-500/20 rounded">
+                          <div className="font-bold">6 Jam</div>
+                          <div className="text-emerald-600">1.5x</div>
+                        </div>
+                        <div className="text-center p-2 bg-emerald-500/20 rounded">
+                          <div className="font-bold">24 Jam</div>
+                          <div className="text-emerald-600">2.0x</div>
+                        </div>
+                        <div className="text-center p-2 bg-emerald-500/20 rounded">
+                          <div className="font-bold">7 Hari</div>
+                          <div className="text-emerald-600">3.0x</div>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-emerald-500/10 rounded-lg">
-                        <span className="font-medium">3 Predictions</span>
-                        <span className="text-emerald-600 font-bold">3.0x</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-emerald-500/10 rounded-lg">
-                        <span className="font-medium">4 Predictions</span>
-                        <span className="text-emerald-600 font-bold">4.0x</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-emerald-500/10 rounded-lg">
-                        <span className="font-medium">5 Predictions</span>
-                        <span className="text-emerald-600 font-bold">5.0x</span>
+                    </div>
+
+                    {/* Formula Explanation */}
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                      <h5 className="font-semibold mb-2">Formula Perhitungan:</h5>
+                      <div className="font-mono text-sm">
+                        Final Multiplier = (1.5 × Duration Multiplier)^Number_of_Predictions
                       </div>
                     </div>
                   </CardContent>
@@ -577,111 +590,116 @@ export default function HowToPlay() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
-                    <h4 className="font-semibold text-lg mb-3 text-center">Formula Perhitungan</h4>
+                    <h4 className="font-semibold text-lg mb-3 text-center">Formula Perhitungan Actual</h4>
                     <div className="text-center">
                       <div className="font-mono text-xl mb-2">
-                        Potential Win = Stake × Multiplier
+                        Final Multiplier = (1.5 × Duration Multiplier)^Jumlah_Prediksi
+                      </div>
+                      <div className="font-mono text-lg mb-2">
+                        Potential Win = Stake × Final Multiplier
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Multiplier ditentukan oleh jumlah prediksi dalam parlay
+                        Duration sangat berpengaruh terhadap total multiplier!
                       </div>
                     </div>
                   </div>
 
-                  {/* Detailed Examples */}
+                  {/* Detailed Examples with Different Durations */}
                   <div className="grid md:grid-cols-2 gap-6">
-                    {/* 2-Prediction Example */}
+                    {/* 2-Prediction with 1h duration */}
                     <div className="space-y-4">
-                      <h5 className="font-semibold text-blue-600">Contoh: 2 Prediksi (Multiplier 2.0x)</h5>
+                      <h5 className="font-semibold text-blue-600">Contoh: 2 Prediksi Duration 1 Jam</h5>
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-3">
                         <div className="text-sm">
                           <div className="font-medium mb-2">Parlay Setup:</div>
-                          <div>• Bitcoin: UP</div>
-                          <div>• Ethereum: DOWN</div>
-                          <div>• Stake: 200 NTIQ</div>
+                          <div>• Bitcoin: UP (1 jam)</div>
+                          <div>• Ethereum: DOWN (1 jam)</div>
+                          <div>• Stake: 100 NTIQ</div>
                         </div>
                         <div className="border-t pt-3">
-                          <div className="font-mono text-sm">
-                            Potential Win = 200 × 2.0 = <span className="font-bold text-blue-600">400 NTIQ</span>
+                          <div className="font-mono text-xs">
+                            Duration Multiplier: 1.2x<br/>
+                            Final Multiplier = (1.5 × 1.2)² = 1.8² = 3.24x
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Profit: 200 NTIQ (jika semua benar)
+                          <div className="font-mono text-sm mt-2">
+                            Potential Win = 100 × 3.24 = <span className="font-bold text-blue-600">324 NTIQ</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* 5-Prediction Example */}
+                    {/* 2-Prediction with 7d duration */}
                     <div className="space-y-4">
-                      <h5 className="font-semibold text-purple-600">Contoh: 5 Prediksi (Multiplier 5.0x)</h5>
+                      <h5 className="font-semibold text-purple-600">Contoh: 2 Prediksi Duration 7 Hari</h5>
                       <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 space-y-3">
                         <div className="text-sm">
                           <div className="font-medium mb-2">Parlay Setup:</div>
-                          <div>• Bitcoin: UP</div>
-                          <div>• Ethereum: DOWN</div>
-                          <div>• Solana: UP</div>
-                          <div>• BNB: DOWN</div>
-                          <div>• Cardano: UP</div>
+                          <div>• Bitcoin: UP (7 hari)</div>
+                          <div>• Ethereum: DOWN (7 hari)</div>
                           <div>• Stake: 100 NTIQ</div>
                         </div>
                         <div className="border-t pt-3">
-                          <div className="font-mono text-sm">
-                            Potential Win = 100 × 5.0 = <span className="font-bold text-purple-600">500 NTIQ</span>
+                          <div className="font-mono text-xs">
+                            Duration Multiplier: 3.0x<br/>
+                            Final Multiplier = (1.5 × 3.0)² = 4.5² = 20.25x
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Profit: 400 NTIQ (jika semua benar)
+                          <div className="font-mono text-sm mt-2">
+                            Potential Win = 100 × 20.25 = <span className="font-bold text-purple-600">2,025 NTIQ</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Risk vs Reward Table */}
+                  {/* Comprehensive Examples Table */}
                   <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                    <h5 className="font-semibold mb-3 text-center">Perbandingan Risk vs Reward</h5>
+                    <h5 className="font-semibold mb-3 text-center">Tabel Multiplier Berdasarkan Duration & Jumlah Prediksi</h5>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-gray-200 dark:border-gray-700">
-                            <th className="text-left py-2">Jumlah Prediksi</th>
-                            <th className="text-left py-2">Multiplier</th>
-                            <th className="text-left py-2">Stake 100 NTIQ</th>
-                            <th className="text-left py-2">Potential Win</th>
-                            <th className="text-left py-2">Profit</th>
+                            <th className="text-left py-2">Prediksi</th>
+                            <th className="text-left py-2">1 Jam (1.2x)</th>
+                            <th className="text-left py-2">6 Jam (1.5x)</th>
+                            <th className="text-left py-2">24 Jam (2.0x)</th>
+                            <th className="text-left py-2">7 Hari (3.0x)</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr className="border-b border-gray-100 dark:border-gray-800">
-                            <td className="py-2">2 Prediksi</td>
-                            <td className="py-2 text-green-600 font-bold">2.0x</td>
-                            <td className="py-2">100 NTIQ</td>
-                            <td className="py-2 font-mono">200 NTIQ</td>
-                            <td className="py-2 text-green-600">+100 NTIQ</td>
+                            <td className="py-2 font-bold">2 Prediksi</td>
+                            <td className="py-2 text-green-600">3.24x</td>
+                            <td className="py-2 text-green-600">5.06x</td>
+                            <td className="py-2 text-green-600">9.0x</td>
+                            <td className="py-2 text-green-600">20.25x</td>
                           </tr>
                           <tr className="border-b border-gray-100 dark:border-gray-800">
-                            <td className="py-2">3 Prediksi</td>
-                            <td className="py-2 text-green-600 font-bold">3.0x</td>
-                            <td className="py-2">100 NTIQ</td>
-                            <td className="py-2 font-mono">300 NTIQ</td>
-                            <td className="py-2 text-green-600">+200 NTIQ</td>
+                            <td className="py-2 font-bold">3 Prediksi</td>
+                            <td className="py-2 text-blue-600">5.83x</td>
+                            <td className="py-2 text-blue-600">11.39x</td>
+                            <td className="py-2 text-blue-600">27.0x</td>
+                            <td className="py-2 text-blue-600">91.13x</td>
                           </tr>
                           <tr className="border-b border-gray-100 dark:border-gray-800">
-                            <td className="py-2">4 Prediksi</td>
-                            <td className="py-2 text-green-600 font-bold">4.0x</td>
-                            <td className="py-2">100 NTIQ</td>
-                            <td className="py-2 font-mono">400 NTIQ</td>
-                            <td className="py-2 text-green-600">+300 NTIQ</td>
+                            <td className="py-2 font-bold">4 Prediksi</td>
+                            <td className="py-2 text-purple-600">10.5x</td>
+                            <td className="py-2 text-purple-600">25.63x</td>
+                            <td className="py-2 text-purple-600">81.0x</td>
+                            <td className="py-2 text-purple-600">410.06x</td>
                           </tr>
                           <tr>
-                            <td className="py-2">5 Prediksi</td>
-                            <td className="py-2 text-green-600 font-bold">5.0x</td>
-                            <td className="py-2">100 NTIQ</td>
-                            <td className="py-2 font-mono">500 NTIQ</td>
-                            <td className="py-2 text-green-600">+400 NTIQ</td>
+                            <td className="py-2 font-bold">5 Prediksi</td>
+                            <td className="py-2 text-red-600">18.9x</td>
+                            <td className="py-2 text-red-600">57.66x</td>
+                            <td className="py-2 text-red-600">243.0x</td>
+                            <td className="py-2 text-red-600 font-bold">1,845.28x</td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                      * Stake 100 NTIQ dengan 5 prediksi 7 hari = potential win 184,528 NTIQ!
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -837,32 +855,51 @@ export default function HowToPlay() {
                 <CardHeader>
                   <CardTitle className="flex items-center text-purple-600">
                     <Clock className="mr-2 h-5 w-5" />
-                    Duration Options
+                    Duration Options & Impact
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-4 gap-4">
                     <div className="text-center p-4 bg-purple-500/10 rounded-lg">
-                      <div className="font-bold text-lg">1 Hour</div>
-                      <div className="text-sm text-muted-foreground">Quick predictions</div>
+                      <div className="font-bold text-lg">1 Jam</div>
+                      <div className="text-purple-600 font-bold">1.2x</div>
+                      <div className="text-sm text-muted-foreground">Risk rendah, multiplier kecil</div>
                     </div>
                     <div className="text-center p-4 bg-purple-500/10 rounded-lg">
-                      <div className="font-bold text-lg">6 Hours</div>
-                      <div className="text-sm text-muted-foreground">Medium term</div>
+                      <div className="font-bold text-lg">6 Jam</div>
+                      <div className="text-purple-600 font-bold">1.5x</div>
+                      <div className="text-sm text-muted-foreground">Risk sedang</div>
                     </div>
                     <div className="text-center p-4 bg-purple-500/10 rounded-lg">
-                      <div className="font-bold text-lg">24 Hours</div>
-                      <div className="text-sm text-muted-foreground">Daily predictions</div>
+                      <div className="font-bold text-lg">24 Jam</div>
+                      <div className="text-purple-600 font-bold">2.0x</div>
+                      <div className="text-sm text-muted-foreground">Risk tinggi</div>
                     </div>
                     <div className="text-center p-4 bg-purple-500/10 rounded-lg">
-                      <div className="font-bold text-lg">7 Days</div>
-                      <div className="text-sm text-muted-foreground">Weekly predictions</div>
+                      <div className="font-bold text-lg">7 Hari</div>
+                      <div className="text-purple-600 font-bold">3.0x</div>
+                      <div className="text-sm text-muted-foreground">Risk sangat tinggi, multiplier besar</div>
                     </div>
                   </div>
-                  <div className="mt-4 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Semua prediksi dalam satu parlay harus memiliki durasi yang sama
-                    </p>
+                  
+                  <div className="mt-4 space-y-3">
+                    <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
+                      <p className="text-sm font-semibold mb-2">📋 Aturan Penting:</p>
+                      <p className="text-sm text-muted-foreground">
+                        • Semua prediksi dalam satu parlay HARUS memiliki durasi yang sama<br/>
+                        • Duration yang lebih panjang memberikan multiplier yang lebih besar<br/>
+                        • Duration yang lebih panjang = risk prediksi yang lebih sulit = reward lebih tinggi
+                      </p>
+                    </div>
+                    
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                      <p className="text-sm font-semibold mb-2 text-yellow-600">⚠️ Strategy Tips:</p>
+                      <p className="text-sm text-muted-foreground">
+                        • Pilih 7 hari untuk maximum multiplier tapi dengan risk tinggi<br/>
+                        • Pilih 1 jam untuk quick result dengan multiplier lebih kecil<br/>
+                        • 5 prediksi × 7 hari = potential multiplier hingga 1,845x!
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
