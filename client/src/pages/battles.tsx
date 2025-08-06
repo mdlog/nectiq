@@ -854,9 +854,9 @@ export default function BattlesPage() {
         {/* Battles Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="live">Open Battles</TabsTrigger>
-            <TabsTrigger value="create">Active Battles</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="live">Open Battles ({openBattles.length})</TabsTrigger>
+            <TabsTrigger value="create">Active Battles ({activeBattles.length})</TabsTrigger>
+            <TabsTrigger value="history">History ({stats?.completedBattles || 0})</TabsTrigger>
           </TabsList>
           
           <TabsContent value="live" className="mt-8">
