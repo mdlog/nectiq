@@ -956,6 +956,10 @@ export default function UserDashboard() {
                           sourceText = `Survival Tournament`;
                           sourceIcon = <TrendingUp size={16} />;
                           break;
+                        case 'parlay':
+                          sourceText = `Parlay Bet`;
+                          sourceIcon = <TrendingUp size={16} />;
+                          break;
                         case 'achievement':
                           sourceText = 'Achievement Reward';
                           sourceIcon = <Check size={16} />;
@@ -977,12 +981,14 @@ export default function UserDashboard() {
                               <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${
                                 rewardType === 'battle' ? 'bg-purple-500' :
                                 rewardType === 'survival' ? 'bg-orange-500' :
+                                rewardType === 'parlay' ? 'bg-indigo-500' :
                                 rewardType === 'achievement' ? 'bg-yellow-500' :
                                 rewardType === 'daily_challenge' ? 'bg-blue-500' :
                                 'bg-green-500'
                               }`}>
                                 {rewardType === 'battle' ? '⚔' : 
                                  rewardType === 'survival' ? '🏆' : 
+                                 rewardType === 'parlay' ? '🎲' :
                                  rewardType === 'achievement' ? '🎯' :
                                  rewardType === 'daily_challenge' ? '📅' :
                                  '📈'}

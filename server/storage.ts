@@ -1209,25 +1209,27 @@ export class DatabaseStorage implements IStorage {
   // Get user reward history for dashboard (similar to Recent Rewards format)
   async getUserRewardHistory(userId: number, limit: number = 20): Promise<any[]> {
     try {
-      console.log(`🔍 [STORAGE] Getting reward history for user ${userId}, limit: ${limit}`);
+      console.log(`🔍 [STORAGE] Getting comprehensive reward history for user ${userId}, limit: ${limit}`);
       
-      // Get recent prediction results (completed predictions)
-      const recentPredictions = await db.select()
-      .from(predictions)
-      .where(
-        and(
-          eq(predictions.userId, userId),
-          eq(predictions.status, 'completed')
-        )
-      )
-      .orderBy(desc(predictions.completedAt))
-      .limit(limit);
+      const allRewards: any[] = [];
 
-      const rewardHistory = recentPredictions.map((prediction) => {
+      // 1. Get recent prediction results (completed predictions)
+      const recentPredictions = await db.select()
+        .from(predictions)
+        .where(
+          and(
+            eq(predictions.userId, userId),
+            eq(predictions.status, 'completed')
+          )
+        )
+        .orderBy(desc(predictions.completedAt))
+        .limit(Math.ceil(limit / 2)); // Reserve space for other types
+
+      recentPredictions.forEach((prediction) => {
         const isWin = prediction.rewardAmount > 0;
         const netResult = isWin ? prediction.rewardAmount : -prediction.stakeAmount;
         
-        return {
+        allRewards.push({
           id: `prediction_${prediction.id}`,
           type: 'prediction',
           userId: userId,
@@ -1242,19 +1244,218 @@ export class DatabaseStorage implements IStorage {
           isWin: isWin,
           stakeAmount: prediction.stakeAmount,
           rewardAmount: prediction.rewardAmount || 0,
-          // Enhanced sourceDetails format matching Recent Rewards
           sourceDetails: {
             predictedPrice: prediction.predictedPrice ? prediction.predictedPrice.toString() : null,
             actualPrice: prediction.actualPrice ? prediction.actualPrice.toString() : null,
             accuracy: prediction.accuracy || "0"
           }
-        };
+        });
       });
 
-      console.log(`✅ [STORAGE] Successfully fetched ${rewardHistory.length} reward history items`);
-      return rewardHistory;
+      // 2. Get battle rewards from transaction logs
+      const battleRewards = await db.select({
+        id: transactionLogs.id,
+        amount: transactionLogs.amount,
+        description: transactionLogs.description,
+        createdAt: transactionLogs.createdAt,
+        relatedId: transactionLogs.relatedId,
+        type: transactionLogs.type
+      })
+      .from(transactionLogs)
+      .where(
+        and(
+          eq(transactionLogs.userId, userId),
+          eq(transactionLogs.type, 'battle_reward'),
+          eq(transactionLogs.status, 'completed')
+        )
+      )
+      .orderBy(desc(transactionLogs.createdAt))
+      .limit(10);
+
+      for (const battleReward of battleRewards) {
+        // Get battle details if available
+        let battleDetails = null;
+        if (battleReward.relatedId) {
+          try {
+            battleDetails = await db.select()
+              .from(predictionBattles)
+              .where(eq(predictionBattles.id, battleReward.relatedId))
+              .limit(1);
+          } catch (error) {
+            console.warn(`Could not fetch battle details for battle ${battleReward.relatedId}`);
+          }
+        }
+
+        const battle = battleDetails?.[0];
+        const opponentInfo = battleReward.description?.match(/vs (.+?) -/) || ['', 'Opponent'];
+        
+        allRewards.push({
+          id: `battle_${battleReward.id}`,
+          type: 'battle',
+          userId: userId,
+          amount: battleReward.amount,
+          description: battleReward.description || `Battle reward - ${battleReward.amount} NTIQ`,
+          createdAt: battleReward.createdAt,
+          cryptocurrency: battle?.cryptocurrency || 'bitcoin',
+          accuracy: null,
+          isWin: true,
+          stakeAmount: battle?.stakeAmount || 0,
+          rewardAmount: battleReward.amount,
+          sourceDetails: {
+            opponentName: opponentInfo[1],
+            battleId: battleReward.relatedId,
+            stakeAmount: battle?.stakeAmount || 0
+          }
+        });
+      }
+
+      // 3. Get survival tournament rewards
+      const survivalRewards = await db.select({
+        id: transactionLogs.id,
+        amount: transactionLogs.amount,
+        description: transactionLogs.description,
+        createdAt: transactionLogs.createdAt,
+        relatedId: transactionLogs.relatedId
+      })
+      .from(transactionLogs)
+      .where(
+        and(
+          eq(transactionLogs.userId, userId),
+          eq(transactionLogs.type, 'survival_reward'),
+          eq(transactionLogs.status, 'completed')
+        )
+      )
+      .orderBy(desc(transactionLogs.createdAt))
+      .limit(5);
+
+      for (const survivalReward of survivalRewards) {
+        // Get tournament details if available
+        let tournamentDetails = null;
+        if (survivalReward.relatedId) {
+          try {
+            tournamentDetails = await db.select()
+              .from(survivalTournaments)
+              .where(eq(survivalTournaments.id, survivalReward.relatedId))
+              .limit(1);
+          } catch (error) {
+            console.warn(`Could not fetch tournament details for tournament ${survivalReward.relatedId}`);
+          }
+        }
+
+        const tournament = tournamentDetails?.[0];
+        
+        allRewards.push({
+          id: `survival_${survivalReward.id}`,
+          type: 'survival',
+          userId: userId,
+          amount: survivalReward.amount,
+          description: survivalReward.description || `Survival tournament winner - ${survivalReward.amount} NTIQ`,
+          createdAt: survivalReward.createdAt,
+          cryptocurrency: tournament?.cryptocurrency || 'bitcoin',
+          accuracy: null,
+          isWin: true,
+          stakeAmount: tournament?.entryFee || 0,
+          rewardAmount: survivalReward.amount,
+          sourceDetails: {
+            tournamentId: survivalReward.relatedId,
+            prizePool: survivalReward.amount,
+            entryFee: tournament?.entryFee || 0
+          }
+        });
+      }
+
+      // 4. Get parlay rewards from transaction logs
+      const parlayRewards = await db.select({
+        id: transactionLogs.id,
+        amount: transactionLogs.amount,
+        description: transactionLogs.description,
+        createdAt: transactionLogs.createdAt,
+        relatedId: transactionLogs.relatedId
+      })
+      .from(transactionLogs)
+      .where(
+        and(
+          eq(transactionLogs.userId, userId),
+          eq(transactionLogs.type, 'parlay_reward'),
+          eq(transactionLogs.status, 'completed')
+        )
+      )
+      .orderBy(desc(transactionLogs.createdAt))
+      .limit(5);
+
+      for (const parlayReward of parlayRewards) {
+        allRewards.push({
+          id: `parlay_${parlayReward.id}`,
+          type: 'parlay',
+          userId: userId,
+          amount: parlayReward.amount,
+          description: parlayReward.description || `Parlay reward - ${parlayReward.amount} NTIQ`,
+          createdAt: parlayReward.createdAt,
+          cryptocurrency: 'multi', // Parlay involves multiple cryptos
+          accuracy: null,
+          isWin: true,
+          stakeAmount: 0, // Will be extracted from description if available
+          rewardAmount: parlayReward.amount,
+          sourceDetails: {
+            parlayId: parlayReward.relatedId,
+            multiplier: null // Could be extracted from description
+          }
+        });
+      }
+
+      // 5. Get achievement rewards
+      const achievementRewards = await db.select({
+        id: transactionLogs.id,
+        amount: transactionLogs.amount,
+        description: transactionLogs.description,
+        createdAt: transactionLogs.createdAt,
+        relatedId: transactionLogs.relatedId
+      })
+      .from(transactionLogs)
+      .where(
+        and(
+          eq(transactionLogs.userId, userId),
+          eq(transactionLogs.type, 'achievement_reward'),
+          eq(transactionLogs.status, 'completed')
+        )
+      )
+      .orderBy(desc(transactionLogs.createdAt))
+      .limit(5);
+
+      for (const achievementReward of achievementRewards) {
+        allRewards.push({
+          id: `achievement_${achievementReward.id}`,
+          type: 'achievement',
+          userId: userId,
+          amount: achievementReward.amount,
+          description: achievementReward.description || `Achievement reward - ${achievementReward.amount} NTIQ`,
+          createdAt: achievementReward.createdAt,
+          cryptocurrency: null,
+          accuracy: null,
+          isWin: true,
+          stakeAmount: 0,
+          rewardAmount: achievementReward.amount,
+          sourceDetails: {
+            achievementId: achievementReward.relatedId
+          }
+        });
+      }
+
+      // Sort all rewards by creation date and limit to requested amount
+      const sortedRewards = allRewards
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, limit);
+
+      console.log(`✅ [STORAGE] Successfully fetched ${sortedRewards.length} comprehensive reward history items`);
+      console.log(`   - Predictions: ${sortedRewards.filter(r => r.type === 'prediction').length}`);
+      console.log(`   - Battles: ${sortedRewards.filter(r => r.type === 'battle').length}`);
+      console.log(`   - Survival: ${sortedRewards.filter(r => r.type === 'survival').length}`);
+      console.log(`   - Parlay: ${sortedRewards.filter(r => r.type === 'parlay').length}`);
+      console.log(`   - Achievement: ${sortedRewards.filter(r => r.type === 'achievement').length}`);
+      
+      return sortedRewards;
     } catch (error) {
-      console.error('[STORAGE] Error fetching user reward history:', error);
+      console.error('[STORAGE] Error fetching comprehensive reward history:', error);
       throw error;
     }
   }
