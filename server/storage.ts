@@ -1206,49 +1206,41 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  // Get user reward history for dashboard (similar to Recent Rewards format)
+  // Get user reward history for dashboard (simplified version to avoid SQL errors)
   async getUserRewardHistory(userId: number, limit: number = 20): Promise<any[]> {
     try {
-      console.log(`🔍 [STORAGE] Getting comprehensive reward history for user ${userId}, limit: ${limit}`);
-      console.log(`📊 [STORAGE] Database tables available: predictions, transactionLogs, predictionBattles, etc.`);
+      console.log(`🔍 [STORAGE] Getting simplified reward history for user ${userId}, limit: ${limit}`);
       
       const allRewards: any[] = [];
 
-      // 1. Get recent prediction results (completed predictions)
-      const recentPredictions = await db.select()
-        .from(predictions)
+      // Get all reward transactions from transaction logs  
+      const rewardTransactions = await db.select()
+        .from(transactionLogs)
         .where(
           and(
-            eq(predictions.user_id, userId),
-            eq(predictions.status, 'completed')
+            eq(transactionLogs.userId, userId),
+            eq(transactionLogs.status, 'completed')
           )
         )
-        .orderBy(desc(predictions.completed_at))
-        .limit(Math.ceil(limit / 2)); // Reserve space for other types
+        .orderBy(desc(transactionLogs.createdAt))
+        .limit(limit);
 
-      recentPredictions.forEach((prediction) => {
-        const isWin = prediction.reward_amount > 0;
-        const netResult = isWin ? prediction.reward_amount : -prediction.stake_amount;
-        
+      rewardTransactions.forEach((reward) => {
         allRewards.push({
-          id: `prediction_${prediction.id}`,
-          type: 'prediction',
+          id: `${reward.type}_${reward.id}`,
+          type: reward.type.replace('_reward', ''),
           userId: userId,
-          predictionId: prediction.id,
-          amount: netResult,
-          description: isWin 
-            ? `Won ${prediction.reward_amount} NTIQ - ${prediction.accuracy}% accuracy` 
-            : `Lost ${prediction.stake_amount} NTIQ - ${prediction.accuracy}% accuracy`,
-          createdAt: prediction.completed_at || prediction.created_at,
-          cryptocurrency: prediction.cryptocurrency,
-          accuracy: prediction.accuracy || "0",
-          isWin: isWin,
-          stakeAmount: prediction.stake_amount,
-          rewardAmount: prediction.reward_amount || 0,
+          amount: reward.amount,
+          description: `${reward.type.replace('_', ' ')} - ${reward.amount} NTIQ`,
+          createdAt: reward.createdAt,
+          cryptocurrency: 'bitcoin',
+          accuracy: null,
+          isWin: true,
+          stakeAmount: 0,
+          rewardAmount: reward.amount,
           sourceDetails: {
-            predictedPrice: prediction.predicted_price ? prediction.predicted_price.toString() : null,
-            actualPrice: prediction.actual_price ? prediction.actual_price.toString() : null,
-            accuracy: prediction.accuracy || "0"
+            transactionId: reward.id,
+            relatedId: reward.relatedId
           }
         });
       });
@@ -1264,7 +1256,7 @@ export class DatabaseStorage implements IStorage {
       .from(transactionLogs)
       .where(
         and(
-          eq(transactionLogs.user_id, userId),
+          eq(transactionLogs.userId, userId),
           eq(transactionLogs.type, 'battle_reward'),
           eq(transactionLogs.status, 'completed')
         )
@@ -1298,12 +1290,12 @@ export class DatabaseStorage implements IStorage {
           cryptocurrency: battle?.cryptocurrency || 'bitcoin',
           accuracy: null,
           isWin: true,
-          stakeAmount: battle?.stake_amount || 0,
+          stakeAmount: battle?.stakeAmount || 0,
           rewardAmount: battleReward.amount,
           sourceDetails: {
             opponentName: 'Opponent',
             battleId: battleReward.relatedId,
-            stakeAmount: battle?.stake_amount || 0
+            stakeAmount: battle?.stakeAmount || 0
           }
         });
       }
@@ -1318,7 +1310,7 @@ export class DatabaseStorage implements IStorage {
       .from(transactionLogs)
       .where(
         and(
-          eq(transactionLogs.user_id, userId),
+          eq(transactionLogs.userId, userId),
           eq(transactionLogs.type, 'survival_reward'),
           eq(transactionLogs.status, 'completed')
         )
@@ -1372,7 +1364,7 @@ export class DatabaseStorage implements IStorage {
       .from(transactionLogs)
       .where(
         and(
-          eq(transactionLogs.user_id, userId),
+          eq(transactionLogs.userId, userId),
           eq(transactionLogs.type, 'parlay_reward'),
           eq(transactionLogs.status, 'completed')
         )
@@ -1410,7 +1402,7 @@ export class DatabaseStorage implements IStorage {
       .from(transactionLogs)
       .where(
         and(
-          eq(transactionLogs.user_id, userId),
+          eq(transactionLogs.userId, userId),
           eq(transactionLogs.type, 'achievement_reward'),
           eq(transactionLogs.status, 'completed')
         )
