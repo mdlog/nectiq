@@ -54,8 +54,11 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
 
   // Fetch live Pyth Network prices for real-time updates
   const { data: livePrices, isLoading: pricesLoading } = useQuery({
-    queryKey: ["/api/crypto/prices"],
-    refetchInterval: 3000, // Update every 3 seconds for live prices
+    queryKey: ["/api/crypto/pyth-prices"],
+    refetchInterval: 1000, // Same as other pages - ultra-fast updates
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Same as other pages - very fresh data
+    retry: 3, // More retry attempts for reliability
     select: (data: any[]) => {
       const priceMap: Record<string, number> = {};
       data.forEach(crypto => {
@@ -67,7 +70,11 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
 
   // Fetch available cryptocurrencies from database
   const { data: availableCryptos, isLoading: cryptosLoading } = useQuery({
-    queryKey: ["/api/crypto/prices"],
+    queryKey: ["/api/crypto/pyth-prices"],
+    refetchInterval: 1000, // Same as other pages - ultra-fast updates
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Same as other pages - very fresh data
+    retry: 3, // More retry attempts for reliability
     select: (data: any[]) => data.map(crypto => ({
       value: crypto.id,
       label: `${crypto.name} (${crypto.symbol})`
