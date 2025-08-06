@@ -36,15 +36,18 @@ const TradingViewChart = ({ cryptoId }: TradingViewChartProps) => {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Clear any existing content
-    containerRef.current.innerHTML = "";
+    // Clear any existing content safely
+    while (containerRef.current.firstChild) {
+      containerRef.current.removeChild(containerRef.current.firstChild);
+    }
 
     const script = document.createElement("script");
     script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
     script.type = "text/javascript";
     script.async = true;
     
-    script.innerHTML = JSON.stringify({
+    // Use textContent instead of innerHTML for security
+    script.textContent = JSON.stringify({
       autosize: true,
       symbol: symbol,
       interval: "D",
@@ -79,7 +82,9 @@ const TradingViewChart = ({ cryptoId }: TradingViewChartProps) => {
     // Cleanup function
     return () => {
       if (containerRef.current) {
-        containerRef.current.innerHTML = "";
+        while (containerRef.current.firstChild) {
+          containerRef.current.removeChild(containerRef.current.firstChild);
+        }
       }
     };
   }, [symbol, systemTheme]);

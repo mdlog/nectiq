@@ -5051,13 +5051,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const tableName of tablesToTruncate) {
         await retryOperation(async () => {
           try {
-            await db.execute(sql.raw(`TRUNCATE TABLE ${tableName} RESTART IDENTITY CASCADE`));
+            await db.execute(sql`TRUNCATE TABLE ${sql.identifier(tableName)} RESTART IDENTITY CASCADE`);
             console.log(`✅ [RESET] ${tableName} table truncated with RESTART IDENTITY CASCADE`);
             clearedTables++;
           } catch (error: any) {
             console.log(`⚠️ [RESET] Could not truncate ${tableName} (${error.message}) - trying DELETE`);
             // Try fallback DELETE if TRUNCATE fails
-            await db.execute(sql.raw(`DELETE FROM ${tableName}`));
+            await db.execute(sql`DELETE FROM ${sql.identifier(tableName)}`);
             console.log(`✅ [RESET] ${tableName} table cleared with DELETE`);
             clearedTables++;
           }
