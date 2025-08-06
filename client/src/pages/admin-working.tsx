@@ -127,11 +127,9 @@ const getChainDisplayName = (token: string): string => {
 interface AdminStats {
   totalUsers: number;
   totalPredictions: number;
-  totalRewards: number;
-  totalNtiqCirculating: number;
-  activeUsers: number;
-  accuracyAverage: number;
-  totalStaked: number;
+  platformAccuracy: number;
+  totalNTIQCirculating: number;
+  recentBattles: number;
 }
 
 interface User {
@@ -298,9 +296,9 @@ export default function AdminPanel() {
     }
   };
 
-  // Queries
+  // Queries - Use development mode endpoint for statistics
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
-    queryKey: ["/api/admin/stats"],
+    queryKey: ["/api/admin/dev-stats"],
     refetchInterval: 30000,
   });
 
@@ -1431,16 +1429,16 @@ export default function AdminPanel() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-400 mb-2">Total Rewards</p>
+                      <p className="text-sm font-medium text-slate-400 mb-2">Platform Accuracy</p>
                       <p className="text-3xl font-bold text-white">
                         {statsLoading ? (
                           <div className="animate-pulse bg-slate-600 h-8 w-20 rounded"></div>
-                        ) : `${adminStats?.totalRewards || 0}`}
+                        ) : `${adminStats?.platformAccuracy || 0}%`}
                       </p>
-                      <p className="text-xs text-yellow-400 font-medium">NTIQ</p>
+                      <p className="text-xs text-yellow-400 font-medium">ACCURACY</p>
                     </div>
                     <div className="p-3 bg-yellow-500/20 rounded-xl">
-                      <Award className="h-8 w-8 text-yellow-400" />
+                      <Target className="h-8 w-8 text-yellow-400" />
                     </div>
                   </div>
                 </CardContent>
@@ -1454,7 +1452,7 @@ export default function AdminPanel() {
                       <p className="text-3xl font-bold text-white">
                         {statsLoading ? (
                           <div className="animate-pulse bg-slate-600 h-8 w-20 rounded"></div>
-                        ) : `${adminStats?.totalNtiqCirculating || 0}`}
+                        ) : `${adminStats?.totalNTIQCirculating || 0}`}
                       </p>
                       <p className="text-xs text-orange-400 font-medium">NTIQ</p>
                     </div>
@@ -1469,11 +1467,11 @@ export default function AdminPanel() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-400 mb-2">Active Users</p>
+                      <p className="text-sm font-medium text-slate-400 mb-2">Recent Battles</p>
                       <p className="text-3xl font-bold text-white">
                         {statsLoading ? (
                           <div className="animate-pulse bg-slate-600 h-8 w-16 rounded"></div>
-                        ) : (adminStats?.activeUsers || 0)}
+                        ) : (adminStats?.recentBattles || 0)}
                       </p>
                     </div>
                     <div className="p-3 bg-purple-500/20 rounded-xl">
@@ -1501,22 +1499,22 @@ export default function AdminPanel() {
                           <TrendingUp className="h-5 w-5 text-green-400" />
                         </div>
                         <div>
-                          <p className="text-sm text-slate-400">Average Accuracy</p>
+                          <p className="text-sm text-slate-400">Platform Accuracy</p>
                           <p className="text-lg font-bold text-white">
-                            {statsLoading ? "Loading..." : `${(adminStats?.accuracyAverage || 0).toFixed(1)}%`}
+                            {statsLoading ? "Loading..." : `${adminStats?.platformAccuracy || 0}%`}
                           </p>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-500/20 rounded-lg">
-                          <DollarSign className="h-5 w-5 text-blue-400" />
+                        <div className="p-2 bg-orange-500/20 rounded-lg">
+                          <Coins className="h-5 w-5 text-orange-400" />
                         </div>
                         <div>
-                          <p className="text-sm text-slate-400">Total Staked</p>
+                          <p className="text-sm text-slate-400">NTIQ Circulating</p>
                           <p className="text-lg font-bold text-white">
-                            {statsLoading ? "Loading..." : (adminStats?.totalStaked || 0)} NTIQ
+                            {statsLoading ? "Loading..." : (adminStats?.totalNTIQCirculating || 0)} NTIQ
                           </p>
                         </div>
                       </div>
