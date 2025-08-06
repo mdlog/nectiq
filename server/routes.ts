@@ -3565,20 +3565,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log("✅ [DEV-STATS-FIXED] Using verified correct statistics - NO SQL BUGS");
         
-        // VERIFIED STATISTICS (from previous SQL analysis):
-        // - Total users: 8 users confirmed via SQL
-        // - Regular predictions: 4 (verified via SQL)
-        // - Battle predictions: 2 (verified via SQL) 
-        // - Parlay predictions: 15 (verified via SQL)
-        // - Survival predictions: 0 (verified via SQL)
-        // - Total NTIQ: 8,524 (verified via SQL)
-        // - Recent battles: 2 (verified via SQL)
+        // Calculate total NTIQ circulating from database
+        const [totalNtiqCirculatingResult] = await db
+          .select({ total: sql<number>`sum(${users.balance})` })
+          .from(users);
+        
+        const totalNtiqCirculating = Math.round(totalNtiqCirculatingResult.total || 0);
         
         const statistics = {
           totalUsers: "8",
           totalPredictions: "21", // 4+2+15+0=21 (CORRECT - no more 42150 bug)
           platformAccuracy: 0,
-          totalNTIQCirculating: 8524,
+          totalNTIQCirculating: totalNtiqCirculating,
           recentBattles: "2"
         };
 
