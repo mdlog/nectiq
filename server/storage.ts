@@ -2194,6 +2194,19 @@ export class DatabaseStorage implements IStorage {
           }
         }
 
+        // Get winner information if winnerId exists
+        let winnerUsername = null;
+        if (battle.winnerId) {
+          const [winnerUser] = await db
+            .select({ username: users.username })
+            .from(users)
+            .where(eq(users.id, battle.winnerId));
+          
+          if (winnerUser) {
+            winnerUsername = winnerUser.username;
+          }
+        }
+
         return {
           ...battle,
           challengedUsername,
@@ -2205,6 +2218,8 @@ export class DatabaseStorage implements IStorage {
           // Add challenger/creator compatibility fields
           creatorId: battle.challengerId,
           creatorUsername: battle.challengerUsername,
+          // Add winner username
+          winnerUsername,
           duration: Math.round((new Date(battle.targetTime).getTime() - new Date(battle.createdAt).getTime()) / (1000 * 60)),
           timeRemaining: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
         };
