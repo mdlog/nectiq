@@ -109,8 +109,7 @@ function Router() {
       </Route>
       
       <Route path="/admin" component={AdminPanel} />
-      
-
+      <Route path="/admin-working" component={AdminPanel} />
       
       {/* Public routes - no authentication required */}
       <Route path="/terms-conditions" component={TermsConditions} />
