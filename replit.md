@@ -69,6 +69,22 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Documentation Updated**: NECTIQ_PREDICTION_FEATURES_GUIDE.md reflects actual implementation
 
 ## Recent Updates (August 6, 2025)
+### Parlay How-to-Play Guide Implementation Completed ✅
+- **New Parlay Tab**: Added dedicated Parlay tab to How-to-Play page with comprehensive education content
+- **Detailed Calculation Examples**: Added section "Cara Menghitung Potential Win" with formula and examples
+- **Risk vs Reward Table**: Comprehensive table showing multipliers for 2-5 predictions with profit calculations
+- **Platform Fee Explanation**: Added detailed section about 6% platform fee with winning/losing examples
+- **Multiple Scenarios**: Included high-stakes parlay examples and various stake amount demonstrations
+- **Pro Tips Section**: Added user education about fee efficiency and ROI considerations
+- **Indonesian Language**: All content provided in Bahasa Indonesia for better user comprehension
+
+### Enhanced User Education ✅
+- **Formula Breakdown**: Clear explanation of "Potential Win = Stake × Multiplier" with practical examples
+- **Fee Impact Visualization**: Side-by-side comparison of winning vs losing scenarios including fee calculations
+- **Multiplier System**: Complete breakdown of 2.0x to 5.0x multipliers based on prediction count
+- **Stake Examples**: Various stake amounts (50-1,000+ NTIQ) with corresponding potential wins
+- **All-or-Nothing Rule**: Clear visual explanation of parlay win/lose conditions
+
 ### Admin Panel Statistics Enhancement Completed ✅
 - **SQL Aggregation**: Replaced memory calculations with direct database SQL queries for accuracy
 - **Total NTIQ Circulating**: Added new statistics card to track total tokens distributed to users
@@ -77,13 +93,6 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Battle Winner Names**: Fixed battles table to display actual usernames instead of "User undefined"
 - **Comprehensive Data**: Statistics now include all prediction types (Regular, Battles, Parlays, Survival)
 
-### Enhanced Data Accuracy ✅
-- **Real Database Counts**: All statistics pulled directly from PostgreSQL using SQL aggregation
-- **Multiple Prediction Types**: Total predictions include regular, battles, parlays, and survival data
-- **User Balance Tracking**: Total NTIQ Circulating calculated from sum of all user balances
-- **Platform Accuracy**: Calculated from predictions with actual results (isCorrect is not null)
-- **Active User Metrics**: Counted distinct users who have made at least one prediction
-
 ### Technical Stability Achieved ✅
 - **TypeScript Resolution**: All LSP diagnostics and type errors completely resolved
 - **Application Stability**: System running with enhanced error handling and performance
@@ -91,7 +100,8 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Production Readiness**: Platform verified for stable production deployment
 
 ### Current System Status
+- **Complete How-to-Play Guide**: 4-tab navigation (Prediction, Parlay, Battle, Survival) with comprehensive user education
+- **Parlay Education Complete**: Users now have detailed understanding of calculation methods and fee structures
 - **Statistics Dashboard**: 5-card layout displaying accurate real-time platform metrics
 - **Error-free operation**: Zero TypeScript/React errors in current system state
 - **Enhanced admin capabilities**: Complete statistics and CSV export system operational
-- **Real-time monitoring**: All systems operational with comprehensive logging

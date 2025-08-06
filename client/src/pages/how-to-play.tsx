@@ -567,28 +567,150 @@ export default function HowToPlay() {
                 </CardContent>
               </Card>
 
+              {/* How Potential Win is Calculated */}
+              <Card className="mt-6 border-orange-500/20 bg-orange-500/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-orange-600">
+                    <DollarSign className="mr-2 h-5 w-5" />
+                    Cara Menghitung Potential Win
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
+                    <h4 className="font-semibold text-lg mb-3 text-center">Formula Perhitungan</h4>
+                    <div className="text-center">
+                      <div className="font-mono text-xl mb-2">
+                        Potential Win = Stake × Multiplier
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Multiplier ditentukan oleh jumlah prediksi dalam parlay
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detailed Examples */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* 2-Prediction Example */}
+                    <div className="space-y-4">
+                      <h5 className="font-semibold text-blue-600">Contoh: 2 Prediksi (Multiplier 2.0x)</h5>
+                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-3">
+                        <div className="text-sm">
+                          <div className="font-medium mb-2">Parlay Setup:</div>
+                          <div>• Bitcoin: UP</div>
+                          <div>• Ethereum: DOWN</div>
+                          <div>• Stake: 200 NTIQ</div>
+                        </div>
+                        <div className="border-t pt-3">
+                          <div className="font-mono text-sm">
+                            Potential Win = 200 × 2.0 = <span className="font-bold text-blue-600">400 NTIQ</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Profit: 200 NTIQ (jika semua benar)
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 5-Prediction Example */}
+                    <div className="space-y-4">
+                      <h5 className="font-semibold text-purple-600">Contoh: 5 Prediksi (Multiplier 5.0x)</h5>
+                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 space-y-3">
+                        <div className="text-sm">
+                          <div className="font-medium mb-2">Parlay Setup:</div>
+                          <div>• Bitcoin: UP</div>
+                          <div>• Ethereum: DOWN</div>
+                          <div>• Solana: UP</div>
+                          <div>• BNB: DOWN</div>
+                          <div>• Cardano: UP</div>
+                          <div>• Stake: 100 NTIQ</div>
+                        </div>
+                        <div className="border-t pt-3">
+                          <div className="font-mono text-sm">
+                            Potential Win = 100 × 5.0 = <span className="font-bold text-purple-600">500 NTIQ</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Profit: 400 NTIQ (jika semua benar)
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Risk vs Reward Table */}
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                    <h5 className="font-semibold mb-3 text-center">Perbandingan Risk vs Reward</h5>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200 dark:border-gray-700">
+                            <th className="text-left py-2">Jumlah Prediksi</th>
+                            <th className="text-left py-2">Multiplier</th>
+                            <th className="text-left py-2">Stake 100 NTIQ</th>
+                            <th className="text-left py-2">Potential Win</th>
+                            <th className="text-left py-2">Profit</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b border-gray-100 dark:border-gray-800">
+                            <td className="py-2">2 Prediksi</td>
+                            <td className="py-2 text-green-600 font-bold">2.0x</td>
+                            <td className="py-2">100 NTIQ</td>
+                            <td className="py-2 font-mono">200 NTIQ</td>
+                            <td className="py-2 text-green-600">+100 NTIQ</td>
+                          </tr>
+                          <tr className="border-b border-gray-100 dark:border-gray-800">
+                            <td className="py-2">3 Prediksi</td>
+                            <td className="py-2 text-green-600 font-bold">3.0x</td>
+                            <td className="py-2">100 NTIQ</td>
+                            <td className="py-2 font-mono">300 NTIQ</td>
+                            <td className="py-2 text-green-600">+200 NTIQ</td>
+                          </tr>
+                          <tr className="border-b border-gray-100 dark:border-gray-800">
+                            <td className="py-2">4 Prediksi</td>
+                            <td className="py-2 text-green-600 font-bold">4.0x</td>
+                            <td className="py-2">100 NTIQ</td>
+                            <td className="py-2 font-mono">400 NTIQ</td>
+                            <td className="py-2 text-green-600">+300 NTIQ</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2">5 Prediksi</td>
+                            <td className="py-2 text-green-600 font-bold">5.0x</td>
+                            <td className="py-2">100 NTIQ</td>
+                            <td className="py-2 font-mono">500 NTIQ</td>
+                            <td className="py-2 text-green-600">+400 NTIQ</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Parlay Examples */}
               <Card className="mt-6 border-blue-500/20 bg-blue-500/5">
                 <CardHeader>
                   <CardTitle className="flex items-center text-blue-600">
                     <Info className="mr-2 h-5 w-5" />
-                    Parlay Examples
+                    Contoh Skenario Parlay
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Winning Example */}
                     <div className="space-y-4">
-                      <h4 className="font-semibold text-green-600">✅ Winning Example</h4>
+                      <h4 className="font-semibold text-green-600">✅ Skenario Menang</h4>
                       <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
                         <div className="space-y-2 text-sm">
-                          <div className="font-medium">3-Prediction Parlay (100 NTIQ stake):</div>
-                          <div>• Bitcoin: UP ✅ (Correct)</div>
-                          <div>• Ethereum: DOWN ✅ (Correct)</div>
-                          <div>• Solana: UP ✅ (Correct)</div>
+                          <div className="font-medium">3-Prediction Parlay (150 NTIQ stake):</div>
+                          <div>• Bitcoin: UP ✅ (Benar)</div>
+                          <div>• Ethereum: DOWN ✅ (Benar)</div>
+                          <div>• Solana: UP ✅ (Benar)</div>
                           <div className="border-t pt-2 mt-2">
                             <div className="text-green-600 font-bold">
-                              Result: 100 × 3.0x = 300 NTIQ reward
+                              Potential Win: 150 × 3.0x = 450 NTIQ
+                            </div>
+                            <div className="text-green-600 font-semibold">
+                              Profit: +300 NTIQ
                             </div>
                           </div>
                         </div>
@@ -597,20 +719,114 @@ export default function HowToPlay() {
 
                     {/* Losing Example */}
                     <div className="space-y-4">
-                      <h4 className="font-semibold text-red-600">❌ Losing Example</h4>
+                      <h4 className="font-semibold text-red-600">❌ Skenario Kalah</h4>
                       <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
                         <div className="space-y-2 text-sm">
-                          <div className="font-medium">3-Prediction Parlay (100 NTIQ stake):</div>
-                          <div>• Bitcoin: UP ✅ (Correct)</div>
-                          <div>• Ethereum: DOWN ✅ (Correct)</div>
-                          <div>• Solana: UP ❌ (Wrong)</div>
+                          <div className="font-medium">3-Prediction Parlay (150 NTIQ stake):</div>
+                          <div>• Bitcoin: UP ✅ (Benar)</div>
+                          <div>• Ethereum: DOWN ✅ (Benar)</div>
+                          <div>• Solana: UP ❌ (Salah)</div>
                           <div className="border-t pt-2 mt-2">
                             <div className="text-red-600 font-bold">
-                              Result: Lose entire 100 NTIQ stake
+                              Result: Kehilangan seluruh 150 NTIQ
+                            </div>
+                            <div className="text-red-600 font-semibold">
+                              Loss: -150 NTIQ
                             </div>
                           </div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* High Stakes Example */}
+                  <div className="mt-6 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-lg p-4">
+                    <h5 className="font-semibold text-yellow-600 mb-3">🚀 Contoh High Stakes Parlay</h5>
+                    <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="font-medium mb-2">Setup:</div>
+                        <div>• 4 Prediksi (4.0x multiplier)</div>
+                        <div>• Stake: 1,000 NTIQ</div>
+                      </div>
+                      <div>
+                        <div className="font-medium mb-2">Jika Menang:</div>
+                        <div className="text-green-600 font-bold">Win: 4,000 NTIQ</div>
+                        <div className="text-green-600">Profit: +3,000 NTIQ</div>
+                      </div>
+                      <div>
+                        <div className="font-medium mb-2">Jika Kalah:</div>
+                        <div className="text-red-600 font-bold">Loss: 1,000 NTIQ</div>
+                        <div className="text-red-600">Risk: 100% stake</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Platform Fee Information */}
+              <Card className="mt-6 border-amber-500/20 bg-amber-500/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-amber-600">
+                    <AlertCircle className="mr-2 h-5 w-5" />
+                    Platform Fee & Payout Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+                    <h5 className="font-semibold mb-3">Platform mengambil fee 6% dari setiap parlay</h5>
+                    <div className="text-sm space-y-2">
+                      <div>• Fee dipotong dari total stake saat parlay dibuat</div>
+                      <div>• Jika menang, Anda menerima: (Stake - 6% fee) × Multiplier</div>
+                      <div>• Jika kalah, Anda kehilangan seluruh stake termasuk fee</div>
+                    </div>
+                  </div>
+
+                  {/* Fee Calculation Examples */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                      <h6 className="font-semibold text-green-600 mb-2">Contoh Fee Calculation (Menang)</h6>
+                      <div className="text-sm space-y-1">
+                        <div>Stake: 1,000 NTIQ</div>
+                        <div>Platform Fee (6%): 60 NTIQ</div>
+                        <div>Net Stake: 940 NTIQ</div>
+                        <div>Multiplier (3 prediksi): 3.0x</div>
+                        <div className="border-t pt-2 mt-2">
+                          <div className="text-green-600 font-bold">
+                            Payout: 940 × 3.0 = 2,820 NTIQ
+                          </div>
+                          <div className="text-green-600">
+                            Net Profit: +1,820 NTIQ
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                      <h6 className="font-semibold text-red-600 mb-2">Contoh Fee Calculation (Kalah)</h6>
+                      <div className="text-sm space-y-1">
+                        <div>Stake: 1,000 NTIQ</div>
+                        <div>Platform Fee (6%): 60 NTIQ</div>
+                        <div>Net Stake: 940 NTIQ</div>
+                        <div>Result: Satu prediksi salah</div>
+                        <div className="border-t pt-2 mt-2">
+                          <div className="text-red-600 font-bold">
+                            Payout: 0 NTIQ
+                          </div>
+                          <div className="text-red-600">
+                            Total Loss: -1,000 NTIQ
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                    <h6 className="font-semibold text-blue-600 mb-2">💡 Pro Tips untuk Maximize Profit</h6>
+                    <div className="text-sm space-y-1">
+                      <div>• Fee 6% lebih rendah daripada prediksi regular (4%) karena risk lebih tinggi</div>
+                      <div>• Pertimbangkan fee saat menghitung potential return on investment</div>
+                      <div>• Parlay dengan multiplier tinggi lebih efisien untuk cover fee cost</div>
+                      <div>• Minimum stake 50 NTIQ memastikan fee minimum 3 NTIQ</div>
                     </div>
                   </div>
                 </CardContent>
@@ -645,7 +861,7 @@ export default function HowToPlay() {
                   </div>
                   <div className="mt-4 text-center">
                     <p className="text-sm text-muted-foreground">
-                      All predictions in a parlay must have the same duration
+                      Semua prediksi dalam satu parlay harus memiliki durasi yang sama
                     </p>
                   </div>
                 </CardContent>
