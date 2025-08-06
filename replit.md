@@ -24,7 +24,7 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Database**: PostgreSQL via Drizzle ORM, hosted on Neon Database for serverless capabilities.
 - **Authentication**: Supports both traditional username/password and Web3 wallet authentication. New wallet addresses are auto-registered. Includes session-based authentication with secure cookie handling and admin access via designated wallets.
 - **Core Features**:
-    - **Prediction Engine**: Supports various cryptocurrencies (Bitcoin, Ethereum, BNB, Cardano, Solana, Dogecoin, Ripple, Avalanche) and timeframes (1 hour, 6 hours, 24 hours, 7 days). Accuracy is percentage-based with reward multipliers (e.g., ≥ 99.5% = 3.0x, ≥ 90% = 0.9x). A platform fee of 4% is applied to winning predictions (1.5x, 2.0x, 3.0x multipliers).
+    - **Prediction Engine**: Supports various cryptocurrencies (Bitcoin, Ethereum, BNB, Cardano, Solana, Dogecoin, Ripple, Avalanche) and timeframes (1 hour, 6 hours, 24 hours, 7 days). Regular predictions use accuracy-based rewards with multipliers (≥ 99.5% = 3.0x, ≥ 90% = 0.9x) and 4% platform fee. Parlay predictions use UP/DOWN system with fixed multipliers (2-5x based on coin count) and 6% platform fee.
     - **Reward System**: Point-based economy (NTIQ) with multipliers for accuracy, progressive rewards, achievements, and daily challenges.
     - **Real-Time Features**: Live cryptocurrency price updates (1-second intervals), interactive price charts, active prediction tracking with countdown timers, and a live leaderboard.
     - **Gamified Elements**: Prediction Battles (head-to-head challenges) and Survival Tournaments (elimination-based predictions) with fair play mechanisms.
@@ -57,8 +57,16 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Snapshot Mechanism**: Clarified price comparison between creation time vs expiration time
 - **All-or-Nothing Rule**: Documented that single wrong prediction causes entire parlay loss
 - **Simplified Multipliers**: Removed complex accuracy bonuses, using fixed multipliers per coin count
-- **Stake System Correction**: Fixed stake calculation - total stake per parlay, not per coin
+- **Stake System Verification**: Confirmed through code analysis - total stake per parlay, not per coin
+- **Stake Limits Corrected**: Min 50 NTIQ, NO maximum limit (only user balance constraint)
 - **Example Scenarios**: Added winning and losing parlay examples with correct stake amounts
+
+### Parlay Stake System Analysis Completed ✅
+- **Frontend Validation**: Confirmed 50 NTIQ minimum in parlay-simple.tsx
+- **Backend Implementation**: Verified total parlay stake system in server/routes.ts
+- **Database Storage**: Stake stored as single total amount per parlay
+- **Maximum Limit**: No upper bound unlike regular predictions (which have 10,000 NTIQ max)
+- **Documentation Updated**: NECTIQ_PREDICTION_FEATURES_GUIDE.md reflects actual implementation
 
 ## Recent Updates (August 6, 2025)
 ### Admin Panel Statistics Enhancement Completed ✅

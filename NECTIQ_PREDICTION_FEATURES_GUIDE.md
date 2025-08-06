@@ -114,7 +114,7 @@
 - **Requirement**: Semua prediksi harus benar untuk menang (jika ada 1 salah, parlay kalah)
 - **Snapshot System**: Harga diambil saat create parlay vs harga saat durasi selesai
 - **Minimum Stake**: 50 NTIQ per parlay (total)
-- **Maximum Stake**: 10,000 NTIQ per parlay (total)
+- **Maximum Stake**: Tidak terbatas (dibatasi oleh balance user)
 - **Timeframe**: Sama untuk semua coins dalam 1 parlay
 
 ### Cara Bergabung
@@ -188,6 +188,18 @@
 - **KALAH** (1 prediksi salah = seluruh parlay kalah)
 - **Reward**: 0 NTIQ
 - **Loss**: -150 NTIQ (kehilangan seluruh stake)
+
+#### Catatan Penting Stake System
+**Sistem Stake Parlay:**
+- ✅ Stake dihitung **PER PARLAY TOTAL**, bukan per coin individual
+- ✅ Minimum stake: **50 NTIQ** untuk seluruh parlay
+- ✅ Maximum stake: **Tidak terbatas** (hanya dibatasi balance user)
+- ❌ **BERBEDA** dengan regular prediction yang memiliki limit 50-10,000 NTIQ
+
+**Contoh Perhitungan:**
+- Parlay 3 coins dengan stake 200 NTIQ = Total 200 NTIQ (bukan 600 NTIQ)
+- User hanya perlu balance 200 NTIQ, bukan 600 NTIQ
+- Jika menang, reward dihitung dari 200 NTIQ × multiplier
 
 ---
 
