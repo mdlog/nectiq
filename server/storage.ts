@@ -1210,6 +1210,7 @@ export class DatabaseStorage implements IStorage {
   async getUserRewardHistory(userId: number, limit: number = 20): Promise<any[]> {
     try {
       console.log(`🔍 [STORAGE] Getting comprehensive reward history for user ${userId}, limit: ${limit}`);
+      console.log(`📊 [STORAGE] Database tables available: predictions, transactionLogs, predictionBattles, etc.`);
       
       const allRewards: any[] = [];
 

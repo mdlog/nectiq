@@ -210,6 +210,25 @@ export default function UserDashboard() {
     staleTime: 60000,
   });
 
+  // Debug authentication and reward loading
+  console.log('🔍 [DASHBOARD] User authentication status:', {
+    user: !!user,
+    userId: user?.id,
+    username: user?.username,
+    rewardsEnabled: !!user,
+    rewardsLoading,
+    rewardsError: rewardsError?.message,
+    rewardsCount: recentRewards.length
+  });
+
+  // Force refresh rewards when user becomes available
+  useEffect(() => {
+    if (user && user.id && !rewardsLoading && recentRewards.length === 0) {
+      console.log('🔄 [DASHBOARD] User authenticated, force refreshing rewards...');
+      queryClient.invalidateQueries({ queryKey: ["/api/user/rewards/history"] });
+    }
+  }, [user, rewardsLoading, recentRewards.length, queryClient]);
+
   const { data: prices = [], isLoading: pricesLoading, refetch: refetchPrices } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/pyth-prices"],
     refetchInterval: 1000, // Same as Live Prices - ultra-fast updates

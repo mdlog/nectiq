@@ -3144,17 +3144,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req as any).session?.userId;
       console.log(`🔍 [REWARD-HISTORY] API endpoint called for userId: ${userId}`);
+      console.log(`🔍 [REWARD-HISTORY] Session data:`, (req as any).session);
+      
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
+      console.log(`📊 [REWARD-HISTORY] Fetching rewards for user ID: ${userId}`);
+      
       // Get comprehensive reward history for user dashboard
       const rewardHistory = await storage.getUserRewardHistory(userId, 20);
       console.log(`✅ [REWARD-HISTORY] Successfully fetched ${rewardHistory.length} reward history items`);
       
+      if (rewardHistory.length > 0) {
+        console.log(`🎁 [REWARD-HISTORY] Sample reward:`, rewardHistory[0]);
+      } else {
+        console.log(`❌ [REWARD-HISTORY] No rewards found for user ${userId}`);
+      }
+      
       res.json(rewardHistory);
     } catch (error) {
-      console.error("Error fetching user reward history:", error);
+      console.error("❌ [REWARD-HISTORY] Error fetching user reward history:", error);
       res.status(500).json({ message: "Failed to get reward history" });
     }
   });
