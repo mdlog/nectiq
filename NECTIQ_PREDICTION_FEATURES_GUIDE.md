@@ -113,15 +113,15 @@
 - **Format**: Pilih UP atau DOWN untuk setiap coin
 - **Requirement**: Semua prediksi harus benar untuk menang (jika ada 1 salah, parlay kalah)
 - **Snapshot System**: Harga diambil saat create parlay vs harga saat durasi selesai
-- **Minimum Stake**: 25 NTIQ per coin
-- **Maximum Stake**: 2,000 NTIQ per coin
+- **Minimum Stake**: 25 NTIQ per parlay (total)
+- **Maximum Stake**: 2,000 NTIQ per parlay (total)
 - **Timeframe**: Sama untuk semua coins dalam 1 parlay
 
 ### Cara Bergabung
 1. Pilih 2-5 cryptocurrency
 2. Set timeframe yang sama untuk semua (1 jam, 6 jam, 24 jam)
 3. Untuk setiap coin, pilih prediksi: **UP** atau **DOWN**
-4. Set stake amount per coin
+4. Set stake amount total untuk seluruh parlay
 5. Konfirmasi parlay bet
 6. Sistem mengambil snapshot harga saat create parlay
 
@@ -146,8 +146,8 @@
 
 #### Scenario 1: Parlay Menang (3-coin parlay - 1 jam)
 **Setup Parlay**:
-- **Stake per coin**: 100 NTIQ
-- **Total Stake**: 300 NTIQ
+- **Total Stake**: 150 NTIQ
+- **Coins**: 3 coins (Bitcoin, Ethereum, Solana)
 - **Duration**: 1 jam
 
 **Harga saat Create Parlay (Snapshot Awal)**:
@@ -167,15 +167,15 @@
 **Perhitungan**:
 - **Result**: MENANG (semua prediksi benar)
 - **Base Multiplier**: 2.5x (3 coins)
-- **Gross Reward**: 300 × 2.5 = 750 NTIQ
-- **Platform Fee**: 750 × 6% = 45 NTIQ
-- **Net Reward**: 750 - 45 = 705 NTIQ
-- **Profit**: 705 - 300 = 405 NTIQ
+- **Gross Reward**: 150 × 2.5 = 375 NTIQ
+- **Platform Fee**: 375 × 6% = 22.5 NTIQ
+- **Net Reward**: 375 - 22.5 = 352.5 NTIQ
+- **Profit**: 352.5 - 150 = 202.5 NTIQ
 
 #### Scenario 2: Parlay Kalah (3-coin parlay - 1 jam)
 **Setup Parlay**:
-- **Stake per coin**: 100 NTIQ
-- **Total Stake**: 300 NTIQ
+- **Total Stake**: 150 NTIQ
+- **Coins**: 3 coins (Bitcoin, Ethereum, Solana)
 
 **Harga saat Create vs Selesai**:
 | Coin | Harga Create | Prediksi | Harga Akhir | Hasil | Status |
@@ -187,7 +187,7 @@
 **Result**: 
 - **KALAH** (1 prediksi salah = seluruh parlay kalah)
 - **Reward**: 0 NTIQ
-- **Loss**: -300 NTIQ (kehilangan seluruh stake)
+- **Loss**: -150 NTIQ (kehilangan seluruh stake)
 
 ---
 
@@ -298,20 +298,20 @@ Contoh:
 - **Balance**: 1,184 - 300 + 570 = 1,454 NTIQ
 
 #### Activity 3: Parlay 2-coin (Solana + BNB 1h)
-- **Stake**: 150 NTIQ per coin = 300 NTIQ total
+- **Total Stake**: 200 NTIQ (untuk seluruh parlay)
 - **Predictions**: Solana UP, BNB DOWN
 - **Results**: Solana UP ✅, BNB DOWN ✅ (kedua benar)
 - **Multiplier**: 1.8x (2 coins)
-- **Gross**: 300 × 1.8 = 540 NTIQ
-- **Fee**: 540 × 6% = 32.4 NTIQ
-- **Net**: 540 - 32.4 = 507.6 NTIQ
-- **Balance**: 1,454 - 300 + 507.6 = 1,661.6 NTIQ
+- **Gross**: 200 × 1.8 = 360 NTIQ
+- **Fee**: 360 × 6% = 21.6 NTIQ
+- **Net**: 360 - 21.6 = 338.4 NTIQ
+- **Balance**: 1,454 - 200 + 338.4 = 1,592.4 NTIQ
 
 #### Total Day Performance
 - **Starting**: 1,000 NTIQ
-- **Ending**: 1,661.6 NTIQ
-- **Profit**: 661.6 NTIQ (66.16% gain)
-- **Total Fees Paid**: 78.4 NTIQ
+- **Ending**: 1,592.4 NTIQ
+- **Profit**: 592.4 NTIQ (59.24% gain)
+- **Total Fees Paid**: 67.6 NTIQ
 
 ---
 

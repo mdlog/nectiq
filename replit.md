@@ -57,7 +57,8 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Snapshot Mechanism**: Clarified price comparison between creation time vs expiration time
 - **All-or-Nothing Rule**: Documented that single wrong prediction causes entire parlay loss
 - **Simplified Multipliers**: Removed complex accuracy bonuses, using fixed multipliers per coin count
-- **Example Scenarios**: Added winning and losing parlay examples for better understanding
+- **Stake System Correction**: Fixed stake calculation - total stake per parlay, not per coin
+- **Example Scenarios**: Added winning and losing parlay examples with correct stake amounts
 
 ## Recent Updates (August 6, 2025)
 ### Admin Panel Statistics Enhancement Completed ✅
