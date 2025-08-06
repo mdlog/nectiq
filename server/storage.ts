@@ -1312,8 +1312,8 @@ export class DatabaseStorage implements IStorage {
       const survivalRewards = await db.select({
         id: transactionLogs.id,
         amount: transactionLogs.amount,
-        createdAt: transactionLogs.createdAt,
-        relatedId: transactionLogs.relatedId
+        createdAt: transactionLogs.created_at,
+        relatedId: transactionLogs.related_id
       })
       .from(transactionLogs)
       .where(
@@ -1323,7 +1323,7 @@ export class DatabaseStorage implements IStorage {
           eq(transactionLogs.status, 'completed')
         )
       )
-      .orderBy(desc(transactionLogs.createdAt))
+      .orderBy(desc(transactionLogs.created_at))
       .limit(5);
 
       for (const survivalReward of survivalRewards) {
