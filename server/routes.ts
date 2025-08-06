@@ -270,6 +270,8 @@ const resetAdminIP = (ip: string) => {
 // Reset the current admin IP immediately on server start
 resetAdminIP('172.31.90.130');
 resetAdminIP('172.31.106.226');
+resetAdminIP('172.31.87.2'); // Current blacklisted admin IP
+console.log(`🔧 [ADMIN-FIX] Reset admin IP blacklisting on server start`);
 
 // Admin authentication middleware with enhanced security
 const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
