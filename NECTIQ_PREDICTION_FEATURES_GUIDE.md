@@ -113,8 +113,8 @@
 - **Format**: Pilih UP atau DOWN untuk setiap coin
 - **Requirement**: Semua prediksi harus benar untuk menang (jika ada 1 salah, parlay kalah)
 - **Snapshot System**: Harga diambil saat create parlay vs harga saat durasi selesai
-- **Minimum Stake**: 25 NTIQ per parlay (total)
-- **Maximum Stake**: 2,000 NTIQ per parlay (total)
+- **Minimum Stake**: 50 NTIQ per parlay (total)
+- **Maximum Stake**: 10,000 NTIQ per parlay (total)
 - **Timeframe**: Sama untuk semua coins dalam 1 parlay
 
 ### Cara Bergabung
