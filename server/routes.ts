@@ -15,6 +15,7 @@ import { predictionService } from "./services/predictionService";
 const pythPriceService = new PythPriceService();
 import { achievementService } from "./services/achievementService";
 import { dailyChallengeService } from "./services/dailyChallengeService";
+import * as schema from "@shared/schema";
 import { insertPredictionSchema, insertCryptocurrencySchema, insertDepositSchema, insertWithdrawalSchema, insertParlayPredictionSchema, insertParlayPredictionCoinSchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions, deposits, withdrawals, rewards, achievements, dailyChallenges, banners, cryptocurrencies, cryptoTransactions, purchases, parlayPredictions, parlayPredictionCoins } from "@shared/schema";
 import { eq, and, or, desc, sql, isNotNull, gte } from "drizzle-orm";
 import { z } from "zod";
@@ -8729,54 +8730,57 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(401).json({ message: 'Authentication required' });
       }
       
-      // Direct implementation using raw SQL to avoid schema issues
-      const participationsResult = await db.execute(
-        `SELECT 
-          sp.tournament_id as "tournamentId",
-          st.title as "tournamentTitle",
-          st.cryptocurrency,
-          sp.status,
-          sp.eliminated_round as "eliminatedRound",
-          sp.joined_at as "joinedAt",
-          sp.eliminated_at as "eliminatedAt",
-          st.status as "tournamentStatus",
-          st.entry_fee as "entryFee",
-          st.reward_amount as "rewardAmount",
-          st.reward_type as "rewardType",
-          st.winner_id as "winnerId",
-          st.current_round as "currentRound",
-          st.end_time as "endTime",
-          st.max_participants as "totalParticipants",
-          st.prize_pool as "prizePool"
-        FROM survival_participants sp
-        INNER JOIN survival_tournaments st ON sp.tournament_id = st.id
-        WHERE sp.user_id = ${userId}`
-      );
+      // Use Drizzle's query builder for secure parameterized queries
+      const participationsResult = await db
+        .select({
+          tournamentId: schema.survivalParticipants.tournamentId,
+          tournamentTitle: schema.survivalTournaments.title,
+          cryptocurrency: schema.survivalTournaments.cryptocurrency,
+          status: schema.survivalParticipants.status,
+          eliminatedRound: schema.survivalParticipants.eliminatedRound,
+          joinedAt: schema.survivalParticipants.joinedAt,
+          eliminatedAt: schema.survivalParticipants.eliminatedAt,
+          tournamentStatus: schema.survivalTournaments.status,
+          entryFee: schema.survivalTournaments.entryFee,
+          rewardAmount: schema.survivalTournaments.rewardAmount,
+          rewardType: schema.survivalTournaments.rewardType,
+          winnerId: schema.survivalTournaments.winnerId,
+          currentRound: schema.survivalTournaments.currentRound,
+          endTime: schema.survivalTournaments.endTime,
+          totalParticipants: schema.survivalTournaments.maxParticipants,
+          prizePool: schema.survivalTournaments.prizePool,
+        })
+        .from(schema.survivalParticipants)
+        .innerJoin(
+          schema.survivalTournaments,
+          eq(schema.survivalParticipants.tournamentId, schema.survivalTournaments.id)
+        )
+        .where(eq(schema.survivalParticipants.userId, userId));
       const participations = participationsResult;
 
-      const tournaments = await Promise.all(participations.rows.map(async (p) => {
-        const allParticipants = await db.execute(
-          `SELECT * FROM survival_participants 
-          WHERE tournament_id = ${p.tournamentId}`
-        );
+      const tournaments = await Promise.all(participations.map(async (p) => {
+        const allParticipants = await db
+          .select()
+          .from(schema.survivalParticipants)
+          .where(eq(schema.survivalParticipants.tournamentId, p.tournamentId));
 
-        const remainingParticipants = allParticipants.rows.filter(participant => 
+        const remainingParticipants = allParticipants.filter(participant => 
           participant.status === 'active' || participant.status === 'winner'
         ).length;
 
-        const userParticipant = allParticipants.rows.find(participant => 
-          participant.user_id === userId && participant.tournament_id === p.tournamentId
+        const userParticipant = allParticipants.find(participant => 
+          participant.userId === userId && participant.tournamentId === p.tournamentId
         );
 
-        const predictions = await db.execute(
-          `SELECT * FROM survival_predictions 
-          WHERE participant_id = ${userParticipant?.id || 0}
-          LIMIT 1`
-        );
+        const predictions = await db
+          .select()
+          .from(schema.survivalPredictions)
+          .where(eq(schema.survivalPredictions.participantId, userParticipant?.id || 0))
+          .limit(1);
 
         const finalPosition = p.status === 'winner' ? 1 : 
-          p.status === 'eliminated' ? allParticipants.rows.filter(participant => 
-            participant.eliminated_round && participant.eliminated_round >= (p.eliminatedRound || 0)
+          p.status === 'eliminated' ? allParticipants.filter(participant => 
+            participant.eliminatedRound && participant.eliminatedRound >= (p.eliminatedRound || 0)
           ).length + 1 : 0;
 
         return {
@@ -8787,12 +8791,12 @@ Manual balance correction required IMMEDIATELY!`;
           round: p.currentRound || 1,
           eliminatedRound: p.eliminatedRound,
           wonRound: p.status === 'winner' ? p.currentRound : null,
-          totalParticipants: p.totalParticipants || allParticipants.rows.length,
+          totalParticipants: p.totalParticipants || allParticipants.length,
           remainingParticipants: remainingParticipants,
           prizePool: p.rewardAmount || 0,
           entryFee: p.entryFee || 0,
           joinedAt: p.joinedAt || new Date().toISOString(),
-          prediction: predictions.rows[0]?.prediction || null,
+          prediction: predictions[0]?.prediction || null,
           eliminatedAt: p.eliminatedAt || null,
           wonAt: p.status === 'winner' ? p.endTime : null,
           finalPosition: finalPosition
