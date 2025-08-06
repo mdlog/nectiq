@@ -20,7 +20,8 @@ import {
   Star,
   Zap,
   Swords,
-  Shield
+  Shield,
+  Layers
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -115,10 +116,14 @@ export default function HowToPlay() {
         
         {/* Navigation Tabs */}
         <Tabs defaultValue="prediction" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-12">
+          <TabsList className="grid w-full grid-cols-4 mb-12">
             <TabsTrigger value="prediction" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               Prediction
+            </TabsTrigger>
+            <TabsTrigger value="parlay" className="flex items-center gap-2">
+              <Layers className="h-4 w-4" />
+              Parlay
             </TabsTrigger>
             <TabsTrigger value="battle" className="flex items-center gap-2">
               <Swords className="h-4 w-4" />
@@ -448,6 +453,204 @@ export default function HowToPlay() {
           </Card>
         </section>
 
+          </TabsContent>
+
+          {/* Parlay Tab Content */}
+          <TabsContent value="parlay" className="space-y-12">
+            {/* Parlay Guide */}
+            <section>
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold mb-4">How to Play: Parlay Predictions</h2>
+                <p className="text-muted-foreground">Combine multiple predictions for bigger rewards with higher risk</p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-8">
+                <Card className="border-cyan-500/20 bg-cyan-500/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-cyan-600">
+                      <Layers className="mr-2 h-5 w-5" />
+                      What is a Parlay?
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      A parlay combines 2-5 predictions into a single bet. ALL predictions must be correct to win.
+                    </p>
+                    <div className="space-y-3">
+                      <div className="flex items-start">
+                        <div className="w-6 h-6 bg-cyan-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">1</div>
+                        <div>
+                          <p className="font-medium">Choose 2-5 Cryptocurrencies</p>
+                          <p className="text-sm text-muted-foreground">Select different cryptocurrencies for your parlay</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <div className="w-6 h-6 bg-cyan-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">2</div>
+                        <div>
+                          <p className="font-medium">Predict UP or DOWN</p>
+                          <p className="text-sm text-muted-foreground">For each crypto, predict if price will go UP or DOWN</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <div className="w-6 h-6 bg-cyan-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">3</div>
+                        <div>
+                          <p className="font-medium">Set Total Stake</p>
+                          <p className="text-sm text-muted-foreground">Minimum 50 NTIQ (no maximum limit)</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-emerald-500/20 bg-emerald-500/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-emerald-600">
+                      <TrendingUp className="mr-2 h-5 w-5" />
+                      Multipliers & Rewards
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Fixed multipliers based on number of predictions in your parlay:
+                    </p>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-emerald-500/10 rounded-lg">
+                        <span className="font-medium">2 Predictions</span>
+                        <span className="text-emerald-600 font-bold">2.0x</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-emerald-500/10 rounded-lg">
+                        <span className="font-medium">3 Predictions</span>
+                        <span className="text-emerald-600 font-bold">3.0x</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-emerald-500/10 rounded-lg">
+                        <span className="font-medium">4 Predictions</span>
+                        <span className="text-emerald-600 font-bold">4.0x</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-emerald-500/10 rounded-lg">
+                        <span className="font-medium">5 Predictions</span>
+                        <span className="text-emerald-600 font-bold">5.0x</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* All-or-Nothing Rule */}
+              <Card className="mt-6 border-red-500/20 bg-red-500/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-red-600">
+                    <AlertCircle className="mr-2 h-5 w-5" />
+                    All-or-Nothing Rule
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <CheckCircle className="w-8 h-8 text-green-500" />
+                      </div>
+                      <h4 className="font-semibold mb-2 text-green-600">All Correct = WIN</h4>
+                      <p className="text-sm text-muted-foreground">
+                        If ALL predictions are correct, you win your stake multiplied by the parlay multiplier
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <AlertCircle className="w-8 h-8 text-red-500" />
+                      </div>
+                      <h4 className="font-semibold mb-2 text-red-600">Any Wrong = LOSE</h4>
+                      <p className="text-sm text-muted-foreground">
+                        If even ONE prediction is wrong, you lose your entire stake
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Parlay Examples */}
+              <Card className="mt-6 border-blue-500/20 bg-blue-500/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-blue-600">
+                    <Info className="mr-2 h-5 w-5" />
+                    Parlay Examples
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Winning Example */}
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-green-600">✅ Winning Example</h4>
+                      <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                        <div className="space-y-2 text-sm">
+                          <div className="font-medium">3-Prediction Parlay (100 NTIQ stake):</div>
+                          <div>• Bitcoin: UP ✅ (Correct)</div>
+                          <div>• Ethereum: DOWN ✅ (Correct)</div>
+                          <div>• Solana: UP ✅ (Correct)</div>
+                          <div className="border-t pt-2 mt-2">
+                            <div className="text-green-600 font-bold">
+                              Result: 100 × 3.0x = 300 NTIQ reward
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Losing Example */}
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-red-600">❌ Losing Example</h4>
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                        <div className="space-y-2 text-sm">
+                          <div className="font-medium">3-Prediction Parlay (100 NTIQ stake):</div>
+                          <div>• Bitcoin: UP ✅ (Correct)</div>
+                          <div>• Ethereum: DOWN ✅ (Correct)</div>
+                          <div>• Solana: UP ❌ (Wrong)</div>
+                          <div className="border-t pt-2 mt-2">
+                            <div className="text-red-600 font-bold">
+                              Result: Lose entire 100 NTIQ stake
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Duration Options */}
+              <Card className="mt-6 border-purple-500/20 bg-purple-500/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-purple-600">
+                    <Clock className="mr-2 h-5 w-5" />
+                    Duration Options
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-purple-500/10 rounded-lg">
+                      <div className="font-bold text-lg">1 Hour</div>
+                      <div className="text-sm text-muted-foreground">Quick predictions</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-500/10 rounded-lg">
+                      <div className="font-bold text-lg">6 Hours</div>
+                      <div className="text-sm text-muted-foreground">Medium term</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-500/10 rounded-lg">
+                      <div className="font-bold text-lg">24 Hours</div>
+                      <div className="text-sm text-muted-foreground">Daily predictions</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-500/10 rounded-lg">
+                      <div className="font-bold text-lg">7 Days</div>
+                      <div className="text-sm text-muted-foreground">Weekly predictions</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      All predictions in a parlay must have the same duration
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
           </TabsContent>
 
           {/* Battle Mode Tab Content */}
