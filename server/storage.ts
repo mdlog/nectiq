@@ -2199,6 +2199,12 @@ export class DatabaseStorage implements IStorage {
           challengedUsername,
           challengedUid,
           challengedProfilePhoto,
+          // Add opponent fields for frontend compatibility
+          opponentId: battle.challengedId,
+          opponentUsername: challengedUsername,
+          // Add challenger/creator compatibility fields
+          creatorId: battle.challengerId,
+          creatorUsername: battle.challengerUsername,
           duration: Math.round((new Date(battle.targetTime).getTime() - new Date(battle.createdAt).getTime()) / (1000 * 60)),
           timeRemaining: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
         };
