@@ -212,6 +212,16 @@ export default function AdminPanel() {
   const [transactionPage, setTransactionPage] = useState(1);
   const [transactionLimit] = useState(10); // Items per page
 
+  // Pagination states for Predictions sub-tabs
+  const [predictionsPage, setPredictionsPage] = useState(1);
+  const [predictionsLimit] = useState(20);
+  const [battlesPage, setBattlesPage] = useState(1);
+  const [battlesLimit] = useState(20);
+  const [parlaysPage, setParlaysPage] = useState(1);
+  const [parlaysLimit] = useState(20);
+  const [survivalPage, setSurvivalPage] = useState(1);
+  const [survivalLimit] = useState(20);
+
   // Financial summary state
   const [financialSummary, setFinancialSummary] = useState({
     totalDeposits: 0,
@@ -321,6 +331,17 @@ export default function AdminPanel() {
   const { data: securityEvents, isLoading: securityLoading } = useQuery({
     queryKey: ["/api/admin/security"],
     refetchInterval: 15000,
+  });
+
+  // Add battles and survival data queries
+  const { data: battlesData, isLoading: battlesLoading } = useQuery({
+    queryKey: ["/api/admin/battles"],
+    refetchInterval: 30000,
+  });
+
+  const { data: survivalData, isLoading: survivalLoading } = useQuery({
+    queryKey: ["/api/admin/survival"],
+    refetchInterval: 30000,
   });
 
   const { data: events, isLoading: eventsLoading } = useQuery({
@@ -811,6 +832,34 @@ export default function AdminPanel() {
   const startIndex = (transactionPage - 1) * transactionLimit;
   const endIndex = startIndex + transactionLimit;
   const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+  // Get paginated predictions data
+  const totalPredictions = filteredPredictions?.length || 0;
+  const totalPredictionsPages = Math.ceil(totalPredictions / predictionsLimit);
+  const predictionsStartIndex = (predictionsPage - 1) * predictionsLimit;
+  const predictionsEndIndex = predictionsStartIndex + predictionsLimit;
+  const paginatedPredictions = filteredPredictions?.slice(predictionsStartIndex, predictionsEndIndex) || [];
+
+  // Get paginated parlays data
+  const totalParlays = parlayData?.length || 0;
+  const totalParlaysPages = Math.ceil(totalParlays / parlaysLimit);
+  const parlaysStartIndex = (parlaysPage - 1) * parlaysLimit;
+  const parlaysEndIndex = parlaysStartIndex + parlaysLimit;
+  const paginatedParlays = parlayData?.slice(parlaysStartIndex, parlaysEndIndex) || [];
+
+  // Get paginated battles data
+  const totalBattles = battlesData?.length || 0;
+  const totalBattlesPages = Math.ceil(totalBattles / battlesLimit);
+  const battlesStartIndex = (battlesPage - 1) * battlesLimit;
+  const battlesEndIndex = battlesStartIndex + battlesLimit;
+  const paginatedBattles = battlesData?.slice(battlesStartIndex, battlesEndIndex) || [];
+
+  // Get paginated survival data
+  const totalSurvival = survivalData?.length || 0;
+  const totalSurvivalPages = Math.ceil(totalSurvival / survivalLimit);
+  const survivalStartIndex = (survivalPage - 1) * survivalLimit;
+  const survivalEndIndex = survivalStartIndex + survivalLimit;
+  const paginatedSurvival = survivalData?.slice(survivalStartIndex, survivalEndIndex) || [];
 
   // Get unique tokens for filter dropdown
   const availableTokens = transactionsData && Array.isArray(transactionsData) 
@@ -2044,7 +2093,8 @@ export default function AdminPanel() {
                         <div className="text-center py-8">
                           <div className="text-slate-400">Loading predictions...</div>
                         </div>
-                      ) : filteredPredictions && filteredPredictions.length > 0 ? (
+                      ) : paginatedPredictions && paginatedPredictions.length > 0 ? (
+                        <div>
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -2061,7 +2111,7 @@ export default function AdminPanel() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                      {filteredPredictions.slice(0, 20).map((prediction) => (
+                      {paginatedPredictions.map((prediction) => (
                         <TableRow key={prediction.id}>
                           <TableCell>{prediction.id}</TableCell>
                           <TableCell>
@@ -2120,6 +2170,56 @@ export default function AdminPanel() {
                       ))}
                     </TableBody>
                   </Table>
+                  
+                  {/* Predictions Pagination */}
+                  {totalPredictionsPages > 1 && (
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
+                      <div className="text-sm text-slate-400">
+                        Showing {predictionsStartIndex + 1}-{Math.min(predictionsEndIndex, totalPredictions)} of {totalPredictions} predictions
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPredictionsPage(Math.max(1, predictionsPage - 1))}
+                          disabled={predictionsPage === 1}
+                          className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Previous
+                        </Button>
+                        
+                        <div className="flex space-x-1">
+                          {Array.from({ length: totalPredictionsPages }, (_, i) => i + 1).map((page) => (
+                            <Button
+                              key={page}
+                              variant={page === predictionsPage ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setPredictionsPage(page)}
+                              className={page === predictionsPage 
+                                ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                                : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                              }
+                            >
+                              {page}
+                            </Button>
+                          ))}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPredictionsPage(Math.min(totalPredictionsPages, predictionsPage + 1))}
+                          disabled={predictionsPage === totalPredictionsPages}
+                          className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                        >
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  </div>
                 ) : (
                   <div className="text-center py-8">
                     <TrendingUp className="h-12 w-12 text-slate-400 mx-auto mb-4" />
@@ -2138,7 +2238,7 @@ export default function AdminPanel() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Swords className="mr-2" size={20} />
-                    Prediction Battles (0)
+                    Prediction Battles ({totalBattles})
                   </div>
                   <Button onClick={() => {}} variant="outline" size="sm">
                     <Download className="mr-2" size={16} />
@@ -2147,11 +2247,121 @@ export default function AdminPanel() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Swords className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-300 mb-2">No Battles Yet</h3>
-                  <p className="text-slate-400">Prediction battles will appear here when users start challenging each other</p>
-                </div>
+                {battlesLoading ? (
+                  <div className="text-center py-8">
+                    <div className="text-slate-400">Loading battles...</div>
+                  </div>
+                ) : paginatedBattles && paginatedBattles.length > 0 ? (
+                  <div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Battle ID</TableHead>
+                          <TableHead>Challenger</TableHead>
+                          <TableHead>Opponent</TableHead>
+                          <TableHead>Cryptocurrency</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Winner</TableHead>
+                          <TableHead>Stake</TableHead>
+                          <TableHead>Created</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedBattles.map((battle: any) => (
+                          <TableRow key={battle.id}>
+                            <TableCell>#{battle.id}</TableCell>
+                            <TableCell className="font-medium text-white">
+                              {battle.challengerUsername || `User ${battle.challengerId}`}
+                            </TableCell>
+                            <TableCell className="font-medium text-white">
+                              {battle.opponentUsername || `User ${battle.opponentId}`}
+                            </TableCell>
+                            <TableCell className="font-medium text-white capitalize">
+                              {battle.cryptocurrency}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                battle.status === 'completed' ? 'default' : 
+                                battle.status === 'active' ? 'secondary' : 'outline'
+                              }>
+                                {battle.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {battle.winnerId ? 
+                                <span className="text-green-400 font-semibold">
+                                  {battle.winnerUsername || `User ${battle.winnerId}`}
+                                </span> : 
+                                <span className="text-slate-400">Pending</span>
+                              }
+                            </TableCell>
+                            <TableCell className="text-yellow-400 font-semibold">
+                              {battle.stakeAmount} NTIQ
+                            </TableCell>
+                            <TableCell className="text-xs text-slate-400">
+                              {new Date(battle.createdAt).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    
+                    {/* Battles Pagination */}
+                    {totalBattlesPages > 1 && (
+                      <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
+                        <div className="text-sm text-slate-400">
+                          Showing {battlesStartIndex + 1}-{Math.min(battlesEndIndex, totalBattles)} of {totalBattles} battles
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBattlesPage(Math.max(1, battlesPage - 1))}
+                            disabled={battlesPage === 1}
+                            className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            Previous
+                          </Button>
+                          
+                          <div className="flex space-x-1">
+                            {Array.from({ length: totalBattlesPages }, (_, i) => i + 1).map((page) => (
+                              <Button
+                                key={page}
+                                variant={page === battlesPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setBattlesPage(page)}
+                                className={page === battlesPage 
+                                  ? "bg-red-600 hover:bg-red-700 text-white" 
+                                  : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                }
+                              >
+                                {page}
+                              </Button>
+                            ))}
+                          </div>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBattlesPage(Math.min(totalBattlesPages, battlesPage + 1))}
+                            disabled={battlesPage === totalBattlesPages}
+                            className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                          >
+                            Next
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Swords className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-300 mb-2">No Battles Yet</h3>
+                    <p className="text-slate-400">Prediction battles will appear here when users start challenging each other</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -2177,7 +2387,8 @@ export default function AdminPanel() {
                     <div className="text-slate-400">Loading parlay predictions...</div>
                   </div>
                 ) : parlayData && parlayData.length > 0 ? (
-                  <Table>
+                  <div>
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Parlay ID</TableHead>
@@ -2194,7 +2405,7 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {parlayData.slice(0, 50).map((coin: any) => (
+                      {paginatedParlays.map((coin: any) => (
                         <TableRow key={`${coin.parlayId}-${coin.coinId}`}>
                           <TableCell>
                             <div className="font-medium text-white">#{coin.parlayId}</div>
@@ -2260,6 +2471,56 @@ export default function AdminPanel() {
                       ))}
                     </TableBody>
                   </Table>
+                  
+                  {/* Parlays Pagination */}
+                  {totalParlaysPages > 1 && (
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
+                      <div className="text-sm text-slate-400">
+                        Showing {parlaysStartIndex + 1}-{Math.min(parlaysEndIndex, totalParlays)} of {totalParlays} parlay predictions
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setParlaysPage(Math.max(1, parlaysPage - 1))}
+                          disabled={parlaysPage === 1}
+                          className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Previous
+                        </Button>
+                        
+                        <div className="flex space-x-1">
+                          {Array.from({ length: totalParlaysPages }, (_, i) => i + 1).map((page) => (
+                            <Button
+                              key={page}
+                              variant={page === parlaysPage ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setParlaysPage(page)}
+                              className={page === parlaysPage 
+                                ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                                : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                              }
+                            >
+                              {page}
+                            </Button>
+                          ))}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setParlaysPage(Math.min(totalParlaysPages, parlaysPage + 1))}
+                          disabled={parlaysPage === totalParlaysPages}
+                          className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                        >
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  </div>
                 ) : (
                   <div className="text-center py-8">
                     <Layers className="h-12 w-12 text-slate-400 mx-auto mb-4" />
@@ -2278,7 +2539,7 @@ export default function AdminPanel() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Target className="mr-2" size={20} />
-                    Survival Tournaments (0)
+                    Survival Tournaments ({totalSurvival})
                   </div>
                   <Button onClick={() => {}} variant="outline" size="sm">
                     <Download className="mr-2" size={16} />
@@ -2287,11 +2548,118 @@ export default function AdminPanel() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-300 mb-2">No Tournaments</h3>
-                  <p className="text-slate-400">Survival tournaments will appear here when they are active</p>
-                </div>
+                {survivalLoading ? (
+                  <div className="text-center py-8">
+                    <div className="text-slate-400">Loading survival tournaments...</div>
+                  </div>
+                ) : paginatedSurvival && paginatedSurvival.length > 0 ? (
+                  <div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tournament ID</TableHead>
+                          <TableHead>Player</TableHead>
+                          <TableHead>Round</TableHead>
+                          <TableHead>Cryptocurrency</TableHead>
+                          <TableHead>Prediction</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Score</TableHead>
+                          <TableHead>Created</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedSurvival.map((entry: any) => (
+                          <TableRow key={`${entry.tournamentId}-${entry.userId}-${entry.round}`}>
+                            <TableCell>#{entry.tournamentId}</TableCell>
+                            <TableCell className="font-medium text-white">
+                              {entry.username || `User ${entry.userId}`}
+                            </TableCell>
+                            <TableCell className="font-semibold text-blue-400">
+                              Round {entry.round}
+                            </TableCell>
+                            <TableCell className="font-medium text-white capitalize">
+                              {entry.cryptocurrency}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-green-400 border-green-400">
+                                {entry.direction === 'up' ? '↑ Higher' : '↓ Lower'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                entry.status === 'eliminated' ? 'destructive' : 
+                                entry.status === 'advancing' ? 'default' : 'secondary'
+                              }>
+                                {entry.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-yellow-400 font-semibold">
+                              {entry.score || 0} pts
+                            </TableCell>
+                            <TableCell className="text-xs text-slate-400">
+                              {new Date(entry.createdAt).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    
+                    {/* Survival Pagination */}
+                    {totalSurvivalPages > 1 && (
+                      <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
+                        <div className="text-sm text-slate-400">
+                          Showing {survivalStartIndex + 1}-{Math.min(survivalEndIndex, totalSurvival)} of {totalSurvival} tournament entries
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSurvivalPage(Math.max(1, survivalPage - 1))}
+                            disabled={survivalPage === 1}
+                            className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            Previous
+                          </Button>
+                          
+                          <div className="flex space-x-1">
+                            {Array.from({ length: totalSurvivalPages }, (_, i) => i + 1).map((page) => (
+                              <Button
+                                key={page}
+                                variant={page === survivalPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setSurvivalPage(page)}
+                                className={page === survivalPage 
+                                  ? "bg-orange-600 hover:bg-orange-700 text-white" 
+                                  : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                }
+                              >
+                                {page}
+                              </Button>
+                            ))}
+                          </div>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSurvivalPage(Math.min(totalSurvivalPages, survivalPage + 1))}
+                            disabled={survivalPage === totalSurvivalPages}
+                            className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                          >
+                            Next
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-300 mb-2">No Tournaments</h3>
+                    <p className="text-slate-400">Survival tournaments will appear here when they are active</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
