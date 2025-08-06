@@ -718,7 +718,12 @@ export default function BattlesPage() {
                   <SelectItem value="all">All Crypto</SelectItem>
                   {cryptos.map((crypto: any) => (
                     <SelectItem key={crypto.id} value={crypto.id}>
-                      {crypto.symbol.toUpperCase()}
+                      <div className="flex items-center gap-2">
+                        <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
+                        <span>
+                          {crypto.symbol?.toUpperCase()} (${crypto.current_price?.toFixed(2)})
+                        </span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

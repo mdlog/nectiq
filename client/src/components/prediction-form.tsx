@@ -75,10 +75,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
     refetchIntervalInBackground: true, // Enable background updates
     staleTime: 500, // Same as other pages - very fresh data
     retry: 3, // More retry attempts for reliability
-    select: (data: any[]) => data.map(crypto => ({
-      value: crypto.id,
-      label: `${crypto.name} (${crypto.symbol})`
-    }))
+    select: (data: any[]) => data // Return full crypto data with image, price, etc.
   });
 
   // Update current prices when live prices change
@@ -89,7 +86,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
   }, [livePrices]);
 
   // Create dynamic schema based on available cryptocurrencies
-  const cryptoIds = availableCryptos?.map(crypto => crypto.value) || [];
+  const cryptoIds = availableCryptos?.map(crypto => crypto.id) || [];
   const predictionFormSchema = createPredictionFormSchema(cryptoIds);
 
   const form = useForm<PredictionFormData>({
@@ -251,9 +248,14 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
                       {cryptosLoading ? (
                         <SelectItem value="loading" disabled>Loading cryptocurrencies...</SelectItem>
                       ) : availableCryptos && availableCryptos.length > 0 ? (
-                        availableCryptos.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                        availableCryptos.map((crypto) => (
+                          <SelectItem key={crypto.id} value={crypto.id}>
+                            <div className="flex items-center gap-2">
+                              <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
+                              <span>
+                                {crypto.symbol?.toUpperCase()} (${crypto.current_price?.toFixed(2)})
+                              </span>
+                            </div>
                           </SelectItem>
                         ))
                       ) : (
