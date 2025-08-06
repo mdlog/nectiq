@@ -3198,35 +3198,7 @@ export class MemStorage implements IStorage {
       .slice(0, limit);
   }
 
-  async getComprehensiveRewards(userId: number, limit: number = 10): Promise<any[]> {
-    try {
-      console.log('Getting comprehensive rewards for user:', userId);
-      
-      // Simple query to get all transactions for user
-      const transactions = await db
-        .select()
-        .from(transactionLogs)
-        .where(eq(transactionLogs.userId, userId))
-        .limit(limit);
-
-      console.log('Found transactions:', transactions.length);
-
-      // Return basic transaction data with minimal processing
-      return transactions.map(transaction => ({
-        id: transaction.id,
-        amount: transaction.amount,
-        type: transaction.type,
-        cryptocurrency: null, // We'll enhance this later
-        sourceDetails: null,
-        createdAt: transaction.createdAt,
-        status: transaction.status
-      }));
-
-    } catch (error) {
-      console.error('Error in getComprehensiveRewards:', error);
-      throw error;
-    }
-  }
+  // Duplicate method removed - keeping the DatabaseStorage implementation only
 
   async getTopPredictors(limit: number = 10): Promise<User[]> {
     return Array.from(this.users.values())
