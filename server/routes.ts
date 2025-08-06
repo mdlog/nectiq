@@ -3576,6 +3576,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .select({ count: sql<number>`count(*)` })
           .from(survivalPredictions);
 
+        // Debug: Log individual counts
+        console.log("📊 [DEV-STATS-DEBUG] Individual prediction counts:");
+        console.log("  Regular predictions:", totalPredictionsResult?.count || 0);
+        console.log("  Battle predictions:", totalBattlePredictionsResult?.count || 0);
+        console.log("  Parlay predictions:", totalParlayPredictionsResult?.count || 0);
+        console.log("  Survival predictions:", totalSurvivalPredictionsResult?.count || 0);
+
         // Calculate total predictions across all types
         const totalPredictionsAllTypes = 
           (totalPredictionsResult?.count || 0) +
@@ -3583,29 +3590,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (totalParlayPredictionsResult?.count || 0) +
           (totalSurvivalPredictionsResult?.count || 0);
 
+        console.log("📊 [DEV-STATS-DEBUG] Total calculated:", totalPredictionsAllTypes);
+
         // Get total NTIQ circulating (sum of all user balances)
         const [totalNTIQResult] = await db
-          .select({ total: sql<number>`sum("balance")` })
+          .select({ total: sql<number>`sum(${users.balance})` })
           .from(users);
-
-        // Get accuracy percentage from predictions with results
-        const [accuracyResult] = await db
-          .select({ 
-            total: sql<number>`count(*)`,
-            totalAccuracy: sql<number>`sum(coalesce("accuracy", 0))`
-          })
-          .from(predictions)
-          .where(sql`"status" = 'completed' AND "actual_price" IS NOT NULL`);
-
-        // Calculate platform accuracy percentage
-        const totalWithResults = accuracyResult?.total || 0;
-        const totalAccuracy = accuracyResult?.totalAccuracy || 0;
-        const platformAccuracy = totalWithResults > 0 ? (totalAccuracy / totalWithResults) : 0;
-
-        // Get active users (users who have made at least one prediction)
-        const [activeUsersResult] = await db
-          .select({ count: sql<number>`count(distinct "user_id")` })
-          .from(predictions);
 
         // Get recent battles data
         const [recentBattlesResult] = await db
@@ -3613,12 +3603,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .from(predictionBattles)
           .where(gte(predictionBattles.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))); // Last 7 days
 
+        // Calculate platform accuracy based on predictions with results
+        const [accuracyResult] = await db
+          .select({ 
+            correct: sql<number>`count(case when ${predictions.isCorrect} = true then 1 end)`,
+            total: sql<number>`count(case when ${predictions.isCorrect} is not null then 1 end)`
+          })
+          .from(predictions);
+
+        const platformAccuracy = accuracyResult.total > 0 ? 
+          Number(((accuracyResult.correct / accuracyResult.total) * 100).toFixed(1)) : 0;
+
         const statistics = {
-          totalUsers: totalUsersResult?.count || 0,
-          totalPredictions: totalPredictionsAllTypes,
-          platformAccuracy: Math.round(platformAccuracy * 100) / 100, // Round to 2 decimal places
-          totalNTIQCirculating: Math.round((totalNTIQResult?.total || 0) * 100) / 100,
-          recentBattles: recentBattlesResult?.count || 0
+          totalUsers: String(totalUsersResult?.count || 0),
+          totalPredictions: String(totalPredictionsAllTypes),
+          platformAccuracy: platformAccuracy,
+          totalNTIQCirculating: Math.round(totalNTIQResult?.total || 0),
+          recentBattles: String(recentBattlesResult?.count || 0)
         };
 
         console.log("📊 [ADMIN-STATS] Statistics calculated successfully:", statistics);
