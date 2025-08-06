@@ -3548,34 +3548,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     try {
-      const users = await storage.getAllUsers(); // Get all users including admins for stats
-      const allPredictions = await storage.getRecentPredictions(1000); // Get all predictions
+      console.log("📊 [ADMIN-STATS] Calculating comprehensive platform statistics...");
       
-      const totalUsers = users.length;
-      const totalPredictions = allPredictions.length;
-      const activeUsers = users.filter(u => u.totalPredictions > 0).length;
-      const totalRewards = users.reduce((sum, u) => sum + u.totalRewards, 0);
-      const totalStaked = allPredictions.reduce((sum, p) => sum + p.stakeAmount, 0);
+      // Get real counts from database using SQL aggregation for accuracy
+      const [totalUsersResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(users);
       
-      let accuracySum = 0;
-      let accuracyCount = 0;
-      users.forEach(user => {
-        if (user.totalPredictions > 0) {
-          accuracySum += (user.correctPredictions / user.totalPredictions) * 100;
-          accuracyCount++;
-        }
+      const [totalPredictionsResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(predictions);
+      
+      const [totalBattlesResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(predictionBattles);
+      
+      const [totalParlaysResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(parlayPredictions);
+      
+      const [totalSurvivalResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(survivalParticipants);
+      
+      // Get active users (users with at least one prediction)
+      const [activeUsersResult] = await db
+        .select({ count: sql<number>`count(distinct ${predictions.userId})` })
+        .from(predictions);
+      
+      // Calculate total NTIQ rewards distributed
+      const [totalRewardsResult] = await db
+        .select({ total: sql<number>`sum(${rewards.amount})` })
+        .from(rewards);
+      
+      // Calculate total NTIQ circulating (sum of all user balances)
+      const [totalNtiqCirculatingResult] = await db
+        .select({ total: sql<number>`sum(${users.balance})` })
+        .from(users);
+      
+      // Calculate platform accuracy (predictions with result)
+      const [accuracyResult] = await db
+        .select({ 
+          correct: sql<number>`count(*) filter (where ${predictions.isCorrect} = true)`,
+          total: sql<number>`count(*) filter (where ${predictions.isCorrect} is not null)`
+        })
+        .from(predictions);
+      
+      // Get total staked across all prediction types
+      const [stakePredictionsResult] = await db
+        .select({ total: sql<number>`sum(${predictions.stakeAmount})` })
+        .from(predictions);
+      
+      const [stakeBattlesResult] = await db
+        .select({ total: sql<number>`sum(${predictionBattles.stakeAmount})` })
+        .from(predictionBattles);
+      
+      const [stakeParlaysResult] = await db
+        .select({ total: sql<number>`sum(${parlayPredictions.stakeAmount})` })
+        .from(parlayPredictions);
+      
+      // Calculate totals
+      const totalUsers = totalUsersResult.count || 0;
+      const totalPredictions = (totalPredictionsResult.count || 0) + 
+                               (totalBattlesResult.count || 0) + 
+                               (totalParlaysResult.count || 0) + 
+                               (totalSurvivalResult.count || 0);
+      const activeUsers = activeUsersResult.count || 0;
+      const totalRewards = Math.round(totalRewardsResult.total || 0);
+      const totalNtiqCirculating = Math.round(totalNtiqCirculatingResult.total || 0);
+      const totalStaked = Math.round((stakePredictionsResult.total || 0) + 
+                                   (stakeBattlesResult.total || 0) + 
+                                   (stakeParlaysResult.total || 0));
+      
+      // Calculate accuracy percentage
+      const accuracyPercentage = accuracyResult.total > 0 ? 
+        Number(((accuracyResult.correct / accuracyResult.total) * 100).toFixed(2)) : 0;
+      
+      console.log("📊 [ADMIN-STATS] Statistics calculated:", {
+        totalUsers,
+        totalPredictions,
+        activeUsers,
+        totalRewards,
+        totalNtiqCirculating,
+        accuracyPercentage,
+        totalStaked
       });
-      const accuracyAverage = accuracyCount > 0 ? accuracySum / accuracyCount : 0;
 
       res.json({
         totalUsers,
         totalPredictions,
         totalRewards,
+        totalNtiqCirculating,
         activeUsers,
-        accuracyAverage,
+        accuracyAverage: accuracyPercentage,
         totalStaked
       });
     } catch (error) {
+      console.error("❌ [ADMIN-STATS] Error calculating statistics:", error);
       res.status(500).json({ message: "Failed to get admin stats" });
     }
   });

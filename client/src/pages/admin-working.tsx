@@ -128,6 +128,7 @@ interface AdminStats {
   totalUsers: number;
   totalPredictions: number;
   totalRewards: number;
+  totalNtiqCirculating: number;
   activeUsers: number;
   accuracyAverage: number;
   totalStaked: number;
@@ -1389,7 +1390,7 @@ export default function AdminPanel() {
 
           {/* Statistics Tab */}
           <TabsContent value="statistics" className="space-y-8">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -1445,6 +1446,25 @@ export default function AdminPanel() {
                 </CardContent>
               </Card>
 
+              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-400 mb-2">Total NTIQ Circulating</p>
+                      <p className="text-3xl font-bold text-white">
+                        {statsLoading ? (
+                          <div className="animate-pulse bg-slate-600 h-8 w-20 rounded"></div>
+                        ) : `${adminStats?.totalNtiqCirculating || 0}`}
+                      </p>
+                      <p className="text-xs text-orange-400 font-medium">NTIQ</p>
+                    </div>
+                    <div className="p-3 bg-orange-500/20 rounded-xl">
+                      <Coins className="h-8 w-8 text-orange-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -1483,7 +1503,7 @@ export default function AdminPanel() {
                         <div>
                           <p className="text-sm text-slate-400">Average Accuracy</p>
                           <p className="text-lg font-bold text-white">
-                            {statsLoading ? "Loading..." : `${((adminStats?.accuracyAverage || 0) * 100).toFixed(1)}%`}
+                            {statsLoading ? "Loading..." : `${(adminStats?.accuracyAverage || 0).toFixed(1)}%`}
                           </p>
                         </div>
                       </div>
