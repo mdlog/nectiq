@@ -284,7 +284,7 @@ export class CryptoService {
         name: crypto.name,
         current_price: parseFloat(crypto.currentPrice || '0'),
         price_change_percentage_24h: parseFloat(crypto.priceChange24h || '0'),
-        image: crypto.image
+        image: crypto.image || undefined
       }));
       
       // If we have real cached prices from CoinGecko, merge them

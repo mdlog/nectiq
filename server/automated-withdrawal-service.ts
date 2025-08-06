@@ -178,7 +178,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
       const validationResult = await this.validateWithdrawal(withdrawal);
       if (!validationResult.isValid) {
         console.log(`⚠️ [AUTO-WD] Withdrawal ${withdrawal.id} failed validation: ${validationResult.reason}`);
-        await this.rejectWithdrawal(withdrawal.id, validationResult.reason);
+        await this.rejectWithdrawal(withdrawal.id, validationResult.reason || 'Validation failed');
         return;
       }
 
@@ -193,7 +193,8 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
       
     } catch (error) {
       console.error(`❌ [AUTO-WD] Error processing withdrawal ${withdrawal.id}:`, error);
-      await this.rejectWithdrawal(withdrawal.id, `Processing error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await this.rejectWithdrawal(withdrawal.id, `Processing error: ${errorMessage}`);
     }
   }
 
@@ -284,14 +285,16 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
       // CRITICAL FIX: Only reject if transaction was NOT sent to blockchain
       if (!transactionSent) {
         console.log(`🔄 [AUTO-WD] Transaction not sent to blockchain, safe to reject withdrawal ${withdrawal.id}`);
-        await this.updateWithdrawalStatus(withdrawal.id, 'rejected', null, error.message);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        await this.updateWithdrawalStatus(withdrawal.id, 'rejected', undefined, errorMessage);
         // Refund balance since no blockchain transaction occurred
         await this.refundWithdrawalBalance(withdrawal);
       } else {
         console.error(`🚨 [AUTO-WD] CRITICAL: Transaction sent but post-processing failed for withdrawal ${withdrawal.id}!`);
         console.error(`🚨 [AUTO-WD] Transaction Hash: ${txHash} - Manual intervention required!`);
         // Transaction already sent to blockchain, mark as completed with error note
-        await this.updateWithdrawalStatus(withdrawal.id, 'completed', txHash, `Post-processing error: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        await this.updateWithdrawalStatus(withdrawal.id, 'completed', txHash || undefined, `Post-processing error: ${errorMessage}`);
         
         // Still try to deduct balance to maintain financial integrity
         try {
@@ -299,7 +302,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
           console.log(`✅ [AUTO-WD] Balance deducted despite post-processing error`);
         } catch (balanceError) {
           console.error(`🚨 [AUTO-WD] FAILED TO DEDUCT BALANCE - MANUAL CORRECTION NEEDED!`, balanceError);
-          await this.sendCriticalErrorNotification(withdrawal, txHash, balanceError);
+          await this.sendCriticalErrorNotification(withdrawal, txHash || '', balanceError);
         }
       }
       
@@ -393,7 +396,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
    * Reject withdrawal dengan alasan (hanya untuk withdrawal yang belum dikirim ke blockchain)
    */
   private async rejectWithdrawal(id: number, reason: string): Promise<void> {
-    await this.updateWithdrawalStatus(id, 'rejected', null, `Auto-rejected: ${reason}`);
+    await this.updateWithdrawalStatus(id, 'rejected', undefined, `Auto-rejected: ${reason}`);
     
     // Refund user balance menggunakan BalanceService
     await this.refundWithdrawalBalance({ id, userId: null, ntiqAmount: null });
@@ -433,7 +436,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
     await this.updateWithdrawalStatus(
       withdrawal.id, 
       'pending', 
-      null, 
+      undefined, 
       'Requires manual review - exceeds auto-approval threshold'
     );
     
