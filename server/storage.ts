@@ -1298,12 +1298,12 @@ export class DatabaseStorage implements IStorage {
           cryptocurrency: battle?.cryptocurrency || 'bitcoin',
           accuracy: null,
           isWin: true,
-          stakeAmount: battle?.stakeAmount || 0,
+          stakeAmount: battle?.stake_amount || 0,
           rewardAmount: battleReward.amount,
           sourceDetails: {
             opponentName: 'Opponent',
             battleId: battleReward.relatedId,
-            stakeAmount: battle?.stakeAmount || 0
+            stakeAmount: battle?.stake_amount || 0
           }
         });
       }

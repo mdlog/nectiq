@@ -3618,7 +3618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get active users (users with at least one prediction)
       const [activeUsersResult] = await db
-        .select({ count: sql<number>`count(distinct ${predictions.userId})` })
+        .select({ count: sql<number>`count(distinct ${predictions.user_id})` })
         .from(predictions);
       
       // Calculate total NTIQ rewards distributed
@@ -3634,22 +3634,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate platform accuracy (predictions with result)
       const [accuracyResult] = await db
         .select({ 
-          correct: sql<number>`count(case when ${predictions.isCorrect} = true then 1 end)`,
-          total: sql<number>`count(case when ${predictions.isCorrect} is not null then 1 end)`
+          correct: sql<number>`count(case when ${predictions.is_correct} = true then 1 end)`,
+          total: sql<number>`count(case when ${predictions.is_correct} is not null then 1 end)`
         })
         .from(predictions);
       
       // Get total staked across all prediction types
       const [stakePredictionsResult] = await db
-        .select({ total: sql<number>`sum(${predictions.stakeAmount})` })
+        .select({ total: sql<number>`sum(${predictions.stake_amount})` })
         .from(predictions);
       
       const [stakeBattlesResult] = await db
-        .select({ total: sql<number>`sum(${predictionBattles.stakeAmount})` })
+        .select({ total: sql<number>`sum(${predictionBattles.stake_amount})` })
         .from(predictionBattles);
       
       const [stakeParlaysResult] = await db
-        .select({ total: sql<number>`sum(${parlayPredictions.stakeAmount})` })
+        .select({ total: sql<number>`sum(${parlayPredictions.stake_amount})` })
         .from(parlayPredictions);
       
       // Calculate totals
