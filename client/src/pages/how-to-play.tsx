@@ -652,52 +652,52 @@ export default function HowToPlay() {
                   </div>
 
                   {/* Comprehensive Examples Table */}
-                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                    <h5 className="font-semibold mb-3 text-center">Tabel Multiplier Berdasarkan Duration & Jumlah Prediksi</h5>
+                  <div className="bg-slate-800 dark:bg-slate-900 rounded-lg p-4 border border-slate-700">
+                    <h5 className="font-semibold mb-3 text-center text-white">Tabel Multiplier Berdasarkan Duration & Jumlah Prediksi</h5>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-gray-200 dark:border-gray-700">
-                            <th className="text-left py-2">Prediksi</th>
-                            <th className="text-left py-2">1 Jam (1.2x)</th>
-                            <th className="text-left py-2">6 Jam (1.5x)</th>
-                            <th className="text-left py-2">24 Jam (2.0x)</th>
-                            <th className="text-left py-2">7 Hari (3.0x)</th>
+                          <tr className="border-b border-slate-600">
+                            <th className="text-left py-2 text-slate-200">Prediksi</th>
+                            <th className="text-left py-2 text-slate-200">1 Jam (1.2x)</th>
+                            <th className="text-left py-2 text-slate-200">6 Jam (1.5x)</th>
+                            <th className="text-left py-2 text-slate-200">24 Jam (2.0x)</th>
+                            <th className="text-left py-2 text-slate-200">7 Hari (3.0x)</th>
                           </tr>
                         </thead>
                         <tbody>
-                          <tr className="border-b border-gray-100 dark:border-gray-800">
-                            <td className="py-2 font-bold">2 Prediksi</td>
-                            <td className="py-2 text-green-600">3.24x</td>
-                            <td className="py-2 text-green-600">5.06x</td>
-                            <td className="py-2 text-green-600">9.0x</td>
-                            <td className="py-2 text-green-600">20.25x</td>
+                          <tr className="border-b border-slate-700">
+                            <td className="py-2 font-bold text-white">2 Prediksi</td>
+                            <td className="py-2 text-green-400 font-semibold">3.24x</td>
+                            <td className="py-2 text-green-400 font-semibold">5.06x</td>
+                            <td className="py-2 text-green-400 font-semibold">9.0x</td>
+                            <td className="py-2 text-green-400 font-semibold">20.25x</td>
                           </tr>
-                          <tr className="border-b border-gray-100 dark:border-gray-800">
-                            <td className="py-2 font-bold">3 Prediksi</td>
-                            <td className="py-2 text-blue-600">5.83x</td>
-                            <td className="py-2 text-blue-600">11.39x</td>
-                            <td className="py-2 text-blue-600">27.0x</td>
-                            <td className="py-2 text-blue-600">91.13x</td>
+                          <tr className="border-b border-slate-700">
+                            <td className="py-2 font-bold text-white">3 Prediksi</td>
+                            <td className="py-2 text-blue-400 font-semibold">5.83x</td>
+                            <td className="py-2 text-blue-400 font-semibold">11.39x</td>
+                            <td className="py-2 text-blue-400 font-semibold">27.0x</td>
+                            <td className="py-2 text-blue-400 font-semibold">91.13x</td>
                           </tr>
-                          <tr className="border-b border-gray-100 dark:border-gray-800">
-                            <td className="py-2 font-bold">4 Prediksi</td>
-                            <td className="py-2 text-purple-600">10.5x</td>
-                            <td className="py-2 text-purple-600">25.63x</td>
-                            <td className="py-2 text-purple-600">81.0x</td>
-                            <td className="py-2 text-purple-600">410.06x</td>
+                          <tr className="border-b border-slate-700">
+                            <td className="py-2 font-bold text-white">4 Prediksi</td>
+                            <td className="py-2 text-purple-400 font-semibold">10.5x</td>
+                            <td className="py-2 text-purple-400 font-semibold">25.63x</td>
+                            <td className="py-2 text-purple-400 font-semibold">81.0x</td>
+                            <td className="py-2 text-purple-400 font-semibold">410.06x</td>
                           </tr>
                           <tr>
-                            <td className="py-2 font-bold">5 Prediksi</td>
-                            <td className="py-2 text-red-600">18.9x</td>
-                            <td className="py-2 text-red-600">57.66x</td>
-                            <td className="py-2 text-red-600">243.0x</td>
-                            <td className="py-2 text-red-600 font-bold">1,845.28x</td>
+                            <td className="py-2 font-bold text-white">5 Prediksi</td>
+                            <td className="py-2 text-red-400 font-semibold">18.9x</td>
+                            <td className="py-2 text-red-400 font-semibold">57.66x</td>
+                            <td className="py-2 text-red-400 font-semibold">243.0x</td>
+                            <td className="py-2 text-red-400 font-bold">1,845.28x</td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                    <p className="text-xs text-slate-300 mt-2 text-center">
                       * Stake 100 NTIQ dengan 5 prediksi 7 hari = potential win 184,528 NTIQ!
                     </p>
                   </div>
