@@ -34,6 +34,7 @@ import { DepositMonitorService } from "./services/depositMonitorService.js";
 import { withdrawalMonitorService } from "./services/withdrawalMonitorService.js";
 import { initializeDepositExpiryService } from "./services/deposit-expiry-service";
 import { ParlayProcessorService } from "./services/parlayProcessorService.js";
+import { BattleExpiryService } from "./services/battleExpiryService.js";
 
 const app = express();
 
@@ -341,6 +342,16 @@ try {
   console.log('✅ Parlay processor service started successfully - processing every 30 seconds');
 } catch (error) {
   console.error('❌ Failed to initialize parlay processor service:', error);
+}
+
+// Initialize Battle Expiry Service for automatic battle expiry processing
+try {
+  console.log('🔧 Initializing Battle Expiry Service...');
+  const battleExpiryService = BattleExpiryService.getInstance();
+  battleExpiryService.start();
+  console.log('✅ Battle expiry service started successfully - monitoring every 30 seconds');
+} catch (error) {
+  console.error('❌ Failed to initialize battle expiry service:', error);
 }
 
 (async () => {

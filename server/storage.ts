@@ -170,6 +170,7 @@ export interface IStorage {
   getBattleById(id: number): Promise<any>;
   getBattleHistory(): Promise<any[]>;
   updateBattle(id: number, updates: any): Promise<void>;
+  updateBattleStatus(id: number, status: string): Promise<void>;
   deleteBattle(id: number): Promise<void>;
   createBattleComment(comment: any): Promise<any>;
   getBattleComments(battleId: number): Promise<any[]>;
@@ -2422,6 +2423,13 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(predictionBattles)
       .set(updates)
+      .where(eq(predictionBattles.id, id));
+  }
+
+  async updateBattleStatus(id: number, status: string): Promise<void> {
+    await db
+      .update(predictionBattles)
+      .set({ status })
       .where(eq(predictionBattles.id, id));
   }
 
