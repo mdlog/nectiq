@@ -69,6 +69,15 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Documentation Updated**: NECTIQ_PREDICTION_FEATURES_GUIDE.md reflects actual implementation
 
 ## Recent Updates (August 6, 2025)
+### Frontend-Backend Parlay Synchronization Completed ✅
+- **Critical Inconsistency Discovered**: Found major differences between frontend and backend multiplier calculations
+- **Backend Formula Updated**: Synchronized to use frontend formula "(1.5 × Duration Multiplier)^Number_of_Predictions"
+- **Duration Multipliers Synchronized**: Backend now uses 1h=1.2x, 6h=1.5x, 24h=2.0x, 7d=3.0x (matching frontend)
+- **Platform Fee Standardized**: Backend updated to use 6% fee (was 4%) to match documentation
+- **Reward Calculation Fixed**: Eliminated ~50% variance between displayed and actual rewards
+- **Legacy '3d' Duration Removed**: Backend no longer supports unused 3-day duration option
+- **Detailed Logging Added**: Enhanced backend logging shows exact multiplier calculations for debugging
+
 ### Parlay How-to-Play Guide Implementation Completed ✅
 - **New Parlay Tab**: Added dedicated Parlay tab to How-to-Play page with comprehensive education content
 - **Detailed Calculation Examples**: Added section "Cara Menghitung Potential Win" with formula and examples
@@ -86,6 +95,7 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Fee Impact Visualization**: Side-by-side comparison of winning vs losing scenarios including fee calculations
 - **All-or-Nothing Rule**: Clear visual explanation of parlay win/lose conditions
 - **Strategic Education**: Added tips about duration selection impact on risk vs reward
+- **UI Enhancement**: Improved multiplier table contrast with dark slate background for better readability
 
 ### Admin Panel Statistics Enhancement Completed ✅
 - **SQL Aggregation**: Replaced memory calculations with direct database SQL queries for accuracy

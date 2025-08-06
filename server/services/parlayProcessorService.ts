@@ -189,35 +189,35 @@ export class ParlayProcessorService {
     }
   }
 
-  // Calculate parlay reward using compound multiplier system
+  // Calculate parlay reward using frontend-synchronized multiplier system
   private calculateParlayReward(stakeAmount: number, coins: any[]): number {
-    // Base multiplier per coin based on duration (same as frontend)
+    // Duration multipliers matching frontend exactly
     const getDurationMultiplier = (duration: string): number => {
       switch (duration) {
-        case '1h': return 1.5;
-        case '6h': return 1.8;
-        case '24h': return 2.25;
-        case '3d': return 2.7;
+        case '1h': return 1.2;
+        case '6h': return 1.5;
+        case '24h': return 2.0;
         case '7d': return 3.0;
-        default: return 1.5;
+        default: return 1.2;
       }
     };
 
-    // Calculate compound multiplier
-    let totalMultiplier = 1.0;
-    coins.forEach(coin => {
-      const durationMultiplier = getDurationMultiplier(coin.duration);
-      totalMultiplier *= durationMultiplier;
-    });
+    // Calculate total multiplier using frontend formula: (1.5 × Duration Multiplier)^Number_of_Predictions
+    // Since all coins must have same duration, we can use the first coin's duration
+    const duration = coins[0]?.duration || '1h';
+    const durationMultiplier = getDurationMultiplier(duration);
+    const numberOfPredictions = coins.length;
+    
+    const totalMultiplier = Math.pow(1.5 * durationMultiplier, numberOfPredictions);
 
     // Calculate final reward
     const grossReward = Math.round(stakeAmount * totalMultiplier);
     
-    // Apply 4% platform fee from gross reward (as per new system)
-    const platformFee = Math.round(grossReward * 0.04);
+    // Apply 6% platform fee (matching frontend documentation)
+    const platformFee = Math.round(grossReward * 0.06);
     const netReward = grossReward - platformFee;
 
-    console.log(`💰 [PARLAY-REWARD-CALC] Stake: ${stakeAmount}, Coins: ${coins.length}, Total Multiplier: ${totalMultiplier.toFixed(2)}x, Gross: ${grossReward}, Fee: ${platformFee}, Net: ${netReward}`);
+    console.log(`💰 [PARLAY-REWARD-CALC] Stake: ${stakeAmount}, Predictions: ${numberOfPredictions}, Duration: ${duration} (${durationMultiplier}x), Base Formula: (1.5 × ${durationMultiplier})^${numberOfPredictions} = ${totalMultiplier.toFixed(2)}x, Gross: ${grossReward}, Fee (6%): ${platformFee}, Net: ${netReward}`);
 
     return netReward;
   }
