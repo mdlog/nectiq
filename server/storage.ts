@@ -1256,7 +1256,6 @@ export class DatabaseStorage implements IStorage {
       const battleRewards = await db.select({
         id: transactionLogs.id,
         amount: transactionLogs.amount,
-        description: transactionLogs.description,
         createdAt: transactionLogs.createdAt,
         relatedId: transactionLogs.relatedId,
         type: transactionLogs.type
@@ -1264,7 +1263,7 @@ export class DatabaseStorage implements IStorage {
       .from(transactionLogs)
       .where(
         and(
-          eq(transactionLogs.userId, userId),
+          eq(transactionLogs.user_id, userId),
           eq(transactionLogs.type, 'battle_reward'),
           eq(transactionLogs.status, 'completed')
         )
@@ -1287,14 +1286,13 @@ export class DatabaseStorage implements IStorage {
         }
 
         const battle = battleDetails?.[0];
-        const opponentInfo = battleReward.description?.match(/vs (.+?) -/) || ['', 'Opponent'];
         
         allRewards.push({
           id: `battle_${battleReward.id}`,
           type: 'battle',
           userId: userId,
           amount: battleReward.amount,
-          description: battleReward.description || `Battle reward - ${battleReward.amount} NTIQ`,
+          description: `Battle reward - ${battleReward.amount} NTIQ`,
           createdAt: battleReward.createdAt,
           cryptocurrency: battle?.cryptocurrency || 'bitcoin',
           accuracy: null,
@@ -1302,7 +1300,7 @@ export class DatabaseStorage implements IStorage {
           stakeAmount: battle?.stakeAmount || 0,
           rewardAmount: battleReward.amount,
           sourceDetails: {
-            opponentName: opponentInfo[1],
+            opponentName: 'Opponent',
             battleId: battleReward.relatedId,
             stakeAmount: battle?.stakeAmount || 0
           }
@@ -1313,14 +1311,13 @@ export class DatabaseStorage implements IStorage {
       const survivalRewards = await db.select({
         id: transactionLogs.id,
         amount: transactionLogs.amount,
-        description: transactionLogs.description,
         createdAt: transactionLogs.createdAt,
         relatedId: transactionLogs.relatedId
       })
       .from(transactionLogs)
       .where(
         and(
-          eq(transactionLogs.userId, userId),
+          eq(transactionLogs.user_id, userId),
           eq(transactionLogs.type, 'survival_reward'),
           eq(transactionLogs.status, 'completed')
         )
@@ -1349,7 +1346,7 @@ export class DatabaseStorage implements IStorage {
           type: 'survival',
           userId: userId,
           amount: survivalReward.amount,
-          description: survivalReward.description || `Survival tournament winner - ${survivalReward.amount} NTIQ`,
+          description: `Survival tournament winner - ${survivalReward.amount} NTIQ`,
           createdAt: survivalReward.createdAt,
           cryptocurrency: tournament?.cryptocurrency || 'bitcoin',
           accuracy: null,
@@ -1368,14 +1365,13 @@ export class DatabaseStorage implements IStorage {
       const parlayRewards = await db.select({
         id: transactionLogs.id,
         amount: transactionLogs.amount,
-        description: transactionLogs.description,
         createdAt: transactionLogs.createdAt,
         relatedId: transactionLogs.relatedId
       })
       .from(transactionLogs)
       .where(
         and(
-          eq(transactionLogs.userId, userId),
+          eq(transactionLogs.user_id, userId),
           eq(transactionLogs.type, 'parlay_reward'),
           eq(transactionLogs.status, 'completed')
         )
@@ -1389,7 +1385,7 @@ export class DatabaseStorage implements IStorage {
           type: 'parlay',
           userId: userId,
           amount: parlayReward.amount,
-          description: parlayReward.description || `Parlay reward - ${parlayReward.amount} NTIQ`,
+          description: `Parlay reward - ${parlayReward.amount} NTIQ`,
           createdAt: parlayReward.createdAt,
           cryptocurrency: 'multi', // Parlay involves multiple cryptos
           accuracy: null,
@@ -1407,14 +1403,13 @@ export class DatabaseStorage implements IStorage {
       const achievementRewards = await db.select({
         id: transactionLogs.id,
         amount: transactionLogs.amount,
-        description: transactionLogs.description,
         createdAt: transactionLogs.createdAt,
         relatedId: transactionLogs.relatedId
       })
       .from(transactionLogs)
       .where(
         and(
-          eq(transactionLogs.userId, userId),
+          eq(transactionLogs.user_id, userId),
           eq(transactionLogs.type, 'achievement_reward'),
           eq(transactionLogs.status, 'completed')
         )
@@ -1428,7 +1423,7 @@ export class DatabaseStorage implements IStorage {
           type: 'achievement',
           userId: userId,
           amount: achievementReward.amount,
-          description: achievementReward.description || `Achievement reward - ${achievementReward.amount} NTIQ`,
+          description: `Achievement reward - ${achievementReward.amount} NTIQ`,
           createdAt: achievementReward.createdAt,
           cryptocurrency: null,
           accuracy: null,
