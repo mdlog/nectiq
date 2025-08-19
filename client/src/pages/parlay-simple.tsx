@@ -751,13 +751,13 @@ export default function ParlaySimple() {
                                     <div className="grid grid-cols-2 gap-2 text-xs">
                                       <div>
                                         <span className="text-gray-400">Start:</span>
-                                        <span className="ml-1 font-mono">${startPrice.toLocaleString()}</span>
+                                        <span className="ml-1 font-mono">${startPrice.toFixed(2)}</span>
                                       </div>
                                       <div>
                                         <span className="text-gray-400">
                                           {coin.endPrice ? 'Final:' : 'Current:'}
                                         </span>
-                                        <span className="ml-1 font-mono">${displayPrice.toLocaleString()}</span>
+                                        <span className="ml-1 font-mono">${displayPrice.toFixed(2)}</span>
                                         {coin.endPrice && (
                                           <span className="ml-1 text-xs text-orange-400">📸</span>
                                         )}
@@ -1003,11 +1003,11 @@ export default function ParlaySimple() {
                                           <div className="grid grid-cols-2 gap-2 text-xs">
                                             <div>
                                               <span className="text-gray-400">Start:</span>
-                                              <span className="ml-1 font-mono">${startPrice.toLocaleString()}</span>
+                                              <span className="ml-1 font-mono">${startPrice.toFixed(2)}</span>
                                             </div>
                                             <div>
                                               <span className="text-gray-400">Final:</span>
-                                              <span className="ml-1 font-mono">${finalPrice.toLocaleString()}</span>
+                                              <span className="ml-1 font-mono">${finalPrice.toFixed(2)}</span>
                                               {isHistoricalSnapshot && (
                                                 <span className="ml-1 text-xs text-orange-400" title="Price locked by system">🔒</span>
                                               )}

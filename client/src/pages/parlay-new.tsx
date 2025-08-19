@@ -387,7 +387,7 @@ export default function ParlayNew() {
                               <div className="flex items-center gap-2">
                                 <img src={crypto.image} alt={crypto.name} className="w-5 h-5" />
                                 <span>{crypto.symbol.toUpperCase()}</span>
-                                <span className="text-muted-foreground">${crypto.current_price.toLocaleString()}</span>
+                                <span className="text-muted-foreground">${crypto.current_price.toFixed(2)}</span>
                               </div>
                             </SelectItem>
                           ))}
@@ -399,7 +399,7 @@ export default function ParlayNew() {
                     {card.cryptocurrency && (
                       <div className="bg-muted p-3 rounded-md">
                         <p className="text-sm text-muted-foreground">Current Price</p>
-                        <p className="text-lg font-semibold">${card.startPrice.toLocaleString()}</p>
+                        <p className="text-lg font-semibold">${card.startPrice.toFixed(2)}</p>
                       </div>
                     )}
 
