@@ -312,13 +312,13 @@ export function ActivePredictions() {
                     <p className="text-sm text-slate-300">
                       Predicted: $
                       <span className="font-semibold text-white">
-                        {parseFloat(prediction.predictedPrice).toLocaleString()}
+                        {parseFloat(prediction.predictedPrice).toFixed(2)}
                       </span>
                     </p>
                     <p className="text-xs text-slate-400">
                       Current: $
                       <span className="font-semibold text-slate-300">
-                        {parseFloat(liveCurrentPrice.toString()).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {parseFloat(liveCurrentPrice.toString()).toFixed(2)}
                       </span>
                     </p>
                   </div>

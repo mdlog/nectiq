@@ -125,11 +125,13 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **Production Readiness**: Platform verified for stable production deployment
 
 ### Price Display Formatting Enhancement Completed ✅ (August 19, 2025)
-- **Standardized Price Display**: All cryptocurrency prices in active parlay section now consistently show maximum 2 decimal places
-- **Format Consistency**: Replaced `.toLocaleString()` with `.toFixed(2)` across all parlay price displays for uniform formatting
-- **User Experience Improvement**: Cleaner, more readable price displays in both active and completed parlay tabs
+- **Standardized Price Display**: All cryptocurrency prices across platform now consistently show maximum 2 decimal places
+- **Format Consistency**: Replaced `.toLocaleString()` with `.toFixed(2)` across all price displays for uniform formatting
+- **User Experience Improvement**: Cleaner, more readable price displays in all sections including active/completed parlays
 - **Active Parlay Prices**: Updated start price, current price, and final price displays to use 2 decimal places
 - **Completed Parlay History**: Updated historical price displays for consistent formatting
+- **Active Predictions Component**: Fixed current and predicted price displays to use consistent 2-decimal formatting
+- **Comprehensive Coverage**: Updated both parlay-simple.tsx, parlay-new.tsx, and active-predictions.tsx components
 
 ### Current System Status
 - **Complete How-to-Play Guide**: 4-tab navigation (Prediction, Parlay, Battle, Survival) with comprehensive user education

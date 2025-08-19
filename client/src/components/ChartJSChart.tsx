@@ -320,7 +320,7 @@ export default function ChartJSChart({ cryptoId, onPredictionClick }: ChartJSCha
             type: 'label' as const,
             xValue: data.length - 1, // Index ujung kanan chart
             yValue: cryptoInfo.current_price,
-            content: `$${cryptoInfo.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            content: `$${cryptoInfo.current_price.toFixed(2)}`,
             backgroundColor: '#00d4aa',
             color: '#ffffff',
             font: {

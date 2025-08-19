@@ -201,7 +201,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
                   <p className="font-semibold text-xs whitespace-nowrap">{crypto.symbol}</p>
                   
                   {/* Price */}
-                  <p className="font-medium text-xs whitespace-nowrap">${crypto.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="font-medium text-xs whitespace-nowrap">${crypto.current_price.toFixed(2)}</p>
                   
                   {/* Change percentage */}
                   <div className="flex items-center space-x-0.5">
