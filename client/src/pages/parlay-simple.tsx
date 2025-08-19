@@ -716,7 +716,7 @@ export default function ParlaySimple() {
                               {coinPredictions.map((coin: any, index: number) => {
                                 // Find current price for this cryptocurrency
                                 const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
-                                const liveCurrentPrice = currentCrypto?.current_price || 0;
+                                const liveCurrentPrice = parseFloat((currentCrypto?.current_price || 0).toFixed(2));
                                 const startPrice = parseFloat(coin.startPrice || '0');
                                 
                                 // Check if duration has passed to determine which price to use
@@ -727,6 +727,9 @@ export default function ParlaySimple() {
                                 // CRITICAL: Always use endPrice if available (snapshot is permanent), otherwise use live price
                                 const displayPrice = coin.endPrice ? 
                                   parseFloat(coin.endPrice) : liveCurrentPrice;
+                                
+                                // Debug logging for price formatting
+                                console.log(`🎯 [PARLAY-PRICE-DEBUG] ${coin.cryptocurrency} - Raw: ${currentCrypto?.current_price}, Live: ${liveCurrentPrice}, Display: ${displayPrice}, Formatted: ${displayPrice.toFixed(2)}`);
                                 
                                 const status = getPredictionStatus(coin, liveCurrentPrice);
                                 
