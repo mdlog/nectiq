@@ -323,6 +323,62 @@ try {
   console.error('❌ Failed to initialize withdrawal hash detection service:', error);
 }
 
+// Initialize Processing Withdrawals Blockchain Monitor
+try {
+  console.log('🔧 Initializing Processing Withdrawals Blockchain Monitor...');
+  const { AutomatedWithdrawalService } = await import('./automated-withdrawal-service');
+  
+  // Only initialize if admin private key exists
+  if (process.env.ADMIN_PRIVATE_KEY) {
+    const networks = {
+      ethereum: { 
+        rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
+        chainId: 11155111,
+        gasLimit: '21000',
+        maxGasPrice: '20000000000',
+        tokenContracts: {
+          USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
+          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
+        }
+      },
+      sepolia: { 
+        rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
+        chainId: 11155111,
+        gasLimit: '21000',
+        maxGasPrice: '20000000000',
+        tokenContracts: {
+          USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
+          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
+        }
+      }
+    };
+    
+    const automatedService = new AutomatedWithdrawalService({
+      adminPrivateKey: process.env.ADMIN_PRIVATE_KEY,
+      networks,
+      maxDailyWithdrawal: 10000,
+      maxSingleWithdrawal: 5000,
+      autoApprovalThreshold: 100
+    }, storage);
+    
+    // Check processing withdrawals every 2 minutes
+    setInterval(async () => {
+      try {
+        console.log('🔍 [PROCESSING-MONITOR] Checking processing withdrawals for blockchain confirmation...');
+        await automatedService.monitorProcessingWithdrawals();
+      } catch (error) {
+        console.error('❌ [PROCESSING-MONITOR] Error:', error);
+      }
+    }, 120000); // 2 minutes
+    
+    console.log('✅ Processing withdrawals blockchain monitor started - checking every 2 minutes');
+  } else {
+    console.log('⚠️ Processing withdrawals monitor disabled - ADMIN_PRIVATE_KEY not found');
+  }
+} catch (error) {
+  console.error('❌ Failed to initialize processing withdrawals monitor:', error);
+}
+
 // Initialize Parlay Processor Service for automatic parlay completion
 try {
   console.log('🔧 Initializing Parlay Processor Service...');

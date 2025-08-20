@@ -54,6 +54,9 @@ export class AutomatedWithdrawalService {
       // PREVENTION: Check for suspicious withdrawals (rejected but with transaction hash)
       await this.checkForSuspiciousWithdrawals();
       
+      // Check processing withdrawals for blockchain confirmation
+      await this.checkProcessingWithdrawals();
+      
       // Reset daily counter jika sudah lewat 24 jam
       this.resetDailyCounterIfNeeded();
       
@@ -91,6 +94,156 @@ export class AutomatedWithdrawalService {
     } catch (error) {
       console.error('❌ [AUTO-WD] Error in processAllPendingWithdrawals:', error);
       await this.sendErrorNotification('Failed to process pending withdrawals', error);
+    }
+  }
+
+  /**
+   * Public method untuk monitoring processing withdrawals (untuk dipanggil dari server index)
+   */
+  async monitorProcessingWithdrawals(): Promise<void> {
+    try {
+      console.log('🔍 [PROCESSING-MONITOR] Starting processing withdrawal monitoring...');
+      await this.checkProcessingWithdrawals();
+      console.log('✅ [PROCESSING-MONITOR] Processing withdrawal monitoring completed');
+    } catch (error) {
+      console.error('❌ [PROCESSING-MONITOR] Error monitoring processing withdrawals:', error);
+    }
+  }
+
+  /**
+   * Check processing withdrawals untuk konfirmasi blockchain otomatis
+   */
+  private async checkProcessingWithdrawals(): Promise<void> {
+    try {
+      console.log('🔍 [WITHDRAWAL-MONITOR] Checking processing withdrawals for blockchain confirmation...');
+      
+      // Ambil semua withdrawal dengan status 'processing' yang memiliki transaction hash
+      const processingWithdrawals = await db
+        .select()
+        .from(withdrawals)
+        .where(and(
+          eq(withdrawals.status, 'processing'),
+          isNotNull(withdrawals.transactionHash)
+        ));
+
+      if (processingWithdrawals.length === 0) {
+        console.log('✅ [WITHDRAWAL-MONITOR] No processing withdrawals found');
+        return;
+      }
+
+      console.log(`🔍 [WITHDRAWAL-MONITOR] Found ${processingWithdrawals.length} processing withdrawals to check`);
+
+      for (const withdrawal of processingWithdrawals) {
+        await this.verifyBlockchainTransaction(withdrawal);
+        
+        // Small delay between checks
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+    } catch (error) {
+      console.error('❌ [WITHDRAWAL-MONITOR] Error checking processing withdrawals:', error);
+    }
+  }
+
+  /**
+   * Verify transaction pada blockchain dan update status jika confirmed
+   */
+  private async verifyBlockchainTransaction(withdrawal: any): Promise<void> {
+    try {
+      const transactionHash = withdrawal.transactionHash;
+      if (!transactionHash || !transactionHash.startsWith('0x')) {
+        console.log(`⚠️ [WITHDRAWAL-MONITOR] Invalid transaction hash for withdrawal ${withdrawal.id}: ${transactionHash}`);
+        return;
+      }
+
+      // Get network configuration
+      const networkConfig = this.config.networks[withdrawal.chainName];
+      if (!networkConfig) {
+        console.log(`❌ [WITHDRAWAL-MONITOR] Unsupported network: ${withdrawal.chainName}`);
+        return;
+      }
+
+      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+      
+      // Check transaction receipt
+      const receipt = await provider.getTransactionReceipt(transactionHash);
+      
+      if (!receipt) {
+        // Transaction not yet mined, keep waiting
+        console.log(`⏳ [WITHDRAWAL-MONITOR] Transaction ${transactionHash} not yet mined`);
+        return;
+      }
+
+      if (receipt.status === 1) {
+        // Transaction successful - update to completed
+        await db
+          .update(withdrawals)
+          .set({
+            status: 'completed',
+            adminNote: 'Automatically verified on blockchain - transaction confirmed',
+            processedAt: new Date()
+          })
+          .where(eq(withdrawals.id, withdrawal.id));
+
+        console.log(`✅ [WITHDRAWAL-MONITOR] Withdrawal ${withdrawal.id} automatically marked as completed - TX: ${transactionHash}`);
+        
+        // Send success notification
+        await this.sendSuccessNotification(withdrawal, transactionHash);
+        
+      } else if (receipt.status === 0) {
+        // Transaction failed - update to failed
+        await db
+          .update(withdrawals)
+          .set({
+            status: 'failed',
+            adminNote: `Transaction failed on blockchain - TX: ${transactionHash}`,
+            processedAt: new Date()
+          })
+          .where(eq(withdrawals.id, withdrawal.id));
+
+        console.log(`❌ [WITHDRAWAL-MONITOR] Withdrawal ${withdrawal.id} marked as failed - TX failed: ${transactionHash}`);
+        
+        // Send failure notification
+        await this.sendFailureNotification(withdrawal, transactionHash);
+      }
+
+    } catch (error) {
+      if (error.message && error.message.includes('could not detect network')) {
+        console.log(`⚠️ [WITHDRAWAL-MONITOR] Network detection failed for withdrawal ${withdrawal.id} - keeping processing status`);
+      } else {
+        console.error(`❌ [WITHDRAWAL-MONITOR] Error verifying transaction for withdrawal ${withdrawal.id}:`, error);
+      }
+    }
+  }
+
+  /**
+   * Send success notification when withdrawal is automatically completed
+   */
+  private async sendSuccessNotification(withdrawal: any, transactionHash: string): Promise<void> {
+    try {
+      // Add to notification log or send webhook if configured
+      console.log(`🎉 [AUTO-COMPLETE] Withdrawal ${withdrawal.id} for user ${withdrawal.userId} completed automatically`);
+      console.log(`💰 Amount: ${withdrawal.ntiqAmount} NTIQ (${withdrawal.usdAmount} USD)`);
+      console.log(`🔗 TX Hash: ${transactionHash}`);
+      
+      // Here you could add webhook notification to Discord/Slack if needed
+    } catch (error) {
+      console.error('Error sending success notification:', error);
+    }
+  }
+
+  /**
+   * Send failure notification when withdrawal fails on blockchain
+   */
+  private async sendFailureNotification(withdrawal: any, transactionHash: string): Promise<void> {
+    try {
+      console.log(`🚨 [AUTO-FAILED] Withdrawal ${withdrawal.id} for user ${withdrawal.userId} failed on blockchain`);
+      console.log(`💰 Amount: ${withdrawal.ntiqAmount} NTIQ (${withdrawal.usdAmount} USD)`);
+      console.log(`❌ Failed TX: ${transactionHash}`);
+      
+      // Here you could add webhook notification for failed transactions
+    } catch (error) {
+      console.error('Error sending failure notification:', error);
     }
   }
 
