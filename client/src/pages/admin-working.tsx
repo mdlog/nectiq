@@ -17,6 +17,17 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAccount, useWriteContract, useSendTransaction } from "wagmi";
 import { parseEther, parseUnits } from "viem";
 
+// TypeScript declaration for MetaMask/Ethereum provider
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: any[] }) => Promise<any>;
+      on?: (eventName: string, handler: (...args: any[]) => void) => void;
+      removeListener?: (eventName: string, handler: (...args: any[]) => void) => void;
+    };
+  }
+}
+
 // Helper functions for blockchain explorer URLs
 const getBlockchainExplorerUrl = (hash: string, token: string): string => {
   const lowerToken = token.toLowerCase();
@@ -483,6 +494,115 @@ export default function AdminPanel() {
     },
   });
 
+  // Helper function to switch MetaMask chain
+  const switchToChain = async (targetChainId: number, chainName: string) => {
+    try {
+      if (!window.ethereum) {
+        throw new Error('MetaMask not found');
+      }
+
+      const chainIdHex = `0x${targetChainId.toString(16)}`;
+      
+      try {
+        // Try to switch to the chain
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: chainIdHex }],
+        });
+        
+        toast({
+          title: "Chain Switched",
+          description: `Successfully switched to ${chainName}`,
+          variant: "default"
+        });
+        
+        return true;
+      } catch (switchError: any) {
+        // Chain not added to MetaMask, add it first
+        if (switchError.code === 4902) {
+          console.log(`🔗 [CHAIN-SWITCH] Adding ${chainName} network to MetaMask...`);
+          
+          const networkParams = getNetworkParams(targetChainId);
+          if (!networkParams) {
+            throw new Error(`Unsupported chain ID: ${targetChainId}`);
+          }
+
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [networkParams],
+          });
+          
+          toast({
+            title: "Network Added & Switched",
+            description: `Added and switched to ${chainName}`,
+            variant: "default"
+          });
+          
+          return true;
+        } else {
+          throw switchError;
+        }
+      }
+    } catch (error: any) {
+      console.error(`❌ [CHAIN-SWITCH] Failed to switch to ${chainName}:`, error);
+      toast({
+        title: "Chain Switch Failed",
+        description: `Failed to switch to ${chainName}: ${error.message}`,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Get network parameters for adding new chains
+  const getNetworkParams = (chainId: number) => {
+    const networks: Record<number, any> = {
+      1: {
+        chainId: '0x1',
+        chainName: 'Ethereum Mainnet',
+        rpcUrls: ['https://eth.llamarpc.com'],
+        nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+        blockExplorerUrls: ['https://etherscan.io/']
+      },
+      11155111: {
+        chainId: '0xaa36a7',
+        chainName: 'Sepolia Testnet',
+        rpcUrls: ['https://sepolia.infura.io/v3/'],
+        nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+        blockExplorerUrls: ['https://sepolia.etherscan.io/']
+      },
+      56: {
+        chainId: '0x38',
+        chainName: 'BNB Smart Chain',
+        rpcUrls: ['https://bsc-dataseed.binance.org/'],
+        nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+        blockExplorerUrls: ['https://bscscan.com/']
+      },
+      97: {
+        chainId: '0x61',
+        chainName: 'BNB Smart Chain Testnet',
+        rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
+        nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+        blockExplorerUrls: ['https://testnet.bscscan.com/']
+      }
+    };
+    
+    return networks[chainId] || null;
+  };
+
+  // Get target chain ID based on withdrawal token
+  const getTargetChainId = (token: string): { chainId: number; chainName: string } => {
+    const chainMap: Record<string, { chainId: number; chainName: string }> = {
+      'ETH': { chainId: 11155111, chainName: 'Sepolia Testnet' }, // For testing
+      'USDC': { chainId: 11155111, chainName: 'Sepolia Testnet' },
+      'USDT': { chainId: 11155111, chainName: 'Sepolia Testnet' },
+      'BNB': { chainId: 97, chainName: 'BNB Testnet' },
+      // Add more tokens and their respective chains as needed
+    };
+    
+    return chainMap[token] || { chainId: 11155111, chainName: 'Sepolia Testnet' }; // Default to Sepolia
+  };
+
   // Withdrawal action handler
   const handleWithdrawalAction = async (withdrawalId: number, action: 'approve' | 'reject') => {
     setProcessingWithdrawal(withdrawalId);
@@ -512,6 +632,32 @@ export default function AdminPanel() {
         const cryptoAmount = withdrawal.netAmount || (withdrawal.amount / 1000).toString(); // Use netAmount or fallback
         const tokenSymbol = withdrawal.token;
         const recipientAddress = withdrawal.toAddress;
+
+        // Get target chain for this token
+        const { chainId: targetChainId, chainName: targetChainName } = getTargetChainId(tokenSymbol);
+        const currentChainId = chain?.id;
+
+        console.log(`🔗 [CHAIN-CHECK] Current chain: ${chain?.name} (ID: ${currentChainId})`);
+        console.log(`🔗 [CHAIN-CHECK] Required chain: ${targetChainName} (ID: ${targetChainId})`);
+
+        // Check if we need to switch chains
+        if (currentChainId !== targetChainId) {
+          toast({
+            title: "Chain Switch Required",
+            description: `Switching to ${targetChainName} for ${tokenSymbol} withdrawal...`,
+            variant: "default"
+          });
+
+          console.log(`🔗 [CHAIN-SWITCH] Need to switch from ${chain?.name} (${currentChainId}) to ${targetChainName} (${targetChainId})`);
+          
+          const switchSuccess = await switchToChain(targetChainId, targetChainName);
+          if (!switchSuccess) {
+            throw new Error(`Failed to switch to ${targetChainName}. Please switch manually in MetaMask.`);
+          }
+
+          // Wait a moment for the switch to complete
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
 
         toast({ 
           title: "MetaMask Required", 
