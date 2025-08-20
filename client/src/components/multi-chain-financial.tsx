@@ -1859,3 +1859,5 @@ export function MultiChainFinancial() {
     </div>
   );
 }
+
+export default MultiChainFinancial;
