@@ -538,7 +538,9 @@ export default function AdminPanel() {
                 description: "Transaction was cancelled by user. You can try again.",
                 variant: "default"
               });
-              return; // Exit early, buttons will reappear due to finally block
+              // Reset processing state immediately for UI buttons to reappear
+              setProcessingWithdrawal(null);
+              return; // Exit early
             }
             throw sendError; // Re-throw other errors
           }
@@ -630,7 +632,9 @@ export default function AdminPanel() {
                 description: "Transaction was cancelled by user. You can try again.",
                 variant: "default"
               });
-              return; // Exit early, buttons will reappear due to finally block
+              // Reset processing state immediately for UI buttons to reappear
+              setProcessingWithdrawal(null);
+              return; // Exit early
             }
             console.error(`❌ [USDC-DEBUG] WriteContract error details:`, {
               error: writeError,
