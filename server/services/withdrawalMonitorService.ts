@@ -158,21 +158,20 @@ export class WithdrawalMonitorService {
 
       console.log(`⏰ [WITHDRAWAL-MONITOR] ${relevantTxs.length} transactions in timeframe`);
 
-      // Convert expected amount to Wei (assuming USD amount)
-      const expectedUSD = parseFloat(withdrawal.usdAmount || withdrawal.netAmount || (withdrawal.amount * 0.01).toString());
+      // Get expected ETH amount directly from net_amount field (already calculated)
+      const expectedETH = parseFloat(withdrawal.netAmount || '0');
+      
+      console.log(`🔍 [WITHDRAWAL-MONITOR] Expected ETH amount: ${expectedETH}`);
       
       for (const tx of relevantTxs) {
         const txValueWei = tx.value;
         const txValueEth = parseFloat(txValueWei) / Math.pow(10, 18);
         
-        console.log(`🔍 [WITHDRAWAL-MONITOR] Checking tx ${tx.hash}: ${txValueEth} ETH`);
+        console.log(`🔍 [WITHDRAWAL-MONITOR] Checking tx ${tx.hash}: ${txValueEth} ETH vs expected ${expectedETH} ETH`);
         
-        // For native tokens, we need to estimate if the ETH value matches USD expectation
-        // This is rough estimation - in production, use price at transaction time
-        const estimatedUSD = txValueEth * 3000; // Rough ETH price estimate
-        
-        if (this.isAmountMatch(estimatedUSD, expectedUSD, 0.2)) { // 20% tolerance for native tokens
-          console.log(`✅ [WITHDRAWAL-MONITOR] Amount match found: ${estimatedUSD} USD ≈ ${expectedUSD} USD`);
+        // Direct ETH amount comparison with tight tolerance
+        if (this.isAmountMatch(txValueEth, expectedETH, 0.001)) { // 0.1% tolerance for exact ETH amounts
+          console.log(`✅ [WITHDRAWAL-MONITOR] ETH amount match found: ${txValueEth} ETH ≈ ${expectedETH} ETH`);
           return tx.hash;
         }
       }

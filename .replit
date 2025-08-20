@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["nano", "htop-vim"]
+packages = ["nano", "htop-vim", "jq"]
 
 [deployment]
 deploymentTarget = "autoscale"
