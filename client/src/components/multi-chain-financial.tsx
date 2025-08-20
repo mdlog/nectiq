@@ -207,7 +207,6 @@ const SUPPORTED_CHAINS = [
     color: "text-purple-600",
     logo: SepoliaLogo,
     explorerUrl: "https://sepolia.etherscan.io",
-    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       ETH: { address: "native", decimals: 18 },
       USDC: { address: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8", decimals: 6 },
@@ -222,7 +221,6 @@ const SUPPORTED_CHAINS = [
     color: "text-gray-600",
     logo: HoleskyLogo,
     explorerUrl: "https://holesky.etherscan.io",
-    adminWallet: "0x4C6165286739696849Fb3e77A16b0639D762c5B6",
     tokens: {
       ETH: { address: "native", decimals: 18 },
       USDC: { address: "0x449cde79f489e2ae32e6314d8d966ca64e040409", decimals: 6 }, // Official Circle USDC on Holesky

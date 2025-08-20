@@ -775,9 +775,10 @@ export default function AdminPanel() {
           // For ERC-20 tokens (USDC, USDT) - Simulation mode untuk testing
           console.log(`🔍 [USDC-DEBUG] Starting USDC withdrawal for ${cryptoAmount} ${tokenSymbol}`);
           
+          // Get token addresses from environment variables for security
           const tokenAddresses = {
-            'USDC': '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8', // Sepolia USDC testnet (official)
-            'USDT': '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'  // Sepolia USDT testnet
+            'USDC': import.meta.env.VITE_SEPOLIA_USDC_CONTRACT || '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8', // Sepolia USDC testnet (official)
+            'USDT': import.meta.env.VITE_SEPOLIA_USDT_CONTRACT || '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'  // Sepolia USDT testnet
           };
           
           const tokenAddress = tokenAddresses[tokenSymbol as keyof typeof tokenAddresses];

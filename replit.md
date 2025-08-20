@@ -49,3 +49,9 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 - **vite**, **tsx**, **esbuild**: Development and build tools.
 - **Etherscan API**: Used for monitoring and verifying blockchain transactions (deposits, withdrawals).
 - **Firebase**: For linking wallet addresses with Gmail verification.
+
+## Security Architecture
+- **Environment Variables**: All sensitive data (API keys, wallet addresses, database credentials) stored securely in Replit Secrets
+- **Secret Management**: Complete migration from hardcoded values to environment variables completed August 2025
+- **Database Security**: Neon PostgreSQL with encrypted connections and environment-based authentication
+- **API Security**: Secured endpoints with proper authentication and authorization middleware
