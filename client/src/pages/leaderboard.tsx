@@ -39,7 +39,7 @@ export default function Leaderboard() {
   const [filter, setFilter] = useState<FilterType>('alltime');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const itemsPerPage = 10;
+  const itemsPerPage = 25;
 
   // Reset to page 1 when filter or search changes
   const handleFilterChange = (newFilter: FilterType) => {

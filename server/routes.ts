@@ -2994,7 +2994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const handleLeaderboard = async (req: any, res: any) => {
     try {
       const filter = req.query.filter as string || 'alltime';
-      const limit = parseInt(req.query.limit as string) || 50;
+      const limit = parseInt(req.query.limit as string) || 100;
       
       try {
         // Use enhanced leaderboard that includes battle and survival data
