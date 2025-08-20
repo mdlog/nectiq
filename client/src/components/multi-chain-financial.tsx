@@ -1810,7 +1810,9 @@ export function MultiChainFinancial() {
                             })()}
                             <span>{SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName)?.name}</span>
                           </div>
-                          {withdrawal.transactionHash && (
+                          {withdrawal.transactionHash && 
+                           withdrawal.transactionHash.length === 66 && 
+                           withdrawal.transactionHash.startsWith('0x') && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -1821,9 +1823,17 @@ export function MultiChainFinancial() {
                                   window.open(`${chain.explorerUrl}/tx/${withdrawal.transactionHash}`, '_blank');
                                 }
                               }}
+                              title="View transaction on blockchain explorer"
                             >
                               <ExternalLink className="w-3 h-3" />
                             </Button>
+                          )}
+                          {withdrawal.transactionHash && 
+                           withdrawal.transactionHash === 'VERIFIED_ON_BLOCKCHAIN' && (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-xs text-green-600">Verified</span>
+                            </div>
                           )}
                         </div>
                         {withdrawal.adminNote && (
