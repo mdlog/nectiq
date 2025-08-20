@@ -774,24 +774,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Normalize wallet address
       const normalizedAddress = normalizeWalletAddress(walletAddress);
       
-      // ✅ CRITICAL DUPLICATION FIX: Check for multiple users with same wallet
-      const allUsersWithWallet = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
-      
-      if (allUsersWithWallet.length > 1) {
-        console.log(`🚨 [DUPLICATION-FIX] Found ${allUsersWithWallet.length} users with wallet ${normalizedAddress}`);
-        
-        // Keep the user with email or the first one created, delete others
-        const userToKeep = allUsersWithWallet.find(u => u.email) || allUsersWithWallet[0];
-        const usersToDelete = allUsersWithWallet.filter(u => u.id !== userToKeep.id);
-        
-        console.log(`🔧 [DUPLICATION-FIX] Keeping user ID ${userToKeep.id} (${userToKeep.username}), deleting ${usersToDelete.length} duplicates`);
-        
-        // Delete duplicate users
-        for (const duplicateUser of usersToDelete) {
-          await db.delete(users).where(eq(users.id, duplicateUser.id));
-          console.log(`🗑️ [DUPLICATION-FIX] Deleted duplicate user ID ${duplicateUser.id} (${duplicateUser.username})`);
-        }
-      }
+      // Note: Automatic duplicate user cleanup has been disabled due to foreign key constraints.
+      // Use admin panel manual cleanup for duplicate users with financial data.
       
       // Find user by wallet address (should be unique now)
       const user = await storage.getUserByWalletAddress(normalizedAddress);
@@ -858,52 +842,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const normalizedAddress = normalizeWalletAddress(walletAddress);
+      let dbUser = null; // Declare outside try block for proper scoping
       
-      // Security check for wallet login
-      const { WalletSecurityService } = await import('./walletSecurity');
-      const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
-      
-      if (!securityCheck.success) {
-        return res.status(403).json({ 
-          message: securityCheck.message,
-          securityBlock: true 
-        });
-      }
-
-      // ✅ CRITICAL DUPLICATION FIX: Check for multiple users with same wallet
-      const allUsersWithWallet = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
-      
-      if (allUsersWithWallet.length > 1) {
-        console.log(`🚨 [DUPLICATION-FIX] Found ${allUsersWithWallet.length} users with wallet ${normalizedAddress}`);
+      try {
+        // Security check for wallet login
+        console.log(`🔍 [WALLET-DEBUG] Starting security check for ${normalizedAddress.slice(0, 8)}...`);
+        const { WalletSecurityService } = await import('./walletSecurity');
+        const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
         
-        // Keep the user with email or the first one created, delete others
-        const userToKeep = allUsersWithWallet.find(u => u.email) || allUsersWithWallet[0];
-        const usersToDelete = allUsersWithWallet.filter(u => u.id !== userToKeep.id);
-        
-        console.log(`🔧 [DUPLICATION-FIX] Keeping user ID ${userToKeep.id} (${userToKeep.username}), deleting ${usersToDelete.length} duplicates`);
-        
-        // Delete duplicate users
-        for (const duplicateUser of usersToDelete) {
-          await db.delete(users).where(eq(users.id, duplicateUser.id));
-          console.log(`🗑️ [DUPLICATION-FIX] Deleted duplicate user ID ${duplicateUser.id} (${duplicateUser.username})`);
+        if (!securityCheck.success) {
+          console.log(`❌ [WALLET-DEBUG] Security check failed: ${securityCheck.message}`);
+          return res.status(403).json({ 
+            message: securityCheck.message,
+            securityBlock: true 
+          });
         }
+        console.log(`✅ [WALLET-DEBUG] Security check passed`);
+
+        // Find or create user by wallet
+        console.log(`🔍 [WALLET-DEBUG] Looking up user by wallet address`);
+        dbUser = await storage.getUserByWalletAddress(normalizedAddress);
+        if (!dbUser) {
+          console.log(`🔍 [WALLET-DEBUG] User not found, creating new user`);
+          const adminWallets = getAdminWalletAddresses();
+          const isAdmin = adminWallets.includes(normalizedAddress);
+          const username = isAdmin ? `Admin_${normalizedAddress.slice(-6)}` : generateRandomUsername();
+          
+          console.log(`🔍 [WALLET-DEBUG] About to create user with username: ${username}`);
+          dbUser = await storage.createUser({
+            username,
+            walletAddress: normalizedAddress,
+            authMethod: "wallet",
+            isAdmin
+          });
+          console.log(`✅ [WALLET-DEBUG] User created successfully: ${username}, ID: ${dbUser.id}`);
+          
+          console.log(`🔐 [SERVER] Auto-registered wallet user: ${username}, admin: ${isAdmin}, wallet: ${normalizedAddress.slice(0, 6)}...`);
+        } else {
+          console.log(`✅ [WALLET-DEBUG] Existing user found: ${dbUser.username}, ID: ${dbUser.id}`);
+        }
+      } catch (error: any) {
+        console.error(`💥 [WALLET-ERROR] Error during wallet authentication:`, error);
+        console.error(`💥 [WALLET-ERROR] Error message:`, error.message);
+        console.error(`💥 [WALLET-ERROR] Error code:`, error.code);
+        console.error(`💥 [WALLET-ERROR] Error details:`, error.detail);
+        console.error(`💥 [WALLET-ERROR] Full error:`, error);
+        return res.status(500).json({ message: "Failed to authenticate with wallet" });
       }
 
-      // Find or create user by wallet
-      let dbUser = await storage.getUserByWalletAddress(normalizedAddress);
+      // Validate dbUser exists before setting session
       if (!dbUser) {
-        const adminWallets = getAdminWalletAddresses();
-        const isAdmin = adminWallets.includes(normalizedAddress);
-        const username = isAdmin ? `Admin_${normalizedAddress.slice(-6)}` : generateRandomUsername();
-        
-        dbUser = await storage.createUser({
-          username,
-          walletAddress: normalizedAddress,
-          authMethod: "wallet",
-          isAdmin
-        });
-        
-        console.log(`🔐 [SERVER] Auto-registered wallet user: ${username}, admin: ${isAdmin}, wallet: ${normalizedAddress.slice(0, 6)}...`);
+        console.error(`❌ [WALLET-CONNECT] dbUser is null after authentication process`);
+        return res.status(500).json({ message: "Failed to authenticate with wallet" });
       }
 
       // Set session
@@ -939,6 +929,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("❌ [WALLET-CONNECT] Error:", error);
+      console.error("❌ [WALLET-CONNECT] Error stack:", error.stack);
+      console.error("❌ [WALLET-CONNECT] Error name:", error.name);
+      console.error("❌ [WALLET-CONNECT] Error message:", error.message);
       res.status(500).json({ message: "Failed to authenticate with wallet" });
     }
   });
@@ -1032,24 +1025,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        // ✅ CRITICAL DUPLICATION FIX: Check for multiple users with same wallet
-        const allUsersWithWallet = await db.select().from(users).where(eq(users.walletAddress, normalizedAddress));
-        
-        if (allUsersWithWallet.length > 1) {
-          console.log(`🚨 [DUPLICATION-FIX] Found ${allUsersWithWallet.length} users with wallet ${normalizedAddress}`);
-          
-          // Keep the user with email or the first one created, delete others
-          const userToKeep = allUsersWithWallet.find(u => u.email) || allUsersWithWallet[0];
-          const usersToDelete = allUsersWithWallet.filter(u => u.id !== userToKeep.id);
-          
-          console.log(`🔧 [DUPLICATION-FIX] Keeping user ID ${userToKeep.id} (${userToKeep.username}), deleting ${usersToDelete.length} duplicates`);
-          
-          // Delete duplicate users
-          for (const duplicateUser of usersToDelete) {
-            await db.delete(users).where(eq(users.id, duplicateUser.id));
-            console.log(`🗑️ [DUPLICATION-FIX] Deleted duplicate user ID ${duplicateUser.id} (${duplicateUser.username})`);
-          }
-        }
+        // Note: Automatic duplicate user cleanup has been disabled due to foreign key constraints.
+        // Use admin panel manual cleanup for duplicate users with financial data.
 
         // Find or create user by wallet
         dbUser = await storage.getUserByWalletAddress(normalizedAddress);
