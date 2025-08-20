@@ -777,12 +777,17 @@ export default function AdminPanel() {
     } : null;
   };
 
-  // Filter functions
-  const filteredUsers = usersData?.filter(user => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.walletAddress?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter functions with deduplication
+  const filteredUsers = usersData
+    ?.filter((user, index, array) => {
+      // Remove duplicates by id - keep first occurrence
+      return array.findIndex(u => u.id === user.id) === index;
+    })
+    ?.filter(user => 
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.walletAddress?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const filteredPredictions = predictions?.filter(prediction => {
     if (filterStatus !== "all" && prediction.status !== filterStatus) return false;
