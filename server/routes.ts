@@ -1766,10 +1766,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = session.userId;
+      console.log(`🔍 [WITHDRAWAL-HISTORY] Fetching withdrawals for user ID: ${userId}`);
+      
       const withdrawals = await storage.getUserWithdrawals(userId, 10);
-      res.json(withdrawals);
+      console.log(`📊 [WITHDRAWAL-HISTORY] Found ${withdrawals.length} withdrawals for user ${userId}`);
+      
+      // Map database fields (snake_case) to frontend expected format (camelCase)
+      const mappedWithdrawals = withdrawals.map(withdrawal => ({
+        id: withdrawal.id,
+        ntiqAmount: withdrawal.ntiq_amount,           // Database: ntiq_amount → Frontend: ntiqAmount
+        usdAmount: withdrawal.usd_amount,             // Database: usd_amount → Frontend: usdAmount
+        status: withdrawal.status,
+        tokenType: withdrawal.token_type,             // Database: token_type → Frontend: tokenType
+        transactionHash: withdrawal.transaction_hash, // Database: transaction_hash → Frontend: transactionHash
+        createdAt: withdrawal.created_at,             // Database: created_at → Frontend: createdAt
+        uniqueTransactionId: withdrawal.unique_transaction_id, // Database: unique_transaction_id → Frontend: uniqueTransactionId
+        chainName: withdrawal.chain_name,             // Database: chain_name → Frontend: chainName
+        toWalletAddress: withdrawal.to_wallet_address, // Database: to_wallet_address → Frontend: toWalletAddress
+        netAmount: withdrawal.net_amount,             // Database: net_amount → Frontend: netAmount
+        feeAmount: withdrawal.fee_amount              // Database: fee_amount → Frontend: feeAmount
+      }));
+      
+      console.log(`✅ [WITHDRAWAL-HISTORY] Mapped withdrawals:`, mappedWithdrawals.length > 0 ? mappedWithdrawals[0] : 'No withdrawals');
+      res.json(mappedWithdrawals);
     } catch (error) {
-      console.error("Error fetching withdrawals:", error);
+      console.error("❌ [WITHDRAWAL-HISTORY] Error fetching withdrawals:", error);
       res.status(500).json({ message: "Failed to fetch withdrawal history" });
     }
   });
