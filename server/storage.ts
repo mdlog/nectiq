@@ -81,6 +81,7 @@ export interface IStorage {
 
   // Multi-chain Withdrawal operations
   createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
+  getWithdrawal(id: number): Promise<Withdrawal | undefined>;
   getUserWithdrawals(userId: number, limit?: number): Promise<Withdrawal[]>;
   getAllWithdrawals(): Promise<Withdrawal[]>;
   updateWithdrawalStatus(id: number, status: string, transactionHash?: string, adminNote?: string, processedBy?: number): Promise<void>;
@@ -806,6 +807,11 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return withdrawal;
+  }
+
+  async getWithdrawal(id: number): Promise<Withdrawal | undefined> {
+    const [withdrawal] = await db.select().from(withdrawals).where(eq(withdrawals.id, id));
+    return withdrawal || undefined;
   }
 
   async getUserWithdrawals(userId: number, limit: number = 10): Promise<Withdrawal[]> {
@@ -3296,6 +3302,11 @@ export class MemStorage implements IStorage {
     };
     this.withdrawals.set(withdrawal.id, withdrawal);
     return withdrawal;
+  }
+
+  async getWithdrawal(id: number): Promise<Withdrawal | undefined> {
+    const withdrawal = this.withdrawals.get(id);
+    return (withdrawal && !withdrawal.amountUSD) ? withdrawal : undefined; // Exclude deposits
   }
 
   async getUserWithdrawals(userId: number, limit: number = 10): Promise<Withdrawal[]> {

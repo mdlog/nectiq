@@ -1682,7 +1682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate token amount (1 PTS = 0.01 USDT/USDC)
       const tokenAmount = numAmount * 0.01;
 
-      // Create withdrawal record with pending status
+      // Create withdrawal record with pending status (DON'T deduct balance yet)
       const withdrawal = await storage.createWithdrawal({
         userId,
         ptsAmount: numAmount,
@@ -1692,14 +1692,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "pending"
       });
 
-      // CRITICAL FIX: Use BalanceService for withdrawal deduction
-      const balanceResult = await BalanceService.processTransaction({
-        userId,
-        type: 'withdrawal',
-        amount: numAmount,
-        description: `Withdrawal request - ${numAmount} NTIQ to ${token}`,
-        relatedId: withdrawal.id
-      }, storage);
+      // NOTE: Balance will only be deducted when withdrawal is completed by admin
+      // This prevents balance loss if withdrawal gets rejected
 
       // Real-time notification to admin panel for approval
       broadcastToAdmins({
@@ -1721,10 +1715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
-      // Get updated user balance after withdrawal deduction
-      const updatedUser = await storage.getUser(userId);
-      const newBalance = updatedUser?.balance || 0;
-
+      // Balance remains unchanged until withdrawal is completed
       auditLog("user_withdrawal_request", {
         userId,
         withdrawalId: withdrawal.id,
@@ -1732,19 +1723,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tokenAmount,
         token,
         walletAddress: user.walletAddress,
-        newBalance,
+        balance: user.balance, // Balance unchanged 
         status: "pending"
       }, req);
 
       res.json({
         success: true,
-        message: "Withdrawal request submitted successfully. Admin approval required.",
+        message: "Withdrawal request submitted successfully. Balance will be deducted only after admin approval and completion.",
         withdrawalId: withdrawal.id,
         ptsAmount: numAmount,
         tokenAmount: tokenAmount.toFixed(2),
         token,
         status: "pending",
-        newBalance
+        balance: user.balance // Return current unchanged balance
       });
     } catch (error) {
       console.error("Detailed withdrawal error:", error);
@@ -4338,6 +4329,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminId = req.session.userId;
       const { adminNote, transactionHash } = req.body;
 
+      // Get withdrawal details for balance deduction
+      const withdrawal = await storage.getWithdrawal(withdrawalId);
+      if (!withdrawal) {
+        return res.status(404).json({ message: "Withdrawal not found" });
+      }
+
       auditLog("withdrawal_completed", {
         withdrawalId,
         adminId,
@@ -4345,7 +4342,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionHash: transactionHash || "No transaction hash"
       }, req);
 
+      // Complete withdrawal first
       await storage.completeWithdrawal(withdrawalId, adminId, adminNote, transactionHash);
+      
+      // CRITICAL: Now deduct user balance after withdrawal is completed
+      await BalanceService.processTransaction({
+        userId: withdrawal.userId,
+        type: 'withdrawal_completed',
+        amount: withdrawal.ntiqAmount,
+        description: `Withdrawal completed - ${withdrawal.ntiqAmount} NTIQ to ${withdrawal.token} | TX: ${transactionHash || 'manual_completion'}`,
+        relatedId: withdrawal.id
+      }, storage);
+
+      console.log(`💰 [MANUAL-WD] Deducted ${withdrawal.ntiqAmount} NTIQ from user ${withdrawal.userId} balance for withdrawal ${withdrawalId}`);
       
       // Broadcast to admin clients
       broadcastToAdmins({
@@ -4357,7 +4366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
-      res.json({ message: "Withdrawal marked as completed" });
+      res.json({ message: "Withdrawal completed and balance deducted successfully" });
     } catch (error) {
       console.error("Error completing withdrawal:", error);
       res.status(500).json({ message: "Failed to complete withdrawal" });
