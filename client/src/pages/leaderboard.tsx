@@ -53,7 +53,7 @@ export default function Leaderboard() {
   };
   
   const { data: leaderboardData, isLoading } = useQuery<LeaderboardUser[]>({
-    queryKey: ['/api/leaderboard', filter],
+    queryKey: [`/api/leaderboard?filter=${filter}&limit=100`],
     refetchInterval: 30000,
   });
 

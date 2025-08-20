@@ -551,7 +551,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEnhancedLeaderboard(options: any = {}): Promise<any> {
-    const { page = 1, limit = 10, sortBy = 'totalRewards', sortOrder = 'desc' } = options;
+    const { page = 1, limit = 100, sortBy = 'totalRewards', sortOrder = 'desc' } = options;
     // Get users with basic data
     const usersData = await db.select({
       id: users.id,

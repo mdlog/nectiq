@@ -2998,12 +2998,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Use enhanced leaderboard that includes battle and survival data
-        const enhancedLeaderboardResult = await storage.getEnhancedLeaderboard(limit);
+        const enhancedLeaderboardResult = await storage.getEnhancedLeaderboard({ limit });
+        console.log(`🔍 [LEADERBOARD-DEBUG] Enhanced result type: ${typeof enhancedLeaderboardResult}, limit: ${limit}`);
         
         // Handle both array and object response formats
         const enhancedLeaderboard = Array.isArray(enhancedLeaderboardResult) 
           ? enhancedLeaderboardResult 
           : (enhancedLeaderboardResult?.users || []);
+        
+        console.log(`🔍 [LEADERBOARD-DEBUG] Enhanced leaderboard length: ${enhancedLeaderboard.length}`);
         
         if (!Array.isArray(enhancedLeaderboard) || enhancedLeaderboard.length === 0) {
           // Create mock leaderboard data if no data available
