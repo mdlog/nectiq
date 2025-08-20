@@ -28,7 +28,7 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
     - **Reward System**: Point-based economy (NTIQ) with multipliers for accuracy, progressive rewards, achievements, and daily challenges.
     - **Real-Time Features**: Live cryptocurrency price updates (1-second intervals), interactive price charts, active prediction tracking with countdown timers, and a live leaderboard.
     - **Gamified Elements**: Prediction Battles (head-to-head challenges) and Survival Tournaments (elimination-based predictions) with fair play mechanisms.
-    - **Financial System**: Multi-chain deposit and withdrawal system (ETH, USDC, USDT) with automated processing, real-time tracking, and integrated fee structures. Automated monitoring of processing withdrawals with blockchain confirmation. Automatic MetaMask chain switching for admin approvals.
+    - **Financial System**: Multi-chain deposit and withdrawal system (ETH, USDC, USDT) with automated processing, real-time tracking, and integrated fee structures. Automated monitoring of processing withdrawals with blockchain confirmation. Automatic MetaMask chain switching for admin approvals with full mobile wallet support.
     - **Security**: Robust security measures including input validation, CORS, secure session management, anti-multi wallet abuse (device fingerprinting, IP tracking), and comprehensive admin oversight tools.
     - **Architecture Decisions**: Emphasis on modularity, scalability, and maintainability. Components are designed for reusability, and services are decoupled. Prioritizes direct Pyth Network integration for institutional-grade real-time price feeds.
 

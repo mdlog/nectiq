@@ -18,13 +18,19 @@ import { useAccount, useWriteContract, useSendTransaction } from "wagmi";
 import { parseEther, parseUnits } from "viem";
 
 // TypeScript declaration for MetaMask/Ethereum provider
+interface EthereumProvider {
+  request: (args: { method: string; params?: any[] }) => Promise<any>;
+  on?: (eventName: string, handler: (...args: any[]) => void) => void;
+  removeListener?: (eventName: string, handler: (...args: any[]) => void) => void;
+  isMobile?: boolean;
+  isMetaMask?: boolean;
+  selectedAddress?: string;
+  chainId?: string;
+}
+
 declare global {
   interface Window {
-    ethereum?: {
-      request: (args: { method: string; params?: any[] }) => Promise<any>;
-      on?: (eventName: string, handler: (...args: any[]) => void) => void;
-      removeListener?: (eventName: string, handler: (...args: any[]) => void) => void;
-    };
+    ethereum?: EthereumProvider;
   }
 }
 
@@ -494,16 +500,57 @@ export default function AdminPanel() {
     },
   });
 
-  // Helper function to switch MetaMask chain
+  // Helper function to detect mobile device
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           window.innerWidth <= 768;
+  };
+
+  // Helper function to switch MetaMask chain (Mobile & Desktop Compatible)
   const switchToChain = async (targetChainId: number, chainName: string) => {
     try {
+      const mobile = isMobileDevice();
+      console.log(`🔗 [CHAIN-SWITCH] Device type: ${mobile ? 'Mobile' : 'Desktop'}`);
+
+      // For mobile devices, use wagmi's built-in chain switching if available
+      if (mobile && window.ethereum && window.ethereum.isMobile) {
+        console.log(`📱 [MOBILE-CHAIN] Using mobile-optimized chain switching for ${chainName}`);
+        
+        try {
+          // Mobile wallets often need different approach
+          const chainIdHex = `0x${targetChainId.toString(16)}`;
+          
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: chainIdHex }],
+          });
+          
+          toast({
+            title: "Chain Switched (Mobile)",
+            description: `Successfully switched to ${chainName}`,
+            variant: "default"
+          });
+          
+          return true;
+        } catch (mobileError: any) {
+          console.log(`📱 [MOBILE-CHAIN] Mobile switch failed, trying standard method:`, mobileError);
+          // Fall through to standard method
+        }
+      }
+
+      // Standard method for desktop and mobile fallback
       if (!window.ethereum) {
-        throw new Error('MetaMask not found');
+        const errorMsg = mobile 
+          ? 'Please open this page in MetaMask mobile app or install a Web3 wallet'
+          : 'MetaMask not found. Please install MetaMask extension';
+        throw new Error(errorMsg);
       }
 
       const chainIdHex = `0x${targetChainId.toString(16)}`;
       
       try {
+        console.log(`🔗 [CHAIN-SWITCH] Attempting to switch to ${chainName} (Chain ID: ${targetChainId})`);
+        
         // Try to switch to the chain
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
@@ -518,9 +565,11 @@ export default function AdminPanel() {
         
         return true;
       } catch (switchError: any) {
-        // Chain not added to MetaMask, add it first
+        console.log(`🔗 [CHAIN-SWITCH] Switch error:`, switchError);
+        
+        // Chain not added to wallet, add it first
         if (switchError.code === 4902) {
-          console.log(`🔗 [CHAIN-SWITCH] Adding ${chainName} network to MetaMask...`);
+          console.log(`🔗 [CHAIN-SWITCH] Adding ${chainName} network to wallet...`);
           
           const networkParams = getNetworkParams(targetChainId);
           if (!networkParams) {
@@ -533,21 +582,35 @@ export default function AdminPanel() {
           });
           
           toast({
-            title: "Network Added & Switched",
+            title: mobile ? "Network Added (Mobile)" : "Network Added & Switched",
             description: `Added and switched to ${chainName}`,
             variant: "default"
           });
           
           return true;
+        } else if (switchError.code === 4001) {
+          // User rejected the request
+          toast({
+            title: "Chain Switch Cancelled",
+            description: `You cancelled the chain switch to ${chainName}`,
+            variant: "default"
+          });
+          return false;
         } else {
           throw switchError;
         }
       }
     } catch (error: any) {
       console.error(`❌ [CHAIN-SWITCH] Failed to switch to ${chainName}:`, error);
+      
+      const mobile = isMobileDevice();
+      const errorMessage = mobile 
+        ? `Failed to switch to ${chainName}. Try opening this page in MetaMask mobile app or switch manually in your wallet.`
+        : `Failed to switch to ${chainName}: ${error.message}`;
+      
       toast({
         title: "Chain Switch Failed",
-        description: `Failed to switch to ${chainName}: ${error.message}`,
+        description: errorMessage,
         variant: "destructive"
       });
       return false;
@@ -642,21 +705,39 @@ export default function AdminPanel() {
 
         // Check if we need to switch chains
         if (currentChainId !== targetChainId) {
+          const mobile = isMobileDevice();
+          
           toast({
             title: "Chain Switch Required",
-            description: `Switching to ${targetChainName} for ${tokenSymbol} withdrawal...`,
+            description: mobile 
+              ? `Switching to ${targetChainName} for ${tokenSymbol} withdrawal (Mobile)`
+              : `Switching to ${targetChainName} for ${tokenSymbol} withdrawal...`,
             variant: "default"
           });
 
           console.log(`🔗 [CHAIN-SWITCH] Need to switch from ${chain?.name} (${currentChainId}) to ${targetChainName} (${targetChainId})`);
+          console.log(`📱 [MOBILE-CHECK] Mobile device detected: ${mobile}`);
           
           const switchSuccess = await switchToChain(targetChainId, targetChainName);
           if (!switchSuccess) {
-            throw new Error(`Failed to switch to ${targetChainName}. Please switch manually in MetaMask.`);
+            const errorMsg = mobile 
+              ? `Failed to switch to ${targetChainName}. Please open this page in MetaMask mobile app or switch network manually in your wallet.`
+              : `Failed to switch to ${targetChainName}. Please switch manually in MetaMask.`;
+            throw new Error(errorMsg);
           }
 
-          // Wait a moment for the switch to complete
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          // Wait longer for mobile devices as they might need more time
+          const waitTime = mobile ? 3000 : 1500;
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          
+          // Show additional mobile guidance if needed
+          if (mobile) {
+            toast({
+              title: "Mobile Tip",
+              description: "If chain switch didn't work, try refreshing the page or switching network manually in your wallet app",
+              variant: "default"
+            });
+          }
         }
 
         toast({ 
