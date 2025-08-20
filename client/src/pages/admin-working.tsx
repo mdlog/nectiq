@@ -703,8 +703,8 @@ export default function AdminPanel() {
             console.error('Error checking transaction status:', error);
           }
         }, 10000); // Check after 10 seconds
-      } else {
-        // For reject action, just call API
+      } else if (action === 'reject') {
+        // For reject action, call API
         const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
           method: 'POST',
         });
@@ -713,7 +713,24 @@ export default function AdminPanel() {
           queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
           toast({ 
             title: "Success", 
-            description: `Withdrawal ${action}d successfully` 
+            description: `Withdrawal rejected successfully` 
+          });
+        }
+      } else if (action === 'complete') {
+        // For complete action, call API
+        const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            adminNote: "Manual completion by admin",
+            transactionHash: "manual_completion"
+          })
+        });
+        
+        if (response) {
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+          toast({ 
+            title: "Success", 
+            description: `Withdrawal completed successfully` 
           });
         }
       }
@@ -3162,22 +3179,34 @@ export default function AdminPanel() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {transaction.type === 'withdrawal' && transaction.status === 'pending' ? (
+                            {transaction.type === 'withdrawal' && (transaction.status === 'pending' || transaction.status === 'processing') ? (
                               <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleWithdrawalAction(transaction.id, 'approve')}
-                                  className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
-                                  disabled={processingWithdrawal === transaction.id}
-                                >
-                                  {processingWithdrawal === transaction.id ? 'Processing...' : 'Approve'}
-                                </button>
-                                <button
-                                  onClick={() => handleWithdrawalAction(transaction.id, 'reject')}
-                                  className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
-                                  disabled={processingWithdrawal === transaction.id}
-                                >
-                                  Reject
-                                </button>
+                                {transaction.status === 'pending' ? (
+                                  <>
+                                    <button
+                                      onClick={() => handleWithdrawalAction(transaction.id, 'approve')}
+                                      className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+                                      disabled={processingWithdrawal === transaction.id}
+                                    >
+                                      {processingWithdrawal === transaction.id ? 'Processing...' : 'Approve'}
+                                    </button>
+                                    <button
+                                      onClick={() => handleWithdrawalAction(transaction.id, 'reject')}
+                                      className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+                                      disabled={processingWithdrawal === transaction.id}
+                                    >
+                                      Reject
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={() => handleWithdrawalAction(transaction.id, 'complete')}
+                                    className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                                    disabled={processingWithdrawal === transaction.id}
+                                  >
+                                    {processingWithdrawal === transaction.id ? 'Processing...' : 'Complete'}
+                                  </button>
+                                )}
                               </div>
                             ) : (
                               <span className="text-xs text-muted-foreground">-</span>
