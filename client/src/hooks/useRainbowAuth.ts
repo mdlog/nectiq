@@ -25,26 +25,45 @@ export function useRainbowAuth() {
   const authenticateWalletMutation = useMutation({
     mutationFn: async (walletAddress: string) => {
       console.log('🌈 [RAINBOW] Authenticating wallet:', walletAddress);
+      console.log('🌈 [RAINBOW] Chain info:', { chainId: chain?.id, chainName: chain?.name });
       
-      const response = await fetch('/api/auth/wallet-connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ 
+      try {
+        const requestBody = { 
           walletAddress: walletAddress.toLowerCase(),
           chainId: chain?.id,
           chainName: chain?.name
-        }),
-      });
+        };
+        
+        console.log('🌈 [RAINBOW] Request payload:', requestBody);
+        
+        const response = await fetch('/api/auth/wallet-connect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(requestBody),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(errorData || 'Authentication failed');
+        console.log('🌈 [RAINBOW] Response status:', response.status);
+        console.log('🌈 [RAINBOW] Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('🌈 [RAINBOW] Error response:', errorData);
+          throw new Error(errorData || `HTTP ${response.status}: Authentication failed`);
+        }
+
+        const result = await response.json();
+        console.log('🌈 [RAINBOW] Success response:', result);
+        return result;
+      } catch (error) {
+        console.error('🌈 [RAINBOW] Network error:', error);
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          throw new Error('Network connection failed. Please check your internet connection.');
+        }
+        throw error;
       }
-
-      return response.json();
     },
     onSuccess: (data) => {
       console.log('✅ [RAINBOW] Wallet authenticated successfully:', data);
