@@ -518,16 +518,30 @@ export default function AdminPanel() {
           description: `Please confirm transaction in MetaMask: ${cryptoAmount} ${tokenSymbol} to ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}` 
         });
 
-        // Call MetaMask transaction
+        // Call MetaMask transaction with proper error handling
         let transactionHash = '';
         
         if (tokenSymbol === 'ETH') {
           // For ETH transactions - use sendTransaction
-          const tx = await sendTransaction({
-            to: recipientAddress as `0x${string}`,
-            value: parseEther(cryptoAmount)
-          });
-          transactionHash = tx || '';
+          try {
+            const tx = await sendTransaction({
+              to: recipientAddress as `0x${string}`,
+              value: parseEther(cryptoAmount)
+            });
+            transactionHash = tx || '';
+          } catch (sendError: any) {
+            // Check if user cancelled transaction
+            if (sendError?.code === 4001 || sendError?.message?.includes('rejected') || sendError?.message?.includes('denied')) {
+              console.log('🚫 [ETH-CANCEL] User cancelled MetaMask transaction');
+              toast({
+                title: "Transaction Cancelled",
+                description: "Transaction was cancelled by user. You can try again.",
+                variant: "default"
+              });
+              return; // Exit early, buttons will reappear due to finally block
+            }
+            throw sendError; // Re-throw other errors
+          }
         } else {
           // For ERC-20 tokens (USDC, USDT) - Simulation mode untuk testing
           console.log(`🔍 [USDC-DEBUG] Starting USDC withdrawal for ${cryptoAmount} ${tokenSymbol}`);
@@ -607,7 +621,17 @@ export default function AdminPanel() {
             console.log(`✅ [USDC-DEBUG] Transaction submitted successfully: ${tx}`);
             console.log(`✅ [USDC-DEBUG] Transaction type:`, typeof tx);
             transactionHash = tx || '';
-          } catch (writeError) {
+          } catch (writeError: any) {
+            // Check if user cancelled transaction first
+            if (writeError?.code === 4001 || writeError?.message?.includes('rejected') || writeError?.message?.includes('denied')) {
+              console.log('🚫 [USDC-CANCEL] User cancelled MetaMask transaction');
+              toast({
+                title: "Transaction Cancelled", 
+                description: "Transaction was cancelled by user. You can try again.",
+                variant: "default"
+              });
+              return; // Exit early, buttons will reappear due to finally block
+            }
             console.error(`❌ [USDC-DEBUG] WriteContract error details:`, {
               error: writeError,
               message: writeError?.message,
