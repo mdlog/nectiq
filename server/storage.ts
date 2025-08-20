@@ -3791,7 +3791,8 @@ export class MemStorage implements IStorage {
           battleRewards,
           calculatedTotalRewards,
           lastActivity: user.lastLoginAt || user.createdAt,
-          isVerified: !!(user.email || user.twitterHandle)
+          isVerified: !!(user.email || user.twitterHandle),
+          profilePhoto: user.profilePhoto || user.profile_photo  // Ensure profile photo is included
         };
       });
 
