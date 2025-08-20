@@ -412,29 +412,85 @@ export function Header() {
               {/* User Information Section */}
               <div className="border-t border-surface-light pt-3 mt-3">
                 <div className="px-3 py-2">
-                  <p className="text-sm font-medium text-white mb-3">
-                    User Information
-                  </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-medium text-white">
+                      User Information
+                    </p>
+                    {/* Mobile Profile Badge */}
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                      <User className="text-white" size={16} />
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-gray-400" />
                         <span className="text-sm font-medium text-gray-300">Username:</span>
                       </div>
-                      <span className="text-sm text-gray-400">
-                        {user?.username || 'Not connected'}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-400">
+                          {user?.username || 'Not connected'}
+                        </span>
+                        {user?.username && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(user?.username || '', 'Username')}
+                            className="h-6 w-6 p-0"
+                          >
+                            {copiedItem === 'Username' ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <ChartLine className="h-4 w-4 text-gray-400" />
                         <span className="text-sm font-medium text-gray-300">UID:</span>
                       </div>
-                      <span className="text-sm text-gray-400 font-mono">
-                        {user?.uid || 'Not connected'}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-400 font-mono">
+                          {user?.uid || 'Not connected'}
+                        </span>
+                        {user?.uid && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(user?.uid || '', 'UID')}
+                            className="h-6 w-6 p-0"
+                          >
+                            {copiedItem === 'UID' ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Go to Dashboard Button for Mobile */}
+                  {user && (
+                    <div className="mt-3 pt-2 border-t border-surface-light">
+                      <Button
+                        onClick={() => {
+                          setLocation('/user-dashboard');
+                          setIsMobileMenuOpen(false);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="w-full flex items-center justify-center space-x-2"
+                      >
+                        <User className="h-4 w-4" />
+                        <span>Go to Dashboard</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
