@@ -86,7 +86,7 @@ All sensitive data has been moved to Replit Secrets:
 All sensitive configurations now use `process.env.VARIABLE_NAME` pattern:
 ```javascript
 // Before: hardcoded values
-const adminWallet = "0x4C6165286739696849Fb3e77A16b0639D762c5B6";
+const adminWallet = process.env.ADMIN_WALLET_ADDRESSES;
 
 // After: environment variables
 const adminWallet = process.env.ADMIN_WALLET_ADDRESSES;

@@ -45,15 +45,15 @@ PGDATABASE=your-neon-db-name
 SESSION_SECRET=your-super-secure-session-secret-at-least-32-chars
 
 # Web3 Authentication (Required)
-VITE_DYNAMIC_ENVIRONMENT_ID=bd026474-57a4-4b86-96c5-4897759d9b62
-VITE_WALLETCONNECT_PROJECT_ID=ba0e679a5831cee26576868ecd70fdbf
+VITE_DYNAMIC_ENVIRONMENT_ID=your_dynamic_environment_id
+VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
 
 # Admin Configuration (Required)
 ADMIN_WALLET_ADDRESSES=0x1234...,0x5678...
 ADMIN_PRIVATE_KEY=your-encrypted-admin-private-key
 
 # External APIs (Required)
-ETHERSCAN_API_KEY=FAJBQ6GECUEU2ZMKAQRH61XRCPQEIWKA7Z
+ETHERSCAN_API_KEY=your_etherscan_api_key_here
 
 # Firebase Email Verification (Optional)
 VITE_FIREBASE_API_KEY=your-firebase-api-key
@@ -189,7 +189,7 @@ app.use(cors({
 ### Dynamic Labs Setup
 
 1. **Environment Configuration**: 
-   - Environment ID: `bd026474-57a4-4b86-96c5-4897759d9b62`
+   - Environment ID: `your_dynamic_environment_id`
    - Configure supported wallets and networks
 
 2. **Domain Authorization**:

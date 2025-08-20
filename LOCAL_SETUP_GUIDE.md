@@ -207,13 +207,13 @@ nectiq-platform/
 ### Cara Login Sebagai Admin:
 1. **Setup Admin Wallet Address** di `.env`:
    ```env
-   ADMIN_WALLET_ADDRESSES=0x4C6165286739696849Fb3e77A16b0639D762c5B6,0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4
+   ADMIN_WALLET_ADDRESSES=0xYourAdminWalletAddress1,0xYourAdminWalletAddress2
    ```
 
 2. **Import Private Key ke MetaMask** (UNTUK TESTING SAJA):
    ```
-   Private Key untuk 0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4:
-   0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+   Private Key untuk Admin Wallet 2:
+   [REMOVED FOR SECURITY - GET FROM SECURE SOURCE]
    ```
    
    **⚠️ HANYA UNTUK LOCALHOST TESTING - JANGAN GUNAKAN DI PRODUCTION!**
@@ -232,7 +232,7 @@ nectiq-platform/
 1. **Check Environment Variables**:
    ```bash
    # Pastikan .env berisi:
-   ADMIN_WALLET_ADDRESSES=0x4C6165286739696849Fb3e77A16b0639D762c5B6,0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4
+   ADMIN_WALLET_ADDRESSES=0xYourAdminWalletAddress1,0xYourAdminWalletAddress2
    ```
 
 2. **Restart Server**:
@@ -283,10 +283,10 @@ nectiq-platform/
 
 ### Default Admin Accounts (Development):
 ```
-Admin Wallet 1: 0x4C6165286739696849Fb3e77A16b0639D762c5B6
-Admin Wallet 2: 0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4 ✅ (Recommended untuk testing)
+Admin Wallet 1: [SET_YOUR_ADMIN_WALLET_ADDRESS_1]
+Admin Wallet 2: [SET_YOUR_WALLET_ADDRESS] ✅ (Recommended untuk testing)
 
-Private Key untuk Wallet 2: 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+Private Key untuk Wallet 2: [REMOVED FOR SECURITY - GET FROM SECURE SOURCE]
 ```
 
 **⚠️ PENTING**: 
