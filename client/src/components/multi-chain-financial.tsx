@@ -280,7 +280,7 @@ export function MultiChainFinancial() {
   const queryClient = useQueryClient();
 
   // Secure query to get admin wallet address from server
-  const { data: adminWalletData, isLoading: adminWalletLoading } = useQuery({
+  const { data: adminWalletData = {}, isLoading: adminWalletLoading } = useQuery({
     queryKey: ["/api/deposit/admin-wallet"],
     staleTime: 300000, // Cache for 5 minutes
     retry: 3,
@@ -327,13 +327,13 @@ export function MultiChainFinancial() {
   };
 
   // Query to get user data
-  const { data: user } = useQuery({
+  const { data: user = {} } = useQuery({
     queryKey: ["/api/user"],
     staleTime: 30000,
   });
 
   // Query to get deposit history
-  const { data: deposits, isLoading: depositsLoading, refetch: refetchDeposits } = useQuery({
+  const { data: deposits = [], isLoading: depositsLoading, refetch: refetchDeposits } = useQuery({
     queryKey: ["/api/user/deposits"],
     refetchInterval: 5000, // More frequent refresh
     staleTime: 0, // Always consider data stale
@@ -341,13 +341,13 @@ export function MultiChainFinancial() {
   });
 
   // Query to get withdrawal history
-  const { data: withdrawals, isLoading: withdrawalsLoading } = useQuery({
+  const { data: withdrawals = [], isLoading: withdrawalsLoading } = useQuery({
     queryKey: ["/api/user/withdrawals"],
     refetchInterval: 10000,
   });
 
   // Query to get crypto prices for ETH conversion
-  const { data: cryptoPrices } = useQuery({
+  const { data: cryptoPrices = [] } = useQuery({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 5000,
     staleTime: 0,
@@ -385,7 +385,7 @@ export function MultiChainFinancial() {
       
       if (ethPriceSnapshot) {
         price = parseFloat(ethPriceSnapshot);
-      } else if (cryptoPrices && cryptoPrices.length > 0) {
+      } else if (cryptoPrices && Array.isArray(cryptoPrices) && cryptoPrices.length > 0) {
         const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
         price = ethPrice?.current_price || 0;
       }
@@ -633,7 +633,7 @@ export function MultiChainFinancial() {
       tokenType: selectedToken,
       tokenAddress: tokenConfig.address,
       amountUSD: depositAmount,
-      toWalletAddress: selectedChain.adminWallet,
+      toWalletAddress: selectedChain?.adminWallet || "",
       fromWalletAddress: user?.walletAddress || "0x0000000000000000000000000000000000000000", // Use authenticated user's wallet address
     });
   };
@@ -659,7 +659,7 @@ export function MultiChainFinancial() {
     }
 
     const ntiqAmount = parseInt(withdrawAmount);
-    if (ntiqAmount > user.balance) {
+    if (ntiqAmount > (user?.balance || 0)) {
       toast({
         title: "Error",
         description: "Insufficient NTIQ balance",
@@ -672,7 +672,7 @@ export function MultiChainFinancial() {
       ntiqAmount,
       chainName: selectedChain.shortName,
       tokenType: selectedToken,
-      toWalletAddress: user.walletAddress || "",
+      toWalletAddress: user?.walletAddress || "",
     });
   };
 
