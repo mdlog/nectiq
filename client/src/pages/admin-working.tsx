@@ -208,6 +208,10 @@ export default function AdminPanel() {
   const [newCrypto, setNewCrypto] = useState({ id: "", name: "", symbol: "", image: "", pythFeedId: "" });
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterTimeframe, setFilterTimeframe] = useState("all");
+  
+  // State untuk pagination users
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isFetchingLogo, setIsFetchingLogo] = useState(false);
   const [processingWithdrawal, setProcessingWithdrawal] = useState<number | null>(null);
@@ -319,10 +323,24 @@ export default function AdminPanel() {
     refetchInterval: 30000,
   });
 
-  const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery<User[]>({
-    queryKey: ["/api/admin/users"],
+  const { data: usersResponse, isLoading: usersLoading, error: usersError } = useQuery<{
+    users: User[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalUsers: number;
+      limit: number;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
+    };
+  }>({
+    queryKey: ["/api/admin/users", currentPage, usersPerPage],
+    queryFn: () => apiRequest(`/api/admin/users?page=${currentPage}&limit=${usersPerPage}`),
     refetchInterval: 30000,
   });
+
+  const usersData = usersResponse?.users;
+  const pagination = usersResponse?.pagination;
 
   // Debug logging untuk user query
   useEffect(() => {
@@ -418,6 +436,7 @@ export default function AdminPanel() {
       toast({ title: "Successfully", description: "User added successfully" });
       setShowAddUser(false);
       setNewUser({ username: "", walletAddress: "", isAdmin: false });
+      setCurrentPage(1); // Reset to first page after adding user
     },
     onError: (error: any) => {
       toast({ 
@@ -1062,17 +1081,11 @@ export default function AdminPanel() {
     } : null;
   };
 
-  // Filter functions with deduplication
-  const filteredUsers = usersData
-    ?.filter((user, index, array) => {
-      // Remove duplicates by id - keep first occurrence
-      return array.findIndex(u => u.id === user.id) === index;
-    })
-    ?.filter(user => 
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.walletAddress?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  // Filter functions with deduplication - untuk pagination, search akan ditangani di backend
+  const filteredUsers = usersData?.filter((user, index, array) => {
+    // Remove duplicates by id - keep first occurrence
+    return array.findIndex(u => u.id === user.id) === index;
+  });
 
   const filteredPredictions = predictions?.filter(prediction => {
     if (filterStatus !== "all" && prediction.status !== filterStatus) return false;
@@ -2067,6 +2080,70 @@ export default function AdminPanel() {
                     <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-slate-300 mb-2">No Users Found</h3>
                     <p className="text-slate-400">Add your first user to get started</p>
+                  </div>
+                )}
+
+                {/* Pagination Controls */}
+                {pagination && pagination.totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 px-4 py-3 bg-slate-900 rounded-lg border border-slate-700">
+                    <div className="flex items-center text-sm text-slate-400">
+                      <span>
+                        Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to{' '}
+                        {Math.min(pagination.currentPage * pagination.limit, pagination.totalUsers)} of{' '}
+                        {pagination.totalUsers} users
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={!pagination.hasPreviousPage}
+                        className="bg-slate-800 border-slate-600 hover:bg-slate-700"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                          .filter(page => {
+                            const current = pagination.currentPage;
+                            return page === 1 || page === pagination.totalPages || 
+                                   (page >= current - 2 && page <= current + 2);
+                          })
+                          .map((page, index, array) => (
+                            <div key={page} className="flex items-center">
+                              {index > 0 && array[index - 1] !== page - 1 && (
+                                <span className="px-2 text-slate-500">...</span>
+                              )}
+                              <Button
+                                variant={page === pagination.currentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(page)}
+                                className={page === pagination.currentPage 
+                                  ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                                  : "bg-slate-800 border-slate-600 hover:bg-slate-700"
+                                }
+                              >
+                                {page}
+                              </Button>
+                            </div>
+                          ))
+                        }
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={!pagination.hasNextPage}
+                        className="bg-slate-800 border-slate-600 hover:bg-slate-700"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>

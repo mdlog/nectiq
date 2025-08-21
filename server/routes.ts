@@ -3701,12 +3701,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     console.log("🔍 [ADMIN-USERS] Endpoint called - starting execution");
     try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+      
+      console.log("📊 [ADMIN-USERS] Pagination params:", { page, limit, offset });
+      
       const users = await storage.getAllUsers(); // Get all users including admins for admin panel
-      console.log("📊 [ADMIN-USERS] Retrieved users count:", users.length);
+      const totalUsers = users.length;
+      console.log("📊 [ADMIN-USERS] Retrieved total users count:", totalUsers);
+      
+      // Apply pagination
+      const paginatedUsers = users.slice(offset, offset + limit);
+      console.log("📊 [ADMIN-USERS] Paginated users count:", paginatedUsers.length);
       
       // For now, return users with basic stats to fix the immediate issue
       // TODO: Re-implement enhanced statistics without complex SQL  
-      const enhancedUsers = users.map(user => ({
+      const enhancedUsers = paginatedUsers.map(user => ({
         ...user,
         battleRewards: 0,
         survivalRewards: 0,
@@ -3719,8 +3730,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       console.log("📊 [ADMIN-USERS] Enhanced users with statistics");
-      console.log("📊 [ADMIN-USERS] First enhanced user sample:", enhancedUsers[0]);
-      res.json(enhancedUsers);
+      if (enhancedUsers.length > 0) {
+        console.log("📊 [ADMIN-USERS] First enhanced user sample:", enhancedUsers[0]);
+      }
+      
+      const totalPages = Math.ceil(totalUsers / limit);
+      
+      res.json({
+        users: enhancedUsers,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalUsers,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
+      });
     } catch (error) {
       console.error("❌ [ADMIN-USERS] Error enhancing users with statistics:", error);
       res.status(500).json({ message: "Failed to get users" });
