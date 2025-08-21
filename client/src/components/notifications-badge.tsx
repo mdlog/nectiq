@@ -194,62 +194,66 @@ export default function NotificationsBadge() {
           )}
         </div>
         
-        <ScrollArea className="max-h-96 min-h-[200px]">
-          <div className="px-1">
-            {isLoading ? (
-              <div className="p-4 text-center text-sm text-gray-500">
-                Loading notifications...
-              </div>
-            ) : (notifications as Notification[]).length === 0 ? (
-              <div className="p-4 text-center text-sm text-gray-500">
-                No notifications yet
-              </div>
-            ) : (
-              <div className="space-y-0">
-                {(notifications as Notification[]).map((notification: Notification, index: number) => (
-                  <div key={notification.id}>
-                    <div className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 cursor-pointer ${
-                      !notification.isRead 
-                        ? 'bg-blue-50/80 dark:bg-blue-900/20 border-l-4 border-blue-500' 
-                        : 'border-l-4 border-transparent'
-                    }`}>
-                      <div className="flex items-start gap-3">
-                        <div className="text-xl flex-shrink-0 mt-0.5 p-1 rounded-full bg-gray-100 dark:bg-gray-800">
-                          {getTypeIcon(notification.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge 
-                              className={`text-xs px-2 py-1 ${getStatusColor(notification.type, notification.status)}`}
-                              variant="secondary"
-                            >
-                              {notification.status.toUpperCase()}
-                            </Badge>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatTime(notification.createdAt)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-900 dark:text-gray-100 mb-2 leading-relaxed">
-                            {notification.message}
-                          </p>
-                          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md inline-block">
-                            {formatAmount(notification.amount, notification.token)}
-                          </p>
-                        </div>
-                        {!notification.isRead && (
-                          <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0 mt-1 animate-pulse"></div>
-                        )}
+        <div 
+          className="max-h-96 overflow-y-auto" 
+          style={{ 
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#cbd5e1 #f1f5f9'
+          }}
+        >
+          {isLoading ? (
+            <div className="p-4 text-center text-sm text-gray-500">
+              Loading notifications...
+            </div>
+          ) : (notifications as Notification[]).length === 0 ? (
+            <div className="p-4 text-center text-sm text-gray-500">
+              No notifications yet
+            </div>
+          ) : (
+            <div className="space-y-0">
+              {(notifications as Notification[]).map((notification: Notification, index: number) => (
+                <div key={notification.id}>
+                  <div className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 cursor-pointer ${
+                    !notification.isRead 
+                      ? 'bg-blue-50/80 dark:bg-blue-900/20 border-l-4 border-blue-500' 
+                      : 'border-l-4 border-transparent'
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      <div className="text-xl flex-shrink-0 mt-0.5 p-1 rounded-full bg-gray-100 dark:bg-gray-800">
+                        {getTypeIcon(notification.type)}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge 
+                            className={`text-xs px-2 py-1 ${getStatusColor(notification.type, notification.status)}`}
+                            variant="secondary"
+                          >
+                            {notification.status.toUpperCase()}
+                          </Badge>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {formatTime(notification.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-900 dark:text-gray-100 mb-2 leading-relaxed">
+                          {notification.message}
+                        </p>
+                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md inline-block">
+                          {formatAmount(notification.amount, notification.token)}
+                        </p>
+                      </div>
+                      {!notification.isRead && (
+                        <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0 mt-1 animate-pulse"></div>
+                      )}
                     </div>
-                    {index < (notifications as Notification[]).length - 1 && (
-                      <Separator className="mx-4" />
-                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+                  {index < (notifications as Notification[]).length - 1 && (
+                    <Separator className="mx-4" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         
         {(notifications as Notification[]).length > 0 && (
           <div className="border-t bg-gray-50 dark:bg-gray-900/50 p-3 sticky bottom-0">
