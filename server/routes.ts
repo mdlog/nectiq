@@ -43,9 +43,10 @@ const upload = multer({
   },
 });
 
-// Real-time transaction tracking with WebSocket
+// Real-time notification system with WebSocket
 let wss: WebSocketServer;
 const adminClients = new Set<WebSocket>();
+const userClients = new Map<number, Set<WebSocket>>(); // userId -> Set of WebSocket connections
 
 function broadcastToAdmins(data: any) {
   const message = JSON.stringify(data);
@@ -55,6 +56,39 @@ function broadcastToAdmins(data: any) {
     }
   });
 }
+
+function broadcastToUser(userId: number, data: any) {
+  const message = JSON.stringify(data);
+  const userConnections = userClients.get(userId);
+  
+  if (userConnections) {
+    userConnections.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  }
+}
+
+function broadcastNotification(userId: number, notification: any) {
+  console.log(`📡 [REAL-TIME] Broadcasting notification to user ${userId}:`, notification);
+  
+  // Broadcast to specific user
+  broadcastToUser(userId, {
+    type: 'notification',
+    data: notification
+  });
+  
+  // Also broadcast to admins for monitoring
+  broadcastToAdmins({
+    type: 'user_notification',
+    userId: userId,
+    data: notification
+  });
+}
+
+// Export the broadcast function for use by other services
+export const broadcastNotificationCallback = broadcastNotification;
 
 // Security audit logs storage in memory
 const securityAuditLogs: Array<{
@@ -9451,6 +9485,8 @@ Manual balance correction required IMMEDIATELY!`;
   
   wss.on('connection', (ws, req) => {
     console.log('WebSocket connection established');
+    let currentUserId: number | null = null;
+    let isAdmin = false;
     
     ws.on('message', (message) => {
       try {
@@ -9459,22 +9495,80 @@ Manual balance correction required IMMEDIATELY!`;
         // Register admin clients for real-time updates
         if (data.type === 'admin_register') {
           adminClients.add(ws);
+          isAdmin = true;
           console.log('Admin client registered for real-time updates');
           ws.send(JSON.stringify({ type: 'registered', message: 'Successfully registered for admin updates' }));
         }
+        
+        // Register user clients for real-time notifications
+        else if (data.type === 'user_register') {
+          const { userId } = data;
+          if (userId && typeof userId === 'number') {
+            currentUserId = userId;
+            
+            // Initialize user connections set if not exists
+            if (!userClients.has(userId)) {
+              userClients.set(userId, new Set());
+            }
+            
+            // Add this connection to user's connections
+            userClients.get(userId)!.add(ws);
+            
+            console.log(`📱 [REAL-TIME] User ${userId} registered for notifications`);
+            ws.send(JSON.stringify({ 
+              type: 'user_registered', 
+              message: 'Successfully registered for notifications',
+              userId: userId
+            }));
+          }
+        }
+        
+        // Ping/Pong for connection health check
+        else if (data.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+        }
+        
       } catch (error) {
         console.error('WebSocket message error:', error);
       }
     });
     
     ws.on('close', () => {
-      adminClients.delete(ws);
-      console.log('Admin client disconnected');
+      // Remove from admin clients
+      if (isAdmin) {
+        adminClients.delete(ws);
+        console.log('Admin client disconnected');
+      }
+      
+      // Remove from user clients
+      if (currentUserId) {
+        const userConnections = userClients.get(currentUserId);
+        if (userConnections) {
+          userConnections.delete(ws);
+          
+          // Remove empty sets to prevent memory leaks
+          if (userConnections.size === 0) {
+            userClients.delete(currentUserId);
+          }
+        }
+        console.log(`📱 [REAL-TIME] User ${currentUserId} disconnected`);
+      }
     });
     
     ws.on('error', (error) => {
       console.error('WebSocket error:', error);
       adminClients.delete(ws);
+      
+      // Clean up user connections on error
+      if (currentUserId) {
+        const userConnections = userClients.get(currentUserId);
+        if (userConnections) {
+          userConnections.delete(ws);
+          if (userConnections.size === 0) {
+            userClients.delete(currentUserId);
+          }
+        }
+      }
     });
   });
 
@@ -10629,6 +10723,57 @@ Manual balance correction required IMMEDIATELY!`;
     } catch (error) {
       console.error('Error marking notifications as read:', error);
       res.status(500).json({ message: 'Failed to mark notifications as read' });
+    }
+  });
+
+  // Test endpoint for triggering notifications
+  app.post('/api/test/broadcast-notification', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { type, title, message, data, priority } = req.body;
+      
+      if (!type || !title || !message) {
+        return res.status(400).json({ message: 'Missing required fields: type, title, message' });
+      }
+
+      // Broadcast notification to all connected WebSocket clients
+      const notification = {
+        type,
+        title,
+        message,
+        data: data || {},
+        priority: priority || 'normal',
+        timestamp: new Date().toISOString()
+      };
+
+      // Get the WebSocket server from the HTTP server
+      const wss = httpServer.webSocketServer;
+      if (wss) {
+        // Broadcast to all connected clients
+        wss.clients.forEach((client: any) => {
+          if (client.readyState === 1) { // WebSocket.OPEN
+            try {
+              client.send(JSON.stringify({
+                type: 'notification',
+                ...notification
+              }));
+            } catch (error) {
+              console.log('Error sending to WebSocket client:', error);
+            }
+          }
+        });
+        
+        console.log(`📢 [TEST] Broadcast notification sent: ${title} (${type}) to ${wss.clients.size} clients`);
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Test notification broadcast successfully',
+        notification,
+        clientCount: wss?.clients?.size || 0
+      });
+    } catch (error) {
+      console.error('Error broadcasting test notification:', error);
+      res.status(500).json({ message: 'Failed to broadcast notification' });
     }
   });
 

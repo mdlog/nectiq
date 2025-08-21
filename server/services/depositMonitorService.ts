@@ -166,9 +166,34 @@ class DepositMonitorService {
         console.log(`📈 [DEPOSIT-MONITOR] User ${user.username} balance updated automatically from blockchain confirmation`);
       }
       
-      // TODO: Create success notification for user - temporarily disabled due to TypeScript issues
-      // Will be implemented in next iteration with proper type definitions
-      console.log(`🔔 [DEPOSIT-MONITOR] TODO: Create notification for successful deposit ${deposit.id}`);
+      // Send real-time notification to user
+      try {
+        // Import broadcastNotification function from routes
+        const { broadcastNotificationCallback } = await import('../routes.js');
+        
+        if (broadcastNotificationCallback) {
+          broadcastNotificationCallback(deposit.userId, {
+            type: 'deposit_completed',
+            title: 'Deposit Completed',
+            message: `Your deposit of ${deposit.ntiqAmount} NTIQ has been successfully processed and credited to your account.`,
+            data: {
+              depositId: deposit.id,
+              amount: deposit.ntiqAmount,
+              currency: 'NTIQ',
+              transactionHash: deposit.transactionHash,
+              completedAt: new Date().toISOString()
+            },
+            timestamp: Date.now(),
+            priority: 'high'
+          });
+          
+          console.log(`📡 [DEPOSIT-MONITOR] Real-time notification sent to user ${deposit.userId} for completed deposit`);
+        } else {
+          console.log(`⚠️ [DEPOSIT-MONITOR] Broadcast function not available, notification not sent`);
+        }
+      } catch (error) {
+        console.error(`❌ [DEPOSIT-MONITOR] Error sending notification:`, error);
+      }
       
     } catch (error) {
       console.error(`❌ [DEPOSIT-MONITOR] Error processing successful deposit ${deposit.id}:`, error);

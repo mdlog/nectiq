@@ -1,251 +1,292 @@
-import { useState, useEffect } from "react";
-import { Bell, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useState, useEffect } from 'react';
+import { Bell, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { useToast } from '@/hooks/use-toast';
 
 interface Notification {
-  id: number;
-  type: string;
-  status: string;
-  amount: number;
-  token: string | null;
+  id: string;
+  type: 'deposit_completed' | 'withdrawal_completed' | 'user_notification';
+  title: string;
   message: string;
-  isRead: boolean;
-  relatedId: number | null;
-  createdAt: string;
+  data?: any;
+  timestamp: number;
+  priority?: 'low' | 'medium' | 'high';
+  read?: boolean;
 }
 
-interface User {
-  id: number;
-  username: string;
-  walletAddress: string;
-  balance: number;
-}
-
-const getStatusColor = (type: string, status: string) => {
-  if (type === "deposit") {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300";
-      case "processing":
-        return "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300";
-      case "pending":
-        return "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300";
-      case "failed":
-        return "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300";
-      default:
-        return "bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-300";
-    }
-  } else if (type === "withdrawal") {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300";
-      case "processing":
-        return "bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300";
-      case "pending":
-        return "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300";
-      case "failed":
-        return "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300";
-      default:
-        return "bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-300";
-    }
-  } else if (type === "purchase") {
-    switch (status) {
-      case "completed":
-        return "bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300";
-      case "failed":
-        return "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300";
-      default:
-        return "bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-300";
-    }
-  }
-  return "bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-300";
-};
-
-const getTypeIcon = (type: string) => {
-  switch (type) {
-    case "deposit":
-      return "💰";
-    case "withdrawal":
-      return "💸";
-    case "purchase":
-      return "🛍️";
-    default:
-      return "📢";
-  }
-};
-
-export default function NotificationsBadge() {
+export function NotificationsBadge() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const queryClient = useQueryClient();
-  
-  // Get user data first
-  const { data: user } = useQuery<User>({
-    queryKey: ["/api/user"],
-    retry: false,
-    throwOnError: false,
-  });
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const { toast } = useToast();
 
-  const { data: notifications = [], isLoading, isError } = useQuery<Notification[]>({
-    queryKey: ['/api/notifications'],
-    enabled: !!user, // Only fetch notifications if user is logged in
-    refetchInterval: 30000, // Refetch every 30 seconds
-    retry: (failureCount, error: any) => {
-      // Don't retry on authentication errors
-      if (error?.message?.includes('401') || error?.status === 401) {
-        return false;
-      }
-      return failureCount < 3;
+  // Initialize WebSocket connection and handle notifications
+  const { isConnected, sendMessage } = useWebSocket({
+    onNotification: (notification) => {
+      console.log('🔔 [NOTIFICATIONS] Received notification:', notification);
+      
+      // Create notification with unique ID
+      const newNotification: Notification = {
+        id: `${notification.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ...notification,
+        read: false
+      };
+      
+      // Add to notifications list
+      setNotifications(prev => [newNotification, ...prev.slice(0, 49)]); // Keep max 50 notifications
+      setUnreadCount(prev => prev + 1);
+      
+      // Show toast notification
+      showToastNotification(newNotification);
     },
-    refetchOnWindowFocus: true,
-  });
-
-  // Debug logging
-  useEffect(() => {
-    if (user && notifications && (notifications as Notification[]).length > 0) {
-      console.log('🔔 [REAL-NOTIFICATIONS] Current user:', user.username, 'ID:', user.id);
-      console.log('🔔 [REAL-NOTIFICATIONS] Live notifications count:', (notifications as Notification[]).length);
-      console.log('🔔 [REAL-NOTIFICATIONS] Data source: Real API /api/notifications (NO MOCK DATA)');
-      console.log('📋 [REAL-NOTIFICATIONS] Latest notification:', (notifications as Notification[])[0]);
-      console.log('📊 [REAL-NOTIFICATIONS] Full notifications array:', notifications);
-    }
-  }, [user, notifications, isLoading, isError]);
-
-  const markAsReadMutation = useMutation({
-    mutationFn: () => apiRequest('/api/notifications/mark-read', {
-      method: 'POST',
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    onConnected: () => {
+      console.log('🔗 [NOTIFICATIONS] WebSocket connected');
+      setConnectionStatus('connected');
+    },
+    onDisconnected: () => {
+      console.log('🔌 [NOTIFICATIONS] WebSocket disconnected');
+      setConnectionStatus('disconnected');
+    },
+    onError: (error) => {
+      console.error('❌ [NOTIFICATIONS] WebSocket error:', error);
+      setConnectionStatus('disconnected');
     }
   });
 
-  const unreadCount = (notifications as Notification[]).filter((n: Notification) => !n.isRead).length;
+  const showToastNotification = (notification: Notification) => {
+    const getIcon = () => {
+      switch (notification.type) {
+        case 'deposit_completed':
+          return '💰';
+        case 'withdrawal_completed':
+          return '📤';
+        default:
+          return '🔔';
+      }
+    };
 
-  const handleOpen = (open: boolean) => {
-    setIsOpen(open);
-    if (open && unreadCount > 0) {
-      // Mark as read after a brief delay to allow user to see notifications
-      setTimeout(() => {
-        markAsReadMutation.mutate();
-      }, 1000);
-    }
-  };
-
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInMins = Math.floor(diffInMs / (1000 * 60));
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-    if (diffInMins < 1) return 'Just now';
-    if (diffInMins < 60) return `${diffInMins}m ago`;
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInDays < 7) return `${diffInDays}d ago`;
+    const variant = notification.priority === 'high' ? 'default' : 'default';
     
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    toast({
+      title: `${getIcon()} ${notification.title}`,
+      description: notification.message,
+      variant,
+      duration: notification.priority === 'high' ? 8000 : 5000,
     });
   };
 
-  const formatAmount = (amount: number, token: string | null) => {
-    if (token) {
-      return `${amount.toLocaleString()} ${token}`;
-    }
-    return `${amount.toLocaleString()} NTIQ`;
+  const markAsRead = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.map(n => 
+        n.id === notificationId ? { ...n, read: true } : n
+      )
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+  };
+
+  const removeNotification = (notificationId: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    setUnreadCount(0);
+  };
+
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'deposit_completed':
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'withdrawal_completed':
+        return <CheckCircle className="w-5 h-5 text-blue-500" />;
+      default:
+        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+    }
+  };
+
+  // Update connection status based on WebSocket state
+  useEffect(() => {
+    if (isConnected) {
+      setConnectionStatus('connected');
+    } else {
+      setConnectionStatus('disconnected');
+    }
+  }, [isConnected]);
+
   return (
-    <Popover open={isOpen} onOpenChange={handleOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative p-2">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between px-3 py-2 border-b">
-          <h4 className="font-medium text-sm">Notifications</h4>
-          {unreadCount > 0 && (
-            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-              {unreadCount} new
-            </span>
-          )}
-        </div>
+    <div className="relative">
+      {/* Bell Icon with Badge */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "relative p-2 rounded-lg transition-colors",
+          "hover:bg-gray-100 dark:hover:bg-gray-800",
+          connectionStatus === 'connected' 
+            ? "text-gray-700 dark:text-gray-300" 
+            : "text-gray-400 dark:text-gray-600"
+        )}
+        title={
+          connectionStatus === 'connected' 
+            ? "Real-time notifications active" 
+            : "Connecting to notifications..."
+        }
+      >
+        <Bell className="w-6 h-6" />
         
-        <div 
-          className="max-h-80 overflow-y-auto" 
-          style={{ 
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#cbd5e1 #f8fafc'
-          }}
-        >
-          {isLoading ? (
-            <div className="p-3 text-center text-xs text-gray-500">
-              Loading...
-            </div>
-          ) : (notifications as Notification[]).length === 0 ? (
-            <div className="p-3 text-center text-xs text-gray-500">
-              No notifications
-            </div>
-          ) : (
-            <div>
-              {(notifications as Notification[]).map((notification: Notification) => (
-                <div 
-                  key={notification.id} 
-                  className={`px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800/30 border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
-                    !notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    <span className="text-sm mt-0.5">{getTypeIcon(notification.type)}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-xs px-1.5 py-0.5 rounded ${getStatusColor(notification.type, notification.status)}`}>
-                          {notification.status}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {formatTime(notification.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-700 dark:text-gray-300 mb-1 line-clamp-2">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
-                        {formatAmount(notification.amount, notification.token)}
-                      </p>
-                    </div>
-                    {!notification.isRead && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                    )}
-                  </div>
+        {/* Connection Status Indicator */}
+        <div className={cn(
+          "absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900",
+          connectionStatus === 'connected' ? "bg-green-500" : "bg-red-500"
+        )} />
+        
+        {/* Unread Count Badge */}
+        {unreadCount > 0 && (
+          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </div>
+        )}
+      </button>
+
+      {/* Notifications Panel */}
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-80 max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                Notifications
+              </h3>
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "flex items-center gap-1 text-xs px-2 py-1 rounded",
+                  connectionStatus === 'connected' 
+                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                    : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                )}>
+                  <div className={cn(
+                    "w-2 h-2 rounded-full",
+                    connectionStatus === 'connected' ? "bg-green-500" : "bg-red-500"
+                  )} />
+                  {connectionStatus === 'connected' ? 'Live' : 'Offline'}
                 </div>
-              ))}
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
             </div>
-          )}
+          </div>
+
+          {/* Notifications List */}
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No notifications yet</p>
+                <p className="text-sm mt-1">
+                  You'll receive real-time updates here when deposits and withdrawals complete.
+                </p>
+              </div>
+            ) : (
+              <>
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={cn(
+                      "p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0",
+                      !notification.read && "bg-blue-50 dark:bg-blue-900/20"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      {getNotificationIcon(notification.type)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h4 className={cn(
+                            "text-sm font-medium truncate",
+                            !notification.read 
+                              ? "text-gray-900 dark:text-white" 
+                              : "text-gray-600 dark:text-gray-300"
+                          )}>
+                            {notification.title}
+                          </h4>
+                          <button
+                            onClick={() => removeNotification(notification.id)}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {notification.message}
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {formatTime(notification.timestamp)}
+                          </span>
+                          {!notification.read && (
+                            <button
+                              onClick={() => markAsRead(notification.id)}
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              Mark read
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Clear All Button */}
+                {notifications.length > 0 && (
+                  <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={clearAllNotifications}
+                      className="w-full text-sm text-red-600 dark:text-red-400 hover:underline"
+                    >
+                      Clear all notifications
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      )}
+
+      {/* Click outside to close */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </div>
   );
 }

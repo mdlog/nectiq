@@ -2,7 +2,7 @@ import { ChartLine, Coins, User, LogOut, Menu, X, ChevronDown, Copy, Check, Wall
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { RainbowConnectButton } from "@/components/RainbowConnectButton";
-import NotificationsBadge from "@/components/notifications-badge";
+import { NotificationsBadge } from "@/components/notifications-badge";
 import { useRainbowAuth } from "@/hooks/useRainbowAuth";
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
