@@ -3700,6 +3700,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     console.log("🔍 [ADMIN-USERS] Endpoint called - starting execution");
+    console.log("🔍 [ADMIN-USERS] Query params:", req.query);
+    console.log("🔍 [ADMIN-USERS] Session data:", req.session);
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
