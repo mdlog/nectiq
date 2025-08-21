@@ -111,11 +111,12 @@ export default function NotificationsBadge() {
 
   // Debug logging
   useEffect(() => {
-    if (user) {
-      console.log('👤 [NOTIFICATIONS] Current user:', user.username, 'ID:', user.id);
-      console.log('🔔 [NOTIFICATIONS] Notifications data:', notifications);
-      console.log('🔔 [NOTIFICATIONS] Notifications count:', (notifications as Notification[]).length);
-      console.log('🔔 [NOTIFICATIONS] Loading:', isLoading, 'Error:', isError);
+    if (user && notifications && (notifications as Notification[]).length > 0) {
+      console.log('🔔 [REAL-NOTIFICATIONS] Current user:', user.username, 'ID:', user.id);
+      console.log('🔔 [REAL-NOTIFICATIONS] Live notifications count:', (notifications as Notification[]).length);
+      console.log('🔔 [REAL-NOTIFICATIONS] Data source: Real API /api/notifications (NO MOCK DATA)');
+      console.log('📋 [REAL-NOTIFICATIONS] Latest notification:', (notifications as Notification[])[0]);
+      console.log('📊 [REAL-NOTIFICATIONS] Full notifications array:', notifications);
     }
   }, [user, notifications, isLoading, isError]);
 
