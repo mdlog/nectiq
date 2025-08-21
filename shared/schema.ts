@@ -69,6 +69,20 @@ export const rewards = pgTable("rewards", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// User Notifications Table
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  type: varchar("type", { length: 20 }).notNull(), // "deposit", "withdrawal", "purchase"
+  status: varchar("status", { length: 20 }).notNull(), // "completed", "failed", "pending", "processing"
+  amount: numeric("amount", { precision: 18, scale: 8 }).notNull(),
+  token: varchar("token", { length: 10 }), // ETH, USDT, USDC, or null for NTIQ
+  message: text("message").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  relatedId: integer("related_id"), // References deposit_id, withdrawal_id, or purchase_id
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Multi-Chain Deposits Table
 export const deposits = pgTable("deposits", {
   id: serial("id").primaryKey(),
@@ -1042,6 +1056,14 @@ export type InsertParlayPrediction = z.infer<typeof insertParlayPredictionSchema
 
 export type ParlayPredictionCoin = typeof parlayPredictionCoins.$inferSelect;
 export type InsertParlayPredictionCoin = z.infer<typeof insertParlayPredictionCoinSchema>;
+
+// Notification types
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
 
 // Event types
 export const insertEventSchema = createInsertSchema(events).omit({ 

@@ -1,4 +1,4 @@
-import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, deposits, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleComments, battleReactions, battleSpectators, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, monthlyTierRewards, tierPromotions, predictionReactions, predictionComments, userVerifications, parlayPredictions, parlayPredictionCoins, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction, type ParlayPrediction, type InsertParlayPrediction, type ParlayPredictionCoin, type InsertParlayPredictionCoin } from "@shared/schema";
+import { users, predictions, cryptocurrencies, rewards, withdrawals, purchases, deposits, notifications, securityEvents, adminLogs, transactionLogs, systemSettings, banners, events, predictionBattles, battleComments, battleReactions, battleSpectators, survivalTournaments, survivalParticipants, survivalRounds, survivalPredictions, userAchievements, userDailyChallenges, userAnalytics, walletFingerprints, abuseDetections, cryptoTransactions, referrals, monthlyTierRewards, tierPromotions, predictionReactions, predictionComments, userVerifications, parlayPredictions, parlayPredictionCoins, type User, type InsertUser, type Prediction, type InsertPrediction, type Cryptocurrency, type InsertCryptocurrency, type Reward, type InsertReward, type Withdrawal, type InsertWithdrawal, type Purchase, type InsertPurchase, type Banner, type InsertBanner, type Event, type InsertEvent, type PredictionBattle, type InsertPredictionBattle, type BattleComment, type InsertBattleComment, type SurvivalTournament, type InsertSurvivalTournament, type SurvivalParticipant, type InsertSurvivalParticipant, type SurvivalRound, type InsertSurvivalRound, type SurvivalPrediction, type InsertSurvivalPrediction, type ParlayPrediction, type InsertParlayPrediction, type ParlayPredictionCoin, type InsertParlayPredictionCoin } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, gte, lte, like, or, isNull, inArray, sql, lt, ne } from "drizzle-orm";
 import { BalanceService } from "./services/balanceService.js";
@@ -103,6 +103,11 @@ export interface IStorage {
   updateUserVerification(id: number, email?: string, twitterHandle?: string): Promise<User>;
   verifyUserEmail(id: number): Promise<User>;
   verifyUserTwitter(id: number): Promise<User>;
+
+  // Notification operations
+  createNotification(notification: any): Promise<any>;
+  getUserNotifications(userId: number, limit?: number): Promise<any[]>;
+  markNotificationsAsRead(userId: number): Promise<void>;
   checkEmailExists(email: string, excludeUserId?: number): Promise<boolean>;
   checkTwitterExists(twitterHandle: string, excludeUserId?: number): Promise<boolean>;
   getUsersByEmailOrTwitter(email?: string, twitterHandle?: string): Promise<User[]>;
@@ -216,6 +221,11 @@ export interface IStorage {
   getActiveParlayPredictions(): Promise<any[]>;
   updateParlayPredictionCoinEndPrice(coinId: number, endPrice: number, isCorrect: boolean): Promise<void>;
   getExpiredParlayPredictionCoins(): Promise<any[]>;
+  
+  // Notification operations
+  createNotification(notification: any): Promise<any>;
+  getUserNotifications(userId: number, limit?: number): Promise<any[]>;
+  markNotificationsAsRead(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4240,6 +4250,28 @@ export class MemStorage implements IStorage {
       );
     
     return result;
+  }
+
+  // Notification operations
+  async createNotification(notification: any): Promise<any> {
+    const [inserted] = await db.insert(notifications).values(notification).returning();
+    return inserted;
+  }
+
+  async getUserNotifications(userId: number, limit: number = 20): Promise<any[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
+  }
+
+  async markNotificationsAsRead(userId: number): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId));
   }
 
   async getActiveParlayPredictions(): Promise<any[]> {

@@ -10595,5 +10595,36 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
+  // Notification endpoints
+  app.get('/api/notifications', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const notifications = await storage.getUserNotifications(userId, 20);
+      res.json(notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ message: 'Failed to fetch notifications' });
+    }
+  });
+
+  app.post('/api/notifications/mark-read', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      await storage.markNotificationsAsRead(userId);
+      res.json({ message: 'Notifications marked as read' });
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+      res.status(500).json({ message: 'Failed to mark notifications as read' });
+    }
+  });
+
   return httpServer;
 }
