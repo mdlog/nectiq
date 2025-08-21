@@ -335,7 +335,12 @@ export default function AdminPanel() {
     };
   }>({
     queryKey: ["/api/admin/users", currentPage, usersPerPage],
-    queryFn: () => apiRequest(`/api/admin/users?page=${currentPage}&limit=${usersPerPage}`),
+    queryFn: async () => {
+      console.log(`🔍 [FRONTEND-DEBUG] Calling /api/admin/users?page=${currentPage}&limit=${usersPerPage}`);
+      const result = await apiRequest(`/api/admin/users?page=${currentPage}&limit=${usersPerPage}`);
+      console.log(`🔍 [FRONTEND-DEBUG] Users API result:`, result);
+      return result;
+    },
     refetchInterval: 30000,
   });
 
