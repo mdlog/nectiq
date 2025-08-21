@@ -203,14 +203,7 @@ export interface IStorage {
   // Live Activity operations
   getLiveActivities(limit?: number): Promise<any[]>;
 
-  // Referral system operations
-  generateReferralCode(userId: number): Promise<string>;
-  processReferral(referralCode: string, newUserId: number): Promise<void>;
-  getReferralData(userId: number): Promise<any>;
-  createReferral(data: any): Promise<any>;
 
-  // Platform statistics operations  
-  getPlatformStats(): Promise<any>;
 
   // Parlay operations
   createParlayPrediction(parlay: InsertParlayPrediction): Promise<ParlayPrediction>;
@@ -3419,70 +3412,9 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async generateReferralCode(userId: number): Promise<string> {
-    console.log('🎯 [STORAGE] generateReferralCode called for userId:', userId);
-    
-    // Generate unique referral code
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-    console.log('🎲 [STORAGE] Generated code:', code);
-    
-    try {
-      // Update user with referral code
-      console.log('🔄 [STORAGE] Updating user with referral code...');
-      const result = await db.update(users)
-        .set({ referralCode: code })
-        .where(eq(users.id, userId));
-      
-      console.log('✅ [STORAGE] Update result:', result);
-      console.log('✅ [STORAGE] Referral code saved successfully:', code);
-      
-      return code;
-    } catch (error) {
-      console.error('❌ [STORAGE] Error updating user with referral code:', error);
-      throw error;
-    }
-  }
 
-  async processReferral(referralCode: string, newUserId: number): Promise<void> {
-    console.log(`🎯 [REFERRAL] Processing referral - Code: ${referralCode}, New User: ${newUserId}`);
-    
-    // Find the referrer by referral code
-    const referrer = await this.getUserByReferralCode(referralCode);
-    if (!referrer) {
-      console.log(`❌ [REFERRAL] Invalid referral code: ${referralCode}`);
-      throw new Error('Invalid referral code');
-    }
 
-    console.log(`✅ [REFERRAL] Found referrer - ID: ${referrer.id}, Username: ${referrer.username}`);
 
-    // Create referral record
-    await this.createReferral(referrer.id, newUserId, referralCode);
-    console.log(`✅ [REFERRAL] Created referral record`);
-
-    // Import BalanceService properly
-    const { BalanceService } = await import('./services/balanceService.js');
-    
-    // Award rewards to both users (100 NTIQ each)
-    console.log(`💰 [REFERRAL] Awarding rewards - 100 NTIQ each`);
-    
-    await BalanceService.processTransaction({
-      userId: referrer.id,
-      type: 'referral_reward',
-      amount: 100,
-      description: `Referral bonus for inviting user ${newUserId}`,
-      relatedId: newUserId
-    }, this);
-    
-    await BalanceService.processTransaction({
-      userId: newUserId,
-      type: 'referral_bonus', 
-      amount: 100,
-      description: `Welcome bonus from referral code ${referralCode}`,
-      relatedId: referrer.id
-    }, this);
-
-    console.log(`🎉 [REFERRAL] Referral process completed successfully!`);
-  }
 
 
 
