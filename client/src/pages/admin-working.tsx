@@ -334,47 +334,60 @@ export default function AdminPanel() {
       hasPreviousPage: boolean;
     };
   }>({
-    queryKey: ["/api/debug/admin/users", currentPage, usersPerPage, Date.now()], // Add timestamp to prevent aggressive caching
+    queryKey: ["/api/admin/users", currentPage, usersPerPage], // Use main endpoint
     queryFn: async () => {
-      console.log(`🔍 [FRONTEND-DEBUG] Calling debug endpoint /api/debug/admin/users?page=${currentPage}&limit=${usersPerPage}`);
+      console.log(`🎯 [USERS-MAIN] Calling main admin users endpoint: /api/admin/users?page=${currentPage}&limit=${usersPerPage}`);
       
       try {
-        const response = await fetch(`/api/debug/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
+        const response = await fetch(`/api/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
           method: 'GET',
           credentials: 'include',
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
+            'Content-Type': 'application/json'
           }
         });
         
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          console.log(`❌ [USERS-MAIN] Main endpoint failed, trying debug fallback`);
+          // Fallback to debug endpoint
+          const debugResponse = await fetch(`/api/debug/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (!debugResponse.ok) {
+            throw new Error(`Both endpoints failed: ${response.status} and ${debugResponse.status}`);
+          }
+          
+          const debugResult = await debugResponse.json();
+          console.log(`✅ [USERS-FALLBACK] Debug fallback success:`, debugResult);
+          return debugResult;
         }
         
         const result = await response.json();
-        console.log(`✅ [FRONTEND-DEBUG] Debug users API success:`, result);
+        console.log(`✅ [USERS-MAIN] Main endpoint success:`, result);
         return result;
       } catch (error) {
-        console.error(`❌ [FRONTEND-ERROR] Debug users API failed:`, error);
+        console.error(`❌ [USERS-ERROR] All endpoints failed:`, error);
         throw error;
       }
     },
-    staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache results
+    staleTime: 5000,
     refetchOnWindowFocus: true,
     refetchInterval: 30000,
-    retry: 2,
-    retryDelay: 1000,
+    retry: 1,
+    retryDelay: 2000,
   });
 
   const usersData = usersResponse?.users;
   const pagination = usersResponse?.pagination;
 
-  // Debug logging untuk user query
+  // Enhanced debug logging untuk user query
   useEffect(() => {
     console.log("🔍 [USER-QUERY-DEBUG] Users query state:", {
       data: usersData,
@@ -382,9 +395,24 @@ export default function AdminPanel() {
       error: usersError,
       dataType: typeof usersData,
       isArray: Array.isArray(usersData),
-      length: usersData?.length
+      length: usersData?.length,
+      fullResponse: usersResponse,
+      pagination: pagination
     });
-  }, [usersData, usersLoading, usersError]);
+
+    // Additional debug untuk troubleshooting
+    if (usersError) {
+      console.error("🔥 [USER-QUERY-ERROR] Detailed error:", usersError);
+    }
+    
+    if (usersData && usersData.length === 0) {
+      console.warn("⚠️ [USER-QUERY-WARN] Users array is empty but defined");
+    }
+    
+    if (!usersLoading && !usersData && !usersError) {
+      console.warn("⚠️ [USER-QUERY-WARN] No loading, no data, no error - this might indicate a query problem");
+    }
+  }, [usersData, usersLoading, usersError, usersResponse, pagination]);
 
   const { data: predictions, isLoading: predictionsLoading } = useQuery<Prediction[]>({
     queryKey: ["/api/admin/predictions"],
@@ -1116,8 +1144,30 @@ export default function AdminPanel() {
   // Filter functions with deduplication - untuk pagination, search akan ditangani di backend
   const filteredUsers = usersData?.filter((user, index, array) => {
     // Remove duplicates by id - keep first occurrence
-    return array.findIndex(u => u.id === user.id) === index;
+    const isFirstOccurrence = array.findIndex(u => u.id === user.id) === index;
+    if (!isFirstOccurrence) return false;
+    
+    // Apply search filter
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      user.username?.toLowerCase().includes(searchLower) ||
+      user.email?.toLowerCase().includes(searchLower) ||
+      user.walletAddress?.toLowerCase().includes(searchLower)
+    );
   });
+
+  // Debug filtered users
+  useEffect(() => {
+    console.log("🔍 [FILTERED-DEBUG] Users filtering:", {
+      originalCount: usersData?.length || 0,
+      filteredCount: filteredUsers?.length || 0,
+      searchTerm: searchTerm,
+      hasUsersData: !!usersData,
+      isUsersDataArray: Array.isArray(usersData),
+      firstFilteredUser: filteredUsers?.[0]
+    });
+  }, [filteredUsers, usersData, searchTerm]);
 
   const filteredPredictions = predictions?.filter(prediction => {
     if (filterStatus !== "all" && prediction.status !== filterStatus) return false;
@@ -1983,6 +2033,10 @@ export default function AdminPanel() {
                 {usersLoading ? (
                   <div className="text-center py-8">
                     <div className="text-slate-400">Loading users...</div>
+                  </div>
+                ) : usersError ? (
+                  <div className="text-center py-8">
+                    <div className="text-red-400">Error loading users: {String(usersError)}</div>
                   </div>
                 ) : filteredUsers && filteredUsers.length > 0 ? (
                   <Table>
