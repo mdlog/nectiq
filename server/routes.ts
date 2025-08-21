@@ -3675,6 +3675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
+    console.log("🔍 [ADMIN-USERS] Endpoint called - starting execution");
     try {
       const users = await storage.getAllUsers(); // Get all users including admins for admin panel
       console.log("📊 [ADMIN-USERS] Retrieved users count:", users.length);
