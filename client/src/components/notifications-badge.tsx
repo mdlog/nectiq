@@ -99,15 +99,25 @@ export default function NotificationsBadge() {
     queryKey: ['/api/notifications'],
     enabled: !!user, // Only fetch notifications if user is logged in
     refetchInterval: 30000, // Refetch every 30 seconds
-    retry: (failureCount, error) => {
+    retry: (failureCount, error: any) => {
       // Don't retry on authentication errors
-      if (error.message.includes('401')) {
+      if (error?.message?.includes('401') || error?.status === 401) {
         return false;
       }
       return failureCount < 3;
     },
     refetchOnWindowFocus: true,
   });
+
+  // Debug logging
+  useEffect(() => {
+    if (user) {
+      console.log('👤 [NOTIFICATIONS] Current user:', user.username, 'ID:', user.id);
+      console.log('🔔 [NOTIFICATIONS] Notifications data:', notifications);
+      console.log('🔔 [NOTIFICATIONS] Notifications count:', (notifications as Notification[]).length);
+      console.log('🔔 [NOTIFICATIONS] Loading:', isLoading, 'Error:', isError);
+    }
+  }, [user, notifications, isLoading, isError]);
 
   const markAsReadMutation = useMutation({
     mutationFn: () => apiRequest('/api/notifications/mark-read', {
@@ -118,7 +128,7 @@ export default function NotificationsBadge() {
     }
   });
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = (notifications as Notification[]).filter((n: Notification) => !n.isRead).length;
 
   const handleOpen = (open: boolean) => {
     setIsOpen(open);
@@ -188,13 +198,13 @@ export default function NotificationsBadge() {
             <div className="p-4 text-center text-sm text-gray-500">
               Loading notifications...
             </div>
-          ) : notifications.length === 0 ? (
+          ) : (notifications as Notification[]).length === 0 ? (
             <div className="p-4 text-center text-sm text-gray-500">
               No notifications
             </div>
           ) : (
             <div className="space-y-1">
-              {notifications.map((notification, index) => (
+              {(notifications as Notification[]).map((notification: Notification, index: number) => (
                 <div key={notification.id}>
                   <div className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
                     !notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
@@ -227,14 +237,14 @@ export default function NotificationsBadge() {
                       )}
                     </div>
                   </div>
-                  {index < notifications.length - 1 && <Separator />}
+                  {index < (notifications as Notification[]).length - 1 && <Separator />}
                 </div>
               ))}
             </div>
           )}
         </ScrollArea>
         
-        {notifications.length > 0 && (
+        {(notifications as Notification[]).length > 0 && (
           <div className="border-t p-3">
             <Button 
               variant="ghost" 
