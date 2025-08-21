@@ -184,8 +184,8 @@ export default function NotificationsBadge() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between p-4 border-b">
+      <PopoverContent className="w-96 p-0" align="end">
+        <div className="flex items-center justify-between p-4 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
           <h4 className="font-semibold">Notifications</h4>
           {unreadCount > 0 && (
             <Badge variant="secondary" className="text-xs">
@@ -194,67 +194,78 @@ export default function NotificationsBadge() {
           )}
         </div>
         
-        <ScrollArea className="max-h-80">
-          {isLoading ? (
-            <div className="p-4 text-center text-sm text-gray-500">
-              Loading notifications...
-            </div>
-          ) : (notifications as Notification[]).length === 0 ? (
-            <div className="p-4 text-center text-sm text-gray-500">
-              No notifications
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {(notifications as Notification[]).map((notification: Notification, index: number) => (
-                <div key={notification.id}>
-                  <div className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
-                    !notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
-                  }`}>
-                    <div className="flex items-start gap-3">
-                      <div className="text-lg flex-shrink-0 mt-0.5">
-                        {getTypeIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge 
-                            className={`text-xs ${getStatusColor(notification.type, notification.status)}`}
-                            variant="secondary"
-                          >
-                            {notification.status.toUpperCase()}
-                          </Badge>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatTime(notification.createdAt)}
-                          </span>
+        <ScrollArea className="max-h-96 min-h-[200px]">
+          <div className="px-1">
+            {isLoading ? (
+              <div className="p-4 text-center text-sm text-gray-500">
+                Loading notifications...
+              </div>
+            ) : (notifications as Notification[]).length === 0 ? (
+              <div className="p-4 text-center text-sm text-gray-500">
+                No notifications yet
+              </div>
+            ) : (
+              <div className="space-y-0">
+                {(notifications as Notification[]).map((notification: Notification, index: number) => (
+                  <div key={notification.id}>
+                    <div className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 cursor-pointer ${
+                      !notification.isRead 
+                        ? 'bg-blue-50/80 dark:bg-blue-900/20 border-l-4 border-blue-500' 
+                        : 'border-l-4 border-transparent'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        <div className="text-xl flex-shrink-0 mt-0.5 p-1 rounded-full bg-gray-100 dark:bg-gray-800">
+                          {getTypeIcon(notification.type)}
                         </div>
-                        <p className="text-sm text-gray-900 dark:text-gray-100 mb-1">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                          {formatAmount(notification.amount, notification.token)}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge 
+                              className={`text-xs px-2 py-1 ${getStatusColor(notification.type, notification.status)}`}
+                              variant="secondary"
+                            >
+                              {notification.status.toUpperCase()}
+                            </Badge>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatTime(notification.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-900 dark:text-gray-100 mb-2 leading-relaxed">
+                            {notification.message}
+                          </p>
+                          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md inline-block">
+                            {formatAmount(notification.amount, notification.token)}
+                          </p>
+                        </div>
+                        {!notification.isRead && (
+                          <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0 mt-1 animate-pulse"></div>
+                        )}
                       </div>
-                      {!notification.isRead && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
-                      )}
                     </div>
+                    {index < (notifications as Notification[]).length - 1 && (
+                      <Separator className="mx-4" />
+                    )}
                   </div>
-                  {index < (notifications as Notification[]).length - 1 && <Separator />}
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </ScrollArea>
         
         {(notifications as Notification[]).length > 0 && (
-          <div className="border-t p-3">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="w-full text-xs"
-              onClick={() => setIsOpen(false)}
-            >
-              Close
-            </Button>
+          <div className="border-t bg-gray-50 dark:bg-gray-900/50 p-3 sticky bottom-0">
+            <div className="flex gap-2 justify-between items-center">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {(notifications as Notification[]).length} notification{(notifications as Notification[]).length !== 1 ? 's' : ''}
+              </span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs px-3 py-1.5"
+                onClick={() => setIsOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
           </div>
         )}
       </PopoverContent>
