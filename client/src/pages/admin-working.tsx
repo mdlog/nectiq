@@ -319,10 +319,22 @@ export default function AdminPanel() {
     refetchInterval: 30000,
   });
 
-  const { data: usersData, isLoading: usersLoading } = useQuery<User[]>({
+  const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
     refetchInterval: 30000,
   });
+
+  // Debug logging untuk user query
+  useEffect(() => {
+    console.log("🔍 [USER-QUERY-DEBUG] Users query state:", {
+      data: usersData,
+      loading: usersLoading,
+      error: usersError,
+      dataType: typeof usersData,
+      isArray: Array.isArray(usersData),
+      length: usersData?.length
+    });
+  }, [usersData, usersLoading, usersError]);
 
   const { data: predictions, isLoading: predictionsLoading } = useQuery<Prediction[]>({
     queryKey: ["/api/admin/predictions"],
