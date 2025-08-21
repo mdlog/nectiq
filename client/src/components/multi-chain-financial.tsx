@@ -622,6 +622,16 @@ export function MultiChainFinancial() {
       return;
     }
 
+    // Check if admin wallet data is available
+    if (!adminWalletData?.adminWallet) {
+      toast({
+        title: "Security Error",
+        description: "Cannot retrieve secure admin wallet address. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const tokenConfig = selectedChain.tokens[selectedToken];
     const amountUSD = parseFloat(depositAmount);
 
@@ -631,7 +641,7 @@ export function MultiChainFinancial() {
       tokenType: selectedToken,
       tokenAddress: tokenConfig.address,
       amountUSD: depositAmount,
-      toWalletAddress: selectedChain.adminWallet,
+      toWalletAddress: adminWalletData.adminWallet, // Use secure admin wallet from server
       fromWalletAddress: user?.walletAddress || "0x0000000000000000000000000000000000000000", // Use authenticated user's wallet address
     });
   };
