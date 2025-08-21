@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAccount, useSwitchChain, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { parseEther, parseUnits } from 'viem';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,12 +31,19 @@ import { DepositCountdownTimer } from '@/components/deposit-countdown-timer';
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-// Extend Window interface for MetaMask
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
+// ERC-20 Transfer ABI for Wagmi
+const ERC20_TRANSFER_ABI = [
+  {
+    name: 'transfer',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+] as const;
 
 // Blockchain Logo Components
 const EthereumLogo = ({ className = "w-5 h-5" }) => (
@@ -276,6 +285,14 @@ export function MultiChainFinancial() {
   const itemsPerPage = 5;
   
   const queryClient = useQueryClient();
+  
+  // Wagmi hooks for consistent wallet technology
+  const { address, isConnected, chain } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const { writeContract, data: txHash, isPending: isTransactionPending } = useWriteContract();
+  const { data: transactionReceipt, isLoading: isReceiptLoading } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
 
   // Secure query to get admin wallet address from server
   const { data: adminWalletData, isLoading: adminWalletLoading } = useQuery({
@@ -692,90 +709,36 @@ export function MultiChainFinancial() {
     });
   };
 
-  // MetaMask transaction function
-  const sendViaMetaMask = async (deposit: any) => {
+  // Wagmi-based transaction function (consistent with RainbowKit login)
+  const sendViaWallet = async (deposit: any) => {
     try {
-      if (!window.ethereum) {
+      // Check wallet connection using consistent RainbowKit/Wagmi technology
+      if (!isConnected || !address) {
         toast({
-          title: "MetaMask Required",
-          description: "Please install MetaMask to use this feature",
+          title: "Wallet Not Connected",
+          description: "Please connect your wallet using RainbowKit to continue",
           variant: "destructive",
         });
         return;
       }
-
-      // Request account access
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
 
       // Get chain configuration
-      const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
-      if (!chain) {
+      const targetChain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+      if (!targetChain) {
         toast({
           title: "Chain Not Supported",
-          description: "This chain is not supported for MetaMask transactions",
+          description: "This chain is not supported for wallet transactions",
           variant: "destructive",
         });
         return;
       }
 
-      // Calculate ETH amount using snapshot price - includes 2% fee for payment
-      const ethAmount = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
-      if (!ethAmount || ethAmount === "0.000000" || deposit.tokenType !== 'ETH') {
+      // Calculate token amount using snapshot price - includes 2% fee for payment
+      const tokenAmount = calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot);
+      if (!tokenAmount || tokenAmount === "0.000000") {
         toast({
           title: "Invalid Transaction",
-          description: "Only ETH deposits support MetaMask transactions",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Convert ETH amount to Wei (18 decimals)
-      const weiAmount = '0x' + (BigInt(Math.floor(parseFloat(ethAmount) * 1e18))).toString(16);
-
-      // Chain ID mapping
-      const chainIdMap: { [key: string]: string } = {
-        'eth': '0x1', // Ethereum Mainnet
-        'base': '0x2105', // Base
-        'bsc': '0x38', // BSC
-        'optimism': '0xa', // Optimism
-        'arbitrum': '0xa4b1', // Arbitrum
-        'sepolia': '0xaa36a7', // Sepolia Testnet
-        'holesky': '0x4268' // Holesky Testnet
-      };
-
-      const targetChainId = chainIdMap[deposit.chainName];
-      if (!targetChainId) {
-        toast({
-          title: "Chain Not Supported",
-          description: "This chain is not supported for MetaMask transactions",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Switch to target network if needed
-      try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: targetChainId }],
-        });
-      } catch (error: any) {
-        if (error.code === 4902) {
-          toast({
-            title: "Network Not Added",
-            description: "Please add this network to MetaMask manually",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // Get current account
-      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-      if (!accounts || accounts.length === 0) {
-        toast({
-          title: "No Account Connected",
-          description: "Please connect your MetaMask wallet first",
+          description: "Cannot calculate transaction amount",
           variant: "destructive",
         });
         return;
@@ -792,95 +755,106 @@ export function MultiChainFinancial() {
         return;
       }
 
-      // Prepare transaction
-      const transactionParameters = {
-        from: accounts[0],
-        to: secureAdminWallet,
-        value: weiAmount,
-        gas: '0x5208', // 21000 gas limit for ETH transfer
-      };
-
-      // Send transaction
-      const txHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [transactionParameters],
-      });
+      // Switch to target network if needed (consistent with RainbowKit)
+      if (chain?.id !== targetChain.chainId) {
+        try {
+          await switchChain({ chainId: targetChain.chainId });
+          toast({
+            title: "Network Switched",
+            description: `Switched to ${targetChain.name}`,
+          });
+        } catch (error: any) {
+          toast({
+            title: "Network Switch Failed",
+            description: "Please switch network manually in your wallet",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
 
       toast({
-        title: "Transaction Sent",
-        description: `Transaction hash: ${txHash}`,
+        title: "Preparing Transaction",
+        description: "Please confirm the transaction in your wallet",
       });
 
-      console.log('Transaction sent:', txHash);
-
-      // Update deposit with transaction hash (keep as pending until blockchain confirmation)
-      try {
-        await apiRequest(`/api/deposits/${deposit.id}/update-transaction`, {
-          method: 'POST',
-          body: JSON.stringify({
-            transactionHash: txHash,
-            status: 'processing' // Change to processing instead of completed
-          }),
-        });
-
-        // Refresh deposit data
-        queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+      // Handle ETH transfer using Wagmi
+      if (deposit.tokenType === 'ETH') {
+        const ethValue = parseEther(tokenAmount);
         
-        toast({
-          title: "Transaction Submitted",
-          description: "Transaction hash saved. Waiting for blockchain confirmation...",
-        });
-      } catch (updateError: any) {
-        console.error('Failed to update deposit:', updateError);
-        toast({
-          title: "Warning",
-          description: "Transaction sent but failed to update deposit status",
-          variant: "destructive",
+        // Send ETH transaction using Wagmi sendTransaction
+        await writeContract({
+          to: secureAdminWallet as `0x${string}`,
+          value: ethValue,
         });
       }
 
     } catch (error: any) {
-      console.error('MetaMask transaction error:', error);
+      console.error('Wallet transaction error:', error);
       toast({
         title: "Transaction Failed",
-        description: error.message || "Failed to send transaction",
+        description: error.message || "Failed to send transaction via wallet",
         variant: "destructive",
       });
     }
   };
 
-  // Function to send USDC/USDT via MetaMask
-  const sendStablecoinViaMetaMask = async (deposit: any) => {
+  // Handle transaction success/failure using useEffect
+  useEffect(() => {
+    if (txHash && !isTransactionPending) {
+      toast({
+        title: "Transaction Sent",
+        description: `Transaction hash: ${txHash}`,
+      });
+      
+      console.log('Wagmi transaction sent:', txHash);
+    }
+  }, [txHash, isTransactionPending]);
+
+  // Handle transaction receipt
+  useEffect(() => {
+    if (transactionReceipt && !isReceiptLoading) {
+      toast({
+        title: "Transaction Confirmed",
+        description: "Transaction confirmed on blockchain",
+      });
+      
+      // Refresh deposit data
+      queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    }
+  }, [transactionReceipt, isReceiptLoading, queryClient]);
+
+  // Function to send USDC/USDT via Wagmi (consistent with RainbowKit)
+  const sendStablecoinViaWallet = async (deposit: any) => {
     try {
-      if (!window.ethereum) {
+      // Check wallet connection using consistent RainbowKit/Wagmi technology
+      if (!isConnected || !address) {
         toast({
-          title: "MetaMask Required",
-          description: "Please install MetaMask to use this feature",
+          title: "Wallet Not Connected",
+          description: "Please connect your wallet using RainbowKit to continue",
           variant: "destructive",
         });
         return;
       }
 
-      // Request account access
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-
       // Get chain configuration
-      const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
-      if (!chain) {
+      const targetChain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+      if (!targetChain) {
         toast({
           title: "Chain Not Supported",
-          description: "This chain is not supported for MetaMask transactions",
+          description: "This chain is not supported for wallet transactions",
           variant: "destructive",
         });
         return;
       }
 
       // Get token configuration
-      const tokenConfig = chain.tokens[deposit.tokenType as keyof typeof chain.tokens];
+      const tokenConfig = targetChain.tokens[deposit.tokenType as keyof typeof targetChain.tokens];
       if (!tokenConfig || !tokenConfig.address || tokenConfig.address === 'native') {
         toast({
           title: "Token Not Supported",
-          description: "This token is not supported for MetaMask transactions",
+          description: "This token is not supported for wallet transactions",
           variant: "destructive",
         });
         return;
@@ -897,59 +871,6 @@ export function MultiChainFinancial() {
         return;
       }
 
-      // Convert to wei using token decimals
-      const decimals = tokenConfig.decimals || 18;
-      const weiAmount = '0x' + (BigInt(Math.floor(parseFloat(tokenAmount) * Math.pow(10, decimals)))).toString(16);
-
-      // Chain ID mapping
-      const chainIdMap: { [key: string]: string } = {
-        'eth': '0x1',
-        'base': '0x2105',
-        'bsc': '0x38',
-        'optimism': '0xa',
-        'arbitrum': '0xa4b1',
-        'sepolia': '0xaa36a7',
-        'holesky': '0x4268'
-      };
-
-      const targetChainId = chainIdMap[deposit.chainName];
-      if (!targetChainId) {
-        toast({
-          title: "Chain Not Supported",
-          description: "This chain is not supported for MetaMask transactions",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Switch to target network if needed
-      try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: targetChainId }],
-        });
-      } catch (error: any) {
-        if (error.code === 4902) {
-          toast({
-            title: "Network Not Added",
-            description: "Please add this network to MetaMask manually",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // Get current account
-      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-      if (!accounts || accounts.length === 0) {
-        toast({
-          title: "No Account Connected",
-          description: "Please connect your MetaMask wallet first",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Get secure admin wallet address
       const secureAdminWallet = adminWalletData?.adminWallet;
       if (!secureAdminWallet) {
@@ -961,64 +882,46 @@ export function MultiChainFinancial() {
         return;
       }
 
-      // Prepare ERC-20 transfer transaction
-      const transferFunction = "0xa9059cbb"; // transfer(address,uint256)
-      const toAddress = secureAdminWallet.replace("0x", "").padStart(64, "0");
-      const amount = weiAmount.replace("0x", "").padStart(64, "0");
-      const data = transferFunction + toAddress + amount;
-
-      const transactionParameters = {
-        from: accounts[0],
-        to: tokenConfig.address,
-        value: "0x0",
-        data: data,
-        gas: '0x15F90', // 90000 gas limit for ERC-20 transfer
-      };
-
-      // Send transaction
-      const txHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [transactionParameters],
-      });
-
-      toast({
-        title: "Transaction Sent",
-        description: `Transaction hash: ${txHash}`,
-      });
-
-      console.log('Stablecoin transaction sent:', txHash);
-
-      // Update deposit with transaction hash
-      try {
-        await apiRequest(`/api/deposits/${deposit.id}/update-transaction`, {
-          method: 'POST',
-          body: JSON.stringify({
-            transactionHash: txHash,
-            status: 'processing'
-          }),
-        });
-
-        // Refresh deposit data
-        queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
-        
-        toast({
-          title: "Transaction Submitted",
-          description: "Transaction hash saved. Waiting for blockchain confirmation...",
-        });
-      } catch (updateError: any) {
-        console.error('Failed to update deposit:', updateError);
-        toast({
-          title: "Warning",
-          description: "Transaction sent but failed to update deposit status",
-          variant: "destructive",
-        });
+      // Switch to target network if needed (consistent with RainbowKit)
+      if (chain?.id !== targetChain.chainId) {
+        try {
+          await switchChain({ chainId: targetChain.chainId });
+          toast({
+            title: "Network Switched",
+            description: `Switched to ${targetChain.name}`,
+          });
+        } catch (error: any) {
+          toast({
+            title: "Network Switch Failed",
+            description: "Please switch network manually in your wallet",
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
+      toast({
+        title: "Preparing Transaction",
+        description: "Please confirm the transaction in your wallet",
+      });
+
+      // Handle ERC-20 token transfer using Wagmi
+      const decimals = tokenConfig.decimals || 6; // USDC/USDT typically use 6 decimals
+      const tokenValue = parseUnits(tokenAmount, decimals);
+      
+      // Send ERC-20 transaction using Wagmi
+      await writeContract({
+        address: tokenConfig.address as `0x${string}`,
+        abi: ERC20_TRANSFER_ABI,
+        functionName: 'transfer',
+        args: [secureAdminWallet as `0x${string}`, tokenValue],
+      });
+
     } catch (error: any) {
-      console.error('MetaMask stablecoin transaction error:', error);
+      console.error('Wallet stablecoin transaction error:', error);
       toast({
         title: "Transaction Failed",
-        description: error.message || "Failed to send stablecoin transaction",
+        description: error.message || "Failed to send stablecoin transaction via wallet",
         variant: "destructive",
       });
     }
@@ -1497,36 +1400,38 @@ export function MultiChainFinancial() {
                               </p>
                             </div>
                             
-                            {/* MetaMask Send Button (for ETH deposits only) */}
+                            {/* Wallet Send Button (for ETH deposits only) - Uses RainbowKit/Wagmi */}
                             {deposit.tokenType === 'ETH' && (
                               <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
                                 <Button
-                                  onClick={() => sendViaMetaMask(deposit)}
+                                  onClick={() => sendViaWallet(deposit)}
                                   className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-medium"
                                   size="lg"
+                                  disabled={isTransactionPending || !isConnected}
                                 >
                                   <Send className="w-4 h-4 mr-2" />
-                                  Send {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ETH via MetaMask
+                                  {isTransactionPending ? 'Sending...' : `Send ${calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ETH via Wallet`}
                                 </Button>
                                 <p className="text-xs text-gray-500 text-center mt-2">
-                                  Click to automatically send the amount (includes 2% processing fee) using MetaMask
+                                  Click to automatically send the amount (includes 2% processing fee) using your connected wallet
                                 </p>
                               </div>
                             )}
                             
-                            {/* MetaMask Send Button (for USDC/USDT deposits) */}
+                            {/* Wallet Send Button (for USDC/USDT deposits) - Uses RainbowKit/Wagmi */}
                             {(deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') && (
                               <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
                                 <Button
-                                  onClick={() => sendStablecoinViaMetaMask(deposit)}
+                                  onClick={() => sendStablecoinViaWallet(deposit)}
                                   className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium"
                                   size="lg"
+                                  disabled={isTransactionPending || !isConnected}
                                 >
                                   <Send className="w-4 h-4 mr-2" />
-                                  Send {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} {deposit.tokenType} via MetaMask
+                                  {isTransactionPending ? 'Sending...' : `Send ${calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ${deposit.tokenType} via Wallet`}
                                 </Button>
                                 <p className="text-xs text-gray-500 text-center mt-2">
-                                  Click to automatically send the amount (includes 2% processing fee) using MetaMask
+                                  Click to automatically send the amount (includes 2% processing fee) using your connected wallet
                                 </p>
                               </div>
                             )}
