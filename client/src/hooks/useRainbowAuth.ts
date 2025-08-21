@@ -72,10 +72,8 @@ export function useRainbowAuth() {
     onSuccess: (data) => {
       console.log('✅ [RAINBOW] Wallet authenticated successfully:', data);
       
-      toast({
-        title: "Wallet Connected",
-        description: address ? `Successfully connected to ${address.slice(0, 6)}...${address.slice(-4)}` : "Successfully connected to wallet",
-      });
+      // Note: Wallet connection notification is handled by useWalletConnectionStatus
+      // to prevent duplicate notifications and ensure it only shows on first connection
 
       // Refresh user data
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });

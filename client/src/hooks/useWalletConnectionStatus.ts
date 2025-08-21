@@ -20,6 +20,19 @@ export function useWalletConnectionStatus() {
   const connectionHistory = useRef<ConnectionEvent[]>([]);
   const toastTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
   
+  // Check if wallet was previously connected during this session
+  const isFirstTimeConnection = (walletAddress: string) => {
+    const sessionKey = `wallet_connected_${walletAddress}`;
+    const sessionConnected = sessionStorage.getItem(sessionKey);
+    return !sessionConnected;
+  };
+  
+  // Mark wallet as connected in session
+  const markWalletAsConnected = (walletAddress: string) => {
+    const sessionKey = `wallet_connected_${walletAddress}`;
+    sessionStorage.setItem(sessionKey, 'true');
+  };
+  
   // State for connection quality tracking
   const [connectionQuality, setConnectionQuality] = useState<{
     isStable: boolean;
@@ -85,9 +98,9 @@ export function useWalletConnectionStatus() {
   useEffect(() => {
     const now = Date.now();
     
-    // First connection
+    // First connection - only show notification if truly first time this session
     if (isConnected && !previouslyConnected.current && address) {
-      console.log('🔗 [WALLET-STATUS] First connection detected:', address);
+      console.log('🔗 [WALLET-STATUS] Connection detected:', address);
       
       addConnectionEvent({
         type: 'connected',
@@ -95,12 +108,19 @@ export function useWalletConnectionStatus() {
         address
       });
       
-      showConnectionNotification(
-        "Wallet Connected",
-        `Successfully connected to ${address.slice(0, 6)}...${address.slice(-4)}`,
-        'default',
-        3000
-      );
+      // Only show notification if this is the first time connecting this wallet in this session
+      const isFirstTime = isFirstTimeConnection(address);
+      console.log('🔗 [WALLET-STATUS] Is first time connection:', isFirstTime);
+      
+      if (isFirstTime) {
+        showConnectionNotification(
+          "Wallet Connected",
+          `Successfully connected to ${address.slice(0, 6)}...${address.slice(-4)}`,
+          'default',
+          3000
+        );
+        markWalletAsConnected(address);
+      }
       
       previouslyConnected.current = true;
       previousAddress.current = address;
