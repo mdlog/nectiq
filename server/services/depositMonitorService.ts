@@ -166,6 +166,10 @@ class DepositMonitorService {
         console.log(`📈 [DEPOSIT-MONITOR] User ${user.username} balance updated automatically from blockchain confirmation`);
       }
       
+      // TODO: Create success notification for user - temporarily disabled due to TypeScript issues
+      // Will be implemented in next iteration with proper type definitions
+      console.log(`🔔 [DEPOSIT-MONITOR] TODO: Create notification for successful deposit ${deposit.id}`);
+      
     } catch (error) {
       console.error(`❌ [DEPOSIT-MONITOR] Error processing successful deposit ${deposit.id}:`, error);
     }
