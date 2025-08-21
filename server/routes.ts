@@ -3628,24 +3628,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   if (isDevelopmentMode) {
     app.get("/api/admin/dev-stats", async (req, res) => {
       try {
-        console.log("✅ [DEV-STATS-FIXED] Using verified correct statistics - NO SQL BUGS");
+        console.log("✅ [DEV-STATS-FIXED] Calculating real-time statistics from database");
+        
+        // Get actual user count from database
+        const [totalUsersResult] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(users);
+        
+        // Get actual predictions count from database  
+        const [totalPredictionsResult] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(predictions);
+        
+        // Get actual battles count from database
+        const [totalBattlesResult] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(predictionBattles);
         
         // Calculate total NTIQ circulating from database
         const [totalNtiqCirculatingResult] = await db
           .select({ total: sql<number>`sum(${users.balance})` })
           .from(users);
         
+        const totalUsers = totalUsersResult.count || 0;
+        const totalPredictions = totalPredictionsResult.count || 0;
+        const totalBattles = totalBattlesResult.count || 0;
         const totalNtiqCirculating = Math.round(totalNtiqCirculatingResult.total || 0);
         
         const statistics = {
-          totalUsers: "8",
-          totalPredictions: "21", // 4+2+15+0=21 (CORRECT - no more 42150 bug)
+          totalUsers: totalUsers.toString(),
+          totalPredictions: totalPredictions.toString(),
           platformAccuracy: 0,
           totalNTIQCirculating: totalNtiqCirculating,
-          recentBattles: "2"
+          recentBattles: totalBattles.toString()
         };
 
-        console.log("✅ [DEV-STATS-SUCCESS] Returning verified statistics:", statistics);
+        console.log("✅ [DEV-STATS-SUCCESS] Returning live database statistics:", statistics);
         res.json(statistics);
       } catch (error) {
         console.error("❌ [ADMIN-STATS] Error calculating statistics:", error);
