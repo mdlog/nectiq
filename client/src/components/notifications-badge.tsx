@@ -24,6 +24,13 @@ interface Notification {
   createdAt: string;
 }
 
+interface User {
+  id: number;
+  username: string;
+  walletAddress: string;
+  balance: number;
+}
+
 const getStatusColor = (type: string, status: string) => {
   if (type === "deposit") {
     switch (status) {
@@ -80,10 +87,26 @@ const getTypeIcon = (type: string) => {
 export default function NotificationsBadge() {
   const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
+  
+  // Get user data first
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/user"],
+    retry: false,
+    throwOnError: false,
+  });
 
-  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
+  const { data: notifications = [], isLoading, isError } = useQuery<Notification[]>({
     queryKey: ['/api/notifications'],
+    enabled: !!user, // Only fetch notifications if user is logged in
     refetchInterval: 30000, // Refetch every 30 seconds
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error.message.includes('401')) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    refetchOnWindowFocus: true,
   });
 
   const markAsReadMutation = useMutation({
