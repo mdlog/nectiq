@@ -2,6 +2,7 @@ import { ChartLine, Coins, User, LogOut, Menu, X, ChevronDown, Copy, Check, Wall
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { RainbowConnectButton } from "@/components/RainbowConnectButton";
+import { WalletConnectionStatus } from "@/components/WalletConnectionStatus";
 import { useRainbowAuth } from "@/hooks/useRainbowAuth";
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
@@ -141,6 +142,9 @@ export function Header() {
             
             {isConnected && address ? (
               <div className="flex items-center space-x-2">
+                {/* Wallet Connection Status */}
+                <WalletConnectionStatus className="hidden sm:block" />
+                
                 <div className="hidden sm:flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-3 py-1 rounded-lg border border-green-200 dark:border-green-800">
                   <Wallet className="text-green-600 dark:text-green-400" size={16} />
                   <span className="text-xs font-mono text-green-700 dark:text-green-300">

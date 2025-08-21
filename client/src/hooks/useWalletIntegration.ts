@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { useToast } from '@/hooks/use-toast';
+import { useWalletConnectionStatus } from './useWalletConnectionStatus';
 
 interface WalletState {
   isConnected: boolean;
@@ -13,6 +14,9 @@ interface WalletState {
 export function useWalletIntegration() {
   const { address, isConnected, chain } = useAccount();
   const { toast } = useToast();
+  
+  // Initialize improved connection status hook
+  const connectionStatus = useWalletConnectionStatus();
   
   const [walletState, setWalletState] = useState<WalletState>({
     isConnected: false,
@@ -309,5 +313,8 @@ export function useWalletIntegration() {
     syncBalance,
     refreshBalances,
     refetchBalance,
+    
+    // Connection status information
+    connectionStatus,
   };
 }

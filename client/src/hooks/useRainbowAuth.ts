@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import type { User } from "@shared/schema";
+import { useWalletConnectionStatus } from './useWalletConnectionStatus';
 
 export function useRainbowAuth() {
   const { address, isConnected, chain } = useAccount();
@@ -12,6 +13,9 @@ export function useRainbowAuth() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  
+  // Initialize connection status monitoring
+  const connectionStatus = useWalletConnectionStatus();
 
   // Get user data from backend
   const { data: user, isLoading } = useQuery<User>({
@@ -119,10 +123,13 @@ export function useRainbowAuth() {
       // Clear all cached data
       queryClient.clear();
       
-      toast({
-        title: "Logged Out",
-        description: "Successfully disconnected from wallet",
-      });
+      // Use improved notification system
+      connectionStatus.showConnectionNotification(
+        "Successfully Logged Out",
+        address ? `Disconnected from ${address.slice(0, 6)}...${address.slice(-4)}` : "Wallet disconnected",
+        'default',
+        3000
+      );
       
       // Redirect to home
       setLocation('/');
@@ -164,5 +171,8 @@ export function useRainbowAuth() {
     isLoggingOut: logoutMutation.isPending,
     authError: authenticateWalletMutation.error,
     logoutError: logoutMutation.error,
+    
+    // Connection status
+    connectionStatus,
   };
 }
