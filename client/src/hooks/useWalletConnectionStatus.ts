@@ -143,7 +143,7 @@ export function useWalletConnectionStatus() {
       } else {
         showConnectionNotification(
           "Wallet Disconnected",
-          `Disconnected from ${previousAddress.current?.slice(0, 6)}...${previousAddress.current?.slice(-4)}`,
+          `Wallet ${previousAddress.current?.slice(0, 6)}...${previousAddress.current?.slice(-4)} has been disconnected`,
           'default',
           4000
         );

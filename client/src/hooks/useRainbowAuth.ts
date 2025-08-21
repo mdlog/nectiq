@@ -125,10 +125,10 @@ export function useRainbowAuth() {
       
       // Use improved notification system
       connectionStatus.showConnectionNotification(
-        "Successfully Logged Out",
-        address ? `Disconnected from ${address.slice(0, 6)}...${address.slice(-4)}` : "Wallet disconnected",
+        "Wallet Disconnected",
+        address ? `Successfully logged out from ${address.slice(0, 6)}...${address.slice(-4)}` : "Wallet disconnected successfully",
         'default',
-        3000
+        4000
       );
       
       // Redirect to home
