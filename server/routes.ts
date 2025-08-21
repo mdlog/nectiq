@@ -10598,12 +10598,18 @@ Manual balance correction required IMMEDIATELY!`;
   // Notification endpoints
   app.get('/api/notifications', requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ message: 'Authentication required' });
-      }
+      const user = (req as any).user;
+      console.log('🔔 [NOTIFICATIONS] User requesting notifications:', {
+        id: user.id,
+        username: user.username
+      });
 
-      const notifications = await storage.getUserNotifications(userId, 20);
+      console.log('🔍 [DEBUG] Storage object methods:', Object.getOwnPropertyNames(storage).filter(name => name.includes('Notification')));
+      console.log('🔍 [DEBUG] Storage getUserNotifications type:', typeof storage.getUserNotifications);
+
+      const notifications = await storage.getUserNotifications(user.id, 20);
+      console.log('🔔 [NOTIFICATIONS] Found', notifications.length, 'notifications for user', user.username);
+      
       res.json(notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);

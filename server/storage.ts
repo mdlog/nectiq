@@ -234,6 +234,28 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  // Notification operations - added early for proper method access
+  async createNotification(notification: any): Promise<any> {
+    const [inserted] = await db.insert(notifications).values(notification).returning();
+    return inserted;
+  }
+
+  async getUserNotifications(userId: number, limit: number = 20): Promise<any[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
+  }
+
+  async markNotificationsAsRead(userId: number): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId));
+  }
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
@@ -4250,28 +4272,6 @@ export class MemStorage implements IStorage {
       );
     
     return result;
-  }
-
-  // Notification operations
-  async createNotification(notification: any): Promise<any> {
-    const [inserted] = await db.insert(notifications).values(notification).returning();
-    return inserted;
-  }
-
-  async getUserNotifications(userId: number, limit: number = 20): Promise<any[]> {
-    return await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit);
-  }
-
-  async markNotificationsAsRead(userId: number): Promise<void> {
-    await db
-      .update(notifications)
-      .set({ isRead: true })
-      .where(eq(notifications.userId, userId));
   }
 
   async getActiveParlayPredictions(): Promise<any[]> {
