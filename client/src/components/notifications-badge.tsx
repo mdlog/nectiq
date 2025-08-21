@@ -184,94 +184,67 @@ export default function NotificationsBadge() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0" align="end">
-        <div className="flex items-center justify-between p-4 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-          <h4 className="font-semibold">Notifications</h4>
+      <PopoverContent className="w-80 p-0" align="end">
+        <div className="flex items-center justify-between px-3 py-2 border-b">
+          <h4 className="font-medium text-sm">Notifications</h4>
           {unreadCount > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {unreadCount} unread
-            </Badge>
+            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+              {unreadCount} new
+            </span>
           )}
         </div>
         
         <div 
-          className="max-h-96 overflow-y-auto" 
+          className="max-h-80 overflow-y-auto" 
           style={{ 
             scrollbarWidth: 'thin',
-            scrollbarColor: '#cbd5e1 #f1f5f9'
+            scrollbarColor: '#cbd5e1 #f8fafc'
           }}
         >
           {isLoading ? (
-            <div className="p-4 text-center text-sm text-gray-500">
-              Loading notifications...
+            <div className="p-3 text-center text-xs text-gray-500">
+              Loading...
             </div>
           ) : (notifications as Notification[]).length === 0 ? (
-            <div className="p-4 text-center text-sm text-gray-500">
-              No notifications yet
+            <div className="p-3 text-center text-xs text-gray-500">
+              No notifications
             </div>
           ) : (
-            <div className="space-y-0">
-              {(notifications as Notification[]).map((notification: Notification, index: number) => (
-                <div key={notification.id}>
-                  <div className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 cursor-pointer ${
-                    !notification.isRead 
-                      ? 'bg-blue-50/80 dark:bg-blue-900/20 border-l-4 border-blue-500' 
-                      : 'border-l-4 border-transparent'
-                  }`}>
-                    <div className="flex items-start gap-3">
-                      <div className="text-xl flex-shrink-0 mt-0.5 p-1 rounded-full bg-gray-100 dark:bg-gray-800">
-                        {getTypeIcon(notification.type)}
+            <div>
+              {(notifications as Notification[]).map((notification: Notification) => (
+                <div 
+                  key={notification.id} 
+                  className={`px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800/30 border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
+                    !notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="text-sm mt-0.5">{getTypeIcon(notification.type)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${getStatusColor(notification.type, notification.status)}`}>
+                          {notification.status}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {formatTime(notification.createdAt)}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge 
-                            className={`text-xs px-2 py-1 ${getStatusColor(notification.type, notification.status)}`}
-                            variant="secondary"
-                          >
-                            {notification.status.toUpperCase()}
-                          </Badge>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatTime(notification.createdAt)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-900 dark:text-gray-100 mb-2 leading-relaxed">
-                          {notification.message}
-                        </p>
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md inline-block">
-                          {formatAmount(notification.amount, notification.token)}
-                        </p>
-                      </div>
-                      {!notification.isRead && (
-                        <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0 mt-1 animate-pulse"></div>
-                      )}
+                      <p className="text-xs text-gray-700 dark:text-gray-300 mb-1 line-clamp-2">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                        {formatAmount(notification.amount, notification.token)}
+                      </p>
                     </div>
+                    {!notification.isRead && (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                    )}
                   </div>
-                  {index < (notifications as Notification[]).length - 1 && (
-                    <Separator className="mx-4" />
-                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
-        
-        {(notifications as Notification[]).length > 0 && (
-          <div className="border-t bg-gray-50 dark:bg-gray-900/50 p-3 sticky bottom-0">
-            <div className="flex gap-2 justify-between items-center">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {(notifications as Notification[]).length} notification{(notifications as Notification[]).length !== 1 ? 's' : ''}
-              </span>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs px-3 py-1.5"
-                onClick={() => setIsOpen(false)}
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        )}
       </PopoverContent>
     </Popover>
   );
