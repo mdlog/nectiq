@@ -1113,17 +1113,17 @@ export default function AdminPanel() {
     }
   };
 
-  // Helper function untuk mencari harga cryptocurrency
+  // Helper function to find cryptocurrency price
   const getCryptoPrice = (cryptoId: string) => {
     if (!cryptoPrices || !Array.isArray(cryptoPrices)) return null;
     const crypto = cryptoPrices.find((c: any) => c.id === cryptoId);
     return crypto;
   };
 
-  // Helper function untuk mendapatkan info cryptocurrency dari database admin
+  // Helper function to get cryptocurrency info from admin database
   const getCryptoInfo = (cryptoId: string) => {
     if (!cryptocurrencies || !Array.isArray(cryptocurrencies)) {
-      // Fallback ke cryptoPrices jika cryptocurrencies tidak tersedia
+      // Fallback to cryptoPrices if cryptocurrencies is not available
       if (!cryptoPrices || !Array.isArray(cryptoPrices)) return null;
       const crypto = cryptoPrices.find((c: any) => c.id === cryptoId);
       return crypto ? {
@@ -1141,7 +1141,7 @@ export default function AdminPanel() {
     } : null;
   };
 
-  // Filter functions with deduplication - untuk pagination, search akan ditangani di backend
+  // Filter functions with deduplication - for pagination, search will be handled by backend
   const filteredUsers = usersData?.filter((user, index, array) => {
     // Remove duplicates by id - keep first occurrence
     const isFirstOccurrence = array.findIndex(u => u.id === user.id) === index;
