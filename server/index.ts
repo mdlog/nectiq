@@ -136,8 +136,8 @@ app.use(session({
     httpOnly: false, // Allow frontend access to session
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'lax' // Allow cross-origin requests
-  },
-  name: 'nectiq.session' // Custom session name
+  }
+  // Using default session name 'connect.sid' for proper authentication
 }));
 
 // Enhanced CORS middleware - Complete Dynamic SDK support
