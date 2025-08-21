@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, ChartLine, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, ChartLine } from "lucide-react";
 import type { CryptoPrice } from "@/types";
 
 function getValidImageUrl(crypto: CryptoPrice): string {
@@ -59,8 +57,6 @@ interface LivePricesProps {
 }
 
 export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerView = 14; // Show 14 cryptos at once
 
   // STATIC PRICES - No Real-time Updates (matches chart behavior)
   const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
@@ -87,24 +83,6 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   // Sort prices by market cap (highest price first)
   const sortedPrices = prices.sort((a, b) => b.current_price - a.current_price);
 
-  // Pagination functions
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => Math.max(0, prev - itemsPerView));
-  };
-
-  const goToNext = () => {
-    setCurrentIndex((prev) => 
-      Math.min(sortedPrices.length - itemsPerView, prev + itemsPerView)
-    );
-  };
-
-  // Get current page items
-  const currentItems = sortedPrices.slice(currentIndex, currentIndex + itemsPerView);
-
-  // Check if navigation buttons should be disabled
-  const canGoPrevious = currentIndex > 0;
-  const canGoNext = currentIndex + itemsPerView < sortedPrices.length;
-
   if (isLoading) {
     return (
       <div className="bg-surface rounded-lg p-2 border border-surface-light">
@@ -112,20 +90,12 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           <ChartLine className="text-success mr-2" size={16} />
           Live Prices
         </h3>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" disabled>
-            <ChevronLeft size={14} />
-          </Button>
-          <div className="flex gap-1.5 justify-center">
-            {[...Array(14)].map((_, i) => (
-              <div key={i} className="crypto-card px-3 py-2 bg-surface-light rounded-md animate-pulse flex-shrink-0">
-                <div className="w-16 h-14 bg-slate-600 rounded"></div>
-              </div>
-            ))}
-          </div>
-          <Button variant="outline" size="sm" disabled>
-            <ChevronRight size={14} />
-          </Button>
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-thin scrollbar-track-surface-light scrollbar-thumb-primary pb-2">
+          {[...Array(14)].map((_, i) => (
+            <div key={i} className="crypto-card px-3 py-2 bg-surface-light rounded-md animate-pulse flex-shrink-0">
+              <div className="w-16 h-14 bg-slate-600 rounded"></div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -148,20 +118,16 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
         </div>
       </div>
       
-      {/* Single row with navigation */}
-      <div className="flex items-center space-x-2">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={goToPrevious}
-          disabled={!canGoPrevious}
-          className="flex-shrink-0"
+      {/* Scrollable horizontal list */}
+      <div className="relative">
+        <div 
+          className="flex gap-1.5 overflow-x-auto scrollbar-thin scrollbar-track-surface-light scrollbar-thumb-primary hover:scrollbar-thumb-primary/80 pb-2"
+          style={{
+            scrollbarWidth: 'thin',
+            msOverflowStyle: 'auto'
+          }}
         >
-          <ChevronLeft size={14} />
-        </Button>
-        
-        <div className="flex gap-1.5 overflow-hidden">
-          {currentItems.map((crypto) => {
+          {sortedPrices.map((crypto) => {
             const isPositive = crypto.price_change_percentage_24h >= 0;
             
             return (
@@ -219,30 +185,6 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
             );
           })}
         </div>
-        
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={goToNext}
-          disabled={!canGoNext}
-          className="flex-shrink-0"
-        >
-          <ChevronRight size={14} />
-        </Button>
-      </div>
-      
-      {/* Dot indicators */}
-      <div className="flex justify-center mt-2 space-x-1">
-        {Array.from({ length: Math.ceil(sortedPrices.length / itemsPerView) }).map((_, index) => (
-          <div
-            key={index}
-            className={`w-1.5 h-1.5 rounded-full transition-colors duration-200 ${
-              Math.floor(currentIndex / itemsPerView) === index 
-                ? 'bg-primary' 
-                : 'bg-gray-600'
-            }`}
-          />
-        ))}
       </div>
     </div>
   );

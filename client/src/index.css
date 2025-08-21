@@ -72,6 +72,38 @@
 }
 
 @layer utilities {
+  /* Custom Scrollbar for Live Prices */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  
+  .scrollbar-track-surface-light {
+    scrollbar-color: hsl(239, 62%, 56%) hsl(215, 16%, 32%);
+  }
+  
+  .scrollbar-thumb-primary {
+    scrollbar-color: hsl(239, 62%, 56%) hsl(215, 16%, 32%);
+  }
+  
+  /* WebKit Scrollbar for Chrome/Safari */
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  .scrollbar-track-surface-light::-webkit-scrollbar-track {
+    background: hsl(215, 16%, 32%);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thumb-primary::-webkit-scrollbar-thumb {
+    background: hsl(239, 62%, 56%);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thumb-primary::-webkit-scrollbar-thumb:hover {
+    background: hsl(239, 62%, 60%);
+  }
+  
   /* TradingView Chart Styling */
   .tradingview-widget-container {
     border-radius: 8px;
