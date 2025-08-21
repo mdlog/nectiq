@@ -271,6 +271,7 @@ const resetAdminIP = (ip: string) => {
 resetAdminIP('172.31.90.130');
 resetAdminIP('172.31.106.226');
 resetAdminIP('172.31.87.2'); // Current blacklisted admin IP
+resetAdminIP('172.31.82.98'); // Current blacklisted admin IP
 console.log(`🔧 [ADMIN-FIX] Reset admin IP blacklisting on server start`);
 
 // Admin authentication middleware with enhanced security
