@@ -334,7 +334,7 @@ export default function AdminPanel() {
       hasPreviousPage: boolean;
     };
   }>({
-    queryKey: ["/api/debug/admin/users", currentPage, usersPerPage],
+    queryKey: ["/api/debug/admin/users", currentPage, usersPerPage, Date.now()], // Add timestamp to prevent aggressive caching
     queryFn: async () => {
       console.log(`🔍 [FRONTEND-DEBUG] Calling debug endpoint /api/debug/admin/users?page=${currentPage}&limit=${usersPerPage}`);
       
@@ -344,7 +344,10 @@ export default function AdminPanel() {
           credentials: 'include',
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
           }
         });
         
@@ -353,13 +356,16 @@ export default function AdminPanel() {
         }
         
         const result = await response.json();
-        console.log(`🔍 [FRONTEND-DEBUG] Debug users API success:`, result);
+        console.log(`✅ [FRONTEND-DEBUG] Debug users API success:`, result);
         return result;
       } catch (error) {
         console.error(`❌ [FRONTEND-ERROR] Debug users API failed:`, error);
         throw error;
       }
     },
+    staleTime: 0, // Always consider data stale
+    cacheTime: 0, // Don't cache results
+    refetchOnWindowFocus: true,
     refetchInterval: 30000,
     retry: 2,
     retryDelay: 1000,

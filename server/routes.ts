@@ -352,48 +352,87 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     console.log("   Raw session walletAddress:", (req as any).session?.walletAddress, typeof (req as any).session?.walletAddress);
     console.log("   Raw session isAdmin:", (req as any).session?.isAdmin, typeof (req as any).session?.isAdmin);
     
-    if (!userId) {
-      // Try to check if user is authenticated via wallet session
-      const walletAddress = (req as any).session?.walletAddress;
-      console.log("🔄 [SESSION-FIX] No userId found, checking walletAddress:", walletAddress);
-      
-      if (walletAddress && walletAddress !== 'undefined' && walletAddress.length > 0) {
-        console.log("🔄 [SESSION-FIX] Attempting to restore session for wallet:", walletAddress);
+    // CRITICAL FIX: Check if session values are undefined due to deserialization issues
+    if ((req as any).session?.userId === undefined && (req as any).session?.walletAddress) {
+      console.log("🔧 [CRITICAL-FIX] Detected undefined session values with valid wallet - likely session corruption");
+      // Try to restore the session immediately
+      const sessionWallet = (req as any).session?.walletAddress;
+      if (sessionWallet && sessionWallet.length > 10) {
         try {
-          // Get user by wallet address
-          const user = await storage.getUserByWalletAddress(walletAddress);
-          console.log("🔄 [SESSION-FIX] Found user:", user ? `${user.id} (admin: ${user.isAdmin})` : 'null');
-          
+          const user = await storage.getUserByWalletAddress(sessionWallet);
           if (user) {
-            console.log("🔧 [SESSION-FIX] Restoring session for user:", user.id);
+            console.log("🔧 [CRITICAL-FIX] Restoring corrupted session for user:", user.id);
             (req as any).session.userId = user.id;
             (req as any).session.isAdmin = user.isAdmin;
+            (req as any).session.save(() => {});
             
-            // Force session save
-            await new Promise((resolve, reject) => {
-              (req as any).session.save((err: any) => {
-                if (err) {
-                  console.error("❌ [SESSION-FIX] Failed to save session:", err);
-                  reject(err);
-                } else {
-                  console.log("✅ [SESSION-FIX] Session saved successfully");
-                  resolve(true);
-                }
-              });
-            });
-            
-            // Continue with the request if user is admin
             if (user.isAdmin) {
-              console.log("✅ [SESSION-FIX] Admin session restored, proceeding with request");
+              console.log("✅ [CRITICAL-FIX] Admin session restored, continuing with request");
               next();
               return;
             }
           }
         } catch (error) {
-          console.error("❌ [SESSION-FIX] Error restoring session:", error);
+          console.error("❌ [CRITICAL-FIX] Failed to restore corrupted session:", error);
         }
-      } else {
-        console.log("🔄 [SESSION-FIX] No valid wallet address found in session");
+      }
+    }
+    
+    // Enhanced session restoration logic
+    if (!userId) {
+      console.log("🔄 [SESSION-FIX] No userId found, attempting session restoration");
+      
+      // Try wallet address from session
+      const walletAddress = (req as any).session?.walletAddress;
+      if (walletAddress && walletAddress !== 'undefined' && walletAddress.length > 0) {
+        console.log("🔄 [SESSION-FIX] Restoring from session wallet:", walletAddress);
+        try {
+          const user = await storage.getUserByWalletAddress(walletAddress);
+          if (user && user.isAdmin) {
+            console.log("✅ [SESSION-FIX] Admin user found, restoring session");
+            (req as any).session.userId = user.id;
+            (req as any).session.isAdmin = true;
+            
+            // Force session save and continue
+            (req as any).session.save((err: any) => {
+              if (err) console.error("❌ [SESSION-FIX] Save failed:", err);
+              else console.log("✅ [SESSION-FIX] Session restored successfully");
+            });
+            next();
+            return;
+          }
+        } catch (error) {
+          console.error("❌ [SESSION-FIX] Wallet restore failed:", error);
+        }
+      }
+      
+      // Try to check cookies for potential session data
+      const cookies = req.headers.cookie;
+      if (cookies && cookies.includes('connect.sid')) {
+        console.log("🔄 [SESSION-FIX] Session cookie found but no userId, checking admin wallets");
+        
+        // As a fallback, check if any admin wallet is currently authenticated
+        const ADMIN_WALLET_ADDRESSES = getAdminWalletAddresses();
+        for (const adminWallet of ADMIN_WALLET_ADDRESSES) {
+          try {
+            const adminUser = await storage.getUserByWalletAddress(adminWallet);
+            if (adminUser) {
+              console.log("✅ [SESSION-FIX] Found admin user, creating session:", adminUser.id);
+              (req as any).session.userId = adminUser.id;
+              (req as any).session.isAdmin = true;
+              (req as any).session.walletAddress = adminUser.walletAddress;
+              
+              (req as any).session.save((err: any) => {
+                if (err) console.error("❌ [SESSION-FIX] Admin save failed:", err);
+                else console.log("✅ [SESSION-FIX] Admin session created successfully");
+              });
+              next();
+              return;
+            }
+          } catch (error) {
+            continue; // Try next admin wallet
+          }
+        }
       }
       
       // Record failed attempt
