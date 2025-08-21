@@ -30,7 +30,11 @@ export async function getUserStatistics(req: AuthenticatedRequest, res: Response
     // Top users with safe SQL
     const topUsersResult = await db.execute(sql`
       SELECT id as "userId", username, total_predictions as "totalPredictions", 
-             CASE WHEN total_predictions > 0 THEN (correct_predictions::float / total_predictions::float) * 100 ELSE 0 END as "avgAccuracy",
+             CASE 
+               WHEN total_predictions > 0 
+               THEN (correct_predictions::float / total_predictions::float) * 100 
+               ELSE 0 
+             END as "avgAccuracy",
              total_rewards as "totalRewards"
       FROM users 
       WHERE total_predictions > 0 
