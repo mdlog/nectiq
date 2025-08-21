@@ -3,7 +3,7 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, setGlobalWalletAddress } from '@/lib/queryClient';
 import type { User } from "@shared/schema";
 import { useWalletConnectionStatus } from './useWalletConnectionStatus';
 
@@ -123,6 +123,9 @@ export function useRainbowAuth() {
       // Clear all cached data
       queryClient.clear();
       
+      // Clear global wallet address
+      setGlobalWalletAddress(null);
+      
       // Use improved notification system
       connectionStatus.showConnectionNotification(
         "Wallet Disconnected",
@@ -152,6 +155,13 @@ export function useRainbowAuth() {
       authenticateWalletMutation.mutate(address);
     }
   }, [isConnected, address, user]);
+
+  // Set global wallet address for API requests
+  React.useEffect(() => {
+    const walletAddress = user?.walletAddress || address;
+    setGlobalWalletAddress(walletAddress || null);
+    console.log('🔐 [RAINBOW] Updated global wallet address for API requests:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
+  }, [user?.walletAddress, address]);
 
   return {
     // Wallet state

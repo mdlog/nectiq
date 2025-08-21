@@ -9415,34 +9415,89 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
+  // Unified authentication middleware for both wallet and session authentication
+  const unifiedAuth = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      let userId: number | undefined;
+      let user: any = null;
+      
+      // First try session-based authentication
+      const sessionUserId = req.session?.userId;
+      if (sessionUserId) {
+        console.log('🔐 [UNIFIED-AUTH] Using session authentication, userId:', sessionUserId);
+        userId = sessionUserId;
+        user = await storage.getUser(userId);
+      }
+      
+      // If no session, try wallet-based authentication
+      if (!userId) {
+        const walletAddress = req.headers['x-wallet-address'] as string || 
+                             req.body?.walletAddress ||
+                             req.query?.walletAddress as string;
+        
+        if (walletAddress) {
+          console.log('🔐 [UNIFIED-AUTH] Using wallet authentication, address:', walletAddress.substring(0, 8) + '...');
+          const normalizedAddress = normalizeWalletAddress(walletAddress);
+          user = await storage.getUserByWalletAddress(normalizedAddress);
+          if (user) {
+            userId = user.id;
+            // Set session for future requests
+            req.session.userId = user.id;
+            req.session.walletAddress = normalizedAddress;
+            req.session.isAdmin = user.isAdmin;
+          }
+        }
+      }
+      
+      if (!userId || !user) {
+        console.log('❌ [UNIFIED-AUTH] Authentication failed - no valid session or wallet');
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      
+      console.log('✅ [UNIFIED-AUTH] User authenticated:', {
+        id: user.id,
+        username: user.username,
+        method: sessionUserId ? 'session' : 'wallet'
+      });
+      
+      // Add user to request object
+      (req as any).user = user;
+      (req as any).userId = userId;
+      
+      next();
+    } catch (error) {
+      console.error('🚨 [UNIFIED-AUTH] Authentication error:', error);
+      res.status(500).json({ message: 'Authentication error' });
+    }
+  };
+
   // ===== REFERRAL ENDPOINTS =====
 
   // Get user's referral data
-  app.get('/api/user/referral', requireAuth, async (req: Request, res: Response) => {
+  app.get('/api/user/referral', unifiedAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ message: 'Authentication required' });
-      }
-
+      const userId = (req as any).userId;
+      console.log('🎯 [REFERRAL-GET] Getting referral data for userId:', userId);
+      
       // Get comprehensive referral data using storage function
       const referralData = await storage.getReferralData(userId);
+      console.log('✅ [REFERRAL-GET] Found referral data:', referralData ? 'YES' : 'NO');
       
       res.json(referralData);
     } catch (error) {
-      console.error('Error fetching referral data:', error);
+      console.error('❌ [REFERRAL-GET] Error fetching referral data:', error);
       res.status(500).json({ message: 'Failed to fetch referral data' });
     }
   });
 
   // Generate referral code
-  app.post('/api/user/referral/generate', requireAuth, async (req: Request, res: Response) => {
+  app.post('/api/user/referral/generate', unifiedAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId;
+      const userId = (req as any).userId;
       console.log('🎯 [REFERRAL-GENERATE-PRIMARY] Starting generation for userId:', userId);
       
       if (!userId) {
-        console.log('❌ [REFERRAL-GENERATE-PRIMARY] No userId in session');
+        console.log('❌ [REFERRAL-GENERATE-PRIMARY] No userId from unified auth');
         return res.status(401).json({ message: 'Authentication required' });
       }
 

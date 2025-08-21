@@ -1,5 +1,13 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Global wallet address state for headers
+let globalWalletAddress: string | null = null;
+
+export function setGlobalWalletAddress(address: string | null) {
+  globalWalletAddress = address;
+  console.log('🔐 [QUERY-CLIENT] Global wallet address set:', address ? address.substring(0, 8) + '...' : 'null');
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -11,12 +19,20 @@ export async function apiRequest(
   url: string,
   options?: RequestInit,
 ): Promise<Response> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...options?.headers,
+  };
+  
+  // Add wallet address header if available
+  if (globalWalletAddress) {
+    headers['x-wallet-address'] = globalWalletAddress;
+    console.log('🔐 [API-REQUEST] Including wallet address in headers for:', url);
+  }
+
   const res = await fetch(url, {
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
+    headers,
     ...options,
   });
 
@@ -30,8 +46,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const headers: Record<string, string> = {};
+    
+    // Add wallet address header if available
+    if (globalWalletAddress) {
+      headers['x-wallet-address'] = globalWalletAddress;
+      console.log('🔐 [GET-QUERY] Including wallet address in headers for:', queryKey[0]);
+    }
+
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
