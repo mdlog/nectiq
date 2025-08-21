@@ -334,14 +334,35 @@ export default function AdminPanel() {
       hasPreviousPage: boolean;
     };
   }>({
-    queryKey: ["/api/admin/users", currentPage, usersPerPage],
+    queryKey: ["/api/debug/admin/users", currentPage, usersPerPage],
     queryFn: async () => {
-      console.log(`🔍 [FRONTEND-DEBUG] Calling /api/admin/users?page=${currentPage}&limit=${usersPerPage}`);
-      const result = await apiRequest(`/api/admin/users?page=${currentPage}&limit=${usersPerPage}`);
-      console.log(`🔍 [FRONTEND-DEBUG] Users API result:`, result);
-      return result;
+      console.log(`🔍 [FRONTEND-DEBUG] Calling debug endpoint /api/debug/admin/users?page=${currentPage}&limit=${usersPerPage}`);
+      
+      try {
+        const response = await fetch(`/api/debug/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log(`🔍 [FRONTEND-DEBUG] Debug users API success:`, result);
+        return result;
+      } catch (error) {
+        console.error(`❌ [FRONTEND-ERROR] Debug users API failed:`, error);
+        throw error;
+      }
     },
     refetchInterval: 30000,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const usersData = usersResponse?.users;

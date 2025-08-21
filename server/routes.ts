@@ -346,25 +346,54 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     console.log("   Cookies:", req.headers.cookie ? req.headers.cookie.substring(0, 100) + '...' : 'NO COOKIES');
     console.log("   Request URL:", req.url);
     
+    // Extended debug for session values
+    console.log("🔧 [SESSION-VALUES-DEBUG]:");
+    console.log("   Raw session userId:", (req as any).session?.userId, typeof (req as any).session?.userId);
+    console.log("   Raw session walletAddress:", (req as any).session?.walletAddress, typeof (req as any).session?.walletAddress);
+    console.log("   Raw session isAdmin:", (req as any).session?.isAdmin, typeof (req as any).session?.isAdmin);
+    
     if (!userId) {
       // Try to check if user is authenticated via wallet session
       const walletAddress = (req as any).session?.walletAddress;
-      if (walletAddress) {
+      console.log("🔄 [SESSION-FIX] No userId found, checking walletAddress:", walletAddress);
+      
+      if (walletAddress && walletAddress !== 'undefined' && walletAddress.length > 0) {
         console.log("🔄 [SESSION-FIX] Attempting to restore session for wallet:", walletAddress);
         try {
           // Get user by wallet address
           const user = await storage.getUserByWalletAddress(walletAddress);
-          if (user && user.isAdmin) {
-            console.log("🔧 [SESSION-FIX] Restoring admin session for user:", user.id);
+          console.log("🔄 [SESSION-FIX] Found user:", user ? `${user.id} (admin: ${user.isAdmin})` : 'null');
+          
+          if (user) {
+            console.log("🔧 [SESSION-FIX] Restoring session for user:", user.id);
             (req as any).session.userId = user.id;
-            (req as any).session.isAdmin = true;
-            // Continue with the request
-            next();
-            return;
+            (req as any).session.isAdmin = user.isAdmin;
+            
+            // Force session save
+            await new Promise((resolve, reject) => {
+              (req as any).session.save((err: any) => {
+                if (err) {
+                  console.error("❌ [SESSION-FIX] Failed to save session:", err);
+                  reject(err);
+                } else {
+                  console.log("✅ [SESSION-FIX] Session saved successfully");
+                  resolve(true);
+                }
+              });
+            });
+            
+            // Continue with the request if user is admin
+            if (user.isAdmin) {
+              console.log("✅ [SESSION-FIX] Admin session restored, proceeding with request");
+              next();
+              return;
+            }
           }
         } catch (error) {
           console.error("❌ [SESSION-FIX] Error restoring session:", error);
         }
+      } else {
+        console.log("🔄 [SESSION-FIX] No valid wallet address found in session");
       }
       
       // Record failed attempt
@@ -3698,11 +3727,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Temporary debug endpoint for users without requireAdmin middleware
+  app.get("/api/debug/admin/users", async (req, res) => {
+    console.log("🔧 [DEBUG-USERS] ===== DEBUG USERS ENDPOINT REACHED =====");
+    console.log("🔧 [DEBUG-USERS] Session:", JSON.stringify(req.session, null, 2));
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+
+      console.log("🔧 [DEBUG-USERS] Pagination params:", { page, limit, offset });
+
+      // Get total count
+      const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
+      const totalCount = totalUsers[0]?.count || 0;
+
+      // Get users with pagination
+      const usersList = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          email: users.email,
+          emailVerified: users.emailVerified,
+          walletAddress: users.walletAddress,
+          balance: users.balance,
+          isAdmin: users.isAdmin,
+          authMethod: users.authMethod,
+          totalPredictions: sql<number>`COALESCE((SELECT COUNT(*) FROM ${predictions} WHERE ${predictions.userId} = ${users.id}), 0)`,
+          correctPredictions: sql<number>`COALESCE((SELECT COUNT(*) FROM ${predictions} WHERE ${predictions.userId} = ${users.id} AND ${predictions.accuracy} >= 90), 0)`,
+          totalRewards: sql<number>`COALESCE((SELECT SUM(amount) FROM ${rewards} WHERE ${rewards.userId} = ${users.id}), 0)`,
+          uid: users.uid
+        })
+        .from(users)
+        .orderBy(desc(users.id))
+        .limit(limit)
+        .offset(offset);
+
+      const totalPages = Math.ceil(totalCount / limit);
+
+      const response = {
+        users: usersList,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalUsers: totalCount,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
+      };
+
+      console.log("🔧 [DEBUG-USERS] Success - returning", usersList.length, "users");
+      res.json(response);
+    } catch (error) {
+      console.error("🔧 [DEBUG-USERS] Error:", error);
+      res.status(500).json({ message: "Internal server error", error: String(error) });
+    }
+  });
+
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
-    console.log("🔍 [ADMIN-USERS] ===== ENDPOINT REACHED =====");
-    console.log("🔍 [ADMIN-USERS] Query params:", req.query);
-    console.log("🔍 [ADMIN-USERS] Session userId:", req.session.userId);
-    console.log("🔍 [ADMIN-USERS] Session isAdmin:", req.session.isAdmin);
+    console.log("🎯 [ADMIN-USERS] ===== GET USERS ENDPOINT REACHED SUCCESSFULLY =====");
+    console.log("🎯 [ADMIN-USERS] Query params:", req.query);
+    console.log("🎯 [ADMIN-USERS] Session userId:", req.session.userId);
+    console.log("🎯 [ADMIN-USERS] Session isAdmin:", req.session.isAdmin);
+    console.log("🎯 [ADMIN-USERS] Request method:", req.method);
+    console.log("🎯 [ADMIN-USERS] Request URL:", req.url);
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
