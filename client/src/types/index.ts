@@ -35,6 +35,7 @@ export interface ActivePrediction {
 export interface LeaderboardEntry {
   id: number;
   username: string;
+  rank: number; // Backend-provided ranking for consistency
   totalPredictions: number;
   correctPredictions: number;
   accuracy: number;
@@ -48,6 +49,12 @@ export interface LeaderboardEntry {
   totalSurvivalTournaments?: number;
   wonSurvivalTournaments?: number;
   survivalRewards?: number;
+  // Additional fields for filtering
+  weeklyPoints?: number;
+  monthlyPoints?: number;
+  profilePhoto?: string;
+  uid?: string;
+  winRate?: number;
 }
 
 export interface RecentReward {

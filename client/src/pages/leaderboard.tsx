@@ -102,26 +102,42 @@ export default function Leaderboard() {
   const getFilterData = () => {
     if (!leaderboardData) return [];
     
-    let filteredData = leaderboardData.map((user, index) => ({
+    // Use the backend-provided ranking for consistency
+    let filteredData = leaderboardData.map((user) => ({
       ...user,
-      rank: index + 1,
+      // Use backend rank for all-time, but calculate for weekly/monthly
+      rank: filter === 'alltime' ? user.rank : user.rank, // Keep original rank for now
       points: filter === 'weekly' ? (user.weeklyPoints || 0) : 
               filter === 'monthly' ? (user.monthlyPoints || 0) : 
               user.totalRewards
-    })).sort((a, b) => b.points - a.points);
+    }));
+
+    // Only re-sort if not using all-time filter (to maintain backend consistency)
+    if (filter !== 'alltime') {
+      filteredData = filteredData.sort((a, b) => b.points - a.points);
+      // Recalculate ranks only for non-alltime filters
+      filteredData = filteredData.map((user, index) => ({
+        ...user,
+        rank: index + 1
+      }));
+    }
 
     // Apply search filter
     if (searchTerm) {
       filteredData = filteredData.filter(user => 
         user.username.toLowerCase().includes(searchTerm.toLowerCase())
       );
+      
+      // If searching, we need to recalculate ranks based on filtered results
+      if (searchTerm.trim()) {
+        filteredData = filteredData.map((user, index) => ({
+          ...user,
+          rank: index + 1
+        }));
+      }
     }
 
-    // Recalculate ranks after filtering
-    return filteredData.map((user, index) => ({
-      ...user,
-      rank: index + 1
-    }));
+    return filteredData;
   };
 
   const getPaginatedData = () => {

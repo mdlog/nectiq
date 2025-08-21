@@ -84,7 +84,8 @@ export function TopPredictors() {
       
       <div className="space-y-3 flex-1">
         {topSixPredictors.map((user, index) => {
-          const rank = index + 1;
+          // Use backend-provided rank for consistency
+          const rank = user.rank;
           
           return (
             <div key={user.id} className="flex items-center space-x-3 p-3 bg-surface-light rounded-lg">
