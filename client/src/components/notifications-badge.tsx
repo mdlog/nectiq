@@ -115,12 +115,12 @@ export default function NotificationsBadge() {
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    if (diffInMins < 1) return 'Baru saja';
-    if (diffInMins < 60) return `${diffInMins}m yang lalu`;
-    if (diffInHours < 24) return `${diffInHours}j yang lalu`;
-    if (diffInDays < 7) return `${diffInDays}h yang lalu`;
+    if (diffInMins < 1) return 'Just now';
+    if (diffInMins < 60) return `${diffInMins}m ago`;
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
     
-    return date.toLocaleDateString('id-ID', { 
+    return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric',
       hour: '2-digit',
@@ -152,10 +152,10 @@ export default function NotificationsBadge() {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between p-4 border-b">
-          <h4 className="font-semibold">Notifikasi</h4>
+          <h4 className="font-semibold">Notifications</h4>
           {unreadCount > 0 && (
             <Badge variant="secondary" className="text-xs">
-              {unreadCount} belum dibaca
+              {unreadCount} unread
             </Badge>
           )}
         </div>
@@ -163,11 +163,11 @@ export default function NotificationsBadge() {
         <ScrollArea className="max-h-80">
           {isLoading ? (
             <div className="p-4 text-center text-sm text-gray-500">
-              Memuat notifikasi...
+              Loading notifications...
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-gray-500">
-              Tidak ada notifikasi
+              No notifications
             </div>
           ) : (
             <div className="space-y-1">
@@ -219,7 +219,7 @@ export default function NotificationsBadge() {
               className="w-full text-xs"
               onClick={() => setIsOpen(false)}
             >
-              Tutup
+              Close
             </Button>
           </div>
         )}

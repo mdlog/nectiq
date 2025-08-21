@@ -21,7 +21,7 @@ async function createTestNotifications() {
         status: 'completed',
         amount: 10000,
         token: 'USDC',
-        message: 'Deposit berhasil! Dana USDC Anda telah dikreditkan ke akun.',
+        message: 'Deposit successful! Your USDC funds have been credited to your account.',
         relatedId: 12
       },
       {
@@ -30,7 +30,7 @@ async function createTestNotifications() {
         status: 'processing',
         amount: 5000,
         token: null,
-        message: 'Penarikan sedang diproses. Dana akan dikirim ke wallet Anda dalam beberapa menit.',
+        message: 'Withdrawal is being processed. Funds will be sent to your wallet within minutes.',
         relatedId: null
       },
       {
@@ -39,7 +39,7 @@ async function createTestNotifications() {
         status: 'completed',
         amount: 100,
         token: null,
-        message: 'Pembelian prediksi berhasil! Battle prediction telah dibuat.',
+        message: 'Prediction purchase successful! Battle prediction has been created.',
         relatedId: 5
       },
       {
@@ -48,7 +48,7 @@ async function createTestNotifications() {
         status: 'failed',
         amount: 2500,
         token: 'USDT',
-        message: 'Deposit gagal! Silakan coba lagi atau hubungi customer service.',
+        message: 'Deposit failed! Please try again or contact customer service.',
         relatedId: null
       },
       {
@@ -57,7 +57,7 @@ async function createTestNotifications() {
         status: 'completed',
         amount: 15000,
         token: null,
-        message: 'Penarikan berhasil! Dana telah dikirim ke wallet Anda.',
+        message: 'Withdrawal successful! Funds have been sent to your wallet.',
         relatedId: 8
       }
     ];
