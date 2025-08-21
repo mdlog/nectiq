@@ -339,10 +339,33 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     console.log("   User ID in session:", userId);
     console.log("   Session isAdmin:", (req as any).session?.isAdmin);
     console.log("   Session data keys:", req.session ? Object.keys(req.session) : 'NO SESSION');
+    console.log("   Full session object:", JSON.stringify(req.session, null, 2));
+    console.log("   Session userId value:", (req as any).session?.userId);
+    console.log("   Session isAdmin value:", (req as any).session?.isAdmin);
     console.log("   Cookies:", req.headers.cookie ? req.headers.cookie.substring(0, 100) + '...' : 'NO COOKIES');
     console.log("   Request URL:", req.url);
     
     if (!userId) {
+      // Try to check if user is authenticated via wallet session
+      const walletAddress = (req as any).session?.walletAddress;
+      if (walletAddress) {
+        console.log("🔄 [SESSION-FIX] Attempting to restore session for wallet:", walletAddress);
+        try {
+          // Get user by wallet address
+          const user = await storage.getUserByWalletAddress(walletAddress);
+          if (user && user.isAdmin) {
+            console.log("🔧 [SESSION-FIX] Restoring admin session for user:", user.id);
+            (req as any).session.userId = user.id;
+            (req as any).session.isAdmin = true;
+            // Continue with the request
+            next();
+            return;
+          }
+        } catch (error) {
+          console.error("❌ [SESSION-FIX] Error restoring session:", error);
+        }
+      }
+      
       // Record failed attempt
       adminAttempts.set(clientIP, { 
         count: (attempts?.count || 0) + 1, 
