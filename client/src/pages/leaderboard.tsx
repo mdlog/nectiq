@@ -184,7 +184,7 @@ export default function Leaderboard() {
               <Trophy className="text-primary h-8 w-8" />
               <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
               <Badge variant="secondary" className="bg-primary/20 text-primary">
-                {totalUsers} Users
+                {totalUsers.toLocaleString()} Users
               </Badge>
             </div>
 
@@ -243,7 +243,7 @@ export default function Leaderboard() {
                   <Users className="text-primary h-8 w-8" />
                   <div>
                     <p className="text-sm text-slate-400">Total Predictors</p>
-                    <p className="text-2xl font-bold text-white">{totalUsers}</p>
+                    <p className="text-2xl font-bold text-white">{totalUsers.toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
@@ -280,7 +280,7 @@ export default function Leaderboard() {
               <span>{filter === 'alltime' ? 'All Time' : filter} Rankings</span>
               {searchTerm && (
                 <Badge variant="secondary" className="bg-primary/20 text-primary">
-                  {totalUsers} results for "{searchTerm}"
+                  {totalUsers.toLocaleString()} results for "{searchTerm}"
                 </Badge>
               )}
             </CardTitle>
@@ -335,7 +335,7 @@ export default function Leaderboard() {
                           <div className="flex items-center space-x-4 text-sm text-slate-400">
                             <div className="flex items-center space-x-1">
                               <Target size={12} />
-                              <span>{user.totalPredictions} predictions</span>
+                              <span>{user.totalPredictions.toLocaleString()} predictions</span>
                             </div>
                             <div className="flex items-center space-x-1">
                               <TrendingUp size={12} />
@@ -346,13 +346,13 @@ export default function Leaderboard() {
                             {(user.totalBattles || 0) > 0 && (
                               <div className="flex items-center space-x-1">
                                 <span className="text-blue-400">⚔</span>
-                                <span className="text-blue-400">{user.wonBattles || 0}/{user.totalBattles || 0} battles</span>
+                                <span className="text-blue-400">{(user.wonBattles || 0).toLocaleString()}/{(user.totalBattles || 0).toLocaleString()} battles</span>
                               </div>
                             )}
                             {(user.totalSurvivalTournaments || 0) > 0 && (
                               <div className="flex items-center space-x-1">
                                 <span className="text-orange-400">🏆</span>
-                                <span className="text-orange-400">{user.wonSurvivalTournaments || 0}/{user.totalSurvivalTournaments || 0} survival</span>
+                                <span className="text-orange-400">{(user.wonSurvivalTournaments || 0).toLocaleString()}/{(user.totalSurvivalTournaments || 0).toLocaleString()} survival</span>
                               </div>
                             )}
                           </div>
@@ -382,7 +382,7 @@ export default function Leaderboard() {
                           {/* Prediction Stats */}
                           <div className="text-center">
                             <p className="text-slate-400">Predictions</p>
-                            <p className="font-semibold text-success">{user.correctPredictions}/{user.totalPredictions}</p>
+                            <p className="font-semibold text-success">{user.correctPredictions.toLocaleString()}/{user.totalPredictions.toLocaleString()}</p>
                           </div>
                           <div className="text-center">
                             <p className="text-slate-400">Pred Rewards</p>
@@ -392,7 +392,7 @@ export default function Leaderboard() {
                           {/* Battle Stats */}
                           <div className="text-center">
                             <p className="text-slate-400">Battles</p>
-                            <p className="font-semibold text-blue-400">{user.wonBattles || 0}/{user.totalBattles || 0}</p>
+                            <p className="font-semibold text-blue-400">{(user.wonBattles || 0).toLocaleString()}/{(user.totalBattles || 0).toLocaleString()}</p>
                           </div>
                           <div className="text-center">
                             <p className="text-slate-400">Battle Rewards</p>
@@ -402,7 +402,7 @@ export default function Leaderboard() {
                           {/* Survival Stats */}
                           <div className="text-center">
                             <p className="text-slate-400">Survival</p>
-                            <p className="font-semibold text-orange-400">{user.wonSurvivalTournaments || 0}/{user.totalSurvivalTournaments || 0}</p>
+                            <p className="font-semibold text-orange-400">{(user.wonSurvivalTournaments || 0).toLocaleString()}/{(user.totalSurvivalTournaments || 0).toLocaleString()}</p>
                           </div>
                           <div className="text-center">
                             <p className="text-slate-400">Survival Rewards</p>

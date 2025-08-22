@@ -472,7 +472,7 @@ export default function UserDashboard() {
               <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
             </CardHeader>
             <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold">{stats?.totalPredictions || 0}</div>
+              <div className="text-lg sm:text-2xl font-bold">{stats?.totalPredictions?.toLocaleString() || "0"}</div>
               <div className="text-xs text-slate-400 mt-1 hidden sm:block">Lifetime predictions made</div>
             </CardContent>
           </Card>
@@ -509,7 +509,7 @@ export default function UserDashboard() {
               <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
             </CardHeader>
             <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold text-primary">{stats?.totalRewards || 0}</div>
+              <div className="text-lg sm:text-2xl font-bold text-primary">{stats?.totalRewards?.toLocaleString() || "0"}</div>
               <div className="text-xs text-slate-400 mt-1 hidden sm:block">Points earned</div>
             </CardContent>
           </Card>
@@ -1285,7 +1285,7 @@ function BattlesSection() {
             <Swords className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalBattles}</div>
+            <div className="text-2xl font-bold">{stats.totalBattles?.toLocaleString()}</div>
             <div className="text-xs text-slate-400 mt-1">All time battles participated</div>
           </CardContent>
         </Card>
@@ -1296,7 +1296,7 @@ function BattlesSection() {
             <Trophy className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">{stats.wonBattles}</div>
+            <div className="text-2xl font-bold text-success">{stats.wonBattles?.toLocaleString()}</div>
             <div className="text-xs text-slate-400 mt-1">Win Rate: {winRate}%</div>
           </CardContent>
         </Card>
@@ -1318,7 +1318,7 @@ function BattlesSection() {
             <Activity className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{stats.activeBattles}</div>
+            <div className="text-2xl font-bold text-primary">{stats.activeBattles?.toLocaleString()}</div>
             <div className="text-xs text-slate-400 mt-1">Currently ongoing</div>
           </CardContent>
         </Card>
@@ -1329,7 +1329,7 @@ function BattlesSection() {
             <Clock className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-500">{stats.pendingBattles}</div>
+            <div className="text-2xl font-bold text-orange-500">{stats.pendingBattles?.toLocaleString()}</div>
             <div className="text-xs text-slate-400 mt-1">Waiting for opponent</div>
           </CardContent>
         </Card>
@@ -1857,11 +1857,11 @@ function UserProfile() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-400 dark:text-yellow-300">{user.balance}</div>
+              <div className="text-2xl font-bold text-yellow-400 dark:text-yellow-300">{user.balance?.toLocaleString() || "0"}</div>
               <div className="text-sm text-yellow-200 dark:text-yellow-200">NTIQ Balance</div>
             </div>
             <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-green-400">{user.totalPredictions || 0}</div>
+              <div className="text-2xl font-bold text-green-400">{user.totalPredictions?.toLocaleString() || "0"}</div>
               <div className="text-sm text-slate-400">Total Predictions</div>
             </div>
             <div className="bg-surface-light rounded-lg p-4 text-center">
@@ -1869,7 +1869,7 @@ function UserProfile() {
               <div className="text-sm text-slate-400">Accuracy Rate</div>
             </div>
             <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-purple-400">{user.totalRewards || 0}</div>
+              <div className="text-2xl font-bold text-purple-400">{user.totalRewards?.toLocaleString() || "0"}</div>
               <div className="text-sm text-slate-400">Total Rewards</div>
             </div>
           </div>
