@@ -147,6 +147,25 @@ const TradingViewChart = ({ cryptoId }: TradingViewChartProps) => {
 
   return (
     <div className="relative">
+      {/* Chart Header */}
+      <div className="flex items-center justify-between p-2 sm:p-4 border-b border-border bg-card">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            <h3 className="text-sm sm:text-lg font-semibold">{getCryptoName(cryptoId)}</h3>
+            <span className="text-xs sm:text-sm text-muted-foreground">({symbol})</span>
+          </div>
+          <div className="text-xs text-muted-foreground bg-green-500/10 text-green-400 px-1 sm:px-2 py-1 rounded">
+            TradingView
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-1 sm:space-x-2">
+          <Button variant="outline" size="sm" onClick={toggleFullscreen} className="p-1 sm:p-2">
+            <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4" />
+          </Button>
+        </div>
+      </div>
+
       {/* Chart Content */}
       <div className="h-[700px]">
         <div 
