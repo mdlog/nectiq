@@ -123,7 +123,7 @@ export default function HowToPlay() {
             </TabsTrigger>
             <TabsTrigger value="parlay" className="flex items-center gap-2">
               <Layers className="h-4 w-4" />
-              Parlay
+              TrendRide
             </TabsTrigger>
             <TabsTrigger value="battle" className="flex items-center gap-2">
               <Swords className="h-4 w-4" />
@@ -455,12 +455,12 @@ export default function HowToPlay() {
 
           </TabsContent>
 
-          {/* Parlay Tab Content */}
+          {/* TrendRide Tab Content */}
           <TabsContent value="parlay" className="space-y-12">
-            {/* Parlay Guide */}
+            {/* TrendRide Guide */}
             <section>
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold mb-4">How to Play: Parlay Predictions</h2>
+                <h2 className="text-3xl font-bold mb-4">How to Play: TrendRide Predictions</h2>
                 <p className="text-muted-foreground">Combine multiple predictions for bigger rewards with higher risk</p>
               </div>
               
@@ -469,19 +469,19 @@ export default function HowToPlay() {
                   <CardHeader>
                     <CardTitle className="flex items-center text-cyan-600">
                       <Layers className="mr-2 h-5 w-5" />
-                      What is a Parlay?
+                      What is TrendRide?
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground mb-4">
-                      A parlay combines 2-5 predictions into a single bet. ALL predictions must be correct to win.
+                      TrendRide combines 2-5 predictions into a single bet. ALL predictions must be correct to win.
                     </p>
                     <div className="space-y-3">
                       <div className="flex items-start">
                         <div className="w-6 h-6 bg-cyan-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">1</div>
                         <div>
                           <p className="font-medium">Choose 2-5 Cryptocurrencies</p>
-                          <p className="text-sm text-muted-foreground">Select different cryptocurrencies for your parlay</p>
+                          <p className="text-sm text-muted-foreground">Select different cryptocurrencies for your TrendRide</p>
                         </div>
                       </div>
                       <div className="flex items-start">
@@ -611,7 +611,7 @@ export default function HowToPlay() {
                       <h5 className="font-semibold text-blue-600">Example: 2 Predictions Duration 1 Hour</h5>
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-3">
                         <div className="text-sm">
-                          <div className="font-medium mb-2">Parlay Setup:</div>
+                          <div className="font-medium mb-2">TrendRide Setup:</div>
                           <div>• Bitcoin: UP (1 hour)</div>
                           <div>• Ethereum: DOWN (1 hour)</div>
                           <div>• Stake: 100 NTIQ</div>
@@ -633,7 +633,7 @@ export default function HowToPlay() {
                       <h5 className="font-semibold text-purple-600">Example: 2 Predictions Duration 7 Days</h5>
                       <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 space-y-3">
                         <div className="text-sm">
-                          <div className="font-medium mb-2">Parlay Setup:</div>
+                          <div className="font-medium mb-2">TrendRide Setup:</div>
                           <div>• Bitcoin: UP (7 days)</div>
                           <div>• Ethereum: DOWN (7 days)</div>
                           <div>• Stake: 100 NTIQ</div>
@@ -709,7 +709,7 @@ export default function HowToPlay() {
                 <CardHeader>
                   <CardTitle className="flex items-center text-blue-600">
                     <Info className="mr-2 h-5 w-5" />
-                    Parlay Scenario Examples
+                    TrendRide Scenario Examples
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -719,7 +719,7 @@ export default function HowToPlay() {
                       <h4 className="font-semibold text-green-600">✅ Winning Scenario</h4>
                       <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
                         <div className="space-y-2 text-sm">
-                          <div className="font-medium">3-Prediction Parlay (150 NTIQ stake):</div>
+                          <div className="font-medium">3-Prediction TrendRide (150 NTIQ stake):</div>
                           <div>• Bitcoin: UP ✅ (Correct)</div>
                           <div>• Ethereum: DOWN ✅ (Correct)</div>
                           <div>• Solana: UP ✅ (Correct)</div>
@@ -740,7 +740,7 @@ export default function HowToPlay() {
                       <h4 className="font-semibold text-red-600">❌ Losing Scenario</h4>
                       <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
                         <div className="space-y-2 text-sm">
-                          <div className="font-medium">3-Prediction Parlay (150 NTIQ stake):</div>
+                          <div className="font-medium">3-Prediction TrendRide (150 NTIQ stake):</div>
                           <div>• Bitcoin: UP ✅ (Correct)</div>
                           <div>• Ethereum: DOWN ✅ (Correct)</div>
                           <div>• Solana: UP ❌ (Wrong)</div>
