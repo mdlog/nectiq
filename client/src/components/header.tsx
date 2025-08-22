@@ -138,8 +138,8 @@ export function Header() {
             {isConnected && user && (
               <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
                 <Coins className="text-warning" size={16} />
-                <span className="font-semibold text-sm md:text-base text-gray-900 dark:text-white">{user.balance?.toLocaleString() || "0"}</span>
-                <span className="text-xs text-slate-400">NTIQ</span>
+                <span className="font-semibold text-sm md:text-base text-yellow-400 dark:text-yellow-300">{user.balance?.toLocaleString() || "0"}</span>
+                <span className="text-xs text-yellow-200 dark:text-yellow-200">NTIQ</span>
               </div>
             )}
             

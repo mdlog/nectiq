@@ -436,8 +436,8 @@ export default function UserDashboard() {
             <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="flex items-center space-x-1 sm:space-x-2 bg-surface-light px-2 sm:px-3 py-1 rounded-lg">
                 <Coins className="text-warning" size={14} />
-                <span className="text-sm sm:text-base font-semibold">{user?.balance?.toLocaleString() || "0"}</span>
-                <span className="text-xs text-slate-400">NTIQ</span>
+                <span className="text-sm sm:text-base font-semibold text-yellow-400 dark:text-yellow-300">{user?.balance?.toLocaleString() || "0"}</span>
+                <span className="text-xs text-yellow-200 dark:text-yellow-200">NTIQ</span>
               </div>
               <div className="hidden sm:block">
                 {getRankBadge(stats?.rank)}
@@ -1857,8 +1857,8 @@ function UserProfile() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{user.balance}</div>
-              <div className="text-sm text-slate-400">NTIQ Balance</div>
+              <div className="text-2xl font-bold text-yellow-400 dark:text-yellow-300">{user.balance}</div>
+              <div className="text-sm text-yellow-200 dark:text-yellow-200">NTIQ Balance</div>
             </div>
             <div className="bg-surface-light rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-green-400">{user.totalPredictions || 0}</div>
