@@ -49,19 +49,19 @@ export default function TermsConditions() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                Nectiq is a gamified cryptocurrency price prediction platform designed for entertainment and educational purposes only. The platform allows users to:
+                Nectiq is a professional cryptocurrency price prediction platform that enables users to earn real rewards through accurate predictions. The platform allows users to:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Make predictions about cryptocurrency price movements</li>
-                <li>Stake virtual points on their predictions</li>
-                <li>Earn rewards based on prediction accuracy</li>
+                <li>Stake NTIQ tokens on their predictions</li>
+                <li>Earn real cryptocurrency rewards based on prediction accuracy</li>
                 <li>Compete with other users on leaderboards</li>
                 <li>Track their prediction performance over time</li>
               </ul>
-              <div className="bg-yellow-50 dark:bg-yellow-950/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <p className="font-semibold text-yellow-800 dark:text-yellow-200">Important:</p>
-                <p className="text-yellow-700 dark:text-yellow-300">
-                  All activities on this platform involve virtual points only. No real money or cryptocurrency is involved in the prediction activities.
+              <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="font-semibold text-blue-800 dark:text-blue-200">Important:</p>
+                <p className="text-blue-700 dark:text-blue-300">
+                  This platform involves real cryptocurrency transactions. Users can deposit funds, stake NTIQ tokens, and withdraw earnings as USDT/USDC to their wallets.
                 </p>
               </div>
             </CardContent>
@@ -110,9 +110,9 @@ export default function TermsConditions() {
               <CardTitle>4. Virtual Points and Rewards</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <h4 className="font-semibold">4.1 Virtual Currency</h4>
+              <h4 className="font-semibold">4.1 NTIQ Tokens</h4>
               <p>
-                All points, stakes, and rewards on the platform are virtual and have no real-world monetary value. They cannot be exchanged for real money, cryptocurrency, or any other valuable consideration.
+                NTIQ tokens are the platform's native currency that can be earned through successful predictions and withdrawn as real cryptocurrency (USDT/USDC) to users' wallets. Users can deposit funds and convert them to NTIQ tokens for staking on predictions.
               </p>
 
               <h4 className="font-semibold">4.2 Reward Distribution</h4>
@@ -158,23 +158,23 @@ export default function TermsConditions() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-                <h4 className="font-semibold text-red-800 dark:text-red-200 mb-2">6.1 Educational Purpose Only</h4>
+                <h4 className="font-semibold text-red-800 dark:text-red-200 mb-2">6.1 Risk Disclosure</h4>
                 <p className="text-red-700 dark:text-red-300">
-                  This platform is designed for entertainment and educational purposes only. It is not intended to provide financial advice or encourage real cryptocurrency trading.
+                  Cryptocurrency markets are highly volatile and unpredictable. While our platform enables real earnings through predictions, all activities involve financial risk and potential loss of staked funds.
                 </p>
               </div>
 
               <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
                 <h4 className="font-semibold text-red-800 dark:text-red-200 mb-2">6.2 No Financial Advice</h4>
                 <p className="text-red-700 dark:text-red-300">
-                  Nothing on this platform constitutes financial, investment, trading, or other types of advice. Users should not make real investment decisions based on activities or results from this platform.
+                  This platform provides prediction tools and market data for entertainment purposes. Nothing on this platform constitutes financial, investment, or trading advice. Users are responsible for their own investment decisions.
                 </p>
               </div>
 
               <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
                 <h4 className="font-semibold text-red-800 dark:text-red-200 mb-2">6.3 Market Volatility</h4>
                 <p className="text-red-700 dark:text-red-300">
-                  Cryptocurrency markets are extremely volatile and unpredictable. Past performance on this platform does not indicate future success in real trading.
+                  Cryptocurrency markets are extremely volatile and unpredictable. Users should only stake amounts they can afford to lose and understand that prediction accuracy does not guarantee profits.
                 </p>
               </div>
             </CardContent>

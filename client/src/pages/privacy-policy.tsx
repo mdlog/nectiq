@@ -319,7 +319,7 @@ export default function PrivacyPolicy() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                CryptoPredikt is accessible globally. If you access our platform from outside our primary jurisdiction, please note:
+                Nectiq is accessible globally. If you access our platform from outside our primary jurisdiction, please note:
               </p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>Your data may be transferred and processed in different countries</li>
