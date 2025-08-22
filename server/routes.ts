@@ -1802,36 +1802,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const user = await storage.getUser(userId);
-      if (!user) {
+      // Get fresh user data directly from database
+      const [freshUser] = await db.select({
+        id: users.id,
+        username: users.username,
+        referralCode: users.referralCode,
+        totalReferrals: users.totalReferrals,
+        referralRewards: users.referralRewards
+      }).from(users).where(eq(users.id, userId)).limit(1);
+
+      if (!freshUser) {
         return res.status(404).json({ message: "User not found" });
       }
 
+      console.log(`🔍 [REFERRAL-API] Fresh user data for ${freshUser.username}:`, {
+        totalReferrals: freshUser.totalReferrals,
+        referralRewards: freshUser.referralRewards,
+        referralCode: freshUser.referralCode
+      });
+
       // Get referred users
-      const referredUsers = user.referralCode ? await db.select({
+      const referredUsers = freshUser.referralCode ? await db.select({
         id: users.id,
         username: users.username,
         uid: users.uid,
         joinedAt: users.createdAt,
         rewardAmount: sql<number>`100`.as('rewardAmount') // 100 NTIQ bonus per referral
-      }).from(users).where(eq(users.referredBy, user.id)) : [];
+      }).from(users).where(eq(users.referredBy, freshUser.id)) : [];
 
-      const referralLink = user.referralCode 
-        ? `${req.get('origin') || 'https://nectiq.app'}/?ref=${user.referralCode}`
+      const referralLink = freshUser.referralCode 
+        ? `${req.get('origin') || 'https://nectiq.app'}/?ref=${freshUser.referralCode}`
         : null;
 
-      res.json({
-        referralCode: user.referralCode,
+      const responseData = {
+        referralCode: freshUser.referralCode,
         referralLink,
-        totalReferrals: user.totalReferrals || 0,
-        referralRewards: user.referralRewards || 0,
+        totalReferrals: freshUser.totalReferrals || 0,
+        referralRewards: freshUser.referralRewards || 0,
         referredUsers: referredUsers.map(u => ({
           ...u,
           joinedAt: u.joinedAt?.toISOString()
         }))
-      });
+      };
+
+      console.log(`✅ [REFERRAL-API] Returning data:`, responseData);
+      res.json(responseData);
     } catch (error) {
-      console.error("Error fetching referral data:", error);
+      console.error("❌ [REFERRAL-API] Error fetching referral data:", error);
       res.status(500).json({ message: "Failed to get referral data" });
     }
   });
