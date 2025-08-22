@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAccount, useSwitchChain, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useSwitchChain, useWriteContract, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther, parseUnits } from 'viem';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -289,7 +289,13 @@ export function MultiChainFinancial() {
   // Wagmi hooks for consistent wallet technology
   const { address, isConnected, chain } = useAccount();
   const { switchChain } = useSwitchChain();
-  const { writeContract, data: txHash, isPending: isTransactionPending } = useWriteContract();
+  const { writeContract, data: contractTxHash, isPending: isContractPending } = useWriteContract();
+  const { sendTransaction, data: ethTxHash, isPending: isEthPending } = useSendTransaction();
+  
+  // Use the appropriate transaction hash based on transaction type
+  const txHash = ethTxHash || contractTxHash;
+  const isTransactionPending = isEthPending || isContractPending;
+  
   const { data: transactionReceipt, isLoading: isReceiptLoading } = useWaitForTransactionReceipt({
     hash: txHash,
   });
@@ -778,12 +784,12 @@ export function MultiChainFinancial() {
         description: "Please confirm the transaction in your wallet",
       });
 
-      // Handle ETH transfer using Wagmi
+      // Handle ETH transfer using Wagmi sendTransaction
       if (deposit.tokenType === 'ETH') {
         const ethValue = parseEther(tokenAmount);
         
-        // Send ETH transaction using Wagmi sendTransaction
-        await writeContract({
+        // Send ETH transaction using Wagmi sendTransaction (correct for native ETH transfers)
+        sendTransaction({
           to: secureAdminWallet as `0x${string}`,
           value: ethValue,
         });
@@ -909,8 +915,8 @@ export function MultiChainFinancial() {
       const decimals = tokenConfig.decimals || 6; // USDC/USDT typically use 6 decimals
       const tokenValue = parseUnits(tokenAmount, decimals);
       
-      // Send ERC-20 transaction using Wagmi
-      await writeContract({
+      // Send ERC-20 transaction using Wagmi writeContract (correct for token transfers)
+      writeContract({
         address: tokenConfig.address as `0x${string}`,
         abi: ERC20_TRANSFER_ABI,
         functionName: 'transfer',
