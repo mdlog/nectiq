@@ -90,7 +90,7 @@ export function Header() {
                 location === '/parlay' ? "text-white font-bold" : "text-slate-300 hover:text-white"
               }`}
             >
-              Parlay
+              TrendRide
             </button>
             <button 
               onClick={() => setLocation('/survival')} 
@@ -372,7 +372,7 @@ export function Header() {
                     location === '/parlay' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
                   }`}
                 >
-                  Parlay
+                  TrendRide
                 </button>
                 <button 
                   onClick={() => {

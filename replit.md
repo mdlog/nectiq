@@ -13,6 +13,7 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 
 ## Recent Critical Fixes (August 2025)
 - **✅ DEPOSIT TRANSACTION HASH AUTO-CAPTURE**: Fixed critical issue where deposit transaction hashes were not automatically saved, requiring manual intervention for every deposit. Frontend now automatically updates deposits with transaction hashes via `/api/deposits/:id/update-transaction` endpoint when transactions are sent through Wagmi hooks.
+- **✅ TRENDRIDE REBRANDING COMPLETE**: Successfully migrated all "Parlay" references to "TrendRide" across the platform (August 22, 2025). Updated frontend components, navigation menus (desktop and mobile), UI text, variable names, and function declarations for consistent branding throughout the application.
 
 **Frontend:**
 - **Framework & UI**: React 18 with TypeScript, utilizing Shadcn/ui components and Radix UI primitives, styled with Tailwind CSS.
