@@ -167,26 +167,31 @@ export class BalanceService {
   }
   
   /**
-   * Process battle reward with winner determination
+   * Process battle reward with winner determination (Simplified System)
    */
   static async processBattleReward(
     winnerId: number, 
     battleId: number, 
     stakeAmount: number, 
-    accuracyMultiplier: number, 
     storage: any
   ): Promise<{ success: boolean; newBalance: number; rewardAmount: number }> {
-    const rewardAmount = Math.round(stakeAmount * 2 * accuracyMultiplier); // Winner gets 2x stake with accuracy bonus
+    // Calculate total pool from both stakes
+    const totalPool = stakeAmount * 2;
+    
+    // Apply platform fee (3.5%)
+    const platformFee = Math.round(totalPool * 0.035);
+    const rewardAmount = totalPool - platformFee;
     
     const result = await this.processTransaction({
       userId: winnerId,
       type: 'battle_reward',
       amount: rewardAmount,
-      description: `Battle victory reward (${accuracyMultiplier}x accuracy multiplier)`,
+      description: `Battle victory reward (Total pool: ${totalPool}, Platform fee: ${platformFee})`,
       relatedId: battleId,
       metadata: {
         originalStake: stakeAmount,
-        accuracyMultiplier,
+        totalPool,
+        platformFee,
         calculatedReward: rewardAmount
       }
     }, storage);

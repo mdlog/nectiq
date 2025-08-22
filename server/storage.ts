@@ -1777,26 +1777,19 @@ export class DatabaseStorage implements IStorage {
       }
       // If equal accuracy, it's a tie (winnerId remains null)
 
-      // Calculate reward based on accuracy and stake
+      // Process reward for winner (Simplified System)
       if (winnerId) {
-        const winnerAccuracy = winnerId === battle.challengerId ? challengerAccuracy : challengedAccuracy;
-        let multiplier = 1;
-
-        // Accuracy-based multipliers
-        if (winnerAccuracy <= 0.1) multiplier = 5;
-        else if (winnerAccuracy <= 1) multiplier = 3;
-        else if (winnerAccuracy <= 5) multiplier = 1.5;
-        else multiplier = 1;
-
-        winnerReward = parseFloat(String(battle.stakeAmount)) * 2 * multiplier; // Double stake + multiplier
+        const stakeAmount = parseFloat(String(battle.stakeAmount));
+        const totalPool = stakeAmount * 2;
+        const platformFee = Math.round(totalPool * 0.035);
+        winnerReward = totalPool - platformFee;
 
         // CRITICAL: Use BalanceService for guaranteed real-time balance updates
         try {
           const balanceResult = await BalanceService.processBattleReward(
             winnerId,
             battleId,
-            parseFloat(String(battle.stakeAmount)),
-            multiplier,
+            stakeAmount,
             this
           );
           
