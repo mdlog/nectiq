@@ -61,7 +61,9 @@ function Router() {
       <Route path="/home" component={Dashboard} />
       
       <Route path="/user-dashboard">
-        <UserDashboard />
+        <ProtectedRoute requireWallet={true}>
+          <UserDashboard />
+        </ProtectedRoute>
       </Route>
 
 
