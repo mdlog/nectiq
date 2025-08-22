@@ -160,16 +160,33 @@ export function useRainbowAuth() {
 
   // Auto-authenticate when wallet connects and clear state when disconnected
   React.useEffect(() => {
+    console.log('🔍 [RAINBOW] useEffect state check:', {
+      isConnected,
+      hasAddress: !!address,
+      hasUser: !!user,
+      isUserLoading: isLoading,
+      isPending: authenticateWalletMutation.isPending,
+      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : null
+    });
+
     if (!isConnected) {
       // Wallet is disconnected - clear all user state
       console.log('🌈 [RAINBOW] Wallet disconnected - clearing user state');
       queryClient.removeQueries({ queryKey: ["/api/user"] });
       setGlobalWalletAddress(null);
-    } else if (isConnected && address && !user && !authenticateWalletMutation.isPending) {
+    } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
       console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
       authenticateWalletMutation.mutate(address);
+    } else if (isConnected && address && !user && !isLoading) {
+      console.log('🔍 [RAINBOW] Authentication conditions not met:', {
+        isConnected,
+        hasAddress: !!address,
+        hasUser: !!user,
+        isUserLoading: isLoading,
+        isPending: authenticateWalletMutation.isPending
+      });
     }
-  }, [isConnected, address, user]);
+  }, [isConnected, address, user, isLoading]);
 
   // Set global wallet address for API requests
   React.useEffect(() => {

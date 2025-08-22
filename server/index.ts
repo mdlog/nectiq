@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import MemoryStore from "memorystore";
 import path from "path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -126,9 +127,15 @@ app.get('/api/activities/live', async (req, res) => {
   }
 });
 
-// Session configuration with enhanced debugging
+// Session configuration with persistent MemoryStore
+const sessionStore = MemoryStore(session);
 app.use(session({
   secret: process.env.SESSION_SECRET || 'crypto-predict-session-secret-key',
+  store: new sessionStore({
+    checkPeriod: 86400000, // prune expired entries every 24h
+    max: 100000, // Maximum number of sessions
+    ttl: 86400000 // 24 hours TTL
+  }),
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -136,8 +143,8 @@ app.use(session({
     httpOnly: false, // Allow frontend access to session
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'lax' // Allow cross-origin requests
-  }
-  // Using default session name 'connect.sid' for proper authentication
+  },
+  name: 'connect.sid' // Explicit session name for proper authentication
 }));
 
 // Enhanced CORS middleware - Complete Dynamic SDK support

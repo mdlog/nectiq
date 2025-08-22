@@ -26,11 +26,48 @@ export function ReferralSection() {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  // Fetch referral data
-  const { data: referralData, isLoading } = useQuery<ReferralData>({
+  console.log(`🚀 [REFERRAL] ReferralSection component mounted/rendered`);
+
+  // Fetch referral data with force refresh
+  const { data: referralData, isLoading, error, refetch } = useQuery<ReferralData>({
     queryKey: ["/api/user/referral"],
-    staleTime: 30000, // 30 seconds
+    staleTime: 0, // Force fresh data
+    cacheTime: 0, // Don't cache
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      console.log(`🔍 [REFERRAL] Making API request to /api/user/referral`);
+      const response = await fetch("/api/user/referral", {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      console.log(`🔍 [REFERRAL] API response status:`, response.status);
+      
+      if (!response.ok) {
+        console.log(`❌ [REFERRAL] API error:`, response.status, response.statusText);
+        if (response.status === 401) {
+          console.log(`🔐 [REFERRAL] Authentication required - user not logged in`);
+          return null;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log(`✅ [REFERRAL] API success:`, data);
+      return data;
+    },
   });
+
+  // Force refresh on component mount  
+  const [initialized, setInitialized] = useState(false);
+  if (!initialized) {
+    console.log(`🔄 [REFERRAL] Force refreshing data on mount`);
+    setInitialized(true);
+    refetch();
+  }
 
   // Generate referral code mutation
   const generateCodeMutation = useMutation({

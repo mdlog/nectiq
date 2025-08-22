@@ -1797,8 +1797,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user referral data
   app.get("/api/user/referral", async (req, res) => {
     try {
+      console.log(`🔍 [REFERRAL-API] Session debug:`, {
+        sessionExists: !!(req as any).session,
+        sessionId: (req as any).session?.id,
+        userId: (req as any).session?.userId,
+        walletAddress: (req as any).session?.walletAddress,
+        headers: req.headers.cookie ? 'Has cookie' : 'No cookie'
+      });
+
       const userId = (req as any).session?.userId;
       if (!userId) {
+        console.log(`❌ [REFERRAL-API] No user ID in session`);
         return res.status(401).json({ message: "Authentication required" });
       }
 
