@@ -1857,7 +1857,7 @@ function UserProfile() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-primary">{user.balance}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{user.balance}</div>
               <div className="text-sm text-slate-400">NTIQ Balance</div>
             </div>
             <div className="bg-surface-light rounded-lg p-4 text-center">
