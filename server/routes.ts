@@ -3847,11 +3847,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Development mode stats endpoint (no authentication required)
-  const isDevelopmentMode = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === undefined;
-  
-  if (isDevelopmentMode) {
-    app.get("/api/admin/dev-stats", async (req, res) => {
+  // Statistics endpoint for admin dashboard (available in all environments)
+  app.get("/api/admin/dev-stats", async (req, res) => {
       try {
         console.log("✅ [DEV-STATS-FIXED] Calculating real-time statistics from database");
         
@@ -3889,14 +3886,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
 
-        console.log("✅ [DEV-STATS-SUCCESS] Returning live database statistics:", statistics);
         res.json(statistics);
       } catch (error) {
         console.error("❌ [ADMIN-STATS] Error calculating statistics:", error);
         res.status(500).json({ message: "Failed to get statistics" });
       }
     });
-  }
   
   app.get("/api/admin/stats", requireAdmin, async (req, res) => {
     try {
