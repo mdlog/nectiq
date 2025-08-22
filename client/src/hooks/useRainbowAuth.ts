@@ -146,9 +146,14 @@ export function useRainbowAuth() {
     },
   });
 
-  // Auto-authenticate when wallet connects
+  // Auto-authenticate when wallet connects and clear state when disconnected
   React.useEffect(() => {
-    if (isConnected && address && !user && !authenticateWalletMutation.isPending) {
+    if (!isConnected) {
+      // Wallet is disconnected - clear all user state
+      console.log('🌈 [RAINBOW] Wallet disconnected - clearing user state');
+      queryClient.removeQueries({ queryKey: ["/api/user"] });
+      setGlobalWalletAddress(null);
+    } else if (isConnected && address && !user && !authenticateWalletMutation.isPending) {
       console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
       authenticateWalletMutation.mutate(address);
     }
@@ -156,10 +161,16 @@ export function useRainbowAuth() {
 
   // Set global wallet address for API requests
   React.useEffect(() => {
-    const walletAddress = user?.walletAddress || address;
-    setGlobalWalletAddress(walletAddress || null);
-    console.log('🔐 [RAINBOW] Updated global wallet address for API requests:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
-  }, [user?.walletAddress, address]);
+    if (!isConnected) {
+      // If wallet is disconnected, clear global address
+      setGlobalWalletAddress(null);
+      console.log('🔐 [RAINBOW] Wallet disconnected - cleared global wallet address');
+    } else {
+      const walletAddress = user?.walletAddress || address;
+      setGlobalWalletAddress(walletAddress || null);
+      console.log('🔐 [RAINBOW] Updated global wallet address for API requests:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
+    }
+  }, [isConnected, user?.walletAddress, address]);
 
   return {
     // Wallet state

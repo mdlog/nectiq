@@ -21,7 +21,7 @@ export async function apiRequest(
 ): Promise<Response> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options?.headers,
+    ...(options?.headers as Record<string, string>),
   };
   
   // Add wallet address header if available

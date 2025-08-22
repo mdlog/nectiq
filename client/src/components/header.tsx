@@ -134,11 +134,14 @@ export function Header() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
-              <Coins className="text-warning" size={16} />
-              <span className="font-semibold text-sm md:text-base text-gray-900 dark:text-white">{user?.balance?.toLocaleString() || "0"}</span>
-              <span className="text-xs text-slate-400">NTIQ</span>
-            </div>
+            {/* Only show balance when wallet is connected and user is authenticated */}
+            {isConnected && user && (
+              <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
+                <Coins className="text-warning" size={16} />
+                <span className="font-semibold text-sm md:text-base text-gray-900 dark:text-white">{user.balance?.toLocaleString() || "0"}</span>
+                <span className="text-xs text-slate-400">NTIQ</span>
+              </div>
+            )}
             
             {isConnected && address ? (
               <div className="flex items-center space-x-2">
