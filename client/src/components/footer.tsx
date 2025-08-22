@@ -1,5 +1,6 @@
 import { ChartLine, Github, Twitter, Mail, Shield, FileText, HelpCircle } from "lucide-react";
 import nectiqLogo from "@/assets/nectiq-logo.png";
+import { Link } from "wouter";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -47,14 +48,14 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Platform</h4>
             <ul className="space-y-2">
               <li>
-                <a href="/" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/" className="text-slate-400 hover:text-white transition-colors">
                   Home
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/dashboard" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/user-dashboard" className="text-slate-400 hover:text-white transition-colors">
                   My Dashboard
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors">
@@ -74,22 +75,22 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2">
               <li>
-                <a href="/how-to-play" className="text-slate-400 hover:text-white transition-colors flex items-center">
+                <Link href="/how-to-play" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <HelpCircle size={16} className="mr-2" />
                   How to Play
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/terms-conditions" className="text-slate-400 hover:text-white transition-colors flex items-center">
+                <Link href="/terms-conditions" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <FileText size={16} className="mr-2" />
                   Terms & Conditions
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/privacy-policy" className="text-slate-400 hover:text-white transition-colors flex items-center">
+                <Link href="/privacy-policy" className="text-slate-400 hover:text-white transition-colors flex items-center">
                   <Shield size={16} className="mr-2" />
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-white transition-colors flex items-center">
