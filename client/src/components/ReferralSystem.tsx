@@ -9,6 +9,7 @@ import { Copy, Users, Gift, ExternalLink, Share2, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAccount } from "wagmi";
+import { SocialShare } from "@/components/SocialShare";
 
 interface ReferralData {
   referralCode: string | null;
@@ -154,22 +155,17 @@ export function ReferralSystem() {
     });
   };
 
-  const handleShareReferral = (code: string) => {
-    const shareText = `🚀 Join Nectiq Platform!\n\n✨ Predict cryptocurrency prices and earn NTIQ rewards!\n\n🎁 Use my referral code: ${code}\n\n💰 Get 100 NTIQ bonus to start!\n\n${window.location.origin}/?ref=${code}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: "Join Nectiq Platform",
-        text: shareText,
-        url: `${window.location.origin}/?ref=${code}`,
-      });
-    } else {
-      navigator.clipboard.writeText(shareText);
-      toast({
-        title: "Referral Message Copied!",
-        description: "Referral message has been copied to clipboard for sharing.",
-      });
-    }
+  // Create share data for referral program
+  const createReferralShareData = (code: string, totalReferrals: number = 0, totalRewards: number = 0) => {
+    return {
+      type: 'prediction' as const,
+      title: `Join Nectiq - Crypto Prediction Platform!`,
+      result: `Invited by referral code: ${code}`,
+      accuracy: undefined,
+      reward: 100, // Welcome bonus amount
+      crypto: 'NTIQ',
+      timeframe: `Join ${totalReferrals > 0 ? `${totalReferrals} friends` : 'our community'} and start earning rewards! Get 100 NTIQ welcome bonus with referral code: ${code}`,
+    };
   };
 
   if (isLoading) {
@@ -235,14 +231,14 @@ export function ReferralSystem() {
                     <Copy className="w-4 h-4 mr-2" />
                     Copy Code
                   </Button>
-                  <Button
-                    onClick={() => handleShareReferral(referralData.referralCode!)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
+                  <SocialShare
+                    data={createReferralShareData(
+                      referralData.referralCode!,
+                      referralData.totalReferrals,
+                      referralData.referralRewards
+                    )}
+                    compact={true}
+                  />
                 </div>
               </div>
 
