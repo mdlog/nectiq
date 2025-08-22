@@ -503,7 +503,7 @@ export default function TrendRideSimple() {
         {/* Second Row: Full Width TrendRide History */}
         <div className="w-full">
           {/* TrendRide History Section - Tab-based Active vs Completed */}
-          {!parlaysError && safeParlays.length > 0 && (() => {
+          {!trendRidesError && safeTrendRides.length > 0 && (() => {
               // Helper function to determine TrendRide status using DATABASE isCorrect
               const getTrendRideStatus = (parlay: any) => {
                 const coinPredictions = parlay?.coins || [];
@@ -568,12 +568,12 @@ export default function TrendRideSimple() {
               };
               
               // Separate TrendRides into active and completed based on overall status
-              const activeTrendRides = safeParlays.filter((parlay: any) => {
+              const activeTrendRides = safeTrendRides.filter((parlay: any) => {
                 const status = getTrendRideStatus(parlay);
                 return status === 'active' || status === 'pending'; // Only truly active TrendRides
               });
               
-              const completedTrendRides = safeParlays.filter((parlay: any) => {
+              const completedTrendRides = safeTrendRides.filter((parlay: any) => {
                 const status = getTrendRideStatus(parlay);
                 return status === 'win' || status === 'lose'; // Completed TrendRides (won or lost)
               });
@@ -833,7 +833,7 @@ export default function TrendRideSimple() {
                             
                             // DEBUG: Log TrendRide data in History tab for troubleshooting
                             if (coinPredictions.length > 0) {
-                              console.log(`🔍 [HISTORY-DEBUG] TrendRide ${parlay.id} coins data:`, coinPredictions.map(coin => ({
+                              console.log(`🔍 [HISTORY-DEBUG] TrendRide ${parlay.id} coins data:`, coinPredictions.map((coin: any) => ({
                                 crypto: coin.cryptocurrency,
                                 startPrice: coin.startPrice,
                                 endPrice: coin.endPrice,
