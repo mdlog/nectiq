@@ -3937,41 +3937,96 @@ export class MemStorage implements IStorage {
 
   async getReferralData(userId: number): Promise<any> {
     try {
+      console.log('🎯 [GET-REFERRAL-DATA] Starting for userId:', userId);
+
+      if (!userId || isNaN(userId) || userId <= 0) {
+        console.log('❌ [GET-REFERRAL-DATA] Invalid userId:', userId);
+        throw new Error('Invalid user ID');
+      }
+
       const user = await this.getUser(userId);
+      console.log('🔍 [GET-REFERRAL-DATA] User found:', user ? 'YES' : 'NO', user?.referralCode ? `(Code: ${user.referralCode})` : '(No Code)');
+      
       if (!user) {
+        console.log('❌ [GET-REFERRAL-DATA] User not found for ID:', userId);
         throw new Error('User not found');
       }
 
-      // Get referred users count
-      const referredUsers = await db
-        .select({ id: users.id, username: users.username, createdAt: users.createdAt })
-        .from(users)
-        .where(eq(users.referredBy, userId));
+      // Get referred users who used this user's referral code
+      let referredUsers = [];
+      try {
+        const referredUsersResult = await db
+          .select({ 
+            id: users.id, 
+            username: users.username, 
+            uid: users.uid,
+            createdAt: sql<string>`CAST(${users.createdAt} as TEXT)`.as('createdAt')
+          })
+          .from(users)
+          .where(eq(users.referredBy, userId));
 
-      // Calculate total referral earnings
-      const referralEarnings = await db
-        .select()
-        .from(transactionLogs)
-        .where(and(
-          eq(transactionLogs.userId, userId),
-          eq(transactionLogs.type, 'referral_reward')
-        ));
-
-      const totalEarnings = referralEarnings.reduce((sum, tx) => sum + Number(tx.amount), 0);
-
-      return {
-        referralCode: user.referralCode,
-        referredCount: referredUsers.length,
-        referredUsers: referredUsers.map(u => ({
+        referredUsers = referredUsersResult.map(u => ({
+          id: u.id,
           username: u.username,
-          joinedAt: u.createdAt
-        })),
-        totalEarnings,
+          uid: u.uid,
+          joinedAt: u.createdAt,
+          rewardAmount: 100 // Fixed 100 NTIQ reward
+        }));
+
+        console.log('🔍 [GET-REFERRAL-DATA] Found referred users:', referredUsers.length);
+      } catch (referredUsersError) {
+        console.log('⚠️ [GET-REFERRAL-DATA] Error fetching referred users:', referredUsersError.message);
+        referredUsers = [];
+      }
+
+      // Calculate total referral earnings from transaction logs
+      let totalEarnings = 0;
+      try {
+        const referralEarnings = await db
+          .select({
+            amount: transactionLogs.amount
+          })
+          .from(transactionLogs)
+          .where(and(
+            eq(transactionLogs.userId, userId),
+            eq(transactionLogs.type, 'referral_reward')
+          ));
+
+        totalEarnings = referralEarnings.reduce((sum, tx) => sum + Number(tx.amount), 0);
+        console.log('🔍 [GET-REFERRAL-DATA] Calculated earnings:', totalEarnings);
+      } catch (earningsError) {
+        console.log('⚠️ [GET-REFERRAL-DATA] Error calculating earnings:', earningsError.message);
+        totalEarnings = user.referralRewards || 0;
+      }
+
+      const response = {
+        referralCode: user.referralCode || null,
+        referralLink: user.referralCode ? 
+          `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/?ref=${user.referralCode}` : 
+          null,
+        totalReferrals: referredUsers.length || user.totalReferrals || 0,
+        referralRewards: totalEarnings,
+        referredUsers: referredUsers,
         bonusPerReferral: 100
       };
+
+      console.log('✅ [GET-REFERRAL-DATA] Final response:', response);
+      return response;
     } catch (error) {
       console.error('❌ [GET-REFERRAL-DATA] Error:', error);
-      throw error;
+      
+      // Return a safe default response instead of throwing
+      const safeResponse = {
+        referralCode: null,
+        referralLink: null,
+        totalReferrals: 0,
+        referralRewards: 0,
+        referredUsers: [],
+        bonusPerReferral: 100
+      };
+      
+      console.log('🔄 [GET-REFERRAL-DATA] Returning safe default response');
+      return safeResponse;
     }
   }
 

@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, Users, Gift, ExternalLink, Share2, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAccount } from "wagmi";
 
 interface ReferralData {
   referralCode: string | null;
@@ -26,55 +27,113 @@ interface ReferralData {
 export function ReferralSystem() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { address: walletAddress } = useAccount();
   const [referralCode, setReferralCode] = useState("");
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Fetch referral data
   const { data: referralData, isLoading, refetch } = useQuery<ReferralData>({
     queryKey: ["/api/user/referral"],
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 30000, // 30 seconds cache to avoid unnecessary refetches
+    gcTime: 300000,   // 5 minutes garbage collection
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    retry: 2,
   });
 
+  // Auto-initialize referral code on wallet connect
+  useEffect(() => {
+    console.log("🔍 [REFERRAL] useEffect triggered:", { 
+      walletAddress, 
+      hasInitialized, 
+      isLoading, 
+      hasReferralCode: !!referralData?.referralCode 
+    });
+
+    // Only auto-initialize if:
+    // 1. User has wallet connected
+    // 2. Not already initialized 
+    // 3. Not currently loading
+    // 4. No referral code exists yet
+    if (walletAddress && !hasInitialized && !isLoading && !referralData?.referralCode) {
+      console.log("🔄 [REFERRAL] Auto-triggering referral code generation/retrieval...");
+      setHasInitialized(true);
+      
+      // Small delay to ensure user data is loaded
+      const timeoutId = setTimeout(() => {
+        generateCodeMutation.mutate();
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+    
+    if (referralData?.referralCode && !hasInitialized) {
+      setHasInitialized(true);
+    }
+  }, [walletAddress, hasInitialized, isLoading, referralData?.referralCode]);
+
   // Debug logging
-  console.log("🔍 [REFERRAL] Component data:", { referralData, isLoading });
+  console.log("🔍 [REFERRAL] Component data:", { 
+    referralData, 
+    isLoading,
+    hasReferralCode: !!referralData?.referralCode,
+    referralCode: referralData?.referralCode,
+    walletAddress,
+    hasInitialized
+  });
 
   // Generate referral code mutation
   const generateCodeMutation = useMutation({
     mutationFn: async () => {
+      console.log("🔄 [REFERRAL] Attempting to generate/retrieve referral code");
       const response = await apiRequest("/api/user/referral/generate", {
         method: "POST",
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       return await response.json();
     },
     onSuccess: async (data: any) => {
-      console.log("🎉 [REFERRAL] Generation success:", data);
+      console.log("🎉 [REFERRAL] Generation/retrieval success:", data);
       
-      // Directly update the query cache with the new data
-      queryClient.setQueryData(["/api/user/referral"], {
+      // Get existing referral data or create new structure
+      const currentData = referralData || {
+        totalReferrals: 0,
+        referralRewards: 0,
+        referredUsers: []
+      };
+      
+      // Update the query cache with the referral code data
+      const updatedData = {
+        ...currentData,
         referralCode: data.referralCode,
         referralLink: `${window.location.origin}/?ref=${data.referralCode}`,
-        totalReferrals: 0,
-        totalRewards: 0,
-        referredFriends: []
-      });
+      };
       
-      // Also invalidate to ensure future fetches are fresh
+      queryClient.setQueryData(["/api/user/referral"], updatedData);
+      
+      // Invalidate and refetch to ensure we have the latest data
       queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
       
-      console.log("✅ [REFERRAL] Cache updated directly with:", data.referralCode);
+      console.log("✅ [REFERRAL] Cache updated with referral code:", data.referralCode);
       
-      toast({
-        title: "Referral Code Created Successfully!",
-        description: `Your referral code: ${data.referralCode}`,
-      });
+      // Only show success message for newly generated codes
+      if (data.success && !referralData?.referralCode) {
+        toast({
+          title: "Referral Code Created Successfully!",
+          description: `Your referral code: ${data.referralCode}`,
+        });
+      }
     },
     onError: (error: any) => {
+      console.error("❌ [REFERRAL] Generation/retrieval error:", error);
       toast({
         variant: "destructive",
-        title: "Failed to Create Referral Code",
-        description: error.message || "An error occurred while creating referral code.",
+        title: "Failed to Process Referral Code",
+        description: error.message || "An error occurred while processing referral code.",
       });
     },
   });
@@ -156,7 +215,7 @@ export function ReferralSystem() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {referralData?.referralCode ? (
+          {referralData?.referralCode && referralData.referralCode !== null && referralData.referralCode.trim() !== "" ? (
             <div className="space-y-4">
               {/* Referral Code Display */}
               <div className="flex flex-col sm:flex-row gap-3">
@@ -213,17 +272,19 @@ export function ReferralSystem() {
           ) : (
             <div className="text-center space-y-4">
               <p className="text-gray-600 dark:text-gray-400">
-                You don't have a referral code yet. Generate one now to start inviting friends!
+                {isLoading ? "Checking for existing referral code..." : "You don't have a referral code yet. Generate one now to start inviting friends!"}
               </p>
               <Button
                 onClick={() => {
-                  console.log("🔄 [REFERRAL] Generate button clicked");
+                  console.log("🔄 [REFERRAL] Generate button clicked, current data:", referralData);
                   generateCodeMutation.mutate();
                 }}
-                disabled={generateCodeMutation.isPending}
+                disabled={generateCodeMutation.isPending || isLoading}
                 className="bg-purple-600 hover:bg-purple-700"
               >
-                {generateCodeMutation.isPending ? "Creating..." : "Generate Referral Code"}
+                {generateCodeMutation.isPending ? "Processing..." : 
+                 isLoading ? "Loading..." : 
+                 "Generate Referral Code"}
               </Button>
             </div>
           )}

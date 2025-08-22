@@ -10097,12 +10097,27 @@ Manual balance correction required IMMEDIATELY!`;
     try {
       const userId = (req as any).userId;
       console.log('🎯 [REFERRAL-GET] Getting referral data for userId:', userId);
-      
+
+      if (!userId) {
+        console.log('❌ [REFERRAL-GET] No userId from unified auth');
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
       // Get comprehensive referral data using storage function
       const referralData = await storage.getReferralData(userId);
-      console.log('✅ [REFERRAL-GET] Found referral data:', referralData ? 'YES' : 'NO');
-      
-      res.json(referralData);
+      console.log('✅ [REFERRAL-GET] Found referral data:', referralData ? 'YES' : 'NO', 'Code:', referralData?.referralCode || 'NONE');
+
+      // Ensure we always return a valid response structure
+      const response = {
+        referralCode: referralData?.referralCode || null,
+        referralLink: referralData?.referralLink || null,
+        totalReferrals: referralData?.totalReferrals || 0,
+        referralRewards: referralData?.referralRewards || 0,
+        referredUsers: referralData?.referredUsers || []
+      };
+
+      console.log('📊 [REFERRAL-GET] Sending response:', response);
+      res.json(response);
     } catch (error) {
       console.error('❌ [REFERRAL-GET] Error fetching referral data:', error);
       res.status(500).json({ message: 'Failed to fetch referral data' });
