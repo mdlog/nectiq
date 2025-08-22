@@ -646,10 +646,16 @@ export default function AdminPanel() {
   const updateSettingsMutation = useMutation({
     mutationFn: async (settingsData: any) => {
       console.log('🔧 [SETTINGS] Updating settings:', settingsData);
-      return apiRequest("/api/admin/settings", {
+      console.log('🔧 [SETTINGS] Request data stringified:', JSON.stringify(settingsData));
+      console.log('🔧 [SETTINGS] About to send POST request to /api/admin/settings');
+      
+      const response = await apiRequest("/api/admin/settings", {
         method: "POST",
         body: JSON.stringify(settingsData),
       });
+      
+      console.log('🔧 [SETTINGS] Response received:', response);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
