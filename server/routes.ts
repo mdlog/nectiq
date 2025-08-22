@@ -3936,6 +3936,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Create new user
+  app.post("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const { username, walletAddress, isAdmin } = req.body;
+      
+      // Validate required fields
+      if (!username || !walletAddress) {
+        return res.status(400).json({ message: "Username and wallet address are required" });
+      }
+
+      // Normalize wallet address
+      const normalizedWalletAddress = normalizeWalletAddress(walletAddress);
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByWalletAddress(normalizedWalletAddress);
+      if (existingUser) {
+        return res.status(400).json({ message: "User with this wallet address already exists" });
+      }
+
+      // Create new user
+      const userData = {
+        username,
+        walletAddress: normalizedWalletAddress,
+        authMethod: "manual" as const,
+        isAdmin: Boolean(isAdmin),
+        balance: 1000, // Default starting balance
+      };
+
+      const newUser = await storage.createUser(userData);
+      
+      auditLog('ADMIN_USER_CREATED', { 
+        adminUserId: (req as any).session?.userId,
+        createdUserId: newUser.id,
+        username,
+        walletAddress: normalizedWalletAddress,
+        isAdmin: Boolean(isAdmin)
+      }, req);
+
+      res.json({ success: true, user: newUser });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  // Admin: Update user
+  app.patch("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const { username, email, balance, isAdmin } = req.body;
+      
+      // Get existing user
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Update user with provided fields
+      const updateData: any = {};
+      if (username !== undefined) updateData.username = username;
+      if (email !== undefined) updateData.email = email;
+      if (balance !== undefined) updateData.balance = Number(balance);
+      if (isAdmin !== undefined) updateData.isAdmin = Boolean(isAdmin);
+
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      auditLog('ADMIN_USER_UPDATED', { 
+        adminUserId: (req as any).session?.userId,
+        updatedUserId: userId,
+        changes: updateData
+      }, req);
+
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Admin: Delete user
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Get user data before deletion for audit
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Don't allow deletion of other admin users
+      if (user.isAdmin && user.id !== (req as any).session?.userId) {
+        return res.status(403).json({ message: "Cannot delete other admin users" });
+      }
+
+      // Delete user
+      await storage.deleteUser(userId);
+      
+      auditLog('ADMIN_USER_DELETED', { 
+        adminUserId: (req as any).session?.userId,
+        deletedUserId: userId,
+        deletedUserInfo: {
+          username: user.username,
+          walletAddress: user.walletAddress,
+          isAdmin: user.isAdmin
+        }
+      }, req);
+
+      res.json({ success: true, message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // User Statistics routes (Admin only) - TEMPORARILY DISABLED DUE TO SCHEMA MISMATCH
   // app.get('/api/admin/user-statistics', requireAdmin, getUserStatistics);
   // app.get('/api/admin/user-growth', requireAdmin, getUserGrowthMetrics);

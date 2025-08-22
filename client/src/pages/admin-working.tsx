@@ -2112,13 +2112,75 @@ export default function AdminPanel() {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setSelectedUser(user)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setSelectedUser(user)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="bg-slate-800 border-slate-700">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-white">Edit User</DialogTitle>
+                                  </DialogHeader>
+                                  {selectedUser && (
+                                    <div className="space-y-4">
+                                      <div>
+                                        <Label className="text-white">Username</Label>
+                                        <Input
+                                          value={selectedUser.username || ""}
+                                          onChange={(e) => setSelectedUser({...selectedUser, username: e.target.value})}
+                                          className="bg-slate-700 border-slate-600 text-white"
+                                          placeholder="Enter username"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label className="text-white">Email</Label>
+                                        <Input
+                                          value={selectedUser.email || ""}
+                                          onChange={(e) => setSelectedUser({...selectedUser, email: e.target.value})}
+                                          className="bg-slate-700 border-slate-600 text-white"
+                                          placeholder="user@example.com"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label className="text-white">Balance (NTIQ)</Label>
+                                        <Input
+                                          type="number"
+                                          value={selectedUser.balance || 0}
+                                          onChange={(e) => setSelectedUser({...selectedUser, balance: Number(e.target.value)})}
+                                          className="bg-slate-700 border-slate-600 text-white"
+                                          placeholder="1000"
+                                        />
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <Switch
+                                          checked={selectedUser.isAdmin || false}
+                                          onCheckedChange={(checked) => setSelectedUser({...selectedUser, isAdmin: checked})}
+                                        />
+                                        <Label className="text-white">Admin privileges</Label>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <Button 
+                                          onClick={() => updateUserMutation.mutate({ id: selectedUser.id, data: selectedUser })}
+                                          disabled={updateUserMutation.isPending}
+                                          className="bg-blue-600 hover:bg-blue-700"
+                                        >
+                                          {updateUserMutation.isPending ? "Updating..." : "Update User"}
+                                        </Button>
+                                        <DialogTrigger asChild>
+                                          <Button variant="outline" onClick={() => setSelectedUser(null)}>
+                                            Cancel
+                                          </Button>
+                                        </DialogTrigger>
+                                      </div>
+                                    </div>
+                                  )}
+                                </DialogContent>
+                              </Dialog>
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button size="sm" variant="destructive">
