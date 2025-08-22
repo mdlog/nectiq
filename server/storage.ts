@@ -1436,24 +1436,39 @@ export class DatabaseStorage implements IStorage {
     
     const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
     
-    await db.insert(systemSettings)
-      .values({
-        category,
-        key,
-        value: stringValue,
-        dataType,
-        updatedBy: adminId,
-        updatedAt: new Date()
-      })
-      .onConflictDoUpdate({
-        target: [systemSettings.category, systemSettings.key],
-        set: {
+    // Check if setting exists first
+    const existing = await db.select()
+      .from(systemSettings)
+      .where(and(
+        eq(systemSettings.category, category),
+        eq(systemSettings.key, key)
+      ));
+    
+    if (existing.length > 0) {
+      // Update existing setting
+      await db.update(systemSettings)
+        .set({
           value: stringValue,
           dataType,
           updatedBy: adminId,
           updatedAt: new Date()
-        }
-      });
+        })
+        .where(and(
+          eq(systemSettings.category, category),
+          eq(systemSettings.key, key)
+        ));
+    } else {
+      // Insert new setting
+      await db.insert(systemSettings)
+        .values({
+          category,
+          key,
+          value: stringValue,
+          dataType,
+          updatedBy: adminId,
+          updatedAt: new Date()
+        });
+    }
   }
 
   async createBanner(bannerData: any): Promise<any> {

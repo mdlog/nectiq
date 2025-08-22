@@ -718,16 +718,6 @@ function getContractConfiguration() {
 const depositSecurity = new AutomatedDepositSecurity(storage);
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // DEBUG: Global middleware to log ALL requests to /api/admin/settings
-  app.use('/api/admin/settings', (req, res, next) => {
-    console.log('🔧 [GLOBAL-DEBUG] Request to /api/admin/settings');
-    console.log('🔧 [GLOBAL-DEBUG] Method:', req.method);
-    console.log('🔧 [GLOBAL-DEBUG] URL:', req.url);
-    console.log('🔧 [GLOBAL-DEBUG] Headers Content-Type:', req.headers['content-type']);
-    console.log('🔧 [GLOBAL-DEBUG] Body present:', !!req.body);
-    console.log('🔧 [GLOBAL-DEBUG] Body content:', JSON.stringify(req.body, null, 2));
-    next();
-  });
   // URGENT DEBUGGING TEST ROUTE - PLACED FIRST
   app.get('/api/test-route-priority', (req: Request, res: Response) => {
     console.log('🎯 [URGENT-TEST] First route hit successfully!');
@@ -7300,10 +7290,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/admin/settings", requireAdmin, async (req, res) => {
-    console.log('🔧 [SETTINGS-POST] Received settings update request');
-    console.log('🔧 [SETTINGS-POST] Request body:', JSON.stringify(req.body, null, 2));
-    console.log('🔧 [SETTINGS-POST] Admin ID:', req.session.userId);
-    
     try {
       const { platform, security, exchangeRates } = req.body;
       const adminId = req.session.userId;
