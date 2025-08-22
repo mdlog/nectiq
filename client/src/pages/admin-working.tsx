@@ -648,7 +648,7 @@ export default function AdminPanel() {
       console.log('🔧 [SETTINGS] Updating settings:', settingsData);
       return apiRequest("/api/admin/settings", {
         method: "POST",
-        body: settingsData,
+        body: JSON.stringify(settingsData),
       });
     },
     onSuccess: () => {
