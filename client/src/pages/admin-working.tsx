@@ -318,10 +318,16 @@ export default function AdminPanel() {
   };
 
   // Queries - Use development mode endpoint for statistics
-  const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
+  const { data: adminStats, isLoading: statsLoading, error: statsError } = useQuery<AdminStats>({
     queryKey: ["/api/admin/dev-stats"],
     refetchInterval: 30000,
   });
+
+  // Format number with commas
+  const formatNumber = (num: number | string): string => {
+    if (!num && num !== 0) return '0';
+    return Number(num).toLocaleString();
+  };
 
   const { data: usersResponse, isLoading: usersLoading, error: usersError } = useQuery<{
     users: User[];
@@ -1783,7 +1789,7 @@ export default function AdminPanel() {
                       <p className="text-3xl font-bold text-white">
                         {statsLoading ? (
                           <div className="animate-pulse bg-slate-600 h-8 w-16 rounded"></div>
-                        ) : (adminStats?.totalUsers || 0)}
+                        ) : formatNumber(adminStats?.totalUsers || 0)}
                       </p>
                     </div>
                     <div className="p-3 bg-blue-500/20 rounded-xl">
@@ -1801,7 +1807,7 @@ export default function AdminPanel() {
                       <p className="text-3xl font-bold text-white">
                         {statsLoading ? (
                           <div className="animate-pulse bg-slate-600 h-8 w-16 rounded"></div>
-                        ) : (adminStats?.totalPredictions || 0)}
+                        ) : formatNumber(adminStats?.totalPredictions || 0)}
                       </p>
                     </div>
                     <div className="p-3 bg-green-500/20 rounded-xl">
@@ -1819,7 +1825,7 @@ export default function AdminPanel() {
                       <p className="text-3xl font-bold text-white">
                         {statsLoading ? (
                           <div className="animate-pulse bg-slate-600 h-8 w-20 rounded"></div>
-                        ) : `${adminStats?.platformAccuracy || 0}%`}
+                        ) : `${formatNumber(adminStats?.platformAccuracy || 0)}%`}
                       </p>
                       <p className="text-xs text-yellow-400 font-medium">ACCURACY</p>
                     </div>
@@ -1838,7 +1844,7 @@ export default function AdminPanel() {
                       <p className="text-3xl font-bold text-white">
                         {statsLoading ? (
                           <div className="animate-pulse bg-slate-600 h-8 w-20 rounded"></div>
-                        ) : `${adminStats?.totalNTIQCirculating || 0}`}
+                        ) : formatNumber(adminStats?.totalNTIQCirculating || 0)}
                       </p>
                       <p className="text-xs text-orange-400 font-medium">NTIQ</p>
                     </div>
@@ -1857,7 +1863,7 @@ export default function AdminPanel() {
                       <p className="text-3xl font-bold text-white">
                         {statsLoading ? (
                           <div className="animate-pulse bg-slate-600 h-8 w-16 rounded"></div>
-                        ) : (adminStats?.recentBattles || 0)}
+                        ) : formatNumber(adminStats?.recentBattles || 0)}
                       </p>
                     </div>
                     <div className="p-3 bg-purple-500/20 rounded-xl">
@@ -1887,7 +1893,7 @@ export default function AdminPanel() {
                         <div>
                           <p className="text-sm text-slate-400">Platform Accuracy</p>
                           <p className="text-lg font-bold text-white">
-                            {statsLoading ? "Loading..." : `${adminStats?.platformAccuracy || 0}%`}
+                            {statsLoading ? "Loading..." : `${formatNumber(adminStats?.platformAccuracy || 0)}%`}
                           </p>
                         </div>
                       </div>
@@ -1900,7 +1906,7 @@ export default function AdminPanel() {
                         <div>
                           <p className="text-sm text-slate-400">NTIQ Circulating</p>
                           <p className="text-lg font-bold text-white">
-                            {statsLoading ? "Loading..." : (adminStats?.totalNTIQCirculating || 0)} NTIQ
+                            {statsLoading ? "Loading..." : `${formatNumber(adminStats?.totalNTIQCirculating || 0)} NTIQ`}
                           </p>
                         </div>
                       </div>
@@ -2076,7 +2082,7 @@ export default function AdminPanel() {
                           <TableCell className="font-mono text-xs">
                             {user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 'N/A'}
                           </TableCell>
-                          <TableCell>{user.balance} NTIQ</TableCell>
+                          <TableCell>{formatNumber(user.balance)} NTIQ</TableCell>
                           <TableCell>
                             <Badge variant={user.isAdmin ? "default" : "secondary"}>
                               {user.isAdmin ? "Admin" : "User"}

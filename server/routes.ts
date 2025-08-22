@@ -3875,18 +3875,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .select({ total: sql<number>`sum(${users.balance})` })
           .from(users);
         
-        const totalUsers = totalUsersResult.count || 0;
-        const totalPredictions = totalPredictionsResult.count || 0;
-        const totalBattles = totalBattlesResult.count || 0;
-        const totalNtiqCirculating = Math.round(totalNtiqCirculatingResult.total || 0);
+        const totalUsers = Number(totalUsersResult.count) || 0;
+        const totalPredictions = Number(totalPredictionsResult.count) || 0;
+        const totalBattles = Number(totalBattlesResult.count) || 0;
+        const totalNtiqCirculating = Math.round(Number(totalNtiqCirculatingResult.total) || 0);
         
         const statistics = {
-          totalUsers: totalUsers.toString(),
-          totalPredictions: totalPredictions.toString(),
+          totalUsers: totalUsers,
+          totalPredictions: totalPredictions,
           platformAccuracy: 0,
           totalNTIQCirculating: totalNtiqCirculating,
-          recentBattles: totalBattles.toString()
+          recentBattles: totalBattles
         };
+
 
         console.log("✅ [DEV-STATS-SUCCESS] Returning live database statistics:", statistics);
         res.json(statistics);
