@@ -4202,13 +4202,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User with this wallet address already exists" });
       }
 
+      // Get starting balance from system settings
+      let startingBalance = 1000; // Default fallback
+      try {
+        const settings = await storage.getSystemSettings();
+        startingBalance = settings.platform?.startingBalance || 1000;
+        console.log(`💰 [SETTINGS] Using starting balance: ${startingBalance} NTIQ`);
+      } catch (error) {
+        console.error('⚠️ [SETTINGS] Failed to get starting balance, using default:', error);
+      }
+
       // Create new user
       const userData = {
         username,
         walletAddress: normalizedWalletAddress,
         authMethod: "manual" as const,
         isAdmin: Boolean(isAdmin),
-        balance: 1000, // Default starting balance
+        balance: startingBalance,
       };
 
       const newUser = await storage.createUser(userData);
@@ -6182,8 +6192,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid wallet address format" });
       }
 
+      // Get default starting balance from system settings  
+      let defaultBalance = 1000; // Fallback
+      try {
+        const settings = await storage.getSystemSettings();
+        defaultBalance = settings.platform?.startingBalance || 1000;
+      } catch (error) {
+        console.error('⚠️ [SETTINGS] Failed to get default balance:', error);
+      }
+      
       // Validate balance (must be non-negative integer, max 1M)
-      const numBalance = Number(balance || 1000);
+      const numBalance = Number(balance || defaultBalance);
       if (isNaN(numBalance) || !Number.isInteger(numBalance) || numBalance < 0 || numBalance > 1000000) {
         return res.status(400).json({ message: "Balance must be 0-1000000 PTS" });
       }

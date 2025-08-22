@@ -210,6 +210,23 @@ export default function AdminPanel() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterTimeframe, setFilterTimeframe] = useState("all");
   
+  // Settings state
+  const [settings, setSettings] = useState({
+    platform: {
+      startingBalance: 1000,
+      minStakeAmount: 50,
+      maxStakeAmount: 500,
+      maxPredictionsPerUser: 10,
+      maintenanceMode: false,
+      userRegistrationEnabled: true
+    },
+    token: {
+      startingBalance: 1000,
+      minStakeAmount: 50,
+      maxStakeAmount: 500
+    }
+  });
+  
   // State untuk pagination users
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
@@ -468,6 +485,32 @@ export default function AdminPanel() {
     refetchInterval: 3000, // Update setiap 3 detik
   });
 
+  // Query untuk system settings
+  const { data: systemSettings, isLoading: settingsLoading } = useQuery({
+    queryKey: ["/api/admin/settings"],
+    refetchInterval: 30000,
+    onSuccess: (data) => {
+      if (data) {
+        console.log('🔧 [SETTINGS] Loaded settings:', data);
+        setSettings({
+          platform: {
+            startingBalance: data.platform?.startingBalance || 1000,
+            minStakeAmount: data.platform?.minStakeAmount || 50,
+            maxStakeAmount: data.platform?.maxStakeAmount || 500,
+            maxPredictionsPerUser: data.platform?.maxPredictionsPerUser || 10,
+            maintenanceMode: data.platform?.maintenanceMode || false,
+            userRegistrationEnabled: data.platform?.userRegistrationEnabled !== false
+          },
+          token: {
+            startingBalance: data.platform?.startingBalance || 1000,
+            minStakeAmount: data.platform?.minStakeAmount || 50,
+            maxStakeAmount: data.platform?.maxStakeAmount || 500
+          }
+        });
+      }
+    }
+  });
+
   // Query untuk data parlay predictions - gunakan detailed endpoint
   const { data: trendRideData, isLoading: trendRideLoading, refetch: refetchTrendRides } = useQuery({
     queryKey: ["/api/admin/parlays/detailed"],
@@ -598,6 +641,72 @@ export default function AdminPanel() {
       });
     },
   });
+
+  // Settings mutations
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (settingsData: any) => {
+      console.log('🔧 [SETTINGS] Updating settings:', settingsData);
+      return apiRequest("/api/admin/settings", {
+        method: "POST",
+        body: settingsData,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      toast({ 
+        title: "Settings Updated", 
+        description: "Platform settings have been updated successfully",
+        variant: "default"
+      });
+    },
+    onError: (error: any) => {
+      console.error('❌ [SETTINGS] Update failed:', error);
+      toast({ 
+        title: "Update Failed", 
+        description: error.message || "Failed to update settings",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Settings update handlers
+  const updatePlatformSetting = async (key: string, value: any) => {
+    console.log(`🔧 [SETTINGS] Updating platform.${key} to:`, value);
+    
+    const settingData = {
+      platform: {
+        [key]: value
+      }
+    };
+    
+    try {
+      await updateSettingsMutation.mutateAsync(settingData);
+      // Update local state immediately
+      setSettings(prev => ({
+        ...prev,
+        platform: {
+          ...prev.platform,
+          [key]: value
+        },
+        token: {
+          ...prev.token,
+          ...(key === 'startingBalance' || key === 'minStakeAmount' || key === 'maxStakeAmount' ? { [key]: value } : {})
+        }
+      }));
+    } catch (error) {
+      console.error(`❌ [SETTINGS] Failed to update ${key}:`, error);
+    }
+  };
+
+  const toggleMaintenanceMode = () => {
+    const newValue = !settings.platform.maintenanceMode;
+    updatePlatformSetting('maintenanceMode', newValue);
+  };
+
+  const toggleUserRegistration = () => {
+    const newValue = !settings.platform.userRegistrationEnabled;
+    updatePlatformSetting('userRegistrationEnabled', newValue);
+  };
 
   // Helper function to detect mobile device
   const isMobileDevice = () => {
@@ -4012,9 +4121,15 @@ export default function AdminPanel() {
                       <Label className="text-white">Maintenance Mode</Label>
                       <p className="text-sm text-slate-400">Enable platform maintenance</p>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant={settings.platform.maintenanceMode ? "destructive" : "outline"} 
+                      size="sm"
+                      onClick={toggleMaintenanceMode}
+                      disabled={updateSettingsMutation.isPending}
+                      data-testid="button-toggle-maintenance"
+                    >
                       <Settings className="mr-2" size={16} />
-                      {maintenanceMode ? 'Disable' : 'Enable'}
+                      {settings.platform.maintenanceMode ? 'Disable' : 'Enable'}
                     </Button>
                   </div>
                   
@@ -4023,9 +4138,15 @@ export default function AdminPanel() {
                       <Label className="text-white">New User Registration</Label>
                       <p className="text-sm text-slate-400">Allow new users to register</p>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant={settings.platform.userRegistrationEnabled ? "default" : "outline"} 
+                      size="sm"
+                      onClick={toggleUserRegistration}
+                      disabled={updateSettingsMutation.isPending}
+                      data-testid="button-toggle-registration"
+                    >
                       <UserPlus className="mr-2" size={16} />
-                      Enabled
+                      {settings.platform.userRegistrationEnabled ? 'Enabled' : 'Disabled'}
                     </Button>
                   </div>
                   
@@ -4037,10 +4158,26 @@ export default function AdminPanel() {
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
-                        defaultValue={10}
+                        value={settings.platform.maxPredictionsPerUser}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 0;
+                          setSettings(prev => ({
+                            ...prev,
+                            platform: { ...prev.platform, maxPredictionsPerUser: value }
+                          }));
+                        }}
                         className="w-20 bg-slate-700 border-slate-600 text-white"
+                        data-testid="input-prediction-limits"
                       />
-                      <Button variant="outline" size="sm">Update</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => updatePlatformSetting('maxPredictionsPerUser', settings.platform.maxPredictionsPerUser)}
+                        disabled={updateSettingsMutation.isPending}
+                        data-testid="button-update-prediction-limits"
+                      >
+                        {updateSettingsMutation.isPending ? "Updating..." : "Update"}
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -4062,10 +4199,27 @@ export default function AdminPanel() {
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
-                        defaultValue={1000}
+                        value={settings.token.startingBalance}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 0;
+                          setSettings(prev => ({
+                            ...prev,
+                            token: { ...prev.token, startingBalance: value },
+                            platform: { ...prev.platform, startingBalance: value }
+                          }));
+                        }}
                         className="w-24 bg-slate-700 border-slate-600 text-white"
+                        data-testid="input-starting-balance"
                       />
-                      <Button variant="outline" size="sm">Update</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => updatePlatformSetting('startingBalance', settings.token.startingBalance)}
+                        disabled={updateSettingsMutation.isPending}
+                        data-testid="button-update-starting-balance"
+                      >
+                        {updateSettingsMutation.isPending ? "Updating..." : "Update"}
+                      </Button>
                     </div>
                   </div>
                   
@@ -4077,10 +4231,27 @@ export default function AdminPanel() {
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
-                        defaultValue={50}
+                        value={settings.token.minStakeAmount}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 0;
+                          setSettings(prev => ({
+                            ...prev,
+                            token: { ...prev.token, minStakeAmount: value },
+                            platform: { ...prev.platform, minStakeAmount: value }
+                          }));
+                        }}
                         className="w-20 bg-slate-700 border-slate-600 text-white"
+                        data-testid="input-min-stake"
                       />
-                      <Button variant="outline" size="sm">Update</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => updatePlatformSetting('minStakeAmount', settings.token.minStakeAmount)}
+                        disabled={updateSettingsMutation.isPending}
+                        data-testid="button-update-min-stake"
+                      >
+                        {updateSettingsMutation.isPending ? "Updating..." : "Update"}
+                      </Button>
                     </div>
                   </div>
                   
@@ -4092,10 +4263,27 @@ export default function AdminPanel() {
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
-                        defaultValue={500}
+                        value={settings.token.maxStakeAmount}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 0;
+                          setSettings(prev => ({
+                            ...prev,
+                            token: { ...prev.token, maxStakeAmount: value },
+                            platform: { ...prev.platform, maxStakeAmount: value }
+                          }));
+                        }}
                         className="w-20 bg-slate-700 border-slate-600 text-white"
+                        data-testid="input-max-stake"
                       />
-                      <Button variant="outline" size="sm">Update</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => updatePlatformSetting('maxStakeAmount', settings.token.maxStakeAmount)}
+                        disabled={updateSettingsMutation.isPending}
+                        data-testid="button-update-max-stake"
+                      >
+                        {updateSettingsMutation.isPending ? "Updating..." : "Update"}
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
