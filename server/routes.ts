@@ -7290,6 +7290,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/admin/settings", requireAdmin, async (req, res) => {
+    console.log('🔧 [SETTINGS-POST] Received settings update request');
+    console.log('🔧 [SETTINGS-POST] Request body:', JSON.stringify(req.body, null, 2));
+    console.log('🔧 [SETTINGS-POST] Admin ID:', req.session.userId);
+    
     try {
       const { platform, security, exchangeRates } = req.body;
       const adminId = req.session.userId;
