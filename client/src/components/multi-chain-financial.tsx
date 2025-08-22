@@ -278,6 +278,7 @@ export function MultiChainFinancial() {
   const [confirmationEthAmount, setConfirmationEthAmount] = useState<string>("0");
   const [expandedDeposits, setExpandedDeposits] = useState<Set<number>>(new Set());
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
+  const [processedHashes, setProcessedHashes] = useState<Set<string>>(new Set());
   
   // Pagination states
   const [depositPage, setDepositPage] = useState(1);
@@ -837,10 +838,7 @@ export function MultiChainFinancial() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      toast({
-        title: "Deposit Updated",
-        description: "Transaction hash has been saved and deposit is being processed",
-      });
+      // Toast notification removed to prevent duplicate notifications
     },
     onError: (error: any) => {
       console.error('❌ [DEPOSIT-UPDATE] Failed to update deposit:', error);
@@ -854,12 +852,7 @@ export function MultiChainFinancial() {
 
   // Handle transaction success/failure using useEffect
   useEffect(() => {
-    if (txHash && !isTransactionPending) {
-      toast({
-        title: "Transaction Sent",
-        description: `Transaction hash: ${txHash}`,
-      });
-      
+    if (txHash && !isTransactionPending && !processedHashes.has(txHash)) {
       console.log('🔧 [WALLET-SUCCESS] Wagmi transaction sent:', txHash);
 
       // CRITICAL FIX: Update the most recent deposit with transaction hash
@@ -868,26 +861,30 @@ export function MultiChainFinancial() {
         const latestDeposit = deposits.find(d => d.status === 'pending' && !d.transactionHash);
         if (latestDeposit) {
           console.log(`🔧 [DEPOSIT-FIX] Updating deposit ${latestDeposit.id} with transaction hash:`, txHash);
+          
+          // Mark this hash as processed to prevent duplicates
+          setProcessedHashes(prev => new Set(prev).add(txHash));
+          
           updateDepositMutation.mutate({
             depositId: latestDeposit.id,
             transactionHash: txHash,
             status: 'processing',
+          });
+
+          toast({
+            title: "Transaction Sent",
+            description: `Transaction hash saved and deposit is processing`,
           });
         } else {
           console.warn('🚨 [DEPOSIT-WARNING] No pending deposit found to update with transaction hash');
         }
       }
     }
-  }, [txHash, isTransactionPending, deposits, updateDepositMutation]);
+  }, [txHash, isTransactionPending, deposits, updateDepositMutation, processedHashes]);
 
   // Handle contract transaction hash (for ERC-20 tokens like USDC/USDT)
   useEffect(() => {
-    if (contractTxHash && !isContractPending) {
-      toast({
-        title: "Token Transaction Sent",
-        description: `Token transaction hash: ${contractTxHash}`,
-      });
-      
+    if (contractTxHash && !isContractPending && !processedHashes.has(contractTxHash)) {
       console.log('🔧 [CONTRACT-SUCCESS] Wagmi contract transaction sent:', contractTxHash);
 
       // CRITICAL FIX: Update the most recent deposit with contract transaction hash
@@ -895,17 +892,26 @@ export function MultiChainFinancial() {
         const latestDeposit = deposits.find(d => d.status === 'pending' && !d.transactionHash);
         if (latestDeposit) {
           console.log(`🔧 [DEPOSIT-FIX] Updating deposit ${latestDeposit.id} with contract transaction hash:`, contractTxHash);
+          
+          // Mark this hash as processed to prevent duplicates
+          setProcessedHashes(prev => new Set(prev).add(contractTxHash));
+          
           updateDepositMutation.mutate({
             depositId: latestDeposit.id,
             transactionHash: contractTxHash,
             status: 'processing',
+          });
+
+          toast({
+            title: "Token Transaction Sent",
+            description: `Transaction hash saved and deposit is processing`,
           });
         } else {
           console.warn('🚨 [DEPOSIT-WARNING] No pending deposit found to update with contract transaction hash');
         }
       }
     }
-  }, [contractTxHash, isContractPending, deposits, updateDepositMutation]);
+  }, [contractTxHash, isContractPending, deposits, updateDepositMutation, processedHashes]);
 
   // Handle sendTransaction errors
   useEffect(() => {
