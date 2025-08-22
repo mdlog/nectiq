@@ -58,14 +58,14 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/leaderboard" className="text-slate-400 hover:text-white transition-colors">
                   Leaderboard
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/user-dashboard" className="text-slate-400 hover:text-white transition-colors">
                   Reward History
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
