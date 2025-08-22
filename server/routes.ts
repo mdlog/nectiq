@@ -961,11 +961,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Wallet Connect Authentication endpoint
   app.post("/api/auth/wallet-connect", async (req, res) => {
     try {
-      const { walletAddress } = req.body;
+      const { walletAddress, referralCode } = req.body;
       
       if (!walletAddress) {
         return res.status(400).json({ message: "Wallet address is required" });
       }
+
+      console.log(`🎯 [REFERRAL] Wallet connect with referral code:`, referralCode || 'None');
 
       const normalizedAddress = normalizeWalletAddress(walletAddress);
       let dbUser = null; // Declare outside try block for proper scoping
@@ -988,6 +990,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Find or create user by wallet
         console.log(`🔍 [WALLET-DEBUG] Looking up user by wallet address`);
         dbUser = await storage.getUserByWalletAddress(normalizedAddress);
+        
+        const isNewUser = !dbUser;
         if (!dbUser) {
           console.log(`🔍 [WALLET-DEBUG] User not found, creating new user`);
           const adminWallets = getAdminWalletAddresses();
@@ -1004,6 +1008,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`✅ [WALLET-DEBUG] User created successfully: ${username}, ID: ${dbUser.id}`);
           
           console.log(`🔐 [SERVER] Auto-registered wallet user: ${username}, admin: ${isAdmin}, wallet: ${normalizedAddress.slice(0, 6)}...`);
+
+          // Process referral reward if user is new and has referral code
+          if (referralCode && !isAdmin) {
+            try {
+              console.log(`🎯 [REFERRAL] Processing referral for new user ${username} with code: ${referralCode}`);
+              
+              // Validate referral code format (8 characters, alphanumeric)
+              if (referralCode.length === 8 && /^[A-Z0-9]+$/.test(referralCode)) {
+                const referralResult = await storage.processReferral(referralCode, dbUser.id);
+                
+                if (referralResult.success) {
+                  console.log(`✅ [REFERRAL] Referral processed successfully:`, {
+                    newUserBonus: referralResult.newUserBonus,
+                    referrerBonus: referralResult.referrerBonus,
+                    referrerUsername: referralResult.referrerUsername
+                  });
+                  
+                  // Update user balance in our local object for response
+                  dbUser.balance = (dbUser.balance || 0) + referralResult.newUserBonus;
+                } else {
+                  console.warn(`⚠️ [REFERRAL] Referral processing failed: ${referralResult.message}`);
+                }
+              } else {
+                console.warn(`⚠️ [REFERRAL] Invalid referral code format: ${referralCode}`);
+              }
+            } catch (referralError) {
+              console.error(`❌ [REFERRAL] Error processing referral:`, referralError);
+              // Continue with user creation even if referral fails
+            }
+          }
         } else {
           console.log(`✅ [WALLET-DEBUG] Existing user found: ${dbUser.username}, ID: ${dbUser.id}`);
         }

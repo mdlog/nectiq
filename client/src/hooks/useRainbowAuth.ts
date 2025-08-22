@@ -6,6 +6,7 @@ import { useLocation } from 'wouter';
 import { apiRequest, setGlobalWalletAddress } from '@/lib/queryClient';
 import type { User } from "@shared/schema";
 import { useWalletConnectionStatus } from './useWalletConnectionStatus';
+import { getStoredReferralCode, clearStoredReferralCode } from '@/lib/referralHandler';
 
 export function useRainbowAuth() {
   const { address, isConnected, chain } = useAccount();
@@ -31,11 +32,16 @@ export function useRainbowAuth() {
       console.log('🌈 [RAINBOW] Authenticating wallet:', walletAddress);
       console.log('🌈 [RAINBOW] Chain info:', { chainId: chain?.id, chainName: chain?.name });
       
+      // Check for stored referral code
+      const referralCode = getStoredReferralCode();
+      console.log('🎯 [REFERRAL] Found stored referral code:', referralCode);
+      
       try {
         const requestBody = { 
           walletAddress: walletAddress.toLowerCase(),
           chainId: chain?.id,
-          chainName: chain?.name
+          chainName: chain?.name,
+          ...(referralCode && { referralCode })
         };
         
         console.log('🌈 [RAINBOW] Request payload:', requestBody);
@@ -71,6 +77,12 @@ export function useRainbowAuth() {
     },
     onSuccess: (data) => {
       console.log('✅ [RAINBOW] Wallet authenticated successfully:', data);
+      
+      // Clear referral code after successful authentication (it's been processed)
+      if (getStoredReferralCode()) {
+        clearStoredReferralCode();
+        console.log('🧹 [REFERRAL] Cleared processed referral code');
+      }
       
       // Note: Wallet connection notification is handled by useWalletConnectionStatus
       // to prevent duplicate notifications and ensure it only shows on first connection

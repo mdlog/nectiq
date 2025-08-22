@@ -18,6 +18,8 @@ import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
 
 import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
+import { handleReferralFromURL } from "@/lib/referralHandler";
+import { useEffect } from 'react';
 
 
 // Suppress wallet extension conflicts in console
@@ -136,6 +138,11 @@ function Router() {
 
 function App() {
   const { showWarning, dismissWarning } = useMobileDetection();
+
+  // Handle referral codes from URL on app startup
+  useEffect(() => {
+    handleReferralFromURL();
+  }, []);
 
   return (
     <TooltipProvider>
