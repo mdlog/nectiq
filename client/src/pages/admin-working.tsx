@@ -470,12 +470,12 @@ export default function AdminPanel() {
     gcTime: 0, // Tidak ada cache 
   });
 
-  // Debug: Tambahkan effect untuk debug parlay data
+  // Debug: Tambahkan effect untuk debug trendride data
   useEffect(() => {
-    console.log('🔍 [PARLAY-DETAILED-DEBUG] Query state:', { 
-      parlayData, 
-      parlayLoading, 
-      dataLength: parlayData?.length 
+    console.log('🔍 [TRENDRIDE-DETAILED-DEBUG] Query state:', { 
+      trendRideData, 
+      trendRideLoading, 
+      dataLength: trendRideData?.length 
     });
     if (trendRideData) {
       console.log('📊 [TRENDRIDE-DETAILED-DEBUG] Sample detailed data:', trendRideData[0]);
