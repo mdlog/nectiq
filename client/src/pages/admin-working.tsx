@@ -511,7 +511,8 @@ export default function AdminPanel() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       return apiRequest(`/api/admin/users/${id}`, {
         method: "PATCH",
-        body: data,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
     },
     onSuccess: () => {

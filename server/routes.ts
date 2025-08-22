@@ -1760,6 +1760,197 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user referral data
+  app.get("/api/user/referral", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get referred users
+      const referredUsers = user.referralCode ? await db.select({
+        id: users.id,
+        username: users.username,
+        uid: users.uid,
+        joinedAt: users.createdAt,
+        rewardAmount: sql<number>`100`.as('rewardAmount') // 100 NTIQ bonus per referral
+      }).from(users).where(eq(users.referredBy, user.id)) : [];
+
+      const referralLink = user.referralCode 
+        ? `${req.get('origin') || 'https://nectiq.app'}/?ref=${user.referralCode}`
+        : null;
+
+      res.json({
+        referralCode: user.referralCode,
+        referralLink,
+        totalReferrals: user.totalReferrals || 0,
+        referralRewards: user.referralRewards || 0,
+        referredUsers: referredUsers.map(u => ({
+          ...u,
+          joinedAt: u.joinedAt?.toISOString()
+        }))
+      });
+    } catch (error) {
+      console.error("Error fetching referral data:", error);
+      res.status(500).json({ message: "Failed to get referral data" });
+    }
+  });
+
+  // Generate referral code
+  app.post("/api/user/referral/generate", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user already has a referral code
+      if (user.referralCode) {
+        return res.json({
+          success: true,
+          referralCode: user.referralCode,
+          message: "Referral code already exists"
+        });
+      }
+
+      // Generate unique 8-character referral code
+      let referralCode;
+      let isUnique = false;
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      while (!isUnique && attempts < maxAttempts) {
+        // Generate code with letters and numbers
+        referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+        
+        // Check if code is unique
+        const existingUser = await db.select().from(users).where(eq(users.referralCode, referralCode)).limit(1);
+        if (existingUser.length === 0) {
+          isUnique = true;
+        }
+        attempts++;
+      }
+
+      if (!isUnique) {
+        return res.status(500).json({ message: "Failed to generate unique referral code" });
+      }
+
+      // Update user with referral code
+      await db.update(users).set({
+        referralCode: referralCode
+      }).where(eq(users.id, userId));
+
+      auditLog('REFERRAL_CODE_GENERATED', { 
+        userId: userId,
+        referralCode: referralCode
+      }, req);
+
+      res.json({
+        success: true,
+        referralCode: referralCode,
+        message: "Referral code generated successfully"
+      });
+    } catch (error) {
+      console.error("Error generating referral code:", error);
+      res.status(500).json({ message: "Failed to generate referral code" });
+    }
+  });
+
+  // Validate referral code endpoint
+  app.get("/api/referrals/validate/:code", async (req, res) => {
+    try {
+      const { code } = req.params;
+      
+      if (!code || code.length !== 8) {
+        return res.status(400).json({ 
+          valid: false, 
+          message: "Invalid referral code format" 
+        });
+      }
+
+      // Find user with this referral code
+      const referrer = await db.select({
+        id: users.id,
+        username: users.username,
+        referralCode: users.referralCode
+      }).from(users).where(eq(users.referralCode, code.toUpperCase())).limit(1);
+
+      if (referrer.length === 0) {
+        return res.json({ 
+          valid: false, 
+          message: "Referral code not found" 
+        });
+      }
+
+      res.json({ 
+        valid: true, 
+        referrer: {
+          username: referrer[0].username,
+          referralCode: referrer[0].referralCode
+        },
+        message: "Valid referral code" 
+      });
+    } catch (error) {
+      console.error("Error validating referral code:", error);
+      res.status(500).json({ message: "Failed to validate referral code" });
+    }
+  });
+
+  // Update user endpoint for admin
+  app.patch("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const updateData = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Get existing user
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Update user in database
+      await db.update(users).set({
+        username: updateData.username || existingUser.username,
+        balance: updateData.balance !== undefined ? updateData.balance : existingUser.balance,
+        isAdmin: updateData.isAdmin !== undefined ? updateData.isAdmin : existingUser.isAdmin,
+        totalPredictions: updateData.totalPredictions !== undefined ? updateData.totalPredictions : existingUser.totalPredictions,
+        correctPredictions: updateData.correctPredictions !== undefined ? updateData.correctPredictions : existingUser.correctPredictions,
+        totalRewards: updateData.totalRewards !== undefined ? updateData.totalRewards : existingUser.totalRewards
+      }).where(eq(users.id, userId));
+
+      auditLog('USER_UPDATED', { 
+        userId: userId,
+        updatedFields: Object.keys(updateData),
+        adminId: req.user?.id
+      }, req);
+
+      const updatedUser = await storage.getUser(userId);
+      res.json({ 
+        success: true, 
+        message: "User updated successfully",
+        user: updatedUser 
+      });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   // Withdraw PTS to USDT/USDC
   app.post("/api/user/withdraw", async (req, res) => {
     try {
