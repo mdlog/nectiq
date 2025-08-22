@@ -564,7 +564,7 @@ export default function HowToPlay() {
                       </div>
                       <h4 className="font-semibold mb-2 text-green-600">All Correct = WIN</h4>
                       <p className="text-sm text-muted-foreground">
-                        If ALL predictions are correct, you win your stake multiplied by the parlay multiplier
+                        If ALL predictions are correct, you win your stake multiplied by the TrendRide multiplier
                       </p>
                     </div>
                     <div className="text-center">
@@ -791,9 +791,9 @@ export default function HowToPlay() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
-                    <h5 className="font-semibold mb-3">Platform takes a 6% fee from each parlay</h5>
+                    <h5 className="font-semibold mb-3">Platform takes a 6% fee from each TrendRide</h5>
                     <div className="text-sm space-y-2">
-                      <div>• Fee is deducted from total stake when parlay is created</div>
+                      <div>• Fee is deducted from total stake when TrendRide is created</div>
                       <div>• If you win, you receive: (Stake - 6% fee) × Multiplier</div>
                       <div>• If you lose, you lose entire stake including fee</div>
                     </div>
@@ -886,7 +886,7 @@ export default function HowToPlay() {
                     <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
                       <p className="text-sm font-semibold mb-2">📋 Important Rules:</p>
                       <p className="text-sm text-muted-foreground">
-                        • All predictions in one parlay MUST have the same duration<br/>
+                        • All predictions in one TrendRide MUST have the same duration<br/>
                         • Longer duration provides higher multiplier<br/>
                         • Longer duration = higher prediction difficulty = higher reward
                       </p>
