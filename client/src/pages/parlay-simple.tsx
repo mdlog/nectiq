@@ -440,7 +440,7 @@ export default function TrendRideSimple() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Parlay Summary</CardTitle>
+                <CardTitle>TrendRide Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>

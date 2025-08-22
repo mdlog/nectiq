@@ -240,7 +240,7 @@ export default function ParlayNew() {
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                <p className="text-muted-foreground">Loading your parlays...</p>
+                <p className="text-muted-foreground">Loading your TrendRides...</p>
               </div>
             </div>
           ) : userParlays.length > 0 ? (
@@ -250,7 +250,7 @@ export default function ParlayNew() {
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-lg">Parlay #{parlay.id.slice(-6)}</CardTitle>
+                        <CardTitle className="text-lg">TrendRide #{parlay.id.slice(-6)}</CardTitle>
                         <p className="text-sm text-muted-foreground">
                           {parlay.coins.length} coins • {parlay.multiplier.toFixed(2)}x
                         </p>
@@ -454,7 +454,7 @@ export default function ParlayNew() {
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Parlay Summary</CardTitle>
+                <CardTitle>TrendRide Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -493,7 +493,7 @@ export default function ParlayNew() {
                   size="lg"
                   disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
                 >
-                  {createParlayMutation.isPending ? "Creating..." : "Create Parlay"}
+                  {createParlayMutation.isPending ? "Creating..." : "Create TrendRide"}
                 </Button>
               </CardContent>
             </Card>
@@ -501,7 +501,7 @@ export default function ParlayNew() {
             {/* Info Card */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">How Parlay Works</h3>
+                <h3 className="font-semibold mb-2">How TrendRide Works</h3>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• Combine 2-5 cryptocurrency predictions</li>
                   <li>• Each coin has individual duration</li>

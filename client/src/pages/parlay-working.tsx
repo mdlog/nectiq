@@ -144,7 +144,7 @@ export default function ParlayWorking() {
     onSuccess: (result) => {
       console.log("✅ [PARLAY] Created successfully:", result);
       toast({
-        title: "Parlay Created!",
+        title: "TrendRide Created!",
         description: "Your prediction has been submitted successfully",
       });
       setParlayCards([]);
@@ -155,7 +155,7 @@ export default function ParlayWorking() {
       console.error("❌ [PARLAY] Creation failed:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create parlay",
+        description: error.message || "Failed to create TrendRide",
         variant: "destructive"
       });
     }
@@ -406,7 +406,7 @@ export default function ParlayWorking() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Parlay Summary</CardTitle>
+                <CardTitle>TrendRide Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -445,7 +445,7 @@ export default function ParlayWorking() {
                   size="lg"
                   disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
                 >
-                  {createParlayMutation.isPending ? "Creating..." : "Create Parlay"}
+                  {createParlayMutation.isPending ? "Creating..." : "Create TrendRide"}
                 </Button>
               </CardContent>
             </Card>
@@ -453,7 +453,7 @@ export default function ParlayWorking() {
             {/* Info Card */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">How Parlay Works</h3>
+                <h3 className="font-semibold mb-2">How TrendRide Works</h3>
                 <ul className="text-sm text-gray-400 space-y-1">
                   <li>• Combine 2-5 cryptocurrency predictions</li>
                   <li>• Each coin has individual duration</li>
