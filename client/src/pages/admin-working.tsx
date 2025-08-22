@@ -237,8 +237,8 @@ export default function AdminPanel() {
   const [predictionsLimit] = useState(20);
   const [battlesPage, setBattlesPage] = useState(1);
   const [battlesLimit] = useState(20);
-  const [parlaysPage, setParlaysPage] = useState(1);
-  const [parlaysLimit] = useState(20);
+  const [trendRidesPage, setTrendRidesPage] = useState(1);
+  const [trendRidesLimit] = useState(20);
   const [survivalPage, setSurvivalPage] = useState(1);
   const [survivalLimit] = useState(20);
 
@@ -462,7 +462,7 @@ export default function AdminPanel() {
   });
 
   // Query untuk data parlay predictions - gunakan detailed endpoint
-  const { data: parlayData, isLoading: parlayLoading, refetch: refetchParlays } = useQuery({
+  const { data: trendRideData, isLoading: trendRideLoading, refetch: refetchTrendRides } = useQuery({
     queryKey: ["/api/admin/parlays/detailed"],
     refetchInterval: 15000, // Lebih sering
     enabled: true, // Paksa aktif
@@ -477,10 +477,10 @@ export default function AdminPanel() {
       parlayLoading, 
       dataLength: parlayData?.length 
     });
-    if (parlayData) {
-      console.log('📊 [PARLAY-DETAILED-DEBUG] Sample detailed data:', parlayData[0]);
+    if (trendRideData) {
+      console.log('📊 [TRENDRIDE-DETAILED-DEBUG] Sample detailed data:', trendRideData[0]);
     }
-  }, [parlayData, parlayLoading]);
+  }, [trendRideData, trendRideLoading]);
 
   // Mutations for admin actions
   const addUserMutation = useMutation({
@@ -1224,12 +1224,12 @@ export default function AdminPanel() {
   const predictionsEndIndex = predictionsStartIndex + predictionsLimit;
   const paginatedPredictions = filteredPredictions?.slice(predictionsStartIndex, predictionsEndIndex) || [];
 
-  // Get paginated parlays data
-  const totalParlays = parlayData?.length || 0;
-  const totalParlaysPages = Math.ceil(totalParlays / parlaysLimit);
-  const parlaysStartIndex = (parlaysPage - 1) * parlaysLimit;
-  const parlaysEndIndex = parlaysStartIndex + parlaysLimit;
-  const paginatedParlays = parlayData?.slice(parlaysStartIndex, parlaysEndIndex) || [];
+  // Get paginated TrendRides data
+  const totalTrendRides = trendRideData?.length || 0;
+  const totalTrendRidesPages = Math.ceil(totalTrendRides / trendRidesLimit);
+  const trendRidesStartIndex = (trendRidesPage - 1) * trendRidesLimit;
+  const trendRidesEndIndex = trendRidesStartIndex + trendRidesLimit;
+  const paginatedTrendRides = trendRideData?.slice(trendRidesStartIndex, trendRidesEndIndex) || [];
 
   // Get paginated battles data
   const totalBattles = battlesData?.length || 0;
@@ -1359,31 +1359,31 @@ export default function AdminPanel() {
   };
 
   // Export Parlay Predictions CSV
-  const exportParlayPredictions = () => {
-    if (!parlayData || !Array.isArray(parlayData)) return;
+  const exportTrendRidePredictions = () => {
+    if (!trendRideData || !Array.isArray(trendRideData)) return;
     const csvContent = [
-      ["Parlay ID", "User ID", "Username", "Coin ID", "Cryptocurrency", "Prediction", "Duration", "Start Price", "End Price", "Is Correct", "Coin Status", "Parlay Status", "Stake Amount", "Total Multiplier", "Coin Multiplier", "Reward Amount", "Total Coin Count", "Correct Predictions", "Target Time", "Created At"].join(","),
-      ...parlayData.map((parlay: any) => [
-        parlay.parlayId || "N/A",
-        parlay.userId || "N/A",
-        parlay.username || "N/A",
-        parlay.coinId || "N/A",
-        parlay.cryptocurrency || "N/A",
-        parlay.prediction || "N/A",
-        parlay.duration || "N/A",
-        parlay.startPrice || "N/A",
-        parlay.endPrice || "N/A",
-        parlay.isCorrect !== null ? (parlay.isCorrect ? "Yes" : "No") : "N/A",
-        parlay.coinStatus || "N/A",
-        parlay.parlayStatus || "N/A",
-        parlay.stakeAmount || 0,
-        parlay.totalMultiplier || "N/A",
-        parlay.coinMultiplier || "N/A",
-        parlay.rewardAmount || 0,
-        parlay.totalCoinCount || 0,
-        parlay.correctPredictions || 0,
-        parlay.coinTargetTime ? new Date(parlay.coinTargetTime).toLocaleDateString() : "N/A",
-        parlay.createdAt ? new Date(parlay.createdAt).toLocaleDateString() : "N/A"
+      ["TrendRide ID", "User ID", "Username", "Coin ID", "Cryptocurrency", "Prediction", "Duration", "Start Price", "End Price", "Is Correct", "Coin Status", "TrendRide Status", "Stake Amount", "Total Multiplier", "Coin Multiplier", "Reward Amount", "Total Coin Count", "Correct Predictions", "Target Time", "Created At"].join(","),
+      ...trendRideData.map((trendRide: any) => [
+        trendRide.parlayId || "N/A",
+        trendRide.userId || "N/A",
+        trendRide.username || "N/A",
+        trendRide.coinId || "N/A",
+        trendRide.cryptocurrency || "N/A",
+        trendRide.prediction || "N/A",
+        trendRide.duration || "N/A",
+        trendRide.startPrice || "N/A",
+        trendRide.endPrice || "N/A",
+        trendRide.isCorrect !== null ? (trendRide.isCorrect ? "Yes" : "No") : "N/A",
+        trendRide.coinStatus || "N/A",
+        trendRide.parlayStatus || "N/A",
+        trendRide.stakeAmount || 0,
+        trendRide.totalMultiplier || "N/A",
+        trendRide.coinMultiplier || "N/A",
+        trendRide.rewardAmount || 0,
+        trendRide.totalCoinCount || 0,
+        trendRide.correctPredictions || 0,
+        trendRide.coinTargetTime ? new Date(trendRide.coinTargetTime).toLocaleDateString() : "N/A",
+        trendRide.createdAt ? new Date(trendRide.createdAt).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
     
@@ -1392,10 +1392,10 @@ export default function AdminPanel() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `parlay_predictions_export_${timestamp}.csv`;
+    a.download = `trendride_predictions_export_${timestamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Success", description: "Parlay predictions exported successfully" });
+    toast({ title: "Success", description: "TrendRide predictions exported successfully" });
   };
 
   // Export Transactions CSV
@@ -2837,32 +2837,32 @@ export default function AdminPanel() {
             </Card>
           </TabsContent>
 
-          {/* Parlays Sub-Tab */}
+          {/* TrendRides Sub-Tab */}
           <TabsContent value="parlays" className="mt-6">
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Layers className="mr-2" size={20} />
-                    Parlay Predictions ({parlayData?.length || 0})
+                    TrendRide Predictions ({trendRideData?.length || 0})
                   </div>
-                  <Button onClick={exportParlayPredictions} variant="outline" size="sm">
+                  <Button onClick={exportTrendRidePredictions} variant="outline" size="sm">
                     <Download className="mr-2" size={16} />
                     Export CSV
                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {parlayLoading ? (
+                {trendRideLoading ? (
                   <div className="text-center py-8">
-                    <div className="text-slate-400">Loading parlay predictions...</div>
+                    <div className="text-slate-400">Loading TrendRide predictions...</div>
                   </div>
-                ) : parlayData && parlayData.length > 0 ? (
+                ) : trendRideData && trendRideData.length > 0 ? (
                   <div>
                     <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Parlay ID</TableHead>
+                        <TableHead>TrendRide ID</TableHead>
                         <TableHead>User</TableHead>
                         <TableHead>Cryptocurrency</TableHead>
                         <TableHead>Prediction</TableHead>
@@ -2876,7 +2876,7 @@ export default function AdminPanel() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedParlays.map((coin: any) => (
+                      {paginatedTrendRides.map((coin: any) => (
                         <TableRow key={`${coin.parlayId}-${coin.coinId}`}>
                           <TableCell>
                             <div className="font-medium text-white">#{coin.parlayId}</div>
@@ -2943,18 +2943,18 @@ export default function AdminPanel() {
                     </TableBody>
                   </Table>
                   
-                  {/* Parlays Pagination */}
-                  {totalParlaysPages > 1 && (
+                  {/* TrendRides Pagination */}
+                  {totalTrendRidesPages > 1 && (
                     <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
                       <div className="text-sm text-slate-400">
-                        Showing {parlaysStartIndex + 1}-{Math.min(parlaysEndIndex, totalParlays)} of {totalParlays} parlay predictions
+                        Showing {trendRidesStartIndex + 1}-{Math.min(trendRidesEndIndex, totalTrendRides)} of {totalTrendRides} TrendRide predictions
                       </div>
                       <div className="flex space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setParlaysPage(Math.max(1, parlaysPage - 1))}
-                          disabled={parlaysPage === 1}
+                          onClick={() => setTrendRidesPage(Math.max(1, trendRidesPage - 1))}
+                          disabled={trendRidesPage === 1}
                           className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
                         >
                           <ChevronLeft className="h-4 w-4" />
@@ -2962,13 +2962,13 @@ export default function AdminPanel() {
                         </Button>
                         
                         <div className="flex space-x-1">
-                          {Array.from({ length: totalParlaysPages }, (_, i) => i + 1).map((page) => (
+                          {Array.from({ length: totalTrendRidesPages }, (_, i) => i + 1).map((page) => (
                             <Button
                               key={page}
-                              variant={page === parlaysPage ? "default" : "outline"}
+                              variant={page === trendRidesPage ? "default" : "outline"}
                               size="sm"
-                              onClick={() => setParlaysPage(page)}
-                              className={page === parlaysPage 
+                              onClick={() => setTrendRidesPage(page)}
+                              className={page === trendRidesPage 
                                 ? "bg-blue-600 hover:bg-blue-700 text-white" 
                                 : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
                               }
@@ -2981,8 +2981,8 @@ export default function AdminPanel() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setParlaysPage(Math.min(totalParlaysPages, parlaysPage + 1))}
-                          disabled={parlaysPage === totalParlaysPages}
+                          onClick={() => setTrendRidesPage(Math.min(totalTrendRidesPages, trendRidesPage + 1))}
+                          disabled={trendRidesPage === totalTrendRidesPages}
                           className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
                         >
                           Next
