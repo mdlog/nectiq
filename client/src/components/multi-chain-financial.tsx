@@ -395,6 +395,8 @@ export function MultiChainFinancial() {
 
   // Function to calculate token amount from USD for deposit history action view
   const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string, ethPriceSnapshot?: string): string => {
+    console.log(`🔍 [ETH-CALC] Calculating for ${tokenType}, USD: ${usdAmount}, snapshot: ${ethPriceSnapshot}`);
+    
     if (tokenType === 'USDC' || tokenType === 'USDT') {
       // For USDC/USDT, add 2% fee to the amount user needs to send
       const amountWithFee = usdAmount * 1.02;
@@ -405,19 +407,30 @@ export function MultiChainFinancial() {
       // For ETH deposits, use snapshot price if available, otherwise use current price
       let price = 0;
       
-      if (ethPriceSnapshot) {
+      if (ethPriceSnapshot && ethPriceSnapshot !== 'null') {
         price = parseFloat(ethPriceSnapshot);
+        console.log(`🔍 [ETH-CALC] Using snapshot price: ${price}`);
       } else if (cryptoPrices && cryptoPrices.length > 0) {
         const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
         price = ethPrice?.current_price || 0;
+        console.log(`🔍 [ETH-CALC] Using current price: ${price}, cryptoPrices length: ${cryptoPrices.length}`);
+      } else {
+        // Emergency fallback price (approximate current ETH price)
+        price = 3400; // Use a reasonable ETH price as fallback
+        console.log(`🔍 [ETH-CALC] Using fallback price: ${price}`);
       }
       
-      if (price === 0) return "0.000000";
+      if (price === 0) {
+        console.log(`❌ [ETH-CALC] No valid price found, returning 0.000000`);
+        return "0.000000";
+      }
       
       // Calculate base ETH amount and add 2% fee
       const baseTokenAmount = usdAmount / price;
       const tokenAmountWithFee = baseTokenAmount * 1.02;
-      return tokenAmountWithFee.toFixed(6);
+      const result = tokenAmountWithFee.toFixed(6);
+      console.log(`✅ [ETH-CALC] Final result: ${result} ETH (base: ${baseTokenAmount}, with fee: ${tokenAmountWithFee})`);
+      return result;
     }
     
     return "0.000000";
@@ -538,20 +551,38 @@ export function MultiChainFinancial() {
 
   // Effect to calculate fixed ETH amount when deposit amount changes for ETH deposits
   useEffect(() => {
-    if (selectedToken === "ETH" && depositAmount && cryptoPrices) {
+    console.log(`🔍 [DEPOSIT-CALC] useEffect triggered - Token: ${selectedToken}, Amount: ${depositAmount}, CryptoPrices: ${cryptoPrices?.length || 0}`);
+    
+    if (selectedToken === "ETH" && depositAmount) {
       const usd = parseFloat(depositAmount);
       if (!isNaN(usd) && usd > 0) {
-        const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === "ethereum")?.current_price;
-        if (ethPrice) {
-          // Calculate ETH amount based on USD + add 2% fee on ETH payment
-          const baseEthAmount = usd / ethPrice;
-          const ethAmountWithFee = baseEthAmount * 1.02; // Add 2% fee to ETH payment
-          setFixedEthAmount(ethAmountWithFee.toFixed(6));
+        let ethPrice = 0;
+        
+        if (cryptoPrices && cryptoPrices.length > 0) {
+          const ethData = cryptoPrices.find((crypto: any) => crypto.id === "ethereum");
+          ethPrice = ethData?.current_price || 0;
+          console.log(`🔍 [DEPOSIT-CALC] Found ETH price from API: ${ethPrice}`);
         }
+        
+        if (ethPrice === 0) {
+          // Use fallback price when API data is not available
+          ethPrice = 3400; // Reasonable ETH price fallback
+          console.log(`🔍 [DEPOSIT-CALC] Using fallback ETH price: ${ethPrice}`);
+        }
+        
+        // Calculate ETH amount based on USD + add 2% fee on ETH payment
+        const baseEthAmount = usd / ethPrice;
+        const ethAmountWithFee = baseEthAmount * 1.02; // Add 2% fee to ETH payment
+        const result = ethAmountWithFee.toFixed(6);
+        
+        console.log(`✅ [DEPOSIT-CALC] Setting fixedEthAmount: ${result} (USD: ${usd}, ETH Price: ${ethPrice})`);
+        setFixedEthAmount(result);
       } else {
+        console.log(`❌ [DEPOSIT-CALC] Invalid USD amount: ${usd}`);
         setFixedEthAmount("0");
       }
     } else {
+      console.log(`🔍 [DEPOSIT-CALC] Conditions not met - setting fixedEthAmount to 0`);
       setFixedEthAmount("0");
     }
   }, [depositAmount, selectedToken, cryptoPrices]);
