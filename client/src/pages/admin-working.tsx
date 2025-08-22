@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAccount, useWriteContract, useSendTransaction } from "wagmi";
 import { parseEther, parseUnits } from "viem";
+import { Footer } from "@/components/footer";
 
 // TypeScript declaration for MetaMask/Ethereum provider
 interface EthereumProvider {
@@ -4310,6 +4311,8 @@ export default function AdminPanel() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <Footer />
     </div>
   );
 }
