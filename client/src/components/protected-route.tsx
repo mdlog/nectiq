@@ -28,8 +28,8 @@ export function ProtectedRoute({
         console.log('🚫 [PROTECTED-ROUTE] Access denied - wallet not connected or user not authenticated');
         
         toast({
-          title: "Wallet Diperlukan",
-          description: "Silakan hubungkan wallet Anda untuk mengakses halaman ini.",
+          title: "Wallet Required",
+          description: "Please connect your wallet to access this page.",
           variant: "destructive",
         });
         
@@ -46,7 +46,7 @@ export function ProtectedRoute({
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Memeriksa autentikasi...</p>
+          <p className="text-muted-foreground">Checking authentication...</p>
         </div>
       </div>
     );

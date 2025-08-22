@@ -14,6 +14,8 @@ Nectiq features a modern React frontend and a Node.js/Express backend with a Pos
 ## Recent Critical Fixes (August 2025)
 - **✅ DEPOSIT TRANSACTION HASH AUTO-CAPTURE**: Fixed critical issue where deposit transaction hashes were not automatically saved, requiring manual intervention for every deposit. Frontend now automatically updates deposits with transaction hashes via `/api/deposits/:id/update-transaction` endpoint when transactions are sent through Wagmi hooks.
 - **✅ TRENDRIDE REBRANDING 100% COMPLETE**: Successfully migrated all "Parlay" references to "TrendRide" across the entire platform (August 22, 2025). Updated frontend components, navigation menus (desktop and mobile), admin panel, UI text, variable names, function declarations, export functionality, and debug logs for consistent branding throughout the application. URL routing remains `/parlay` for backend consistency while display names show "TrendRide".
+- **✅ WALLET DISCONNECTION STATE MANAGEMENT**: Fixed critical wallet disconnect bug where user balance remained visible and users could create battles after wallet disconnection. Implemented proper state clearing, cache invalidation, and global wallet address reset on disconnect.
+- **✅ ROUTING PROTECTION SYSTEM**: Implemented comprehensive ProtectedRoute component with wallet requirement enforcement. Pages requiring wallet connection automatically redirect to homepage with English notification when accessed without wallet. Leaderboard and How-to-Play remain accessible without wallet.
 
 **Frontend:**
 - **Framework & UI**: React 18 with TypeScript, utilizing Shadcn/ui components and Radix UI primitives, styled with Tailwind CSS.
