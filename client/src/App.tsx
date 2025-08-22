@@ -2,7 +2,7 @@ import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import LandingPage from "@/pages/landing";
-import ProtectedRoute from "@/components/protected-route";
+import { ProtectedRoute } from "@/components/protected-route";
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 
@@ -67,49 +67,57 @@ function Router() {
 
       
       <Route path="/dashboard">
-        <ProtectedRoute>
+        <ProtectedRoute requireWallet={true}>
           <UserDashboard />
         </ProtectedRoute>
       </Route>
       
       <Route path="/battles">
-        <ProtectedRoute>
+        <ProtectedRoute requireWallet={true}>
           <BattlesPage />
         </ProtectedRoute>
       </Route>
       
       <Route path="/survival">
-        <ProtectedRoute>
+        <ProtectedRoute requireWallet={true}>
           <SurvivalGame />
         </ProtectedRoute>
       </Route>
       
       <Route path="/survival-game">
-        <ProtectedRoute>
+        <ProtectedRoute requireWallet={true}>
           <SurvivalGame />
         </ProtectedRoute>
       </Route>
       
       <Route path="/leaderboard">
-        <ProtectedRoute>
+        <ProtectedRoute requireWallet={false}>
           <Leaderboard />
         </ProtectedRoute>
       </Route>
       
       <Route path="/parlay">
-        <ProtectedRoute>
+        <ProtectedRoute requireWallet={true}>
           <ParlayPage />
         </ProtectedRoute>
       </Route>
       
       <Route path="/how-to-play">
-        <ProtectedRoute>
+        <ProtectedRoute requireWallet={false}>
           <HowToPlay />
         </ProtectedRoute>
       </Route>
       
-      <Route path="/admin" component={AdminPanel} />
-      <Route path="/admin-working" component={AdminPanel} />
+      <Route path="/admin">
+        <ProtectedRoute requireWallet={true}>
+          <AdminPanel />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin-working">
+        <ProtectedRoute requireWallet={true}>
+          <AdminPanel />
+        </ProtectedRoute>
+      </Route>
       
       {/* Public routes - no authentication required */}
       <Route path="/terms-conditions" component={TermsConditions} />
