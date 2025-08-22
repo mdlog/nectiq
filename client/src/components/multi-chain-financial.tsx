@@ -788,11 +788,28 @@ export function MultiChainFinancial() {
       if (deposit.tokenType === 'ETH') {
         const ethValue = parseEther(tokenAmount);
         
-        // Send ETH transaction using Wagmi sendTransaction (correct for native ETH transfers)
-        sendTransaction({
-          to: secureAdminWallet as `0x${string}`,
-          value: ethValue,
+        console.log('🔧 [WALLET-DEBUG] Attempting ETH transaction:', {
+          to: secureAdminWallet,
+          value: ethValue.toString(),
+          tokenAmount,
+          chainId: chain?.id,
+          targetChainId: targetChain.chainId,
+          isConnected,
+          address
         });
+        
+        // Send ETH transaction using Wagmi sendTransaction (correct for native ETH transfers)
+        try {
+          const result = sendTransaction({
+            to: secureAdminWallet as `0x${string}`,
+            value: ethValue,
+          });
+          
+          console.log('🔧 [WALLET-DEBUG] Transaction initiated:', result);
+        } catch (sendError: any) {
+          console.error('🚨 [WALLET-ERROR] sendTransaction failed:', sendError);
+          throw sendError;
+        }
       }
 
     } catch (error: any) {
@@ -813,9 +830,23 @@ export function MultiChainFinancial() {
         description: `Transaction hash: ${txHash}`,
       });
       
-      console.log('Wagmi transaction sent:', txHash);
+      console.log('🔧 [WALLET-SUCCESS] Wagmi transaction sent:', txHash);
     }
   }, [txHash, isTransactionPending]);
+
+  // Handle sendTransaction errors
+  useEffect(() => {
+    if (isEthPending) {
+      console.log('🔧 [WALLET-DEBUG] ETH transaction is pending...');
+    }
+  }, [isEthPending]);
+
+  // Handle writeContract errors  
+  useEffect(() => {
+    if (isContractPending) {
+      console.log('🔧 [WALLET-DEBUG] Contract transaction is pending...');
+    }
+  }, [isContractPending]);
 
   // Handle transaction receipt
   useEffect(() => {
