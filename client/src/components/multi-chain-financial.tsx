@@ -822,6 +822,36 @@ export function MultiChainFinancial() {
     }
   };
 
+  // Mutation to update deposit with transaction hash
+  const updateDepositMutation = useMutation({
+    mutationFn: async (data: { depositId: number; transactionHash: string; status: string }) => {
+      const response = await apiRequest(`/api/deposits/${data.depositId}/update-transaction`, {
+        method: "POST",
+        body: JSON.stringify({
+          transactionHash: data.transactionHash,
+          status: data.status,
+        }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Deposit Updated",
+        description: "Transaction hash has been saved and deposit is being processed",
+      });
+    },
+    onError: (error: any) => {
+      console.error('❌ [DEPOSIT-UPDATE] Failed to update deposit:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to save transaction hash, but transaction was sent",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Handle transaction success/failure using useEffect
   useEffect(() => {
     if (txHash && !isTransactionPending) {
@@ -831,8 +861,51 @@ export function MultiChainFinancial() {
       });
       
       console.log('🔧 [WALLET-SUCCESS] Wagmi transaction sent:', txHash);
+
+      // CRITICAL FIX: Update the most recent deposit with transaction hash
+      // This fixes the issue where deposits were created without transaction hashes
+      if (deposits && deposits.length > 0) {
+        const latestDeposit = deposits.find(d => d.status === 'pending' && !d.transactionHash);
+        if (latestDeposit) {
+          console.log(`🔧 [DEPOSIT-FIX] Updating deposit ${latestDeposit.id} with transaction hash:`, txHash);
+          updateDepositMutation.mutate({
+            depositId: latestDeposit.id,
+            transactionHash: txHash,
+            status: 'processing',
+          });
+        } else {
+          console.warn('🚨 [DEPOSIT-WARNING] No pending deposit found to update with transaction hash');
+        }
+      }
     }
-  }, [txHash, isTransactionPending]);
+  }, [txHash, isTransactionPending, deposits, updateDepositMutation]);
+
+  // Handle contract transaction hash (for ERC-20 tokens like USDC/USDT)
+  useEffect(() => {
+    if (contractTxHash && !isContractPending) {
+      toast({
+        title: "Token Transaction Sent",
+        description: `Token transaction hash: ${contractTxHash}`,
+      });
+      
+      console.log('🔧 [CONTRACT-SUCCESS] Wagmi contract transaction sent:', contractTxHash);
+
+      // CRITICAL FIX: Update the most recent deposit with contract transaction hash
+      if (deposits && deposits.length > 0) {
+        const latestDeposit = deposits.find(d => d.status === 'pending' && !d.transactionHash);
+        if (latestDeposit) {
+          console.log(`🔧 [DEPOSIT-FIX] Updating deposit ${latestDeposit.id} with contract transaction hash:`, contractTxHash);
+          updateDepositMutation.mutate({
+            depositId: latestDeposit.id,
+            transactionHash: contractTxHash,
+            status: 'processing',
+          });
+        } else {
+          console.warn('🚨 [DEPOSIT-WARNING] No pending deposit found to update with contract transaction hash');
+        }
+      }
+    }
+  }, [contractTxHash, isContractPending, deposits, updateDepositMutation]);
 
   // Handle sendTransaction errors
   useEffect(() => {
