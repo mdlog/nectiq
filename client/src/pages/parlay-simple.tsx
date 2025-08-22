@@ -20,7 +20,7 @@ interface Cryptocurrency {
   current_price: number;
 }
 
-interface ParlayCard {
+interface TrendRideCard {
   id: string;
   cryptocurrency: string;
   prediction: 'up' | 'down';
@@ -28,10 +28,10 @@ interface ParlayCard {
   startPrice: number;
 }
 
-export default function ParlaySimple() {
-  console.log("🚀 [PARLAY-SIMPLE] Component rendering...");
+export default function TrendRideSimple() {
+  console.log("🚀 [TRENDRIDE-SIMPLE] Component rendering...");
   
-  const [parlayCards, setParlayCards] = useState<ParlayCard[]>([]);
+  const [trendRideCards, setTrendRideCards] = useState<TrendRideCard[]>([]);
   const [stakeAmount, setStakeAmount] = useState("");
   const [totalMultiplier, setTotalMultiplier] = useState(1);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -53,10 +53,10 @@ export default function ParlaySimple() {
     refetchInterval: 2000
   }) as { data: Cryptocurrency[], isLoading: boolean };
 
-  console.log("📊 [PARLAY] Cryptos loaded:", cryptos.length);
+  console.log("📊 [TRENDRIDE] Cryptos loaded:", cryptos.length);
 
-  // Fetch user's active parlays (with safe error handling)
-  const { data: userParlays = [], isLoading: parlaysLoading, error: parlaysError } = useQuery({
+  // Fetch user's active TrendRides (with safe error handling)
+  const { data: userTrendRides = [], isLoading: trendRidesLoading, error: trendRidesError } = useQuery({
     queryKey: ["/api/parlay/user"],
     refetchInterval: 30000,
     retry: 0,
@@ -65,8 +65,8 @@ export default function ParlaySimple() {
     enabled: true
   });
 
-  const safeParlays = Array.isArray(userParlays) ? userParlays : [];
-  console.log("📊 [PARLAY] User parlays:", { count: safeParlays.length, loading: parlaysLoading, error: parlaysError });
+  const safeTrendRides = Array.isArray(userTrendRides) ? userTrendRides : [];
+  console.log("📊 [TRENDRIDE] User TrendRides:", { count: safeTrendRides.length, loading: trendRidesLoading, error: trendRidesError });
 
   // Calculate duration multiplier
   const getDurationMultiplier = (duration: string) => {
@@ -111,37 +111,37 @@ export default function ParlaySimple() {
 
   // Update total multiplier when cards change
   useEffect(() => {
-    const newMultiplier = parlayCards.reduce((acc, card) => {
+    const newMultiplier = trendRideCards.reduce((acc, card) => {
       return acc * (1.5 * getDurationMultiplier(card.duration));
     }, 1);
     setTotalMultiplier(newMultiplier);
-  }, [parlayCards]);
+  }, [trendRideCards]);
 
   // Calculate potential win
   const potentialWin = parseFloat(stakeAmount || "0") * totalMultiplier;
 
-  // Add new parlay card
-  const addParlayCard = () => {
-    const newCard: ParlayCard = {
+  // Add new TrendRide card
+  const addTrendRideCard = () => {
+    const newCard: TrendRideCard = {
       id: Date.now().toString(),
       cryptocurrency: '',
       prediction: 'up',
       duration: '1h',
       startPrice: 0
     };
-    setParlayCards([...parlayCards, newCard]);
-    console.log("➕ [PARLAY] Added card:", newCard.id);
+    setTrendRideCards([...trendRideCards, newCard]);
+    console.log("➕ [TRENDRIDE] Added card:", newCard.id);
   };
 
-  // Remove parlay card
-  const removeParlayCard = (id: string) => {
-    setParlayCards(parlayCards.filter(card => card.id !== id));
-    console.log("🗑️ [PARLAY] Removed card:", id);
+  // Remove TrendRide card
+  const removeTrendRideCard = (id: string) => {
+    setTrendRideCards(trendRideCards.filter(card => card.id !== id));
+    console.log("🗑️ [TRENDRIDE] Removed card:", id);
   };
 
   // Check for duplicate cryptocurrency selection
   const isDuplicateCryptocurrency = (id: string, cryptocurrency: string) => {
-    return parlayCards.some(card => 
+    return trendRideCards.some(card => 
       card.id !== id && 
       card.cryptocurrency === cryptocurrency && 
       cryptocurrency !== ''
@@ -150,26 +150,26 @@ export default function ParlaySimple() {
 
   // Get list of already selected cryptocurrencies (excluding current card)
   const getSelectedCryptocurrencies = (excludeCardId: string) => {
-    return parlayCards
+    return trendRideCards
       .filter(card => card.id !== excludeCardId && card.cryptocurrency !== '')
       .map(card => card.cryptocurrency);
   };
 
-  // Update parlay card
-  const updateParlayCard = (id: string, field: keyof ParlayCard, value: any) => {
+  // Update TrendRide card
+  const updateTrendRideCard = (id: string, field: keyof TrendRideCard, value: any) => {
     // Validate cryptocurrency selection for duplicates
     if (field === 'cryptocurrency' && value !== '') {
       if (isDuplicateCryptocurrency(id, value)) {
         toast({
           title: "Cryptocurrency Already Selected",
-          description: "Each coin can only be selected once per parlay. Please choose a different cryptocurrency.",
+          description: "Each coin can only be selected once per TrendRide. Please choose a different cryptocurrency.",
           variant: "destructive"
         });
         return; // Don't update if duplicate
       }
     }
 
-    setParlayCards(parlayCards.map(card => {
+    setTrendRideCards(trendRideCards.map(card => {
       if (card.id === id) {
         const updatedCard = { ...card, [field]: value };
         
@@ -181,37 +181,37 @@ export default function ParlaySimple() {
           }
         }
         
-        console.log("✏️ [PARLAY] Updated card:", id, field, value);
+        console.log("✏️ [TRENDRIDE] Updated card:", id, field, value);
         return updatedCard;
       }
       return card;
     }));
   };
 
-  // Create parlay mutation
-  const createParlayMutation = useMutation({
+  // Create TrendRide mutation
+  const createTrendRideMutation = useMutation({
     mutationFn: async (data: { stakeAmount: string; coins: any[] }) => {
-      console.log("🟢 [PARLAY] Creating parlay:", data);
+      console.log("🟢 [TRENDRIDE] Creating TrendRide:", data);
       return apiRequest("/api/parlay/create", {
         method: "POST",
         body: JSON.stringify(data)
       });
     },
     onSuccess: (result) => {
-      console.log("✅ [PARLAY] Created successfully:", result);
+      console.log("✅ [TRENDRIDE] Created successfully:", result);
       toast({
-        title: "Parlay Created!",
+        title: "TrendRide Created!",
         description: "Your prediction has been submitted successfully",
       });
-      setParlayCards([]);
+      setTrendRideCards([]);
       setStakeAmount("");
       queryClient.invalidateQueries({ queryKey: ["/api/parlay/user"] });
     },
     onError: (error: any) => {
-      console.error("❌ [PARLAY] Creation failed:", error);
+      console.error("❌ [TRENDRIDE] Creation failed:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create parlay",
+        description: error.message || "Failed to create TrendRide",
         variant: "destructive"
       });
     }
@@ -219,7 +219,7 @@ export default function ParlaySimple() {
 
   // Handle submit
   const handleSubmit = () => {
-    if (parlayCards.length < 2) {
+    if (trendRideCards.length < 2) {
       toast({
         title: "Minimum 2 Predictions Required",
         description: "Add at least 2 cryptocurrency predictions",
@@ -238,7 +238,7 @@ export default function ParlaySimple() {
     }
 
     // Check for incomplete cards
-    const incompleteCards = parlayCards.filter(card => !card.cryptocurrency);
+    const incompleteCards = trendRideCards.filter(card => !card.cryptocurrency);
     if (incompleteCards.length > 0) {
       toast({
         title: "Incomplete Predictions",
@@ -249,25 +249,25 @@ export default function ParlaySimple() {
     }
 
     // Check for duplicate cryptocurrencies
-    const selectedCryptos = parlayCards.map(card => card.cryptocurrency);
+    const selectedCryptos = trendRideCards.map(card => card.cryptocurrency);
     const uniqueCryptos = new Set(selectedCryptos);
     if (selectedCryptos.length !== uniqueCryptos.size) {
       toast({
         title: "Duplicate Cryptocurrencies",
-        description: "Each cryptocurrency can only be selected once per parlay",
+        description: "Each cryptocurrency can only be selected once per TrendRide",
         variant: "destructive"
       });
       return;
     }
 
-    const coins = parlayCards.map(card => ({
+    const coins = trendRideCards.map(card => ({
       cryptocurrency: card.cryptocurrency,
       prediction: card.prediction,
       duration: card.duration,
       startPrice: card.startPrice
     }));
 
-    createParlayMutation.mutate({ stakeAmount, coins });
+    createTrendRideMutation.mutate({ stakeAmount, coins });
   };
 
   if (cryptosLoading) {
@@ -287,45 +287,45 @@ export default function ParlaySimple() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Parlay Predictions</h1>
+          <h1 className="text-4xl font-bold mb-4">TrendRide Predictions</h1>
           <p className="text-xl text-blue-200">Combine multiple predictions for exponential rewards</p>
         </div>
 
-        {/* First Row: Create Parlay and Summary */}
+        {/* First Row: Create TrendRide and Summary */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          {/* Parlay Input Section - Single Card */}
+          {/* TrendRide Input Section - Single Card */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Single Parlay Input Card */}
+            {/* Single TrendRide Input Card */}
             <Card className="min-h-[600px]">
               <CardHeader>
-                <CardTitle className="text-xl">Create Parlay Prediction</CardTitle>
+                <CardTitle className="text-xl">Create TrendRide Prediction</CardTitle>
                 <CardDescription>Add multiple predictions in one simple form</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Add Prediction Button */}
                 <div className="flex justify-between items-center">
                   <Button 
-                    onClick={addParlayCard} 
+                    onClick={addTrendRideCard} 
                     variant="outline"
-                    disabled={parlayCards.length >= 5}
+                    disabled={trendRideCards.length >= 5}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Prediction ({parlayCards.length}/5)
+                    Add Prediction ({trendRideCards.length}/5)
                   </Button>
-                  {parlayCards.length > 0 && (
-                    <p className="text-sm text-gray-400">{parlayCards.length} prediction(s) added</p>
+                  {trendRideCards.length > 0 && (
+                    <p className="text-sm text-gray-400">{trendRideCards.length} prediction(s) added</p>
                   )}
                 </div>
 
                 {/* Predictions List - Compact Display */}
-                {parlayCards.length > 0 && (
+                {trendRideCards.length > 0 && (
                   <div className="space-y-3">
-                    {parlayCards.map((card, index) => (
+                    {trendRideCards.map((card, index) => (
                       <div key={card.id} className="bg-gray-800/50 rounded-lg p-4 space-y-3">
                         <div className="flex justify-between items-center">
                           <h4 className="font-medium">Prediction #{index + 1}</h4>
                           <Button 
-                            onClick={() => removeParlayCard(card.id)} 
+                            onClick={() => removeTrendRideCard(card.id)} 
                             variant="destructive" 
                             size="sm"
                           >
@@ -339,7 +339,7 @@ export default function ParlaySimple() {
                             <label className="text-xs font-medium text-gray-400 mb-1 block">Cryptocurrency</label>
                             <Select
                               value={card.cryptocurrency}
-                              onValueChange={(value) => updateParlayCard(card.id, 'cryptocurrency', value)}
+                              onValueChange={(value) => updateTrendRideCard(card.id, 'cryptocurrency', value)}
                             >
                               <SelectTrigger className="h-9">
                                 <SelectValue placeholder="Select crypto" />
@@ -372,7 +372,7 @@ export default function ParlaySimple() {
                             <label className="text-xs font-medium text-gray-400 mb-1 block">Direction</label>
                             <div className="grid grid-cols-2 gap-1">
                               <Button
-                                onClick={() => updateParlayCard(card.id, 'prediction', 'up')}
+                                onClick={() => updateTrendRideCard(card.id, 'prediction', 'up')}
                                 variant={card.prediction === 'up' ? 'default' : 'outline'}
                                 size="sm"
                                 className={`h-9 ${card.prediction === 'up' ? 'bg-green-600 hover:bg-green-700 text-white' : 'border-green-600 text-green-600 hover:bg-green-600 hover:text-white'}`}
@@ -380,7 +380,7 @@ export default function ParlaySimple() {
                                 <TrendingUp className="w-3 h-3" />
                               </Button>
                               <Button
-                                onClick={() => updateParlayCard(card.id, 'prediction', 'down')}
+                                onClick={() => updateTrendRideCard(card.id, 'prediction', 'down')}
                                 variant={card.prediction === 'down' ? 'default' : 'outline'}
                                 size="sm"
                                 className={`h-9 ${card.prediction === 'down' ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-red-600 text-red-600 hover:bg-red-600 hover:text-white'}`}
@@ -395,7 +395,7 @@ export default function ParlaySimple() {
                             <label className="text-xs font-medium text-gray-400 mb-1 block">Duration</label>
                             <Select
                               value={card.duration}
-                              onValueChange={(value) => updateParlayCard(card.id, 'duration', value as ParlayCard['duration'])}
+                              onValueChange={(value) => updateTrendRideCard(card.id, 'duration', value as TrendRideCard['duration'])}
                             >
                               <SelectTrigger className="h-9">
                                 <SelectValue />
@@ -425,9 +425,9 @@ export default function ParlaySimple() {
                 )}
 
                 {/* Help Text */}
-                {parlayCards.length === 0 && (
+                {trendRideCards.length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-gray-400">Click "Add Prediction" to start building your parlay</p>
+                    <p className="text-gray-400">Click "Add Prediction" to start building your TrendRide</p>
                     <p className="text-sm text-gray-500 mt-1">Minimum 2 predictions required</p>
                   </div>
                 )}
@@ -457,7 +457,7 @@ export default function ParlaySimple() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Cards:</span>
-                    <span>{parlayCards.length}</span>
+                    <span>{trendRideCards.length}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Total Multiplier:</span>
@@ -477,9 +477,9 @@ export default function ParlaySimple() {
                   onClick={handleSubmit} 
                   className="w-full" 
                   size="lg"
-                  disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
+                  disabled={trendRideCards.length < 2 || !stakeAmount || createTrendRideMutation.isPending}
                 >
-                  {createParlayMutation.isPending ? "Creating..." : "Create Parlay"}
+                  {createTrendRideMutation.isPending ? "Creating..." : "Create TrendRide"}
                 </Button>
               </CardContent>
             </Card>
@@ -487,7 +487,7 @@ export default function ParlaySimple() {
             {/* Info Card */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">How Parlay Works</h3>
+                <h3 className="font-semibold mb-2">How TrendRide Works</h3>
                 <ul className="text-sm text-gray-400 space-y-1">
                   <li>• Combine 2-5 cryptocurrency predictions</li>
                   <li>• Each coin has individual duration</li>
@@ -500,12 +500,12 @@ export default function ParlaySimple() {
           </div>
         </div>
 
-        {/* Second Row: Full Width Parlay History */}
+        {/* Second Row: Full Width TrendRide History */}
         <div className="w-full">
-          {/* Parlay History Section - Tab-based Active vs Completed */}
+          {/* TrendRide History Section - Tab-based Active vs Completed */}
           {!parlaysError && safeParlays.length > 0 && (() => {
-              // Helper function to determine parlay status using DATABASE isCorrect
-              const getParlayStatus = (parlay: any) => {
+              // Helper function to determine TrendRide status using DATABASE isCorrect
+              const getTrendRideStatus = (parlay: any) => {
                 const coinPredictions = parlay?.coins || [];
                 if (coinPredictions.length === 0) return 'pending';
                 
@@ -532,7 +532,7 @@ export default function ParlaySimple() {
                       // Database has processed result - most reliable
                       if (!coin.isCorrect) {
                         hasLosePredictions = true;
-                        break; // If any loses, entire parlay loses
+                        break; // If any loses, entire TrendRide loses
                       }
                     } else {
                       // Not yet processed by ParlayProcessorService - calculate manually as fallback
@@ -554,54 +554,54 @@ export default function ParlaySimple() {
                       
                       if (!isCorrect) {
                         hasLosePredictions = true;
-                        break; // If any loses, entire parlay loses
+                        break; // If any loses, entire TrendRide loses
                       }
                     }
                   }
                 }
                 
                 // Return overall status
-                if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire parlay loses
+                if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire TrendRide loses
                 if (hasActivePredictions) return 'active'; // Still has active predictions
                 if (allWin && !hasActivePredictions) return 'win'; // All won and none active
                 return 'pending';
               };
               
-              // Separate parlays into active and completed based on overall status
-              const activeParlays = safeParlays.filter((parlay: any) => {
-                const status = getParlayStatus(parlay);
-                return status === 'active' || status === 'pending'; // Only truly active parlays
+              // Separate TrendRides into active and completed based on overall status
+              const activeTrendRides = safeParlays.filter((parlay: any) => {
+                const status = getTrendRideStatus(parlay);
+                return status === 'active' || status === 'pending'; // Only truly active TrendRides
               });
               
-              const completedParlays = safeParlays.filter((parlay: any) => {
-                const status = getParlayStatus(parlay);
-                return status === 'win' || status === 'lose'; // Completed parlays (won or lost)
+              const completedTrendRides = safeParlays.filter((parlay: any) => {
+                const status = getTrendRideStatus(parlay);
+                return status === 'win' || status === 'lose'; // Completed TrendRides (won or lost)
               });
               
               return (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Your Parlay History</CardTitle>
-                    <p className="text-sm text-gray-400">Manage and track your parlay predictions</p>
+                    <CardTitle>Your TrendRide History</CardTitle>
+                    <p className="text-sm text-gray-400">Manage and track your TrendRide predictions</p>
                   </CardHeader>
                   <CardContent>
                     <Tabs defaultValue="active" className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="active" className="flex items-center gap-2">
                           <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                          Active ({activeParlays.length})
+                          Active ({activeTrendRides.length})
                         </TabsTrigger>
                         <TabsTrigger value="completed" className="flex items-center gap-2">
                           <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
-                          History ({completedParlays.length})
+                          History ({completedTrendRides.length})
                         </TabsTrigger>
                       </TabsList>
                       
-                      {/* Active Parlays Tab */}
+                      {/* Active TrendRides Tab */}
                       <TabsContent value="active" className="mt-4">
-                        {activeParlays.length > 0 ? (
+                        {activeTrendRides.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {activeParlays.slice(0, 5).map((parlay: any) => {
+                            {activeTrendRides.slice(0, 5).map((parlay: any) => {
                       // Calculate potential win using server data structure
                       const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
                       const calculatedPotentialWin = parlay?.stakeAmount && multiplier ? 
@@ -685,8 +685,8 @@ export default function ParlaySimple() {
                                 variant={overallStatus === 'win' ? 'default' : overallStatus === 'lose' ? 'destructive' : 'secondary'}
                                 className="font-semibold"
                               >
-                                {overallStatus === 'win' ? '🏆 PARLAY WIN' : 
-                                 overallStatus === 'lose' ? '💔 PARLAY LOST' : 
+                                {overallStatus === 'win' ? '🏆 TRENDRIDE WIN' : 
+                                 overallStatus === 'lose' ? '💔 TRENDRIDE LOST' : 
                                  overallStatus === 'active' ? '⏳ ACTIVE' : '⌛ PENDING'}
                               </Badge>
                             </div>
@@ -792,7 +792,7 @@ export default function ParlaySimple() {
                           )}
                           
                           <div className="text-xs border-t border-gray-600 pt-2 flex justify-between items-center">
-                            <span className="text-gray-500">Total Parlay:</span>
+                            <span className="text-gray-500">Total TrendRide:</span>
                             <span className={`font-mono font-bold ${isCountdownExpired(expiresAt) ? 'text-red-400' : 'text-green-400'}`}>
                               {expiresAt ? (isCountdownExpired(expiresAt) ? 'EXPIRED' : formatCountdown(expiresAt)) : 'N/A'}
                             </span>
@@ -801,25 +801,25 @@ export default function ParlaySimple() {
                       );
 
                             })}
-                            {activeParlays.length > 5 && (
+                            {activeTrendRides.length > 5 && (
                               <p className="text-center text-gray-400 text-sm">
-                                +{activeParlays.length - 5} more active parlays
+                                +{activeTrendRides.length - 5} more active TrendRides
                               </p>
                             )}
                           </div>
                         ) : (
                           <div className="text-center py-8">
-                            <p className="text-gray-400">No active parlays at the moment</p>
-                            <p className="text-sm text-gray-500 mt-2">Create a new parlay prediction to get started</p>
+                            <p className="text-gray-400">No active TrendRides at the moment</p>
+                            <p className="text-sm text-gray-500 mt-2">Create a new TrendRide prediction to get started</p>
                           </div>
                         )}
                       </TabsContent>
                       
-                      {/* Completed Parlays Tab */}
+                      {/* Completed TrendRides Tab */}
                       <TabsContent value="completed" className="mt-4">
-                        {completedParlays.length > 0 ? (
+                        {completedTrendRides.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {completedParlays.slice(0, 5).map((parlay: any) => {
+                            {completedTrendRides.slice(0, 5).map((parlay: any) => {
                             // Calculate potential win using server data structure
                             const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
                             const calculatedPotentialWin = parlay?.stakeAmount && multiplier ? 
@@ -831,9 +831,9 @@ export default function ParlaySimple() {
                             // Get coin prediction details
                             const coinPredictions = parlay?.coins || [];
                             
-                            // DEBUG: Log parlay data in History tab for troubleshooting
+                            // DEBUG: Log TrendRide data in History tab for troubleshooting
                             if (coinPredictions.length > 0) {
-                              console.log(`🔍 [HISTORY-DEBUG] Parlay ${parlay.id} coins data:`, coinPredictions.map(coin => ({
+                              console.log(`🔍 [HISTORY-DEBUG] TrendRide ${parlay.id} coins data:`, coinPredictions.map(coin => ({
                                 crypto: coin.cryptocurrency,
                                 startPrice: coin.startPrice,
                                 endPrice: coin.endPrice,
@@ -860,8 +860,8 @@ export default function ParlaySimple() {
                               return (isUp === priceChanged) ? 'win' : 'lose';
                             };
                             
-                            // Calculate overall parlay status: IF ANY SINGLE PREDICTION LOSES, ENTIRE PARLAY LOSES
-                            const getOverallParlayStatus = () => {
+                            // Calculate overall TrendRide status: IF ANY SINGLE PREDICTION LOSES, ENTIRE TRENDRIDE LOSES
+                            const getOverallTrendRideStatus = () => {
                               if (coinPredictions.length === 0) return 'pending';
                               
                               let hasActivePredictions = false;
@@ -895,13 +895,13 @@ export default function ParlaySimple() {
                               }
                               
                               // Return overall status
-                              if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire parlay loses
+                              if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire TrendRide loses
                               if (hasActivePredictions) return 'active';
                               if (allWin) return 'win';
                               return 'pending';
                             };
                             
-                            const overallStatus = getOverallParlayStatus();
+                            const overallStatus = getOverallTrendRideStatus();
                             
                             // Get border color based on overall status
                             const getBorderColor = (status: string) => {
@@ -1044,16 +1044,16 @@ export default function ParlaySimple() {
                             );
 
                             })}
-                            {completedParlays.length > 5 && (
+                            {completedTrendRides.length > 5 && (
                               <p className="text-center text-gray-400 text-sm">
-                                +{completedParlays.length - 5} more completed parlays
+                                +{completedTrendRides.length - 5} more completed TrendRides
                               </p>
                             )}
                           </div>
                         ) : (
                           <div className="text-center py-8">
-                            <p className="text-gray-400">No completed parlays yet</p>
-                            <p className="text-sm text-gray-500 mt-2">Your completed parlay history will appear here</p>
+                            <p className="text-gray-400">No completed TrendRides yet</p>
+                            <p className="text-sm text-gray-500 mt-2">Your completed TrendRide history will appear here</p>
                           </div>
                         )}
                       </TabsContent>
