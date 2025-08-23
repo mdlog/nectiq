@@ -747,11 +747,14 @@ export function MultiChainFinancial() {
     });
   };
 
-  // Wagmi-based transaction function (consistent with RainbowKit login)
+  // MOBILE-OPTIMIZED wallet transaction function (enhanced for mobile MetaMask)
   const sendViaWallet = async (deposit: any) => {
     try {
+      console.log('🔧 [MOBILE-DEBUG] sendViaWallet called, checking connection...');
+      
       // Check wallet connection using consistent RainbowKit/Wagmi technology
       if (!isConnected || !address) {
+        console.log('🚨 [MOBILE-DEBUG] Wallet not connected:', { isConnected, address });
         toast({
           title: "Wallet Not Connected",
           description: "Please connect your wallet using RainbowKit to continue",
@@ -759,6 +762,8 @@ export function MultiChainFinancial() {
         });
         return;
       }
+      
+      console.log('🔧 [MOBILE-DEBUG] Wallet connected, proceeding with transaction...');
 
       // Get chain configuration
       const targetChain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
@@ -830,33 +835,31 @@ export function MultiChainFinancial() {
           address
         });
         
-        // Send ETH transaction using Wagmi sendTransaction - MOBILE FIX: Properly handle async operation
+        // MOBILE-OPTIMIZED ETH transaction - Direct call without Promise wrapper
         try {
-          // CRITICAL MOBILE FIX: Add await and proper promise handling for mobile MetaMask
-          await new Promise((resolve, reject) => {
-            try {
-              const result = sendTransaction({
-                to: secureAdminWallet as `0x${string}`,
-                value: ethValue,
-              });
-              
-              console.log('🔧 [WALLET-DEBUG] Transaction initiated:', result);
-              
-              // Give MetaMask time to process the request on mobile
-              setTimeout(() => {
-                resolve(result);
-              }, 100);
-              
-            } catch (sendError: any) {
-              console.error('🚨 [WALLET-ERROR] sendTransaction failed:', sendError);
-              reject(sendError);
-            }
+          console.log('🔧 [MOBILE-DEBUG] Attempting ETH sendTransaction...');
+          
+          // CRITICAL MOBILE FIX: Direct call to sendTransaction for better mobile compatibility
+          const result = sendTransaction({
+            to: secureAdminWallet as `0x${string}`,
+            value: ethValue,
           });
           
-          console.log('🔧 [WALLET-DEBUG] ETH transaction successfully submitted to MetaMask');
+          console.log('🔧 [MOBILE-DEBUG] ETH transaction initiated:', result);
+          
+          // Mobile-specific success feedback
+          toast({
+            title: "Transaction Initiated",
+            description: "Check your MetaMask mobile app to confirm the transaction",
+          });
           
         } catch (sendError: any) {
-          console.error('🚨 [WALLET-ERROR] sendTransaction failed:', sendError);
+          console.error('🚨 [MOBILE-ERROR] sendTransaction failed:', sendError);
+          toast({
+            title: "Transaction Failed",
+            description: `MetaMask error: ${sendError.message || 'Unknown error'}`,
+            variant: "destructive",
+          });
           throw sendError;
         }
       }
@@ -1073,35 +1076,33 @@ export function MultiChainFinancial() {
       const decimals = tokenConfig.decimals || 6; // USDC/USDT typically use 6 decimals
       const tokenValue = parseUnits(tokenAmount, decimals);
       
-      // Send ERC-20 transaction using Wagmi writeContract - MOBILE FIX: Properly handle async operation
+      // MOBILE-OPTIMIZED ERC-20 token transaction - Direct call without Promise wrapper
       try {
-        // CRITICAL MOBILE FIX: Add proper promise handling for mobile MetaMask
-        await new Promise((resolve, reject) => {
-          try {
-            const result = writeContract({
-              address: tokenConfig.address as `0x${string}`,
-              abi: ERC20_TRANSFER_ABI,
-              functionName: 'transfer',
-              args: [secureAdminWallet as `0x${string}`, tokenValue],
-            });
-            
-            console.log('🔧 [WALLET-DEBUG] Token transaction initiated:', result);
-            
-            // Give MetaMask time to process the request on mobile
-            setTimeout(() => {
-              resolve(result);
-            }, 100);
-            
-          } catch (contractError: any) {
-            console.error('🚨 [WALLET-ERROR] writeContract failed:', contractError);
-            reject(contractError);
-          }
+        console.log('🔧 [MOBILE-DEBUG] Attempting token writeContract...');
+        
+        // CRITICAL MOBILE FIX: Direct call to writeContract for better mobile compatibility
+        const result = writeContract({
+          address: tokenConfig.address as `0x${string}`,
+          abi: ERC20_TRANSFER_ABI,
+          functionName: 'transfer',
+          args: [secureAdminWallet as `0x${string}`, tokenValue],
         });
         
-        console.log('🔧 [WALLET-DEBUG] Token transaction successfully submitted to MetaMask');
+        console.log('🔧 [MOBILE-DEBUG] Token transaction initiated:', result);
+        
+        // Mobile-specific success feedback
+        toast({
+          title: "Transaction Initiated",
+          description: "Check your MetaMask mobile app to confirm the token transaction",
+        });
         
       } catch (contractError: any) {
-        console.error('🚨 [WALLET-ERROR] writeContract failed:', contractError);
+        console.error('🚨 [MOBILE-ERROR] writeContract failed:', contractError);
+        toast({
+          title: "Transaction Failed",
+          description: `MetaMask error: ${contractError.message || 'Unknown error'}`,
+          variant: "destructive",
+        });
         throw contractError;
       }
 
@@ -1588,38 +1589,60 @@ export function MultiChainFinancial() {
                               </p>
                             </div>
                             
-                            {/* Wallet Send Button (for ETH deposits only) - Uses RainbowKit/Wagmi */}
+                            {/* MOBILE-OPTIMIZED Wallet Send Button (for ETH deposits only) - Enhanced for Mobile MetaMask */}
                             {deposit.tokenType === 'ETH' && (
                               <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
                                 <Button
-                                  onClick={() => sendViaWallet(deposit)}
-                                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-medium"
+                                  onClick={(e) => {
+                                    console.log('🔧 [MOBILE-DEBUG] ETH wallet button clicked');
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    sendViaWallet(deposit);
+                                  }}
+                                  onTouchStart={(e) => {
+                                    console.log('🔧 [MOBILE-DEBUG] ETH wallet button touched');
+                                    e.currentTarget.focus();
+                                  }}
+                                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-medium touch-manipulation"
                                   size="lg"
                                   disabled={isTransactionPending || !isConnected}
+                                  style={{ minHeight: '48px', touchAction: 'manipulation' }}
+                                  data-testid="send-eth-wallet-button"
                                 >
                                   <Send className="w-4 h-4 mr-2" />
                                   {isTransactionPending ? 'Sending...' : `Send ${calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ETH via Wallet`}
                                 </Button>
                                 <p className="text-xs text-gray-500 text-center mt-2">
-                                  Click to automatically send the amount (includes 2% processing fee) using your connected wallet
+                                  Tap to send ETH via MetaMask mobile (includes 2% processing fee)
                                 </p>
                               </div>
                             )}
                             
-                            {/* Wallet Send Button (for USDC/USDT deposits) - Uses RainbowKit/Wagmi */}
+                            {/* MOBILE-OPTIMIZED Wallet Send Button (for USDC/USDT deposits) - Enhanced for Mobile MetaMask */}
                             {(deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') && (
                               <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
                                 <Button
-                                  onClick={() => sendStablecoinViaWallet(deposit)}
-                                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium"
+                                  onClick={(e) => {
+                                    console.log('🔧 [MOBILE-DEBUG] Token wallet button clicked');
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    sendStablecoinViaWallet(deposit);
+                                  }}
+                                  onTouchStart={(e) => {
+                                    console.log('🔧 [MOBILE-DEBUG] Token wallet button touched');
+                                    e.currentTarget.focus();
+                                  }}
+                                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium touch-manipulation"
                                   size="lg"
                                   disabled={isTransactionPending || !isConnected}
+                                  style={{ minHeight: '48px', touchAction: 'manipulation' }}
+                                  data-testid="send-token-wallet-button"
                                 >
                                   <Send className="w-4 h-4 mr-2" />
                                   {isTransactionPending ? 'Sending...' : `Send ${calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ${deposit.tokenType} via Wallet`}
                                 </Button>
                                 <p className="text-xs text-gray-500 text-center mt-2">
-                                  Click to automatically send the amount (includes 2% processing fee) using your connected wallet
+                                  Tap to send {deposit.tokenType} via MetaMask mobile (includes 2% processing fee)
                                 </p>
                               </div>
                             )}
