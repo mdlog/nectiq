@@ -1240,52 +1240,24 @@ export class DatabaseStorage implements IStorage {
   // Get user reward history for dashboard (simplified version to avoid SQL errors)
   async getUserRewardHistory(userId: number, limit: number = 20): Promise<any[]> {
     try {
-      console.log(`🔍 [STORAGE] Getting simplified reward history for user ${userId}, limit: ${limit}`);
+      console.log(`🔍 [STORAGE] Getting real reward history for user ${userId}, limit: ${limit}`);
       
-      // Return sample data for now to avoid Drizzle ORM errors
-      const sampleRewards = [
-        {
-          id: 'battle_1',
-          type: 'battle',
-          userId: userId,
-          amount: 300,
-          description: 'Battle reward - 300 NTIQ',
-          createdAt: new Date('2025-08-06T03:25:42.213Z'),
-          cryptocurrency: 'bitcoin',
-          accuracy: null,
-          isWin: true,
-          stakeAmount: 100,
-          rewardAmount: 300,
-          sourceDetails: {
-            opponentName: 'Player2',
-            battleId: 1
-          }
-        },
-        {
-          id: 'prediction_1',
-          type: 'prediction',
-          userId: userId,
-          amount: 150,
-          description: 'Prediction reward - 150 NTIQ',
-          createdAt: new Date('2025-08-05T16:48:11.102Z'),
-          cryptocurrency: 'bitcoin',
-          accuracy: '95.2',
-          isWin: true,
-          stakeAmount: 50,
-          rewardAmount: 150,
-          sourceDetails: {
-            predictedPrice: '67000',
-            actualPrice: '67200',
-            accuracy: '95.2'
-          }
-        }
-      ];
+      // Get REAL rewards data from the database instead of sample data
+      const userRewards = await db
+        .select()
+        .from(rewards)
+        .where(eq(rewards.userId, userId))
+        .orderBy(desc(rewards.createdAt))
+        .limit(limit);
 
-      console.log(`✅ [STORAGE] Successfully returned ${sampleRewards.length} reward history items`);
-      return sampleRewards;
+      console.log(`✅ [STORAGE] Successfully returned ${userRewards.length} real reward history items`);
+      return userRewards;
     } catch (error) {
-      console.error('[STORAGE] Error fetching comprehensive reward history:', error);
-      throw error;
+      console.error(`❌ [STORAGE] Error fetching real reward history for user ${userId}:`, error);
+      
+      // Return empty array instead of sample data when there's an error
+      console.log(`🔍 [STORAGE] Returning empty rewards array for user ${userId} due to error`);
+      return [];
     }
   }
 
