@@ -83,6 +83,47 @@ export function ReferralSystem() {
     hasInitialized
   });
 
+  // Apply referral code mutation
+  const applyReferralMutation = useMutation({
+    mutationFn: async (code: string) => {
+      console.log("🎯 [REFERRAL] Applying referral code:", code);
+      const response = await apiRequest("/api/user/referral/apply", {
+        method: "POST",
+        body: JSON.stringify({ referralCode: code }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    },
+    onSuccess: (data: any) => {
+      console.log("✅ [REFERRAL] Apply referral success:", data);
+      toast({
+        title: "Referral Code Applied!",
+        description: data.message || "You and the referrer will receive 100 NTIQ bonus!",
+      });
+      setReferralCode("");
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    },
+    onError: (error: any) => {
+      console.error("❌ [REFERRAL] Apply referral error:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to Apply Referral Code",
+        description: error.message || "An error occurred while applying the referral code.",
+      });
+    },
+  });
+
   // Generate referral code mutation
   const generateCodeMutation = useMutation({
     mutationFn: async () => {
@@ -286,6 +327,76 @@ export function ReferralSystem() {
           )}
         </CardContent>
       </Card>
+
+      {/* Apply Referral Code Section - Only show if user doesn't have a referrer */}
+      {!referralData?.hasReferrer && !isLoading && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Apply Referral Code</CardTitle>
+            <CardDescription>
+              Enter a friend's referral code to earn bonus rewards (one-time only)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <Input
+                  placeholder="Enter 8-character referral code (e.g., ABC123XY)"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  maxLength={8}
+                  className="text-center text-lg font-mono tracking-wider"
+                />
+              </div>
+              <Button 
+                onClick={() => {
+                  if (referralCode.length === 8 && /^[A-Z0-9]+$/.test(referralCode)) {
+                    applyReferralMutation.mutate(referralCode);
+                  } else {
+                    toast({
+                      variant: "destructive",
+                      title: "Invalid Code Format",
+                      description: "Referral code must be exactly 8 characters (letters and numbers only).",
+                    });
+                  }
+                }}
+                disabled={referralCode.length !== 8 || applyReferralMutation.isPending}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                {applyReferralMutation.isPending ? "Applying..." : "Apply Code"}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              💡 Note: You can only use one referral code per account. Both you and your referrer will receive 100 NTIQ bonus.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show referrer info if user has one */}
+      {referralData?.hasReferrer && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Your Referrer</CardTitle>
+            <CardDescription>
+              You were referred by someone and already received your bonus
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold">
+                ✓
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-green-800 dark:text-green-200">Referral Bonus Received!</p>
+                <p className="text-sm text-green-600 dark:text-green-300">
+                  You earned 100 NTIQ when you joined using a referral code
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

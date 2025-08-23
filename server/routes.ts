@@ -1848,6 +1848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         referralLink,
         totalReferrals: freshUser.totalReferrals || 0,
         referralRewards: freshUser.referralRewards || 0,
+        hasReferrer: !!freshUser.referredBy, // Add info if user was referred by someone
         referredUsers: referredUsers.map(u => ({
           ...u,
           joinedAt: u.joinedAt?.toISOString()
@@ -1964,6 +1965,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error validating referral code:", error);
       res.status(500).json({ message: "Failed to validate referral code" });
+    }
+  });
+
+  // Apply referral code for existing user
+  app.post("/api/user/referral/apply", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { referralCode } = req.body;
+      
+      if (!referralCode || typeof referralCode !== 'string' || referralCode.length !== 8) {
+        return res.status(400).json({ message: "Valid 8-character referral code is required" });
+      }
+
+      // Check if user already has a referrer
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (currentUser.referredBy) {
+        return res.status(400).json({ 
+          message: "You already have a referrer. Each account can only use one referral code." 
+        });
+      }
+
+      // Apply the referral code
+      try {
+        await storage.processReferral(referralCode.toUpperCase(), userId);
+        
+        auditLog('REFERRAL_CODE_APPLIED', { 
+          userId: userId,
+          referralCode: referralCode.toUpperCase(),
+          appliedByExistingUser: true
+        }, req);
+
+        res.json({
+          success: true,
+          message: "Referral code applied successfully! Both you and your referrer received 100 NTIQ bonus."
+        });
+      } catch (error) {
+        console.error("Error applying referral code:", error);
+        res.status(400).json({ 
+          message: error.message || "Failed to apply referral code" 
+        });
+      }
+    } catch (error) {
+      console.error("Error in apply referral endpoint:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
