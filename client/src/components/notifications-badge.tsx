@@ -27,12 +27,31 @@ export function NotificationsBadge() {
     onNotification: (notification) => {
       console.log('🔔 [NOTIFICATIONS] Received notification:', notification);
       
+      // Create unique notification identifier for deduplication
+      const notificationKey = `${notification.type}-${notification.data?.withdrawalId || notification.data?.depositId || notification.timestamp}`;
+      
+      // Check if we already have this notification (deduplication)
+      const isDuplicate = notifications.some(n => 
+        n.type === notification.type && 
+        n.message === notification.message &&
+        (n.data?.withdrawalId === notification.data?.withdrawalId ||
+         n.data?.depositId === notification.data?.depositId) &&
+        Math.abs(n.timestamp - notification.timestamp) < 5000 // Within 5 seconds
+      );
+      
+      if (isDuplicate) {
+        console.log('🚫 [NOTIFICATIONS] Duplicate notification detected, ignoring:', notificationKey);
+        return;
+      }
+      
       // Create notification with unique ID
       const newNotification: Notification = {
         id: `${notification.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...notification,
         read: false
       };
+      
+      console.log('✅ [NOTIFICATIONS] Adding new notification:', newNotification);
       
       // Add to notifications list
       setNotifications(prev => [newNotification, ...prev.slice(0, 49)]); // Keep max 50 notifications
