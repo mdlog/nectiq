@@ -95,8 +95,8 @@ Battle adalah kompetisi head-to-head antara dua pemain. Anda menantang pemain la
 
 ### Sistem Reward Battle (IMPLEMENTASI AKTUAL)
 ```
-Formula: Winner Reward = Total Pool × Accuracy Multiplier
-Platform Fee: 0% (Tidak ada fee untuk battles)
+Formula: Winner Reward = (Total Pool - Platform Fee) × Accuracy Multiplier
+Platform Fee: 3.5% dari total pool battles
 ```
 
 ### Contoh Reward Battle
@@ -118,15 +118,16 @@ Player B: (1 - |3380-3435|/3435) × 100% = 98.40%
 
 🏆 PEMENANG: Player A (lebih akurat)
 💰 REWARD CALCULATION:
-Accuracy Multiplier: 99.56% → 3.0x (≥99.5%)
-Player A Reward: 500 × 2 × 3.0 = 3000 NTIQ*
+Total Pool: 1000 NTIQ
+Platform Fee (3.5%): 1000 × 0.035 = 35 NTIQ
+Net Pool: 1000 - 35 = 965 NTIQ
+Player A Reward: 965 NTIQ (winner gets net pool)
 Player B: 0 NTIQ (kalah)
 
-*Reward bisa melebihi pool karena accuracy multiplier bonus
-Platform Fee: 0% (Battles bebas fee)
+Platform Fee: 3.5% (diambil dari total pool)
 
-⚠️ NOTE: Sistem accuracy multiplier untuk battles sama 
-dengan regular predictions untuk konsistensi reward
+⚠️ NOTE: Battle rewards tidak menggunakan accuracy multiplier seperti 
+regular predictions - pemenang mendapat total pool setelah dikurangi fee
 ```
 
 ---
@@ -249,14 +250,14 @@ Round 5: Predict Cardano 6h → WON!
 
 ### Base Rewards (SISTEM AKTUAL 2025)
 - **Regular Prediction**: Stake × Accuracy Multiplier (setelah fee 4%)
-- **Battle Win**: Stake × 2 × Accuracy Multiplier (0% fee)
+- **Battle Win**: Total Pool - Platform Fee 3.5% (fixed amount per battle)
 - **TrendRide**: Stake × Total Multiplier (setelah fee 6%)
 - **Survival**: Berdasarkan posisi final (0% fee tambahan)
 
 ### Platform Fee Structure
 - **Regular Predictions**: 4% dari winning rewards
 - **TrendRide**: 6% dari gross reward
-- **Battles**: 0% (Bebas fee)
+- **Battles**: 3.5% dari total pool
 - **Survival**: 0% (Hanya entry fee)
 - **Withdrawals**: 2.5% (otomatis)
 
