@@ -1101,7 +1101,7 @@ export default function UserDashboard() {
                       let sourceText = '';
                       let sourceIcon = <Gift size={16} />;
                       
-                      const rewardType = reward.type || 'prediction';
+                      const rewardType = (reward as any).type || 'prediction';
                       switch (rewardType) {
                         case 'prediction':
                           sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
@@ -1177,7 +1177,7 @@ export default function UserDashboard() {
                             </p>
                             
                             {/* Share Button for Prediction Wins with Enhanced Details */}
-                            {reward.amount > 0 && rewardType === 'prediction' && reward.sourceDetails && (
+                            {reward.amount > 0 && rewardType === 'prediction' && (reward as any).sourceDetails && (
                               <SocialShare
                                 compact={true}
                                 data={createShareData.predictionWithDetails(
@@ -1185,9 +1185,9 @@ export default function UserDashboard() {
                                   reward.amount,
                                   parseFloat(reward.accuracy || '0'),
                                   {
-                                    predictedPrice: reward.sourceDetails.predictedPrice,
-                                    actualPrice: reward.sourceDetails.actualPrice,
-                                    accuracy: reward.sourceDetails.accuracy
+                                    predictedPrice: (reward as any).sourceDetails.predictedPrice,
+                                    actualPrice: (reward as any).sourceDetails.actualPrice,
+                                    accuracy: (reward as any).sourceDetails.accuracy
                                   }
                                 )}
                               />
@@ -1575,7 +1575,7 @@ function BattlesSection() {
                               data={createShareData.battle(
                                 battle.cryptocurrency?.toUpperCase() || 'CRYPTO',
                                 battle.isUserChallenger ? battle.challengedUsername || 'Opponent' : battle.challengerUsername || 'Opponent',
-                                parseFloat(battle.winnerReward || '0')
+                                parseFloat(battle.winnerReward?.toString() || '0')
                               )}
                             />
                           )}
