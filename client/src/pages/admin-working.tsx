@@ -17,6 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAccount, useWriteContract, useSendTransaction } from "wagmi";
 import { parseEther, parseUnits } from "viem";
 import { Footer } from "@/components/footer";
+import "../styles/mobile-admin.css";
 
 // TypeScript declaration for MetaMask/Ethereum provider
 interface EthereumProvider {
@@ -1810,40 +1811,42 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">{/* Content wrapper moved here */}
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">{/* Content wrapper moved here */}
 
         {/* Professional Navigation */}
-        <div className="mb-8">
-          <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-2">
+        <div className="mb-6 md:mb-8">
+          <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-1 md:p-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="bg-transparent w-full grid grid-cols-3 lg:grid-cols-9 gap-2 h-auto p-0">
+              <TabsList className="bg-transparent w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-1 md:gap-2 h-auto p-0">
                 <TabsTrigger 
                   value="statistics" 
-                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                  className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
-                  <BarChart3 className="h-6 w-6 mb-1" />
-                  Statistics
+                  <BarChart3 className="h-4 w-4 md:h-6 md:w-6 mb-1" />
+                  <span className="hidden sm:inline">Statistics</span>
+                  <span className="sm:hidden">Stats</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="users" 
-                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                  className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
-                  <Users className="h-6 w-6 mb-1" />
+                  <Users className="h-4 w-4 md:h-6 md:w-6 mb-1" />
                   Users
                 </TabsTrigger>
                 <TabsTrigger 
                   value="cryptocurrencies" 
-                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-yellow-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                  className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-yellow-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
-                  <Database className="h-6 w-6 mb-1" />
+                  <Database className="h-4 w-4 md:h-6 md:w-6 mb-1" />
                   Crypto
                 </TabsTrigger>
                 <TabsTrigger 
                   value="predictions" 
-                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                  className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
-                  <TrendingUp className="h-6 w-6 mb-1" />
-                  Predictions
+                  <TrendingUp className="h-4 w-4 md:h-6 md:w-6 mb-1" />
+                  <span className="hidden sm:inline">Predictions</span>
+                  <span className="sm:hidden">Pred</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="leaderboard" 
@@ -1875,9 +1878,9 @@ export default function AdminPanel() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="settings" 
-                  className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-violet-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
+                  className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-violet-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
-                  <Settings className="h-6 w-6 mb-1" />
+                  <Settings className="h-4 w-4 md:h-6 md:w-6 mb-1" />
                   Settings
                 </TabsTrigger>
               </TabsList>
@@ -1889,20 +1892,20 @@ export default function AdminPanel() {
 
           {/* Statistics Tab */}
           <TabsContent value="statistics" className="space-y-8">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
-                <CardContent className="p-6">
+                <CardContent className="p-4 md:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-400 mb-2">Total Users</p>
-                      <p className="text-3xl font-bold text-white">
+                      <p className="text-xs md:text-sm font-medium text-slate-400 mb-2">Total Users</p>
+                      <p className="text-2xl md:text-3xl font-bold text-white">
                         {statsLoading ? (
                           <div className="animate-pulse bg-slate-600 h-8 w-16 rounded"></div>
                         ) : formatNumber(adminStats?.totalUsers || 0)}
                       </p>
                     </div>
-                    <div className="p-3 bg-blue-500/20 rounded-xl">
-                      <Users className="h-8 w-8 text-blue-400" />
+                    <div className="p-2 md:p-3 bg-blue-500/20 rounded-xl">
+                      <Users className="h-6 w-6 md:h-8 md:w-8 text-blue-400" />
                     </div>
                   </div>
                 </CardContent>
@@ -2072,16 +2075,18 @@ export default function AdminPanel() {
                     <Users className="mr-2" size={20} />
                     User Management ({filteredUsers?.length || 0})
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={exportUsers} variant="outline" size="sm">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button onClick={exportUsers} variant="outline" size="sm" className="w-full sm:w-auto">
                       <Download className="mr-2" size={16} />
-                      Export CSV
+                      <span className="hidden sm:inline">Export CSV</span>
+                      <span className="sm:hidden">Export</span>
                     </Button>
                     <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
                       <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
+                        <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
                           <Plus className="mr-2" size={16} />
-                          Add New User
+                          <span className="hidden sm:inline">Add New User</span>
+                          <span className="sm:hidden">Add User</span>
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="bg-slate-800 border-slate-700">
@@ -3505,7 +3510,7 @@ export default function AdminPanel() {
                 </CardTitle>
                 
                 {/* Filter Controls */}
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                   <div>
                     <Label className="text-white text-sm">Type</Label>
                     <Select 
