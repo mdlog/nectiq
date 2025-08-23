@@ -49,15 +49,13 @@ function formatPrice(price: number): string {
 
 export function RecentRewards() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [forceRefresh, setForceRefresh] = useState(0);
   const itemsPerPage = 5; // Show 5 rewards per page
 
   const { data: rewards = [], isLoading, error } = useQuery<any[]>({
-    queryKey: ["/api/rewards/recent", forceRefresh], // Add forceRefresh to invalidate cache
+    queryKey: ["/api/rewards/recent"],
     refetchInterval: false, // DISABLED to prevent rate limiting
     refetchIntervalInBackground: false,
-    staleTime: 0, // Force fresh data to show latest changes
-    gcTime: 0, // Clear cache immediately
+    staleTime: 60000, // 1 minute cache
     retry: (failureCount, error: any) => {
       // Don't retry on authentication errors
       if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
@@ -123,12 +121,6 @@ export function RecentRewards() {
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Connect your wallet to view your recent rewards
               </p>
-              <button 
-                onClick={() => setForceRefresh(prev => prev + 1)}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm"
-              >
-                🔄 Refresh Data
-              </button>
             </div>
           </div>
         </div>
@@ -142,13 +134,6 @@ export function RecentRewards() {
         <h3 className="text-lg font-bold mb-4 flex items-center">
           <Gift className="text-primary mr-2" size={18} />
           Recent Rewards
-          <button 
-            onClick={() => setForceRefresh(prev => prev + 1)}
-            className="ml-auto px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs transition-colors"
-            title="Clear cache and refresh"
-          >
-            🔄 Refresh
-          </button>
         </h3>
         <div className="flex-1 flex items-center justify-center">
           <EngagementPlaceholder type="rewards" />
@@ -162,13 +147,6 @@ export function RecentRewards() {
       <h3 className="text-lg font-bold mb-4 flex items-center">
         <Gift className="text-primary mr-2" size={18} />
         Recent Rewards
-        <button 
-          onClick={() => setForceRefresh(prev => prev + 1)}
-          className="ml-auto px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs transition-colors"
-          title="Clear cache and refresh data"
-        >
-          🔄 Refresh
-        </button>
       </h3>
       
       <div className="space-y-3 flex-1">
