@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Gift, Check, X, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Target } from "lucide-react";
+import { Gift, Check, X, TrendingUp, TrendingDown, ChevronLeft, ChevronRight, Target, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { RecentReward } from "@/types";
 import { EngagementPlaceholder } from "@/components/engagement-placeholder";
@@ -49,14 +49,22 @@ function formatPrice(price: number): string {
 
 export function RecentRewards() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [forceRefresh, setForceRefresh] = useState(0);
   const itemsPerPage = 5; // Show 5 rewards per page
 
-  const { data: rewards = [], isLoading } = useQuery<any[]>({
-    queryKey: ["/api/rewards/recent"],
+  const { data: rewards = [], isLoading, error } = useQuery<any[]>({
+    queryKey: ["/api/rewards/recent", forceRefresh], // Add forceRefresh to invalidate cache
     refetchInterval: false, // DISABLED to prevent rate limiting
     refetchIntervalInBackground: false,
     staleTime: 0, // Force fresh data to show latest changes
     gcTime: 0, // Clear cache immediately
+    retry: (failureCount, error: any) => {
+      // Don't retry on authentication errors
+      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 
   // OPTIMIZED: Crypto prices for dynamic logo display
@@ -97,12 +105,50 @@ export function RecentRewards() {
     );
   }
 
+  // Show authentication error message if user is not authenticated
+  if (error?.message?.includes('Authentication') || error?.message?.includes('401')) {
+    return (
+      <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
+        <h3 className="text-lg font-bold mb-4 flex items-center">
+          <Gift className="text-primary mr-2" size={18} />
+          Recent Rewards
+        </h3>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 mx-auto bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Authentication Required</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Connect your wallet to view your recent rewards
+              </p>
+              <button 
+                onClick={() => setForceRefresh(prev => prev + 1)}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm"
+              >
+                🔄 Refresh Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (safeRewards.length === 0) {
     return (
       <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
         <h3 className="text-lg font-bold mb-4 flex items-center">
           <Gift className="text-primary mr-2" size={18} />
           Recent Rewards
+          <button 
+            onClick={() => setForceRefresh(prev => prev + 1)}
+            className="ml-auto px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs transition-colors"
+            title="Clear cache and refresh"
+          >
+            🔄 Refresh
+          </button>
         </h3>
         <div className="flex-1 flex items-center justify-center">
           <EngagementPlaceholder type="rewards" />
@@ -116,6 +162,13 @@ export function RecentRewards() {
       <h3 className="text-lg font-bold mb-4 flex items-center">
         <Gift className="text-primary mr-2" size={18} />
         Recent Rewards
+        <button 
+          onClick={() => setForceRefresh(prev => prev + 1)}
+          className="ml-auto px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs transition-colors"
+          title="Clear cache and refresh data"
+        >
+          🔄 Refresh
+        </button>
       </h3>
       
       <div className="space-y-3 flex-1">
