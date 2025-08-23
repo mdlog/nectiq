@@ -51,9 +51,10 @@
     font-weight: 700;
   }
 
-  /* Tabs Navigation - Vertical stack on mobile with proper spacing */
+  /* Tabs Navigation - Grid layout on mobile with proper spacing */
   .admin-tabs-nav {
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 0.5rem !important;
     padding: 0 !important;
     background: transparent !important;
@@ -62,27 +63,32 @@
   .admin-tab-button {
     width: 100% !important;
     min-width: auto !important;
-    padding: 0.75rem !important;
-    font-size: 0.875rem !important;
+    padding: 0.75rem 0.5rem !important;
+    font-size: 0.75rem !important;
     border-radius: 0.5rem !important;
-    justify-content: flex-start !important;
-    text-align: left !important;
+    justify-content: center !important;
+    text-align: center !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     line-height: 1.2 !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
   }
 
   .admin-tab-button span {
-    display: inline !important;
-    margin-left: 0.5rem !important;
+    display: block !important;
+    margin-left: 0 !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
   }
 
-  /* Ensure icons are visible */
+  /* Ensure icons are visible and centered */
   .admin-tab-button svg {
-    width: 1rem !important;
-    height: 1rem !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
     flex-shrink: 0 !important;
+    margin: 0 auto !important;
   }
 
   /* Content area improvements */
@@ -303,9 +309,11 @@
 
   /* Specific fixes for dashboard menu buttons */
   .admin-tab-button {
-    min-height: 48px !important;
+    min-height: 60px !important;
     border: 1px solid transparent !important;
     transition: all 0.2s ease-in-out !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
   .admin-tab-button:hover {
@@ -320,9 +328,30 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
   }
 
-  /* Ensure consistent spacing */
+  /* Ensure consistent spacing and optional 3-column layout for smaller screens */
   .admin-tabs-nav > * + * {
     margin-top: 0 !important;
+  }
+  
+  /* Optional: Switch to 3 columns for very wide mobile screens */
+  @media (min-width: 480px) and (max-width: 768px) {
+    .admin-tabs-nav {
+      grid-template-columns: repeat(3, 1fr) !important;
+    }
+    
+    .admin-tab-button {
+      font-size: 0.6rem !important;
+      padding: 0.5rem 0.25rem !important;
+    }
+    
+    .admin-tab-button span {
+      font-size: 0.6rem !important;
+    }
+    
+    .admin-tab-button svg {
+      width: 1rem !important;
+      height: 1rem !important;
+    }
   }
 }
 
