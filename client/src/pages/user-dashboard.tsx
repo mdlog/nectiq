@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem, Plus, Users, Zap } from "lucide-react";
 import { useLocation } from "wouter";
@@ -29,6 +30,26 @@ import { SurvivalStatus } from "@/components/survival-status";
 import { MultiChainFinancial } from "@/components/multi-chain-financial";
 import { WalletEmailVerification } from "@/components/WalletEmailVerification";
 import { SocialShare, createShareData } from "@/components/SocialShare";
+
+// Simple Error Boundary Component using functional approach
+function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <React.Suspense fallback={
+      <div className="p-6 text-center">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2">
+            Loading Financial System...
+          </h3>
+          <div className="flex justify-center">
+            <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    }>
+      {children}
+    </React.Suspense>
+  );
+}
 
 
 // Dynamic function to get crypto image from live API data
@@ -1266,14 +1287,16 @@ export default function UserDashboard() {
                 {/* Financial Tab - Deposit Only */}
                 <TabsContent value="financial" className="flex-1 h-full">
                   <div className="h-full">
-            <div className="space-y-6">
-              <div className="text-center p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <h3 className="text-lg font-bold mb-2 text-black dark:text-black">Multi-Chain Financial System</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Deposit and withdrawal system for multiple blockchains
-                </p>
-              </div>
-              <MultiChainFinancial />
+                    <div className="space-y-6">
+                      <div className="text-center p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <h3 className="text-lg font-bold mb-2 text-black dark:text-black">Multi-Chain Financial System</h3>
+                        <div className="text-sm text-slate-600 dark:text-slate-300">
+                          Deposit and withdrawal system for multiple blockchains
+                        </div>
+                      </div>
+                      <ErrorBoundary>
+                        <MultiChainFinancial />
+                      </ErrorBoundary>
                     </div>
                   </div>
                 </TabsContent>
