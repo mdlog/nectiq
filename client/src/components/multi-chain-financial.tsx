@@ -1136,6 +1136,7 @@ export function MultiChainFinancial() {
       approved: { color: "bg-blue-600", text: "Approved" },
       rejected: { color: "bg-red-500", text: "Rejected" },
       failed: { color: "bg-red-600", text: "Failed" },
+      cancelled: { color: "bg-gray-500", text: "Cancelled" },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
