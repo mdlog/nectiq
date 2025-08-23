@@ -830,14 +830,31 @@ export function MultiChainFinancial() {
           address
         });
         
-        // Send ETH transaction using Wagmi sendTransaction (correct for native ETH transfers)
+        // Send ETH transaction using Wagmi sendTransaction - MOBILE FIX: Properly handle async operation
         try {
-          const result = sendTransaction({
-            to: secureAdminWallet as `0x${string}`,
-            value: ethValue,
+          // CRITICAL MOBILE FIX: Add await and proper promise handling for mobile MetaMask
+          await new Promise((resolve, reject) => {
+            try {
+              const result = sendTransaction({
+                to: secureAdminWallet as `0x${string}`,
+                value: ethValue,
+              });
+              
+              console.log('🔧 [WALLET-DEBUG] Transaction initiated:', result);
+              
+              // Give MetaMask time to process the request on mobile
+              setTimeout(() => {
+                resolve(result);
+              }, 100);
+              
+            } catch (sendError: any) {
+              console.error('🚨 [WALLET-ERROR] sendTransaction failed:', sendError);
+              reject(sendError);
+            }
           });
           
-          console.log('🔧 [WALLET-DEBUG] Transaction initiated:', result);
+          console.log('🔧 [WALLET-DEBUG] ETH transaction successfully submitted to MetaMask');
+          
         } catch (sendError: any) {
           console.error('🚨 [WALLET-ERROR] sendTransaction failed:', sendError);
           throw sendError;
@@ -1056,13 +1073,37 @@ export function MultiChainFinancial() {
       const decimals = tokenConfig.decimals || 6; // USDC/USDT typically use 6 decimals
       const tokenValue = parseUnits(tokenAmount, decimals);
       
-      // Send ERC-20 transaction using Wagmi writeContract (correct for token transfers)
-      writeContract({
-        address: tokenConfig.address as `0x${string}`,
-        abi: ERC20_TRANSFER_ABI,
-        functionName: 'transfer',
-        args: [secureAdminWallet as `0x${string}`, tokenValue],
-      });
+      // Send ERC-20 transaction using Wagmi writeContract - MOBILE FIX: Properly handle async operation
+      try {
+        // CRITICAL MOBILE FIX: Add proper promise handling for mobile MetaMask
+        await new Promise((resolve, reject) => {
+          try {
+            const result = writeContract({
+              address: tokenConfig.address as `0x${string}`,
+              abi: ERC20_TRANSFER_ABI,
+              functionName: 'transfer',
+              args: [secureAdminWallet as `0x${string}`, tokenValue],
+            });
+            
+            console.log('🔧 [WALLET-DEBUG] Token transaction initiated:', result);
+            
+            // Give MetaMask time to process the request on mobile
+            setTimeout(() => {
+              resolve(result);
+            }, 100);
+            
+          } catch (contractError: any) {
+            console.error('🚨 [WALLET-ERROR] writeContract failed:', contractError);
+            reject(contractError);
+          }
+        });
+        
+        console.log('🔧 [WALLET-DEBUG] Token transaction successfully submitted to MetaMask');
+        
+      } catch (contractError: any) {
+        console.error('🚨 [WALLET-ERROR] writeContract failed:', contractError);
+        throw contractError;
+      }
 
     } catch (error: any) {
       console.error('Wallet stablecoin transaction error:', error);
