@@ -1996,6 +1996,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Apply the referral code
       try {
+        // Debug: Check if processReferral function exists
+        console.log('🔍 [DEBUG] storage methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(storage)));
+        console.log('🔍 [DEBUG] processReferral type:', typeof storage.processReferral);
+        
+        if (typeof storage.processReferral !== 'function') {
+          throw new Error('processReferral method not available on storage object');
+        }
+        
         await storage.processReferral(referralCode.toUpperCase(), userId);
         
         auditLog('REFERRAL_CODE_APPLIED', { 
