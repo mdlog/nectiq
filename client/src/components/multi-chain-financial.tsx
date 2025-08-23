@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount, useSwitchChain, useWriteContract, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther, parseUnits } from 'viem';
@@ -269,7 +268,7 @@ interface WithdrawalData {
 
 export function MultiChainFinancial() {
   const [selectedAction, setSelectedAction] = useState<"deposit" | "withdraw">("deposit");
-  const [selectedChain, setSelectedChain] = useState<any>(null);
+  const [selectedChain, setSelectedChain] = useState(SUPPORTED_CHAINS[0]);
   const [selectedToken, setSelectedToken] = useState<"ETH" | "USDC" | "USDT">("ETH");
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -303,7 +302,7 @@ export function MultiChainFinancial() {
   });
 
   // Secure query to get admin wallet address from server
-  const { data: adminWalletData, isLoading: adminWalletLoading } = useQuery<any>({
+  const { data: adminWalletData, isLoading: adminWalletLoading } = useQuery({
     queryKey: ["/api/deposit/admin-wallet"],
     staleTime: 300000, // Cache for 5 minutes
     retry: 3,
@@ -349,20 +348,14 @@ export function MultiChainFinancial() {
     );
   };
 
-  // Query to get blockchain settings from admin panel
-  const { data: blockchainSettings, isLoading: blockchainLoading } = useQuery<any[]>({
-    queryKey: ["/api/blockchain-settings"],
-    staleTime: 30000,
-  });
-
   // Query to get user data
-  const { data: user } = useQuery<any>({
+  const { data: user } = useQuery({
     queryKey: ["/api/user"],
     staleTime: 30000,
   });
 
   // Query to get deposit history
-  const { data: deposits = [], isLoading: depositsLoading, refetch: refetchDeposits } = useQuery<DepositData[]>({
+  const { data: deposits, isLoading: depositsLoading, refetch: refetchDeposits } = useQuery({
     queryKey: ["/api/user/deposits"],
     refetchInterval: 5000, // More frequent refresh
     staleTime: 0, // Always consider data stale
@@ -370,13 +363,13 @@ export function MultiChainFinancial() {
   });
 
   // Query to get withdrawal history
-  const { data: withdrawals = [], isLoading: withdrawalsLoading } = useQuery<WithdrawalData[]>({
+  const { data: withdrawals, isLoading: withdrawalsLoading } = useQuery({
     queryKey: ["/api/user/withdrawals"],
     refetchInterval: 10000,
   });
 
   // Query to get crypto prices for ETH conversion
-  const { data: cryptoPrices = [] } = useQuery<any[]>({
+  const { data: cryptoPrices } = useQuery({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 5000,
     staleTime: 0,
@@ -384,14 +377,14 @@ export function MultiChainFinancial() {
 
   // Calculate pagination for deposits
   const getPaginatedDeposits = () => {
-    if (!deposits || !Array.isArray(deposits)) return [];
+    if (!deposits) return [];
     const startIndex = (depositPage - 1) * itemsPerPage;
     return deposits.slice(startIndex, startIndex + itemsPerPage);
   };
 
   // Calculate pagination for withdrawals
   const getPaginatedWithdrawals = () => {
-    if (!withdrawals || !Array.isArray(withdrawals)) return [];
+    if (!withdrawals) return [];
     const startIndex = (withdrawalPage - 1) * itemsPerPage;
     return withdrawals.slice(startIndex, startIndex + itemsPerPage);
   };
@@ -399,48 +392,6 @@ export function MultiChainFinancial() {
   // Calculate total pages
   const totalDepositPages = Math.ceil((deposits?.length || 0) / itemsPerPage);
   const totalWithdrawalPages = Math.ceil((withdrawals?.length || 0) / itemsPerPage);
-
-  // Transform blockchain settings to match SUPPORTED_CHAINS format
-  const transformBlockchainSettings = () => {
-    if (!blockchainSettings) return SUPPORTED_CHAINS;
-    
-    const enabledChains = blockchainSettings
-      .filter(chain => chain.isEnabled)
-      .map(chain => {
-        // Find matching chain from SUPPORTED_CHAINS for logo and tokens
-        const matchingChain = SUPPORTED_CHAINS.find(sc => 
-          sc.chainId === chain.chainId || 
-          sc.shortName.toLowerCase() === chain.chainName.toLowerCase()
-        );
-        
-        return {
-          chainId: chain.chainId,
-          name: chain.networkName,
-          symbol: chain.nativeCurrency,
-          shortName: chain.chainName,
-          color: matchingChain?.color || "text-gray-600",
-          logo: matchingChain?.logo || EthereumLogo,
-          explorerUrl: chain.explorerUrl,
-          tokens: matchingChain?.tokens || { ETH: { address: "native", decimals: 18 } },
-          isDepositEnabled: chain.isDepositEnabled,
-          isWithdrawalEnabled: chain.isWithdrawalEnabled
-        } as any;
-      });
-    
-    return enabledChains.length > 0 ? enabledChains : SUPPORTED_CHAINS;
-  };
-
-  // Get available chains based on admin settings
-  const availableChains = transformBlockchainSettings();
-  const availableDepositChains = availableChains.filter(chain => (chain as any).isDepositEnabled !== false);
-  const availableWithdrawalChains = availableChains.filter(chain => (chain as any).isWithdrawalEnabled !== false);
-
-  // Set default selected chain when chains are loaded
-  React.useEffect(() => {
-    if (!selectedChain && availableChains.length > 0) {
-      setSelectedChain(availableChains[0]);
-    }
-  }, [availableChains, selectedChain]);
 
   // Function to calculate token amount from USD for deposit history action view
   const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string, ethPriceSnapshot?: string): string => {
@@ -815,7 +766,7 @@ export function MultiChainFinancial() {
       console.log('🔧 [MOBILE-DEBUG] Wallet connected, proceeding with transaction...');
 
       // Get chain configuration
-      const targetChain = availableChains.find(c => c.shortName === deposit.chainName);
+      const targetChain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
       if (!targetChain) {
         toast({
           title: "Chain Not Supported",
@@ -1055,7 +1006,7 @@ export function MultiChainFinancial() {
       }
 
       // Get chain configuration
-      const targetChain = availableChains.find(c => c.shortName === deposit.chainName);
+      const targetChain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
       if (!targetChain) {
         toast({
           title: "Chain Not Supported",
@@ -1245,18 +1196,18 @@ export function MultiChainFinancial() {
                 {/* Chain Selection */}
                 <div>
                   <Label>Select Blockchain</Label>
-                  <Select value={selectedChain?.shortName || ''} onValueChange={(value) => {
-                    const chain = availableDepositChains.find(c => c.shortName === value);
+                  <Select value={selectedChain.shortName} onValueChange={(value) => {
+                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === value);
                     if (chain) setSelectedChain(chain);
                   }}>
                     <SelectTrigger>
                       <div className="flex items-center space-x-2">
-                        {selectedChain?.logo && <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />}
-                        <span>{selectedChain?.name || 'Select Blockchain'}</span>
+                        <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                        <span>{selectedChain.name}</span>
                       </div>
                     </SelectTrigger>
                     <SelectContent>
-                      {availableDepositChains.map((chain) => (
+                      {SUPPORTED_CHAINS.map((chain) => (
                         <SelectItem key={chain.chainId} value={chain.shortName}>
                           <div className="flex items-center space-x-2">
                             <chain.logo className={`w-5 h-5 ${chain.color}`} />
@@ -1465,14 +1416,14 @@ export function MultiChainFinancial() {
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <div className="flex items-center space-x-1">
                               {(() => {
-                                const chain = availableChains.find(c => c.shortName === deposit.chainName);
+                                const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
                                 if (chain) {
                                   const LogoComponent = chain.logo;
                                   return <LogoComponent className={`w-4 h-4 ${chain.color}`} />;
                                 }
                                 return null;
                               })()}
-                              <span>{availableChains.find(c => c.shortName === deposit.chainName)?.name}</span>
+                              <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}</span>
                             </div>
                             {deposit.transactionHash && (
                               <Button
@@ -1480,7 +1431,7 @@ export function MultiChainFinancial() {
                                 variant="ghost"
                                 className="h-auto p-1"
                                 onClick={() => {
-                                  const chain = availableChains.find(c => c.shortName === deposit.chainName);
+                                  const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
                                   if (chain) {
                                     window.open(`${chain.explorerUrl}/tx/${deposit.transactionHash}`, '_blank');
                                   }
@@ -1589,7 +1540,7 @@ export function MultiChainFinancial() {
                                 <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Network:</span>
                                 <div className="flex items-center space-x-2">
                                   {(() => {
-                                    const chain = availableChains.find(c => c.shortName === deposit.chainName);
+                                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
                                     if (chain) {
                                       const LogoComponent = chain.logo;
                                       return <LogoComponent className={`w-5 h-5 ${chain.color}`} />;
@@ -1597,7 +1548,7 @@ export function MultiChainFinancial() {
                                     return null;
                                   })()}
                                   <span className="font-medium text-gray-900 dark:text-gray-100">
-                                    {availableChains.find(c => c.shortName === deposit.chainName)?.name}
+                                    {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}
                                   </span>
                                 </div>
                               </div>
@@ -1612,7 +1563,7 @@ export function MultiChainFinancial() {
                                     size="sm"
                                     variant="ghost"
                                     onClick={() => {
-                                      const chain = availableChains.find(c => c.shortName === deposit.chainName);
+                                      const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
                                       const tokenAddress = chain?.tokens[deposit.tokenType as keyof typeof chain.tokens]?.address;
                                       if (tokenAddress && tokenAddress !== 'native') {
                                         copyToClipboard(tokenAddress);
@@ -1624,7 +1575,7 @@ export function MultiChainFinancial() {
                                 </div>
                                 <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all text-gray-900 dark:text-gray-100">
                                   {(() => {
-                                    const chain = availableChains.find(c => c.shortName === deposit.chainName);
+                                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
                                     const tokenAddress = chain?.tokens[deposit.tokenType as keyof typeof chain.tokens]?.address;
                                     return tokenAddress !== 'native' ? tokenAddress : 'Native Token';
                                   })()}
@@ -1749,18 +1700,18 @@ export function MultiChainFinancial() {
                 {/* Chain Selection */}
                 <div>
                   <Label>Select Blockchain</Label>
-                  <Select value={selectedChain?.shortName || ''} onValueChange={(value) => {
-                    const chain = availableWithdrawalChains.find(c => c.shortName === value);
+                  <Select value={selectedChain.shortName} onValueChange={(value) => {
+                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === value);
                     if (chain) setSelectedChain(chain);
                   }}>
                     <SelectTrigger>
                       <div className="flex items-center space-x-2">
-                        {selectedChain?.logo && <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />}
-                        <span>{selectedChain?.name || 'Select Blockchain'}</span>
+                        <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                        <span>{selectedChain.name}</span>
                       </div>
                     </SelectTrigger>
                     <SelectContent>
-                      {availableWithdrawalChains.map((chain) => (
+                      {SUPPORTED_CHAINS.map((chain) => (
                         <SelectItem key={chain.chainId} value={chain.shortName}>
                           <div className="flex items-center space-x-2">
                             <chain.logo className={`w-5 h-5 ${chain.color}`} />
@@ -1975,14 +1926,14 @@ export function MultiChainFinancial() {
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                           <div className="flex items-center space-x-1">
                             {(() => {
-                              const chain = availableChains.find(c => c.shortName === withdrawal.chainName);
+                              const chain = SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName);
                               if (chain) {
                                 const LogoComponent = chain.logo;
                                 return <LogoComponent className={`w-4 h-4 ${chain.color}`} />;
                               }
                               return null;
                             })()}
-                            <span>{availableChains.find(c => c.shortName === withdrawal.chainName)?.name}</span>
+                            <span>{SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName)?.name}</span>
                           </div>
                           {withdrawal.transactionHash && 
                            withdrawal.transactionHash.length === 66 && 
@@ -1992,7 +1943,7 @@ export function MultiChainFinancial() {
                               variant="ghost"
                               className="h-auto p-1"
                               onClick={() => {
-                                const chain = availableChains.find(c => c.shortName === withdrawal.chainName);
+                                const chain = SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName);
                                 if (chain) {
                                   window.open(`${chain.explorerUrl}/tx/${withdrawal.transactionHash}`, '_blank');
                                 }

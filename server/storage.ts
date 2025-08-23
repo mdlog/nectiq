@@ -226,9 +226,6 @@ export interface IStorage {
   createNotification(notification: any): Promise<any>;
   getUserNotifications(userId: number, limit?: number): Promise<any[]>;
   markNotificationsAsRead(userId: number): Promise<void>;
-
-  // Blockchain settings operations
-  getBlockchainSettings(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4361,14 +4358,6 @@ export class MemStorage implements IStorage {
       totalPredictions: predictionCount.count,
       totalRewards: totalRewardsResult[0]?.total || 0
     };
-  }
-
-  // Blockchain settings operations
-  async getBlockchainSettings(): Promise<any[]> {
-    return await db
-      .select()
-      .from(schema.blockchainSettings)
-      .orderBy(schema.blockchainSettings.chainName);
   }
 }
 
