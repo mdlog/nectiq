@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
 import TradingViewChart from "@/components/TradingViewChart";
@@ -132,6 +133,29 @@ export default function UserDashboard() {
     refetchOnMount: true,
     refetchOnReconnect: false,
     throwOnError: false, // Don't throw errors
+  });
+
+  // Initialize WebSocket connection for real-time notifications
+  const { isConnected } = useWebSocket({
+    onNotification: (notification) => {
+      console.log('🔔 [USER-DASHBOARD] Received notification:', notification);
+      
+      // Show toast for important notifications
+      if (notification.type === 'withdrawal_completed' || notification.type === 'deposit_completed') {
+        const icon = notification.type === 'withdrawal_completed' ? '📤' : '💰';
+        toast({
+          title: `${icon} ${notification.title}`,
+          description: notification.message,
+          duration: 8000,
+        });
+      }
+    },
+    onConnected: () => {
+      console.log('✅ [USER-DASHBOARD] WebSocket connected');
+    },
+    onDisconnected: () => {
+      console.log('❌ [USER-DASHBOARD] WebSocket disconnected');
+    },
   });
 
   const queryClient = useQueryClient();
