@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { Users, TrendingUp, Award, Activity, BarChart3, Settings, Lock, Plus, Database, Calendar, DollarSign, Zap, Trophy, Megaphone, Swords, Edit, Trash2, Download, Search, Filter, AlertTriangle, Shield, Ban, UserPlus, RefreshCw, Coins, Eye, CheckCircle, XCircle, Clock, AlertCircle, Home, ChevronLeft, ChevronRight, Copy, KeyRound, Target, Gamepad2, Layers } from "lucide-react";
+import { BlockchainSettings } from "@/components/blockchain-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -4293,6 +4294,9 @@ export default function AdminPanel() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Blockchain Management Section */}
+            <BlockchainSettings className="md:col-span-2" />
 
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>

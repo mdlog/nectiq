@@ -240,6 +240,30 @@ export const systemSettings = pgTable("system_settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Blockchain Settings Table
+export const blockchainSettings = pgTable("blockchain_settings", {
+  id: serial("id").primaryKey(),
+  chainName: varchar("chain_name", { length: 20 }).notNull().unique(), // ethereum, base, bsc, optimism, arbitrum, sepolia, holesky
+  chainId: integer("chain_id").notNull().unique(),
+  networkName: varchar("network_name", { length: 50 }).notNull(), // Ethereum Mainnet, Base, BSC, etc.
+  rpcUrl: text("rpc_url").notNull(),
+  explorerUrl: text("explorer_url").notNull(),
+  nativeCurrency: varchar("native_currency", { length: 10 }).notNull(), // ETH, BNB, etc.
+  isMainnet: boolean("is_mainnet").notNull().default(true),
+  isEnabled: boolean("is_enabled").notNull().default(true), // Admin can enable/disable
+  isDepositEnabled: boolean("is_deposit_enabled").notNull().default(true),
+  isWithdrawalEnabled: boolean("is_withdrawal_enabled").notNull().default(true),
+  maxGasPrice: varchar("max_gas_price", { length: 20 }).notNull().default("50"), // in gwei
+  gasLimit: varchar("gas_limit", { length: 20 }).notNull().default("21000"),
+  minConfirmations: integer("min_confirmations").notNull().default(12),
+  depositFeePercent: numeric("deposit_fee_percent", { precision: 5, scale: 2 }).notNull().default("0.00"), // 0% default
+  withdrawalFeePercent: numeric("withdrawal_fee_percent", { precision: 5, scale: 2 }).notNull().default("2.50"), // 2.5% default
+  tokenContracts: jsonb("token_contracts").notNull().default({}), // { USDC: "0x...", USDT: "0x..." }
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedBy: integer("updated_by").references(() => users.id),
+});
+
 export const transactionLogs = pgTable("transaction_logs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
