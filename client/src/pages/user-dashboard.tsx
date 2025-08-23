@@ -1363,7 +1363,7 @@ export default function UserDashboard() {
                         </div>
                       </div>
                       <ErrorBoundary>
-                        <SimpleFinancialTest />
+                        <MultiChainFinancial />
                       </ErrorBoundary>
                     </div>
                   </div>

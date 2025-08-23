@@ -424,7 +424,7 @@ export function MultiChainFinancial() {
           tokens: matchingChain?.tokens || { ETH: { address: "native", decimals: 18 } },
           isDepositEnabled: chain.isDepositEnabled,
           isWithdrawalEnabled: chain.isWithdrawalEnabled
-        };
+        } as any;
       });
     
     return enabledChains.length > 0 ? enabledChains : SUPPORTED_CHAINS;
