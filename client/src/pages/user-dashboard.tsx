@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem, Plus, Users, Zap } from "lucide-react";
+import { BarChart3, Target, Trophy, Gift, TrendingUp, TrendingDown, Clock, Coins, Star, ArrowLeft, Wallet, DollarSign, RefreshCw, Activity, Award, Calendar, History, Eye, CreditCard, UserCircle, Upload, Copy, Check, Swords, Shield, CheckCircle, AlertCircle, Crown, Gem, Plus, Users, Zap, Send } from "lucide-react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -499,12 +499,35 @@ export default function UserDashboard() {
     );
   }
 
-  // Temporary: Skip authentication check to allow dashboard access
+  // Enhanced authentication check
   console.log("🎯 [USER-DASHBOARD] Rendering dashboard", { 
     user: !!user, 
     userLoading,
     error: userError?.message 
   });
+
+  // If there's an authentication error or no user, show auth required
+  if (userError || (!userLoading && !user)) {
+    console.log("❌ [USER-DASHBOARD] Authentication required - redirecting or showing auth screen");
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md p-6">
+          <AlertCircle className="mx-auto h-16 w-16 text-amber-500" />
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Authentication Required</h2>
+          <p className="text-slate-600 dark:text-slate-400">
+            Please connect your wallet to access the dashboard. Your session may have expired.
+          </p>
+          <Button 
+            onClick={() => setLocation('/home')}
+            className="mt-4"
+          >
+            <ArrowLeft className="mr-2" size={16} />
+            Back to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   console.log("🎯 [USER-DASHBOARD] Dashboard rendering started", { 
     userId: user?.id, 
@@ -1653,7 +1676,7 @@ function BattlesSection() {
                               data={createShareData.battle(
                                 battle.cryptocurrency?.toUpperCase() || 'CRYPTO',
                                 battle.isUserChallenger ? battle.challengedUsername || 'Opponent' : battle.challengerUsername || 'Opponent',
-                                parseFloat((battle.winnerReward || 0).toString())
+                                Number((battle.winnerReward || 0))
                               )}
                             />
                           )}
