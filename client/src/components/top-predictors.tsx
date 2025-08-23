@@ -151,7 +151,7 @@ export function TopPredictors() {
               {userRankEntry.rank <= 3 ? getRankIcon(userRankEntry.rank) : userRankEntry.rank}
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm text-primary">You</p>
+              <p className="font-semibold text-sm text-warning">You</p>
               <div className="flex items-center space-x-2 text-xs text-slate-400">
                 <span>Accuracy: {userRankEntry.accuracy}%</span>
               </div>
