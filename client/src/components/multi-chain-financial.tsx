@@ -432,8 +432,8 @@ export function MultiChainFinancial() {
 
   // Get available chains based on admin settings
   const availableChains = transformBlockchainSettings();
-  const availableDepositChains = availableChains.filter(chain => chain.isDepositEnabled !== false);
-  const availableWithdrawalChains = availableChains.filter(chain => chain.isWithdrawalEnabled !== false);
+  const availableDepositChains = availableChains.filter(chain => (chain as any).isDepositEnabled !== false);
+  const availableWithdrawalChains = availableChains.filter(chain => (chain as any).isWithdrawalEnabled !== false);
 
   // Set default selected chain when chains are loaded
   React.useEffect(() => {

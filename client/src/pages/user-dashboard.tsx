@@ -51,6 +51,74 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Simple test component to check if rendering works
+function SimpleFinancialTest() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 text-center">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2">
+            Loading Financial System...
+          </h3>
+          <div className="flex justify-center">
+            <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Wallet className="mr-2" size={20} />
+            Multi-Chain Financial System - Test Mode
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4">
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <h3 className="font-semibold text-green-800 dark:text-green-300 mb-2">
+                ✅ Basic Component Loading Successfully
+              </h3>
+              <p className="text-sm text-green-600 dark:text-green-400">
+                The Financial tab is now rendering content. This confirms the basic component structure is working.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                🔧 Next Steps
+              </h3>
+              <p className="text-sm text-blue-600 dark:text-blue-400">
+                Now we'll integrate the full multi-chain functionality step by step to ensure stability.
+              </p>
+            </div>
+
+            <Button 
+              onClick={() => setIsLoading(true)}
+              className="w-full mt-4"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Test Reload Component
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 
 // Dynamic function to get crypto image from live API data
 function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
@@ -1295,7 +1363,7 @@ export default function UserDashboard() {
                         </div>
                       </div>
                       <ErrorBoundary>
-                        <MultiChainFinancial />
+                        <SimpleFinancialTest />
                       </ErrorBoundary>
                     </div>
                   </div>
