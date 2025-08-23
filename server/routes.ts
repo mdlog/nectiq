@@ -1996,15 +1996,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Apply the referral code
       try {
-        // Debug: Check if processReferral function exists
-        console.log('🔍 [DEBUG] storage methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(storage)));
-        console.log('🔍 [DEBUG] processReferral type:', typeof storage.processReferral);
-        
-        if (typeof storage.processReferral !== 'function') {
-          throw new Error('processReferral method not available on storage object');
+        // Manual referral processing to bypass TypeScript compilation issues
+        const referrerResult = await db
+          .select()
+          .from(users)
+          .where(eq(users.referralCode, referralCode.toUpperCase()))
+          .limit(1);
+
+        if (!referrerResult || referrerResult.length === 0) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Invalid referral code. Please check the code and try again." 
+          });
         }
-        
-        await storage.processReferral(referralCode.toUpperCase(), userId);
+
+        const referrer = referrerResult[0];
+
+        // Prevent self-referral
+        if (referrer.id === userId) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "You cannot refer yourself." 
+          });
+        }
+
+        // Update user with referrer info
+        await db
+          .update(users)
+          .set({ referredBy: referrer.id })
+          .where(eq(users.id, userId));
+
+        // Award bonuses
+        const REFERRAL_BONUS = 100;
+
+        // Award referrer bonus
+        await db
+          .update(users)
+          .set({ 
+            balance: sql`${users.balance} + ${REFERRAL_BONUS}`,
+            totalRewards: sql`${users.totalRewards} + ${REFERRAL_BONUS}`
+          })
+          .where(eq(users.id, referrer.id));
+
+        // Award new user bonus
+        await db
+          .update(users)
+          .set({ 
+            balance: sql`${users.balance} + ${REFERRAL_BONUS}`,
+            totalRewards: sql`${users.totalRewards} + ${REFERRAL_BONUS}`
+          })
+          .where(eq(users.id, userId));
+
+        console.log('✅ [REFERRAL-APPLIED] Success:', {
+          referrerId: referrer.id,
+          newUserId: userId,
+          bonus: REFERRAL_BONUS
+        });
         
         auditLog('REFERRAL_CODE_APPLIED', { 
           userId: userId,
