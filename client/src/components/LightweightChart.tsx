@@ -145,15 +145,15 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeType>('1D');
 
-  // Fetch current price data - STATIC CHART (No Real-time Updates)
+  // Fetch current price data - Synchronized with other components
   const { data: cryptoPrices } = useQuery({
     queryKey: ["/api/crypto/pyth-prices"], 
-    refetchInterval: false, // DISABLED - No automatic refresh
-    refetchIntervalInBackground: false, // DISABLED - No background updates
-    staleTime: Infinity, // STATIC - Data never becomes stale
+    refetchInterval: 1000, // Same as Live Prices and other components - 1 second refresh
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Fresh data - same as other components
     retry: 3,
-    refetchOnWindowFocus: false, // DISABLED - No refresh on window focus
-    refetchOnMount: true, // Only fetch once on component mount
+    refetchOnWindowFocus: true, // Enable refresh on window focus for consistency
+    refetchOnMount: true, // Fetch on component mount
   });
 
   const currentCrypto = Array.isArray(cryptoPrices) ? cryptoPrices.find((crypto: any) => crypto.id === cryptoId) : null;

@@ -58,24 +58,17 @@ interface LivePricesProps {
 
 export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) {
 
-  // STATIC PRICES - No Real-time Updates (matches chart behavior)
+  // REAL-TIME PRICES - Synchronized with other components
   const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/pyth-prices"], 
-    refetchInterval: false, // DISABLED - No automatic refresh
-    refetchIntervalInBackground: false, // DISABLED - No background updates
-    staleTime: Infinity, // STATIC - Data never becomes stale
+    refetchInterval: 1000, // Same as Active Predictions and Battles - 1 second refresh
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Fresh data - same as other components
     retry: 3,
-    refetchOnWindowFocus: false, // DISABLED - No refresh on window focus
-    refetchOnMount: true, // Only fetch once on component mount
+    refetchOnWindowFocus: true, // Enable refresh on window focus for consistency
+    refetchOnMount: true, // Fetch on component mount
   });
 
-  // ENHANCED DEBUG: Compare with Battle component timing
-  const bitcoinPrice = prices.find(c => c.id === 'bitcoin')?.current_price;
-  if (bitcoinPrice) {
-    console.log('🟢 [LIVE-EXACT] Bitcoin price:', bitcoinPrice, 'Source: Live Prices component');
-    console.log('📊 [LIVE-DEBUG] Data length:', prices?.length, 'Updated:', new Date(dataUpdatedAt).toLocaleTimeString());
-    console.log('🎯 [LIVE-DEBUG] Full Bitcoin object:', prices.find(c => c.id === 'bitcoin'));
-  }
 
   // Add visual indicator for when data was last updated
   const lastUpdate = new Date(dataUpdatedAt).toLocaleTimeString();

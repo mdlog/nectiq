@@ -94,17 +94,6 @@ export function TopPredictors() {
   // Check if current user is in top 6
   const currentUserInTopSix = user && topSixPredictors.some(predictor => predictor.id === user.id);
   
-  // Debug logging
-  console.log("🔍 [TOP-PREDICTORS] Debug:", {
-    user: !!user,
-    userStats: !!userStats,
-    currentUserInTopSix,
-    userRank: userStats?.rank,
-    userAccuracy: userStats?.accuracy,
-    userRewards: userStats?.totalRewards,
-    topSixCount: topSixPredictors.length
-  });
-
   // Create user rank entry if user is logged in and not in top 6
   const userRankEntry = user && userStats && !currentUserInTopSix ? {
     id: user.id,
