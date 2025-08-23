@@ -11092,6 +11092,23 @@ Manual balance correction required IMMEDIATELY!`;
 
   // ===== BLOCKCHAIN MANAGEMENT ENDPOINTS (ADMIN) =====
 
+  // Get blockchain settings (public read access for user interface)
+  app.get('/api/blockchain-settings', async (req, res) => {
+    try {
+      console.log("🔍 [BLOCKCHAIN-SETTINGS] Fetching blockchain configurations for user interface...");
+      
+      const blockchainConfigs = await db.select()
+        .from(schema.blockchainSettings)
+        .orderBy(schema.blockchainSettings.chainName);
+      
+      console.log(`✅ [BLOCKCHAIN-SETTINGS] Found ${blockchainConfigs.length} blockchain configurations`);
+      res.json(blockchainConfigs);
+    } catch (error) {
+      console.error("❌ [BLOCKCHAIN-SETTINGS] Error fetching blockchain settings for user interface:", error);
+      res.status(500).json({ message: "Failed to fetch blockchain settings" });
+    }
+  });
+
   // Get all blockchain settings
   app.get("/api/admin/blockchain-settings", requireAdmin, async (req, res) => {
     try {

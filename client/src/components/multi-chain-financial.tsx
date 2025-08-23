@@ -351,7 +351,7 @@ export function MultiChainFinancial() {
 
   // Query to get blockchain settings from admin panel
   const { data: blockchainSettings, isLoading: blockchainLoading } = useQuery<any[]>({
-    queryKey: ["/api/admin/blockchain-settings"],
+    queryKey: ["/api/blockchain-settings"],
     staleTime: 30000,
   });
 
