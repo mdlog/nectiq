@@ -166,6 +166,35 @@ const TradingViewChart = ({ cryptoId }: TradingViewChartProps) => {
         </div>
       </div>
 
+      {/* Price Disclaimer */}
+      <div className={`px-4 py-3 border-b ${
+        systemTheme === "dark" 
+          ? "bg-yellow-900/20 border-yellow-700/50" 
+          : "bg-yellow-50 border-yellow-200"
+      }`}>
+        <div className="flex items-start space-x-2">
+          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center mt-0.5">
+            <span className="text-white text-xs font-bold">!</span>
+          </div>
+          <div className="flex-1">
+            <h4 className={`text-sm font-semibold mb-1 ${
+              systemTheme === "dark" ? "text-yellow-400" : "text-yellow-800"
+            }`}>
+              Price Reference Notice
+            </h4>
+            <p className={`text-xs leading-relaxed ${
+              systemTheme === "dark" ? "text-yellow-300" : "text-yellow-700"
+            }`}>
+              <strong>Platform Reference Prices:</strong> All predictions and rewards are based on live price feeds from Pyth Network.
+              <br />
+              <strong>Chart Purpose:</strong> This chart is an analysis tool only to help you study price patterns and trends.
+              <br />
+              <strong>Important:</strong> There may be slight differences between the chart display prices and Live Prices section due to different data sources and refresh intervals.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Chart Content */}
       <div className="h-[700px]">
         <div 
