@@ -303,7 +303,7 @@ export function MultiChainFinancial() {
   });
 
   // Secure query to get admin wallet address from server
-  const { data: adminWalletData, isLoading: adminWalletLoading } = useQuery({
+  const { data: adminWalletData, isLoading: adminWalletLoading } = useQuery<any>({
     queryKey: ["/api/deposit/admin-wallet"],
     staleTime: 300000, // Cache for 5 minutes
     retry: 3,
@@ -356,13 +356,13 @@ export function MultiChainFinancial() {
   });
 
   // Query to get user data
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<any>({
     queryKey: ["/api/user"],
     staleTime: 30000,
   });
 
   // Query to get deposit history
-  const { data: deposits, isLoading: depositsLoading, refetch: refetchDeposits } = useQuery({
+  const { data: deposits = [], isLoading: depositsLoading, refetch: refetchDeposits } = useQuery<DepositData[]>({
     queryKey: ["/api/user/deposits"],
     refetchInterval: 5000, // More frequent refresh
     staleTime: 0, // Always consider data stale
@@ -370,13 +370,13 @@ export function MultiChainFinancial() {
   });
 
   // Query to get withdrawal history
-  const { data: withdrawals, isLoading: withdrawalsLoading } = useQuery({
+  const { data: withdrawals = [], isLoading: withdrawalsLoading } = useQuery<WithdrawalData[]>({
     queryKey: ["/api/user/withdrawals"],
     refetchInterval: 10000,
   });
 
   // Query to get crypto prices for ETH conversion
-  const { data: cryptoPrices } = useQuery({
+  const { data: cryptoPrices = [] } = useQuery<any[]>({
     queryKey: ["/api/crypto/prices"],
     refetchInterval: 5000,
     staleTime: 0,
@@ -384,14 +384,14 @@ export function MultiChainFinancial() {
 
   // Calculate pagination for deposits
   const getPaginatedDeposits = () => {
-    if (!deposits) return [];
+    if (!deposits || !Array.isArray(deposits)) return [];
     const startIndex = (depositPage - 1) * itemsPerPage;
     return deposits.slice(startIndex, startIndex + itemsPerPage);
   };
 
   // Calculate pagination for withdrawals
   const getPaginatedWithdrawals = () => {
-    if (!withdrawals) return [];
+    if (!withdrawals || !Array.isArray(withdrawals)) return [];
     const startIndex = (withdrawalPage - 1) * itemsPerPage;
     return withdrawals.slice(startIndex, startIndex + itemsPerPage);
   };
