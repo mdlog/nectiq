@@ -3722,6 +3722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 10);
 
+      console.log(`🔍 [RECENT-REWARDS] Final response for userId ${userId}:`, JSON.stringify(sortedActivities, null, 2));
       res.json(sortedActivities);
     } catch (error) {
       console.error('Error getting recent rewards:', error);
