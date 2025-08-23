@@ -145,6 +145,7 @@ export default function UserDashboard() {
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [editedUsername, setEditedUsername] = useState("");
   const [activeTab, setActiveTab] = useState("profile");
+  const [forceRefreshRewards, setForceRefreshRewards] = useState(0);
 
   // Debug function to track tab changes
   const handleTabChange = (value: string) => {
@@ -162,6 +163,19 @@ export default function UserDashboard() {
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
     }
+  };
+
+  // Force refresh rewards function
+  const handleRefreshRewards = () => {
+    console.log('🔄 [DASHBOARD-REWARDS] Force refreshing rewards data...');
+    setForceRefreshRewards(prev => prev + 1);
+    // Also invalidate query cache for good measure
+    queryClient.invalidateQueries({ queryKey: ["/api/user/rewards/history"] });
+    
+    toast({
+      title: "Rewards Refreshed",
+      description: "Latest reward data has been loaded from server",
+    });
   };
 
   // Copy wallet address function
@@ -204,12 +218,19 @@ export default function UserDashboard() {
   });
 
   const { data: recentRewards = [], isLoading: rewardsLoading, error: rewardsError } = useQuery<RecentReward[]>({
-    queryKey: ["/api/user/rewards/history"],
+    queryKey: ["/api/user/rewards/history", forceRefreshRewards], // Add forceRefresh to invalidate cache
     enabled: !!user,
-    retry: false,
+    retry: (failureCount, error: any) => {
+      // Don't retry on authentication errors
+      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
     throwOnError: false,
     refetchInterval: false,
-    staleTime: 60000,
+    staleTime: 0, // Force fresh data to show latest changes
+    gcTime: 0, // Clear cache immediately
   });
 
   // Debug authentication and reward loading
@@ -938,13 +959,45 @@ export default function UserDashboard() {
                   <div className="h-full">
                     <Card className="bg-surface border-surface-light h-full flex flex-col">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Gift className="mr-2" size={20} />
-                  Recent Rewards
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Gift className="mr-2" size={20} />
+                    Recent Rewards
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefreshRewards}
+                    className="text-xs hover:bg-primary/20 border-primary/30"
+                  >
+                    <RefreshCw className="mr-1" size={14} />
+                    Refresh
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col">
-                {recentRewards.length === 0 ? (
+                {rewardsLoading ? (
+                  <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
+                    <RefreshCw className="mx-auto mb-2 animate-spin" size={32} />
+                    <p>Loading rewards...</p>
+                    <p className="text-sm">Fetching latest data from server...</p>
+                  </div>
+                ) : rewardsError?.message?.includes('Authentication') || rewardsError?.message?.includes('401') ? (
+                  <div className="text-center py-8 text-amber-400 flex-1 flex flex-col justify-center">
+                    <AlertCircle className="mx-auto mb-2" size={32} />
+                    <p>Authentication Required</p>
+                    <p className="text-sm">Connect your wallet to view reward history</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-3 mx-auto" 
+                      onClick={handleRefreshRewards}
+                    >
+                      <RefreshCw className="mr-1" size={14} />
+                      Retry
+                    </Button>
+                  </div>
+                ) : recentRewards.length === 0 ? (
                   <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
                     <Gift className="mx-auto mb-2" size={32} />
                     <p>No rewards yet</p>
