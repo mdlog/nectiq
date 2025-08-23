@@ -38,24 +38,38 @@ Regular Prediction adalah fitur prediksi standar di mana Anda menebak harga cryp
 - **4%** dari reward untuk winning predictions (multiplier ≥1.5x)
 - Tidak ada fee untuk losing predictions
 
+### Formula Perhitungan Akurasi
+```
+Accuracy = (1 - |Predicted Price - Actual Price| / Actual Price) × 100%
+```
+
 ### Contoh Reward Regular Prediction
 ```
 Cryptocurrency: Bitcoin (BTC)
-Stake: 100 NTIQ
-Harga Saat Ini: $113,250
-Prediksi Anda: $114,000
-Hasil Aktual: $113,800
+Stake: 1000 NTIQ
+Harga Saat Ini: $114,850
+Prediksi Anda: $115,000
+Hasil Aktual: $114,950
 
 Perhitungan Akurasi:
-- Selisih: |114,000 - 113,800| = $200
-- Persentase Error: (200/113,800) × 100 = 0.176%
-- Akurasi: 100% - 0.176% = 99.824%
+- Selisih: |115,000 - 114,950| = $50
+- Akurasi: (1 - 50/114,950) × 100% = 99.956%
 
 💰 REWARD CALCULATION:
-Accuracy: 99.824% → 3.0x multiplier (≥99.5%)
-Gross Reward: 100 × 3.0 = 300 NTIQ
-Platform Fee (4%): 300 × 0.04 = 12 NTIQ
-Net Reward: 300 - 12 = 288 NTIQ
+Accuracy: 99.956% → 3.0x multiplier (≥99.5%)
+Gross Reward: 1000 × 3.0 = 3000 NTIQ
+Platform Fee (4%): 3000 × 0.04 = 120 NTIQ
+Net Reward: 3000 - 120 = 2880 NTIQ
+Net Profit: 2880 - 1000 = 1880 NTIQ
+
+CONTOH GOOD PREDICTION (User Rugi):
+Accuracy: 91.5% → 0.9x multiplier (≥90%)
+Net Reward: 1000 × 0.9 = 900 NTIQ
+User Loss: 100 NTIQ (Platform Fee: tidak ada)
+
+CONTOH POOR PREDICTION (Stake Hangus):
+Accuracy: 85% → 0x multiplier (<90%)
+Net Reward: 0 NTIQ (Stake hangus total ke platform)
 
 ⚠️ NOTE: Time multipliers belum diimplementasikan dalam sistem saat ini
 ```
@@ -81,7 +95,7 @@ Battle adalah kompetisi head-to-head antara dua pemain. Anda menantang pemain la
 
 ### Sistem Reward Battle (IMPLEMENTASI AKTUAL)
 ```
-Formula: Winner Reward = Stake Amount × 2 × Accuracy Multiplier
+Formula: Winner Reward = Total Pool × Accuracy Multiplier
 Platform Fee: 0% (Tidak ada fee untuk battles)
 ```
 
@@ -90,28 +104,29 @@ Platform Fee: 0% (Tidak ada fee untuk battles)
 BATTLE: Player A vs Player B
 Cryptocurrency: Ethereum (ETH)
 Timeframe: 6 Jam
-Entry Fee: 50 NTIQ per pemain
-Total Pool: 100 NTIQ
+Entry Fee: 500 NTIQ per pemain
+Total Pool: 1000 NTIQ
 
-Harga Saat Ini: $3,420
+Harga Saat Mulai: $3,420
 Player A Prediksi: $3,450
 Player B Prediksi: $3,380
 Hasil Aktual: $3,435
 
 Perhitungan Akurasi:
-Player A: 99.56% accuracy → Accuracy Multiplier ≈ 3.0x
-Player B: 98.4% accuracy → Accuracy Multiplier ≈ 2.0x
+Player A: (1 - |3450-3435|/3435) × 100% = 99.56%
+Player B: (1 - |3380-3435|/3435) × 100% = 98.40%
 
 🏆 PEMENANG: Player A (lebih akurat)
 💰 REWARD CALCULATION:
-Player A Reward: 50 × 2 × 3.0 = 300 NTIQ
+Accuracy Multiplier: 99.56% → 3.0x (≥99.5%)
+Player A Reward: 500 × 2 × 3.0 = 3000 NTIQ*
 Player B: 0 NTIQ (kalah)
 
-Total Payout: 300 NTIQ (dari prize pool + bonus system)
+*Reward bisa melebihi pool karena accuracy multiplier bonus
 Platform Fee: 0% (Battles bebas fee)
 
-⚠️ NOTE: Detail accuracy multiplier untuk battles mengikuti 
-sistem yang sama dengan regular predictions
+⚠️ NOTE: Sistem accuracy multiplier untuk battles sama 
+dengan regular predictions untuk konsistensi reward
 ```
 
 ---
@@ -145,34 +160,35 @@ Total Multiplier = (1.5 × Duration Multiplier)^Number_of_Predictions
 ### Contoh Reward TrendRide
 ```
 TRENDRIDE PREDICTION (Single Coin)
-Cryptocurrency: Solana (SOL)
+Cryptocurrency: Bitcoin (BTC)
 Timeframe: 24 Jam
-Stake: 100 NTIQ
+Stake: 500 NTIQ
 Prediksi: UP (Naik)
 Number of Predictions: 1
 
-Harga Saat Mulai: $145.50
-Harga Setelah 24 Jam: $148.20
+Harga Saat Mulai: $114,850
+Harga Setelah 24 Jam: $115,200
 
-✅ HASIL: MENANG (Harga naik dari $145.50 ke $148.20)
+✅ HASIL: MENANG (Harga naik dari $114,850 ke $115,200)
 
 💰 REWARD CALCULATION:
 Duration Multiplier: 2.0x (24 jam)
 Total Multiplier: (1.5 × 2.0)^1 = 3.0x
-Gross Reward: 100 × 3.0 = 300 NTIQ
-Platform Fee (6%): 300 × 0.06 = 18 NTIQ
-Net Reward: 300 - 18 = 282 NTIQ
-Net Profit: 282 - 100 = 182 NTIQ
+Gross Reward: 500 × 3.0 = 1500 NTIQ
+Platform Fee (6%): 1500 × 0.06 = 90 NTIQ
+Net Reward: 1500 - 90 = 1410 NTIQ
+Net Profit: 1410 - 500 = 910 NTIQ
 
-CONTOH MULTI-PREDICTION:
-Jika Anda pilih 2 coins (BTC + ETH):
-Total Multiplier: (1.5 × 2.0)^2 = 9.0x
-Gross Reward: 100 × 9.0 = 900 NTIQ
-Platform Fee (6%): 54 NTIQ
-Net Reward: 846 NTIQ
+CONTOH MULTI-PREDICTION (High Risk, High Reward):
+Jika Anda pilih 3 coins (BTC + ETH + SOL), 7 hari:
+Total Multiplier: (1.5 × 3.0)^3 = 91.125x
+Gross Reward: 100 × 91.125 = 9112.5 NTIQ
+Platform Fee (6%): 546.75 NTIQ
+Net Reward: 8565.75 NTIQ
 
 ❌ Jika KALAH (minimal 1 prediksi salah):
-Anda kehilangan stake: -100 NTIQ
+Anda kehilangan stake sepenuhnya: -100 NTIQ
+⚠️ RISK: Semua prediksi harus benar untuk menang!
 ```
 
 ---
@@ -265,30 +281,31 @@ masih dalam tahap pengembangan dan belum tersedia di sistem saat ini.
 ### Contoh Reward Maksimal (SISTEM AKTUAL)
 ```
 SCENARIO: Perfect Regular Prediction
-Stake: 1000 NTIQ
-Accuracy: 99.6% (Perfect category)
+Stake: 2000 NTIQ
+Accuracy: 99.8% (Perfect category)
 Multiplier: 3.0x
 
 CALCULATION:
-Gross Reward: 1000 × 3.0 = 3000 NTIQ
-Platform Fee (4%): 3000 × 0.04 = 120 NTIQ
-Net Reward: 3000 - 120 = 2880 NTIQ
-Net Profit: 2880 - 1000 = 1880 NTIQ
+Gross Reward: 2000 × 3.0 = 6000 NTIQ
+Platform Fee (4%): 6000 × 0.04 = 240 NTIQ
+Net Reward: 6000 - 240 = 5760 NTIQ
+Net Profit: 5760 - 2000 = 3760 NTIQ
 
-💵 VALUE: 2880 NTIQ = $28.80 USD
+💵 VALUE: 5760 NTIQ = $57.60 USD
 
-TRENDRIDE MAKSIMAL (Multi-Prediction):
-Stake: 100 NTIQ, 3 Coins, 7 hari
-Total Multiplier: (1.5 × 3.0)^3 = 91.125x
-Gross Reward: 100 × 91.125 = 9112.5 NTIQ
-Platform Fee (6%): 546.75 NTIQ
-Net Reward: 8565.75 NTIQ
-Net Profit: 8465.75 NTIQ
+TRENDRIDE MAKSIMAL (Extreme Risk):
+Stake: 200 NTIQ, 5 Coins, 7 hari
+Total Multiplier: (1.5 × 3.0)^5 = 1,845.28x
+Gross Reward: 200 × 1,845.28 = 369,056 NTIQ
+Platform Fee (6%): 22,143 NTIQ
+Net Reward: 346,913 NTIQ
+Net Profit: 346,713 NTIQ
 
-💵 VALUE: 8565.75 NTIQ = $85.66 USD
+💵 VALUE: 346,913 NTIQ = $3,469.13 USD
 
-⚠️ RISK: TrendRide high multiplier = high risk
-Semua prediksi harus benar untuk menang
+⚠️ EXTREME RISK: 5 predictions semua harus benar!
+Probabilitas menang: sangat rendah (1 in 32 jika 50/50 odds)
+Rekomendasi: Mulai dengan 1-2 predictions untuk risk management
 ```
 
 ---
@@ -355,4 +372,24 @@ Semua reward dapat di-withdraw ke wallet crypto Anda atau digunakan untuk predik
 
 ---
 
-*Dokumen ini diupdate secara berkala untuk mencerminkan sistem aktual platform Nectiq. Terakhir diupdate: Agustus 22, 2025*
+*Dokumen ini diupdate secara berkala untuk mencerminkan sistem aktual platform Nectiq. Terakhir diupdate: Agustus 23, 2025*
+
+---
+
+## 🔗 Multi-Chain Support
+
+### Supported Blockchains untuk Deposit/Withdrawal:
+- **Mainnet**: Ethereum, Base, BSC, Optimism, Arbitrum
+- **Testnet**: Sepolia, Holesky
+
+### Supported Tokens:
+- **ETH** (Native Ethereum)
+- **USDC** (USD Coin)
+- **USDT** (Tether USD)
+
+### Withdrawal Fees:
+- **Semua Networks**: 2.5% otomatis dari jumlah withdrawal
+- **Minimum Withdrawal**: Varies by network and token
+- **Processing Time**: 5-30 menit (tergantung blockchain congestion)
+
+*Fitur multi-chain memungkinkan fleksibilitas maksimal dalam deposit dan withdrawal cross-blockchain*
