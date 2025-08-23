@@ -364,7 +364,100 @@ export default function LightweightChart({ cryptoId, onPredictionClick }: Lightw
           : "bg-white border-gray-300"
       } ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'relative'}`}
     >
+      {/* Header with Controls */}
+      <div className={`px-4 py-3 border-b ${
+        systemTheme === "dark" 
+          ? "bg-gray-800 border-gray-700" 
+          : "bg-gray-100 border-gray-300"
+      }`}>
+        <div className="flex justify-between items-center mb-3">
+          <h3 className={`text-lg font-semibold flex items-center space-x-2 ${
+            systemTheme === "dark" ? "text-white" : "text-gray-900"
+          }`}>
+            <TrendingUp className="h-5 w-5 text-cyan-400" />
+            <span>Price Analysis Chart</span>
+          </h3>
+          <div className="flex items-center space-x-2">
+            {/* Timeframe Selector */}
+            <div className="flex space-x-1">
+              {(['1H', '4H', '1D', '1W', '1M'] as TimeframeType[]).map((timeframe) => (
+                <Button
+                  key={timeframe}
+                  variant={selectedTimeframe === timeframe ? "default" : "outline"}
+                  size="sm"
+                  className={`px-2 py-1 text-xs ${
+                    selectedTimeframe === timeframe 
+                      ? "bg-cyan-600 text-white border-cyan-600" 
+                      : systemTheme === "dark" 
+                        ? "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600" 
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setSelectedTimeframe(timeframe)}
+                >
+                  {timeframe}
+                </Button>
+              ))}
+            </div>
+            
+            {/* Action Buttons */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onPredictionClick}
+              className={`px-3 py-1 text-xs ${
+                systemTheme === "dark" 
+                  ? "bg-gray-700 text-cyan-400 border-cyan-500 hover:bg-cyan-500 hover:text-white" 
+                  : "bg-white text-cyan-600 border-cyan-500 hover:bg-cyan-500 hover:text-white"
+              }`}
+            >
+              <Target className="h-3 w-3 mr-1" />
+              Predict
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleFullscreen}
+              className={`px-2 py-1 ${
+                systemTheme === "dark" 
+                  ? "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600" 
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
 
+        {/* Price Disclaimer */}
+        <div className={`p-3 rounded-lg border ${
+          systemTheme === "dark" 
+            ? "bg-yellow-900/20 border-yellow-700/50" 
+            : "bg-yellow-50 border-yellow-200"
+        }`}>
+          <div className="flex items-start space-x-2">
+            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center mt-0.5">
+              <span className="text-white text-xs font-bold">!</span>
+            </div>
+            <div className="flex-1">
+              <h4 className={`text-sm font-semibold mb-1 ${
+                systemTheme === "dark" ? "text-yellow-400" : "text-yellow-800"
+              }`}>
+                Price Reference Notice
+              </h4>
+              <p className={`text-xs leading-relaxed ${
+                systemTheme === "dark" ? "text-yellow-300" : "text-yellow-700"
+              }`}>
+                <strong>Platform Reference Prices:</strong> All predictions and rewards are based on live price feeds from Pyth Network.
+                <br />
+                <strong>Chart Purpose:</strong> This chart is an analysis tool only to help you study price patterns and trends.
+                <br />
+                <strong>Important:</strong> There may be slight differences between the chart display prices and Live Prices section due to different data sources and refresh intervals.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Chart Container */}  
       <div 
