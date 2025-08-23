@@ -1375,98 +1375,12 @@ export default function UserDashboard() {
                   </div>
                 </TabsContent>
 
-                {/* Financial Tab - Deposit Only */}
+                {/* Financial Tab - Full Multi-Chain System */}
                 <TabsContent value="financial" className="flex-1 h-full">
                   <div className="h-full">
-                    <div className="space-y-6">
-                      <div className="text-center p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                        <h3 className="text-lg font-bold mb-2 text-black dark:text-black">Multi-Chain Financial System</h3>
-                        <div className="text-sm text-slate-600 dark:text-slate-300">
-                          Deposit and withdrawal system for multiple blockchains
-                        </div>
-                      </div>
-                      <ErrorBoundary>
-                        <div className="p-6 space-y-6">
-                          <div className="flex items-center gap-3">
-                            <Wallet className="w-6 h-6 text-primary" />
-                            <h2 className="text-2xl font-bold">Multi-Chain Financial System</h2>
-                          </div>
-                          
-                          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                              <h3 className="font-semibold text-blue-900 dark:text-blue-100">System Status</h3>
-                            </div>
-                            <p className="text-blue-800 dark:text-blue-200 text-sm">
-                              Financial system is online. Supporting 7 blockchains: Ethereum, BSC, Arbitrum, Base, Optimism, Sepolia, Holesky
-                            </p>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Card>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="flex items-center gap-2 text-lg">
-                                  <Plus className="w-5 h-5 text-green-600" />
-                                  Deposit
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                  Fund your account with crypto from supported blockchains
-                                </p>
-                                <Button className="w-full" disabled>
-                                  Open Deposit
-                                </Button>
-                              </CardContent>
-                            </Card>
-
-                            <Card>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="flex items-center gap-2 text-lg">
-                                  <Send className="w-5 h-5 text-blue-600" />
-                                  Withdraw
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                  Withdraw your funds to any supported blockchain
-                                </p>
-                                <Button variant="outline" className="w-full" disabled>
-                                  Open Withdrawal
-                                </Button>
-                              </CardContent>
-                            </Card>
-
-                            <Card>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="flex items-center gap-2 text-lg">
-                                  <Clock className="w-5 h-5 text-purple-600" />
-                                  History
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                  View your transaction history and status
-                                </p>
-                                <Button variant="secondary" className="w-full" disabled>
-                                  View History
-                                </Button>
-                              </CardContent>
-                            </Card>
-                          </div>
-
-                          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <AlertCircle className="w-5 h-5 text-amber-600" />
-                              <h3 className="font-semibold text-amber-900 dark:text-amber-100">Coming Soon</h3>
-                            </div>
-                            <p className="text-amber-800 dark:text-amber-200 text-sm">
-                              Full multi-chain financial interface akan segera tersedia. Fitur deposit, withdrawal, dan transaction history sedang dalam tahap final testing.
-                            </p>
-                          </div>
-                        </div>
-                      </ErrorBoundary>
-                    </div>
+                    <ErrorBoundary>
+                      <MultiChainFinancial />
+                    </ErrorBoundary>
                   </div>
                 </TabsContent>
 
