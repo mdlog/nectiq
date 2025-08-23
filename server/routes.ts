@@ -1843,11 +1843,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? `${req.get('origin') || 'https://nectiq.app'}/?ref=${freshUser.referralCode}`
         : null;
 
+      // Calculate dynamic totals from actual referred users
+      const actualTotalReferrals = referredUsers.length;
+      const actualReferralRewards = actualTotalReferrals * 100; // 100 NTIQ per referral
+
       const responseData = {
         referralCode: freshUser.referralCode,
         referralLink,
-        totalReferrals: freshUser.totalReferrals || 0,
-        referralRewards: freshUser.referralRewards || 0,
+        totalReferrals: actualTotalReferrals, // Dynamic count from actual referred users
+        referralRewards: actualReferralRewards, // Dynamic calculation
         hasReferrer: !!freshUser.referredBy, // Add info if user was referred by someone
         referredUsers: referredUsers.map(u => ({
           ...u,
