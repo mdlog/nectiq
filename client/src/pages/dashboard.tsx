@@ -155,6 +155,11 @@ export default function Dashboard() {
           </Card>
         </div>
 
+        {/* Top Predictors Section */}
+        <div className="mt-8">
+          <TopPredictors />
+        </div>
+
         {/* Platform Stats - Full Width */}
         <div className="mt-16">
           <HeroStats />
