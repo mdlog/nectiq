@@ -19,6 +19,7 @@ import { DailyChallenges } from "@/components/daily-challenges";
 import TradingViewChart from "@/components/TradingViewChart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
+import "../styles/mobile-user-dashboard.css";
 // import { WalletBalances } from "@/components/wallet-balances"; // Removed - not needed
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 import { ReferralSystem } from "@/components/ReferralSystem";
@@ -465,38 +466,38 @@ export default function UserDashboard() {
         </div>
 
         {/* Key Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-6 mb-4 sm:mb-6 md:mb-8">
-          <Card className="bg-surface border-surface-light">
+        <div className="admin-stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-6 mb-4 sm:mb-6 md:mb-8">
+          <Card className="admin-card bg-surface border-surface-light">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Total Predictions</CardTitle>
+              <CardTitle className="admin-card-title text-xs sm:text-sm font-medium text-slate-400">Total Predictions</CardTitle>
               <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
             </CardHeader>
             <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold">{stats?.totalPredictions?.toLocaleString() || "0"}</div>
+              <div className="admin-card-value text-lg sm:text-2xl font-bold">{stats?.totalPredictions?.toLocaleString() || "0"}</div>
               <div className="text-xs text-slate-400 mt-1 hidden sm:block">Lifetime predictions made</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-surface border-surface-light">
+          <Card className="admin-card bg-surface border-surface-light">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Accuracy Rate</CardTitle>
+              <CardTitle className="admin-card-title text-xs sm:text-sm font-medium text-slate-400">Accuracy Rate</CardTitle>
               <Target className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
             </CardHeader>
             <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold text-success">{stats?.accuracy || 0}%</div>
+              <div className="admin-card-value text-lg sm:text-2xl font-bold text-success">{stats?.accuracy || 0}%</div>
               <div className={`text-xs px-1 sm:px-2 py-1 rounded-full inline-block mt-1 ${accuracyLevel.bg} ${accuracyLevel.color} hidden sm:block`}>
                 {accuracyLevel.label}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-surface border-surface-light">
+          <Card className="admin-card bg-surface border-surface-light">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Current Rank</CardTitle>
+              <CardTitle className="admin-card-title text-xs sm:text-sm font-medium text-slate-400">Current Rank</CardTitle>
               <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
             </CardHeader>
             <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold text-warning">
+              <div className="admin-card-value text-lg sm:text-2xl font-bold text-warning">
                 {stats?.rank ? `#${stats.rank}` : "N/A"}
               </div>
               <div className="text-xs text-slate-400 mt-1 hidden sm:block">Global ranking</div>
@@ -516,10 +517,10 @@ export default function UserDashboard() {
         </div>
 
         {/* Main Content with Sidebar Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="admin-layout grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Sidebar Navigation - 1/3 of width */}
           <div className="lg:col-span-1">
-            <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 shadow-2xl sticky top-4 h-fit">
+            <div className="admin-sidebar bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 shadow-2xl sticky top-4 h-fit">
               <div className="mb-4 sm:mb-5 md:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">Dashboard Menu</h3>
                 <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">Manage your account and track your performance</p>
@@ -527,10 +528,10 @@ export default function UserDashboard() {
               
               <Tabs value={activeTab} onValueChange={handleTabChange} orientation="vertical" className="w-full">
                 <div className="space-y-1 sm:space-y-2 md:space-y-3">
-                  <TabsList className="bg-transparent w-full h-auto p-0 flex-col space-y-1 sm:space-y-2 md:space-y-3">
+                  <TabsList className="admin-tabs-nav bg-transparent w-full h-auto p-0 flex-col space-y-1 sm:space-y-2 md:space-y-3">
                     <TabsTrigger 
                       value="profile" 
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-blue-400/50 text-slate-300"
+                      className="admin-tab-button w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-blue-400/50 text-slate-300"
                     >
                       <UserCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span>Profile</span>

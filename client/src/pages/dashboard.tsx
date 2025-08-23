@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { BarChart3, Target, TrendingUp, Users, Award, Zap } from "lucide-react";
 import type { CryptoPrice } from "@/types";
 import type { User as UserType } from "@shared/schema";
+import "../styles/mobile-admin.css";
 
 
 
@@ -122,7 +123,7 @@ export default function Dashboard() {
         )}
 
         {/* Feature Cards for Unauthenticated Users - Full Width */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mt-20 mb-12">
+        <div className="admin-stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mt-20 mb-12">
           <Card className="text-center p-6 sm:p-8">
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
               <Target className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
