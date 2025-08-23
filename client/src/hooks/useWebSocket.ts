@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 interface NotificationData {
@@ -36,6 +36,7 @@ class WebSocketManager {
   private isConnecting = false;
   private callbacks = new Set<UseWebSocketOptions>();
   private pingInterval: NodeJS.Timeout | null = null;
+  private connectionStatusCallbacks = new Set<(isConnected: boolean) => void>();
 
   connect(userId: number) {
     // If already connected for the same user, don't create new connection
@@ -110,6 +111,9 @@ class WebSocketManager {
           // Notify all callbacks
           this.callbacks.forEach(callback => callback.onConnected?.());
           
+          // Notify connection status callbacks
+          this.connectionStatusCallbacks.forEach(callback => callback(true));
+          
           resolve(ws);
         };
 
@@ -151,6 +155,9 @@ class WebSocketManager {
           
           // Notify all callbacks
           this.callbacks.forEach(callback => callback.onDisconnected?.());
+          
+          // Notify connection status callbacks
+          this.connectionStatusCallbacks.forEach(callback => callback(false));
           
           // Attempt to reconnect if not manually closed
           if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts && this.currentUserId) {
@@ -231,6 +238,17 @@ class WebSocketManager {
     this.callbacks.delete(callback);
   }
 
+  onConnectionStatusChange(callback: (isConnected: boolean) => void) {
+    this.connectionStatusCallbacks.add(callback);
+    // Immediately call with current status
+    callback(this.isConnected);
+    
+    // Return unsubscribe function
+    return () => {
+      this.connectionStatusCallbacks.delete(callback);
+    };
+  }
+
   sendMessage(message: any): boolean {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
@@ -296,8 +314,21 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     }
   }, [user?.id]);
 
+  const [isConnected, setIsConnected] = useState(false);
+
+  // Update connection status reactively
+  useEffect(() => {
+    // Subscribe to connection status changes
+    const unsubscribe = wsManager.onConnectionStatusChange((connected) => {
+      setIsConnected(connected);
+      console.log('📊 [WEBSOCKET-HOOK] Connection status updated:', connected);
+    });
+    
+    return unsubscribe;
+  }, []);
+
   return {
-    isConnected: wsManager.isConnected,
+    isConnected,
     sendMessage,
     disconnect,
     reconnect
