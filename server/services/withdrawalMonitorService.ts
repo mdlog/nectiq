@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { storage } from '../storage.js';
+import { broadcastNotificationCallback } from '../routes.js';
 
 interface EtherscanTransaction {
   hash: string;
@@ -251,34 +252,19 @@ export class WithdrawalMonitorService {
       // Log success for admin monitoring
       console.log(`🎉 [WITHDRAWAL-MONITOR] Automatic hash detection successful for withdrawal ${withdrawal.uniqueTransactionId}`);
       
-      // Send real-time notification to user
+      // Send WebSocket notification to user
       try {
-        // Import broadcastNotification function from routes
-        const { broadcastNotificationCallback } = await import('../routes.js');
-        
-        if (broadcastNotificationCallback) {
-          broadcastNotificationCallback(withdrawal.userId, {
-            type: 'withdrawal_completed',
-            title: 'Withdrawal Completed',
-            message: `Your withdrawal of ${withdrawal.ntiqAmount} NTIQ has been successfully processed and sent to your wallet address.`,
-            data: {
-              withdrawalId: withdrawal.uniqueTransactionId,
-              amount: withdrawal.ntiqAmount,
-              currency: 'NTIQ',
-              transactionHash: hash,
-              recipientAddress: withdrawal.walletAddress,
-              completedAt: new Date().toISOString()
-            },
-            timestamp: Date.now(),
-            priority: 'high'
-          });
-          
-          console.log(`📡 [WITHDRAWAL-MONITOR] Real-time notification sent to user ${withdrawal.userId} for completed withdrawal`);
-        } else {
-          console.log(`⚠️ [WITHDRAWAL-MONITOR] Broadcast function not available, notification not sent`);
-        }
-      } catch (error) {
-        console.error(`❌ [WITHDRAWAL-MONITOR] Error sending notification:`, error);
+        broadcastNotificationCallback(withdrawal.userId, {
+          id: Date.now(),
+          type: 'withdrawal_completed',
+          title: 'Withdrawal Complete',
+          message: `Your withdrawal of ${withdrawal.netAmount} ${withdrawal.tokenType} has been successfully processed`,
+          timestamp: Date.now(),
+          priority: 'high'
+        });
+        console.log(`📡 [WITHDRAWAL-MONITOR] WebSocket notification sent to user ${withdrawal.userId}`);
+      } catch (notifError) {
+        console.error(`❌ [WITHDRAWAL-MONITOR] Failed to send WebSocket notification:`, notifError);
       }
       
     } catch (error) {

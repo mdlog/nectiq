@@ -4,6 +4,7 @@ import { db } from './db.js';
 import { withdrawals, users } from '../shared/schema.js';
 import { eq, and, isNotNull } from 'drizzle-orm';
 import { IStorage } from './storage.js';
+import { broadcastNotificationCallback } from './routes.js';
 
 interface AutoWithdrawalConfig {
   // Wallet Configuration
@@ -186,6 +187,21 @@ export class AutomatedWithdrawalService {
           .where(eq(withdrawals.id, withdrawal.id));
 
         console.log(`✅ [WITHDRAWAL-MONITOR] Withdrawal ${withdrawal.id} automatically marked as completed - TX: ${transactionHash}`);
+        
+        // Send WebSocket notification to user
+        try {
+          broadcastNotificationCallback(withdrawal.userId, {
+            id: Date.now(),
+            type: 'withdrawal_completed',
+            title: 'Withdrawal Complete',
+            message: `Your withdrawal of ${withdrawal.netAmount} ${withdrawal.tokenType} has been successfully processed`,
+            timestamp: Date.now(),
+            priority: 'high'
+          });
+          console.log(`📡 [WITHDRAWAL-MONITOR] WebSocket notification sent to user ${withdrawal.userId}`);
+        } catch (notifError) {
+          console.error(`❌ [WITHDRAWAL-MONITOR] Failed to send WebSocket notification:`, notifError);
+        }
         
         // Send success notification
         await this.sendSuccessNotification(withdrawal, transactionHash);
@@ -429,6 +445,21 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
       
       console.log(`✅ [AUTO-WD] Withdrawal ${withdrawal.id} completed with TX: ${txHash}`);
       
+      // Send WebSocket notification to user
+      try {
+        broadcastNotificationCallback(withdrawal.userId, {
+          id: Date.now(),
+          type: 'withdrawal_completed',
+          title: 'Withdrawal Complete',
+          message: `Your withdrawal of ${withdrawal.netAmount} ${withdrawal.tokenType} has been successfully processed`,
+          timestamp: Date.now(),
+          priority: 'high'
+        });
+        console.log(`📡 [AUTO-WD] WebSocket notification sent to user ${withdrawal.userId}`);
+      } catch (notifError) {
+        console.error(`❌ [AUTO-WD] Failed to send WebSocket notification:`, notifError);
+      }
+      
       // Send success notification
       await this.sendSuccessNotification(withdrawal, txHash);
       
@@ -453,6 +484,21 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
         try {
           await this.deductUserBalance(withdrawal);
           console.log(`✅ [AUTO-WD] Balance deducted despite post-processing error`);
+          
+          // Send WebSocket notification to user (even with post-processing error, withdrawal is completed)
+          try {
+            broadcastNotificationCallback(withdrawal.userId, {
+              id: Date.now(),
+              type: 'withdrawal_completed',
+              title: 'Withdrawal Complete',
+              message: `Your withdrawal of ${withdrawal.netAmount} ${withdrawal.tokenType} has been successfully processed`,
+              timestamp: Date.now(),
+              priority: 'high'
+            });
+            console.log(`📡 [AUTO-WD] WebSocket notification sent to user ${withdrawal.userId} (post-processing error)`);
+          } catch (notifError) {
+            console.error(`❌ [AUTO-WD] Failed to send WebSocket notification:`, notifError);
+          }
         } catch (balanceError) {
           console.error(`🚨 [AUTO-WD] FAILED TO DEDUCT BALANCE - MANUAL CORRECTION NEEDED!`, balanceError);
           await this.sendCriticalErrorNotification(withdrawal, txHash || '', balanceError);
