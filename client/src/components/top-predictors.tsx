@@ -146,12 +146,12 @@ export function TopPredictors() {
         
         {/* Show current user's rank if they're not in top 6 */}
         {userRankEntry && (
-          <div className="flex items-center space-x-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+          <div className="flex items-center space-x-3 p-3 bg-surface-light rounded-lg">
             <div className={`flex items-center justify-center w-8 h-8 ${getRankColor(userRankEntry.rank)} font-bold rounded-full text-sm`}>
               {userRankEntry.rank <= 3 ? getRankIcon(userRankEntry.rank) : userRankEntry.rank}
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm text-primary">{userRankEntry.rank}. You</p>
+              <p className="font-semibold text-sm">You</p>
               <div className="flex items-center space-x-2 text-xs text-slate-400">
                 <span>Accuracy: {userRankEntry.accuracy}%</span>
               </div>
