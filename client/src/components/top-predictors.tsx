@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Medal, Eye, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import type { LeaderboardEntry } from "@/types";
+import type { LeaderboardEntry, UserStats } from "@/types";
+import type { User } from "@shared/schema";
 
 function getRankIcon(rank: number): string {
   switch (rank) {
@@ -36,6 +37,21 @@ export function TopPredictors() {
     refetchInterval: false, // DISABLED to prevent rate limiting
     refetchIntervalInBackground: false,
     staleTime: 10 * 60 * 1000, // 10 minutes stale time
+  });
+
+  // Get current user information
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/user"],
+    retry: false,
+    staleTime: 60000,
+  });
+
+  // Get current user stats to access their rank
+  const { data: userStats } = useQuery<UserStats>({
+    queryKey: ["/api/user/stats"],
+    enabled: !!user,
+    retry: false,
+    staleTime: 60000,
   });
 
   if (isLoading) {
@@ -74,6 +90,20 @@ export function TopPredictors() {
 
   // Limit to top 6 predictors only
   const topSixPredictors = leaderboard.slice(0, 6);
+  
+  // Check if current user is in top 6
+  const currentUserInTopSix = user && topSixPredictors.some(predictor => predictor.id === user.id);
+  
+  // Create user rank entry if user is logged in and not in top 6
+  const userRankEntry = user && userStats && !currentUserInTopSix ? {
+    id: user.id,
+    username: "You",
+    rank: userStats.rank || 0,
+    totalPredictions: 0,
+    correctPredictions: 0,
+    accuracy: userStats.accuracy,
+    totalRewards: userStats.totalRewards,
+  } : null;
 
   return (
     <div className="bg-surface rounded-xl p-6 border border-surface-light h-full flex flex-col">
@@ -114,8 +144,29 @@ export function TopPredictors() {
           );
         })}
         
-        {/* Fill remaining space if less than 6 predictors */}
-        {topSixPredictors.length < 6 && (
+        {/* Show current user's rank if they're not in top 6 */}
+        {userRankEntry && (
+          <div className="flex items-center space-x-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <div className={`flex items-center justify-center w-8 h-8 ${getRankColor(userRankEntry.rank)} font-bold rounded-full text-sm`}>
+              {userRankEntry.rank <= 3 ? getRankIcon(userRankEntry.rank) : userRankEntry.rank}
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-sm text-primary">{userRankEntry.rank}. You</p>
+              <div className="flex items-center space-x-2 text-xs text-slate-400">
+                <span>Accuracy: {userRankEntry.accuracy}%</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-success">
+                {userRankEntry.totalRewards.toLocaleString()}
+              </p>
+              <p className="text-xs text-slate-400">NTIQ</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Fill remaining space if less than 6 predictors and no user rank entry */}
+        {topSixPredictors.length < 6 && !userRankEntry && (
           <div className="flex-1 flex flex-col justify-center items-center text-slate-400 text-sm">
             <p>{6 - topSixPredictors.length} more slots available</p>
           </div>
