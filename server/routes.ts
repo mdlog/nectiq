@@ -10088,7 +10088,7 @@ Manual balance correction required IMMEDIATELY!`;
       }
     }, 30000); // 30 second timeout for authentication
     
-    ws.on('message', (message) => {
+    ws.on('message', async (message) => {
       try {
         const data = JSON.parse(message.toString());
         

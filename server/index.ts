@@ -254,16 +254,53 @@ app.use('/attached_assets', express.static('attached_assets'));
 // Serve uploaded files (profile photos, banners, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// SECURITY FIX: Enhanced rate limiting middleware - production-grade protection
+// SECURITY FIX: Smart rate limiting middleware with endpoint-specific limits
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 const isDevelopment = process.env.NODE_ENV !== 'production';
-// SECURITY: Reduced rate limits for better protection
-const MAX_REQUESTS_PER_WINDOW = isDevelopment ? 150 : 60; // Much lower for production
+
+// Different rate limits for different endpoint types
+const RATE_LIMITS = {
+  // High-traffic read endpoints (price data, user info)
+  HIGH_TRAFFIC: isDevelopment ? 300 : 200,
+  // Normal API operations (predictions, deposits, referrals)  
+  NORMAL: isDevelopment ? 200 : 120,
+  // Auth and sensitive operations
+  SENSITIVE: isDevelopment ? 100 : 60,
+  // Admin operations
+  ADMIN: isDevelopment ? 50 : 30
+};
+
+// Categorize endpoints by their rate limit needs
+function getRateLimitCategory(path: string): number {
+  // High-traffic read-only endpoints
+  if (path.includes('/api/crypto/') || 
+      path.includes('/api/user/profile') || 
+      path.includes('/api/leaderboard') ||
+      path.includes('/api/session/validate')) {
+    return RATE_LIMITS.HIGH_TRAFFIC;
+  }
+  
+  // Admin endpoints
+  if (path.includes('/api/admin/')) {
+    return RATE_LIMITS.ADMIN;
+  }
+  
+  // Sensitive auth operations
+  if (path.includes('/api/auth/') || 
+      path.includes('/api/user/update-') ||
+      path.includes('/api/user/upload-')) {
+    return RATE_LIMITS.SENSITIVE;
+  }
+  
+  // Normal API operations (includes referral processing)
+  return RATE_LIMITS.NORMAL;
+}
 
 app.use((req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
   const now = Date.now();
+  const maxRequests = getRateLimitCategory(req.path);
   
   if (!rateLimitMap.has(clientIP)) {
     rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
@@ -277,7 +314,8 @@ app.use((req, res, next) => {
     return next();
   }
   
-  if (clientData.count >= MAX_REQUESTS_PER_WINDOW) {
+  if (clientData.count >= maxRequests) {
+    console.log(`🚫 [RATE-LIMIT] IP ${clientIP} exceeded limit for ${req.path} (${clientData.count}/${maxRequests})`);
     return res.status(429).json({ message: 'Too many requests. Please try again later.' });
   }
   
