@@ -139,19 +139,19 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true in production with HTTPS
-    httpOnly: false, // Allow frontend access to session
+    secure: process.env.NODE_ENV === 'production', // SECURITY: Enable HTTPS-only in production
+    httpOnly: true, // SECURITY: Prevent XSS attacks by blocking JavaScript access
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Allow cross-origin requests
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax' // SECURITY: Strict CSRF protection in production
   },
   name: 'connect.sid' // Explicit session name for proper authentication
 }));
 
-// Enhanced CORS middleware - Complete Dynamic SDK support
+// SECURITY: Enhanced CORS middleware with strict origin validation
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Dynamic Labs specific domains for CORS
+  // SECURITY: Whitelist of allowed origins - NO wildcards for production security
   const allowedOrigins = [
     'https://app.dynamicauth.com',
     'https://api.dynamicauth.com',
@@ -161,12 +161,31 @@ app.use((req, res, next) => {
     'https://replit.app'
   ];
   
-  // Handle undefined origin and determine CORS origin
-  let corsOrigin = '*';
-  if (origin && allowedOrigins.includes(origin)) {
+  // Development environment - allow localhost and replit domains
+  if (process.env.NODE_ENV === 'development') {
+    allowedOrigins.push(
+      'http://localhost:5000',
+      'http://localhost:3000',
+      'https://localhost:5000',
+      'https://localhost:3000'
+    );
+    
+    // Add current replit domain dynamically for development
+    if (origin && origin.includes('replit.dev')) {
+      allowedOrigins.push(origin);
+    }
+  }
+  
+  // SECURITY: Strict origin validation - only allow whitelisted origins
+  let corsOrigin = false; // Default: deny all origins
+  if (!origin) {
+    // Same-origin requests (no origin header) are allowed
+    corsOrigin = '*';
+  } else if (allowedOrigins.includes(origin)) {
     corsOrigin = origin;
-  } else if (origin) {
-    corsOrigin = origin; // Allow the current origin if defined
+  } else {
+    // Log suspicious origin attempts for security monitoring
+    console.warn(`🚨 [SECURITY] Blocked CORS request from unauthorized origin: ${origin}`);
   }
   
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);

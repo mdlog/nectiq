@@ -1429,17 +1429,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Direct admin access route - bypasses all browser extension conflicts
+  // SECURITY: Direct admin access route - now requires secure environment variable
   app.get("/admin-direct/:token", async (req, res) => {
     try {
       const { token } = req.params;
-      const adminToken = "secure-admin-2024";
+      const adminToken = process.env.ADMIN_DIRECT_TOKEN;
+      
+      // Security check: Admin direct token must be set in environment
+      if (!adminToken || adminToken.length < 32) {
+        console.error('🚨 [SECURITY] ADMIN_DIRECT_TOKEN not set or too weak. Minimum 32 characters required.');
+        return res.redirect("/?error=access-disabled");
+      }
       
       if (token !== adminToken) {
+        // Log failed attempt for security monitoring
+        auditLog('ADMIN_DIRECT_ACCESS_DENIED', { 
+          providedToken: token.substring(0, 4) + '...', 
+          clientIP: req.ip 
+        }, req);
         return res.redirect("/?error=invalid-access");
       }
 
       const adminAddresses = getAdminWalletAddresses();
+      if (!adminAddresses.length) {
+        console.error('🚨 [SECURITY] No admin wallet addresses configured');
+        return res.redirect("/?error=no-admin-configured");
+      }
+      
       const adminWallet = adminAddresses[0]; // Use first admin address
       
       // Create or get admin user
@@ -1448,19 +1464,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.createUser({
           username: `admin_${adminWallet.slice(-6)}`,
           walletAddress: adminWallet,
-          authMethod: "direct",
+          authMethod: "secure_direct",
           isAdmin: true
         });
       }
 
-      // Set session
+      // Set session with additional security
       req.session.userId = user.id;
       req.session.isAdmin = true;
+      req.session.adminAccessMethod = 'secure_direct';
+      req.session.adminAccessTime = new Date().toISOString();
+
+      // Log successful admin access
+      auditLog('ADMIN_DIRECT_ACCESS_GRANTED', { 
+        adminWallet: adminWallet.substring(0, 6) + '...', 
+        clientIP: req.ip,
+        accessTime: new Date().toISOString()
+      }, req);
 
       // Redirect to admin panel
       res.redirect("/admin?access=granted");
     } catch (error) {
-      console.error("Direct admin access error:", error);
+      console.error("🚨 [SECURITY] Direct admin access error:", error);
+      auditLog('ADMIN_DIRECT_ACCESS_ERROR', { error: error.message, clientIP: req.ip }, req);
       res.redirect("/?error=auth-failed");
     }
   });
