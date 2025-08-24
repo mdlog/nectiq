@@ -15,9 +15,9 @@ import { eq, desc } from "drizzle-orm";
 // Load environment variables
 dotenv.config();
 
-// SECURITY: Log environment status without exposing values
+// Debug environment variables immediately after loading
 console.log("🔍 Environment variables loaded:");
-console.log("   ADMIN_WALLET_ADDRESSES configured:", process.env.ADMIN_WALLET_ADDRESSES ? 'Yes' : 'No');
+console.log("   ADMIN_WALLET_ADDRESSES:", process.env.ADMIN_WALLET_ADDRESSES);
 console.log("   NODE_ENV:", process.env.NODE_ENV);
 
 // Extend Express Request to include session
@@ -38,19 +38,6 @@ import { ParlayProcessorService } from "./services/parlayProcessorService.js";
 import { BattleExpiryService } from "./services/battleExpiryService.js";
 
 const app = express();
-
-// ===== DEDICATED HEALTH CHECK ENDPOINT FOR DEPLOYMENT =====
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Note: Root route (/) is handled by Vite middleware for frontend in development
-// and by static files in production - no override needed here
 
 // ===== LIVE ACTIVITIES ENDPOINT - EARLY PLACEMENT TO BYPASS MIDDLEWARE =====
 app.get('/api/activities/live', async (req, res) => {
@@ -152,19 +139,19 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // SECURITY: Enable HTTPS-only in production
-    httpOnly: true, // SECURITY: Prevent XSS attacks by blocking JavaScript access
+    secure: false, // Set to true in production with HTTPS
+    httpOnly: false, // Allow frontend access to session
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax' // SECURITY: Strict CSRF protection in production
+    sameSite: 'lax' // Allow cross-origin requests
   },
   name: 'connect.sid' // Explicit session name for proper authentication
 }));
 
-// SECURITY: Enhanced CORS middleware with strict origin validation
+// Enhanced CORS middleware - Complete Dynamic SDK support
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // SECURITY: Whitelist of allowed origins - NO wildcards for production security
+  // Dynamic Labs specific domains for CORS
   const allowedOrigins = [
     'https://app.dynamicauth.com',
     'https://api.dynamicauth.com',
@@ -174,35 +161,12 @@ app.use((req, res, next) => {
     'https://replit.app'
   ];
   
-  // Development environment - allow localhost and replit domains
-  if (process.env.NODE_ENV === 'development') {
-    allowedOrigins.push(
-      'http://localhost:5000',
-      'http://localhost:3000',
-      'https://localhost:5000',
-      'https://localhost:3000',
-      'http://127.0.0.1:5000',
-      'http://127.0.0.1:3000',
-      'https://127.0.0.1:5000',
-      'https://127.0.0.1:3000'
-    );
-    
-    // Add current replit domain dynamically for development
-    if (origin && origin.includes('replit.dev')) {
-      allowedOrigins.push(origin);
-    }
-  }
-  
-  // SECURITY: Strict origin validation - only allow whitelisted origins
-  let corsOrigin = false; // Default: deny all origins
-  if (!origin) {
-    // Same-origin requests (no origin header) are allowed
-    corsOrigin = '*';
-  } else if (allowedOrigins.includes(origin)) {
+  // Handle undefined origin and determine CORS origin
+  let corsOrigin = '*';
+  if (origin && allowedOrigins.includes(origin)) {
     corsOrigin = origin;
-  } else {
-    // Log suspicious origin attempts for security monitoring
-    console.warn(`🚨 [SECURITY] Blocked CORS request from unauthorized origin: ${origin}`);
+  } else if (origin) {
+    corsOrigin = origin; // Allow the current origin if defined
   }
   
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
@@ -266,92 +230,29 @@ app.use('/attached_assets', express.static('attached_assets'));
 // Serve uploaded files (profile photos, banners, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// SECURITY: Enhanced rate limiting middleware with tiered protection
+// Simple rate limiting middleware - adjusted for development
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-
-// SECURITY: Tiered rate limiting based on endpoint sensitivity
-const getRateLimitConfig = (req: any) => {
-  const path = req.path;
-  
-  // DEVELOPMENT: Very lenient rate limiting for development mode
-  if (process.env.NODE_ENV === 'development') {
-    // Vite dev server requests - very lenient
-    if (path.startsWith('/@fs/') || path.startsWith('/@vite/') || path.startsWith('/src/') || 
-        path.startsWith('/node_modules/') || path.includes('.js') || path.includes('.ts') || 
-        path.includes('.jsx') || path.includes('.tsx') || path.includes('.css')) {
-      return { maxRequests: 1000, windowMs: 60000, type: 'dev_assets' };
-    }
-    
-    // API endpoints in development - more lenient
-    if (path.startsWith('/api/')) {
-      return { maxRequests: 300, windowMs: 60000, type: 'dev_api' };
-    }
-    
-    // All other development requests
-    return { maxRequests: 500, windowMs: 60000, type: 'dev_public' };
-  }
-  
-  // PRODUCTION: Strict rate limiting for production
-  // CRITICAL: Admin endpoints - very restrictive
-  if (path.startsWith('/api/admin')) {
-    return { maxRequests: 10, windowMs: 60000, type: 'admin' };
-  }
-  
-  // HIGH: Authentication endpoints - restrictive
-  if (path.includes('/auth') || path.includes('/login') || path.includes('/verify')) {
-    return { maxRequests: 20, windowMs: 60000, type: 'auth' };
-  }
-  
-  // HIGH: Financial endpoints - restrictive
-  if (path.includes('/deposit') || path.includes('/withdraw') || path.includes('/transaction')) {
-    return { maxRequests: 30, windowMs: 60000, type: 'financial' };
-  }
-  
-  // MEDIUM: User operations - moderate
-  if (path.includes('/prediction') || path.includes('/battle') || path.includes('/user')) {
-    return { maxRequests: 60, windowMs: 60000, type: 'user' };
-  }
-  
-  // LOW: Public data endpoints - lenient but still controlled
-  return { maxRequests: 120, windowMs: 60000, type: 'public' };
-};
+const MAX_REQUESTS_PER_WINDOW = 500; // Increased for development
 
 app.use((req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
   const now = Date.now();
-  const config = getRateLimitConfig(req);
   
-  const limitKey = `${clientIP}_${config.type}`;
-  
-  if (!rateLimitMap.has(limitKey)) {
-    rateLimitMap.set(limitKey, { count: 1, resetTime: now + config.windowMs });
+  if (!rateLimitMap.has(clientIP)) {
+    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     return next();
   }
   
-  const clientData = rateLimitMap.get(limitKey);
+  const clientData = rateLimitMap.get(clientIP);
   
   if (now > clientData.resetTime) {
-    rateLimitMap.set(limitKey, { count: 1, resetTime: now + config.windowMs });
+    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     return next();
   }
   
-  if (clientData.count >= config.maxRequests) {
-    // SECURITY: Enhanced rate limit logging with threat intelligence
-    console.warn('🚨 [SECURITY] Rate limit exceeded:', {
-      clientIP: clientIP,
-      endpoint: req.path,
-      limitType: config.type,
-      currentCount: clientData.count,
-      maxAllowed: config.maxRequests,
-      timestamp: new Date().toISOString(),
-      userAgent: req.headers['user-agent']?.substring(0, 100)
-    });
-    
-    return res.status(429).json({ 
-      message: 'Too many requests. Please try again later.',
-      retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
-    });
+  if (clientData.count >= MAX_REQUESTS_PER_WINDOW) {
+    return res.status(429).json({ message: 'Too many requests. Please try again later.' });
   }
   
   clientData.count++;
@@ -388,153 +289,132 @@ app.use((req, res, next) => {
   next();
 });
 
-// Background services initialization function (runs after server starts)
-async function initializeBackgroundServices() {
-  console.log('🚀 [STARTUP] Server is listening - now initializing background services...');
+// Initialize survival round service for automatic elimination
+console.log('🔧 Initializing Survival Round Service...');
+survivalRoundService;
+
+// Initialize automated audit system to prevent reward/balance inconsistencies
+console.log('🔧 Audit system temporarily disabled for debugging...');
+
+// ❌ AUTOMATED WITHDRAWAL SYSTEM DISABLED - Manual approval required
+console.log('🚫 Automated Withdrawal System DISABLED - All withdrawals require manual approval');
+console.log('✅ All withdrawals will be processed through admin panel approval system');
+// Auto withdrawal disabled permanently to require manual admin approval
+
+// Initialize automated deposit monitoring system
+console.log('🔧 Initializing Automated Deposit Monitoring System...');
+try {
+  const depositMonitorService = DepositMonitorService.getInstance();
+  await depositMonitorService.start();
+  console.log('✅ Automated deposit monitoring system started successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize automated deposit monitoring system:', error);
+}
+
+// Initialize Deposit Expiry Service for 1-hour auto-cancel
+try {
+  console.log('🔧 Initializing Deposit Expiry Service...');
+  const depositExpiryService = initializeDepositExpiryService(storage as any);
+  depositExpiryService.start();
+  console.log('✅ Deposit expiry monitoring system started successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize deposit expiry service:', error);
+}
+
+// Initialize Withdrawal Hash Detection Service
+try {
+  console.log('🔧 Initializing Withdrawal Hash Detection Service...');
+  await withdrawalMonitorService.start();
+  console.log('✅ Withdrawal hash detection system started successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize withdrawal hash detection service:', error);
+}
+
+// Initialize Processing Withdrawals Blockchain Monitor
+try {
+  console.log('🔧 Initializing Processing Withdrawals Blockchain Monitor...');
+  const { AutomatedWithdrawalService } = await import('./automated-withdrawal-service');
   
-  try {
-    // Initialize survival round service for automatic elimination
-    console.log('🔧 Initializing Survival Round Service...');
-    survivalRoundService;
-
-    // Initialize automated audit system to prevent reward/balance inconsistencies
-    console.log('🔧 Audit system temporarily disabled for debugging...');
-
-    // ❌ AUTOMATED WITHDRAWAL SYSTEM DISABLED - Manual approval required
-    console.log('🚫 Automated Withdrawal System DISABLED - All withdrawals require manual approval');
-    console.log('✅ All withdrawals will be processed through admin panel approval system');
-    // Auto withdrawal disabled permanently to require manual admin approval
-
-    // Initialize automated deposit monitoring system
-    console.log('🔧 Initializing Automated Deposit Monitoring System...');
-    try {
-      const depositMonitorService = DepositMonitorService.getInstance();
-      await depositMonitorService.start();
-      console.log('✅ Automated deposit monitoring system started successfully');
-    } catch (error) {
-      console.error('❌ Failed to initialize automated deposit monitoring system:', error);
-    }
-
-    // Initialize Deposit Expiry Service for 1-hour auto-cancel
-    try {
-      console.log('🔧 Initializing Deposit Expiry Service...');
-      const depositExpiryService = initializeDepositExpiryService(storage as any);
-      depositExpiryService.start();
-      console.log('✅ Deposit expiry monitoring system started successfully');
-    } catch (error) {
-      console.error('❌ Failed to initialize deposit expiry service:', error);
-    }
-
-    // Initialize Withdrawal Hash Detection Service
-    try {
-      console.log('🔧 Initializing Withdrawal Hash Detection Service...');
-      await withdrawalMonitorService.start();
-      console.log('✅ Withdrawal hash detection system started successfully');
-    } catch (error) {
-      console.error('❌ Failed to initialize withdrawal hash detection service:', error);
-    }
-
-    // Initialize Processing Withdrawals Blockchain Monitor
-    try {
-      console.log('🔧 Initializing Processing Withdrawals Blockchain Monitor...');
-      const { AutomatedWithdrawalService } = await import('./automated-withdrawal-service');
-      
-      // Only initialize if admin private key exists
-      if (process.env.ADMIN_PRIVATE_KEY) {
-        const networks = {
-          ethereum: { 
-            rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
-            chainId: 11155111,
-            gasLimit: '21000',
-            maxGasPrice: '20000000000',
-            tokenContracts: {
-              USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
-              USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
-            }
-          },
-          sepolia: { 
-            rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
-            chainId: 11155111,
-            gasLimit: '21000',
-            maxGasPrice: '20000000000',
-            tokenContracts: {
-              USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
-              USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
-            }
-          }
-        };
-        
-        const automatedService = new AutomatedWithdrawalService({
-          adminPrivateKey: process.env.ADMIN_PRIVATE_KEY,
-          networks,
-          maxDailyWithdrawal: 10000,
-          maxSingleWithdrawal: 5000,
-          autoApprovalThreshold: 100
-        }, storage);
-        
-        // Check processing withdrawals every 2 minutes
-        setInterval(async () => {
-          try {
-            console.log('🔍 [PROCESSING-MONITOR] Checking processing withdrawals for blockchain confirmation...');
-            await automatedService.monitorProcessingWithdrawals();
-          } catch (error) {
-            console.error('❌ [PROCESSING-MONITOR] Error:', error);
-          }
-        }, 120000); // 2 minutes
-        
-        console.log('✅ Processing withdrawals blockchain monitor started - checking every 2 minutes');
-      } else {
-        console.log('⚠️ Processing withdrawals monitor disabled - ADMIN_PRIVATE_KEY not found');
-      }
-    } catch (error) {
-      console.error('❌ Failed to initialize processing withdrawals monitor:', error);
-    }
-
-    // Initialize Parlay Processor Service for automatic parlay completion
-    try {
-      console.log('🔧 Initializing Parlay Processor Service...');
-      const parlayProcessorService = new ParlayProcessorService();
-      
-      // Start periodic processing every 30 seconds
-      setInterval(async () => {
-        try {
-          await parlayProcessorService.processExpiredParlayPredictions();
-        } catch (error) {
-          console.error('❌ [PARLAY-PROCESSOR] Periodic processing error:', error);
+  // Only initialize if admin private key exists
+  if (process.env.ADMIN_PRIVATE_KEY) {
+    const networks = {
+      ethereum: { 
+        rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
+        chainId: 11155111,
+        gasLimit: '21000',
+        maxGasPrice: '20000000000',
+        tokenContracts: {
+          USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
+          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
         }
-      }, 30000); // 30 seconds
-      
-      // Run initial processing
-      await parlayProcessorService.processExpiredParlayPredictions();
-      console.log('✅ Parlay processor service started successfully - processing every 30 seconds');
-    } catch (error) {
-      console.error('❌ Failed to initialize parlay processor service:', error);
-    }
-
-    // Initialize Battle Expiry Service for automatic battle expiry processing
-    try {
-      console.log('🔧 Initializing Battle Expiry Service...');
-      const battleExpiryService = BattleExpiryService.getInstance();
-      battleExpiryService.start();
-      console.log('✅ Battle expiry service started successfully - monitoring every 30 seconds');
-    } catch (error) {
-      console.error('❌ Failed to initialize battle expiry service:', error);
-    }
-
-    // Initialize Financial Security Service for comprehensive transaction security
-    try {
-      console.log('🔧 Initializing Financial Security Service...');
-      const { financialSecurityService } = await import('./financial-security-service');
-      financialSecurityService.startSecurityMonitoring();
-      console.log('✅ Financial security service started successfully - monitoring financial transactions');
-    } catch (error) {
-      console.error('❌ Failed to initialize financial security service:', error);
-    }
+      },
+      sepolia: { 
+        rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
+        chainId: 11155111,
+        gasLimit: '21000',
+        maxGasPrice: '20000000000',
+        tokenContracts: {
+          USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
+          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
+        }
+      }
+    };
     
-    console.log('🎉 [STARTUP] All background services initialized successfully!');
-  } catch (error) {
-    console.error('❌ [STARTUP] Error during background service initialization:', error);
+    const automatedService = new AutomatedWithdrawalService({
+      adminPrivateKey: process.env.ADMIN_PRIVATE_KEY,
+      networks,
+      maxDailyWithdrawal: 10000,
+      maxSingleWithdrawal: 5000,
+      autoApprovalThreshold: 100
+    }, storage);
+    
+    // Check processing withdrawals every 2 minutes
+    setInterval(async () => {
+      try {
+        console.log('🔍 [PROCESSING-MONITOR] Checking processing withdrawals for blockchain confirmation...');
+        await automatedService.monitorProcessingWithdrawals();
+      } catch (error) {
+        console.error('❌ [PROCESSING-MONITOR] Error:', error);
+      }
+    }, 120000); // 2 minutes
+    
+    console.log('✅ Processing withdrawals blockchain monitor started - checking every 2 minutes');
+  } else {
+    console.log('⚠️ Processing withdrawals monitor disabled - ADMIN_PRIVATE_KEY not found');
   }
+} catch (error) {
+  console.error('❌ Failed to initialize processing withdrawals monitor:', error);
+}
+
+// Initialize Parlay Processor Service for automatic parlay completion
+try {
+  console.log('🔧 Initializing Parlay Processor Service...');
+  const parlayProcessorService = new ParlayProcessorService();
+  
+  // Start periodic processing every 30 seconds
+  setInterval(async () => {
+    try {
+      await parlayProcessorService.processExpiredParlayPredictions();
+    } catch (error) {
+      console.error('❌ [PARLAY-PROCESSOR] Periodic processing error:', error);
+    }
+  }, 30000); // 30 seconds
+  
+  // Run initial processing
+  await parlayProcessorService.processExpiredParlayPredictions();
+  console.log('✅ Parlay processor service started successfully - processing every 30 seconds');
+} catch (error) {
+  console.error('❌ Failed to initialize parlay processor service:', error);
+}
+
+// Initialize Battle Expiry Service for automatic battle expiry processing
+try {
+  console.log('🔧 Initializing Battle Expiry Service...');
+  const battleExpiryService = BattleExpiryService.getInstance();
+  battleExpiryService.start();
+  console.log('✅ Battle expiry service started successfully - monitoring every 30 seconds');
+} catch (error) {
+  console.error('❌ Failed to initialize battle expiry service:', error);
 }
 
 (async () => {
@@ -567,13 +447,5 @@ async function initializeBackgroundServices() {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
-    
-    // Initialize background services AFTER server starts listening
-    // This ensures health checks pass during deployment
-    setImmediate(() => {
-      initializeBackgroundServices().catch(error => {
-        console.error('❌ [STARTUP] Critical error during background service initialization:', error);
-      });
-    });
   });
 })();

@@ -164,6 +164,5 @@ export function setupAutomatedWithdrawals(storage: IStorage): void {
   
   console.log(`✅ [AUTO-WD] Automated withdrawal system initialized`);
   console.log(`📋 [AUTO-WD] Processing interval: ${intervalMinutes} minutes`);
-  // SECURITY: Never log sensitive configuration details
   console.log(`🔑 [AUTO-WD] Admin private key configured: ${process.env.ADMIN_PRIVATE_KEY ? 'Yes' : 'No'}`);
 }
