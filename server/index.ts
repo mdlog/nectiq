@@ -261,18 +261,25 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Different rate limits for different endpoint types
 const RATE_LIMITS = {
+  // Static content and homepage (very generous)
+  STATIC: isDevelopment ? 1000 : 500,
   // High-traffic read endpoints (price data, user info)
-  HIGH_TRAFFIC: isDevelopment ? 300 : 200,
+  HIGH_TRAFFIC: isDevelopment ? 400 : 250,
   // Normal API operations (predictions, deposits, referrals)  
-  NORMAL: isDevelopment ? 200 : 120,
+  NORMAL: isDevelopment ? 300 : 180,
   // Auth and sensitive operations
-  SENSITIVE: isDevelopment ? 100 : 60,
+  SENSITIVE: isDevelopment ? 150 : 80,
   // Admin operations
-  ADMIN: isDevelopment ? 50 : 30
+  ADMIN: isDevelopment ? 100 : 50
 };
 
 // Categorize endpoints by their rate limit needs
 function getRateLimitCategory(path: string): number {
+  // Static content and non-API pages (homepage, assets, favicon, etc.)
+  if (!path.startsWith('/api/')) {
+    return RATE_LIMITS.STATIC;
+  }
+  
   // High-traffic read-only endpoints
   if (path.includes('/api/crypto/') || 
       path.includes('/api/user/profile') || 
