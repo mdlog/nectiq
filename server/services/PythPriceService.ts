@@ -55,7 +55,7 @@ export class PythPriceService {
       this.cryptoDataCache.clear();
       for (const crypto of cryptos) {
         if (crypto.pythFeedId) {
-          console.log(`🔍 [PYTH-DEBUG] Loading crypto: ${crypto.id}, image: ${crypto.image}`);
+          // console.log(`🔍 [PYTH-DEBUG] Loading crypto: ${crypto.id}, image: ${crypto.image}`);
           this.cryptoDataCache.set(crypto.id, {
             id: crypto.id,
             name: crypto.name,
@@ -169,7 +169,7 @@ export class PythPriceService {
         continue;
       }
 
-      console.log(`🔍 [PYTH-FORMAT] Processing ${cryptoInfo.id}, image: ${cryptoInfo.image}`);
+      // console.log(`🔍 [PYTH-FORMAT] Processing ${cryptoInfo.id}, image: ${cryptoInfo.image}`);
 
       try {
         // Convert price from Pyth format (price * 10^expo) to regular decimal
