@@ -150,9 +150,10 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: isProduction, // HTTPS only in production
-    httpOnly: true, // Secure: prevent XSS attacks
+    httpOnly: false, // Allow frontend access to session (needed for production)
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: isProduction ? 'strict' : 'lax' // Stricter for production
+    sameSite: isProduction ? 'lax' : 'lax', // Use 'lax' for production compatibility
+    domain: isProduction ? undefined : undefined // Let browser set domain automatically
   },
   name: 'connect.sid'
 }));
@@ -169,8 +170,10 @@ app.use((req, res, next) => {
     'https://dynamicauth.com',
     'https://replit.dev',
     'https://replit.app',
-    // Add your production domain here
-    process.env.PRODUCTION_DOMAIN
+    'https://nectiq.replit.app', // Production domain
+    // Additional production domains
+    process.env.PRODUCTION_DOMAIN,
+    ...process.env.REPLIT_DOMAINS?.split(',') || []
   ].filter(Boolean);
   
   let corsOrigin = isProduction ? false : '*';
