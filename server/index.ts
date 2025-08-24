@@ -39,6 +39,24 @@ import { BattleExpiryService } from "./services/battleExpiryService.js";
 
 const app = express();
 
+// ===== DEDICATED HEALTH CHECK ENDPOINT FOR DEPLOYMENT =====
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Root route health check
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'Nectiq API is running', 
+    timestamp: new Date().toISOString() 
+  });
+});
+
 // ===== LIVE ACTIVITIES ENDPOINT - EARLY PLACEMENT TO BYPASS MIDDLEWARE =====
 app.get('/api/activities/live', async (req, res) => {
   console.log('🚀 [LIVE ACTIVITIES] Endpoint called');
@@ -352,142 +370,153 @@ app.use((req, res, next) => {
   next();
 });
 
-// Initialize survival round service for automatic elimination
-console.log('🔧 Initializing Survival Round Service...');
-survivalRoundService;
-
-// Initialize automated audit system to prevent reward/balance inconsistencies
-console.log('🔧 Audit system temporarily disabled for debugging...');
-
-// ❌ AUTOMATED WITHDRAWAL SYSTEM DISABLED - Manual approval required
-console.log('🚫 Automated Withdrawal System DISABLED - All withdrawals require manual approval');
-console.log('✅ All withdrawals will be processed through admin panel approval system');
-// Auto withdrawal disabled permanently to require manual admin approval
-
-// Initialize automated deposit monitoring system
-console.log('🔧 Initializing Automated Deposit Monitoring System...');
-try {
-  const depositMonitorService = DepositMonitorService.getInstance();
-  await depositMonitorService.start();
-  console.log('✅ Automated deposit monitoring system started successfully');
-} catch (error) {
-  console.error('❌ Failed to initialize automated deposit monitoring system:', error);
-}
-
-// Initialize Deposit Expiry Service for 1-hour auto-cancel
-try {
-  console.log('🔧 Initializing Deposit Expiry Service...');
-  const depositExpiryService = initializeDepositExpiryService(storage as any);
-  depositExpiryService.start();
-  console.log('✅ Deposit expiry monitoring system started successfully');
-} catch (error) {
-  console.error('❌ Failed to initialize deposit expiry service:', error);
-}
-
-// Initialize Withdrawal Hash Detection Service
-try {
-  console.log('🔧 Initializing Withdrawal Hash Detection Service...');
-  await withdrawalMonitorService.start();
-  console.log('✅ Withdrawal hash detection system started successfully');
-} catch (error) {
-  console.error('❌ Failed to initialize withdrawal hash detection service:', error);
-}
-
-// Initialize Processing Withdrawals Blockchain Monitor
-try {
-  console.log('🔧 Initializing Processing Withdrawals Blockchain Monitor...');
-  const { AutomatedWithdrawalService } = await import('./automated-withdrawal-service');
+// Background services initialization function (runs after server starts)
+async function initializeBackgroundServices() {
+  console.log('🚀 [STARTUP] Server is listening - now initializing background services...');
   
-  // Only initialize if admin private key exists
-  if (process.env.ADMIN_PRIVATE_KEY) {
-    const networks = {
-      ethereum: { 
-        rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
-        chainId: 11155111,
-        gasLimit: '21000',
-        maxGasPrice: '20000000000',
-        tokenContracts: {
-          USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
-          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
-        }
-      },
-      sepolia: { 
-        rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
-        chainId: 11155111,
-        gasLimit: '21000',
-        maxGasPrice: '20000000000',
-        tokenContracts: {
-          USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
-          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
-        }
-      }
-    };
-    
-    const automatedService = new AutomatedWithdrawalService({
-      adminPrivateKey: process.env.ADMIN_PRIVATE_KEY,
-      networks,
-      maxDailyWithdrawal: 10000,
-      maxSingleWithdrawal: 5000,
-      autoApprovalThreshold: 100
-    }, storage);
-    
-    // Check processing withdrawals every 2 minutes
-    setInterval(async () => {
-      try {
-        console.log('🔍 [PROCESSING-MONITOR] Checking processing withdrawals for blockchain confirmation...');
-        await automatedService.monitorProcessingWithdrawals();
-      } catch (error) {
-        console.error('❌ [PROCESSING-MONITOR] Error:', error);
-      }
-    }, 120000); // 2 minutes
-    
-    console.log('✅ Processing withdrawals blockchain monitor started - checking every 2 minutes');
-  } else {
-    console.log('⚠️ Processing withdrawals monitor disabled - ADMIN_PRIVATE_KEY not found');
-  }
-} catch (error) {
-  console.error('❌ Failed to initialize processing withdrawals monitor:', error);
-}
+  try {
+    // Initialize survival round service for automatic elimination
+    console.log('🔧 Initializing Survival Round Service...');
+    survivalRoundService;
 
-// Initialize Parlay Processor Service for automatic parlay completion
-try {
-  console.log('🔧 Initializing Parlay Processor Service...');
-  const parlayProcessorService = new ParlayProcessorService();
-  
-  // Start periodic processing every 30 seconds
-  setInterval(async () => {
+    // Initialize automated audit system to prevent reward/balance inconsistencies
+    console.log('🔧 Audit system temporarily disabled for debugging...');
+
+    // ❌ AUTOMATED WITHDRAWAL SYSTEM DISABLED - Manual approval required
+    console.log('🚫 Automated Withdrawal System DISABLED - All withdrawals require manual approval');
+    console.log('✅ All withdrawals will be processed through admin panel approval system');
+    // Auto withdrawal disabled permanently to require manual admin approval
+
+    // Initialize automated deposit monitoring system
+    console.log('🔧 Initializing Automated Deposit Monitoring System...');
     try {
-      await parlayProcessorService.processExpiredParlayPredictions();
+      const depositMonitorService = DepositMonitorService.getInstance();
+      await depositMonitorService.start();
+      console.log('✅ Automated deposit monitoring system started successfully');
     } catch (error) {
-      console.error('❌ [PARLAY-PROCESSOR] Periodic processing error:', error);
+      console.error('❌ Failed to initialize automated deposit monitoring system:', error);
     }
-  }, 30000); // 30 seconds
-  
-  // Run initial processing
-  await parlayProcessorService.processExpiredParlayPredictions();
-  console.log('✅ Parlay processor service started successfully - processing every 30 seconds');
-} catch (error) {
-  console.error('❌ Failed to initialize parlay processor service:', error);
-}
 
-// Initialize Battle Expiry Service for automatic battle expiry processing
-try {
-  console.log('🔧 Initializing Battle Expiry Service...');
-  const battleExpiryService = BattleExpiryService.getInstance();
-  battleExpiryService.start();
-  console.log('✅ Battle expiry service started successfully - monitoring every 30 seconds');
-} catch (error) {
-  console.error('❌ Failed to initialize battle expiry service:', error);
-}
+    // Initialize Deposit Expiry Service for 1-hour auto-cancel
+    try {
+      console.log('🔧 Initializing Deposit Expiry Service...');
+      const depositExpiryService = initializeDepositExpiryService(storage as any);
+      depositExpiryService.start();
+      console.log('✅ Deposit expiry monitoring system started successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize deposit expiry service:', error);
+    }
 
-// Initialize Financial Security Service for comprehensive transaction security
-try {
-  console.log('🔧 Initializing Financial Security Service...');
-  const { financialSecurityService } = await import('./financial-security-service');
-  financialSecurityService.startSecurityMonitoring();
-  console.log('✅ Financial security service started successfully - monitoring financial transactions');
-} catch (error) {
-  console.error('❌ Failed to initialize financial security service:', error);
+    // Initialize Withdrawal Hash Detection Service
+    try {
+      console.log('🔧 Initializing Withdrawal Hash Detection Service...');
+      await withdrawalMonitorService.start();
+      console.log('✅ Withdrawal hash detection system started successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize withdrawal hash detection service:', error);
+    }
+
+    // Initialize Processing Withdrawals Blockchain Monitor
+    try {
+      console.log('🔧 Initializing Processing Withdrawals Blockchain Monitor...');
+      const { AutomatedWithdrawalService } = await import('./automated-withdrawal-service');
+      
+      // Only initialize if admin private key exists
+      if (process.env.ADMIN_PRIVATE_KEY) {
+        const networks = {
+          ethereum: { 
+            rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
+            chainId: 11155111,
+            gasLimit: '21000',
+            maxGasPrice: '20000000000',
+            tokenContracts: {
+              USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
+              USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
+            }
+          },
+          sepolia: { 
+            rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
+            chainId: 11155111,
+            gasLimit: '21000',
+            maxGasPrice: '20000000000',
+            tokenContracts: {
+              USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
+              USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
+            }
+          }
+        };
+        
+        const automatedService = new AutomatedWithdrawalService({
+          adminPrivateKey: process.env.ADMIN_PRIVATE_KEY,
+          networks,
+          maxDailyWithdrawal: 10000,
+          maxSingleWithdrawal: 5000,
+          autoApprovalThreshold: 100
+        }, storage);
+        
+        // Check processing withdrawals every 2 minutes
+        setInterval(async () => {
+          try {
+            console.log('🔍 [PROCESSING-MONITOR] Checking processing withdrawals for blockchain confirmation...');
+            await automatedService.monitorProcessingWithdrawals();
+          } catch (error) {
+            console.error('❌ [PROCESSING-MONITOR] Error:', error);
+          }
+        }, 120000); // 2 minutes
+        
+        console.log('✅ Processing withdrawals blockchain monitor started - checking every 2 minutes');
+      } else {
+        console.log('⚠️ Processing withdrawals monitor disabled - ADMIN_PRIVATE_KEY not found');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize processing withdrawals monitor:', error);
+    }
+
+    // Initialize Parlay Processor Service for automatic parlay completion
+    try {
+      console.log('🔧 Initializing Parlay Processor Service...');
+      const parlayProcessorService = new ParlayProcessorService();
+      
+      // Start periodic processing every 30 seconds
+      setInterval(async () => {
+        try {
+          await parlayProcessorService.processExpiredParlayPredictions();
+        } catch (error) {
+          console.error('❌ [PARLAY-PROCESSOR] Periodic processing error:', error);
+        }
+      }, 30000); // 30 seconds
+      
+      // Run initial processing
+      await parlayProcessorService.processExpiredParlayPredictions();
+      console.log('✅ Parlay processor service started successfully - processing every 30 seconds');
+    } catch (error) {
+      console.error('❌ Failed to initialize parlay processor service:', error);
+    }
+
+    // Initialize Battle Expiry Service for automatic battle expiry processing
+    try {
+      console.log('🔧 Initializing Battle Expiry Service...');
+      const battleExpiryService = BattleExpiryService.getInstance();
+      battleExpiryService.start();
+      console.log('✅ Battle expiry service started successfully - monitoring every 30 seconds');
+    } catch (error) {
+      console.error('❌ Failed to initialize battle expiry service:', error);
+    }
+
+    // Initialize Financial Security Service for comprehensive transaction security
+    try {
+      console.log('🔧 Initializing Financial Security Service...');
+      const { financialSecurityService } = await import('./financial-security-service');
+      financialSecurityService.startSecurityMonitoring();
+      console.log('✅ Financial security service started successfully - monitoring financial transactions');
+    } catch (error) {
+      console.error('❌ Failed to initialize financial security service:', error);
+    }
+    
+    console.log('🎉 [STARTUP] All background services initialized successfully!');
+  } catch (error) {
+    console.error('❌ [STARTUP] Error during background service initialization:', error);
+  }
 }
 
 (async () => {
@@ -520,5 +549,13 @@ try {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Initialize background services AFTER server starts listening
+    // This ensures health checks pass during deployment
+    setImmediate(() => {
+      initializeBackgroundServices().catch(error => {
+        console.error('❌ [STARTUP] Critical error during background service initialization:', error);
+      });
+    });
   });
 })();
