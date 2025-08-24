@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Circle, ExternalLink, Copy, Download, Server, Cloud, Rocket, Code } from "lucide-react";
+import { CheckCircle, Circle, ExternalLink, Copy, Download, Server, Cloud, Rocket, Code, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DeploymentStep {
@@ -376,6 +376,42 @@ export default function DeploymentPage() {
                 </AlertDescription>
               </Alert>
 
+              <Card className="mt-6 border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    Wallet Connection Troubleshooting
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 text-sm">
+                    <p><strong>If wallet detection fails after deployment:</strong></p>
+                    <ol className="list-decimal list-inside space-y-2 pl-4">
+                      <li>
+                        <strong>WalletConnect Project ID:</strong> Make sure <code>VITE_WALLETCONNECT_PROJECT_ID</code> is set in Replit Secrets
+                      </li>
+                      <li>
+                        <strong>Domain Authorization:</strong> Add your Replit domain (e.g., <code>your-repl.replit.app</code>) to your WalletConnect project's allowed domains at <a href="https://cloud.walletconnect.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">cloud.walletconnect.com</a>
+                      </li>
+                      <li>
+                        <strong>HTTPS Required:</strong> Wallet connections only work on HTTPS - Replit automatically provides this
+                      </li>
+                      <li>
+                        <strong>Clear Browser Cache:</strong> Clear cache and hard refresh (Ctrl+Shift+R) if wallet modal doesn't open
+                      </li>
+                      <li>
+                        <strong>Check Console:</strong> Open browser dev tools and check for WalletConnect or projectId errors
+                      </li>
+                    </ol>
+                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-md">
+                      <p className="text-xs font-medium text-blue-800 dark:text-blue-200">
+                        💡 <strong>Quick Fix:</strong> If you see "projectId not set" errors, ensure your WalletConnect Project ID is correctly configured in production environment.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card className="mt-6">
                 <CardHeader>
                   <CardTitle className="text-base">Sample .env File</CardTitle>
@@ -402,7 +438,10 @@ FIREBASE_CONFIG='{
 
 # Production Settings
 NODE_ENV="production"
-PORT="5000"`}</pre>
+PORT="5000"
+
+# WalletConnect Configuration (CRITICAL for wallet connections)
+VITE_WALLETCONNECT_PROJECT_ID="your-walletconnect-project-id"`}</pre>
                   </div>
                   <Button
                     variant="outline"
