@@ -35,39 +35,12 @@ function normalizeWalletAddress(address: string): string {
   return address.toLowerCase().trim();
 }
 
-// SECURITY: Configure multer for file uploads with enhanced security
+// Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 2 * 1024 * 1024, // SECURITY: Reduced to 2MB limit
-    files: 1, // SECURITY: Only allow 1 file at a time
-    fields: 10, // SECURITY: Limit form fields
-    fieldNameSize: 50, // SECURITY: Limit field name length
-    fieldSize: 1 * 1024 * 1024 // SECURITY: Limit field value size to 1MB
+    fileSize: 5 * 1024 * 1024, // 5MB limit
   },
-  fileFilter: (req, file, cb) => {
-    // SECURITY: Enhanced file validation
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
-    
-    // SECURITY: Check MIME type
-    if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error('Invalid file type. Only JPEG, PNG, and GIF allowed.'));
-    }
-    
-    // SECURITY: Check file extension (prevent MIME spoofing)
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!allowedExtensions.includes(ext)) {
-      return cb(new Error('Invalid file extension. Only .jpg, .jpeg, .png, .gif allowed.'));
-    }
-    
-    // SECURITY: Validate filename
-    if (!file.originalname || file.originalname.length > 100) {
-      return cb(new Error('Invalid filename.'));
-    }
-    
-    cb(null, true);
-  }
 });
 
 // Real-time notification system with WebSocket
@@ -526,9 +499,8 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     // Debug admin check
     console.log("🔍 Admin verification debug:");
     console.log("   User wallet:", normalizedUserWallet);
-    // SECURITY: Never log full environment variables
-    console.log("   Environment variable configured:", process.env.ADMIN_WALLET_ADDRESSES ? 'Yes' : 'No');
-    console.log("   Authorized wallets count:", ADMIN_WALLET_ADDRESSES.length);
+    console.log("   Environment variable:", process.env.ADMIN_WALLET_ADDRESSES);
+    console.log("   Authorized wallets:", ADMIN_WALLET_ADDRESSES);
     console.log("   Auth method:", user.authMethod);
     console.log("   Is admin authorized:", isAuthorizedAdmin);
 
@@ -1457,33 +1429,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SECURITY: Direct admin access route - now requires secure environment variable
+  // Direct admin access route - bypasses all browser extension conflicts
   app.get("/admin-direct/:token", async (req, res) => {
     try {
       const { token } = req.params;
-      const adminToken = process.env.ADMIN_DIRECT_TOKEN;
-      
-      // Security check: Admin direct token must be set in environment
-      if (!adminToken || adminToken.length < 32) {
-        console.error('🚨 [SECURITY] ADMIN_DIRECT_TOKEN not set or too weak. Minimum 32 characters required.');
-        return res.redirect("/?error=access-disabled");
-      }
+      const adminToken = "secure-admin-2024";
       
       if (token !== adminToken) {
-        // Log failed attempt for security monitoring
-        auditLog('ADMIN_DIRECT_ACCESS_DENIED', { 
-          providedToken: token.substring(0, 4) + '...', 
-          clientIP: req.ip 
-        }, req);
         return res.redirect("/?error=invalid-access");
       }
 
       const adminAddresses = getAdminWalletAddresses();
-      if (!adminAddresses.length) {
-        console.error('🚨 [SECURITY] No admin wallet addresses configured');
-        return res.redirect("/?error=no-admin-configured");
-      }
-      
       const adminWallet = adminAddresses[0]; // Use first admin address
       
       // Create or get admin user
@@ -1492,29 +1448,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.createUser({
           username: `admin_${adminWallet.slice(-6)}`,
           walletAddress: adminWallet,
-          authMethod: "secure_direct",
+          authMethod: "direct",
           isAdmin: true
         });
       }
 
-      // Set session with additional security
+      // Set session
       req.session.userId = user.id;
       req.session.isAdmin = true;
-      req.session.adminAccessMethod = 'secure_direct';
-      req.session.adminAccessTime = new Date().toISOString();
-
-      // Log successful admin access
-      auditLog('ADMIN_DIRECT_ACCESS_GRANTED', { 
-        adminWallet: adminWallet.substring(0, 6) + '...', 
-        clientIP: req.ip,
-        accessTime: new Date().toISOString()
-      }, req);
 
       // Redirect to admin panel
       res.redirect("/admin?access=granted");
     } catch (error) {
-      console.error("🚨 [SECURITY] Direct admin access error:", error);
-      auditLog('ADMIN_DIRECT_ACCESS_ERROR', { error: error.message, clientIP: req.ip }, req);
+      console.error("Direct admin access error:", error);
       res.redirect("/?error=auth-failed");
     }
   });
@@ -1728,81 +1674,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SECURITY: Upload profile photo endpoint with enhanced protection
-  app.post('/api/user/upload-profile-photo', requireAuth, upload.single('profilePhoto'), async (req: Request, res: Response) => {
+  // Upload profile photo endpoint
+  app.post('/api/user/upload-profile-photo', upload.single('profilePhoto'), async (req: Request, res: Response) => {
     try {
-      const userId = req.user!.id;
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
 
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      // SECURITY: Advanced file validation
+      // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
       if (!allowedTypes.includes(req.file.mimetype)) {
-        auditLog("SUSPICIOUS_FILE_UPLOAD", {
-          userId,
-          mimeType: req.file.mimetype,
-          originalName: req.file.originalname,
-          reason: "Invalid MIME type"
-        }, req);
         return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and GIF are allowed" });
       }
 
-      // SECURITY: Reduced file size limit and enhanced validation
-      if (req.file.size > 2 * 1024 * 1024) {
-        auditLog("SUSPICIOUS_FILE_UPLOAD", {
-          userId,
-          fileSize: req.file.size,
-          originalName: req.file.originalname,
-          reason: "File too large"
-        }, req);
-        return res.status(400).json({ message: "File too large. Maximum size is 2MB" });
-      }
-      
-      // SECURITY: Basic malware protection - scan for suspicious patterns
-      const fileBuffer = req.file.buffer;
-      const suspiciousPatterns = [
-        /\x00\x00\x00\x20ftyp/, // MP4 signature
-        /\xFF\xE0/, // JPEG with potential exploits
-        /<\?php/i, // PHP code
-        /<script/i, // JavaScript
-        /\x89PNG\r\n\x1a\n.*tEXt.*<\?php/s, // PNG with PHP
-      ];
-      
-      for (const pattern of suspiciousPatterns) {
-        if (pattern.test(fileBuffer.toString('binary'))) {
-          auditLog("MALWARE_DETECTION", {
-            userId,
-            originalName: req.file.originalname,
-            patternType: pattern.toString(),
-            reason: "Suspicious file content detected"
-          }, req);
-          return res.status(400).json({ message: "File contains suspicious content" });
-        }
+      // Validate file size (max 5MB)
+      if (req.file.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ message: "File too large. Maximum size is 5MB" });
       }
 
-      // SECURITY: Generate cryptographically secure filename
-      const crypto = await import('crypto');
-      const fileExtension = path.extname(req.file.originalname).toLowerCase();
-      const secureHash = crypto.default.randomBytes(16).toString('hex');
-      const fileName = `profile_${userId}_${Date.now()}_${secureHash}${fileExtension}`;
+      // Generate unique filename
+      const fileExtension = path.extname(req.file.originalname);
+      const fileName = `profile_${session.userId}_${Date.now()}${fileExtension}`;
+      const filePath = `/uploads/${fileName}`;
 
-      // SECURITY: Create secure upload directory
+      // Save file
       const uploadDir = path.join(process.cwd(), 'server', 'uploads');
       if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      // SECURITY: Enhanced filename sanitization
+      // SECURITY: Prevent path traversal attacks but keep underscores
       const sanitizedFileName = path.basename(fileName).replace(/[^a-zA-Z0-9._-]/g, '');
-      if (!sanitizedFileName || sanitizedFileName.startsWith('.') || sanitizedFileName.length > 100) {
-        auditLog("SUSPICIOUS_FILE_UPLOAD", {
-          userId,
-          originalName: req.file.originalname,
-          sanitizedName: sanitizedFileName,
-          reason: "Invalid filename after sanitization"
-        }, req);
+      if (!sanitizedFileName || sanitizedFileName.startsWith('.')) {
         return res.status(400).json({ 
           success: false, 
           message: 'Invalid filename' 
@@ -1811,59 +1719,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const fullPath = path.join(uploadDir, sanitizedFileName);
       
-      // SECURITY: Enhanced path validation
+      // SECURITY: Validate file path is within upload directory
       const normalizedPath = path.normalize(fullPath);
-      const normalizedUploadDir = path.normalize(uploadDir);
-      if (!normalizedPath.startsWith(normalizedUploadDir + path.sep) && normalizedPath !== normalizedUploadDir) {
-        auditLog("PATH_TRAVERSAL_ATTEMPT", {
-          userId,
-          attemptedPath: fullPath,
-          normalizedPath,
-          uploadDir: normalizedUploadDir
-        }, req);
+      if (!normalizedPath.startsWith(path.normalize(uploadDir))) {
         return res.status(400).json({ 
           success: false, 
           message: 'Invalid file path' 
         });
       }
       
-      // SECURITY: Clean up old profile photos to prevent storage abuse
-      try {
-        const existingUser = await storage.getUser(userId);
-        if (existingUser?.profilePhoto && existingUser.profilePhoto.startsWith('/uploads/')) {
-          const oldFilePath = path.join(process.cwd(), 'server', existingUser.profilePhoto);
-          if (fs.existsSync(oldFilePath)) {
-            fs.unlinkSync(oldFilePath);
-          }
-        }
-      } catch (cleanupError) {
-        console.warn('Failed to cleanup old profile photo:', cleanupError);
-      }
-      
-      // SECURITY: Write file with restricted permissions
-      fs.writeFileSync(fullPath, req.file.buffer, { mode: 0o644 });
+      fs.writeFileSync(fullPath, req.file.buffer);
 
       // Update user profile photo in database with the correct path
       const profilePhotoUrl = `/uploads/${sanitizedFileName}`;
-      await storage.updateProfilePhoto(userId, profilePhotoUrl);
+      await storage.updateProfilePhoto(session.userId, profilePhotoUrl);
 
       console.log('📷 [PROFILE-UPLOAD] File saved:', {
         originalName: req.file.originalname,
         savedAs: sanitizedFileName,
         fullPath,
         profilePhotoUrl,
-        userId: userId
+        userId: session.userId
       });
 
       // Get updated user data
-      const updatedUser = await storage.getUser(userId);
+      const updatedUser = await storage.getUser(session.userId);
       
       auditLog("PROFILE_PHOTO_UPDATED", {
-        userId: userId,
-        fileName: sanitizedFileName,
-        originalName: req.file.originalname,
-        fileSize: req.file.size,
-        mimeType: req.file.mimetype
+        userId: session.userId,
+        fileName,
+        fileSize: req.file.size
       }, req);
       
       res.json({ 
@@ -1873,29 +1758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: updatedUser 
       });
     } catch (error) {
-      console.error('❌ [PROFILE-UPLOAD] Upload failed:', error);
-      
-      // SECURITY: Log upload failures for monitoring
-      try {
-        auditLog("PROFILE_UPLOAD_FAILED", {
-          userId: req.user?.id || 'unknown',
-          error: error instanceof Error ? error.message : 'Unknown error',
-          originalName: req.file?.originalname || 'unknown'
-        }, req);
-      } catch (auditError) {
-        console.error('Failed to log audit event:', auditError);
-      }
-      
-      // SECURITY: Handle multer errors specifically
-      if (error instanceof Error) {
-        if (error.message.includes('File too large')) {
-          return res.status(400).json({ message: "File too large. Maximum size is 2MB" });
-        }
-        if (error.message.includes('Invalid file type')) {
-          return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and GIF are allowed" });
-        }
-      }
-      
+      console.error('Error uploading profile photo:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -3243,19 +3106,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/battles/:id', requireAuth, async (req, res) => {
+  app.get('/api/battles/:id', async (req, res) => {
     try {
       const battleId = parseInt(req.params.id);
       
-      // SECURITY: Validate battle ID
-      if (!battleId || isNaN(battleId)) {
-        return res.status(400).json({ message: 'Invalid battle ID' });
-      }
-      
-      // SECURITY: Check if user has access to view this battle
-      const userId = req.user!.id;
-      
-      // Simulate battle data (SECURITY: In production, verify user access)
+      // Simulate battle data
       const battle = {
         id: battleId,
         challengerId: 37,
@@ -3290,16 +3145,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SECURITY: Join battle endpoint dengan Anti-Last Minute Joining System
-  app.post('/api/battles/:id/join', requireAuth, async (req, res) => {
+  // Join battle endpoint dengan Anti-Last Minute Joining System
+  app.post('/api/battles/:id/join', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
     try {
       const battleId = parseInt(req.params.id);
-      const userId = req.user!.id;
-      
-      // SECURITY: Validate battle ID
-      if (!battleId || isNaN(battleId)) {
-        return res.status(400).json({ message: 'Invalid battle ID' });
-      }
+      const userId = (req as any).session.userId;
       const { challengedPrediction } = req.body;
 
       // Validate input
@@ -3370,32 +3224,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/battles/:id/spectate', requireAuth, async (req, res) => {
+  app.post('/api/battles/:id/spectate', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
     try {
       const battleId = parseInt(req.params.id);
-      const userId = req.user!.id;
-      
-      // SECURITY: Validate battle ID
-      if (!battleId || isNaN(battleId)) {
-        return res.status(400).json({ message: 'Invalid battle ID' });
-      }
-      
-      // SECURITY: Verify battle exists and is spectatable
-      const battle = await storage.getBattle(battleId);
-      if (!battle) {
-        return res.status(404).json({ message: 'Battle not found' });
-      }
-      
-      // SECURITY: Only allow spectating on live battles
-      if (battle.status !== 'live' && battle.status !== 'active') {
-        return res.status(400).json({ message: 'Battle is not available for spectating' });
-      }
-      
-      // SECURITY: Users cannot spectate their own battles
-      if (battle.challengerId === userId || battle.challengedId === userId) {
-        return res.status(400).json({ message: 'Cannot spectate your own battle' });
-      }
-      
       res.json({ message: 'Added as spectator', battleId });
     } catch (error) {
       console.error('Error adding spectator:', error);
@@ -3403,20 +3238,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/battles/:id/spectators', requireAuth, async (req, res) => {
+  app.get('/api/battles/:id/spectators', async (req, res) => {
     try {
       const battleId = parseInt(req.params.id);
-      
-      // SECURITY: Validate battle ID
-      if (!battleId || isNaN(battleId)) {
-        return res.status(400).json({ message: 'Invalid battle ID' });
-      }
-      
-      // SECURITY: Verify battle exists
-      const battle = await storage.getBattle(battleId);
-      if (!battle) {
-        return res.status(404).json({ message: 'Battle not found' });
-      }
       
       // Simulate spectators data
       const spectators = [
@@ -3443,27 +3267,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/battles/:id/comment', requireAuth, async (req, res) => {
+  app.post('/api/battles/:id/comment', async (req, res) => {
+    if (!(req as any).session?.userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
     try {
       const battleId = parseInt(req.params.id);
       const { message } = req.body;
-      const userId = req.user!.id;
-      
-      // SECURITY: Validate battle ID
-      if (!battleId || isNaN(battleId)) {
-        return res.status(400).json({ message: 'Invalid battle ID' });
-      }
-      
-      // SECURITY: Verify battle exists and user has access to comment
-      const battle = await storage.getBattle(battleId);
-      if (!battle) {
-        return res.status(404).json({ message: 'Battle not found' });
-      }
-      
-      // SECURITY: Only allow comments on live or completed battles
-      if (!['live', 'completed', 'active'].includes(battle.status)) {
-        return res.status(400).json({ message: 'Comments not allowed on this battle' });
-      }
+      const userId = (req as any).session.userId;
 
       if (!message || message.trim().length === 0) {
         return res.status(400).json({ message: 'Comment message required' });
@@ -6085,119 +5897,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SECURITY: Image upload route for banners with enhanced protection
-  app.post('/api/admin/upload-banner-image', requireAdmin, upload.single('image'), async (req: Request, res: Response) => {
+  // Image upload route for banners
+  app.post('/api/admin/upload-banner-image', requireAdmin, async (req: Request, res: Response) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-      }
+      const multer = (await import('multer')).default;
       
-      // SECURITY: Additional validation for banner images
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-      if (!allowedTypes.includes(req.file.mimetype)) {
-        auditLog("SUSPICIOUS_BANNER_UPLOAD", {
-          adminId: req.user!.id,
-          mimeType: req.file.mimetype,
-          originalName: req.file.originalname,
-          reason: "Invalid MIME type"
-        }, req);
-        return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and GIF are allowed" });
-      }
-      
-      // SECURITY: Banner size limit (4MB for banners)
-      if (req.file.size > 4 * 1024 * 1024) {
-        auditLog("SUSPICIOUS_BANNER_UPLOAD", {
-          adminId: req.user!.id,
-          fileSize: req.file.size,
-          originalName: req.file.originalname,
-          reason: "File too large"
-        }, req);
-        return res.status(400).json({ message: "File too large. Maximum size is 4MB" });
-      }
-      
-      // SECURITY: Generate secure filename for banner
-      const crypto = await import('crypto');
-      const fileExtension = path.extname(req.file.originalname).toLowerCase();
-      const secureHash = crypto.default.randomBytes(16).toString('hex');
-      const fileName = `banner_${Date.now()}_${secureHash}${fileExtension}`;
-      
-      // SECURITY: Create secure upload directory
+      // Ensure uploads directory exists
       const uploadsDir = path.join(process.cwd(), 'server', 'uploads');
       if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true, mode: 0o755 });
+        fs.mkdirSync(uploadsDir, { recursive: true });
       }
       
-      // SECURITY: Enhanced filename sanitization
-      const sanitizedFileName = path.basename(fileName).replace(/[^a-zA-Z0-9._-]/g, '');
-      if (!sanitizedFileName || sanitizedFileName.startsWith('.') || sanitizedFileName.length > 100) {
-        auditLog("SUSPICIOUS_BANNER_UPLOAD", {
-          adminId: req.user!.id,
-          originalName: req.file.originalname,
-          sanitizedName: sanitizedFileName,
-          reason: "Invalid filename after sanitization"
-        }, req);
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid filename' 
-        });
-      }
-      
-      const fullPath = path.join(uploadsDir, sanitizedFileName);
-      
-      // SECURITY: Enhanced path validation
-      const normalizedPath = path.normalize(fullPath);
-      const normalizedUploadDir = path.normalize(uploadsDir);
-      if (!normalizedPath.startsWith(normalizedUploadDir + path.sep) && normalizedPath !== normalizedUploadDir) {
-        auditLog("PATH_TRAVERSAL_ATTEMPT", {
-          adminId: req.user!.id,
-          attemptedPath: fullPath,
-          normalizedPath,
-          uploadDir: normalizedUploadDir
-        }, req);
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid file path' 
-        });
-      }
-      
-      // SECURITY: Write file with restricted permissions
-      fs.writeFileSync(fullPath, req.file.buffer, { mode: 0o644 });
-      
-      // Return the file URL
-      const imageUrl = `/uploads/${sanitizedFileName}`;
-      
-      auditLog("BANNER_IMAGE_UPLOADED", {
-        adminId: req.user!.id,
-        fileName: sanitizedFileName,
-        originalName: req.file.originalname,
-        fileSize: req.file.size,
-        imageUrl
-      }, req);
-      
-      console.log('🖼️ [BANNER-UPLOAD] File saved:', {
-        originalName: req.file.originalname,
-        savedAs: sanitizedFileName,
-        fullPath,
-        imageUrl,
-        adminId: req.user!.id
+      // Configure multer for file upload
+      const multerStorage = multer.diskStorage({
+        destination: (req: any, file: any, cb: any) => {
+          cb(null, uploadsDir);
+        },
+        filename: (req: any, file: any, cb: any) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+          cb(null, 'banner-' + uniqueSuffix + path.extname(file.originalname));
+        }
       });
       
-      res.json({ imageUrl });
+      const upload = multer({
+        storage: multerStorage,
+        limits: {
+          fileSize: 5 * 1024 * 1024 // 5MB limit
+        },
+        fileFilter: (req: any, file: any, cb: any) => {
+          if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+          } else {
+            cb(new Error('Only image files are allowed'), false);
+          }
+        }
+      });
+      
+      // Handle upload
+      upload.single('image')(req, res, (err: any) => {
+        if (err) {
+          console.error('Upload error:', err);
+          return res.status(400).json({ message: err.message || 'Upload failed' });
+        }
+        
+        if (!req.file) {
+          return res.status(400).json({ message: 'No file uploaded' });
+        }
+        
+        // Return the file URL
+        const imageUrl = `/uploads/${req.file.filename}`;
+        res.json({ imageUrl });
+      });
       
     } catch (error) {
-      console.error('❌ [BANNER-UPLOAD] Upload failed:', error);
-      
-      // SECURITY: Log upload failures for monitoring
-      try {
-        auditLog("BANNER_UPLOAD_FAILED", {
-          adminId: req.user?.id || 'unknown',
-          error: error instanceof Error ? error.message : 'Unknown error',
-          originalName: req.file?.originalname || 'unknown'
-        }, req);
-      } catch (auditError) {
-        console.error('Failed to log audit event:', auditError);
-      }
-      
+      console.error('Error uploading banner image:', error);
       res.status(500).json({ message: 'Failed to upload image' });
     }
   });

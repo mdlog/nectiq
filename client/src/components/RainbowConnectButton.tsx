@@ -1,8 +1,6 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Button } from '@/components/ui/button';
-import { Wallet, AlertTriangle, Wifi } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+import { Wallet } from 'lucide-react';
 
 interface RainbowConnectButtonProps {
   className?: string;
@@ -15,21 +13,6 @@ export function RainbowConnectButton({
   variant = "default", 
   size = "default" 
 }: RainbowConnectButtonProps) {
-  const { toast } = useToast();
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  
-  // Monitor wallet connection failures
-  useEffect(() => {
-    const handleError = (event: ErrorEvent) => {
-      if (event.message?.includes('WalletConnect') || event.message?.includes('projectId')) {
-        setConnectionError('WalletConnect configuration issue detected');
-        console.error('🚨 [WALLET] Connection error:', event.message);
-      }
-    };
-    
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
-  }, []);
   return (
     <ConnectButton.Custom>
       {({
@@ -64,42 +47,16 @@ export function RainbowConnectButton({
           >
             {(() => {
               if (!connected) {
-                const handleConnect = () => {
-                  try {
-                    openConnectModal();
-                  } catch (error: any) {
-                    console.error('🚨 [WALLET] Failed to open connect modal:', error);
-                    setConnectionError(error.message || 'Failed to open wallet connection');
-                    toast({
-                      title: "Connection Issue",
-                      description: "Unable to open wallet connection. Please check your network and try again.",
-                      variant: "destructive",
-                    });
-                  }
-                };
-                
                 return (
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      onClick={handleConnect}
-                      variant={connectionError ? "destructive" : variant}
-                      size={size}
-                      className={className}
-                    >
-                      {connectionError ? (
-                        <AlertTriangle className="mr-2 h-4 w-4" />
-                      ) : (
-                        <Wallet className="mr-2 h-4 w-4" />
-                      )}
-                      {connectionError ? "Connection Issue" : "Connect Wallet"}
-                    </Button>
-                    
-                    {connectionError && (
-                      <div className="text-xs text-muted-foreground text-center max-w-xs">
-                        {connectionError}. Check console for details.
-                      </div>
-                    )}
-                  </div>
+                  <Button
+                    onClick={openConnectModal}
+                    variant={variant}
+                    size={size}
+                    className={className}
+                  >
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Connect Wallet
+                  </Button>
                 );
               }
 

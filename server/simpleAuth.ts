@@ -43,105 +43,51 @@ function encryptWalletAddress(address: string): string {
   return iv.toString('hex') + ':' + encrypted;
 }
 
-// SECURITY: Admin verification with enhanced validation and audit logging
+// Admin verification with multiple security layers
 async function isAuthorizedAdmin(walletAddress: string): Promise<boolean> {
   const normalizedAddress = walletAddress.toLowerCase();
   
-  // SECURITY ENHANCEMENT: Input validation
-  if (!walletAddress || walletAddress.length !== 42 || !walletAddress.startsWith('0x')) {
-    console.warn('🚨 [SECURITY] Invalid wallet address format for admin check:', walletAddress);
-    return false;
-  }
-  
-  // Layer 1: STRICT Environment-based admin list (primary method)
+  // Layer 1: Environment-based admin list
   const envAdmins = getAdminWallets();
-  if (envAdmins.length > 0) {
-    const isEnvAdmin = envAdmins.includes(normalizedAddress);
-    if (isEnvAdmin) {
-      // SECURITY: Log successful admin verification
-      console.log('✅ [SECURITY] Valid admin wallet verified:', normalizedAddress.substring(0, 6) + '...');
-      return true;
-    }
-  }
-  
-  // Layer 2: Database-based admin check (SECONDARY - more restrictive)
-  try {
-    const user = await storage.getUserByWalletAddress(walletAddress);
-    if (user && user.isAdmin) {
-      // SECURITY: Additional verification - must also be in environment list for security
-      if (envAdmins.length === 0) {
-        console.warn('🚨 [SECURITY] Database admin access without environment verification - BLOCKED');
-        return false;
-      }
-      
-      // SECURITY: Cross-verify with environment admin list
-      if (!envAdmins.includes(normalizedAddress)) {
-        console.error('🚨 [SECURITY] Database admin not in environment whitelist - POTENTIAL COMPROMISE');
-        // Log security incident
-        console.error('🚨 ADMIN SECURITY BREACH ATTEMPT', {
-          wallet: walletAddress,
-          timestamp: new Date().toISOString(),
-          source: 'database_admin_mismatch',
-          severity: 'HIGH'
-        });
-        return false;
-      }
-      
-      console.log('✅ [SECURITY] Database admin verified and matches environment list');
-      return true;
-    }
-  } catch (error) {
-    console.error('🚨 [SECURITY] Error checking admin status:', error);
-    return false;
-  }
-  
-  // Layer 3: Emergency admin access (HIGHLY RESTRICTED)
-  const emergencyAdmin = process.env.EMERGENCY_ADMIN_WALLET?.toLowerCase();
-  if (emergencyAdmin && normalizedAddress === emergencyAdmin) {
-    // SECURITY: Additional emergency admin security checks
-    const emergencyToken = process.env.EMERGENCY_ADMIN_TOKEN;
-    if (!emergencyToken || emergencyToken.length < 32) {
-      console.error('🚨 [SECURITY] Emergency admin token not configured or too weak - ACCESS DENIED');
-      return false;
-    }
-    
-    console.error('🚨 EMERGENCY ADMIN ACCESS ACTIVATED', {
-      wallet: walletAddress.substring(0, 6) + '...',
-      timestamp: new Date().toISOString(),
-      source: 'emergency_admin_access',
-      severity: 'CRITICAL',
-      action_required: 'IMMEDIATE_SECURITY_REVIEW'
-    });
-    
+  if (envAdmins.length > 0 && envAdmins.includes(normalizedAddress)) {
     return true;
   }
   
-  // SECURITY: Log failed admin attempts for monitoring
-  console.warn('🚨 [SECURITY] Unauthorized admin access attempt:', {
-    wallet: normalizedAddress.substring(0, 6) + '...',
-    timestamp: new Date().toISOString(),
-    source: 'isAuthorizedAdmin'
-  });
+  // Layer 2: Database-based admin check
+  try {
+    const user = await storage.getUserByWalletAddress(walletAddress);
+    if (user && user.isAdmin) {
+      return true;
+    }
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+  }
+  
+  // Layer 3: Environment-based emergency admin (more secure)
+  const emergencyAdmin = process.env.EMERGENCY_ADMIN_WALLET?.toLowerCase();
+  if (emergencyAdmin && normalizedAddress === emergencyAdmin) {
+    console.warn('🔒 Emergency admin access used - Review security logs immediately');
+    // Log security event untuk audit trail
+    console.error('🚨 EMERGENCY ADMIN ACCESS DETECTED', {
+      wallet: walletAddress,
+      timestamp: new Date().toISOString(),
+      source: 'isAuthorizedAdmin'
+    });
+    return true;
+  }
   
   return false;
 }
 
 export const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    // SECURITY: Enhanced authentication with input validation
+    // Check for wallet address in headers or body
     const walletAddress = req.headers['x-wallet-address'] as string || 
                          req.body?.walletAddress ||
                          req.query?.walletAddress as string;
 
     if (!walletAddress) {
-      console.warn('🚨 [SECURITY] Authentication attempt without wallet address from IP:', req.ip);
       return res.status(401).json({ message: "Authentication required" });
-    }
-    
-    // SECURITY: Wallet address format validation
-    if (typeof walletAddress !== 'string' || walletAddress.length !== 42 || !walletAddress.startsWith('0x')) {
-      console.warn('🚨 [SECURITY] Invalid wallet address format from IP:', req.ip, 'Address:', walletAddress);
-      return res.status(400).json({ message: "Invalid wallet address format" });
     }
 
     // Get or create user for this wallet
@@ -181,25 +127,8 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
 export const requireAdmin = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   await requireAuth(req, res, () => {
     if (!req.user?.isAdmin) {
-      // SECURITY: Enhanced admin access logging
-      console.warn('🚨 [SECURITY] Non-admin user attempted admin access:', {
-        userId: req.user?.id,
-        walletAddress: req.user?.walletAddress?.substring(0, 6) + '...',
-        timestamp: new Date().toISOString(),
-        clientIP: req.ip,
-        endpoint: req.originalUrl
-      });
       return res.status(403).json({ message: "Admin access required" });
     }
-    
-    // SECURITY: Log successful admin access for audit trail
-    console.log('✅ [SECURITY] Admin access granted:', {
-      userId: req.user.id,
-      walletAddress: req.user.walletAddress?.substring(0, 6) + '...',
-      timestamp: new Date().toISOString(),
-      endpoint: req.originalUrl
-    });
-    
     next();
   });
 };

@@ -16,7 +16,6 @@ import NotFound from "@/pages/not-found";
 import HowToPlay from "@/pages/how-to-play";
 import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
-import DeploymentPage from "@/pages/deployment";
 
 import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
 import { handleReferralFromURL } from "@/lib/referralHandler";
@@ -110,12 +109,6 @@ function Router() {
       <Route path="/how-to-play">
         <ProtectedRoute requireWallet={false}>
           <HowToPlay />
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/deployment">
-        <ProtectedRoute requireWallet={false}>
-          <DeploymentPage />
         </ProtectedRoute>
       </Route>
       

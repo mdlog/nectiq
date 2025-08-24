@@ -19,13 +19,11 @@ export function useRainbowAuth() {
   const connectionStatus = useWalletConnectionStatus();
 
   // Get user data from backend
-  const { data: user, isLoading, refetch: refetchUser } = useQuery<User>({
+  const { data: user, isLoading } = useQuery<User>({
     queryKey: ["/api/user"],
     enabled: isConnected && !!address,
     refetchInterval: 10000,
-    staleTime: 0, // Don't use stale data, always refetch
-    retry: 3,
-    retryDelay: 1000,
+    staleTime: 5000,
   });
 
   // Wallet authentication mutation
@@ -89,25 +87,8 @@ export function useRainbowAuth() {
       // Note: Wallet connection notification is handled by useWalletConnectionStatus
       // to prevent duplicate notifications and ensure it only shows on first connection
 
-      // Force refresh user data to get complete user object with uid
-      console.log('🔄 [RAINBOW] Force refreshing user data after authentication...');
+      // Refresh user data
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      
-      // Multiple attempts to ensure data is loaded
-      setTimeout(() => {
-        console.log('🔄 [RAINBOW] First refetch attempt...');
-        refetchUser();
-      }, 200);
-      
-      setTimeout(() => {
-        console.log('🔄 [RAINBOW] Second refetch attempt...');
-        refetchUser();
-      }, 1000);
-      
-      setTimeout(() => {
-        console.log('🔄 [RAINBOW] Third refetch attempt...');
-        refetchUser();
-      }, 2000);
       
       // Redirect to dashboard if on landing page
       setLocation('/');
@@ -196,12 +177,6 @@ export function useRainbowAuth() {
     } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
       console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
       authenticateWalletMutation.mutate(address);
-    } else if (isConnected && address && user) {
-      // User data exists, ensure it's complete - force refresh if missing uid
-      if (!user.uid || !user.username) {
-        console.log('🔄 [RAINBOW] User data incomplete, force refreshing...', { uid: user.uid, username: user.username });
-        refetchUser();
-      }
     } else if (isConnected && address && !user && !isLoading) {
       console.log('🔍 [RAINBOW] Authentication conditions not met:', {
         isConnected,
