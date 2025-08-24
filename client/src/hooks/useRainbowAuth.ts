@@ -5,7 +5,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { apiRequest, setGlobalWalletAddress } from '@/lib/queryClient';
 import type { User } from "@shared/schema";
-import { useWalletConnectionStatus } from './useWalletConnectionStatus';
 import { getStoredReferralCode, clearStoredReferralCode } from '@/lib/referralHandler';
 
 export function useRainbowAuth() {
@@ -15,15 +14,59 @@ export function useRainbowAuth() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   
-  // Initialize connection status monitoring
-  const connectionStatus = useWalletConnectionStatus();
+  // Manual wallet detection fallback
+  const [manualAddress, setManualAddress] = React.useState<string | null>(null);
+  const [isManuallyConnected, setIsManuallyConnected] = React.useState(false);
+  
+  // Check for wallet connection manually with detailed debugging
+  React.useEffect(() => {
+    const checkWalletConnection = async () => {
+      console.log('🔍 [MANUAL-DEBUG] Checking wallet connection...');
+      console.log('🔍 [MANUAL-DEBUG] window exists:', typeof window !== 'undefined');
+      console.log('🔍 [MANUAL-DEBUG] window.ethereum exists:', !!window.ethereum);
+      
+      if (typeof window !== 'undefined' && window.ethereum) {
+        try {
+          console.log('🔍 [MANUAL-DEBUG] Requesting eth_accounts...');
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          console.log('🔍 [MANUAL-DEBUG] Accounts response:', accounts);
+          
+          if (accounts && accounts.length > 0) {
+            console.log('🔍 [MANUAL-WALLET] Detected connected wallet:', accounts[0]);
+            setManualAddress(accounts[0]);
+            setIsManuallyConnected(true);
+          } else {
+            console.log('🔍 [MANUAL-DEBUG] No accounts found');
+            setManualAddress(null);
+            setIsManuallyConnected(false);
+          }
+        } catch (error) {
+          console.log('🔍 [MANUAL-WALLET] Error checking wallet:', error);
+          setManualAddress(null);
+          setIsManuallyConnected(false);
+        }
+      } else {
+        console.log('🔍 [MANUAL-DEBUG] window.ethereum not available');
+        setManualAddress(null);
+        setIsManuallyConnected(false);
+      }
+    };
+    
+    checkWalletConnection();
+    const interval = setInterval(checkWalletConnection, 3000); // Check every 3 seconds
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Use manual detection as fallback
+  const finalAddress = address || manualAddress;
+  const finalIsConnected = isConnected || isManuallyConnected;
 
-  // Get user data from backend
+  // Get user data from backend with fallback detection
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["/api/user"],
-    enabled: isConnected && !!address,
-    refetchInterval: 10000,
-    staleTime: 5000,
+    enabled: finalIsConnected && !!finalAddress,
+    refetchInterval: 30000, // Reduced from 10s to 30s to avoid rate limiting
+    staleTime: 25000,
   });
 
   // Wallet authentication mutation
@@ -136,13 +179,11 @@ export function useRainbowAuth() {
       // Clear global wallet address
       setGlobalWalletAddress(null);
       
-      // Use improved notification system
-      connectionStatus.showConnectionNotification(
-        "Wallet Disconnected",
-        address ? `Successfully logged out from ${address.slice(0, 6)}...${address.slice(-4)}` : "Wallet disconnected successfully",
-        'default',
-        4000
-      );
+      toast({
+        title: "Wallet Disconnected",
+        description: "Successfully logged out",
+        variant: "default"
+      });
       
       // Redirect to home
       setLocation('/');
@@ -160,51 +201,44 @@ export function useRainbowAuth() {
 
   // Auto-authenticate when wallet connects and clear state when disconnected
   React.useEffect(() => {
-    console.log('🔍 [RAINBOW] useEffect state check:', {
-      isConnected,
-      hasAddress: !!address,
+    console.log('🔍 [RAINBOW] Wallet state:', {
+      wagmiConnected: isConnected,
+      wagmiAddress: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'none',
+      manualConnected: isManuallyConnected,
+      manualAddress: manualAddress ? `${manualAddress.slice(0, 6)}...${manualAddress.slice(-4)}` : 'none',
+      finalConnected: finalIsConnected,
+      finalAddress: finalAddress ? `${finalAddress.slice(0, 6)}...${finalAddress.slice(-4)}` : 'none',
       hasUser: !!user,
-      isUserLoading: isLoading,
-      isPending: authenticateWalletMutation.isPending,
-      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : null
+      isAuthenticating: authenticateWalletMutation.isPending
     });
 
-    if (!isConnected) {
-      // Wallet is disconnected - clear all user state
+    if (!finalIsConnected) {
+      // Wallet disconnected - clear state
       console.log('🌈 [RAINBOW] Wallet disconnected - clearing user state');
       queryClient.removeQueries({ queryKey: ["/api/user"] });
       setGlobalWalletAddress(null);
-    } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
-      console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
-      authenticateWalletMutation.mutate(address);
-    } else if (isConnected && address && !user && !isLoading) {
-      console.log('🔍 [RAINBOW] Authentication conditions not met:', {
-        isConnected,
-        hasAddress: !!address,
-        hasUser: !!user,
-        isUserLoading: isLoading,
-        isPending: authenticateWalletMutation.isPending
-      });
+    } else if (finalIsConnected && finalAddress && !user && !isLoading && !authenticateWalletMutation.isPending) {
+      console.log('🌈 [RAINBOW] Auto-authenticating wallet:', finalAddress);
+      authenticateWalletMutation.mutate(finalAddress);
     }
-  }, [isConnected, address, user, isLoading]);
+  }, [finalIsConnected, finalAddress, user, isLoading]);
 
   // Set global wallet address for API requests
   React.useEffect(() => {
-    if (!isConnected) {
-      // If wallet is disconnected, clear global address
+    if (!finalIsConnected) {
       setGlobalWalletAddress(null);
-      console.log('🔐 [RAINBOW] Wallet disconnected - cleared global wallet address');
+      console.log('🔐 [RAINBOW] Cleared global wallet address');
     } else {
-      const walletAddress = user?.walletAddress || address;
+      const walletAddress = user?.walletAddress || finalAddress;
       setGlobalWalletAddress(walletAddress || null);
-      console.log('🔐 [RAINBOW] Updated global wallet address for API requests:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
+      console.log('🔐 [RAINBOW] Updated global wallet address:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
     }
-  }, [isConnected, user?.walletAddress, address]);
+  }, [finalIsConnected, user?.walletAddress, finalAddress]);
 
   return {
-    // Wallet state
-    address,
-    isConnected,
+    // Wallet state (with fallback)
+    address: finalAddress,
+    isConnected: finalIsConnected,
     chain,
     user,
     isLoading,
@@ -220,7 +254,7 @@ export function useRainbowAuth() {
     authError: authenticateWalletMutation.error,
     logoutError: logoutMutation.error,
     
-    // Connection status
-    connectionStatus,
+    // Actions
+    connect: () => window.location.reload(), // Simple fallback
   };
 }

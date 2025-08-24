@@ -8,3 +8,10 @@ export const rainbowConfig = getDefaultConfig({
   chains: [mainnet, polygon, optimism, arbitrum, base, sepolia],
   ssr: false, // If your dApp uses server side rendering (SSR)
 });
+
+// Debug configuration
+console.log('🔧 [RAINBOW-CONFIG] Configuration loaded:', {
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'ba0e679a5831cee26576868ecd70fdbf',
+  chains: rainbowConfig.chains.length,
+  ssr: false
+});
