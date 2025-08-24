@@ -94,15 +94,34 @@ class WebSocketManager {
           this.isConnecting = false;
           this.reconnectAttempts = 0;
           
-          // Register user for notifications
+          // First authenticate, then register for notifications
           if (this.currentUserId) {
-            const registrationMessage = {
-              type: 'user_register',
-              userId: this.currentUserId
-            };
+            // Get wallet address from global state
+            const walletAddress = (window as any).globalWalletAddress;
             
-            ws.send(JSON.stringify(registrationMessage));
-            console.log(`📱 [WEBSOCKET-MANAGER] Registered for notifications, user ID: ${this.currentUserId}`);
+            if (walletAddress) {
+              const authMessage = {
+                type: 'authenticate',
+                userId: this.currentUserId,
+                walletAddress: walletAddress
+              };
+              
+              ws.send(JSON.stringify(authMessage));
+              console.log(`🔐 [WEBSOCKET-MANAGER] Authenticating user ID: ${this.currentUserId} with wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`);
+              
+              // Wait a bit then send registration
+              setTimeout(() => {
+                const registrationMessage = {
+                  type: 'user_register',
+                  userId: this.currentUserId
+                };
+                
+                ws.send(JSON.stringify(registrationMessage));
+                console.log(`📱 [WEBSOCKET-MANAGER] Registered for notifications, user ID: ${this.currentUserId}`);
+              }, 100);
+            } else {
+              console.warn('⚠️ [WEBSOCKET-MANAGER] No wallet address found for authentication');
+            }
           }
           
           // Setup ping interval
@@ -123,6 +142,10 @@ class WebSocketManager {
             console.log('📨 [WEBSOCKET-MANAGER] Received message:', message);
             
             switch (message.type) {
+              case 'authenticated':
+                console.log('🔐 [WEBSOCKET-MANAGER] Successfully authenticated');
+                break;
+                
               case 'user_registered':
                 console.log('📱 [WEBSOCKET-MANAGER] Successfully registered for notifications');
                 break;
@@ -137,6 +160,14 @@ class WebSocketManager {
                 
               case 'pong':
                 console.log('🏓 [WEBSOCKET-MANAGER] Ping response received');
+                break;
+                
+              case 'error':
+                console.error('❌ [WEBSOCKET-MANAGER] Server error:', message.message || 'Unknown error');
+                break;
+                
+              case 'auth_error':
+                console.error('🚫 [WEBSOCKET-MANAGER] Authentication error:', message.message || 'Auth failed');
                 break;
                 
               default:

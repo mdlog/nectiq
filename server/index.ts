@@ -157,13 +157,17 @@ app.use((req, res, next) => {
     'https://app.dynamicauth.com',
     'https://api.dynamicauth.com',
     'https://auth.dynamicauth.com',
-    'https://dynamicauth.com'
+    'https://dynamicauth.com',
+    'https://nectiq.replit.app',
+    'https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev'
   ];
   
   const developmentOrigins = [
     ...productionOrigins,
     'https://replit.dev',
     'https://replit.app',
+    'https://nectiq.replit.app',
+    'https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev',
     'http://localhost:3000',
     'http://localhost:5000',
     'http://127.0.0.1:3000',
@@ -183,7 +187,7 @@ app.use((req, res, next) => {
   
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since, x-wallet-address');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
