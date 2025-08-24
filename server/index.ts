@@ -49,13 +49,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root route health check
-app.get('/', (req, res) => {
-  res.status(200).json({ 
-    status: 'Nectiq API is running', 
-    timestamp: new Date().toISOString() 
-  });
-});
+// Note: Root route (/) is handled by Vite middleware for frontend in development
+// and by static files in production - no override needed here
 
 // ===== LIVE ACTIVITIES ENDPOINT - EARLY PLACEMENT TO BYPASS MIDDLEWARE =====
 app.get('/api/activities/live', async (req, res) => {
@@ -185,7 +180,11 @@ app.use((req, res, next) => {
       'http://localhost:5000',
       'http://localhost:3000',
       'https://localhost:5000',
-      'https://localhost:3000'
+      'https://localhost:3000',
+      'http://127.0.0.1:5000',
+      'http://127.0.0.1:3000',
+      'https://127.0.0.1:5000',
+      'https://127.0.0.1:3000'
     );
     
     // Add current replit domain dynamically for development
@@ -275,6 +274,25 @@ const RATE_LIMIT_WINDOW = 60000; // 1 minute
 const getRateLimitConfig = (req: any) => {
   const path = req.path;
   
+  // DEVELOPMENT: Very lenient rate limiting for development mode
+  if (process.env.NODE_ENV === 'development') {
+    // Vite dev server requests - very lenient
+    if (path.startsWith('/@fs/') || path.startsWith('/@vite/') || path.startsWith('/src/') || 
+        path.startsWith('/node_modules/') || path.includes('.js') || path.includes('.ts') || 
+        path.includes('.jsx') || path.includes('.tsx') || path.includes('.css')) {
+      return { maxRequests: 1000, windowMs: 60000, type: 'dev_assets' };
+    }
+    
+    // API endpoints in development - more lenient
+    if (path.startsWith('/api/')) {
+      return { maxRequests: 300, windowMs: 60000, type: 'dev_api' };
+    }
+    
+    // All other development requests
+    return { maxRequests: 500, windowMs: 60000, type: 'dev_public' };
+  }
+  
+  // PRODUCTION: Strict rate limiting for production
   // CRITICAL: Admin endpoints - very restrictive
   if (path.startsWith('/api/admin')) {
     return { maxRequests: 10, windowMs: 60000, type: 'admin' };
