@@ -18,42 +18,31 @@ export function useRainbowAuth() {
   const [manualAddress, setManualAddress] = React.useState<string | null>(null);
   const [isManuallyConnected, setIsManuallyConnected] = React.useState(false);
   
-  // Check for wallet connection manually with detailed debugging
+  // Manual wallet detection as backup
   React.useEffect(() => {
     const checkWalletConnection = async () => {
-      console.log('🔍 [MANUAL-DEBUG] Checking wallet connection...');
-      console.log('🔍 [MANUAL-DEBUG] window exists:', typeof window !== 'undefined');
-      console.log('🔍 [MANUAL-DEBUG] window.ethereum exists:', !!window.ethereum);
-      
       if (typeof window !== 'undefined' && window.ethereum) {
         try {
-          console.log('🔍 [MANUAL-DEBUG] Requesting eth_accounts...');
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          console.log('🔍 [MANUAL-DEBUG] Accounts response:', accounts);
-          
           if (accounts && accounts.length > 0) {
-            console.log('🔍 [MANUAL-WALLET] Detected connected wallet:', accounts[0]);
             setManualAddress(accounts[0]);
             setIsManuallyConnected(true);
           } else {
-            console.log('🔍 [MANUAL-DEBUG] No accounts found');
             setManualAddress(null);
             setIsManuallyConnected(false);
           }
         } catch (error) {
-          console.log('🔍 [MANUAL-WALLET] Error checking wallet:', error);
           setManualAddress(null);
           setIsManuallyConnected(false);
         }
       } else {
-        console.log('🔍 [MANUAL-DEBUG] window.ethereum not available');
         setManualAddress(null);
         setIsManuallyConnected(false);
       }
     };
     
     checkWalletConnection();
-    const interval = setInterval(checkWalletConnection, 3000); // Check every 3 seconds
+    const interval = setInterval(checkWalletConnection, 5000); // Check every 5 seconds
     return () => clearInterval(interval);
   }, []);
   
@@ -201,16 +190,6 @@ export function useRainbowAuth() {
 
   // Auto-authenticate when wallet connects and clear state when disconnected
   React.useEffect(() => {
-    console.log('🔍 [RAINBOW] Wallet state:', {
-      wagmiConnected: isConnected,
-      wagmiAddress: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'none',
-      manualConnected: isManuallyConnected,
-      manualAddress: manualAddress ? `${manualAddress.slice(0, 6)}...${manualAddress.slice(-4)}` : 'none',
-      finalConnected: finalIsConnected,
-      finalAddress: finalAddress ? `${finalAddress.slice(0, 6)}...${finalAddress.slice(-4)}` : 'none',
-      hasUser: !!user,
-      isAuthenticating: authenticateWalletMutation.isPending
-    });
 
     if (!finalIsConnected) {
       // Wallet disconnected - clear state

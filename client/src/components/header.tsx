@@ -134,6 +134,19 @@ export function Header() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            {/* Fix Login button - Show when wallet connected but no user */}
+            {isConnected && address && !user && (
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="outline" 
+                size="sm"
+                className="bg-yellow-500/10 border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/20"
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                Fix Login
+              </Button>
+            )}
+            
             {/* Only show balance when wallet is connected and user is authenticated */}
             {isConnected && user && (
               <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
