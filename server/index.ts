@@ -214,12 +214,12 @@ app.use((req, res, next) => {
   // SECURITY FIX: Strict CSP with necessary allowances for Web3
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.dynamicauth.com https://api.dynamicauth.com https://auth.dynamicauth.com https://cdn.jsdelivr.net https://unpkg.com https://storage.googleapis.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://app.dynamicauth.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.dynamicauth.com https://api.dynamicauth.com https://auth.dynamicauth.com https://cdn.jsdelivr.net https://unpkg.com https://storage.googleapis.com https://s3.tradingview.com https://charting-library.tradingview.com https://www.tradingview.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://app.dynamicauth.com https://www.tradingview.com https://s3.tradingview.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' https: data: blob:",
     "connect-src 'self' https: wss: ws:",
-    "frame-src 'self' https://app.dynamicauth.com https://verify.walletconnect.com",
+    "frame-src 'self' https://app.dynamicauth.com https://verify.walletconnect.com https://www.tradingview.com https://charting-library.tradingview.com https://s3.tradingview.com",
     "child-src 'self' https://app.dynamicauth.com",
     "worker-src 'self' blob:",
     "object-src 'none'",
