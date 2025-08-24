@@ -10147,11 +10147,11 @@ Manual balance correction required IMMEDIATELY!`;
         if (data.type === 'authenticate') {
           const { sessionId, userId, walletAddress } = data;
           
-          // Validate authentication data
-          if (!sessionId || !userId || !walletAddress) {
+          // Validate authentication data (sessionId is optional)
+          if (!userId || !walletAddress) {
             ws.send(JSON.stringify({ 
               type: 'auth_error', 
-              message: 'Missing authentication data' 
+              message: 'Missing userId or walletAddress' 
             }));
             return;
           }

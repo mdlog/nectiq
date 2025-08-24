@@ -116,8 +116,26 @@ class WebSocketManager {
                                 sources.ethereum;
             
             if (walletAddress) {
+              // Get session ID from cookies or generate one
+              const getSessionId = () => {
+                // Try to get session from cookies first
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                  const [name, value] = cookie.trim().split('=');
+                  if (name === 'connect.sid' || name === 'sessionId') {
+                    return value;
+                  }
+                }
+                
+                // If no session found, use user ID as session identifier
+                return `user_${this.currentUserId}_${Date.now()}`;
+              };
+              
+              const sessionId = getSessionId();
+              
               const authMessage = {
                 type: 'authenticate',
+                sessionId: sessionId,
                 userId: this.currentUserId,
                 walletAddress: walletAddress
               };
