@@ -3411,7 +3411,7 @@ export class MemStorage implements IStorage {
 
     return {
       referralCode,
-      referralLink: referralCode ? `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/?ref=${referralCode}` : null,
+      referralLink: referralCode ? `${process.env.PRODUCTION_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/?ref=${referralCode}` : null,
       totalReferrals: stats[0]?.totalReferrals || 0,
       referralRewards: stats[0]?.referralRewards || 0,
       referredUsers: referredUsers.map(user => ({
@@ -3989,7 +3989,7 @@ export class MemStorage implements IStorage {
       const response = {
         referralCode: user.referralCode || null,
         referralLink: user.referralCode ? 
-          `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/?ref=${user.referralCode}` : 
+          `${process.env.PRODUCTION_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/?ref=${user.referralCode}` : 
           null,
         totalReferrals: referredUsers.length || user.totalReferrals || 0,
         referralRewards: totalEarnings,

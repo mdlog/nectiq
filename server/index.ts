@@ -15,10 +15,20 @@ import { eq, desc } from "drizzle-orm";
 // Load environment variables
 dotenv.config();
 
-// Debug environment variables immediately after loading
-console.log("🔍 Environment variables loaded:");
-console.log("   ADMIN_WALLET_ADDRESSES:", process.env.ADMIN_WALLET_ADDRESSES);
+// Validate critical environment variables (DO NOT LOG SENSITIVE DATA)
+const isProduction = process.env.NODE_ENV === 'production';
+console.log("🔍 Environment validation:");
 console.log("   NODE_ENV:", process.env.NODE_ENV);
+console.log("   Admin wallets configured:", !!process.env.ADMIN_WALLET_ADDRESSES);
+console.log("   Session secret configured:", !!process.env.SESSION_SECRET);
+
+// Critical security check for production
+if (isProduction && !process.env.SESSION_SECRET) {
+  throw new Error('🚨 SECURITY: SESSION_SECRET is required in production');
+}
+if (isProduction && !process.env.ADMIN_WALLET_ADDRESSES) {
+  throw new Error('🚨 SECURITY: ADMIN_WALLET_ADDRESSES is required in production');
+}
 
 // Extend Express Request to include session
 declare module 'express-session' {
@@ -130,7 +140,7 @@ app.get('/api/activities/live', async (req, res) => {
 // Session configuration with persistent MemoryStore
 const sessionStore = MemoryStore(session);
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'crypto-predict-session-secret-key',
+  secret: process.env.SESSION_SECRET || (isProduction ? null : 'dev-only-fallback-secret'),
   store: new sessionStore({
     checkPeriod: 86400000, // prune expired entries every 24h
     max: 100000, // Maximum number of sessions
@@ -139,34 +149,36 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true in production with HTTPS
-    httpOnly: false, // Allow frontend access to session
+    secure: isProduction, // HTTPS only in production
+    httpOnly: true, // Secure: prevent XSS attacks
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Allow cross-origin requests
+    sameSite: isProduction ? 'strict' : 'lax' // Stricter for production
   },
-  name: 'connect.sid' // Explicit session name for proper authentication
+  name: 'connect.sid'
 }));
 
-// Enhanced CORS middleware - Complete Dynamic SDK support
+// Production-ready CORS middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Dynamic Labs specific domains for CORS
+  // Production-specific allowed origins
   const allowedOrigins = [
     'https://app.dynamicauth.com',
-    'https://api.dynamicauth.com',
+    'https://api.dynamicauth.com', 
     'https://auth.dynamicauth.com',
     'https://dynamicauth.com',
     'https://replit.dev',
-    'https://replit.app'
-  ];
+    'https://replit.app',
+    // Add your production domain here
+    process.env.PRODUCTION_DOMAIN
+  ].filter(Boolean);
   
-  // Handle undefined origin and determine CORS origin
-  let corsOrigin = '*';
+  let corsOrigin = isProduction ? false : '*';
+  
   if (origin && allowedOrigins.includes(origin)) {
     corsOrigin = origin;
-  } else if (origin) {
-    corsOrigin = origin; // Allow the current origin if defined
+  } else if (!isProduction && origin) {
+    corsOrigin = origin; // Only allow any origin in development
   }
   
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
@@ -230,10 +242,10 @@ app.use('/attached_assets', express.static('attached_assets'));
 // Serve uploaded files (profile photos, banners, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Simple rate limiting middleware - adjusted for development
+// Production-ready rate limiting
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 500; // Increased for development
+const MAX_REQUESTS_PER_WINDOW = isProduction ? 100 : 500; // Stricter for production
 
 app.use((req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
