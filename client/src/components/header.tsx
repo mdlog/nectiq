@@ -156,7 +156,7 @@ export function Header() {
               </div>
             )}
             
-            {isConnected && address ? (
+            {isConnected && address && user ? (
               <div className="flex items-center space-x-2">
                 {/* Notifications Badge */}
                 <NotificationsBadge />
@@ -333,7 +333,7 @@ export function Header() {
                   <span className="text-xs text-slate-400">NTIQ</span>
                 </div>
                 
-                {isConnected && address && (
+                {isConnected && address && user && (
                   <div className="flex items-center space-x-2">
                     <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded-lg border border-green-200 dark:border-green-800">
                       <Wallet className="text-green-600 dark:text-green-400" size={14} />
