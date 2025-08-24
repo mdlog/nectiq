@@ -1,4 +1,6 @@
 import { storage } from '../storage';
+import { users, predictions, transactionLogs } from '../../shared/schema';
+import { eq, and, isNull, sql, desc } from 'drizzle-orm';
 
 /**
  * Audit Service untuk memastikan konsistensi data prediction rewards
@@ -34,57 +36,63 @@ export class AuditService {
     };
 
     try {
-      // Get semua user yang memiliki prediksi completed
-      const usersWithPredictions = await storage.db.execute(`
-        SELECT DISTINCT
-          u.id,
-          u.username,
-          u.uid,
-          u.balance
-        FROM users u
-        INNER JOIN predictions p ON u.id = p.user_id
-        WHERE p.status = 'completed' AND p.reward_amount > 0
-        ORDER BY u.id
-      `);
+      // SECURITY: Get semua user yang memiliki prediksi completed - using safe storage methods
+      const allUsers = await storage.getAllUsers();
+      const usersWithPredictions = [];
+      
+      for (const user of allUsers) {
+        const userPredictions = await storage.getUserPredictions(user.id);
+        const hasCompletedRewards = userPredictions.some(p => p.status === 'completed' && (p.rewardAmount || 0) > 0);
+        if (hasCompletedRewards) {
+          usersWithPredictions.push({
+            id: user.id,
+            username: user.username,
+            uid: user.uid,
+            balance: user.balance
+          });
+        }
+      }
 
-      results.usersChecked = usersWithPredictions.rows.length;
+      results.usersChecked = usersWithPredictions.length;
 
-      for (const userRow of usersWithPredictions.rows) {
+      for (const userRow of usersWithPredictions) {
         const userId = userRow.id as number;
         const username = userRow.username as string;
 
-        // Find missing prediction rewards untuk user ini
-        const missingRewards = await storage.db.execute(`
-          SELECT 
-            p.id as prediction_id,
-            p.reward_amount,
-            p.completed_at,
-            p.cryptocurrency
-          FROM predictions p
-          LEFT JOIN transaction_logs tl ON (
-            tl.user_id = p.user_id 
-            AND tl.type = 'prediction_reward' 
-            AND tl.related_id = p.id
-          )
-          WHERE p.user_id = ? 
-            AND p.status = 'completed' 
-            AND p.reward_amount > 0 
-            AND tl.id IS NULL
-          ORDER BY p.completed_at
-        `, [userId]);
+        // SECURITY: Find missing prediction rewards untuk user ini - using safe storage methods
+        const userPredictions = await storage.getUserPredictions(userId);
+        const userTransactionLogs = await storage.getUserTransactionLogs(userId);
+        
+        const missingRewards = userPredictions.filter(prediction => {
+          if (prediction.status !== 'completed' || !prediction.rewardAmount || prediction.rewardAmount <= 0) {
+            return false;
+          }
+          
+          // Check if reward already logged
+          const hasRewardLog = userTransactionLogs.some(log => 
+            log.type === 'prediction_reward' && log.relatedId === prediction.id
+          );
+          
+          return !hasRewardLog;
+        }).map(prediction => ({
+          prediction_id: prediction.id,
+          reward_amount: prediction.rewardAmount,
+          completed_at: prediction.completedAt,
+          cryptocurrency: prediction.cryptocurrency
+        }));
 
-        if (missingRewards.rows.length > 0) {
+        if (missingRewards.length > 0) {
           let userTotalMissing = 0;
           
           // Add missing transaction logs
-          for (const rewardRow of missingRewards.rows) {
+          for (const rewardRow of missingRewards) {
             const predictionId = rewardRow.prediction_id as number;
             const rewardAmount = rewardRow.reward_amount as number;
             const completedAt = rewardRow.completed_at as string;
             const cryptocurrency = rewardRow.cryptocurrency as string;
 
             // Create missing transaction log
-            await storage.createTransaction({
+            await storage.createTransactionLog({
               userId: userId,
               type: 'prediction_reward',
               amount: rewardAmount,
@@ -98,23 +106,23 @@ export class AuditService {
             results.missingRewards++;
           }
 
-          // Update user balance jika perlu
+          // SECURITY: Update user balance jika perlu - using safe storage methods
           if (userTotalMissing > 0) {
-            await storage.db.execute(
-              'UPDATE users SET balance = balance + ? WHERE id = ?',
-              [userTotalMissing, userId]
-            );
+            const currentUser = await storage.getUser(userId);
+            if (currentUser) {
+              await storage.updateUserBalance(userId, currentUser.balance + userTotalMissing);
+            }
 
             results.repairedUsers.push({
               userId,
               username,
               missingAmount: userTotalMissing,
-              predictionsRepaired: missingRewards.rows.length
+              predictionsRepaired: missingRewards.length
             });
 
             results.totalAmountRepaired += userTotalMissing;
 
-            console.log(`✅ [AUDIT] Repaired ${username}: +${userTotalMissing} NTIQ from ${missingRewards.rows.length} predictions`);
+            console.log(`✅ [AUDIT] Repaired ${username}: +${userTotalMissing} NTIQ from ${missingRewards.length} predictions`);
           }
         }
       }
@@ -162,19 +170,25 @@ export class AuditService {
     };
 
     try {
-      const users = await storage.db.execute(`
-        SELECT 
-          u.id,
-          u.username,
-          u.balance as current_balance,
-          COALESCE((SELECT SUM(amount) FROM transaction_logs WHERE user_id = u.id), 0) as calculated_balance
-        FROM users u
-        ORDER BY u.id
-      `);
+      // SECURITY: Get balance consistency data - using safe storage methods
+      const allUsers = await storage.getAllUsers();
+      const usersBalanceData = [];
+      
+      for (const user of allUsers) {
+        const userTransactionLogs = await storage.getUserTransactionLogs(user.id);
+        const calculatedBalance = userTransactionLogs.reduce((sum, log) => sum + log.amount, 0);
+        
+        usersBalanceData.push({
+          id: user.id,
+          username: user.username,
+          current_balance: user.balance,
+          calculated_balance: calculatedBalance
+        });
+      }
 
-      results.totalUsers = users.rows.length;
+      results.totalUsers = usersBalanceData.length;
 
-      for (const user of users.rows) {
+      for (const user of usersBalanceData) {
         const userId = user.id as number;
         const username = user.username as string;
         const currentBalance = user.current_balance as number;

@@ -15,9 +15,9 @@ import { eq, desc } from "drizzle-orm";
 // Load environment variables
 dotenv.config();
 
-// Debug environment variables immediately after loading
+// SECURITY: Log environment status without exposing values
 console.log("🔍 Environment variables loaded:");
-console.log("   ADMIN_WALLET_ADDRESSES:", process.env.ADMIN_WALLET_ADDRESSES);
+console.log("   ADMIN_WALLET_ADDRESSES configured:", process.env.ADMIN_WALLET_ADDRESSES ? 'Yes' : 'No');
 console.log("   NODE_ENV:", process.env.NODE_ENV);
 
 // Extend Express Request to include session
@@ -249,29 +249,73 @@ app.use('/attached_assets', express.static('attached_assets'));
 // Serve uploaded files (profile photos, banners, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Simple rate limiting middleware - adjusted for development
+// SECURITY: Enhanced rate limiting middleware with tiered protection
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 500; // Increased for development
+
+// SECURITY: Tiered rate limiting based on endpoint sensitivity
+const getRateLimitConfig = (req: any) => {
+  const path = req.path;
+  
+  // CRITICAL: Admin endpoints - very restrictive
+  if (path.startsWith('/api/admin')) {
+    return { maxRequests: 10, windowMs: 60000, type: 'admin' };
+  }
+  
+  // HIGH: Authentication endpoints - restrictive
+  if (path.includes('/auth') || path.includes('/login') || path.includes('/verify')) {
+    return { maxRequests: 20, windowMs: 60000, type: 'auth' };
+  }
+  
+  // HIGH: Financial endpoints - restrictive
+  if (path.includes('/deposit') || path.includes('/withdraw') || path.includes('/transaction')) {
+    return { maxRequests: 30, windowMs: 60000, type: 'financial' };
+  }
+  
+  // MEDIUM: User operations - moderate
+  if (path.includes('/prediction') || path.includes('/battle') || path.includes('/user')) {
+    return { maxRequests: 60, windowMs: 60000, type: 'user' };
+  }
+  
+  // LOW: Public data endpoints - lenient but still controlled
+  return { maxRequests: 120, windowMs: 60000, type: 'public' };
+};
 
 app.use((req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
   const now = Date.now();
+  const config = getRateLimitConfig(req);
   
-  if (!rateLimitMap.has(clientIP)) {
-    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+  const limitKey = `${clientIP}_${config.type}`;
+  
+  if (!rateLimitMap.has(limitKey)) {
+    rateLimitMap.set(limitKey, { count: 1, resetTime: now + config.windowMs });
     return next();
   }
   
-  const clientData = rateLimitMap.get(clientIP);
+  const clientData = rateLimitMap.get(limitKey);
   
   if (now > clientData.resetTime) {
-    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    rateLimitMap.set(limitKey, { count: 1, resetTime: now + config.windowMs });
     return next();
   }
   
-  if (clientData.count >= MAX_REQUESTS_PER_WINDOW) {
-    return res.status(429).json({ message: 'Too many requests. Please try again later.' });
+  if (clientData.count >= config.maxRequests) {
+    // SECURITY: Enhanced rate limit logging with threat intelligence
+    console.warn('🚨 [SECURITY] Rate limit exceeded:', {
+      clientIP: clientIP,
+      endpoint: req.path,
+      limitType: config.type,
+      currentCount: clientData.count,
+      maxAllowed: config.maxRequests,
+      timestamp: new Date().toISOString(),
+      userAgent: req.headers['user-agent']?.substring(0, 100)
+    });
+    
+    return res.status(429).json({ 
+      message: 'Too many requests. Please try again later.',
+      retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
+    });
   }
   
   clientData.count++;
@@ -434,6 +478,16 @@ try {
   console.log('✅ Battle expiry service started successfully - monitoring every 30 seconds');
 } catch (error) {
   console.error('❌ Failed to initialize battle expiry service:', error);
+}
+
+// Initialize Financial Security Service for comprehensive transaction security
+try {
+  console.log('🔧 Initializing Financial Security Service...');
+  const { financialSecurityService } = await import('./financial-security-service');
+  financialSecurityService.startSecurityMonitoring();
+  console.log('✅ Financial security service started successfully - monitoring financial transactions');
+} catch (error) {
+  console.error('❌ Failed to initialize financial security service:', error);
 }
 
 (async () => {
