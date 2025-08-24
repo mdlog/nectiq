@@ -149,10 +149,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Disable HTTPS requirement temporarily for debugging
-    httpOnly: false, // Allow frontend access to session
+    secure: isProduction, // Enable HTTPS requirement in production
+    httpOnly: true, // Prevent XSS access to session cookies
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax', // Compatible across environments
+    sameSite: 'strict', // Stronger CSRF protection
     domain: undefined // Let browser set domain automatically
   },
   name: 'connect.sid'
@@ -209,27 +209,29 @@ app.use((req, res, next) => {
   next();
 });
 
-// Enhanced security headers middleware for Dynamic SDK
+// Enhanced security headers middleware with XSS protection
 app.use((req, res, next) => {
-  // Relaxed security headers for development and Dynamic SDK
+  // Strong security headers for production safety
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Allow all frames for Dynamic SDK
-  res.setHeader('X-XSS-Protection', '0'); // Disable XSS protection to avoid conflicts
-  res.setHeader('Referrer-Policy', 'unsafe-url'); // Allow full referrer for Dynamic SDK
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Prevent clickjacking attacks
+  res.setHeader('X-XSS-Protection', '1; mode=block'); // Enable XSS protection
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin'); // Secure referrer policy
   
-  // Ultra-permissive CSP for Dynamic SDK and wallet authentication
+  // Balanced CSP - secure but allows essential Web3 functionality
   res.setHeader('Content-Security-Policy', [
-    "default-src 'self' 'unsafe-inline' 'unsafe-eval' *",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' * data: blob:",
-    "style-src 'self' 'unsafe-inline' * data:",
-    "font-src 'self' * data:",
-    "img-src 'self' * data: blob:",
-    "connect-src 'self' * data: blob: ws: wss:",
-    "frame-src 'self' *",
-    "child-src 'self' *",
-    "worker-src 'self' * blob:",
+    "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: wss: ws: data: blob:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:",
+    "style-src 'self' 'unsafe-inline' https: data:",
+    "font-src 'self' https: data:",
+    "img-src 'self' https: http: data: blob:",
+    "connect-src 'self' https: wss: ws: data: blob:",
+    "frame-src 'self' https:",
+    "child-src 'self' https: blob:",
+    "worker-src 'self' https: blob:",
     "object-src 'none'",
-    "media-src 'self' * data: blob:"
+    "media-src 'self' https: data: blob:",
+    "base-uri 'self'",
+    "form-action 'self'"
   ].join('; '));
   
   // HSTS for HTTPS
