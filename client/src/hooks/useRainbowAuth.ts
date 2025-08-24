@@ -19,11 +19,13 @@ export function useRainbowAuth() {
   const connectionStatus = useWalletConnectionStatus();
 
   // Get user data from backend
-  const { data: user, isLoading } = useQuery<User>({
+  const { data: user, isLoading, refetch: refetchUser } = useQuery<User>({
     queryKey: ["/api/user"],
     enabled: isConnected && !!address,
     refetchInterval: 10000,
     staleTime: 5000,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Wallet authentication mutation
@@ -87,8 +89,14 @@ export function useRainbowAuth() {
       // Note: Wallet connection notification is handled by useWalletConnectionStatus
       // to prevent duplicate notifications and ensure it only shows on first connection
 
-      // Refresh user data
+      // Force refresh user data to get complete user object with uid
+      console.log('🔄 [RAINBOW] Force refreshing user data after authentication...');
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Also force refetch to get immediate updated data
+      setTimeout(() => {
+        refetchUser();
+      }, 500);
       
       // Redirect to dashboard if on landing page
       setLocation('/');
