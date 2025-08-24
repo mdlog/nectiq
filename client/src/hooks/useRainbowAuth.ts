@@ -58,9 +58,30 @@ export function useRainbowAuth() {
     staleTime: 25000,
   });
 
+  // Rate limiting state
+  const [lastAuthAttempt, setLastAuthAttempt] = React.useState<number>(0);
+  const [authRetryCount, setAuthRetryCount] = React.useState<number>(0);
+  
+  // Rate limiting utility
+  const checkRateLimit = () => {
+    const now = Date.now();
+    const timeSinceLastAttempt = now - lastAuthAttempt;
+    const minInterval = Math.min(2000 * Math.pow(2, authRetryCount), 30000); // Exponential backoff, max 30s
+    
+    if (timeSinceLastAttempt < minInterval) {
+      const waitTime = minInterval - timeSinceLastAttempt;
+      throw new Error(`Rate limit: Please wait ${Math.ceil(waitTime / 1000)}s before trying again.`);
+    }
+    
+    setLastAuthAttempt(now);
+  };
+
   // Wallet authentication mutation
   const authenticateWalletMutation = useMutation({
     mutationFn: async (walletAddress: string) => {
+      // Check rate limiting first
+      checkRateLimit();
+      
       console.log('🌈 [RAINBOW] Authenticating wallet:', walletAddress);
       console.log('🌈 [RAINBOW] Chain info:', { chainId: chain?.id, chainName: chain?.name });
       
@@ -90,18 +111,28 @@ export function useRainbowAuth() {
         console.log('🌈 [RAINBOW] Response status:', response.status);
         console.log('🌈 [RAINBOW] Response headers:', Object.fromEntries(response.headers.entries()));
 
+        if (response.status === 429) {
+          setAuthRetryCount(prev => prev + 1);
+          throw new Error('Too many requests. Please try again later.');
+        }
+
         if (!response.ok) {
           const errorData = await response.text();
           console.error('🌈 [RAINBOW] Error response:', errorData);
+          setAuthRetryCount(prev => prev + 1);
           throw new Error(errorData || `HTTP ${response.status}: Authentication failed`);
         }
 
         const result = await response.json();
         console.log('🌈 [RAINBOW] Success response:', result);
+        
+        // Reset retry count on success
+        setAuthRetryCount(0);
         return result;
       } catch (error) {
         console.error('🌈 [RAINBOW] Network error:', error);
         if (error instanceof TypeError && error.message.includes('fetch')) {
+          setAuthRetryCount(prev => prev + 1);
           throw new Error('Network connection failed. Please check your internet connection.');
         }
         throw error;
@@ -128,14 +159,26 @@ export function useRainbowAuth() {
     onError: (error: any) => {
       console.error('❌ [RAINBOW] Authentication failed:', error);
       
-      toast({
-        title: "Connection Failed", 
-        description: error.message || "Failed to authenticate wallet",
-        variant: "destructive"
-      });
-      
-      // Disconnect on auth failure
-      disconnect();
+      // Don't show toast for expected errors (rate limiting, network issues)
+      if (!error.message.includes('Rate limit') && 
+          !error.message.includes('Too many requests') &&
+          !error.message.includes('Network connection failed')) {
+        toast({
+          title: "Connection Failed",
+          description: error.message || "Failed to authenticate wallet",
+          variant: "destructive",
+        });
+        
+        // Only disconnect on non-rate-limit errors
+        disconnect();
+      } else if (error.message.includes('Rate limit') || error.message.includes('Too many requests')) {
+        // Show user-friendly message for rate limiting
+        toast({
+          title: "Please Wait",
+          description: "Too many connection attempts. Please wait a moment and try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
