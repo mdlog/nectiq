@@ -936,6 +936,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Session validation endpoint for production
+  app.get("/api/session/validate", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      
+      if (!userId) {
+        console.log('🔒 [SESSION] No user ID in session');
+        return res.status(401).json({ 
+          message: "No active session", 
+          authenticated: false 
+        });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        console.log('🔒 [SESSION] User not found for ID:', userId);
+        return res.status(401).json({ 
+          message: "User not found", 
+          authenticated: false 
+        });
+      }
+
+      console.log('✅ [SESSION] Valid session for user:', user.username);
+      res.json({
+        authenticated: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          walletAddress: user.walletAddress,
+          balance: user.balance,
+          isAdmin: user.isAdmin
+        }
+      });
+    } catch (error) {
+      console.error("Session validation error:", error);
+      res.status(500).json({ 
+        message: "Session validation failed", 
+        authenticated: false 
+      });
+    }
+  });
+
   // Wallet authentication routes
   app.get("/api/auth/wallet-user", async (req, res) => {
     try {

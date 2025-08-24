@@ -142,7 +142,8 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
     httpOnly: true, // SECURITY FIX: Prevent XSS access to cookies
     maxAge: 4 * 60 * 60 * 1000, // SECURITY: Reduced to 4 hours
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax' // Stricter in production
+    sameSite: 'lax', // Use 'lax' for both dev and production to allow cross-origin authentication
+    domain: process.env.NODE_ENV === 'production' ? '.replit.app' : undefined // Share cookies across subdomains in production
   },
   name: 'connect.sid' // Explicit session name for proper authentication
 }));
@@ -159,7 +160,8 @@ app.use((req, res, next) => {
     'https://auth.dynamicauth.com',
     'https://dynamicauth.com',
     'https://nectiq.replit.app',
-    'https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev'
+    'https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev',
+    'https://replit.app'
   ];
   
   const developmentOrigins = [
