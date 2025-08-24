@@ -23,7 +23,7 @@ export function useRainbowAuth() {
     queryKey: ["/api/user"],
     enabled: isConnected && !!address,
     refetchInterval: 10000,
-    staleTime: 5000,
+    staleTime: 0, // Don't use stale data, always refetch
     retry: 3,
     retryDelay: 1000,
   });
@@ -93,10 +93,21 @@ export function useRainbowAuth() {
       console.log('🔄 [RAINBOW] Force refreshing user data after authentication...');
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       
-      // Also force refetch to get immediate updated data
+      // Multiple attempts to ensure data is loaded
       setTimeout(() => {
+        console.log('🔄 [RAINBOW] First refetch attempt...');
         refetchUser();
-      }, 500);
+      }, 200);
+      
+      setTimeout(() => {
+        console.log('🔄 [RAINBOW] Second refetch attempt...');
+        refetchUser();
+      }, 1000);
+      
+      setTimeout(() => {
+        console.log('🔄 [RAINBOW] Third refetch attempt...');
+        refetchUser();
+      }, 2000);
       
       // Redirect to dashboard if on landing page
       setLocation('/');
@@ -185,6 +196,12 @@ export function useRainbowAuth() {
     } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
       console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
       authenticateWalletMutation.mutate(address);
+    } else if (isConnected && address && user) {
+      // User data exists, ensure it's complete - force refresh if missing uid
+      if (!user.uid || !user.username) {
+        console.log('🔄 [RAINBOW] User data incomplete, force refreshing...', { uid: user.uid, username: user.username });
+        refetchUser();
+      }
     } else if (isConnected && address && !user && !isLoading) {
       console.log('🔍 [RAINBOW] Authentication conditions not met:', {
         isConnected,
