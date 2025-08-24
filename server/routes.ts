@@ -35,73 +35,37 @@ function normalizeWalletAddress(address: string): string {
   return address.toLowerCase().trim();
 }
 
-// SECURITY FIX: Enhanced file upload configuration with comprehensive validation
-const ALLOWED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/jpg', 
-  'image/png',
-  'image/webp',
-  'image/gif'
-];
-
-const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // Reduced to 2MB for security
-
-// Enhanced file validation function
-function validateUploadFile(file: Express.Multer.File): { valid: boolean; error?: string } {
-  // Check MIME type
-  if (!ALLOWED_IMAGE_TYPES.includes(file.mimetype.toLowerCase())) {
-    return { valid: false, error: 'Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.' };
-  }
-
-  // Check file extension
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (!ALLOWED_EXTENSIONS.includes(ext)) {
-    return { valid: false, error: 'Invalid file extension. Only .jpg, .jpeg, .png, .webp, .gif files are allowed.' };
-  }
-
-  // Check file size
-  if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: 'File too large. Maximum size is 2MB.' };
-  }
-
-  // Basic content validation - check magic bytes
-  const magicBytes = file.buffer?.slice(0, 8);
-  if (magicBytes) {
-    const isValidImage = 
-      (magicBytes[0] === 0xFF && magicBytes[1] === 0xD8) || // JPEG
-      (magicBytes[0] === 0x89 && magicBytes[1] === 0x50 && magicBytes[2] === 0x4E && magicBytes[3] === 0x47) || // PNG
-      (magicBytes[0] === 0x47 && magicBytes[1] === 0x49 && magicBytes[2] === 0x46) || // GIF
-      (magicBytes.includes(0x57, 0) && magicBytes.includes(0x45, 1)); // WebP
-
-    if (!isValidImage) {
-      return { valid: false, error: 'File content does not match expected image format.' };
-    }
-  }
-
-  // Check for executable content in filename
-  const dangerousExtensions = ['.exe', '.bat', '.cmd', '.com', '.scr', '.pif', '.js', '.vbs', '.php', '.asp', '.jsp'];
-  const lowerFilename = file.originalname.toLowerCase();
-  if (dangerousExtensions.some(ext => lowerFilename.includes(ext))) {
-    return { valid: false, error: 'Filename contains dangerous content.' };
-  }
-
-  return { valid: true };
-}
-
-// Configure secure multer for file uploads
+// SECURITY: Configure multer for file uploads with enhanced security
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: MAX_FILE_SIZE,
-    files: 1, // Only allow single file upload
-    fieldSize: 1024 * 100, // 100KB for form fields
+    fileSize: 2 * 1024 * 1024, // SECURITY: Reduced to 2MB limit
+    files: 1, // SECURITY: Only allow 1 file at a time
+    fields: 10, // SECURITY: Limit form fields
+    fieldNameSize: 50, // SECURITY: Limit field name length
+    fieldSize: 1 * 1024 * 1024 // SECURITY: Limit field value size to 1MB
   },
   fileFilter: (req, file, cb) => {
-    // Basic MIME type check during upload
-    if (!ALLOWED_IMAGE_TYPES.includes(file.mimetype.toLowerCase())) {
-      return cb(new Error('Invalid file type'), false);
+    // SECURITY: Enhanced file validation
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+    
+    // SECURITY: Check MIME type
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error('Invalid file type. Only JPEG, PNG, and GIF allowed.'));
     }
+    
+    // SECURITY: Check file extension (prevent MIME spoofing)
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!allowedExtensions.includes(ext)) {
+      return cb(new Error('Invalid file extension. Only .jpg, .jpeg, .png, .gif allowed.'));
+    }
+    
+    // SECURITY: Validate filename
+    if (!file.originalname || file.originalname.length > 100) {
+      return cb(new Error('Invalid filename.'));
+    }
+    
     cb(null, true);
   }
 });
@@ -152,119 +116,6 @@ function broadcastNotification(userId: number, notification: any) {
 
 // Export the broadcast function for use by other services
 export const broadcastNotificationCallback = broadcastNotification;
-
-// SECURITY FIX: CSRF Protection Implementation
-import crypto from 'crypto';
-
-const csrfTokens = new Map<string, { token: string; expires: number; userId: number }>();
-const CSRF_TOKEN_EXPIRY = 4 * 60 * 60 * 1000; // 4 hours
-
-// Generate CSRF token for session
-function generateCSRFToken(userId: number): string {
-  const token = crypto.randomBytes(32).toString('hex');
-  const sessionId = crypto.randomBytes(16).toString('hex');
-  
-  csrfTokens.set(sessionId, {
-    token,
-    expires: Date.now() + CSRF_TOKEN_EXPIRY,
-    userId
-  });
-  
-  // Clean expired tokens
-  const now = Date.now();
-  for (const [id, data] of csrfTokens.entries()) {
-    if (data.expires < now) {
-      csrfTokens.delete(id);
-    }
-  }
-  
-  return `${sessionId}:${token}`;
-}
-
-// Validate CSRF token
-function validateCSRFToken(tokenString: string, userId: number): boolean {
-  if (!tokenString) return false;
-  
-  const [sessionId, token] = tokenString.split(':');
-  if (!sessionId || !token) return false;
-  
-  const stored = csrfTokens.get(sessionId);
-  if (!stored) return false;
-  
-  if (stored.expires < Date.now()) {
-    csrfTokens.delete(sessionId);
-    return false;
-  }
-  
-  return stored.token === token && stored.userId === userId;
-}
-
-// CSRF Protection Middleware
-function requireCSRF(req: Request, res: Response, next: NextFunction) {
-  const session = req.session as any;
-  if (!session?.userId) {
-    return res.status(401).json({ message: 'Authentication required' });
-  }
-  
-  const token = req.headers['x-csrf-token'] as string || req.body.csrfToken;
-  if (!validateCSRFToken(token, session.userId)) {
-    auditLog('CSRF_VALIDATION_FAILED', {
-      userId: session.userId,
-      endpoint: req.path,
-      method: req.method,
-      userAgent: req.headers['user-agent']
-    }, req);
-    
-    return res.status(403).json({ 
-      message: 'Invalid or expired CSRF token',
-      code: 'CSRF_INVALID'
-    });
-  }
-  
-  next();
-}
-
-// Session Security Enhancements
-const SESSION_TIMEOUT = 4 * 60 * 60 * 1000; // 4 hours
-const sessionActivity = new Map<number, number>();
-
-// Update session activity
-function updateSessionActivity(userId: number) {
-  sessionActivity.set(userId, Date.now());
-}
-
-// Check session validity
-function isSessionValid(userId: number): boolean {
-  const lastActivity = sessionActivity.get(userId);
-  if (!lastActivity) return false;
-  
-  return Date.now() - lastActivity < SESSION_TIMEOUT;
-}
-
-// Enhanced session validation middleware
-function validateSession(req: Request, res: Response, next: NextFunction) {
-  const session = req.session as any;
-  if (!session?.userId) {
-    return res.status(401).json({ message: 'Authentication required' });
-  }
-  
-  // Check session timeout
-  if (!isSessionValid(session.userId)) {
-    req.session.destroy((err) => {
-      if (err) console.error('Session destruction error:', err);
-    });
-    
-    return res.status(401).json({ 
-      message: 'Session expired',
-      code: 'SESSION_EXPIRED'
-    });
-  }
-  
-  // Update activity
-  updateSessionActivity(session.userId);
-  
-  next();
-}
 
 // Security audit logs storage in memory
 const securityAuditLogs: Array<{
@@ -675,8 +526,9 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     // Debug admin check
     console.log("🔍 Admin verification debug:");
     console.log("   User wallet:", normalizedUserWallet);
-    console.log("   Environment variable:", process.env.ADMIN_WALLET_ADDRESSES);
-    console.log("   Authorized wallets:", ADMIN_WALLET_ADDRESSES);
+    // SECURITY: Never log full environment variables
+    console.log("   Environment variable configured:", process.env.ADMIN_WALLET_ADDRESSES ? 'Yes' : 'No');
+    console.log("   Authorized wallets count:", ADMIN_WALLET_ADDRESSES.length);
     console.log("   Auth method:", user.authMethod);
     console.log("   Is admin authorized:", isAuthorizedAdmin);
 
@@ -933,48 +785,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Auth me error:", error);
       res.status(500).json({ message: "Authentication error" });
-    }
-  });
-
-  // Session validation endpoint for production
-  app.get("/api/session/validate", async (req, res) => {
-    try {
-      const userId = (req as any).session?.userId;
-      
-      if (!userId) {
-        console.log('🔒 [SESSION] No user ID in session');
-        return res.status(401).json({ 
-          message: "No active session", 
-          authenticated: false 
-        });
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        console.log('🔒 [SESSION] User not found for ID:', userId);
-        return res.status(401).json({ 
-          message: "User not found", 
-          authenticated: false 
-        });
-      }
-
-      console.log('✅ [SESSION] Valid session for user:', user.username);
-      res.json({
-        authenticated: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          walletAddress: user.walletAddress,
-          balance: user.balance,
-          isAdmin: user.isAdmin
-        }
-      });
-    } catch (error) {
-      console.error("Session validation error:", error);
-      res.status(500).json({ 
-        message: "Session validation failed", 
-        authenticated: false 
-      });
     }
   });
 
@@ -1647,17 +1457,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Direct admin access route - bypasses all browser extension conflicts
+  // SECURITY: Direct admin access route - now requires secure environment variable
   app.get("/admin-direct/:token", async (req, res) => {
     try {
       const { token } = req.params;
-      const adminToken = "secure-admin-2024";
+      const adminToken = process.env.ADMIN_DIRECT_TOKEN;
+      
+      // Security check: Admin direct token must be set in environment
+      if (!adminToken || adminToken.length < 32) {
+        console.error('🚨 [SECURITY] ADMIN_DIRECT_TOKEN not set or too weak. Minimum 32 characters required.');
+        return res.redirect("/?error=access-disabled");
+      }
       
       if (token !== adminToken) {
+        // Log failed attempt for security monitoring
+        auditLog('ADMIN_DIRECT_ACCESS_DENIED', { 
+          providedToken: token.substring(0, 4) + '...', 
+          clientIP: req.ip 
+        }, req);
         return res.redirect("/?error=invalid-access");
       }
 
       const adminAddresses = getAdminWalletAddresses();
+      if (!adminAddresses.length) {
+        console.error('🚨 [SECURITY] No admin wallet addresses configured');
+        return res.redirect("/?error=no-admin-configured");
+      }
+      
       const adminWallet = adminAddresses[0]; // Use first admin address
       
       // Create or get admin user
@@ -1666,19 +1492,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.createUser({
           username: `admin_${adminWallet.slice(-6)}`,
           walletAddress: adminWallet,
-          authMethod: "direct",
+          authMethod: "secure_direct",
           isAdmin: true
         });
       }
 
-      // Set session
+      // Set session with additional security
       req.session.userId = user.id;
       req.session.isAdmin = true;
+      req.session.adminAccessMethod = 'secure_direct';
+      req.session.adminAccessTime = new Date().toISOString();
+
+      // Log successful admin access
+      auditLog('ADMIN_DIRECT_ACCESS_GRANTED', { 
+        adminWallet: adminWallet.substring(0, 6) + '...', 
+        clientIP: req.ip,
+        accessTime: new Date().toISOString()
+      }, req);
 
       // Redirect to admin panel
       res.redirect("/admin?access=granted");
     } catch (error) {
-      console.error("Direct admin access error:", error);
+      console.error("🚨 [SECURITY] Direct admin access error:", error);
+      auditLog('ADMIN_DIRECT_ACCESS_ERROR', { error: error.message, clientIP: req.ip }, req);
       res.redirect("/?error=auth-failed");
     }
   });
@@ -1892,38 +1728,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload profile photo endpoint
-  app.post('/api/user/upload-profile-photo', upload.single('profilePhoto'), async (req: Request, res: Response) => {
+  // SECURITY: Upload profile photo endpoint with enhanced protection
+  app.post('/api/user/upload-profile-photo', requireAuth, upload.single('profilePhoto'), async (req: Request, res: Response) => {
     try {
-      const session = req.session as any;
-      if (!session?.userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
+      const userId = req.user!.id;
 
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      // SECURITY FIX: Comprehensive file validation using new security function
-      const validation = validateUploadFile(req.file);
-      if (!validation.valid) {
-        return res.status(400).json({ message: validation.error });
+      // SECURITY: Advanced file validation
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        auditLog("SUSPICIOUS_FILE_UPLOAD", {
+          userId,
+          mimeType: req.file.mimetype,
+          originalName: req.file.originalname,
+          reason: "Invalid MIME type"
+        }, req);
+        return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and GIF are allowed" });
       }
 
-      // Generate unique filename
-      const fileExtension = path.extname(req.file.originalname);
-      const fileName = `profile_${session.userId}_${Date.now()}${fileExtension}`;
-      const filePath = `/uploads/${fileName}`;
+      // SECURITY: Reduced file size limit and enhanced validation
+      if (req.file.size > 2 * 1024 * 1024) {
+        auditLog("SUSPICIOUS_FILE_UPLOAD", {
+          userId,
+          fileSize: req.file.size,
+          originalName: req.file.originalname,
+          reason: "File too large"
+        }, req);
+        return res.status(400).json({ message: "File too large. Maximum size is 2MB" });
+      }
+      
+      // SECURITY: Basic malware protection - scan for suspicious patterns
+      const fileBuffer = req.file.buffer;
+      const suspiciousPatterns = [
+        /\x00\x00\x00\x20ftyp/, // MP4 signature
+        /\xFF\xE0/, // JPEG with potential exploits
+        /<\?php/i, // PHP code
+        /<script/i, // JavaScript
+        /\x89PNG\r\n\x1a\n.*tEXt.*<\?php/s, // PNG with PHP
+      ];
+      
+      for (const pattern of suspiciousPatterns) {
+        if (pattern.test(fileBuffer.toString('binary'))) {
+          auditLog("MALWARE_DETECTION", {
+            userId,
+            originalName: req.file.originalname,
+            patternType: pattern.toString(),
+            reason: "Suspicious file content detected"
+          }, req);
+          return res.status(400).json({ message: "File contains suspicious content" });
+        }
+      }
 
-      // Save file
+      // SECURITY: Generate cryptographically secure filename
+      const crypto = await import('crypto');
+      const fileExtension = path.extname(req.file.originalname).toLowerCase();
+      const secureHash = crypto.default.randomBytes(16).toString('hex');
+      const fileName = `profile_${userId}_${Date.now()}_${secureHash}${fileExtension}`;
+
+      // SECURITY: Create secure upload directory
       const uploadDir = path.join(process.cwd(), 'server', 'uploads');
       if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+        fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
       }
 
-      // SECURITY: Prevent path traversal attacks but keep underscores
+      // SECURITY: Enhanced filename sanitization
       const sanitizedFileName = path.basename(fileName).replace(/[^a-zA-Z0-9._-]/g, '');
-      if (!sanitizedFileName || sanitizedFileName.startsWith('.')) {
+      if (!sanitizedFileName || sanitizedFileName.startsWith('.') || sanitizedFileName.length > 100) {
+        auditLog("SUSPICIOUS_FILE_UPLOAD", {
+          userId,
+          originalName: req.file.originalname,
+          sanitizedName: sanitizedFileName,
+          reason: "Invalid filename after sanitization"
+        }, req);
         return res.status(400).json({ 
           success: false, 
           message: 'Invalid filename' 
@@ -1932,36 +1811,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const fullPath = path.join(uploadDir, sanitizedFileName);
       
-      // SECURITY: Validate file path is within upload directory
+      // SECURITY: Enhanced path validation
       const normalizedPath = path.normalize(fullPath);
-      if (!normalizedPath.startsWith(path.normalize(uploadDir))) {
+      const normalizedUploadDir = path.normalize(uploadDir);
+      if (!normalizedPath.startsWith(normalizedUploadDir + path.sep) && normalizedPath !== normalizedUploadDir) {
+        auditLog("PATH_TRAVERSAL_ATTEMPT", {
+          userId,
+          attemptedPath: fullPath,
+          normalizedPath,
+          uploadDir: normalizedUploadDir
+        }, req);
         return res.status(400).json({ 
           success: false, 
           message: 'Invalid file path' 
         });
       }
       
-      fs.writeFileSync(fullPath, req.file.buffer);
+      // SECURITY: Clean up old profile photos to prevent storage abuse
+      try {
+        const existingUser = await storage.getUser(userId);
+        if (existingUser?.profilePhoto && existingUser.profilePhoto.startsWith('/uploads/')) {
+          const oldFilePath = path.join(process.cwd(), 'server', existingUser.profilePhoto);
+          if (fs.existsSync(oldFilePath)) {
+            fs.unlinkSync(oldFilePath);
+          }
+        }
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup old profile photo:', cleanupError);
+      }
+      
+      // SECURITY: Write file with restricted permissions
+      fs.writeFileSync(fullPath, req.file.buffer, { mode: 0o644 });
 
       // Update user profile photo in database with the correct path
       const profilePhotoUrl = `/uploads/${sanitizedFileName}`;
-      await storage.updateProfilePhoto(session.userId, profilePhotoUrl);
+      await storage.updateProfilePhoto(userId, profilePhotoUrl);
 
       console.log('📷 [PROFILE-UPLOAD] File saved:', {
         originalName: req.file.originalname,
         savedAs: sanitizedFileName,
         fullPath,
         profilePhotoUrl,
-        userId: session.userId
+        userId: userId
       });
 
       // Get updated user data
-      const updatedUser = await storage.getUser(session.userId);
+      const updatedUser = await storage.getUser(userId);
       
       auditLog("PROFILE_PHOTO_UPDATED", {
-        userId: session.userId,
-        fileName,
-        fileSize: req.file.size
+        userId: userId,
+        fileName: sanitizedFileName,
+        originalName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype
       }, req);
       
       res.json({ 
@@ -1971,7 +1873,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: updatedUser 
       });
     } catch (error) {
-      console.error('Error uploading profile photo:', error);
+      console.error('❌ [PROFILE-UPLOAD] Upload failed:', error);
+      
+      // SECURITY: Log upload failures for monitoring
+      try {
+        auditLog("PROFILE_UPLOAD_FAILED", {
+          userId: req.user?.id || 'unknown',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          originalName: req.file?.originalname || 'unknown'
+        }, req);
+      } catch (auditError) {
+        console.error('Failed to log audit event:', auditError);
+      }
+      
+      // SECURITY: Handle multer errors specifically
+      if (error instanceof Error) {
+        if (error.message.includes('File too large')) {
+          return res.status(400).json({ message: "File too large. Maximum size is 2MB" });
+        }
+        if (error.message.includes('Invalid file type')) {
+          return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and GIF are allowed" });
+        }
+      }
+      
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -3319,11 +3243,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/battles/:id', async (req, res) => {
+  app.get('/api/battles/:id', requireAuth, async (req, res) => {
     try {
       const battleId = parseInt(req.params.id);
       
-      // Simulate battle data
+      // SECURITY: Validate battle ID
+      if (!battleId || isNaN(battleId)) {
+        return res.status(400).json({ message: 'Invalid battle ID' });
+      }
+      
+      // SECURITY: Check if user has access to view this battle
+      const userId = req.user!.id;
+      
+      // Simulate battle data (SECURITY: In production, verify user access)
       const battle = {
         id: battleId,
         challengerId: 37,
@@ -3358,15 +3290,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Join battle endpoint dengan Anti-Last Minute Joining System
-  app.post('/api/battles/:id/join', async (req, res) => {
-    if (!(req as any).session?.userId) {
-      return res.status(401).json({ message: 'Authentication required' });
-    }
-
+  // SECURITY: Join battle endpoint dengan Anti-Last Minute Joining System
+  app.post('/api/battles/:id/join', requireAuth, async (req, res) => {
     try {
       const battleId = parseInt(req.params.id);
-      const userId = (req as any).session.userId;
+      const userId = req.user!.id;
+      
+      // SECURITY: Validate battle ID
+      if (!battleId || isNaN(battleId)) {
+        return res.status(400).json({ message: 'Invalid battle ID' });
+      }
       const { challengedPrediction } = req.body;
 
       // Validate input
@@ -3437,13 +3370,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/battles/:id/spectate', async (req, res) => {
-    if (!(req as any).session?.userId) {
-      return res.status(401).json({ message: 'Authentication required' });
-    }
-
+  app.post('/api/battles/:id/spectate', requireAuth, async (req, res) => {
     try {
       const battleId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // SECURITY: Validate battle ID
+      if (!battleId || isNaN(battleId)) {
+        return res.status(400).json({ message: 'Invalid battle ID' });
+      }
+      
+      // SECURITY: Verify battle exists and is spectatable
+      const battle = await storage.getBattle(battleId);
+      if (!battle) {
+        return res.status(404).json({ message: 'Battle not found' });
+      }
+      
+      // SECURITY: Only allow spectating on live battles
+      if (battle.status !== 'live' && battle.status !== 'active') {
+        return res.status(400).json({ message: 'Battle is not available for spectating' });
+      }
+      
+      // SECURITY: Users cannot spectate their own battles
+      if (battle.challengerId === userId || battle.challengedId === userId) {
+        return res.status(400).json({ message: 'Cannot spectate your own battle' });
+      }
+      
       res.json({ message: 'Added as spectator', battleId });
     } catch (error) {
       console.error('Error adding spectator:', error);
@@ -3451,9 +3403,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/battles/:id/spectators', async (req, res) => {
+  app.get('/api/battles/:id/spectators', requireAuth, async (req, res) => {
     try {
       const battleId = parseInt(req.params.id);
+      
+      // SECURITY: Validate battle ID
+      if (!battleId || isNaN(battleId)) {
+        return res.status(400).json({ message: 'Invalid battle ID' });
+      }
+      
+      // SECURITY: Verify battle exists
+      const battle = await storage.getBattle(battleId);
+      if (!battle) {
+        return res.status(404).json({ message: 'Battle not found' });
+      }
       
       // Simulate spectators data
       const spectators = [
@@ -3480,15 +3443,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/battles/:id/comment', async (req, res) => {
-    if (!(req as any).session?.userId) {
-      return res.status(401).json({ message: 'Authentication required' });
-    }
-
+  app.post('/api/battles/:id/comment', requireAuth, async (req, res) => {
     try {
       const battleId = parseInt(req.params.id);
       const { message } = req.body;
-      const userId = (req as any).session.userId;
+      const userId = req.user!.id;
+      
+      // SECURITY: Validate battle ID
+      if (!battleId || isNaN(battleId)) {
+        return res.status(400).json({ message: 'Invalid battle ID' });
+      }
+      
+      // SECURITY: Verify battle exists and user has access to comment
+      const battle = await storage.getBattle(battleId);
+      if (!battle) {
+        return res.status(404).json({ message: 'Battle not found' });
+      }
+      
+      // SECURITY: Only allow comments on live or completed battles
+      if (!['live', 'completed', 'active'].includes(battle.status)) {
+        return res.status(400).json({ message: 'Comments not allowed on this battle' });
+      }
 
       if (!message || message.trim().length === 0) {
         return res.status(400).json({ message: 'Comment message required' });
@@ -6110,69 +6085,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Image upload route for banners
-  app.post('/api/admin/upload-banner-image', requireAdmin, async (req: Request, res: Response) => {
+  // SECURITY: Image upload route for banners with enhanced protection
+  app.post('/api/admin/upload-banner-image', requireAdmin, upload.single('image'), async (req: Request, res: Response) => {
     try {
-      const multer = (await import('multer')).default;
-      
-      // Ensure uploads directory exists
-      const uploadsDir = path.join(process.cwd(), 'server', 'uploads');
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
       }
       
-      // Configure multer for file upload
-      const multerStorage = multer.diskStorage({
-        destination: (req: any, file: any, cb: any) => {
-          cb(null, uploadsDir);
-        },
-        filename: (req: any, file: any, cb: any) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-          cb(null, 'banner-' + uniqueSuffix + path.extname(file.originalname));
-        }
+      // SECURITY: Additional validation for banner images
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        auditLog("SUSPICIOUS_BANNER_UPLOAD", {
+          adminId: req.user!.id,
+          mimeType: req.file.mimetype,
+          originalName: req.file.originalname,
+          reason: "Invalid MIME type"
+        }, req);
+        return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and GIF are allowed" });
+      }
+      
+      // SECURITY: Banner size limit (4MB for banners)
+      if (req.file.size > 4 * 1024 * 1024) {
+        auditLog("SUSPICIOUS_BANNER_UPLOAD", {
+          adminId: req.user!.id,
+          fileSize: req.file.size,
+          originalName: req.file.originalname,
+          reason: "File too large"
+        }, req);
+        return res.status(400).json({ message: "File too large. Maximum size is 4MB" });
+      }
+      
+      // SECURITY: Generate secure filename for banner
+      const crypto = await import('crypto');
+      const fileExtension = path.extname(req.file.originalname).toLowerCase();
+      const secureHash = crypto.default.randomBytes(16).toString('hex');
+      const fileName = `banner_${Date.now()}_${secureHash}${fileExtension}`;
+      
+      // SECURITY: Create secure upload directory
+      const uploadsDir = path.join(process.cwd(), 'server', 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true, mode: 0o755 });
+      }
+      
+      // SECURITY: Enhanced filename sanitization
+      const sanitizedFileName = path.basename(fileName).replace(/[^a-zA-Z0-9._-]/g, '');
+      if (!sanitizedFileName || sanitizedFileName.startsWith('.') || sanitizedFileName.length > 100) {
+        auditLog("SUSPICIOUS_BANNER_UPLOAD", {
+          adminId: req.user!.id,
+          originalName: req.file.originalname,
+          sanitizedName: sanitizedFileName,
+          reason: "Invalid filename after sanitization"
+        }, req);
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid filename' 
+        });
+      }
+      
+      const fullPath = path.join(uploadsDir, sanitizedFileName);
+      
+      // SECURITY: Enhanced path validation
+      const normalizedPath = path.normalize(fullPath);
+      const normalizedUploadDir = path.normalize(uploadsDir);
+      if (!normalizedPath.startsWith(normalizedUploadDir + path.sep) && normalizedPath !== normalizedUploadDir) {
+        auditLog("PATH_TRAVERSAL_ATTEMPT", {
+          adminId: req.user!.id,
+          attemptedPath: fullPath,
+          normalizedPath,
+          uploadDir: normalizedUploadDir
+        }, req);
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid file path' 
+        });
+      }
+      
+      // SECURITY: Write file with restricted permissions
+      fs.writeFileSync(fullPath, req.file.buffer, { mode: 0o644 });
+      
+      // Return the file URL
+      const imageUrl = `/uploads/${sanitizedFileName}`;
+      
+      auditLog("BANNER_IMAGE_UPLOADED", {
+        adminId: req.user!.id,
+        fileName: sanitizedFileName,
+        originalName: req.file.originalname,
+        fileSize: req.file.size,
+        imageUrl
+      }, req);
+      
+      console.log('🖼️ [BANNER-UPLOAD] File saved:', {
+        originalName: req.file.originalname,
+        savedAs: sanitizedFileName,
+        fullPath,
+        imageUrl,
+        adminId: req.user!.id
       });
       
-      // SECURITY FIX: Configure secure multer for admin uploads
-      const upload = multer({
-        storage: multerStorage,
-        limits: {
-          fileSize: MAX_FILE_SIZE, // Use global secure limit
-          files: 1,
-          fieldSize: 1024 * 100,
-        },
-        fileFilter: (req: any, file: any, cb: any) => {
-          // Enhanced validation for admin uploads
-          if (!ALLOWED_IMAGE_TYPES.includes(file.mimetype.toLowerCase())) {
-            return cb(new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.'), false);
-          }
-          
-          const ext = path.extname(file.originalname).toLowerCase();
-          if (!ALLOWED_EXTENSIONS.includes(ext)) {
-            return cb(new Error('Invalid file extension.'), false);
-          }
-          
-          cb(null, true);
-        }
-      });
-      
-      // Handle upload
-      upload.single('image')(req, res, (err: any) => {
-        if (err) {
-          console.error('Upload error:', err);
-          return res.status(400).json({ message: err.message || 'Upload failed' });
-        }
-        
-        if (!req.file) {
-          return res.status(400).json({ message: 'No file uploaded' });
-        }
-        
-        // Return the file URL
-        const imageUrl = `/uploads/${req.file.filename}`;
-        res.json({ imageUrl });
-      });
+      res.json({ imageUrl });
       
     } catch (error) {
-      console.error('Error uploading banner image:', error);
+      console.error('❌ [BANNER-UPLOAD] Upload failed:', error);
+      
+      // SECURITY: Log upload failures for monitoring
+      try {
+        auditLog("BANNER_UPLOAD_FAILED", {
+          adminId: req.user?.id || 'unknown',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          originalName: req.file?.originalname || 'unknown'
+        }, req);
+      } catch (auditError) {
+        console.error('Failed to log audit event:', auditError);
+      }
+      
       res.status(500).json({ message: 'Failed to upload image' });
     }
   });
@@ -10116,127 +10141,43 @@ Manual balance correction required IMMEDIATELY!`;
   wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
   wss.on('connection', (ws, req) => {
-    console.log('🔒 [WEBSOCKET-SECURITY] New WebSocket connection attempt');
+    console.log('WebSocket connection established');
     let currentUserId: number | null = null;
     let isAdmin = false;
-    let isAuthenticated = false;
-    let connectionTimeout: NodeJS.Timeout;
     
-    // SECURITY FIX: Set connection timeout for unauthenticated connections
-    connectionTimeout = setTimeout(() => {
-      if (!isAuthenticated) {
-        console.log('🚫 [WEBSOCKET-SECURITY] Closing unauthenticated connection after timeout');
-        ws.close(1008, 'Authentication timeout');
-      }
-    }, 30000); // 30 second timeout for authentication
-    
-    ws.on('message', async (message) => {
+    ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
         
-        // SECURITY FIX: Require authentication before any operations
-        if (!isAuthenticated && data.type !== 'authenticate') {
-          ws.send(JSON.stringify({ 
-            type: 'error', 
-            message: 'Authentication required. Send authenticate message first.' 
-          }));
-          return;
-        }
-        
-        // Authentication endpoint for WebSocket connections
-        if (data.type === 'authenticate') {
-          const { sessionId, userId, walletAddress } = data;
-          
-          // Validate authentication data (sessionId is optional)
-          if (!userId || !walletAddress) {
-            ws.send(JSON.stringify({ 
-              type: 'auth_error', 
-              message: 'Missing userId or walletAddress' 
-            }));
-            return;
-          }
-          
-          // SECURITY: Validate user exists and session matches
-          try {
-            const user = await storage.getUserById(userId);
-            if (!user || normalizeWalletAddress(user.walletAddress) !== normalizeWalletAddress(walletAddress)) {
-              console.log(`🚫 [WEBSOCKET-SECURITY] Invalid authentication attempt for user ${userId}`);
-              ws.send(JSON.stringify({ 
-                type: 'auth_error', 
-                message: 'Invalid authentication credentials' 
-              }));
-              ws.close(1008, 'Authentication failed');
-              return;
-            }
-            
-            // Set authenticated state
-            isAuthenticated = true;
-            currentUserId = userId;
-            isAdmin = user.isAdmin || false;
-            
-            // Clear authentication timeout
-            if (connectionTimeout) {
-              clearTimeout(connectionTimeout);
-            }
-            
-            console.log(`🔓 [WEBSOCKET-SECURITY] User ${userId} authenticated successfully`);
-            ws.send(JSON.stringify({ 
-              type: 'authenticated', 
-              message: 'Authentication successful',
-              userId: userId,
-              isAdmin: isAdmin
-            }));
-            
-          } catch (error) {
-            console.error('🚫 [WEBSOCKET-SECURITY] Authentication error:', error);
-            ws.send(JSON.stringify({ 
-              type: 'auth_error', 
-              message: 'Authentication failed' 
-            }));
-            ws.close(1008, 'Authentication error');
-            return;
-          }
-        }
-        
-        // Register admin clients for real-time updates (requires authentication)
-        else if (data.type === 'admin_register') {
-          if (!isAdmin) {
-            ws.send(JSON.stringify({ 
-              type: 'error', 
-              message: 'Admin privileges required' 
-            }));
-            return;
-          }
-          
+        // Register admin clients for real-time updates
+        if (data.type === 'admin_register') {
           adminClients.add(ws);
-          console.log(`🔑 [WEBSOCKET-SECURITY] Admin user ${currentUserId} registered for updates`);
+          isAdmin = true;
+          console.log('Admin client registered for real-time updates');
           ws.send(JSON.stringify({ type: 'registered', message: 'Successfully registered for admin updates' }));
         }
         
-        // Register user clients for real-time notifications (requires authentication)
+        // Register user clients for real-time notifications
         else if (data.type === 'user_register') {
-          if (!currentUserId) {
+          const { userId } = data;
+          if (userId && typeof userId === 'number') {
+            currentUserId = userId;
+            
+            // Initialize user connections set if not exists
+            if (!userClients.has(userId)) {
+              userClients.set(userId, new Set());
+            }
+            
+            // Add this connection to user's connections
+            userClients.get(userId)!.add(ws);
+            
+            console.log(`📱 [REAL-TIME] User ${userId} registered for notifications`);
             ws.send(JSON.stringify({ 
-              type: 'error', 
-              message: 'User ID not found in authenticated session' 
+              type: 'user_registered', 
+              message: 'Successfully registered for notifications',
+              userId: userId
             }));
-            return;
           }
-          
-          // Initialize user connections set if not exists
-          if (!userClients.has(currentUserId)) {
-            userClients.set(currentUserId, new Set());
-          }
-          
-          // Add this connection to user's connections
-          userClients.get(currentUserId)!.add(ws);
-          
-          console.log(`📱 [WEBSOCKET-SECURITY] Authenticated user ${currentUserId} registered for notifications`);
-          ws.send(JSON.stringify({ 
-            type: 'user_registered', 
-            message: 'Successfully registered for notifications',
-            userId: currentUserId
-          }));
         }
         
         // Ping/Pong for connection health check
@@ -10250,19 +10191,14 @@ Manual balance correction required IMMEDIATELY!`;
     });
     
     ws.on('close', () => {
-      // Clear authentication timeout if still active
-      if (connectionTimeout) {
-        clearTimeout(connectionTimeout);
-      }
-      
       // Remove from admin clients
-      if (isAdmin && isAuthenticated) {
+      if (isAdmin) {
         adminClients.delete(ws);
-        console.log(`🔑 [WEBSOCKET-SECURITY] Admin user ${currentUserId} disconnected`);
+        console.log('Admin client disconnected');
       }
       
       // Remove from user clients
-      if (currentUserId && isAuthenticated) {
+      if (currentUserId) {
         const userConnections = userClients.get(currentUserId);
         if (userConnections) {
           userConnections.delete(ws);
@@ -10272,9 +10208,7 @@ Manual balance correction required IMMEDIATELY!`;
             userClients.delete(currentUserId);
           }
         }
-        console.log(`📱 [WEBSOCKET-SECURITY] Authenticated user ${currentUserId} disconnected`);
-      } else if (!isAuthenticated) {
-        console.log('🚫 [WEBSOCKET-SECURITY] Unauthenticated connection closed');
+        console.log(`📱 [REAL-TIME] User ${currentUserId} disconnected`);
       }
     });
     

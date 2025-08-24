@@ -127,13 +127,13 @@
     "@types/react-dom": "^18.3.1",
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.7.0",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "^10.4.21",
     "drizzle-kit": "^0.30.6",
-    "esbuild": "^0.25.8",
-    "postcss": "^8.4.47",
+    "esbuild": "^0.25.9",
+    "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.20.3",
-    "typescript": "^5.6.3",
+    "typescript": "^5.9.2",
     "vite": "^5.4.19"
   },
   "optionalDependencies": {

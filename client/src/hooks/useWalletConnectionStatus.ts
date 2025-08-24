@@ -89,14 +89,9 @@ export function useWalletConnectionStatus() {
   const isFrequentDisconnection = () => {
     const recentEvents = connectionHistory.current
       .filter(event => event.type === 'disconnected')
-      .filter(event => Date.now() - event.timestamp < 120000); // Extended to 2 minutes for production stability
+      .filter(event => Date.now() - event.timestamp < 60000); // Last minute
     
-    // More lenient in production - require 5 disconnections instead of 3
-    const isProduction = window.location.hostname.includes('replit.app') || 
-                        window.location.hostname.includes('nectiq');
-    const threshold = isProduction ? 5 : 3;
-    
-    return recentEvents.length >= threshold;
+    return recentEvents.length >= 3;
   };
 
   // Handle wallet connection changes
@@ -153,25 +148,12 @@ export function useWalletConnectionStatus() {
       
       // Different messages based on disconnection frequency
       if (isFrequent) {
-        // More gentle message for production
-        const isProduction = window.location.hostname.includes('replit.app') || 
-                            window.location.hostname.includes('nectiq');
-        
-        if (isProduction) {
-          showConnectionNotification(
-            "Wallet Disconnected",
-            "Connection lost. Click Connect Wallet to reconnect if needed.",
-            'default',
-            4000
-          );
-        } else {
-          showConnectionNotification(
-            "Wallet Connection Unstable",
-            "Multiple disconnections detected. Please check your wallet extension.",
-            'destructive',
-            6000
-          );
-        }
+        showConnectionNotification(
+          "Wallet Connection Unstable",
+          "Multiple disconnections detected. Please check your wallet extension.",
+          'destructive',
+          6000
+        );
         
         setConnectionQuality(prev => ({
           isStable: false,

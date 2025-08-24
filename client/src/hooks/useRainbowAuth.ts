@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { apiRequest, setGlobalWalletAddress } from '@/lib/queryClient';
 import type { User } from "@shared/schema";
+import { useWalletConnectionStatus } from './useWalletConnectionStatus';
 import { getStoredReferralCode, clearStoredReferralCode } from '@/lib/referralHandler';
 
 export function useRainbowAuth() {
@@ -14,74 +15,22 @@ export function useRainbowAuth() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   
-  // Manual wallet detection fallback
-  const [manualAddress, setManualAddress] = React.useState<string | null>(null);
-  const [isManuallyConnected, setIsManuallyConnected] = React.useState(false);
-  
-  // Manual wallet detection as backup
-  React.useEffect(() => {
-    const checkWalletConnection = async () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts && accounts.length > 0) {
-            setManualAddress(accounts[0]);
-            setIsManuallyConnected(true);
-          } else {
-            setManualAddress(null);
-            setIsManuallyConnected(false);
-          }
-        } catch (error) {
-          setManualAddress(null);
-          setIsManuallyConnected(false);
-        }
-      } else {
-        setManualAddress(null);
-        setIsManuallyConnected(false);
-      }
-    };
-    
-    checkWalletConnection();
-    const interval = setInterval(checkWalletConnection, 5000); // Check every 5 seconds
-    return () => clearInterval(interval);
-  }, []);
-  
-  // Use manual detection as fallback
-  const finalAddress = address || manualAddress;
-  const finalIsConnected = isConnected || isManuallyConnected;
+  // Initialize connection status monitoring
+  const connectionStatus = useWalletConnectionStatus();
 
-  // Get user data from backend with fallback detection
-  const { data: user, isLoading } = useQuery<User>({
+  // Get user data from backend
+  const { data: user, isLoading, refetch: refetchUser } = useQuery<User>({
     queryKey: ["/api/user"],
-    enabled: finalIsConnected && !!finalAddress,
-    refetchInterval: 30000, // Reduced from 10s to 30s to avoid rate limiting
-    staleTime: 25000,
+    enabled: isConnected && !!address,
+    refetchInterval: 10000,
+    staleTime: 0, // Don't use stale data, always refetch
+    retry: 3,
+    retryDelay: 1000,
   });
-
-  // Rate limiting state
-  const [lastAuthAttempt, setLastAuthAttempt] = React.useState<number>(0);
-  const [authRetryCount, setAuthRetryCount] = React.useState<number>(0);
-  
-  // Rate limiting utility
-  const checkRateLimit = () => {
-    const now = Date.now();
-    const timeSinceLastAttempt = now - lastAuthAttempt;
-    const minInterval = Math.min(1000 * Math.pow(1.5, authRetryCount), 10000); // Gentler backoff, max 10s
-    
-    if (timeSinceLastAttempt < minInterval) {
-      const waitTime = minInterval - timeSinceLastAttempt;
-      throw new Error(`Rate limit: Please wait ${Math.ceil(waitTime / 1000)}s before trying again.`);
-    }
-    
-    setLastAuthAttempt(now);
-  };
 
   // Wallet authentication mutation
   const authenticateWalletMutation = useMutation({
     mutationFn: async (walletAddress: string) => {
-      // Check rate limiting first
-      checkRateLimit();
-      
       console.log('🌈 [RAINBOW] Authenticating wallet:', walletAddress);
       console.log('🌈 [RAINBOW] Chain info:', { chainId: chain?.id, chainName: chain?.name });
       
@@ -111,28 +60,18 @@ export function useRainbowAuth() {
         console.log('🌈 [RAINBOW] Response status:', response.status);
         console.log('🌈 [RAINBOW] Response headers:', Object.fromEntries(response.headers.entries()));
 
-        if (response.status === 429) {
-          setAuthRetryCount(prev => prev + 1);
-          throw new Error('Too many requests. Please try again later.');
-        }
-
         if (!response.ok) {
           const errorData = await response.text();
           console.error('🌈 [RAINBOW] Error response:', errorData);
-          setAuthRetryCount(prev => prev + 1);
           throw new Error(errorData || `HTTP ${response.status}: Authentication failed`);
         }
 
         const result = await response.json();
         console.log('🌈 [RAINBOW] Success response:', result);
-        
-        // Reset retry count on success
-        setAuthRetryCount(0);
         return result;
       } catch (error) {
         console.error('🌈 [RAINBOW] Network error:', error);
         if (error instanceof TypeError && error.message.includes('fetch')) {
-          setAuthRetryCount(prev => prev + 1);
           throw new Error('Network connection failed. Please check your internet connection.');
         }
         throw error;
@@ -150,8 +89,25 @@ export function useRainbowAuth() {
       // Note: Wallet connection notification is handled by useWalletConnectionStatus
       // to prevent duplicate notifications and ensure it only shows on first connection
 
-      // Refresh user data
+      // Force refresh user data to get complete user object with uid
+      console.log('🔄 [RAINBOW] Force refreshing user data after authentication...');
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Multiple attempts to ensure data is loaded
+      setTimeout(() => {
+        console.log('🔄 [RAINBOW] First refetch attempt...');
+        refetchUser();
+      }, 200);
+      
+      setTimeout(() => {
+        console.log('🔄 [RAINBOW] Second refetch attempt...');
+        refetchUser();
+      }, 1000);
+      
+      setTimeout(() => {
+        console.log('🔄 [RAINBOW] Third refetch attempt...');
+        refetchUser();
+      }, 2000);
       
       // Redirect to dashboard if on landing page
       setLocation('/');
@@ -159,22 +115,14 @@ export function useRainbowAuth() {
     onError: (error: any) => {
       console.error('❌ [RAINBOW] Authentication failed:', error);
       
-      // Don't show toast for expected errors (rate limiting, network issues)
-      if (!error.message.includes('Rate limit') && 
-          !error.message.includes('Too many requests') &&
-          !error.message.includes('Network connection failed')) {
-        toast({
-          title: "Connection Failed",
-          description: error.message || "Failed to authenticate wallet",
-          variant: "destructive",
-        });
-        
-        // Only disconnect on non-rate-limit errors
-        disconnect();
-      } else if (error.message.includes('Rate limit') || error.message.includes('Too many requests')) {
-        // Show user-friendly message for rate limiting, but less frequently
-        console.warn('🕒 [RAINBOW] Rate limited, waiting before retry...');
-      }
+      toast({
+        title: "Connection Failed", 
+        description: error.message || "Failed to authenticate wallet",
+        variant: "destructive"
+      });
+      
+      // Disconnect on auth failure
+      disconnect();
     },
   });
 
@@ -207,11 +155,13 @@ export function useRainbowAuth() {
       // Clear global wallet address
       setGlobalWalletAddress(null);
       
-      toast({
-        title: "Wallet Disconnected",
-        description: "Successfully logged out",
-        variant: "default"
-      });
+      // Use improved notification system
+      connectionStatus.showConnectionNotification(
+        "Wallet Disconnected",
+        address ? `Successfully logged out from ${address.slice(0, 6)}...${address.slice(-4)}` : "Wallet disconnected successfully",
+        'default',
+        4000
+      );
       
       // Redirect to home
       setLocation('/');
@@ -229,51 +179,57 @@ export function useRainbowAuth() {
 
   // Auto-authenticate when wallet connects and clear state when disconnected
   React.useEffect(() => {
+    console.log('🔍 [RAINBOW] useEffect state check:', {
+      isConnected,
+      hasAddress: !!address,
+      hasUser: !!user,
+      isUserLoading: isLoading,
+      isPending: authenticateWalletMutation.isPending,
+      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : null
+    });
 
-    if (!finalIsConnected) {
-      // Wallet disconnected - clear state
+    if (!isConnected) {
+      // Wallet is disconnected - clear all user state
       console.log('🌈 [RAINBOW] Wallet disconnected - clearing user state');
       queryClient.removeQueries({ queryKey: ["/api/user"] });
       setGlobalWalletAddress(null);
-    } else if (finalIsConnected && finalAddress && !user && !isLoading && !authenticateWalletMutation.isPending) {
-      console.log('🌈 [RAINBOW] Auto-authenticating wallet:', finalAddress);
-      authenticateWalletMutation.mutate(finalAddress);
+    } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
+      console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
+      authenticateWalletMutation.mutate(address);
+    } else if (isConnected && address && user) {
+      // User data exists, ensure it's complete - force refresh if missing uid
+      if (!user.uid || !user.username) {
+        console.log('🔄 [RAINBOW] User data incomplete, force refreshing...', { uid: user.uid, username: user.username });
+        refetchUser();
+      }
+    } else if (isConnected && address && !user && !isLoading) {
+      console.log('🔍 [RAINBOW] Authentication conditions not met:', {
+        isConnected,
+        hasAddress: !!address,
+        hasUser: !!user,
+        isUserLoading: isLoading,
+        isPending: authenticateWalletMutation.isPending
+      });
     }
-  }, [finalIsConnected, finalAddress, user, isLoading]);
+  }, [isConnected, address, user, isLoading]);
 
   // Set global wallet address for API requests
   React.useEffect(() => {
-    if (!finalIsConnected) {
+    if (!isConnected) {
+      // If wallet is disconnected, clear global address
       setGlobalWalletAddress(null);
-      console.log('🔐 [RAINBOW] Cleared global wallet address');
+      console.log('🔐 [RAINBOW] Wallet disconnected - cleared global wallet address');
     } else {
-      const walletAddress = user?.walletAddress || finalAddress;
+      const walletAddress = user?.walletAddress || address;
       setGlobalWalletAddress(walletAddress || null);
-      
-      // Store in localStorage and multiple global locations for WebSocket access
-      if (walletAddress) {
-        localStorage.setItem('connectedWallet', walletAddress);
-        localStorage.setItem('wallet_address', walletAddress);
-        (window as any).globalWalletAddress = walletAddress;
-        (window as any).connectedWallet = walletAddress;
-        // Also store in session storage as backup
-        sessionStorage.setItem('connectedWallet', walletAddress);
-      } else {
-        localStorage.removeItem('connectedWallet');
-        localStorage.removeItem('wallet_address');
-        (window as any).globalWalletAddress = null;
-        (window as any).connectedWallet = null;
-        sessionStorage.removeItem('connectedWallet');
-      }
-      
-      console.log('🔐 [RAINBOW] Updated global wallet address:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
+      console.log('🔐 [RAINBOW] Updated global wallet address for API requests:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
     }
-  }, [finalIsConnected, user?.walletAddress, finalAddress]);
+  }, [isConnected, user?.walletAddress, address]);
 
   return {
-    // Wallet state (with fallback)
-    address: finalAddress,
-    isConnected: finalIsConnected,
+    // Wallet state
+    address,
+    isConnected,
     chain,
     user,
     isLoading,
@@ -289,7 +245,7 @@ export function useRainbowAuth() {
     authError: authenticateWalletMutation.error,
     logoutError: logoutMutation.error,
     
-    // Actions
-    connect: () => window.location.reload(), // Simple fallback
+    // Connection status
+    connectionStatus,
   };
 }

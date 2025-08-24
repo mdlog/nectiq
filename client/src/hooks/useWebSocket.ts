@@ -94,70 +94,15 @@ class WebSocketManager {
           this.isConnecting = false;
           this.reconnectAttempts = 0;
           
-          // First authenticate, then register for notifications
+          // Register user for notifications
           if (this.currentUserId) {
-            // Get wallet address from multiple sources with debug logging
-            const sources = {
-              globalWalletAddress: (window as any).globalWalletAddress,
-              connectedWallet: (window as any).connectedWallet,
-              localStorage: localStorage.getItem('connectedWallet'),
-              walletAddress: localStorage.getItem('wallet_address'),
-              sessionStorage: sessionStorage.getItem('connectedWallet'),
-              ethereum: (window as any).ethereum?.selectedAddress
+            const registrationMessage = {
+              type: 'user_register',
+              userId: this.currentUserId
             };
             
-            console.log('🔍 [WEBSOCKET-DEBUG] Available wallet sources:', sources);
-            
-            const walletAddress = sources.globalWalletAddress || 
-                                sources.connectedWallet ||
-                                sources.localStorage ||
-                                sources.walletAddress ||
-                                sources.sessionStorage ||
-                                sources.ethereum;
-            
-            if (walletAddress) {
-              // Get session ID from cookies or generate one
-              const getSessionId = () => {
-                // Try to get session from cookies first
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                  const [name, value] = cookie.trim().split('=');
-                  if (name === 'connect.sid' || name === 'sessionId') {
-                    return value;
-                  }
-                }
-                
-                // If no session found, use user ID as session identifier
-                return `user_${this.currentUserId}_${Date.now()}`;
-              };
-              
-              const sessionId = getSessionId();
-              
-              const authMessage = {
-                type: 'authenticate',
-                sessionId: sessionId,
-                userId: this.currentUserId,
-                walletAddress: walletAddress
-              };
-              
-              ws.send(JSON.stringify(authMessage));
-              console.log(`🔐 [WEBSOCKET-MANAGER] Authenticating user ID: ${this.currentUserId} with wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`);
-              console.log('✅ [WEBSOCKET-DEBUG] Authentication message sent successfully');
-              
-              // Wait a bit then send registration
-              setTimeout(() => {
-                const registrationMessage = {
-                  type: 'user_register',
-                  userId: this.currentUserId
-                };
-                
-                ws.send(JSON.stringify(registrationMessage));
-                console.log(`📱 [WEBSOCKET-MANAGER] Registered for notifications, user ID: ${this.currentUserId}`);
-              }, 100);
-            } else {
-              console.warn('⚠️ [WEBSOCKET-MANAGER] No wallet address found for authentication');
-              console.warn('🔍 [WEBSOCKET-DEBUG] All wallet sources were null/undefined:', sources);
-            }
+            ws.send(JSON.stringify(registrationMessage));
+            console.log(`📱 [WEBSOCKET-MANAGER] Registered for notifications, user ID: ${this.currentUserId}`);
           }
           
           // Setup ping interval
@@ -178,10 +123,6 @@ class WebSocketManager {
             console.log('📨 [WEBSOCKET-MANAGER] Received message:', message);
             
             switch (message.type) {
-              case 'authenticated':
-                console.log('🔐 [WEBSOCKET-MANAGER] Successfully authenticated');
-                break;
-                
               case 'user_registered':
                 console.log('📱 [WEBSOCKET-MANAGER] Successfully registered for notifications');
                 break;
@@ -196,14 +137,6 @@ class WebSocketManager {
                 
               case 'pong':
                 console.log('🏓 [WEBSOCKET-MANAGER] Ping response received');
-                break;
-                
-              case 'error':
-                console.error('❌ [WEBSOCKET-MANAGER] Server error:', message.message || 'Unknown error');
-                break;
-                
-              case 'auth_error':
-                console.error('🚫 [WEBSOCKET-MANAGER] Authentication error:', message.message || 'Auth failed');
                 break;
                 
               default:

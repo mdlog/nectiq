@@ -134,19 +134,6 @@ export function Header() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            {/* Fix Login button - Show when wallet connected but no user */}
-            {isConnected && address && !user && (
-              <Button 
-                onClick={() => window.location.reload()} 
-                variant="outline" 
-                size="sm"
-                className="bg-yellow-500/10 border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/20"
-              >
-                <Wallet className="w-4 h-4 mr-2" />
-                Fix Login
-              </Button>
-            )}
-            
             {/* Only show balance when wallet is connected and user is authenticated */}
             {isConnected && user && (
               <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
@@ -156,7 +143,7 @@ export function Header() {
               </div>
             )}
             
-            {isConnected && address && user ? (
+            {isConnected && address ? (
               <div className="flex items-center space-x-2">
                 {/* Notifications Badge */}
                 <NotificationsBadge />
@@ -333,7 +320,7 @@ export function Header() {
                   <span className="text-xs text-slate-400">NTIQ</span>
                 </div>
                 
-                {isConnected && address && user && (
+                {isConnected && address && (
                   <div className="flex items-center space-x-2">
                     <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded-lg border border-green-200 dark:border-green-800">
                       <Wallet className="text-green-600 dark:text-green-400" size={14} />
