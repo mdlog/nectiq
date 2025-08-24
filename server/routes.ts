@@ -35,12 +35,75 @@ function normalizeWalletAddress(address: string): string {
   return address.toLowerCase().trim();
 }
 
-// Configure multer for file uploads
+// SECURITY FIX: Enhanced file upload configuration with comprehensive validation
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/jpg', 
+  'image/png',
+  'image/webp',
+  'image/gif'
+];
+
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // Reduced to 2MB for security
+
+// Enhanced file validation function
+function validateUploadFile(file: Express.Multer.File): { valid: boolean; error?: string } {
+  // Check MIME type
+  if (!ALLOWED_IMAGE_TYPES.includes(file.mimetype.toLowerCase())) {
+    return { valid: false, error: 'Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.' };
+  }
+
+  // Check file extension
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    return { valid: false, error: 'Invalid file extension. Only .jpg, .jpeg, .png, .webp, .gif files are allowed.' };
+  }
+
+  // Check file size
+  if (file.size > MAX_FILE_SIZE) {
+    return { valid: false, error: 'File too large. Maximum size is 2MB.' };
+  }
+
+  // Basic content validation - check magic bytes
+  const magicBytes = file.buffer?.slice(0, 8);
+  if (magicBytes) {
+    const isValidImage = 
+      (magicBytes[0] === 0xFF && magicBytes[1] === 0xD8) || // JPEG
+      (magicBytes[0] === 0x89 && magicBytes[1] === 0x50 && magicBytes[2] === 0x4E && magicBytes[3] === 0x47) || // PNG
+      (magicBytes[0] === 0x47 && magicBytes[1] === 0x49 && magicBytes[2] === 0x46) || // GIF
+      (magicBytes.includes(0x57, 0) && magicBytes.includes(0x45, 1)); // WebP
+
+    if (!isValidImage) {
+      return { valid: false, error: 'File content does not match expected image format.' };
+    }
+  }
+
+  // Check for executable content in filename
+  const dangerousExtensions = ['.exe', '.bat', '.cmd', '.com', '.scr', '.pif', '.js', '.vbs', '.php', '.asp', '.jsp'];
+  const lowerFilename = file.originalname.toLowerCase();
+  if (dangerousExtensions.some(ext => lowerFilename.includes(ext))) {
+    return { valid: false, error: 'Filename contains dangerous content.' };
+  }
+
+  return { valid: true };
+}
+
+// Configure secure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: MAX_FILE_SIZE,
+    files: 1, // Only allow single file upload
+    fieldSize: 1024 * 100, // 100KB for form fields
   },
+  fileFilter: (req, file, cb) => {
+    // Basic MIME type check during upload
+    if (!ALLOWED_IMAGE_TYPES.includes(file.mimetype.toLowerCase())) {
+      return cb(new Error('Invalid file type'), false);
+    }
+    cb(null, true);
+  }
 });
 
 // Real-time notification system with WebSocket
@@ -89,6 +152,119 @@ function broadcastNotification(userId: number, notification: any) {
 
 // Export the broadcast function for use by other services
 export const broadcastNotificationCallback = broadcastNotification;
+
+// SECURITY FIX: CSRF Protection Implementation
+import crypto from 'crypto';
+
+const csrfTokens = new Map<string, { token: string; expires: number; userId: number }>();
+const CSRF_TOKEN_EXPIRY = 4 * 60 * 60 * 1000; // 4 hours
+
+// Generate CSRF token for session
+function generateCSRFToken(userId: number): string {
+  const token = crypto.randomBytes(32).toString('hex');
+  const sessionId = crypto.randomBytes(16).toString('hex');
+  
+  csrfTokens.set(sessionId, {
+    token,
+    expires: Date.now() + CSRF_TOKEN_EXPIRY,
+    userId
+  });
+  
+  // Clean expired tokens
+  const now = Date.now();
+  for (const [id, data] of csrfTokens.entries()) {
+    if (data.expires < now) {
+      csrfTokens.delete(id);
+    }
+  }
+  
+  return `${sessionId}:${token}`;
+}
+
+// Validate CSRF token
+function validateCSRFToken(tokenString: string, userId: number): boolean {
+  if (!tokenString) return false;
+  
+  const [sessionId, token] = tokenString.split(':');
+  if (!sessionId || !token) return false;
+  
+  const stored = csrfTokens.get(sessionId);
+  if (!stored) return false;
+  
+  if (stored.expires < Date.now()) {
+    csrfTokens.delete(sessionId);
+    return false;
+  }
+  
+  return stored.token === token && stored.userId === userId;
+}
+
+// CSRF Protection Middleware
+function requireCSRF(req: Request, res: Response, next: NextFunction) {
+  const session = req.session as any;
+  if (!session?.userId) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+  
+  const token = req.headers['x-csrf-token'] as string || req.body.csrfToken;
+  if (!validateCSRFToken(token, session.userId)) {
+    auditLog('CSRF_VALIDATION_FAILED', {
+      userId: session.userId,
+      endpoint: req.path,
+      method: req.method,
+      userAgent: req.headers['user-agent']
+    }, req);
+    
+    return res.status(403).json({ 
+      message: 'Invalid or expired CSRF token',
+      code: 'CSRF_INVALID'
+    });
+  }
+  
+  next();
+}
+
+// Session Security Enhancements
+const SESSION_TIMEOUT = 4 * 60 * 60 * 1000; // 4 hours
+const sessionActivity = new Map<number, number>();
+
+// Update session activity
+function updateSessionActivity(userId: number) {
+  sessionActivity.set(userId, Date.now());
+}
+
+// Check session validity
+function isSessionValid(userId: number): boolean {
+  const lastActivity = sessionActivity.get(userId);
+  if (!lastActivity) return false;
+  
+  return Date.now() - lastActivity < SESSION_TIMEOUT;
+}
+
+// Enhanced session validation middleware
+function validateSession(req: Request, res: Response, next: NextFunction) {
+  const session = req.session as any;
+  if (!session?.userId) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+  
+  // Check session timeout
+  if (!isSessionValid(session.userId)) {
+    req.session.destroy((err) => {
+      if (err) console.error('Session destruction error:', err);
+    });
+    
+    return res.status(401).json({ 
+      message: 'Session expired',
+      code: 'SESSION_EXPIRED'
+    });
+  }
+  
+  // Update activity
+  updateSessionActivity(session.userId);
+  
+  next();
+}
 
 // Security audit logs storage in memory
 const securityAuditLogs: Array<{
@@ -1686,15 +1862,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-      if (!allowedTypes.includes(req.file.mimetype)) {
-        return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and GIF are allowed" });
-      }
-
-      // Validate file size (max 5MB)
-      if (req.file.size > 5 * 1024 * 1024) {
-        return res.status(400).json({ message: "File too large. Maximum size is 5MB" });
+      // SECURITY FIX: Comprehensive file validation using new security function
+      const validation = validateUploadFile(req.file);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
       }
 
       // Generate unique filename
@@ -5919,17 +6090,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
+      // SECURITY FIX: Configure secure multer for admin uploads
       const upload = multer({
         storage: multerStorage,
         limits: {
-          fileSize: 5 * 1024 * 1024 // 5MB limit
+          fileSize: MAX_FILE_SIZE, // Use global secure limit
+          files: 1,
+          fieldSize: 1024 * 100,
         },
         fileFilter: (req: any, file: any, cb: any) => {
-          if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-          } else {
-            cb(new Error('Only image files are allowed'), false);
+          // Enhanced validation for admin uploads
+          if (!ALLOWED_IMAGE_TYPES.includes(file.mimetype.toLowerCase())) {
+            return cb(new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.'), false);
           }
+          
+          const ext = path.extname(file.originalname).toLowerCase();
+          if (!ALLOWED_EXTENSIONS.includes(ext)) {
+            return cb(new Error('Invalid file extension.'), false);
+          }
+          
+          cb(null, true);
         }
       });
       
@@ -9894,43 +10074,127 @@ Manual balance correction required IMMEDIATELY!`;
   wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
   wss.on('connection', (ws, req) => {
-    console.log('WebSocket connection established');
+    console.log('🔒 [WEBSOCKET-SECURITY] New WebSocket connection attempt');
     let currentUserId: number | null = null;
     let isAdmin = false;
+    let isAuthenticated = false;
+    let connectionTimeout: NodeJS.Timeout;
+    
+    // SECURITY FIX: Set connection timeout for unauthenticated connections
+    connectionTimeout = setTimeout(() => {
+      if (!isAuthenticated) {
+        console.log('🚫 [WEBSOCKET-SECURITY] Closing unauthenticated connection after timeout');
+        ws.close(1008, 'Authentication timeout');
+      }
+    }, 30000); // 30 second timeout for authentication
     
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
         
-        // Register admin clients for real-time updates
-        if (data.type === 'admin_register') {
+        // SECURITY FIX: Require authentication before any operations
+        if (!isAuthenticated && data.type !== 'authenticate') {
+          ws.send(JSON.stringify({ 
+            type: 'error', 
+            message: 'Authentication required. Send authenticate message first.' 
+          }));
+          return;
+        }
+        
+        // Authentication endpoint for WebSocket connections
+        if (data.type === 'authenticate') {
+          const { sessionId, userId, walletAddress } = data;
+          
+          // Validate authentication data
+          if (!sessionId || !userId || !walletAddress) {
+            ws.send(JSON.stringify({ 
+              type: 'auth_error', 
+              message: 'Missing authentication data' 
+            }));
+            return;
+          }
+          
+          // SECURITY: Validate user exists and session matches
+          try {
+            const user = await storage.getUserById(userId);
+            if (!user || normalizeWalletAddress(user.walletAddress) !== normalizeWalletAddress(walletAddress)) {
+              console.log(`🚫 [WEBSOCKET-SECURITY] Invalid authentication attempt for user ${userId}`);
+              ws.send(JSON.stringify({ 
+                type: 'auth_error', 
+                message: 'Invalid authentication credentials' 
+              }));
+              ws.close(1008, 'Authentication failed');
+              return;
+            }
+            
+            // Set authenticated state
+            isAuthenticated = true;
+            currentUserId = userId;
+            isAdmin = user.isAdmin || false;
+            
+            // Clear authentication timeout
+            if (connectionTimeout) {
+              clearTimeout(connectionTimeout);
+            }
+            
+            console.log(`🔓 [WEBSOCKET-SECURITY] User ${userId} authenticated successfully`);
+            ws.send(JSON.stringify({ 
+              type: 'authenticated', 
+              message: 'Authentication successful',
+              userId: userId,
+              isAdmin: isAdmin
+            }));
+            
+          } catch (error) {
+            console.error('🚫 [WEBSOCKET-SECURITY] Authentication error:', error);
+            ws.send(JSON.stringify({ 
+              type: 'auth_error', 
+              message: 'Authentication failed' 
+            }));
+            ws.close(1008, 'Authentication error');
+            return;
+          }
+        }
+        
+        // Register admin clients for real-time updates (requires authentication)
+        else if (data.type === 'admin_register') {
+          if (!isAdmin) {
+            ws.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'Admin privileges required' 
+            }));
+            return;
+          }
+          
           adminClients.add(ws);
-          isAdmin = true;
-          console.log('Admin client registered for real-time updates');
+          console.log(`🔑 [WEBSOCKET-SECURITY] Admin user ${currentUserId} registered for updates`);
           ws.send(JSON.stringify({ type: 'registered', message: 'Successfully registered for admin updates' }));
         }
         
-        // Register user clients for real-time notifications
+        // Register user clients for real-time notifications (requires authentication)
         else if (data.type === 'user_register') {
-          const { userId } = data;
-          if (userId && typeof userId === 'number') {
-            currentUserId = userId;
-            
-            // Initialize user connections set if not exists
-            if (!userClients.has(userId)) {
-              userClients.set(userId, new Set());
-            }
-            
-            // Add this connection to user's connections
-            userClients.get(userId)!.add(ws);
-            
-            console.log(`📱 [REAL-TIME] User ${userId} registered for notifications`);
+          if (!currentUserId) {
             ws.send(JSON.stringify({ 
-              type: 'user_registered', 
-              message: 'Successfully registered for notifications',
-              userId: userId
+              type: 'error', 
+              message: 'User ID not found in authenticated session' 
             }));
+            return;
           }
+          
+          // Initialize user connections set if not exists
+          if (!userClients.has(currentUserId)) {
+            userClients.set(currentUserId, new Set());
+          }
+          
+          // Add this connection to user's connections
+          userClients.get(currentUserId)!.add(ws);
+          
+          console.log(`📱 [WEBSOCKET-SECURITY] Authenticated user ${currentUserId} registered for notifications`);
+          ws.send(JSON.stringify({ 
+            type: 'user_registered', 
+            message: 'Successfully registered for notifications',
+            userId: currentUserId
+          }));
         }
         
         // Ping/Pong for connection health check
@@ -9944,14 +10208,19 @@ Manual balance correction required IMMEDIATELY!`;
     });
     
     ws.on('close', () => {
+      // Clear authentication timeout if still active
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+      }
+      
       // Remove from admin clients
-      if (isAdmin) {
+      if (isAdmin && isAuthenticated) {
         adminClients.delete(ws);
-        console.log('Admin client disconnected');
+        console.log(`🔑 [WEBSOCKET-SECURITY] Admin user ${currentUserId} disconnected`);
       }
       
       // Remove from user clients
-      if (currentUserId) {
+      if (currentUserId && isAuthenticated) {
         const userConnections = userClients.get(currentUserId);
         if (userConnections) {
           userConnections.delete(ws);
@@ -9961,7 +10230,9 @@ Manual balance correction required IMMEDIATELY!`;
             userClients.delete(currentUserId);
           }
         }
-        console.log(`📱 [REAL-TIME] User ${currentUserId} disconnected`);
+        console.log(`📱 [WEBSOCKET-SECURITY] Authenticated user ${currentUserId} disconnected`);
+      } else if (!isAuthenticated) {
+        console.log('🚫 [WEBSOCKET-SECURITY] Unauthenticated connection closed');
       }
     });
     

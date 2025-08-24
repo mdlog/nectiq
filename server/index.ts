@@ -139,34 +139,46 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true in production with HTTPS
-    httpOnly: false, // Allow frontend access to session
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Allow cross-origin requests
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true, // SECURITY FIX: Prevent XSS access to cookies
+    maxAge: 4 * 60 * 60 * 1000, // SECURITY: Reduced to 4 hours
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax' // Stricter in production
   },
   name: 'connect.sid' // Explicit session name for proper authentication
 }));
 
-// Enhanced CORS middleware - Complete Dynamic SDK support
+// Enhanced CORS middleware - Secure production configuration
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Dynamic Labs specific domains for CORS
-  const allowedOrigins = [
+  // Environment-aware allowed origins for security
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const productionOrigins = [
     'https://app.dynamicauth.com',
     'https://api.dynamicauth.com',
     'https://auth.dynamicauth.com',
-    'https://dynamicauth.com',
-    'https://replit.dev',
-    'https://replit.app'
+    'https://dynamicauth.com'
   ];
   
-  // Handle undefined origin and determine CORS origin
-  let corsOrigin = '*';
+  const developmentOrigins = [
+    ...productionOrigins,
+    'https://replit.dev',
+    'https://replit.app',
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5000'
+  ];
+  
+  const allowedOrigins = isDevelopment ? developmentOrigins : productionOrigins;
+  
+  // SECURITY FIX: Only allow whitelisted origins
+  let corsOrigin = 'null';
   if (origin && allowedOrigins.includes(origin)) {
     corsOrigin = origin;
-  } else if (origin) {
-    corsOrigin = origin; // Allow the current origin if defined
+  } else if (!origin && isDevelopment) {
+    // Only allow null origin in development for direct access
+    corsOrigin = '*';
   }
   
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
@@ -189,28 +201,40 @@ app.use((req, res, next) => {
   next();
 });
 
-// Enhanced security headers middleware for Dynamic SDK
+// Enhanced security headers middleware - Production-grade security
 app.use((req, res, next) => {
-  // Relaxed security headers for development and Dynamic SDK
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Allow all frames for Dynamic SDK
-  res.setHeader('X-XSS-Protection', '0'); // Disable XSS protection to avoid conflicts
-  res.setHeader('Referrer-Policy', 'unsafe-url'); // Allow full referrer for Dynamic SDK
+  const isDevelopment = process.env.NODE_ENV !== 'production';
   
-  // Ultra-permissive CSP for Dynamic SDK and wallet authentication
-  res.setHeader('Content-Security-Policy', [
-    "default-src 'self' 'unsafe-inline' 'unsafe-eval' *",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' * data: blob:",
-    "style-src 'self' 'unsafe-inline' * data:",
-    "font-src 'self' * data:",
-    "img-src 'self' * data: blob:",
-    "connect-src 'self' * data: blob: ws: wss:",
-    "frame-src 'self' *",
-    "child-src 'self' *",
-    "worker-src 'self' * blob:",
+  // SECURITY FIX: Enable proper security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', isDevelopment ? 'SAMEORIGIN' : 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // SECURITY FIX: Strict CSP with necessary allowances for Web3
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.dynamicauth.com https://api.dynamicauth.com https://auth.dynamicauth.com https://cdn.jsdelivr.net https://unpkg.com https://storage.googleapis.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://app.dynamicauth.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' https: data: blob:",
+    "connect-src 'self' https: wss: ws:",
+    "frame-src 'self' https://app.dynamicauth.com https://verify.walletconnect.com",
+    "child-src 'self' https://app.dynamicauth.com",
+    "worker-src 'self' blob:",
     "object-src 'none'",
-    "media-src 'self' * data: blob:"
-  ].join('; '));
+    "base-uri 'self'",
+    "form-action 'self'",
+    "media-src 'self' data: blob:"
+  ];
+  
+  if (isDevelopment) {
+    // Add localhost for development
+    cspDirectives[1] += " http://localhost:* http://127.0.0.1:*";
+    cspDirectives[5] += " http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*";
+  }
+  
+  res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
   
   // HSTS for HTTPS
   if (req.secure) {
@@ -230,10 +254,12 @@ app.use('/attached_assets', express.static('attached_assets'));
 // Serve uploaded files (profile photos, banners, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Simple rate limiting middleware - adjusted for development
+// SECURITY FIX: Enhanced rate limiting middleware - production-grade protection
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 500; // Increased for development
+const isDevelopment = process.env.NODE_ENV !== 'production';
+// SECURITY: Reduced rate limits for better protection
+const MAX_REQUESTS_PER_WINDOW = isDevelopment ? 150 : 60; // Much lower for production
 
 app.use((req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
