@@ -215,12 +215,12 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', isDevelopment ? 'SAMEORIGIN' : 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'origin-when-cross-origin');
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
   
   // SECURITY FIX: Strict CSP with necessary allowances for Web3
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.dynamicauth.com https://api.dynamicauth.com https://auth.dynamicauth.com https://cdn.jsdelivr.net https://unpkg.com https://storage.googleapis.com https://s3.tradingview.com https://charting-library.tradingview.com https://www.tradingview.com https://tradingview-widget.com https://widget.tradingview.com https://*.tradingview.com data:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.dynamicauth.com https://api.dynamicauth.com https://auth.dynamicauth.com https://cdn.jsdelivr.net https://unpkg.com https://storage.googleapis.com https://s3.tradingview.com https://charting-library.tradingview.com https://www.tradingview.com https://tradingview-widget.com https://widget.tradingview.com https://widgetembed.tradingview.com https://*.tradingview.com data:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://app.dynamicauth.com https://www.tradingview.com https://s3.tradingview.com https://tradingview-widget.com https://widget.tradingview.com https://*.tradingview.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' https: data: blob:",

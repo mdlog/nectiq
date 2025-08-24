@@ -250,13 +250,20 @@ export function useRainbowAuth() {
       const walletAddress = user?.walletAddress || finalAddress;
       setGlobalWalletAddress(walletAddress || null);
       
-      // Store in localStorage for WebSocket access
+      // Store in localStorage and multiple global locations for WebSocket access
       if (walletAddress) {
         localStorage.setItem('connectedWallet', walletAddress);
+        localStorage.setItem('wallet_address', walletAddress);
         (window as any).globalWalletAddress = walletAddress;
+        (window as any).connectedWallet = walletAddress;
+        // Also store in session storage as backup
+        sessionStorage.setItem('connectedWallet', walletAddress);
       } else {
         localStorage.removeItem('connectedWallet');
+        localStorage.removeItem('wallet_address');
         (window as any).globalWalletAddress = null;
+        (window as any).connectedWallet = null;
+        sessionStorage.removeItem('connectedWallet');
       }
       
       console.log('🔐 [RAINBOW] Updated global wallet address:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');

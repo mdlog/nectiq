@@ -96,10 +96,24 @@ class WebSocketManager {
           
           // First authenticate, then register for notifications
           if (this.currentUserId) {
-            // Get wallet address from multiple sources
-            const walletAddress = (window as any).globalWalletAddress || 
-                                (window as any).ethereum?.selectedAddress ||
-                                localStorage.getItem('connectedWallet');
+            // Get wallet address from multiple sources with debug logging
+            const sources = {
+              globalWalletAddress: (window as any).globalWalletAddress,
+              connectedWallet: (window as any).connectedWallet,
+              localStorage: localStorage.getItem('connectedWallet'),
+              walletAddress: localStorage.getItem('wallet_address'),
+              sessionStorage: sessionStorage.getItem('connectedWallet'),
+              ethereum: (window as any).ethereum?.selectedAddress
+            };
+            
+            console.log('🔍 [WEBSOCKET-DEBUG] Available wallet sources:', sources);
+            
+            const walletAddress = sources.globalWalletAddress || 
+                                sources.connectedWallet ||
+                                sources.localStorage ||
+                                sources.walletAddress ||
+                                sources.sessionStorage ||
+                                sources.ethereum;
             
             if (walletAddress) {
               const authMessage = {
@@ -110,6 +124,7 @@ class WebSocketManager {
               
               ws.send(JSON.stringify(authMessage));
               console.log(`🔐 [WEBSOCKET-MANAGER] Authenticating user ID: ${this.currentUserId} with wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`);
+              console.log('✅ [WEBSOCKET-DEBUG] Authentication message sent successfully');
               
               // Wait a bit then send registration
               setTimeout(() => {
@@ -123,6 +138,7 @@ class WebSocketManager {
               }, 100);
             } else {
               console.warn('⚠️ [WEBSOCKET-MANAGER] No wallet address found for authentication');
+              console.warn('🔍 [WEBSOCKET-DEBUG] All wallet sources were null/undefined:', sources);
             }
           }
           
