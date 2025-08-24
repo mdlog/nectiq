@@ -149,11 +149,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: isProduction, // HTTPS only in production
-    httpOnly: false, // Allow frontend access to session (needed for production)
+    secure: false, // Disable HTTPS requirement temporarily for debugging
+    httpOnly: false, // Allow frontend access to session
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: isProduction ? 'lax' : 'lax', // Use 'lax' for production compatibility
-    domain: isProduction ? undefined : undefined // Let browser set domain automatically
+    sameSite: 'lax', // Compatible across environments
+    domain: undefined // Let browser set domain automatically
   },
   name: 'connect.sid'
 }));
@@ -176,7 +176,7 @@ app.use((req, res, next) => {
     ...process.env.REPLIT_DOMAINS?.split(',') || []
   ].filter(Boolean);
   
-  let corsOrigin = isProduction ? false : '*';
+  let corsOrigin = '*'; // Allow all origins for now to fix production issue
   
   if (origin && allowedOrigins.includes(origin)) {
     corsOrigin = origin;
