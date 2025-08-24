@@ -150,9 +150,9 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: isProduction, // Enable HTTPS requirement in production
-    httpOnly: true, // Prevent XSS access to session cookies
+    httpOnly: false, // Allow JavaScript access for Web3 compatibility
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'strict', // Stronger CSRF protection
+    sameSite: 'lax', // Balance security with Web3 functionality
     domain: undefined // Let browser set domain automatically
   },
   name: 'connect.sid'
