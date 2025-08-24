@@ -170,19 +170,24 @@ app.use((req, res, next) => {
     'https://dynamicauth.com',
     'https://replit.dev',
     'https://replit.app',
-    'https://nectiq.replit.app', // Production domain
+    'https://nectiq.replit.app', // Current production domain
+    'https://nectiq.xyz', // Main production domain
     // Additional production domains
     process.env.PRODUCTION_DOMAIN,
     ...process.env.REPLIT_DOMAINS?.split(',') || []
   ].filter(Boolean);
   
-  let corsOrigin = '*'; // Allow all origins for now to fix production issue
+  let corsOrigin: string | boolean = false; // Default: reject unknown origins
   
   if (origin && allowedOrigins.includes(origin)) {
-    corsOrigin = origin;
+    corsOrigin = origin; // Allow whitelisted origins
   } else if (!isProduction && origin) {
-    corsOrigin = origin; // Only allow any origin in development
+    corsOrigin = origin; // Allow any origin in development only
+  } else if (!origin) {
+    corsOrigin = false; // No origin header (direct API calls)
   }
+  
+  console.log(`🔒 [CORS] Origin: ${origin || 'none'}, Allowed: ${corsOrigin}`);
   
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
