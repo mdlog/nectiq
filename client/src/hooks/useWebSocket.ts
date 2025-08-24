@@ -96,8 +96,10 @@ class WebSocketManager {
           
           // First authenticate, then register for notifications
           if (this.currentUserId) {
-            // Get wallet address from global state
-            const walletAddress = (window as any).globalWalletAddress;
+            // Get wallet address from multiple sources
+            const walletAddress = (window as any).globalWalletAddress || 
+                                (window as any).ethereum?.selectedAddress ||
+                                localStorage.getItem('connectedWallet');
             
             if (walletAddress) {
               const authMessage = {

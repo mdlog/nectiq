@@ -225,7 +225,7 @@ app.use((req, res, next) => {
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' https: data: blob:",
     "connect-src 'self' https: wss: ws: https://*.tradingview.com https://www.tradingview.com",
-    "frame-src 'self' https://app.dynamicauth.com https://verify.walletconnect.com https://www.tradingview.com https://charting-library.tradingview.com https://s3.tradingview.com https://tradingview-widget.com https://*.tradingview.com https://widget.tradingview.com",
+    "frame-src 'self' https://app.dynamicauth.com https://verify.walletconnect.com https://www.tradingview.com https://charting-library.tradingview.com https://s3.tradingview.com https://tradingview-widget.com https://*.tradingview.com https://widget.tradingview.com https://widgetembed.tradingview.com",
     "child-src 'self' https://app.dynamicauth.com",
     "worker-src 'self' blob:",
     "object-src 'none'",

@@ -66,7 +66,7 @@ export function useRainbowAuth() {
   const checkRateLimit = () => {
     const now = Date.now();
     const timeSinceLastAttempt = now - lastAuthAttempt;
-    const minInterval = Math.min(2000 * Math.pow(2, authRetryCount), 30000); // Exponential backoff, max 30s
+    const minInterval = Math.min(1000 * Math.pow(1.5, authRetryCount), 10000); // Gentler backoff, max 10s
     
     if (timeSinceLastAttempt < minInterval) {
       const waitTime = minInterval - timeSinceLastAttempt;
@@ -172,12 +172,8 @@ export function useRainbowAuth() {
         // Only disconnect on non-rate-limit errors
         disconnect();
       } else if (error.message.includes('Rate limit') || error.message.includes('Too many requests')) {
-        // Show user-friendly message for rate limiting
-        toast({
-          title: "Please Wait",
-          description: "Too many connection attempts. Please wait a moment and try again.",
-          variant: "destructive",
-        });
+        // Show user-friendly message for rate limiting, but less frequently
+        console.warn('🕒 [RAINBOW] Rate limited, waiting before retry...');
       }
     },
   });
@@ -253,6 +249,16 @@ export function useRainbowAuth() {
     } else {
       const walletAddress = user?.walletAddress || finalAddress;
       setGlobalWalletAddress(walletAddress || null);
+      
+      // Store in localStorage for WebSocket access
+      if (walletAddress) {
+        localStorage.setItem('connectedWallet', walletAddress);
+        (window as any).globalWalletAddress = walletAddress;
+      } else {
+        localStorage.removeItem('connectedWallet');
+        (window as any).globalWalletAddress = null;
+      }
+      
       console.log('🔐 [RAINBOW] Updated global wallet address:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
     }
   }, [finalIsConnected, user?.walletAddress, finalAddress]);
