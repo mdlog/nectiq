@@ -9,7 +9,7 @@ import { useWalletConnectionStatus } from './useWalletConnectionStatus';
 import { getStoredReferralCode, clearStoredReferralCode } from '@/lib/referralHandler';
 
 export function useRainbowAuth() {
-  const { address, isConnected, chain } = useAccount();
+  const { address, isConnected, chain, status, isConnecting, isReconnecting } = useAccount();
   const { disconnect } = useDisconnect();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -17,6 +17,19 @@ export function useRainbowAuth() {
   
   // Initialize connection status monitoring
   const connectionStatus = useWalletConnectionStatus();
+
+  // Debug wagmi account state
+  React.useEffect(() => {
+    console.log('🔗 [WAGMI-DEBUG] Account state change:', {
+      address,
+      isConnected,
+      status,
+      isConnecting,
+      isReconnecting,
+      chainId: chain?.id,
+      chainName: chain?.name
+    });
+  }, [address, isConnected, status, isConnecting, isReconnecting, chain]);
 
   // Get user data from backend
   const { data: user, isLoading, error } = useQuery<User>({

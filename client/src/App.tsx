@@ -20,6 +20,7 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
 import { handleReferralFromURL } from "@/lib/referralHandler";
 import { useEffect } from 'react';
+import { WalletDebug } from "@/components/WalletDebug";
 
 
 // Suppress wallet extension conflicts in console
@@ -150,6 +151,8 @@ function App() {
         <Toaster />
         <Router />
         <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
+        {/* Debug component - temporarily for troubleshooting */}
+        {process.env.NODE_ENV === 'development' && <WalletDebug />}
       </div>
     </TooltipProvider>
   );
