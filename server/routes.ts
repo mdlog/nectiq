@@ -1599,21 +1599,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user with activity tracking
   app.get("/api/user", async (req, res) => {
     try {
+      console.log('🔍 [USER-API] Session data:', { 
+        sessionID: req.sessionID,
+        userId: (req as any).session?.userId,
+        walletAddress: (req as any).session?.walletAddress,
+        hasSession: !!(req as any).session
+      });
+      
       const userId = (req as any).session?.userId;
       if (!userId) {
+        console.log('❌ [USER-API] No userId in session, authentication required');
         return res.status(401).json({ message: "Authentication required" });
       }
 
+      console.log('✅ [USER-API] Found userId in session:', userId);
       const user = await storage.getUser(userId);
       if (!user) {
+        console.log('❌ [USER-API] User not found in database for ID:', userId);
         return res.status(404).json({ message: "User not found" });
       }
+      
+      console.log('✅ [USER-API] User found:', { id: user.id, username: user.username, uid: user.uid });
       
       // Track user activity for real-time monitoring
       updateUserActivity(user.id, req.ip, req.get('User-Agent'), user.username, user.isAdmin || false);
       
       res.json(user);
     } catch (error) {
+      console.error('💥 [USER-API] Error getting user:', error);
       res.status(500).json({ message: "Failed to get user" });
     }
   });
