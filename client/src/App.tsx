@@ -21,6 +21,7 @@ import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
 import { handleReferralFromURL } from "@/lib/referralHandler";
 import { useEffect } from 'react';
 import { ForceWalletAuth } from "@/components/ForceWalletAuth";
+import { AuthDebugPanel } from "@/components/AuthDebugPanel";
 
 
 // Suppress wallet extension conflicts in console
@@ -152,6 +153,7 @@ function App() {
         <Router />
         <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
         <ForceWalletAuth />
+        <AuthDebugPanel />
       </div>
     </TooltipProvider>
   );

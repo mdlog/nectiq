@@ -40,12 +40,25 @@ export function useRainbowAuth() {
   }, [address, isConnected, status, isConnecting, isReconnecting, chain]);
 
   // Get user data from backend
-  const { data: user, isLoading, error } = useQuery<User>({
+  const { data: user, isLoading, error, refetch } = useQuery<User>({
     queryKey: ["/api/user"],
     enabled: isConnected && !!address,
-    refetchInterval: 10000,
-    staleTime: 5000,
-    retry: 3,
+    refetchInterval: 5000,
+    staleTime: 1000,
+    retry: (failureCount, error: any) => {
+      console.log('🔄 [RAINBOW] Query retry attempt:', failureCount, 'Error:', error?.message);
+      
+      // If we get 401 (auth required), try to authenticate first
+      if (error?.message?.includes('401') || error?.message?.includes('Authentication required')) {
+        console.log('🔐 [RAINBOW] Got 401, triggering authentication...');
+        if (address && !authenticateWalletMutation.isPending) {
+          setTimeout(() => authenticateWalletMutation.mutate(address), 100);
+        }
+        return failureCount < 1; // Only retry once for auth errors
+      }
+      
+      return failureCount < 3;
+    },
     retryDelay: 1000,
   });
 
@@ -122,8 +135,13 @@ export function useRainbowAuth() {
       // Note: Wallet connection notification is handled by useWalletConnectionStatus
       // to prevent duplicate notifications and ensure it only shows on first connection
 
-      // Refresh user data
+      // Refresh user data immediately
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Force refetch after a short delay
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["/api/user"] });
+      }, 500);
       
       // Redirect to dashboard if on landing page
       setLocation('/');
