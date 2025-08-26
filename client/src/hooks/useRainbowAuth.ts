@@ -45,6 +45,8 @@ export function useRainbowAuth() {
     enabled: isConnected && !!address,
     refetchInterval: 10000,
     staleTime: 5000,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Debug logging
@@ -210,7 +212,16 @@ export function useRainbowAuth() {
     } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
       console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
       console.log('🌈 [RAINBOW] Authentication mutation will be triggered...');
-      authenticateWalletMutation.mutate(address);
+      // Add small delay to ensure wagmi is fully ready
+      setTimeout(() => {
+        authenticateWalletMutation.mutate(address);
+      }, 500);
+    } else if (isConnected && address && user && user.walletAddress?.toLowerCase() !== address.toLowerCase()) {
+      console.log('🔄 [RAINBOW] Wallet changed - re-authenticating:', address);
+      queryClient.removeQueries({ queryKey: ["/api/user"] });
+      setTimeout(() => {
+        authenticateWalletMutation.mutate(address);
+      }, 500);
     } else if (isConnected && address && !user && !isLoading) {
       console.log('🔍 [RAINBOW] Authentication conditions not met:', {
         isConnected,

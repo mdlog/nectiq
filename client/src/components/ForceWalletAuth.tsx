@@ -28,8 +28,13 @@ export function ForceWalletAuth() {
       if (response.ok) {
         const result = await response.json();
         console.log('🔧 [FORCE-AUTH] Success:', result);
-        // Force page refresh to reload user data
-        window.location.reload();
+        // Import queryClient and refresh data instead of full page reload
+        const { queryClient } = await import('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        // Small delay then force refresh if still not working
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         const error = await response.text();
         console.error('🔧 [FORCE-AUTH] Error:', error);
