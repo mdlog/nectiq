@@ -6,5 +6,8 @@ export const rainbowConfig = getDefaultConfig({
   appName: 'Nectiq - Cryptocurrency Prediction Platform',
   projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'ba0e679a5831cee26576868ecd70fdbf',
   chains: [mainnet, sepolia, polygon, optimism, arbitrum, base],
-  ssr: false
+  ssr: false,
+  // Improve wallet stability and reduce unnecessary reconnection attempts
+  multiInjectedProviderDiscovery: false,
+  syncConnectedChain: false,
 });
