@@ -140,7 +140,7 @@ app.get('/api/activities/live', async (req, res) => {
 // Session configuration with persistent MemoryStore
 const sessionStore = MemoryStore(session);
 app.use(session({
-  secret: process.env.SESSION_SECRET || (isProduction ? null : 'dev-only-fallback-secret'),
+  secret: process.env.SESSION_SECRET || (!isProduction ? 'dev-only-fallback-secret' : (() => { throw new Error('SESSION_SECRET required in production'); })()),
   store: new sessionStore({
     checkPeriod: 86400000, // prune expired entries every 24h
     max: 100000, // Maximum number of sessions
