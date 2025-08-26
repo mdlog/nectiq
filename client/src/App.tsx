@@ -151,8 +151,7 @@ function App() {
         <Toaster />
         <Router />
         <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
-        {/* Debug component - temporarily for troubleshooting */}
-        {process.env.NODE_ENV === 'development' && <WalletDebug />}
+
       </div>
     </TooltipProvider>
   );

@@ -29,6 +29,14 @@ export function useRainbowAuth() {
       chainId: chain?.id,
       chainName: chain?.name
     });
+    
+    // Also log if this is a successful connection
+    if (isConnected && address) {
+      console.log('✅ [WAGMI-SUCCESS] Wallet successfully connected:', {
+        address: `${address.slice(0, 6)}...${address.slice(-4)}`,
+        chain: chain?.name || 'Unknown'
+      });
+    }
   }, [address, isConnected, status, isConnecting, isReconnecting, chain]);
 
   // Get user data from backend
