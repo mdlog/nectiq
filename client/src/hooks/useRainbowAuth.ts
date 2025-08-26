@@ -209,6 +209,7 @@ export function useRainbowAuth() {
       setGlobalWalletAddress(null);
     } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
       console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
+      console.log('🌈 [RAINBOW] Authentication mutation will be triggered...');
       authenticateWalletMutation.mutate(address);
     } else if (isConnected && address && !user && !isLoading) {
       console.log('🔍 [RAINBOW] Authentication conditions not met:', {

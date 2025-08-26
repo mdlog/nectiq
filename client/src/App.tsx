@@ -20,7 +20,7 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
 import { handleReferralFromURL } from "@/lib/referralHandler";
 import { useEffect } from 'react';
-import { WalletDebug } from "@/components/WalletDebug";
+import { ForceWalletAuth } from "@/components/ForceWalletAuth";
 
 
 // Suppress wallet extension conflicts in console
@@ -151,7 +151,7 @@ function App() {
         <Toaster />
         <Router />
         <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
-
+        <ForceWalletAuth />
       </div>
     </TooltipProvider>
   );
