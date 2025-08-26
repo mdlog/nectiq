@@ -19,12 +19,24 @@ export function useRainbowAuth() {
   const connectionStatus = useWalletConnectionStatus();
 
   // Get user data from backend
-  const { data: user, isLoading } = useQuery<User>({
+  const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ["/api/user"],
     enabled: isConnected && !!address,
     refetchInterval: 10000,
     staleTime: 5000,
   });
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('🔍 [RAINBOW-AUTH] Query state:', {
+      isConnected,
+      address,
+      enabled: isConnected && !!address,
+      isLoading,
+      hasUser: !!user,
+      error: error?.message
+    });
+  }, [isConnected, address, isLoading, user, error]);
 
   // Wallet authentication mutation
   const authenticateWalletMutation = useMutation({

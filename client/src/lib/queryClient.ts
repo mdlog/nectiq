@@ -50,25 +50,34 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const url = queryKey[0] as string;
+    console.log('📡 [QUERY-CLIENT] Making request to:', url);
+    
     const headers: Record<string, string> = {};
     
     // Add wallet address header if available
     if (globalWalletAddress) {
       headers['x-wallet-address'] = globalWalletAddress;
-      console.log('🔐 [GET-QUERY] Including wallet address in headers for:', queryKey[0]);
+      console.log('🔐 [QUERY-CLIENT] Including wallet address in headers for:', url);
     }
 
-    const res = await fetch(queryKey[0] as string, {
+    const res = await fetch(url, {
       credentials: "include",
       headers,
     });
 
+    console.log('📡 [QUERY-CLIENT] Response status for', url, ':', res.status);
+    console.log('📡 [QUERY-CLIENT] Response headers:', Object.fromEntries(res.headers.entries()));
+
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+      console.log('📡 [QUERY-CLIENT] Returning null for 401 response:', url);
       return null;
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+    const data = await res.json();
+    console.log('📡 [QUERY-CLIENT] Success response for', url, ':', data);
+    return data;
   };
 
 // Add global error handler for unhandled promise rejections
