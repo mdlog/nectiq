@@ -82,7 +82,14 @@ class WebSocketManager {
     return new Promise((resolve, reject) => {
       try {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        // Ensure port is properly set for WebSocket connection
+        const host = window.location.host;
+        const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+        const wsUrl = window.location.port 
+          ? `${protocol}//${host}/ws`
+          : `${protocol}//${window.location.hostname}:${window.location.protocol === 'https:' ? '443' : '80'}/ws`;
+        
+        console.log(`📱 [WEBSOCKET-DEBUG] Host: ${host}, Port: ${port}, Final URL: ${wsUrl}`);
         
         console.log(`📱 [WEBSOCKET-MANAGER] Creating connection to: ${wsUrl} for user ${this.currentUserId}`);
         
@@ -131,7 +138,7 @@ class WebSocketManager {
                 if (message.data) {
                   console.log('🔔 [WEBSOCKET-MANAGER] Received notification:', message.data);
                   // Broadcast to all callbacks
-                  this.callbacks.forEach(callback => callback.onNotification?.(message.data!));
+                  this.callbacks.forEach(callback => callback.onNotification?.(message.data as any));
                 }
                 break;
                 
