@@ -273,7 +273,7 @@ class WebSocketManager {
 const wsManager = new WebSocketManager();
 
 export function useWebSocket(options: UseWebSocketOptions = {}) {
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<{id: number}>({
     queryKey: ["/api/user"],
     refetchInterval: 10000,
     staleTime: 5000,
