@@ -27,7 +27,13 @@ export function ProtectedRoute({
     if (requireWallet) {
       // Check if wallet is connected and user is authenticated
       if (!isConnected || !user) {
-        console.log('🚫 [PROTECTED-ROUTE] Access denied - wallet not connected or user not authenticated');
+        console.log('🚫 [PROTECTED-ROUTE] Access denied - debugging:', {
+          isConnected,
+          hasUser: !!user,
+          isLoading,
+          userInfo: user ? { id: user.id, username: user.username } : null,
+          currentPath: window.location.pathname
+        });
         
         toast({
           title: "Wallet Required",

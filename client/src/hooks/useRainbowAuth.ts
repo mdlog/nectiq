@@ -31,6 +31,7 @@ export function useRainbowAuth() {
     mutationFn: async (walletAddress: string) => {
       console.log('🌈 [RAINBOW] Authenticating wallet:', walletAddress);
       console.log('🌈 [RAINBOW] Chain info:', { chainId: chain?.id, chainName: chain?.name });
+      console.log('🌈 [RAINBOW] Current URL:', window.location.href);
       
       // Check for stored referral code
       const referralCode = getStoredReferralCode();

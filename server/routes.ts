@@ -988,9 +988,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Wallet Connect Authentication endpoint
   app.post("/api/auth/wallet-connect", async (req, res) => {
     try {
+      console.log('🌈 [WALLET-CONNECT] Request received:', {
+        walletAddress: req.body.walletAddress ? req.body.walletAddress.slice(0, 8) + '...' : 'none',
+        origin: req.get('Origin'),
+        userAgent: req.get('User-Agent'),
+        ip: req.ip,
+        hasSession: !!req.session,
+        sessionId: req.sessionID,
+        referralCode: req.body.referralCode || 'None'
+      });
+      
       const { walletAddress, referralCode } = req.body;
       
       if (!walletAddress) {
+        console.log('❌ [WALLET-CONNECT] Missing wallet address');
         return res.status(400).json({ message: "Wallet address is required" });
       }
 
@@ -1647,8 +1658,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user with activity tracking
   app.get("/api/user", async (req, res) => {
     try {
+      console.log('🔍 [API-USER] Request received:', {
+        sessionExists: !!req.session,
+        sessionId: req.sessionID,
+        userId: (req as any).session?.userId,
+        hasWalletAddress: !!(req as any).session?.walletAddress,
+        origin: req.get('Origin'),
+        userAgent: req.get('User-Agent') ? req.get('User-Agent')?.slice(0, 50) + '...' : 'none',
+        cookies: req.headers.cookie ? req.headers.cookie.slice(0, 50) + '...' : 'none'
+      });
+      
       const userId = (req as any).session?.userId;
       if (!userId) {
+        console.log('❌ [API-USER] No userId in session, returning 401');
         return res.status(401).json({ message: "Authentication required" });
       }
 
