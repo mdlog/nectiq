@@ -4436,7 +4436,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         period: periodDays
       });
     } catch (error) {
-      console.error('Error fetching user analytics:', error);
+      console.error('🔴 [ANALYTICS] Error details:', {
+        error: error.message,
+        stack: error.stack,
+        userId: userId,
+        period: period
+      });
       res.status(500).json({ message: "Failed to get user analytics" });
     }
   });
