@@ -173,7 +173,7 @@ app.use((req, res, next) => {
   ];
   
   // Strict CORS configuration - only allow whitelisted origins
-  let corsOrigin = false; // Default to false (block)
+  let corsOrigin: string | boolean = false; // Default to false (block)
   if (origin && allowedOrigins.includes(origin)) {
     corsOrigin = origin;
   } else if (!origin) {
@@ -186,7 +186,7 @@ app.use((req, res, next) => {
     console.log('🚫 [CORS] Blocked origin:', origin, 'Allowed:', allowedOrigins);
   }
   
-  res.setHeader('Access-Control-Allow-Origin', corsOrigin);
+  res.setHeader('Access-Control-Allow-Origin', corsOrigin === false ? 'null' : corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -383,7 +383,7 @@ try {
       maxDailyWithdrawal: 10000,
       maxSingleWithdrawal: 5000,
       autoApprovalThreshold: 100
-    }, storage);
+    }, storage as any);
     
     // Check processing withdrawals every 2 minutes
     setInterval(async () => {
