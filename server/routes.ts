@@ -2632,6 +2632,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin status check endpoint (public, checks wallet only)
+  app.get('/api/check-admin/:walletAddress', async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+      if (!walletAddress) {
+        return res.json({ isAdmin: false });
+      }
+
+      const isAdmin = await isAuthorizedAdmin(walletAddress);
+      console.log(`🔍 [ADMIN-CHECK] Wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} - Admin status: ${isAdmin}`);
+      res.json({ isAdmin });
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      res.json({ isAdmin: false });
+    }
+  });
+
   // Get Pyth Network prices only (real-time institutional grade)
   app.get("/api/crypto/pyth-prices", async (req, res) => {
     console.log('🟡 [PYTH] ENDPOINT HIT: /api/crypto/pyth-prices - Starting execution');

@@ -22,6 +22,7 @@ import { MaintenancePage } from "@/components/MaintenancePage";
 import { handleReferralFromURL } from "@/lib/referralHandler";
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAccount } from 'wagmi';
 
 // Simple console test to verify React rendering
 console.log('🚀 Starting Nectiq application...');
@@ -150,12 +151,21 @@ function Router() {
 
 function App() {
   const { isMobile } = useMobileDetection();
+  const { address, isConnected } = useAccount();
 
   // Check maintenance mode status
   const { data: maintenanceData, isLoading: maintenanceLoading } = useQuery({
     queryKey: ["/api/maintenance-status"],
     refetchInterval: 10000, // Check every 10 seconds
     staleTime: 5000, // Consider data stale after 5 seconds
+  });
+
+  // Check if current user is admin (only if wallet connected)
+  const { data: adminData, isLoading: adminLoading } = useQuery({
+    queryKey: ["/api/check-admin", address],
+    enabled: !!address && isConnected, // Only run if wallet is connected
+    refetchInterval: 30000, // Check admin status every 30 seconds
+    staleTime: 20000, // Consider data stale after 20 seconds
   });
 
   // Handle referral code on mount
@@ -172,9 +182,21 @@ function App() {
     return <TestApp />;
   }
 
-  // Show maintenance page if maintenance mode is active
-  if (!maintenanceLoading && maintenanceData?.maintenanceMode) {
+  // Show maintenance page if maintenance mode is active AND user is not admin
+  const isAdmin = adminData?.isAdmin || false;
+  const isInMaintenanceMode = !maintenanceLoading && maintenanceData?.maintenanceMode;
+  
+  console.log('🔍 [MAINTENANCE-CHECK] Maintenance mode:', isInMaintenanceMode);
+  console.log('🔍 [MAINTENANCE-CHECK] User is admin:', isAdmin);
+  console.log('🔍 [MAINTENANCE-CHECK] Wallet address:', address);
+  
+  if (isInMaintenanceMode && !isAdmin) {
+    console.log('🚫 [MAINTENANCE] Blocking user access - showing maintenance page');
     return <MaintenancePage />;
+  }
+  
+  if (isInMaintenanceMode && isAdmin) {
+    console.log('✅ [MAINTENANCE] Admin detected - allowing full access during maintenance');
   }
 
   if (isMobile) {
