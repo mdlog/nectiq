@@ -4304,9 +4304,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user/analytics", async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
+      
+      // Enhanced debugging for analytics endpoint
+      console.log('🔍 [ANALYTICS] Session debug:', {
+        hasSession: !!req.session,
+        sessionId: req.sessionID || 'NONE',
+        userId: userId,
+        sessionData: (req as any).session
+      });
+      
       if (!userId) {
+        console.log('❌ [ANALYTICS] No userId in session, returning 401');
         return res.status(401).json({ message: "Authentication required" });
       }
+      
+      console.log(`✅ [ANALYTICS] Valid session found for userId: ${userId}`);
 
       const period = req.query.period as string || '30'; // days
       const periodDays = parseInt(period);

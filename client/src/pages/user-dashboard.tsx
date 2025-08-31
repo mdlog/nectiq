@@ -1646,25 +1646,7 @@ function UserAnalytics() {
   const [selectedPeriod, setSelectedPeriod] = useState('30');
 
   const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
-    queryKey: ["/api/user/analytics", selectedPeriod],
-    queryFn: async () => {
-      const params = new URLSearchParams({ period: selectedPeriod });
-      const url = `/api/user/analytics?${params}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Analytics fetch failed: ${response.status} - ${errorText}`);
-      }
-      
-      return response.json();
-    },
+    queryKey: [`/api/user/analytics?period=${selectedPeriod}`],
     retry: 1,
     staleTime: 30000,
   });
