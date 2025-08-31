@@ -14,6 +14,9 @@ import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
 import { MarketSentimentDashboard } from "@/components/market-sentiment-dashboard";
+import { TopMovers } from "@/components/top-movers";
+import { PlatformActivity } from "@/components/platform-activity";
+import { PredictionInsights } from "@/components/prediction-insights";
 import TradingViewChart from "@/components/TradingViewChart";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -246,9 +249,24 @@ export default function Dashboard() {
           <BannerSection position="below_live_prices" className="horizontal-banners" />
         </div>
         
-        {/* Market Sentiment Dashboard */}
+        {/* Market Sentiment Dashboard - 3 Column Layout */}
         <div className="mt-6">
-          <MarketSentimentDashboard />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Column 1: Market Sentiment */}
+            <div>
+              <MarketSentimentDashboard />
+            </div>
+            
+            {/* Column 2: Top Movers */}
+            <div>
+              <TopMovers />
+            </div>
+            
+            {/* Column 3: Prediction Insights */}
+            <div>
+              <PredictionInsights />
+            </div>
+          </div>
         </div>
       </main>
       
