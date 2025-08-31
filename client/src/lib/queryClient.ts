@@ -63,6 +63,14 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
+    // Handle maintenance mode (503) - return special error object
+    if (res.status === 503) {
+      const errorData = await res.json().catch(() => ({ message: "Platform under maintenance" }));
+      if (errorData.maintenanceMode) {
+        return { error: "maintenance", message: errorData.message };
+      }
+    }
+
     await throwIfResNotOk(res);
     return await res.json();
   };
@@ -75,6 +83,23 @@ if (typeof window !== 'undefined') {
     // Prevent default behavior (console error)
     event.preventDefault();
     
+    // Handle maintenance mode errors
+    if (event.reason?.message?.includes('503') || 
+        event.reason?.message?.includes('maintenance')) {
+      console.log('🔧 [GLOBAL] Maintenance mode detected');
+      // Show maintenance mode notification
+      const toast = (window as any).toast;
+      if (toast) {
+        toast({
+          title: "Platform Under Maintenance",
+          description: "The platform is temporarily unavailable. Please try again later.",
+          variant: "destructive",
+          duration: 5000
+        });
+      }
+      return;
+    }
+
     // Handle authentication errors gracefully
     if (event.reason?.message?.includes('401') || 
         event.reason?.message?.includes('Authentication required')) {

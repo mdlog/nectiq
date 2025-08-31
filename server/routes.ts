@@ -28,6 +28,33 @@ import { BalanceService } from "./services/balanceService.js";
 import AutomatedDepositSecurity from './automated-deposit-security.js';
 import { requireAuth as requireWalletAuth } from './simpleAuth.js';
 
+// Maintenance mode middleware
+const checkMaintenanceMode = async (req: any, res: any, next: any) => {
+  try {
+    // Skip maintenance check for admin users and admin endpoints
+    if (req.originalUrl.startsWith('/api/admin') || req.session?.isAdmin) {
+      return next();
+    }
+
+    // Get maintenance mode setting from database
+    const settings = await storage.getSystemSettings();
+    const isMaintenanceMode = settings?.platform?.maintenanceMode || false;
+
+    if (isMaintenanceMode) {
+      return res.status(503).json({ 
+        message: "Platform is currently under maintenance. Please try again later.",
+        maintenanceMode: true 
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('❌ [MAINTENANCE] Error checking maintenance mode:', error);
+    // If we can't check maintenance mode, allow the request to proceed
+    next();
+  }
+};
+
 
 // Utility function to normalize wallet addresses (lowercase for consistency)
 function normalizeWalletAddress(address: string): string {
@@ -2698,7 +2725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new prediction
-  app.post("/api/predictions", async (req, res) => {
+  app.post("/api/predictions", checkMaintenanceMode, async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
       if (!userId) {
@@ -2810,7 +2837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's active predictions
-  app.get("/api/predictions/active", async (req, res) => {
+  app.get("/api/predictions/active", checkMaintenanceMode, async (req, res) => {
     try {
       const userId = (req as any).session?.userId;
       if (!userId) {
@@ -2937,7 +2964,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Battle System API Endpoints
-  app.post('/api/battles/create', async (req, res) => {
+  app.post('/api/battles/create', checkMaintenanceMode, async (req, res) => {
     if (!(req as any).session?.userId) {
       return res.status(401).json({ message: 'Authentication required' });
     }
@@ -3057,7 +3084,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/battles/live', async (req, res) => {
+  app.get('/api/battles/live', checkMaintenanceMode, async (req, res) => {
     try {
       // Fetch real battles from database
       const battles = await storage.getLiveBattles();
@@ -3082,7 +3109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get battle history (completed battles)
-  app.get('/api/battles/history', async (req, res) => {
+  app.get('/api/battles/history', checkMaintenanceMode, async (req, res) => {
     try {
       const completedBattles = await storage.getBattleHistory();
       res.json(completedBattles);
@@ -3142,7 +3169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Join battle endpoint dengan Anti-Last Minute Joining System
-  app.post('/api/battles/:id/join', async (req, res) => {
+  app.post('/api/battles/:id/join', checkMaintenanceMode, async (req, res) => {
     if (!(req as any).session?.userId) {
       return res.status(401).json({ message: 'Authentication required' });
     }
@@ -7876,7 +7903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('🔐 [DEPOSIT-SECURITY] Automated monitoring started');
 
   // Create deposit request
-  app.post("/api/deposits/create", async (req, res) => {
+  app.post("/api/deposits/create", checkMaintenanceMode, async (req, res) => {
     try {
       const session = req.session as any;
       console.log('🔍 [SESSION-DEBUG] Create deposit endpoint access attempt:', {
@@ -8286,7 +8313,7 @@ Manual balance correction required IMMEDIATELY!`;
   });
 
   // Create withdrawal request
-  app.post("/api/withdrawals/create", async (req, res) => {
+  app.post("/api/withdrawals/create", checkMaintenanceMode, async (req, res) => {
     try {
       console.log('🔥 [WITHDRAWAL] Request received:', req.body);
       
@@ -10981,7 +11008,7 @@ Manual balance correction required IMMEDIATELY!`;
   // ==================== PARLAY PREDICTION ENDPOINTS (FRESH START) ====================
 
   // Create new parlay prediction - Clean implementation
-  app.post("/api/parlay/create", requireAuth, async (req, res) => {
+  app.post("/api/parlay/create", checkMaintenanceMode, requireAuth, async (req, res) => {
     console.log("🟢 [PARLAY-CLEAN] Starting fresh parlay creation");
     
     try {
@@ -11084,7 +11111,7 @@ Manual balance correction required IMMEDIATELY!`;
   });
 
   // Get user parlays
-  app.get("/api/parlay/user", requireAuth, async (req, res) => {
+  app.get("/api/parlay/user", checkMaintenanceMode, requireAuth, async (req, res) => {
     try {
       const user = req.user as any;
       
