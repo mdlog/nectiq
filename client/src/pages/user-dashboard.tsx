@@ -1645,17 +1645,28 @@ function PredictionHistory() {
 function UserAnalytics() {
   const [selectedPeriod, setSelectedPeriod] = useState('30');
 
-  const { data: analyticsData, isLoading: analyticsLoading } = useQuery({
+  const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
     queryKey: ["/api/user/analytics", selectedPeriod],
     queryFn: async () => {
-      const response = await fetch(`/api/user/analytics?period=${selectedPeriod}`, {
-        credentials: 'include'
+      const params = new URLSearchParams({ period: selectedPeriod });
+      const url = `/api/user/analytics?${params}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-      if (!response.ok) throw new Error('Failed to fetch analytics data');
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Analytics fetch failed: ${response.status} - ${errorText}`);
+      }
+      
       return response.json();
     },
-    retry: 2,
-    staleTime: 60000,
+    retry: 1,
+    staleTime: 30000,
   });
 
   if (analyticsLoading) {
@@ -1663,6 +1674,25 @@ function UserAnalytics() {
       <div className="flex items-center justify-center p-8">
         <RefreshCw className="animate-spin mr-2" size={20} />
         <span>Loading analytics data...</span>
+      </div>
+    );
+  }
+
+  if (analyticsError) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <div className="text-red-400 mb-4">
+          <span className="text-lg">⚠️ Analytics Data Unavailable</span>
+        </div>
+        <p className="text-slate-400 mb-4">
+          {analyticsError instanceof Error ? analyticsError.message : 'Failed to load analytics data'}
+        </p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
