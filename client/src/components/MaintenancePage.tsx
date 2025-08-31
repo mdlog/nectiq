@@ -1,7 +1,11 @@
-import { Settings, AlertTriangle, Clock } from "lucide-react";
+import { Settings, AlertTriangle, Clock, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 export function MaintenancePage() {
+  const { openConnectModal } = useConnectModal();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center px-4">
       <Card className="w-full max-w-lg bg-slate-800/80 border-slate-700 backdrop-blur-sm">
@@ -44,8 +48,24 @@ export function MaintenancePage() {
             <span className="text-sm font-medium">Maintenance Mode Active</span>
           </div>
 
+          {/* Admin Access Button */}
+          <div className="pt-4 border-t border-slate-700">
+            <Button
+              onClick={openConnectModal}
+              variant="outline"
+              className="w-full bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600/50 hover:text-white hover:border-slate-500 transition-all duration-200"
+              data-testid="button-admin-login"
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Admin Login
+            </Button>
+            <p className="text-xs text-slate-500 mt-2 text-center">
+              Connect admin wallet to access system during maintenance
+            </p>
+          </div>
+
           {/* Footer */}
-          <div className="text-xs text-slate-500 pt-4 border-t border-slate-700">
+          <div className="text-xs text-slate-500 pt-4">
             <p>Thank you for your patience</p>
             <p className="mt-1">- Nectiq Team</p>
           </div>
