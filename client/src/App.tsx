@@ -21,6 +21,29 @@ import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
 import { handleReferralFromURL } from "@/lib/referralHandler";
 import { useEffect } from 'react';
 
+// Simple console test to verify React rendering
+console.log('🚀 Starting Nectiq application...');
+
+function TestApp() {
+  console.log('✅ TestApp rendered successfully!');
+  
+  return (
+    <div style={{ 
+      padding: '20px', 
+      fontFamily: 'Arial, sans-serif',
+      background: '#f0f0f0',
+      minHeight: '100vh'
+    }}>
+      <h1>Nectiq Test Mode</h1>
+      <p>Application is loading correctly!</p>
+      <div style={{ marginTop: '20px' }}>
+        <button onClick={() => window.location.href = '/'}>
+          Go to Main App
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // Suppress wallet extension conflicts in console
 const originalError = console.error;
@@ -75,82 +98,72 @@ function Router() {
           <UserDashboard />
         </ProtectedRoute>
       </Route>
-      
-      <Route path="/battles">
-        <ProtectedRoute requireWallet={true}>
-          <BattlesPage />
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/survival">
-        <ProtectedRoute requireWallet={true}>
-          <SurvivalGame />
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/survival-game">
-        <ProtectedRoute requireWallet={true}>
-          <SurvivalGame />
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/leaderboard">
-        <ProtectedRoute requireWallet={false}>
-          <Leaderboard />
-        </ProtectedRoute>
-      </Route>
-      
+
+      {/* Parlay/TrendRide page */}
       <Route path="/parlay">
         <ProtectedRoute requireWallet={true}>
           <ParlayPage />
         </ProtectedRoute>
       </Route>
-      
-      <Route path="/how-to-play">
-        <ProtectedRoute requireWallet={false}>
-          <HowToPlay />
+
+      {/* Battles page */}
+      <Route path="/battles">
+        <ProtectedRoute requireWallet={true}>
+          <BattlesPage />
         </ProtectedRoute>
       </Route>
-      
-      <Route path="/admin">
+
+      {/* Survival game page */}
+      <Route path="/survival">
         <ProtectedRoute requireWallet={true}>
+          <SurvivalGame />
+        </ProtectedRoute>
+      </Route>
+
+      {/* Admin Panel - PROTECTED */}
+      <Route path="/admin-main/:tab?">
+        <ProtectedRoute requireWallet={true} requireAdmin={true}>
           <AdminPanel />
         </ProtectedRoute>
       </Route>
-      <Route path="/admin-working">
-        <ProtectedRoute requireWallet={true}>
-          <AdminPanel />
-        </ProtectedRoute>
-      </Route>
-      
-      {/* Public routes - no authentication required */}
-      <Route path="/terms-conditions" component={TermsConditions} />
-      <Route path="/privacy-policy" component={PrivacyPolicy} />
-      
-      {/* Redirect old wallet-login route to home page */}
-      <Route path="/wallet-login" component={Dashboard} />
-      
-      {/* 404 page */}
+
+      {/* Public pages */}
+      <Route path="/leaderboard" component={Leaderboard} />
+      <Route path="/how-to-play" component={HowToPlay} />
+      <Route path="/terms" component={TermsConditions} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+
+      {/* Catch-all for 404s */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
 function App() {
-  const { showWarning, dismissWarning } = useMobileDetection();
+  const { isMobile } = useMobileDetection();
 
-  // Handle referral codes from URL on app startup
+  // Handle referral code on mount
   useEffect(() => {
     handleReferralFromURL();
   }, []);
 
+  // Simple debug mode toggle
+  const urlParams = new URLSearchParams(window.location.search);
+  const debugMode = urlParams.get('debug') === 'true';
+
+  if (debugMode) {
+    console.log('✅ Root element found, rendering TestApp...');
+    return <TestApp />;
+  }
+
+  if (isMobile) {
+    return <MobileWarning />;
+  }
+
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background text-foreground">
-        <Toaster />
-        <Router />
-        <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
-      </div>
+      <Router />
+      <Toaster />
     </TooltipProvider>
   );
 }
