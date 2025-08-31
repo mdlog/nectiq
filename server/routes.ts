@@ -28,6 +28,7 @@ import { BalanceService } from "./services/balanceService.js";
 import AutomatedDepositSecurity from './automated-deposit-security.js';
 import { requireAuth as requireWalletAuth, isAuthorizedAdmin } from './simpleAuth.js';
 import { logger } from "../shared/logger";
+import sharp from "sharp";
 
 // Maintenance mode middleware
 const checkMaintenanceMode = async (req: any, res: any, next: any) => {
@@ -1832,20 +1833,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      // Validate file type - Only allow JPG and PNG
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
       if (!allowedTypes.includes(req.file.mimetype)) {
-        return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, and GIF are allowed" });
+        return res.status(400).json({ message: "Invalid file type. Only JPG and PNG files are allowed" });
       }
 
-      // Validate file size (max 5MB)
-      if (req.file.size > 5 * 1024 * 1024) {
-        return res.status(400).json({ message: "File too large. Maximum size is 5MB" });
+      // Validate file size (max 10MB before compression)
+      if (req.file.size > 10 * 1024 * 1024) {
+        return res.status(400).json({ message: "File too large. Maximum size is 10MB" });
       }
 
-      // Generate unique filename
-      const fileExtension = path.extname(req.file.originalname);
-      const fileName = `profile_${session.userId}_${Date.now()}${fileExtension}`;
+      // Generate unique filename - always save as JPG after compression
+      const fileName = `profile_${session.userId}_${Date.now()}.jpg`;
       const filePath = `/uploads/${fileName}`;
 
       // Save file
@@ -1900,7 +1900,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      fs.writeFileSync(fullPath, req.file.buffer);
+      // Process and compress image using Sharp
+      try {
+        let compressedBuffer = await sharp(req.file.buffer)
+          .resize(400, 400, { // Resize to 400x400 max while maintaining aspect ratio
+            fit: 'inside',
+            withoutEnlargement: true
+          })
+          .jpeg({ 
+            quality: 85, // Initial quality
+            progressive: true
+          })
+          .toBuffer();
+
+        // If still larger than 150KB, reduce quality iteratively
+        let quality = 85;
+        const maxSize = 150 * 1024; // 150KB
+        
+        while (compressedBuffer.length > maxSize && quality > 30) {
+          quality -= 10;
+          compressedBuffer = await sharp(req.file.buffer)
+            .resize(400, 400, {
+              fit: 'inside',
+              withoutEnlargement: true
+            })
+            .jpeg({ 
+              quality: quality,
+              progressive: true
+            })
+            .toBuffer();
+        }
+
+        // Final size check - if still too large, use smaller dimensions
+        if (compressedBuffer.length > maxSize) {
+          compressedBuffer = await sharp(req.file.buffer)
+            .resize(300, 300, {
+              fit: 'inside',
+              withoutEnlargement: true
+            })
+            .jpeg({ 
+              quality: 60,
+              progressive: true
+            })
+            .toBuffer();
+        }
+
+        fs.writeFileSync(fullPath, compressedBuffer);
+        
+        console.log('🖼️ [IMAGE-COMPRESSION] Image processed:', {
+          originalSize: req.file.size,
+          compressedSize: compressedBuffer.length,
+          compressionRatio: ((req.file.size - compressedBuffer.length) / req.file.size * 100).toFixed(1) + '%',
+          finalQuality: quality
+        });
+      } catch (compressionError) {
+        console.error('❌ [IMAGE-COMPRESSION] Compression failed:', compressionError);
+        return res.status(400).json({ message: "Failed to process image. Please try with a different image." });
+      }
 
       // Update user profile photo in database with the correct path
       const profilePhotoUrl = `/uploads/${sanitizedFileName}`;

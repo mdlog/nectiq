@@ -2308,12 +2308,12 @@ function UserProfile() {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      // Validate file type - Only JPG and PNG allowed
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
       if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Invalid File Type",
-          description: "Only JPEG, PNG, and GIF files are allowed.",
+          description: "Only JPG and PNG files are allowed.",
           variant: "destructive",
         });
         // Reset input value
@@ -2323,11 +2323,11 @@ function UserProfile() {
         return;
       }
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
+      // Validate file size (max 10MB - will be compressed automatically)
+      if (file.size > 10 * 1024 * 1024) {
         toast({
           title: "File Too Large",
-          description: "File size must be less than 5MB.",
+          description: "File size must be less than 10MB. Don't worry, it will be automatically compressed to an optimal size.",
           variant: "destructive",
         });
         // Reset input value
@@ -2437,7 +2437,7 @@ function UserProfile() {
               )}
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png"
                 onChange={handleFileSelect}
                 className="hidden"
                 id="photo-upload"
