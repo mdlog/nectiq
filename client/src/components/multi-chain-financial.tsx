@@ -917,17 +917,21 @@ export function MultiChainFinancial() {
     },
   });
 
-  // Handle transaction success/failure using useEffect
+  // Handle transaction success/failure using useEffect - ENHANCED FOR MOBILE
   useEffect(() => {
     if (txHash && !isTransactionPending && !processedHashes.has(txHash)) {
       console.log('🔧 [WALLET-SUCCESS] Wagmi transaction sent:', txHash);
+      console.log('📱 [MOBILE-DEBUG] Mobile transaction detection - checking deposits for update...');
 
       // CRITICAL FIX: Update the most recent deposit with transaction hash
       // This fixes the issue where deposits were created without transaction hashes
       if (deposits && deposits.length > 0) {
+        console.log(`📱 [MOBILE-DEBUG] Found ${deposits.length} deposits, searching for pending deposit...`);
+        
         const latestDeposit = deposits.find(d => d.status === 'pending' && !d.transactionHash);
         if (latestDeposit) {
           console.log(`🔧 [DEPOSIT-FIX] Updating deposit ${latestDeposit.id} with transaction hash:`, txHash);
+          console.log(`📱 [MOBILE-SUCCESS] Mobile deposit auto-update triggered for deposit ${latestDeposit.id}`);
           
           // Mark this hash as processed to prevent duplicates
           setProcessedHashes(prev => new Set(prev).add(txHash));
@@ -944,21 +948,28 @@ export function MultiChainFinancial() {
           });
         } else {
           console.warn('🚨 [DEPOSIT-WARNING] No pending deposit found to update with transaction hash');
+          console.log('📱 [MOBILE-DEBUG] Available deposits:', deposits.map(d => ({ id: d.id, status: d.status, hasHash: !!d.transactionHash })));
         }
+      } else {
+        console.warn('📱 [MOBILE-WARNING] No deposits found for transaction hash update');
       }
     }
   }, [txHash, isTransactionPending, deposits, updateDepositMutation, processedHashes]);
 
-  // Handle contract transaction hash (for ERC-20 tokens like USDC/USDT)
+  // Handle contract transaction hash (for ERC-20 tokens like USDC/USDT) - ENHANCED FOR MOBILE
   useEffect(() => {
     if (contractTxHash && !isContractPending && !processedHashes.has(contractTxHash)) {
       console.log('🔧 [CONTRACT-SUCCESS] Wagmi contract transaction sent:', contractTxHash);
+      console.log('📱 [MOBILE-CONTRACT-DEBUG] Mobile contract transaction detection - checking deposits for update...');
 
       // CRITICAL FIX: Update the most recent deposit with contract transaction hash
       if (deposits && deposits.length > 0) {
+        console.log(`📱 [MOBILE-CONTRACT-DEBUG] Found ${deposits.length} deposits, searching for pending deposit...`);
+        
         const latestDeposit = deposits.find(d => d.status === 'pending' && !d.transactionHash);
         if (latestDeposit) {
           console.log(`🔧 [DEPOSIT-FIX] Updating deposit ${latestDeposit.id} with contract transaction hash:`, contractTxHash);
+          console.log(`📱 [MOBILE-CONTRACT-SUCCESS] Mobile contract deposit auto-update triggered for deposit ${latestDeposit.id}`);
           
           // Mark this hash as processed to prevent duplicates
           setProcessedHashes(prev => new Set(prev).add(contractTxHash));
@@ -975,38 +986,71 @@ export function MultiChainFinancial() {
           });
         } else {
           console.warn('🚨 [DEPOSIT-WARNING] No pending deposit found to update with contract transaction hash');
+          console.log('📱 [MOBILE-CONTRACT-DEBUG] Available deposits:', deposits.map(d => ({ id: d.id, status: d.status, hasHash: !!d.transactionHash })));
         }
+      } else {
+        console.warn('📱 [MOBILE-CONTRACT-WARNING] No deposits found for contract transaction hash update');
       }
     }
   }, [contractTxHash, isContractPending, deposits, updateDepositMutation, processedHashes]);
 
-  // Handle sendTransaction errors
+  // Handle sendTransaction errors - ENHANCED FOR MOBILE
   useEffect(() => {
     if (isEthPending) {
       console.log('🔧 [WALLET-DEBUG] ETH transaction is pending...');
+      console.log('📱 [MOBILE-DEBUG] Mobile ETH transaction pending - user should confirm in MetaMask app');
     }
   }, [isEthPending]);
 
-  // Handle writeContract errors  
+  // Handle writeContract errors - ENHANCED FOR MOBILE
   useEffect(() => {
     if (isContractPending) {
       console.log('🔧 [WALLET-DEBUG] Contract transaction is pending...');
+      console.log('📱 [MOBILE-DEBUG] Mobile contract transaction pending - user should confirm in MetaMask app');
     }
   }, [isContractPending]);
 
-  // Handle transaction receipt
+  // Handle transaction receipt - CRITICAL FOR MOBILE AUTO-UPDATE
   useEffect(() => {
-    if (transactionReceipt && !isReceiptLoading) {
+    if (transactionReceipt && !isReceiptLoading && transactionReceipt.transactionHash) {
+      console.log('🎉 [MOBILE-RECEIPT] Transaction receipt received:', transactionReceipt.transactionHash);
+      
+      // MOBILE FIX: Ensure deposit gets updated with confirmed transaction hash
+      if (deposits && deposits.length > 0) {
+        const latestDeposit = deposits.find(d => 
+          (d.status === 'pending' || d.status === 'processing') && 
+          (!d.transactionHash || d.transactionHash === transactionReceipt.transactionHash)
+        );
+        
+        if (latestDeposit && !processedHashes.has(transactionReceipt.transactionHash)) {
+          console.log(`🔧 [MOBILE-RECEIPT-FIX] Updating deposit ${latestDeposit.id} with confirmed transaction hash:`, transactionReceipt.transactionHash);
+          
+          // Mark this hash as processed to prevent duplicates
+          setProcessedHashes(prev => new Set(prev).add(transactionReceipt.transactionHash));
+          
+          updateDepositMutation.mutate({
+            depositId: latestDeposit.id,
+            transactionHash: transactionReceipt.transactionHash,
+            status: 'processing',
+          });
+        }
+      }
+      
       toast({
         title: "Transaction Confirmed",
-        description: "Transaction confirmed on blockchain",
+        description: "Transaction confirmed on blockchain and deposit updated",
       });
       
-      // Refresh deposit data
+      // Refresh deposit data with priority for mobile
       queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Force refetch immediately for mobile reliability
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["/api/user/deposits"] });
+      }, 1000);
     }
-  }, [transactionReceipt, isReceiptLoading, queryClient]);
+  }, [transactionReceipt, isReceiptLoading, queryClient, deposits, updateDepositMutation, processedHashes]);
 
   // Function to send USDC/USDT via Wagmi (consistent with RainbowKit)
   const sendStablecoinViaWallet = async (deposit: any) => {

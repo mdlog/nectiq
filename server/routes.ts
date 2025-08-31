@@ -8796,7 +8796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update deposit with transaction hash
+  // Update deposit with transaction hash - ENHANCED FOR MOBILE
   app.post("/api/deposits/:id/update-transaction", async (req, res) => {
     try {
       const session = req.session as any;
@@ -8806,8 +8806,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const depositId = parseInt(req.params.id);
       const { transactionHash, status } = req.body;
+      
+      // Mobile debugging
+      console.log(`📱 [MOBILE-DEPOSIT-UPDATE] Request received for deposit ${depositId}`);
+      console.log(`📱 [MOBILE-DEPOSIT-UPDATE] Transaction hash: ${transactionHash}, Status: ${status}`);
+      console.log(`📱 [MOBILE-DEPOSIT-UPDATE] User: ${session.userId}, UserAgent: ${req.get('User-Agent')?.substring(0, 50)}...`);
 
       if (!transactionHash || !status) {
+        console.log(`❌ [MOBILE-DEPOSIT-UPDATE] Missing required fields - hash: ${!!transactionHash}, status: ${!!status}`);
         return res.status(400).json({ error: "Transaction hash and status are required" });
       }
 
@@ -8816,16 +8822,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const deposit = userDeposits.find(d => d.id === depositId);
       
       if (!deposit) {
+        console.log(`❌ [MOBILE-DEPOSIT-UPDATE] Deposit ${depositId} not found for user ${session.userId}`);
         return res.status(404).json({ error: "Deposit not found or unauthorized" });
       }
+
+      console.log(`📱 [MOBILE-DEPOSIT-UPDATE] Found deposit - Current status: ${deposit.status}, Has hash: ${!!deposit.transactionHash}`);
 
       // Update the deposit
       await storage.updateDepositStatus(depositId, status, transactionHash);
 
-      console.log(`✅ Deposit ${depositId} updated with transaction hash: ${transactionHash}, status: ${status}`);
+      console.log(`✅ [MOBILE-DEPOSIT-UPDATE] Deposit ${depositId} successfully updated with transaction hash: ${transactionHash}, status: ${status}`);
+      console.log(`📱 [MOBILE-SUCCESS] Mobile deposit auto-update completed for user ${session.userId}`);
+      
       res.json({ success: true, message: "Deposit updated successfully" });
     } catch (error: any) {
-      console.error("Error updating deposit:", error);
+      console.error("❌ [MOBILE-DEPOSIT-UPDATE] Error updating deposit:", error);
       res.status(500).json({ error: error.message });
     }
   });
