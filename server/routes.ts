@@ -1456,6 +1456,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Security Events endpoint for admin panel
+  app.get('/api/admin/security-events', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      console.log('🔐 [SECURITY-EVENTS] Admin requesting security events');
+      
+      // Transform security audit logs to frontend format
+      const formattedEvents = securityAuditLogs.map(log => ({
+        id: `${log.timestamp}_${log.event}`, // Create unique ID
+        timestamp: log.timestamp,
+        type: log.event,
+        ip: log.ip,
+        userAgent: log.userAgent,
+        details: typeof log.details === 'object' ? JSON.stringify(log.details) : log.details,
+        status: log.event.includes('FAILED') || log.event.includes('BLOCKED') ? 'failed' : 'success',
+        riskLevel: log.event.includes('FAILED') || log.event.includes('BLOCKED') || log.event.includes('SUSPICIOUS') ? 'high' : 
+                  log.event.includes('WARNING') || log.event.includes('RETRY') ? 'medium' : 'low'
+      })).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      auditLog("admin_security_events_viewed", { 
+        count: formattedEvents.length,
+        userId: (req as any).session.userId,
+        walletAddress: (req as any).session.walletAddress 
+      }, req);
+
+      console.log(`📊 [SECURITY-EVENTS] Returning ${formattedEvents.length} security events`);
+      res.json(formattedEvents);
+    } catch (error) {
+      console.error("❌ [SECURITY-EVENTS] Error fetching security events:", error);
+      res.status(500).json({ message: "Failed to fetch security events" });
+    }
+  });
+
   // IP Blacklist management endpoint
   app.post('/api/security/blacklist/:action', requireAdmin, async (req: Request, res: Response) => {
     try {

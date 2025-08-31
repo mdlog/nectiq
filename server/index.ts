@@ -161,6 +161,7 @@ app.use((req, res, next) => {
     'https://replit.dev',
     'https://replit.app',
     'https://nectiq.replit.app', // Production deployment domain
+    'https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev', // Development domain
     // Add your production domain here
     process.env.FRONTEND_URL || 'https://nectiq.app'
   ];

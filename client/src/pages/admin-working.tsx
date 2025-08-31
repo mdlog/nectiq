@@ -479,7 +479,7 @@ export default function AdminPanel() {
   });
 
   const { data: securityEvents, isLoading: securityLoading } = useQuery({
-    queryKey: ["/api/admin/security"],
+    queryKey: ["/api/admin/security-events"],
     refetchInterval: 15000,
   });
 
