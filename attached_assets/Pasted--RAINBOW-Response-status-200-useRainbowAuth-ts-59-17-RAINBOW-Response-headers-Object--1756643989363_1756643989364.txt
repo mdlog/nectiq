@@ -1,0 +1,93 @@
+🌈 [RAINBOW] Response status: 200 useRainbowAuth.ts:59:17
+🌈 [RAINBOW] Response headers: 
+Object { "access-control-allow-credentials": "true", "access-control-allow-headers": "Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since", "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD", "access-control-allow-origin": "https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev", "access-control-expose-headers": "Content-Length, X-Requested-With", "access-control-max-age": "86400", "content-length": "149", "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com s3.tradingview.com; style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; font-src 'self' data: *.dynamicauth.com *.tradingview.com; img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com; connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; frame-src 'self' *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com tradingview.com; child-src 'self' *.dynamicauth.com *.tradingview.com; worker-src 'self' blob: *.tradingview.com; object-src 'none'; media-src 'self' data: blob:", "content-type": "application/json; charset=utf-8", "cross-origin-embedder-policy": "unsafe-none", … }
+​
+"access-control-allow-credentials": "true"
+​
+"access-control-allow-headers": "Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since"
+​
+"access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+​
+"access-control-allow-origin": "https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev"
+​
+"access-control-expose-headers": "Content-Length, X-Requested-With"
+​
+"access-control-max-age": "86400"
+​
+"content-length": "149"
+​
+"content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com s3.tradingview.com; style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; font-src 'self' data: *.dynamicauth.com *.tradingview.com; img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com; connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; frame-src 'self' *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com tradingview.com; child-src 'self' *.dynamicauth.com *.tradingview.com; worker-src 'self' blob: *.tradingview.com; object-src 'none'; media-src 'self' data: blob:"
+​
+"content-type": "application/json; charset=utf-8"
+​
+"cross-origin-embedder-policy": "unsafe-none"
+​
+"cross-origin-opener-policy": "same-origin-allow-popups"
+​
+"cross-origin-resource-policy": "cross-origin"
+​
+date: "Sun, 31 Aug 2025 12:38:33 GMT"
+​
+etag: 'W/"95-vgH4pNgZA2KFhhqihyfACNMsy1k"'
+​
+"referrer-policy": "strict-origin-when-cross-origin"
+​
+"replit-cluster": "picard"
+​
+"x-content-type-options": "nosniff"
+​
+"x-frame-options": "SAMEORIGIN"
+​
+"x-powered-by": "Express"
+​
+"x-robots-tag": "none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex, none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex"
+​
+"x-xss-protection": "1; mode=block"
+​
+<prototype>: Object { … }
+useRainbowAuth.ts:60:17
+🌈 [RAINBOW] Success response: 
+Object { success: true, user: {…} }
+useRainbowAuth.ts:69:17
+✅ [RAINBOW] Wallet authenticated successfully: 
+Object { success: true, user: {…} }
+useRainbowAuth.ts:80:15
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://widget-sheriff.tradingview-widget.com/sheriff/api/v1/rules/search?origin=https%3A%2F%2F47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev search
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/en.19781.6e491ba7e407c9ccce0e.js en.19781.6e491ba7e407c9ccce0e.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/97443.c32a67c213d1f064eda0.js 97443.c32a67c213d1f064eda0.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/seasonals-chart.c0d080638394521c8605.js seasonals-chart.c0d080638394521c8605.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/lightweight-minichart-study-data-source.0f4dada43b9053f3732e.js lightweight-minichart-study-data-source.0f4dada43b9053f3732e.js
+📱 [WEBSOCKET-MANAGER] Already connected for user 2 useWebSocket.ts:44:15
+🔍 [RAINBOW] useEffect state check: 
+Object { isConnected: true, hasAddress: true, hasUser: true, isUserLoading: false, isPending: false, address: "0x4C61...c5B6" }
+​
+address: "0x4C61...c5B6"
+​
+hasAddress: true
+​
+hasUser: true
+​
+isConnected: true
+​
+isPending: false
+​
+isUserLoading: false
+​
+<prototype>: Object { … }
+useRainbowAuth.ts:164:13
+🔐 [QUERY-CLIENT] Global wallet address set: 0x4c6165... queryClient.ts:8:11
+🔐 [RAINBOW] Updated global wallet address for API requests: 0x4c6165... useRainbowAuth.ts:201:15
+🔍 [RAINBOW] useEffect state check: 
+Object { isConnected: true, hasAddress: true, hasUser: true, isUserLoading: false, isPending: false, address: "0x4C61...c5B6" }
+useRainbowAuth.ts:164:13
+🔐 [QUERY-CLIENT] Global wallet address set: 0x4c6165... queryClient.ts:8:11
+🔐 [RAINBOW] Updated global wallet address for API requests: 0x4c6165... useRainbowAuth.ts:201:15
+📨 [WEBSOCKET-MANAGER] Received message: 
+Object { type: "pong", timestamp: 1756643932878 }
+useWebSocket.ts:123:21
+🏓 [WEBSOCKET-MANAGER] Ping response received useWebSocket.ts:139:25
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/clear-old-settings.5af7558b1ab938123ae5.js clear-old-settings.5af7558b1ab938123ae5.js
+📨 [WEBSOCKET-MANAGER] Received message: 
+Object { type: "pong", timestamp: 1756643962875 }
+useWebSocket.ts:123:21
+🏓 [WEBSOCKET-MANAGER] Ping response received

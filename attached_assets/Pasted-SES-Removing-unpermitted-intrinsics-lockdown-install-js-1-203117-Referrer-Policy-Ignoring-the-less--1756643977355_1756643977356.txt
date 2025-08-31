@@ -1,0 +1,154 @@
+SES Removing unpermitted intrinsics lockdown-install.js:1:203117
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/27568.69f5f8355121628b8df9.js 27568.69f5f8355121628b8df9.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/alerts-collection.42544dfe29484dd4a27a.js alerts-collection.42544dfe29484dd4a27a.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/en.65974.20e35ae3c4010f1ec22b.js en.65974.20e35ae3c4010f1ec22b.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/en.93474.df90dbbb16e662db54bf.js en.93474.df90dbbb16e662db54bf.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/12831.d5718f3c7af4187990fb.js 12831.d5718f3c7af4187990fb.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/22935.6f7dd0e69d9cae64ce6c.js 22935.6f7dd0e69d9cae64ce6c.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/24951.282bef950e2e4ec7fa22.js 24951.282bef950e2e4ec7fa22.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/82043.77aafcb536cdf41302d3.js 82043.77aafcb536cdf41302d3.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/73248.b6ab1666cde097827c19.js 73248.b6ab1666cde097827c19.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/82687.ff2a61d31dcbb7b32910.js 82687.ff2a61d31dcbb7b32910.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/1069.2c801215343e01ae5d3f.js 1069.2c801215343e01ae5d3f.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/88536.12575971eddf4f7fe4ac.js 88536.12575971eddf4f7fe4ac.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/57084.57847291b35337e172bf.js 57084.57847291b35337e172bf.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/73633.6668a28ee3c8bb25c0c0.js 73633.6668a28ee3c8bb25c0c0.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/9887.b5e6f7962949a48ef512.js 9887.b5e6f7962949a48ef512.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/46371.487d8116375336c66605.js 46371.487d8116375336c66605.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/80241.ed527bc314e840e61490.js 80241.ed527bc314e840e61490.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/84412.e2cc6cca406819688433.js 84412.e2cc6cca406819688433.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/17660.0faebc5ac9487049c328.js 17660.0faebc5ac9487049c328.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/21448.527ac6e8026e866b5003.js 21448.527ac6e8026e866b5003.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/14252.2fe956b988d89908779a.js 14252.2fe956b988d89908779a.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/43836.0e0b41cf55d2e3c98bb3.js 43836.0e0b41cf55d2e3c98bb3.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/99235.b5af3478c67b183e1d19.js 99235.b5af3478c67b183e1d19.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/62625.4a93f677611d5823e569.js 62625.4a93f677611d5823e569.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/530.72e410d66d56e22f7903.js 530.72e410d66d56e22f7903.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/6421.604f000111e8a50f2af6.js 6421.604f000111e8a50f2af6.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/symbol-details.266440e019d8062d9460.js symbol-details.266440e019d8062d9460.js
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://s3.tradingview.com/conversions_en.json. (Reason: CORS header ‘Access-Control-Allow-Origin’ does not match ‘https://www.tradingview-widget.com’).
+
+2025-08-31T12:38:33.783Z:Property:The state with a data type: object does not match a schema 91367.e7570b9e9c8eaf7b680b.js:20:615
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/en.53501.1b5140001174d967a84e.js en.53501.1b5140001174d967a84e.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/24913.eafde41f863ea2eaa6d0.js 24913.eafde41f863ea2eaa6d0.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/23301.6cb4192df1bc6e902213.js 23301.6cb4192df1bc6e902213.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/27860.909521c8a8a13e03e023.js 27860.909521c8a8a13e03e023.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/5071.b2f6749d9da3e5d3af6e.js 5071.b2f6749d9da3e5d3af6e.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/88079.59aa45570d7571c87250.js 88079.59aa45570d7571c87250.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/7232.cb053f739a6a44632491.js 7232.cb053f739a6a44632491.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/44293.83590a612c795091d0ac.js 44293.83590a612c795091d0ac.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/134.d4165f055f16622ff065.js 134.d4165f055f16622ff065.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/49346.735a2dc02ebaa72093fd.js 49346.735a2dc02ebaa72093fd.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/53361.49c3a3977e7c6cd8bb89.js 53361.49c3a3977e7c6cd8bb89.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/studies.8cb85ed238b75c8d1b68.js studies.8cb85ed238b75c8d1b68.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/en.98975.832cc8b9460148e62c2f.js en.98975.832cc8b9460148e62c2f.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/price-scale-mode-buttons-renderer.611c931e81afb972ae50.js price-scale-mode-buttons-renderer.611c931e81afb972ae50.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/get-error-card.26929c9a53acb18c1e1b.js get-error-card.26929c9a53acb18c1e1b.js
+🌈 [RAINBOW] Response status: 200 useRainbowAuth.ts:59:17
+🌈 [RAINBOW] Response headers: 
+Object { "access-control-allow-credentials": "true", "access-control-allow-headers": "Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since", "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD", "access-control-allow-origin": "https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev", "access-control-expose-headers": "Content-Length, X-Requested-With", "access-control-max-age": "86400", "content-length": "149", "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com s3.tradingview.com; style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; font-src 'self' data: *.dynamicauth.com *.tradingview.com; img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com; connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; frame-src 'self' *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com tradingview.com; child-src 'self' *.dynamicauth.com *.tradingview.com; worker-src 'self' blob: *.tradingview.com; object-src 'none'; media-src 'self' data: blob:", "content-type": "application/json; charset=utf-8", "cross-origin-embedder-policy": "unsafe-none", … }
+useRainbowAuth.ts:60:17
+🌈 [RAINBOW] Success response: 
+Object { success: true, user: {…} }
+useRainbowAuth.ts:69:17
+✅ [RAINBOW] Wallet authenticated successfully: 
+Object { success: true, user: {…} }
+useRainbowAuth.ts:80:15
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/en.6342.8dfda3c83b2f3a7e92fa.js en.6342.8dfda3c83b2f3a7e92fa.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/change-interval-dialog.33c4f223bbba9cd3905d.js change-interval-dialog.33c4f223bbba9cd3905d.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/3205.31bbb491e57f98368b6b.js 3205.31bbb491e57f98368b6b.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/88003.8209ca77363dd576e301.js 88003.8209ca77363dd576e301.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/study-pane-views.824d34383fb806ec1800.js study-pane-views.824d34383fb806ec1800.js
+🌈 [RAINBOW] Response status: 200 useRainbowAuth.ts:59:17
+🌈 [RAINBOW] Response headers: 
+Object { "access-control-allow-credentials": "true", "access-control-allow-headers": "Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since", "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD", "access-control-allow-origin": "https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev", "access-control-expose-headers": "Content-Length, X-Requested-With", "access-control-max-age": "86400", "content-length": "149", "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com s3.tradingview.com; style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; font-src 'self' data: *.dynamicauth.com *.tradingview.com; img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com; connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; frame-src 'self' *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com tradingview.com; child-src 'self' *.dynamicauth.com *.tradingview.com; worker-src 'self' blob: *.tradingview.com; object-src 'none'; media-src 'self' data: blob:", "content-type": "application/json; charset=utf-8", "cross-origin-embedder-policy": "unsafe-none", … }
+​
+"access-control-allow-credentials": "true"
+​
+"access-control-allow-headers": "Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since"
+​
+"access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
+​
+"access-control-allow-origin": "https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev"
+​
+"access-control-expose-headers": "Content-Length, X-Requested-With"
+​
+"access-control-max-age": "86400"
+​
+"content-length": "149"
+​
+"content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com s3.tradingview.com; style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; font-src 'self' data: *.dynamicauth.com *.tradingview.com; img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com; connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com; frame-src 'self' *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com tradingview.com; child-src 'self' *.dynamicauth.com *.tradingview.com; worker-src 'self' blob: *.tradingview.com; object-src 'none'; media-src 'self' data: blob:"
+​
+"content-type": "application/json; charset=utf-8"
+​
+"cross-origin-embedder-policy": "unsafe-none"
+​
+"cross-origin-opener-policy": "same-origin-allow-popups"
+​
+"cross-origin-resource-policy": "cross-origin"
+​
+date: "Sun, 31 Aug 2025 12:38:33 GMT"
+​
+etag: 'W/"95-vgH4pNgZA2KFhhqihyfACNMsy1k"'
+​
+"referrer-policy": "strict-origin-when-cross-origin"
+​
+"replit-cluster": "picard"
+​
+"x-content-type-options": "nosniff"
+​
+"x-frame-options": "SAMEORIGIN"
+​
+"x-powered-by": "Express"
+​
+"x-robots-tag": "none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex, none, noindex, noarchive, nofollow, nositelinkssearchbox, noimageindex"
+​
+"x-xss-protection": "1; mode=block"
+​
+<prototype>: Object { … }
+useRainbowAuth.ts:60:17
+🌈 [RAINBOW] Success response: 
+Object { success: true, user: {…} }
+useRainbowAuth.ts:69:17
+✅ [RAINBOW] Wallet authenticated successfully: 
+Object { success: true, user: {…} }
+useRainbowAuth.ts:80:15
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://widget-sheriff.tradingview-widget.com/sheriff/api/v1/rules/search?origin=https%3A%2F%2F47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev search
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/en.19781.6e491ba7e407c9ccce0e.js en.19781.6e491ba7e407c9ccce0e.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/97443.c32a67c213d1f064eda0.js 97443.c32a67c213d1f064eda0.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/seasonals-chart.c0d080638394521c8605.js seasonals-chart.c0d080638394521c8605.js
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/lightweight-minichart-study-data-source.0f4dada43b9053f3732e.js lightweight-minichart-study-data-source.0f4dada43b9053f3732e.js
+📱 [WEBSOCKET-MANAGER] Already connected for user 2 useWebSocket.ts:44:15
+🔍 [RAINBOW] useEffect state check: 
+Object { isConnected: true, hasAddress: true, hasUser: true, isUserLoading: false, isPending: false, address: "0x4C61...c5B6" }
+​
+address: "0x4C61...c5B6"
+​
+hasAddress: true
+​
+hasUser: true
+​
+isConnected: true
+​
+isPending: false
+​
+isUserLoading: false
+​
+<prototype>: Object { … }
+useRainbowAuth.ts:164:13
+🔐 [QUERY-CLIENT] Global wallet address set: 0x4c6165... queryClient.ts:8:11
+🔐 [RAINBOW] Updated global wallet address for API requests: 0x4c6165... useRainbowAuth.ts:201:15
+🔍 [RAINBOW] useEffect state check: 
+Object { isConnected: true, hasAddress: true, hasUser: true, isUserLoading: false, isPending: false, address: "0x4C61...c5B6" }
+useRainbowAuth.ts:164:13
+🔐 [QUERY-CLIENT] Global wallet address set: 0x4c6165... queryClient.ts:8:11
+🔐 [RAINBOW] Updated global wallet address for API requests: 0x4c6165... useRainbowAuth.ts:201:15
+📨 [WEBSOCKET-MANAGER] Received message: 
+Object { type: "pong", timestamp: 1756643932878 }
+useWebSocket.ts:123:21
+🏓 [WEBSOCKET-MANAGER] Ping response received useWebSocket.ts:139:25
+Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://www.tradingview-widget.com/static/bundles/embed/clear-old-settings.5af7558b1ab938123ae5.js clear-old-settings.5af7558b1ab938123ae5.js
+📨 [WEBSOCKET-MANAGER] Received message: 
+Object { type: "pong", timestamp: 1756643962875 }
+useWebSocket.ts:123:21
+🏓 [WEBSOCKET-MANAGER] Ping response received useWebSocket.ts:139:25
