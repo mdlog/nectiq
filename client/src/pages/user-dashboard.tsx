@@ -1680,9 +1680,9 @@ function UserAnalytics() {
   }
 
   const analytics = analyticsData || {};
-  const overview = analytics.overview || {};
-  const cryptoPerformance = analytics.cryptoPerformance || [];
-  const timeframePerformance = analytics.timeframePerformance || [];
+  const overview = (analytics as any)?.overview || {};
+  const cryptoPerformance = (analytics as any)?.cryptoPerformance || [];
+  const timeframePerformance = (analytics as any)?.timeframePerformance || [];
 
   return (
     <div className="space-y-6">
@@ -2089,7 +2089,7 @@ function BattlesSection() {
                               data={createShareData.battle(
                                 battle.cryptocurrency?.toUpperCase() || 'CRYPTO',
                                 battle.isUserChallenger ? battle.challengedUsername || 'Opponent' : battle.challengerUsername || 'Opponent',
-                                parseFloat(battle.winnerReward?.toString() || '0')
+                                battle.winnerReward?.toString() || '0'
                               )}
                             />
                           )}

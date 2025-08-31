@@ -150,7 +150,7 @@ function Router() {
 }
 
 function App() {
-  const { isMobile } = useMobileDetection();
+  const { isMobile, showWarning, dismissWarning } = useMobileDetection();
   const { address, isConnected } = useAccount();
 
   // Check maintenance mode status
@@ -172,6 +172,16 @@ function App() {
   useEffect(() => {
     handleReferralFromURL();
   }, []);
+
+  // Add mobile debugging
+  useEffect(() => {
+    console.log('📱 [MOBILE-DEBUG] Device detection:', {
+      isMobile,
+      showWarning,
+      screenWidth: window.innerWidth,
+      userAgent: navigator.userAgent
+    });
+  }, [isMobile, showWarning]);
 
   // Simple debug mode toggle
   const urlParams = new URLSearchParams(window.location.search);
@@ -200,14 +210,17 @@ function App() {
     console.log('✅ [MAINTENANCE] Admin detected - allowing full access during maintenance');
   }
 
-  if (isMobile) {
-    return <MobileWarning />;
-  }
-
   return (
     <TooltipProvider>
       <Router />
       <Toaster />
+      {/* Show mobile warning as overlay instead of blocking access */}
+      {showWarning && (
+        <MobileWarning 
+          isOpen={showWarning} 
+          onClose={dismissWarning} 
+        />
+      )}
     </TooltipProvider>
   );
 }

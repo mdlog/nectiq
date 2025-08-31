@@ -83,17 +83,27 @@ export function useMobileDetection() {
     const checkDevice = () => {
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
       
-      // Deteksi mobile devices
-      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      // More precise mobile device detection - only actual mobile phones
+      const mobileRegex = /Android.*Mobile|iPhone|iPod|IEMobile|Opera Mini/i;
       const isMobileDevice = mobileRegex.test(userAgent);
       
-      // Deteksi layar kecil
-      const isSmallScreen = window.innerWidth <= 768;
+      // Much smaller screen threshold for actual mobile phones (not tablets)
+      const isPhoneScreen = window.innerWidth <= 480;
       
       // Deteksi touch device
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       
-      const mobile = isMobileDevice || (isSmallScreen && isTouchDevice);
+      // Only consider as mobile if it's actually a mobile phone
+      const mobile = isMobileDevice && isPhoneScreen && isTouchDevice;
+      
+      console.log('📱 [MOBILE-DETECTION]', {
+        userAgent: userAgent.substring(0, 50),
+        isMobileDevice,
+        isPhoneScreen,
+        isTouchDevice,
+        screenWidth: window.innerWidth,
+        finalMobileDetection: mobile
+      });
       
       setIsMobile(mobile);
       
