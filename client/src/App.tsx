@@ -162,7 +162,7 @@ function App() {
 
   // Check if current user is admin (only if wallet connected)
   const { data: adminData, isLoading: adminLoading } = useQuery({
-    queryKey: ["/api/check-admin", address],
+    queryKey: [`/api/check-admin/${address}`],
     enabled: !!address && isConnected, // Only run if wallet is connected
     refetchInterval: 30000, // Check admin status every 30 seconds
     staleTime: 20000, // Consider data stale after 20 seconds
@@ -183,12 +183,13 @@ function App() {
   }
 
   // Show maintenance page if maintenance mode is active AND user is not admin
-  const isAdmin = adminData?.isAdmin || false;
-  const isInMaintenanceMode = !maintenanceLoading && maintenanceData?.maintenanceMode;
+  const isAdmin = (adminData as { isAdmin?: boolean })?.isAdmin || false;
+  const isInMaintenanceMode = !maintenanceLoading && (maintenanceData as { maintenanceMode?: boolean })?.maintenanceMode;
   
-  console.log('🔍 [MAINTENANCE-CHECK] Maintenance mode:', isInMaintenanceMode);
-  console.log('🔍 [MAINTENANCE-CHECK] User is admin:', isAdmin);
-  console.log('🔍 [MAINTENANCE-CHECK] Wallet address:', address);
+  // Debug logging can be removed in production
+  // console.log('🔍 [MAINTENANCE-CHECK] Maintenance mode:', isInMaintenanceMode);
+  // console.log('🔍 [MAINTENANCE-CHECK] User is admin:', isAdmin);
+  // console.log('🔍 [MAINTENANCE-CHECK] Wallet address:', address);
   
   if (isInMaintenanceMode && !isAdmin) {
     console.log('🚫 [MAINTENANCE] Blocking user access - showing maintenance page');

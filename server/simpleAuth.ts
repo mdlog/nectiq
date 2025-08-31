@@ -14,7 +14,7 @@ export interface AuthenticatedRequest extends Request {
 // Secure admin wallet management
 function getAdminWallets(): string[] {
   // Method 1: Environment Variables (Primary)
-  const envWallets = process.env.ADMIN_WALLETS;
+  const envWallets = process.env.ADMIN_WALLET_ADDRESSES;
   if (envWallets) {
     return envWallets.split(',').map(wallet => wallet.trim().toLowerCase());
   }
@@ -79,6 +79,8 @@ async function isAuthorizedAdmin(walletAddress: string): Promise<boolean> {
   return false;
 }
 
+// Export the function properly at the end of the file
+
 export const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     // Check for wallet address in headers or body
@@ -132,3 +134,6 @@ export const requireAdmin = async (req: AuthenticatedRequest, res: Response, nex
     next();
   });
 };
+
+// Export isAuthorizedAdmin function for external use
+export { isAuthorizedAdmin };

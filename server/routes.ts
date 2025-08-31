@@ -26,7 +26,7 @@ import { calculateAntiGamingMetrics, getPredictionDeadline, formatCountdown } fr
 import { SurvivalRoundService } from "./services/survivalRoundService.js";
 import { BalanceService } from "./services/balanceService.js";
 import AutomatedDepositSecurity from './automated-deposit-security.js';
-import { requireAuth as requireWalletAuth } from './simpleAuth.js';
+import { requireAuth as requireWalletAuth, isAuthorizedAdmin } from './simpleAuth.js';
 
 // Maintenance mode middleware
 const checkMaintenanceMode = async (req: any, res: any, next: any) => {
@@ -2636,15 +2636,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/check-admin/:walletAddress', async (req, res) => {
     try {
       const { walletAddress } = req.params;
+      console.log(`🔍 [ADMIN-CHECK] Received request for wallet: ${walletAddress}`);
+      
       if (!walletAddress) {
+        console.log(`❌ [ADMIN-CHECK] No wallet address provided`);
         return res.json({ isAdmin: false });
       }
 
       const isAdmin = await isAuthorizedAdmin(walletAddress);
+      
       console.log(`🔍 [ADMIN-CHECK] Wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} - Admin status: ${isAdmin}`);
       res.json({ isAdmin });
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error('❌ [ADMIN-CHECK] Error checking admin status:', error);
       res.json({ isAdmin: false });
     }
   });
