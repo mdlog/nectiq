@@ -1020,9 +1020,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const isNewUser = !dbUser;
         if (!dbUser) {
-          console.log(`🔍 [WALLET-DEBUG] User not found, creating new user`);
+          console.log(`🔍 [WALLET-DEBUG] User not found, checking registration settings`);
           const adminWallets = getAdminWalletAddresses();
           const isAdmin = adminWallets.includes(normalizedAddress);
+          
+          // Check if new user registration is enabled (unless it's an admin)
+          if (!isAdmin) {
+            const settings = await storage.getPlatformSettings();
+            
+            // Check if user registration is disabled
+            if (!settings.userRegistrationEnabled) {
+              console.log(`🚫 [REGISTRATION-BLOCKED] New user registration is disabled`);
+              return res.status(403).json({ 
+                message: "New user registration is currently disabled",
+                registrationBlocked: true 
+              });
+            }
+            
+            // Check if platform is in maintenance mode
+            if (settings.maintenanceMode) {
+              console.log(`🚫 [REGISTRATION-BLOCKED] Platform is in maintenance mode`);
+              return res.status(503).json({ 
+                message: "Platform is under maintenance. New registrations are temporarily disabled",
+                maintenanceMode: true 
+              });
+            }
+          }
+          
+          console.log(`🔍 [WALLET-DEBUG] Registration check passed, creating new user`);
           const username = isAdmin ? `Admin_${normalizedAddress.slice(-6)}` : generateRandomUsername();
           
           console.log(`🔍 [WALLET-DEBUG] About to create user with username: ${username}`);
