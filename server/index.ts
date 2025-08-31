@@ -139,11 +139,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Enable secure flag in production
+    secure: false, // Disable secure flag for now to test if this fixes the issue
     httpOnly: true, // Prevent XSS attacks by blocking JavaScript access
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site cookies for deployment
-    domain: process.env.NODE_ENV === 'production' ? '.replit.app' : undefined // Allow subdomain cookies
+    sameSite: 'lax', // Use lax for better compatibility
+    // Remove domain restriction for now
   },
   name: 'connect.sid' // Explicit session name for proper authentication
 }));

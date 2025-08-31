@@ -991,11 +991,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🌈 [WALLET-CONNECT] Request received:', {
         walletAddress: req.body.walletAddress ? req.body.walletAddress.slice(0, 8) + '...' : 'none',
         origin: req.get('Origin'),
+        host: req.get('Host'),
         userAgent: req.get('User-Agent'),
         ip: req.ip,
         hasSession: !!req.session,
         sessionId: req.sessionID,
-        referralCode: req.body.referralCode || 'None'
+        referralCode: req.body.referralCode || 'None',
+        cookies: req.headers.cookie ? req.headers.cookie.slice(0, 100) + '...' : 'none',
+        protocol: req.protocol,
+        secure: req.secure
       });
       
       const { walletAddress, referralCode } = req.body;
@@ -1652,6 +1656,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Wallet admin auth error:", error);
       res.status(500).json({ success: false, message: "Authentication failed" });
+    }
+  });
+
+  // Debug endpoint for deployment testing
+  app.get("/api/debug/session", async (req, res) => {
+    try {
+      const debugInfo = {
+        session: {
+          exists: !!req.session,
+          id: req.sessionID,
+          userId: (req as any).session?.userId,
+          walletAddress: (req as any).session?.walletAddress,
+          isAdmin: (req as any).session?.isAdmin,
+          keys: req.session ? Object.keys(req.session) : []
+        },
+        request: {
+          origin: req.get('Origin'),
+          host: req.get('Host'),
+          userAgent: req.get('User-Agent')?.slice(0, 50),
+          cookies: req.headers.cookie ? req.headers.cookie.slice(0, 100) : 'none',
+          ip: req.ip,
+          protocol: req.protocol,
+          secure: req.secure
+        },
+        environment: {
+          nodeEnv: process.env.NODE_ENV,
+          domain: req.hostname
+        }
+      };
+      
+      console.log('🔍 [DEBUG-SESSION] Session debug info:', debugInfo);
+      res.json(debugInfo);
+    } catch (error) {
+      console.error('❌ [DEBUG-SESSION] Error:', error);
+      res.status(500).json({ error: 'Debug failed' });
     }
   });
 
