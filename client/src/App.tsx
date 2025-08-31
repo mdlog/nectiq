@@ -121,6 +121,13 @@ function Router() {
       </Route>
 
       {/* Admin Panel - PROTECTED */}
+      <Route path="/admin/:tab?">
+        <ProtectedRoute requireWallet={true} requireAdmin={true}>
+          <AdminPanel />
+        </ProtectedRoute>
+      </Route>
+      
+      {/* Legacy admin route for backward compatibility */}
       <Route path="/admin-main/:tab?">
         <ProtectedRoute requireWallet={true} requireAdmin={true}>
           <AdminPanel />

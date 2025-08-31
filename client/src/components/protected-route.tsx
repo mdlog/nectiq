@@ -6,12 +6,14 @@ import { useToast } from '@/hooks/use-toast';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireWallet?: boolean;
+  requireAdmin?: boolean;
   redirectTo?: string;
 }
 
 export function ProtectedRoute({ 
   children, 
   requireWallet = true, 
+  requireAdmin = false,
   redirectTo = '/home' 
 }: ProtectedRouteProps) {
   const { isConnected, user, isLoading } = useRainbowAuth();
@@ -37,8 +39,23 @@ export function ProtectedRoute({
         setLocation(redirectTo);
         return;
       }
+      
+      // Check admin access if required
+      if (requireAdmin && !user.isAdmin) {
+        console.log('🚫 [PROTECTED-ROUTE] Access denied - admin privileges required');
+        
+        toast({
+          title: "Admin Access Required",
+          description: "You don't have permission to access this page.",
+          variant: "destructive",
+        });
+        
+        // Redirect to home page
+        setLocation(redirectTo);
+        return;
+      }
     }
-  }, [isConnected, user, isLoading, requireWallet, redirectTo, setLocation, toast]);
+  }, [isConnected, user, isLoading, requireWallet, requireAdmin, redirectTo, setLocation, toast]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -54,6 +71,11 @@ export function ProtectedRoute({
 
   // If wallet is required but not connected, don't render children
   if (requireWallet && (!isConnected || !user)) {
+    return null;
+  }
+  
+  // If admin is required but user is not admin, don't render children
+  if (requireAdmin && (!user || !user.isAdmin)) {
     return null;
   }
 
