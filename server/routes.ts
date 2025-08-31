@@ -4063,6 +4063,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user prediction history for History & Analytics
+  app.get("/api/user/prediction-history", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = (page - 1) * limit;
+
+      // Get prediction history with detailed information
+      const predictionHistory = await db
+        .select({
+          id: predictions.id,
+          cryptocurrency: predictions.cryptocurrency,
+          predictedPrice: predictions.predictedPrice,
+          currentPrice: predictions.currentPrice,
+          finalPrice: predictions.finalPrice,
+          timeframe: predictions.timeframe,
+          stakeAmount: predictions.stakeAmount,
+          rewardAmount: predictions.rewardAmount,
+          accuracyScore: predictions.accuracyScore,
+          submissionTime: predictions.submissionTime,
+          resolutionTime: predictions.resolutionTime,
+          status: predictions.status,
+          resolved: predictions.resolved,
+          claimed: predictions.claimed
+        })
+        .from(predictions)
+        .where(eq(predictions.userId, userId))
+        .orderBy(desc(predictions.submissionTime))
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count for pagination
+      const totalCountResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(predictions)
+        .where(eq(predictions.userId, userId));
+
+      const totalCount = Number(totalCountResult[0]?.count) || 0;
+
+      res.json({
+        predictions: predictionHistory,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages: Math.ceil(totalCount / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching prediction history:', error);
+      res.status(500).json({ message: "Failed to get prediction history" });
+    }
+  });
+
+  // Get user analytics data for charts and statistics
+  app.get("/api/user/analytics", async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const period = req.query.period as string || '30'; // days
+      const periodDays = parseInt(period);
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - periodDays);
+
+      // Get overall statistics
+      const overallStats = await db
+        .select({
+          totalPredictions: sql<number>`count(*)`,
+          totalResolved: sql<number>`count(case when ${predictions.resolved} = true then 1 end)`,
+          totalClaimed: sql<number>`count(case when ${predictions.claimed} = true then 1 end)`,
+          avgAccuracy: sql<number>`avg(case when ${predictions.resolved} = true and ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
+          totalStaked: sql<number>`sum(${predictions.stakeAmount})`,
+          totalRewards: sql<number>`sum(case when ${predictions.claimed} = true then ${predictions.rewardAmount} else 0 end)`,
+          bestAccuracy: sql<number>`max(case when ${predictions.resolved} = true and ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
+          winRate: sql<number>`
+            (count(case when ${predictions.claimed} = true then 1 end)::float / 
+             count(case when ${predictions.resolved} = true then 1 end)::float) * 100
+          `
+        })
+        .from(predictions)
+        .where(eq(predictions.userId, userId));
+
+      // Get daily performance for the specified period
+      const dailyPerformance = await db
+        .select({
+          date: sql<string>`date(${predictions.submissionTime})`,
+          predictionsCount: sql<number>`count(*)`,
+          claimedCount: sql<number>`count(case when ${predictions.claimed} = true then 1 end)`,
+          avgAccuracy: sql<number>`avg(case when ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
+          totalRewards: sql<number>`sum(case when ${predictions.claimed} = true then ${predictions.rewardAmount} else 0 end)`
+        })
+        .from(predictions)
+        .where(and(
+          eq(predictions.userId, userId),
+          gte(predictions.submissionTime, startDate)
+        ))
+        .groupBy(sql`date(${predictions.submissionTime})`)
+        .orderBy(sql`date(${predictions.submissionTime})`);
+
+      // Get performance by cryptocurrency
+      const cryptoPerformance = await db
+        .select({
+          cryptocurrency: predictions.cryptocurrency,
+          predictionsCount: sql<number>`count(*)`,
+          claimedCount: sql<number>`count(case when ${predictions.claimed} = true then 1 end)`,
+          avgAccuracy: sql<number>`avg(case when ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
+          totalRewards: sql<number>`sum(case when ${predictions.claimed} = true then ${predictions.rewardAmount} else 0 end)`,
+          winRate: sql<number>`
+            (count(case when ${predictions.claimed} = true then 1 end)::float / 
+             count(case when ${predictions.resolved} = true then 1 end)::float) * 100
+          `
+        })
+        .from(predictions)
+        .where(and(
+          eq(predictions.userId, userId),
+          eq(predictions.resolved, true)
+        ))
+        .groupBy(predictions.cryptocurrency)
+        .orderBy(desc(sql`count(*)`));
+
+      // Get performance by timeframe
+      const timeframePerformance = await db
+        .select({
+          timeframe: predictions.timeframe,
+          predictionsCount: sql<number>`count(*)`,
+          claimedCount: sql<number>`count(case when ${predictions.claimed} = true then 1 end)`,
+          avgAccuracy: sql<number>`avg(case when ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
+          winRate: sql<number>`
+            (count(case when ${predictions.claimed} = true then 1 end)::float / 
+             count(case when ${predictions.resolved} = true then 1 end)::float) * 100
+          `
+        })
+        .from(predictions)
+        .where(and(
+          eq(predictions.userId, userId),
+          eq(predictions.resolved, true)
+        ))
+        .groupBy(predictions.timeframe)
+        .orderBy(desc(sql`count(*)`));
+
+      // Get recent activity (last 7 days)
+      const recentActivityDate = new Date();
+      recentActivityDate.setDate(recentActivityDate.getDate() - 7);
+      
+      const recentActivity = await db
+        .select({
+          date: sql<string>`date(${predictions.submissionTime})`,
+          count: sql<number>`count(*)`
+        })
+        .from(predictions)
+        .where(and(
+          eq(predictions.userId, userId),
+          gte(predictions.submissionTime, recentActivityDate)
+        ))
+        .groupBy(sql`date(${predictions.submissionTime})`)
+        .orderBy(sql`date(${predictions.submissionTime})`);
+
+      res.json({
+        overview: overallStats[0] || {
+          totalPredictions: 0,
+          totalResolved: 0,
+          totalClaimed: 0,
+          avgAccuracy: 0,
+          totalStaked: 0,
+          totalRewards: 0,
+          bestAccuracy: 0,
+          winRate: 0
+        },
+        dailyPerformance,
+        cryptoPerformance,
+        timeframePerformance,
+        recentActivity,
+        period: periodDays
+      });
+    } catch (error) {
+      console.error('Error fetching user analytics:', error);
+      res.status(500).json({ message: "Failed to get user analytics" });
+    }
+  });
+
   // Process expired predictions (manual trigger)
   app.post("/api/predictions/process", async (req, res) => {
     try {

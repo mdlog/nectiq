@@ -635,11 +635,29 @@ export default function UserDashboard() {
                     </TabsTrigger>
                     
                     <TabsTrigger 
-                      value="rewards" 
+                      value="history" 
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-indigo-400/50 text-slate-300"
                     >
                       <History className="h-4 w-4 sm:h-5 sm:w-5" />
-                      <span className="hidden sm:inline">Reward History</span>
+                      <span className="hidden sm:inline">History</span>
+                      <span className="sm:hidden">History</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="analytics" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-violet-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-violet-400/50 text-slate-300"
+                    >
+                      <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="hidden sm:inline">Analytics</span>
+                      <span className="sm:hidden">Analytics</span>
+                    </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="rewards" 
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-cyan-400/50 text-slate-300"
+                    >
+                      <Gift className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="hidden sm:inline">Rewards</span>
                       <span className="sm:hidden">Rewards</span>
                     </TabsTrigger>
                   </TabsList>
@@ -1360,6 +1378,50 @@ export default function UserDashboard() {
                   </div>
                 </TabsContent>
 
+                {/* History Tab */}
+                <TabsContent value="history" className="flex-1 h-full">
+                  <div className="h-full">
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <History className="mr-2" size={20} />
+                          Prediction History
+                        </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          View your complete prediction history and performance
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-y-auto">
+                          <PredictionHistory />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                {/* Analytics Tab */}
+                <TabsContent value="analytics" className="flex-1 h-full">
+                  <div className="h-full">
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <BarChart3 className="mr-2" size={20} />
+                          Performance Analytics
+                        </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          Detailed analytics and performance insights
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-y-auto">
+                          <UserAnalytics />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+
                 {/* Battles Tab */}
                 <TabsContent value="battles" className="flex-1 h-full">
                   <div className="h-full">
@@ -1388,6 +1450,440 @@ export default function UserDashboard() {
       </main>
       
       <Footer />
+    </div>
+  );
+}
+
+// Prediction History Component
+function PredictionHistory() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+
+  const { data: historyData, isLoading: historyLoading } = useQuery({
+    queryKey: ["/api/user/prediction-history", currentPage, pageSize],
+    queryFn: async () => {
+      const response = await fetch(`/api/user/prediction-history?page=${currentPage}&limit=${pageSize}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch prediction history');
+      return response.json();
+    },
+    retry: 2,
+    staleTime: 30000,
+  });
+
+  if (historyLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <RefreshCw className="animate-spin mr-2" size={20} />
+        <span>Loading prediction history...</span>
+      </div>
+    );
+  }
+
+  const predictions = historyData?.predictions || [];
+  const pagination = historyData?.pagination || { page: 1, totalPages: 1, totalCount: 0 };
+
+  const getStatusBadge = (prediction: any) => {
+    if (!prediction.resolved) {
+      return <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/30">Pending</Badge>;
+    }
+    if (prediction.claimed) {
+      return <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-500/30">Won</Badge>;
+    }
+    return <Badge variant="outline" className="bg-red-500/20 text-red-300 border-red-500/30">Lost</Badge>;
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6
+    }).format(price);
+  };
+
+  const formatAccuracy = (accuracy: number | null) => {
+    return accuracy ? `${accuracy.toFixed(2)}%` : 'N/A';
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-surface border-surface-light">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-primary">{pagination.totalCount}</div>
+            <div className="text-sm text-slate-400">Total Predictions</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-surface border-surface-light">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-400">
+              {predictions.filter((p: any) => p.claimed).length}
+            </div>
+            <div className="text-sm text-slate-400">Successful</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-surface border-surface-light">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-yellow-400">
+              {predictions.filter((p: any) => !p.resolved).length}
+            </div>
+            <div className="text-sm text-slate-400">Pending</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-surface border-surface-light">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-purple-400">
+              {predictions.reduce((sum: number, p: any) => sum + (p.rewardAmount || 0), 0).toLocaleString()} NTIQ
+            </div>
+            <div className="text-sm text-slate-400">Total Rewards</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* History Table */}
+      <Card className="bg-surface border-surface-light">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-surface-light">
+                <tr>
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">Crypto</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">Prediction</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">Final Price</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">Timeframe</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">Accuracy</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">Reward</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">Status</th>
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {predictions.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center p-8 text-slate-400">
+                      No prediction history found
+                    </td>
+                  </tr>
+                ) : (
+                  predictions.map((prediction: any) => (
+                    <tr key={prediction.id} className="border-b border-surface-light/50 hover:bg-surface-light/30">
+                      <td className="p-4">
+                        <div className="font-medium text-white">{prediction.cryptocurrency}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-slate-300">{formatPrice(prediction.predictedPrice)}</div>
+                        <div className="text-xs text-slate-500">Stake: {prediction.stakeAmount} NTIQ</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-slate-300">
+                          {prediction.finalPrice ? formatPrice(prediction.finalPrice) : 'Pending'}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-slate-300">{prediction.timeframe}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-slate-300">{formatAccuracy(prediction.accuracyScore)}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-primary font-medium">
+                          {prediction.rewardAmount ? `${prediction.rewardAmount} NTIQ` : '-'}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        {getStatusBadge(prediction)}
+                      </td>
+                      <td className="p-4">
+                        <div className="text-slate-300 text-sm">
+                          {new Date(prediction.submissionTime).toLocaleDateString()}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {new Date(prediction.submissionTime).toLocaleTimeString()}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-slate-400">
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))}
+            disabled={currentPage === pagination.totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// User Analytics Component
+function UserAnalytics() {
+  const [selectedPeriod, setSelectedPeriod] = useState('30');
+
+  const { data: analyticsData, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["/api/user/analytics", selectedPeriod],
+    queryFn: async () => {
+      const response = await fetch(`/api/user/analytics?period=${selectedPeriod}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch analytics data');
+      return response.json();
+    },
+    retry: 2,
+    staleTime: 60000,
+  });
+
+  if (analyticsLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <RefreshCw className="animate-spin mr-2" size={20} />
+        <span>Loading analytics data...</span>
+      </div>
+    );
+  }
+
+  const analytics = analyticsData || {};
+  const overview = analytics.overview || {};
+  const cryptoPerformance = analytics.cryptoPerformance || [];
+  const timeframePerformance = analytics.timeframePerformance || [];
+
+  return (
+    <div className="space-y-6">
+      {/* Period Selector */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">Performance Analytics</h3>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-slate-400">Period:</span>
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="bg-surface border border-surface-light rounded px-2 py-1 text-white text-sm"
+          >
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last year</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Overview Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-surface border-surface-light">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-primary">{overview.totalPredictions || 0}</div>
+            <div className="text-sm text-slate-400">Total Predictions</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-surface border-surface-light">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-400">
+              {overview.avgAccuracy ? `${overview.avgAccuracy.toFixed(1)}%` : '0%'}
+            </div>
+            <div className="text-sm text-slate-400">Average Accuracy</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-surface border-surface-light">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-yellow-400">
+              {overview.winRate ? `${overview.winRate.toFixed(1)}%` : '0%'}
+            </div>
+            <div className="text-sm text-slate-400">Win Rate</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-surface border-surface-light">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-purple-400">
+              {overview.totalRewards?.toLocaleString() || 0} NTIQ
+            </div>
+            <div className="text-sm text-slate-400">Total Rewards</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance by Cryptocurrency */}
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-lg text-white">Performance by Cryptocurrency</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {cryptoPerformance.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                No performance data available for the selected period
+              </div>
+            ) : (
+              cryptoPerformance.map((crypto: any, index: number) => (
+                <div key={index} className="bg-surface-light rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-white">{crypto.cryptocurrency}</h4>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <span className="text-slate-400">
+                        Win Rate: <span className="text-green-400 font-medium">
+                          {crypto.winRate ? `${crypto.winRate.toFixed(1)}%` : '0%'}
+                        </span>
+                      </span>
+                      <span className="text-slate-400">
+                        Predictions: <span className="text-primary font-medium">{crypto.predictionsCount}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-slate-400">Average Accuracy:</span>
+                      <span className="ml-2 text-white font-medium">
+                        {crypto.avgAccuracy ? `${crypto.avgAccuracy.toFixed(2)}%` : 'N/A'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Total Rewards:</span>
+                      <span className="ml-2 text-primary font-medium">
+                        {crypto.totalRewards?.toLocaleString() || 0} NTIQ
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Successful:</span>
+                      <span className="ml-2 text-green-400 font-medium">
+                        {crypto.claimedCount}/{crypto.predictionsCount}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Performance by Timeframe */}
+      <Card className="bg-surface border-surface-light">
+        <CardHeader>
+          <CardTitle className="text-lg text-white">Performance by Timeframe</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {timeframePerformance.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                No timeframe performance data available
+              </div>
+            ) : (
+              timeframePerformance.map((timeframe: any, index: number) => (
+                <div key={index} className="bg-surface-light rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-white">{timeframe.timeframe}</h4>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <span className="text-slate-400">
+                        Win Rate: <span className="text-green-400 font-medium">
+                          {timeframe.winRate ? `${timeframe.winRate.toFixed(1)}%` : '0%'}
+                        </span>
+                      </span>
+                      <span className="text-slate-400">
+                        Predictions: <span className="text-primary font-medium">{timeframe.predictionsCount}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-slate-400">Average Accuracy:</span>
+                      <span className="ml-2 text-white font-medium">
+                        {timeframe.avgAccuracy ? `${timeframe.avgAccuracy.toFixed(2)}%` : 'N/A'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Successful:</span>
+                      <span className="ml-2 text-green-400 font-medium">
+                        {timeframe.claimedCount}/{timeframe.predictionsCount}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Additional Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="bg-surface border-surface-light">
+          <CardHeader>
+            <CardTitle className="text-lg text-white">Best Performance</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Best Accuracy:</span>
+              <span className="text-green-400 font-medium">
+                {overview.bestAccuracy ? `${overview.bestAccuracy.toFixed(2)}%` : 'N/A'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Total Staked:</span>
+              <span className="text-yellow-400 font-medium">
+                {overview.totalStaked?.toLocaleString() || 0} NTIQ
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">ROI:</span>
+              <span className="text-purple-400 font-medium">
+                {overview.totalStaked ? 
+                  `${(((overview.totalRewards || 0) - (overview.totalStaked || 0)) / (overview.totalStaked || 1) * 100).toFixed(1)}%` : 
+                  'N/A'
+                }
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-surface border-surface-light">
+          <CardHeader>
+            <CardTitle className="text-lg text-white">Activity Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Resolved Predictions:</span>
+              <span className="text-blue-400 font-medium">{overview.totalResolved || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Successful Claims:</span>
+              <span className="text-green-400 font-medium">{overview.totalClaimed || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Success Rate:</span>
+              <span className="text-primary font-medium">
+                {overview.totalResolved ? 
+                  `${((overview.totalClaimed || 0) / (overview.totalResolved || 1) * 100).toFixed(1)}%` : 
+                  '0%'
+                }
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
