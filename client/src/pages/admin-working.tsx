@@ -1946,23 +1946,23 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Professional Header */}
+      {/* Professional Header - Mobile Optimized */}
       <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Shield className="h-6 w-6 text-white" />
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Shield className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">
-                  Nectiq Admin Panel
+                <h1 className="text-lg sm:text-2xl font-bold text-white">
+                  Nectiq Admin
                 </h1>
-                <p className="text-slate-300 text-sm">Platform Management Dashboard</p>
+                <p className="text-slate-300 text-xs sm:text-sm hidden sm:block">Platform Management Dashboard</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-2 px-3 py-1 bg-slate-700/50 rounded-full">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="hidden lg:flex items-center space-x-2 px-3 py-1 bg-slate-700/50 rounded-full">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-sm text-slate-300">System Online</span>
               </div>
@@ -1970,23 +1970,24 @@ export default function AdminPanel() {
                 onClick={() => window.location.href = '/'}
                 variant="outline"
                 size="sm"
-                className="bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white transition-all duration-200"
+                className="bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3"
               >
-                <Home className="h-4 w-4 mr-2" />
-                Kembali ke Home
+                <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Kembali ke Home</span>
+                <span className="sm:hidden">Home</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">{/* Content wrapper moved here */}
+      <div className="container mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-4 md:py-8">{/* Content wrapper moved here */}
 
-        {/* Professional Navigation */}
-        <div className="mb-6 md:mb-8">
-          <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-1 md:p-2">
+        {/* Professional Navigation - Mobile Optimized */}
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-1 sm:p-1 md:p-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="bg-transparent w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-1 md:gap-2 h-auto p-0">
+              <TabsList className="bg-transparent w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-0.5 sm:gap-1 md:gap-2 h-auto p-0">
                 <TabsTrigger 
                   value="statistics" 
                   className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"

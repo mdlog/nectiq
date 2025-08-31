@@ -1,0 +1,367 @@
+/* Mobile Optimizations for Nectiq Platform */
+
+/* Base Mobile Styles */
+@media (max-width: 768px) {
+  /* Header Optimizations */
+  .header-mobile {
+    padding: 0.75rem 1rem !important;
+  }
+  
+  .header-logo {
+    height: 2.5rem !important;
+  }
+  
+  .header-title {
+    font-size: 1.125rem !important;
+  }
+  
+  /* Navigation Improvements */
+  .nav-mobile {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .nav-button {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Dialog and Modal Mobile */
+  .dialog-mobile {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 1rem auto !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .dialog-content-mobile {
+    padding: 1rem !important;
+  }
+  
+  /* Form Elements Mobile */
+  .form-mobile {
+    gap: 1rem !important;
+  }
+  
+  .form-field-mobile {
+    margin-bottom: 1rem !important;
+  }
+  
+  .form-label-mobile {
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .form-input-mobile {
+    padding: 0.75rem !important;
+    font-size: 1rem !important; /* Prevents iOS zoom */
+  }
+  
+  /* Button Mobile Styles */
+  .button-mobile {
+    padding: 0.75rem 1.5rem !important;
+    font-size: 0.875rem !important;
+    min-height: 44px !important; /* iOS touch target */
+  }
+  
+  .button-full-mobile {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  
+  /* Card and Container Mobile */
+  .card-mobile {
+    margin: 0.5rem !important;
+    padding: 1rem !important;
+    border-radius: 0.75rem !important;
+  }
+  
+  .container-mobile {
+    padding: 0.75rem !important;
+    margin: 0 !important;
+  }
+  
+  /* Table Mobile Responsive */
+  .table-mobile {
+    display: block !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+  }
+  
+  .table-row-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    padding: 1rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  .table-cell-mobile {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.25rem 0 !important;
+  }
+  
+  .table-header-mobile {
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+  }
+  
+  /* Grid Mobile Layout */
+  .grid-mobile-1 {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+  
+  .grid-mobile-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Statistics Cards Mobile */
+  .stats-card-mobile {
+    padding: 1rem !important;
+    text-align: center !important;
+    min-height: auto !important;
+  }
+  
+  .stats-icon-mobile {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    margin: 0 auto 0.5rem !important;
+  }
+  
+  .stats-value-mobile {
+    font-size: 1.5rem !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+  }
+  
+  .stats-label-mobile {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    margin-top: 0.25rem !important;
+  }
+  
+  /* Tab Navigation Mobile */
+  .tabs-mobile {
+    width: 100% !important;
+    overflow-x: auto !important;
+  }
+  
+  .tabs-list-mobile {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 0.25rem !important;
+    padding: 0.25rem !important;
+  }
+  
+  .tab-trigger-mobile {
+    flex-shrink: 0 !important;
+    min-width: auto !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+  }
+  
+  /* Search and Filter Mobile */
+  .search-container-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .search-input-mobile {
+    width: 100% !important;
+    padding: 0.75rem !important;
+    padding-left: 2.5rem !important;
+    font-size: 1rem !important;
+  }
+  
+  .filter-select-mobile {
+    width: 100% !important;
+  }
+  
+  /* Battle Card Mobile */
+  .battle-card-mobile {
+    padding: 1rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .battle-header-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .battle-details-mobile {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .battle-actions-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Prediction Form Mobile */
+  .prediction-form-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .prediction-input-group-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Chart Container Mobile */
+  .chart-container-mobile {
+    height: 300px !important;
+    width: 100% !important;
+    margin: 1rem 0 !important;
+  }
+  
+  /* Footer Mobile */
+  .footer-mobile {
+    padding: 1rem !important;
+    text-align: center !important;
+  }
+  
+  .footer-links-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    align-items: center !important;
+  }
+  
+  /* Leaderboard Mobile */
+  .leaderboard-item-mobile {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 1rem !important;
+    margin-bottom: 0.5rem !important;
+    border-radius: 0.5rem !important;
+  }
+  
+  .leaderboard-rank-mobile {
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    min-width: 2rem !important;
+  }
+  
+  .leaderboard-info-mobile {
+    flex: 1 !important;
+    margin-left: 1rem !important;
+  }
+  
+  .leaderboard-score-mobile {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+  }
+}
+
+/* Extra Small Mobile (max-width: 480px) */
+@media (max-width: 480px) {
+  .container-xs-mobile {
+    padding: 0.5rem !important;
+  }
+  
+  .card-xs-mobile {
+    margin: 0.25rem !important;
+    padding: 0.75rem !important;
+  }
+  
+  .button-xs-mobile {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .text-xs-mobile {
+    font-size: 0.75rem !important;
+  }
+  
+  .heading-xs-mobile {
+    font-size: 1rem !important;
+  }
+  
+  .grid-xs-mobile {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+  
+  .tab-trigger-xs-mobile {
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.625rem !important;
+  }
+  
+  .stats-value-xs-mobile {
+    font-size: 1.25rem !important;
+  }
+  
+  .dialog-xs-mobile {
+    width: 98vw !important;
+    margin: 0.5rem auto !important;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (max-width: 768px) {
+  /* Ensure all interactive elements are at least 44px for touch */
+  button, 
+  .button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"],
+  .clickable {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+  
+  /* Improved tap targets */
+  .tap-target {
+    padding: 0.75rem !important;
+    margin: 0.25rem !important;
+  }
+  
+  /* Better spacing for finger navigation */
+  .mobile-spacing {
+    margin: 0.5rem 0 !important;
+  }
+  
+  /* Prevent horizontal scroll */
+  .no-scroll {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .landscape-mobile {
+    padding: 0.5rem !important;
+  }
+  
+  .landscape-header {
+    padding: 0.5rem 1rem !important;
+  }
+  
+  .landscape-content {
+    padding: 0.5rem !important;
+  }
+}

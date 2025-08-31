@@ -121,15 +121,24 @@ export function Header() {
             )}
           </nav>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          {/* Mobile Wallet Status and Menu */}
+          <div className="md:hidden flex items-center space-x-2">
+            {/* Mobile Quick Balance */}
+            {isConnected && user && (
+              <div className="flex items-center space-x-1 bg-surface-light px-2 py-1 rounded-lg">
+                <Coins className="text-warning" size={14} />
+                <span className="font-semibold text-xs text-yellow-400">{(user.balance || 0).toLocaleString()}</span>
+              </div>
+            )}
+            
+            {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-slate-300 hover:text-white"
+              className="text-slate-300 hover:text-white p-2"
             >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </Button>
           </div>
 
@@ -311,39 +320,60 @@ export function Header() {
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t transition-all duration-300 bg-surface border-surface-light">
-            <div className="px-4 py-3 space-y-3">
-              {/* Mobile Balance Display */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
-                  <Coins className="text-warning" size={16} />
-                  <span className="font-semibold text-gray-900 dark:text-white">{user?.balance?.toLocaleString() || "0"}</span>
-                  <span className="text-xs text-slate-400">NTIQ</span>
-                </div>
-                
-                {isConnected && address && (
-                  <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded-lg border border-green-200 dark:border-green-800">
-                      <Wallet className="text-green-600 dark:text-green-400" size={14} />
-                      <span className="text-xs font-mono text-green-700 dark:text-green-300">
-                        {address.slice(0, 4)}...{address.slice(-3)}
-                      </span>
+            <div className="px-3 py-4 space-y-4">
+              {/* Mobile Wallet Status */}
+              {isConnected && address ? (
+                <div className="bg-surface-light rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-medium text-white">Wallet Connected</span>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => logout()}
+                      onClick={() => {
+                        logout();
+                        setIsMobileMenuOpen(false);
+                      }}
                       disabled={isLoggingOut}
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 p-1"
-                      title="Disconnect wallet"
+                      className="text-red-400 hover:text-red-300 p-1"
                     >
-                      <LogOut size={14} />
+                      <LogOut size={16} />
                     </Button>
                   </div>
-                )}
-              </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 bg-yellow-500/10 px-3 py-1 rounded-lg">
+                      <Coins className="text-yellow-400" size={16} />
+                      <span className="font-semibold text-white">{user?.balance?.toLocaleString() || "0"}</span>
+                      <span className="text-xs text-yellow-300">NTIQ</span>
+                    </div>
+                    <div className="flex items-center space-x-1 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded border border-green-200 dark:border-green-800">
+                      <Wallet className="text-green-600 dark:text-green-400" size={12} />
+                      <span className="text-xs font-mono text-green-700 dark:text-green-300">
+                        {address.slice(0, 4)}...{address.slice(-3)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-surface-light rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                      <span className="text-sm font-medium text-white">Wallet Not Connected</span>
+                    </div>
+                  </div>
+                  <RainbowConnectButton 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full"
+                  />
+                </div>
+              )}
 
               {/* Mobile Navigation */}
-              <nav className="space-y-2">
+              <nav className="space-y-1">
                 <button 
                   onClick={() => {
                     setLocation('/home');
@@ -501,16 +531,6 @@ export function Header() {
                 </div>
               </div>
 
-              {/* Mobile Connect Wallet Button (if not connected) */}
-              {!isConnected && (
-                <div className="border-t border-surface-light pt-3 mt-3">
-                  <RainbowConnectButton 
-                    variant="default" 
-                    size="sm"
-                    className="w-full flex items-center justify-center space-x-2"
-                  />
-                </div>
-              )}
             </div>
           </div>
         )}
