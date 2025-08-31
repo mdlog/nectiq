@@ -200,17 +200,17 @@ app.use((req, res, next) => {
   res.setHeader('X-XSS-Protection', '1; mode=block'); // Enable XSS protection
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin'); // Secure referrer
   
-  // Balanced CSP for Web3 and security
+  // Balanced CSP for Web3 and TradingView charts security
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev",
-    "style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev",
-    "font-src 'self' data: *.dynamicauth.com",
-    "img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app",
-    "connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev",
-    "frame-src 'self' *.dynamicauth.com *.replit.app",
-    "child-src 'self' *.dynamicauth.com",
-    "worker-src 'self' blob:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev *.tradingview.com s3.tradingview.com",
+    "style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev *.tradingview.com",
+    "font-src 'self' data: *.dynamicauth.com *.tradingview.com",
+    "img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app *.tradingview.com",
+    "connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev *.tradingview.com",
+    "frame-src 'self' *.dynamicauth.com *.replit.app *.tradingview.com tradingview.com",
+    "child-src 'self' *.dynamicauth.com *.tradingview.com",
+    "worker-src 'self' blob: *.tradingview.com",
     "object-src 'none'",
     "media-src 'self' data: blob:"
   ].join('; '));
