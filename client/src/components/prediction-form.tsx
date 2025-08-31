@@ -3,7 +3,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Gem, HelpCircle, AlertTriangle } from "lucide-react";
+import { Gem, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useMaintenanceMode } from "@/hooks/useMaintenanceMode";
 
 // Dynamic schema that will be created based on available cryptocurrencies
 const createPredictionFormSchema = (availableCryptos: string[]) => z.object({
@@ -52,7 +51,6 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
   const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isMaintenanceMode } = useMaintenanceMode();
 
   // Fetch live Pyth Network prices for real-time updates
   const { data: livePrices, isLoading: pricesLoading } = useQuery({
@@ -372,24 +370,12 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
             )}
           />
           
-          {isMaintenanceMode && (
-            <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg text-orange-400 text-sm">
-              <AlertTriangle size={16} />
-              <span>Platform is currently under maintenance. Prediction submissions are temporarily disabled.</span>
-            </div>
-          )}
-          
           <Button
             type="submit"
-            disabled={createPredictionMutation.isPending || isMaintenanceMode}
-            className="w-full gradient-bg hover:opacity-90 text-white font-semibold py-3 px-6 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            data-testid="button-submit-prediction"
+            disabled={createPredictionMutation.isPending}
+            className="w-full gradient-bg hover:opacity-90 text-white font-semibold py-3 px-6 transition-all transform hover:scale-105"
           >
-            {isMaintenanceMode 
-              ? "Maintenance Mode" 
-              : createPredictionMutation.isPending 
-              ? "Submitting..." 
-              : "Submit Prediction"}
+            {createPredictionMutation.isPending ? "Submitting..." : "Submit Prediction"}
           </Button>
         </form>
       </Form>
