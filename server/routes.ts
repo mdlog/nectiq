@@ -4259,21 +4259,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: predictions.id,
           cryptocurrency: predictions.cryptocurrency,
           predictedPrice: predictions.predictedPrice,
-          currentPrice: predictions.currentPrice,
-          finalPrice: predictions.finalPrice,
+          actualPrice: predictions.actualPrice,
           timeframe: predictions.timeframe,
           stakeAmount: predictions.stakeAmount,
           rewardAmount: predictions.rewardAmount,
-          accuracyScore: predictions.accuracyScore,
-          submissionTime: predictions.submissionTime,
-          resolutionTime: predictions.resolutionTime,
+          accuracy: predictions.accuracy,
+          submissionTime: predictions.createdAt,
+          resolutionTime: predictions.completedAt,
           status: predictions.status,
-          resolved: predictions.resolved,
-          claimed: predictions.claimed
+          targetTime: predictions.targetTime,
+          resolved: sql<boolean>`CASE WHEN ${predictions.status} = 'completed' THEN true ELSE false END`,
+          claimed: sql<boolean>`CASE WHEN ${predictions.rewardAmount} > 0 THEN true ELSE false END`
         })
         .from(predictions)
         .where(eq(predictions.userId, userId))
-        .orderBy(desc(predictions.submissionTime))
+        .orderBy(desc(predictions.createdAt))
         .limit(limit)
         .offset(offset);
 
@@ -4317,15 +4317,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const overallStats = await db
         .select({
           totalPredictions: sql<number>`count(*)`,
-          totalResolved: sql<number>`count(case when ${predictions.resolved} = true then 1 end)`,
-          totalClaimed: sql<number>`count(case when ${predictions.claimed} = true then 1 end)`,
-          avgAccuracy: sql<number>`avg(case when ${predictions.resolved} = true and ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
+          totalResolved: sql<number>`count(case when ${predictions.status} = 'completed' then 1 end)`,
+          totalClaimed: sql<number>`count(case when ${predictions.rewardAmount} > 0 then 1 end)`,
+          avgAccuracy: sql<number>`avg(case when ${predictions.status} = 'completed' and ${predictions.rewardAmount} > 0 then ${predictions.accuracy} end)`,
           totalStaked: sql<number>`sum(${predictions.stakeAmount})`,
-          totalRewards: sql<number>`sum(case when ${predictions.claimed} = true then ${predictions.rewardAmount} else 0 end)`,
-          bestAccuracy: sql<number>`max(case when ${predictions.resolved} = true and ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
+          totalRewards: sql<number>`sum(case when ${predictions.rewardAmount} > 0 then ${predictions.rewardAmount} else 0 end)`,
+          bestAccuracy: sql<number>`max(case when ${predictions.status} = 'completed' and ${predictions.rewardAmount} > 0 then ${predictions.accuracy} end)`,
           winRate: sql<number>`
-            (count(case when ${predictions.claimed} = true then 1 end)::float / 
-             count(case when ${predictions.resolved} = true then 1 end)::float) * 100
+            (count(case when ${predictions.rewardAmount} > 0 then 1 end)::float / 
+             count(case when ${predictions.status} = 'completed' then 1 end)::float) * 100
           `
         })
         .from(predictions)
@@ -4334,37 +4334,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get daily performance for the specified period
       const dailyPerformance = await db
         .select({
-          date: sql<string>`date(${predictions.submissionTime})`,
+          date: sql<string>`date(${predictions.createdAt})`,
           predictionsCount: sql<number>`count(*)`,
-          claimedCount: sql<number>`count(case when ${predictions.claimed} = true then 1 end)`,
-          avgAccuracy: sql<number>`avg(case when ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
-          totalRewards: sql<number>`sum(case when ${predictions.claimed} = true then ${predictions.rewardAmount} else 0 end)`
+          claimedCount: sql<number>`count(case when ${predictions.rewardAmount} > 0 then 1 end)`,
+          avgAccuracy: sql<number>`avg(case when ${predictions.rewardAmount} > 0 then ${predictions.accuracy} end)`,
+          totalRewards: sql<number>`sum(case when ${predictions.rewardAmount} > 0 then ${predictions.rewardAmount} else 0 end)`
         })
         .from(predictions)
         .where(and(
           eq(predictions.userId, userId),
-          gte(predictions.submissionTime, startDate)
+          gte(predictions.createdAt, startDate)
         ))
-        .groupBy(sql`date(${predictions.submissionTime})`)
-        .orderBy(sql`date(${predictions.submissionTime})`);
+        .groupBy(sql`date(${predictions.createdAt})`)
+        .orderBy(sql`date(${predictions.createdAt})`);
 
       // Get performance by cryptocurrency
       const cryptoPerformance = await db
         .select({
           cryptocurrency: predictions.cryptocurrency,
           predictionsCount: sql<number>`count(*)`,
-          claimedCount: sql<number>`count(case when ${predictions.claimed} = true then 1 end)`,
-          avgAccuracy: sql<number>`avg(case when ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
-          totalRewards: sql<number>`sum(case when ${predictions.claimed} = true then ${predictions.rewardAmount} else 0 end)`,
+          claimedCount: sql<number>`count(case when ${predictions.rewardAmount} > 0 then 1 end)`,
+          avgAccuracy: sql<number>`avg(case when ${predictions.rewardAmount} > 0 then ${predictions.accuracy} end)`,
+          totalRewards: sql<number>`sum(case when ${predictions.rewardAmount} > 0 then ${predictions.rewardAmount} else 0 end)`,
           winRate: sql<number>`
-            (count(case when ${predictions.claimed} = true then 1 end)::float / 
-             count(case when ${predictions.resolved} = true then 1 end)::float) * 100
+            (count(case when ${predictions.rewardAmount} > 0 then 1 end)::float / 
+             count(case when ${predictions.status} = 'completed' then 1 end)::float) * 100
           `
         })
         .from(predictions)
         .where(and(
           eq(predictions.userId, userId),
-          eq(predictions.resolved, true)
+          eq(predictions.status, 'completed')
         ))
         .groupBy(predictions.cryptocurrency)
         .orderBy(desc(sql`count(*)`));
@@ -4374,17 +4374,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select({
           timeframe: predictions.timeframe,
           predictionsCount: sql<number>`count(*)`,
-          claimedCount: sql<number>`count(case when ${predictions.claimed} = true then 1 end)`,
-          avgAccuracy: sql<number>`avg(case when ${predictions.claimed} = true then ${predictions.accuracyScore} end)`,
+          claimedCount: sql<number>`count(case when ${predictions.rewardAmount} > 0 then 1 end)`,
+          avgAccuracy: sql<number>`avg(case when ${predictions.rewardAmount} > 0 then ${predictions.accuracy} end)`,
           winRate: sql<number>`
-            (count(case when ${predictions.claimed} = true then 1 end)::float / 
-             count(case when ${predictions.resolved} = true then 1 end)::float) * 100
+            (count(case when ${predictions.rewardAmount} > 0 then 1 end)::float / 
+             count(case when ${predictions.status} = 'completed' then 1 end)::float) * 100
           `
         })
         .from(predictions)
         .where(and(
           eq(predictions.userId, userId),
-          eq(predictions.resolved, true)
+          eq(predictions.status, 'completed')
         ))
         .groupBy(predictions.timeframe)
         .orderBy(desc(sql`count(*)`));
@@ -4395,16 +4395,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const recentActivity = await db
         .select({
-          date: sql<string>`date(${predictions.submissionTime})`,
+          date: sql<string>`date(${predictions.createdAt})`,
           count: sql<number>`count(*)`
         })
         .from(predictions)
         .where(and(
           eq(predictions.userId, userId),
-          gte(predictions.submissionTime, recentActivityDate)
+          gte(predictions.createdAt, recentActivityDate)
         ))
-        .groupBy(sql`date(${predictions.submissionTime})`)
-        .orderBy(sql`date(${predictions.submissionTime})`);
+        .groupBy(sql`date(${predictions.createdAt})`)
+        .orderBy(sql`date(${predictions.createdAt})`);
 
       res.json({
         overview: overallStats[0] || {
