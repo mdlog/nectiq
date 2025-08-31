@@ -731,13 +731,17 @@ export default function AdminPanel() {
   // Settings mutations
   const updateSettingsMutation = useMutation({
     mutationFn: async (settingsData: any) => {
-      return apiRequest("/api/admin/settings", {
+      console.log('🔧 [MUTATION] Sending settings update:', settingsData);
+      const response = await apiRequest("/api/admin/settings", {
         method: "POST",
         body: JSON.stringify(settingsData),
       });
+      console.log('✅ [MUTATION] Settings update response received');
+      return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+    onSuccess: async () => {
+      console.log('🔧 [MUTATION] onSuccess: Invalidating cache and showing toast');
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
       toast({ 
         title: "Settings Updated", 
         description: "Platform settings have been updated successfully",
@@ -766,20 +770,16 @@ export default function AdminPanel() {
     
     try {
       await updateSettingsMutation.mutateAsync(settingData);
-      // Update local state immediately
-      setSettings(prev => ({
-        ...prev,
-        platform: {
-          ...prev.platform,
-          [key]: value
-        },
-        token: {
-          ...prev.token,
-          ...(key === 'startingBalance' || key === 'minStakeAmount' || key === 'maxStakeAmount' ? { [key]: value } : {})
-        }
-      }));
+      
+      // Force immediate cache invalidation and refetch
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/settings"] });
+      
+      console.log(`✅ [SETTINGS] Successfully updated platform.${key} to:`, value);
     } catch (error) {
       console.error(`❌ [SETTINGS] Failed to update ${key}:`, error);
+      // Revert local state on error
+      throw error;
     }
   };
 

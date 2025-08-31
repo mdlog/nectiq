@@ -7430,10 +7430,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { platform, security, exchangeRates } = req.body;
       const adminId = req.session.userId;
 
+      console.log('🔧 [SETTINGS-UPDATE] Request body:', req.body);
+      console.log('🔧 [SETTINGS-UPDATE] Platform settings received:', platform);
+
       // Update platform settings
       if (platform) {
         for (const [key, value] of Object.entries(platform)) {
+          console.log(`🔧 [SETTINGS-UPDATE] Updating platform.${key} to:`, value);
           await storage.updateSystemSetting('platform', key, value, adminId);
+          console.log(`✅ [SETTINGS-UPDATE] Successfully updated platform.${key}`);
         }
       }
 
