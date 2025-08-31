@@ -4,7 +4,6 @@ import { HeroStats } from "@/components/hero-stats";
 import { PredictionForm } from "@/components/prediction-form";
 import { ActivePredictions } from "@/components/active-predictions";
 import { LivePrices } from "@/components/live-prices";
-import { TopPredictors } from "@/components/top-predictors";
 import { RecentRewards } from "@/components/recent-rewards";
 
 import { useRainbowAuth } from "@/hooks/useRainbowAuth";
@@ -155,10 +154,6 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Top Predictors Section */}
-        <div className="mt-8">
-          <TopPredictors />
-        </div>
 
         {/* Platform Stats - Full Width */}
         <div className="mt-16">
@@ -232,9 +227,6 @@ export default function Dashboard() {
           {/* Right Sidebar */}
           <div className="lg:col-span-1">
             <div className="flex flex-col space-y-6 h-full min-h-[600px] sticky top-4">
-              <div className="flex-1">
-                <TopPredictors />
-              </div>
               <div className="flex-1">
                 <RecentRewards />
               </div>
