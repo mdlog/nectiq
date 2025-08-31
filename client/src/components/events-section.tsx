@@ -4,16 +4,32 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, ExternalLink, Star, Clock } from "lucide-react";
 
+interface Event {
+  id: number;
+  title: string;
+  description?: string;
+  eventType: string;
+  isActive: boolean;
+  isFeatured?: boolean;
+  priority: number;
+  startDate?: string;
+  endDate?: string;
+  organizer?: string;
+  location?: string;
+  imageUrl?: string;
+  linkUrl?: string;
+}
+
 export function EventsSection() {
-  const { data: events = [] } = useQuery({
+  const { data: events = [] } = useQuery<Event[]>({
     queryKey: ["/api/events"],
     retry: false,
   });
 
   // Filter to show only active events, sorted by priority and featured status
   const activeEvents = events
-    .filter((event: any) => event.isActive)
-    .sort((a: any, b: any) => {
+    .filter((event: Event) => event.isActive)
+    .sort((a: Event, b: Event) => {
       // Featured events first, then by priority, then by start date
       if (a.isFeatured !== b.isFeatured) return b.isFeatured - a.isFeatured;
       if (a.priority !== b.priority) return b.priority - a.priority;
@@ -49,7 +65,7 @@ export function EventsSection() {
     }
   };
 
-  const isEventLive = (event: any) => {
+  const isEventLive = (event: Event) => {
     const now = new Date();
     const startDate = event.startDate ? new Date(event.startDate) : null;
     const endDate = event.endDate ? new Date(event.endDate) : null;
@@ -63,7 +79,7 @@ export function EventsSection() {
     return false;
   };
 
-  const isEventUpcoming = (event: any) => {
+  const isEventUpcoming = (event: Event) => {
     const now = new Date();
     const startDate = event.startDate ? new Date(event.startDate) : null;
     return startDate && now < startDate;
@@ -80,7 +96,7 @@ export function EventsSection() {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {activeEvents.map((event: any) => (
+          {activeEvents.map((event: Event) => (
             <div 
               key={event.id} 
               className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
