@@ -97,31 +97,64 @@ export function TestApp() {
           </div>
         </div>
         
-        <button
-          onClick={() => window.location.reload()}
-          style={{
-            padding: '1rem 2rem',
-            background: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '10px',
-            cursor: 'pointer',
-            fontSize: '1.1rem',
-            fontWeight: '600',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 4px 15px rgba(37, 99, 235, 0.4)'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = '#1d4ed8';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = '#2563eb';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          Launch Application
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => {
+              console.log('🚀 Attempting to load full application...');
+              window.location.reload();
+            }}
+            style={{
+              padding: '1rem 2rem',
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 4px 15px rgba(37, 99, 235, 0.4)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#1d4ed8';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#2563eb';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            🚀 Launch Full Platform
+          </button>
+          
+          <button
+            onClick={() => {
+              console.log('🔄 Force reload with cache clear...');
+              window.location.href = window.location.href + '?t=' + Date.now();
+            }}
+            style={{
+              padding: '1rem 2rem',
+              background: 'rgba(255,255,255,0.1)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.3)',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            🔄 Hard Refresh
+          </button>
+        </div>
         
         <p style={{
           marginTop: '2rem',
