@@ -139,34 +139,37 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true in production with HTTPS
-    httpOnly: false, // Allow frontend access to session
+    secure: process.env.NODE_ENV === 'production', // Enable secure flag in production
+    httpOnly: true, // Prevent XSS attacks by blocking JavaScript access
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Allow cross-origin requests
+    sameSite: 'strict' // Prevent CSRF attacks
   },
   name: 'connect.sid' // Explicit session name for proper authentication
 }));
 
-// Enhanced CORS middleware - Complete Dynamic SDK support
+// Enhanced CORS middleware - Secure configuration
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Dynamic Labs specific domains for CORS
+  // Strict whitelist of allowed origins
   const allowedOrigins = [
     'https://app.dynamicauth.com',
     'https://api.dynamicauth.com',
     'https://auth.dynamicauth.com',
     'https://dynamicauth.com',
     'https://replit.dev',
-    'https://replit.app'
+    'https://replit.app',
+    // Add your production domain here
+    process.env.FRONTEND_URL || 'https://nectiq.app'
   ];
   
-  // Handle undefined origin and determine CORS origin
-  let corsOrigin = '*';
+  // Strict CORS configuration - only allow whitelisted origins
+  let corsOrigin = false; // Default to false (block)
   if (origin && allowedOrigins.includes(origin)) {
     corsOrigin = origin;
-  } else if (origin) {
-    corsOrigin = origin; // Allow the current origin if defined
+  } else if (!origin) {
+    // Allow same-origin requests (no origin header)
+    corsOrigin = '*';
   }
   
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
@@ -189,27 +192,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// Enhanced security headers middleware for Dynamic SDK
+// Enhanced security headers middleware - Production ready
 app.use((req, res, next) => {
-  // Relaxed security headers for development and Dynamic SDK
+  // Security headers for XSS and content type protection
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Allow all frames for Dynamic SDK
-  res.setHeader('X-XSS-Protection', '0'); // Disable XSS protection to avoid conflicts
-  res.setHeader('Referrer-Policy', 'unsafe-url'); // Allow full referrer for Dynamic SDK
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Prevent clickjacking
+  res.setHeader('X-XSS-Protection', '1; mode=block'); // Enable XSS protection
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin'); // Secure referrer
   
-  // Ultra-permissive CSP for Dynamic SDK and wallet authentication
+  // Balanced CSP for Web3 and security
   res.setHeader('Content-Security-Policy', [
-    "default-src 'self' 'unsafe-inline' 'unsafe-eval' *",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' * data: blob:",
-    "style-src 'self' 'unsafe-inline' * data:",
-    "font-src 'self' * data:",
-    "img-src 'self' * data: blob:",
-    "connect-src 'self' * data: blob: ws: wss:",
-    "frame-src 'self' *",
-    "child-src 'self' *",
-    "worker-src 'self' * blob:",
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev",
+    "style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev",
+    "font-src 'self' data: *.dynamicauth.com",
+    "img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app",
+    "connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev",
+    "frame-src 'self' *.dynamicauth.com *.replit.app",
+    "child-src 'self' *.dynamicauth.com",
+    "worker-src 'self' blob:",
     "object-src 'none'",
-    "media-src 'self' * data: blob:"
+    "media-src 'self' data: blob:"
   ].join('; '));
   
   // HSTS for HTTPS

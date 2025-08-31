@@ -1760,23 +1760,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      // SECURITY: Prevent path traversal attacks but keep underscores
-      const sanitizedFileName = path.basename(fileName).replace(/[^a-zA-Z0-9._-]/g, '');
-      if (!sanitizedFileName || sanitizedFileName.startsWith('.')) {
+      // SECURITY: Enhanced filename sanitization and path traversal prevention
+      const sanitizedFileName = path.basename(fileName)
+        .replace(/[^a-zA-Z0-9._-]/g, '') // Remove dangerous characters
+        .replace(/\.\./g, '') // Remove directory traversal sequences
+        .replace(/^\.+/, '') // Remove leading dots
+        .substring(0, 255); // Limit filename length
+      
+      if (!sanitizedFileName || sanitizedFileName.length === 0) {
         return res.status(400).json({ 
           success: false, 
-          message: 'Invalid filename' 
+          message: 'Invalid filename after sanitization' 
+        });
+      }
+      
+      // SECURITY: Additional validation for suspicious patterns
+      const dangerousPatterns = ['//', '\\\\', '../', '..\\', './', '.\\'];
+      if (dangerousPatterns.some(pattern => sanitizedFileName.includes(pattern))) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Filename contains dangerous patterns' 
         });
       }
       
       const fullPath = path.join(uploadDir, sanitizedFileName);
       
-      // SECURITY: Validate file path is within upload directory
+      // SECURITY: Multiple layers of path validation
       const normalizedPath = path.normalize(fullPath);
-      if (!normalizedPath.startsWith(path.normalize(uploadDir))) {
+      const normalizedUploadDir = path.normalize(uploadDir);
+      
+      if (!normalizedPath.startsWith(normalizedUploadDir + path.sep) && 
+          normalizedPath !== normalizedUploadDir) {
         return res.status(400).json({ 
           success: false, 
-          message: 'Invalid file path' 
+          message: 'Path traversal attempt detected' 
+        });
+      }
+      
+      // SECURITY: Additional check using path.relative
+      const relativePath = path.relative(uploadDir, fullPath);
+      if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid file path detected' 
         });
       }
       
