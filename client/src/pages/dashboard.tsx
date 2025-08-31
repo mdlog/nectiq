@@ -5,6 +5,7 @@ import { PredictionForm } from "@/components/prediction-form";
 import { ActivePredictions } from "@/components/active-predictions";
 import { LivePrices } from "@/components/live-prices";
 import { RecentRewards } from "@/components/recent-rewards";
+import { TopPredictors } from "@/components/top-predictors";
 
 import { useRainbowAuth } from "@/hooks/useRainbowAuth";
 import { RainbowConnectButton } from "@/components/RainbowConnectButton";
@@ -227,6 +228,12 @@ export default function Dashboard() {
           {/* Right Sidebar */}
           <div className="lg:col-span-1">
             <div className="flex flex-col space-y-6 h-full min-h-[600px] sticky top-4">
+              {/* Top Predictors */}
+              <div>
+                <TopPredictors />
+              </div>
+              
+              {/* Recent Rewards */}
               <div className="flex-1">
                 <RecentRewards />
               </div>
