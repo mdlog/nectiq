@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -206,6 +207,24 @@ export default function AdminPanel() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showAddUser, setShowAddUser] = useState(false);
   const [showAddCrypto, setShowAddCrypto] = useState(false);
+  
+  // State untuk event management
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [eventFormData, setEventFormData] = useState({
+    title: '',
+    description: '',
+    eventType: 'announcement',
+    isActive: true,
+    isFeatured: false,
+    priority: 0,
+    startDate: '',
+    endDate: '',
+    organizer: '',
+    location: '',
+    imageUrl: '',
+    linkUrl: ''
+  });
   const [newUser, setNewUser] = useState({ username: "", walletAddress: "", isAdmin: false });
   const [newCrypto, setNewCrypto] = useState({ id: "", name: "", symbol: "", image: "", pythFeedId: "" });
   const [filterStatus, setFilterStatus] = useState("all");
@@ -580,6 +599,72 @@ export default function AdminPanel() {
     },
   });
 
+  // Event mutations
+  const updateEventMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/events/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      toast({ title: "Success", description: "Event updated successfully" });
+      setIsEventDialogOpen(false);
+      setSelectedEvent(null);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to update event",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/events/${id}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      toast({ title: "Success", description: "Event deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to delete event",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const createEventMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      toast({ title: "Success", description: "Event created successfully" });
+      setIsEventDialogOpen(false);
+      resetEventForm();
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to create event",
+        variant: "destructive" 
+      });
+    },
+  });
+
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: number) => {
       return apiRequest(`/api/admin/users/${userId}`, {
@@ -706,6 +791,78 @@ export default function AdminPanel() {
   const toggleUserRegistration = () => {
     const newValue = !settings.platform.userRegistrationEnabled;
     updatePlatformSetting('userRegistrationEnabled', newValue);
+  };
+
+  // Event management handlers
+  const resetEventForm = () => {
+    setEventFormData({
+      title: '',
+      description: '',
+      eventType: 'announcement',
+      isActive: true,
+      isFeatured: false,
+      priority: 0,
+      startDate: '',
+      endDate: '',
+      organizer: '',
+      location: '',
+      imageUrl: '',
+      linkUrl: ''
+    });
+  };
+
+  const handleEditEvent = (event: any) => {
+    setSelectedEvent(event);
+    setEventFormData({
+      title: event.title || '',
+      description: event.description || '',
+      eventType: event.eventType || 'announcement',
+      isActive: event.isActive !== false,
+      isFeatured: event.isFeatured === true,
+      priority: event.priority || 0,
+      startDate: event.startDate ? event.startDate.split('T')[0] : '',
+      endDate: event.endDate ? event.endDate.split('T')[0] : '',
+      organizer: event.organizer || '',
+      location: event.location || '',
+      imageUrl: event.imageUrl || '',
+      linkUrl: event.linkUrl || ''
+    });
+    setIsEventDialogOpen(true);
+  };
+
+  const handleCreateEvent = () => {
+    resetEventForm();
+    setSelectedEvent(null);
+    setIsEventDialogOpen(true);
+  };
+
+  const handleSaveEvent = () => {
+    if (!eventFormData.title) {
+      toast({
+        title: "Error",
+        description: "Event title is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const eventData = {
+      ...eventFormData,
+      startDate: eventFormData.startDate ? new Date(eventFormData.startDate).toISOString() : null,
+      endDate: eventFormData.endDate ? new Date(eventFormData.endDate).toISOString() : null,
+    };
+
+    if (selectedEvent) {
+      updateEventMutation.mutate({ id: selectedEvent.id, data: eventData });
+    } else {
+      createEventMutation.mutate(eventData);
+    }
+  };
+
+  const handleDeleteEvent = (eventId: number) => {
+    if (confirm('Are you sure you want to delete this event?')) {
+      deleteEventMutation.mutate(eventId);
+    }
   };
 
   // Helper function to detect mobile device
@@ -4054,58 +4211,88 @@ export default function AdminPanel() {
                     <Calendar className="mr-2" size={20} />
                     Event Management
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={handleCreateEvent}
+                    data-testid="button-create-event"
+                  >
                     <Plus className="mr-2" size={16} />
                     Create Event
                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <Card className="bg-slate-700 border-slate-600">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-white font-semibold">Platform Maintenance</h3>
-                          <p className="text-slate-400 text-sm">Scheduled maintenance window</p>
-                          <p className="text-xs text-slate-500">
-                            {new Date(Date.now() + 86400000).toLocaleDateString()} - Active
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                {eventsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-slate-400">Loading events...</div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {events && events.length > 0 ? (
+                      events.map((event: any) => (
+                        <Card key={event.id} className="bg-slate-700 border-slate-600">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="text-white font-semibold">{event.title}</h3>
+                                  {event.isFeatured && (
+                                    <Badge className="bg-yellow-600 hover:bg-yellow-700">Featured</Badge>
+                                  )}
+                                  <Badge variant={event.isActive ? "default" : "secondary"}>
+                                    {event.isActive ? "Active" : "Inactive"}
+                                  </Badge>
+                                </div>
+                                <p className="text-slate-400 text-sm">{event.description || "No description"}</p>
+                                <div className="flex items-center gap-4 mt-1">
+                                  <p className="text-xs text-slate-500">
+                                    Type: {event.eventType || "announcement"}
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    Priority: {event.priority || 0}
+                                  </p>
+                                  {event.startDate && (
+                                    <p className="text-xs text-slate-500">
+                                      Start: {new Date(event.startDate).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                  {event.endDate && (
+                                    <p className="text-xs text-slate-500">
+                                      End: {new Date(event.endDate).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleEditEvent(event)}
+                                  data-testid={`button-edit-event-${event.id}`}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => handleDeleteEvent(event.id)}
+                                  data-testid={`button-delete-event-${event.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-slate-400">No events found</p>
+                        <p className="text-slate-500 text-sm mt-2">Create your first event to get started</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-slate-700 border-slate-600">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-white font-semibold">Trading Competition</h3>
-                          <p className="text-slate-400 text-sm">Monthly prediction battle event</p>
-                          <p className="text-xs text-slate-500">
-                            {new Date(Date.now() + 604800000).toLocaleDateString()} - Upcoming
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -4503,6 +4690,182 @@ export default function AdminPanel() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Event Edit/Create Dialog */}
+      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
+        <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {selectedEvent ? 'Edit Event' : 'Create Event'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-white">Title *</Label>
+                <Input
+                  value={eventFormData.title}
+                  onChange={(e) => setEventFormData(prev => ({ ...prev, title: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Event title"
+                  data-testid="input-event-title"
+                />
+              </div>
+              <div>
+                <Label className="text-white">Event Type</Label>
+                <Select
+                  value={eventFormData.eventType}
+                  onValueChange={(value) => setEventFormData(prev => ({ ...prev, eventType: value }))}
+                >
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-700 border-slate-600">
+                    <SelectItem value="announcement">Announcement</SelectItem>
+                    <SelectItem value="competition">Competition</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="update">Update</SelectItem>
+                    <SelectItem value="promotion">Promotion</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-white">Description</Label>
+              <Textarea
+                value={eventFormData.description}
+                onChange={(e) => setEventFormData(prev => ({ ...prev, description: e.target.value }))}
+                className="bg-slate-700 border-slate-600 text-white"
+                placeholder="Event description"
+                rows={3}
+                data-testid="textarea-event-description"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-white">Start Date</Label>
+                <Input
+                  type="date"
+                  value={eventFormData.startDate}
+                  onChange={(e) => setEventFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  data-testid="input-event-start-date"
+                />
+              </div>
+              <div>
+                <Label className="text-white">End Date</Label>
+                <Input
+                  type="date"
+                  value={eventFormData.endDate}
+                  onChange={(e) => setEventFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  data-testid="input-event-end-date"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-white">Organizer</Label>
+                <Input
+                  value={eventFormData.organizer}
+                  onChange={(e) => setEventFormData(prev => ({ ...prev, organizer: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Event organizer"
+                  data-testid="input-event-organizer"
+                />
+              </div>
+              <div>
+                <Label className="text-white">Location</Label>
+                <Input
+                  value={eventFormData.location}
+                  onChange={(e) => setEventFormData(prev => ({ ...prev, location: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Event location"
+                  data-testid="input-event-location"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-white">Image URL</Label>
+                <Input
+                  value={eventFormData.imageUrl}
+                  onChange={(e) => setEventFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="https://example.com/image.jpg"
+                  data-testid="input-event-image-url"
+                />
+              </div>
+              <div>
+                <Label className="text-white">Link URL</Label>
+                <Input
+                  value={eventFormData.linkUrl}
+                  onChange={(e) => setEventFormData(prev => ({ ...prev, linkUrl: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="https://example.com"
+                  data-testid="input-event-link-url"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-white">Priority</Label>
+                <Input
+                  type="number"
+                  value={eventFormData.priority}
+                  onChange={(e) => setEventFormData(prev => ({ ...prev, priority: parseInt(e.target.value) || 0 }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="0"
+                  min="0"
+                  data-testid="input-event-priority"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={eventFormData.isActive}
+                  onCheckedChange={(checked) => setEventFormData(prev => ({ ...prev, isActive: checked }))}
+                  data-testid="switch-event-active"
+                />
+                <Label className="text-white">Active</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={eventFormData.isFeatured}
+                  onCheckedChange={(checked) => setEventFormData(prev => ({ ...prev, isFeatured: checked }))}
+                  data-testid="switch-event-featured"
+                />
+                <Label className="text-white">Featured</Label>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setIsEventDialogOpen(false)}
+              data-testid="button-cancel-event"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEvent}
+              disabled={createEventMutation.isPending || updateEventMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-save-event"
+            >
+              {createEventMutation.isPending || updateEventMutation.isPending 
+                ? "Saving..." 
+                : selectedEvent ? "Update Event" : "Create Event"
+              }
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
