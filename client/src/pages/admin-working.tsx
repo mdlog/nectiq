@@ -495,7 +495,7 @@ export default function AdminPanel() {
   });
 
   const { data: events, isLoading: eventsLoading } = useQuery({
-    queryKey: ["/api/events"],
+    queryKey: ["/api/admin/events"],
     refetchInterval: 30000,
   });
 
@@ -602,14 +602,14 @@ export default function AdminPanel() {
   // Event mutations
   const updateEventMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/events/${id}`, {
+      return apiRequest(`/api/admin/events/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
       toast({ title: "Success", description: "Event updated successfully" });
       setIsEventDialogOpen(false);
       setSelectedEvent(null);
@@ -625,12 +625,12 @@ export default function AdminPanel() {
 
   const deleteEventMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/events/${id}`, {
+      return apiRequest(`/api/admin/events/${id}`, {
         method: "DELETE",
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
       toast({ title: "Success", description: "Event deleted successfully" });
     },
     onError: (error: any) => {
@@ -644,14 +644,14 @@ export default function AdminPanel() {
 
   const createEventMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest("/api/events", {
+      return apiRequest("/api/admin/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
       toast({ title: "Success", description: "Event created successfully" });
       setIsEventDialogOpen(false);
       resetEventForm();
