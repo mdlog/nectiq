@@ -58,6 +58,7 @@ interface LivePricesProps {
 }
 
 export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) {
+  console.log("🔍 [LIVE-PRICES-INIT] Live Prices component rendered/re-rendered");
 
   // REAL-TIME PRICES - Synchronized with other components
   const { data: prices = [], isLoading, dataUpdatedAt, isFetching } = useQuery<CryptoPrice[]>({
@@ -71,14 +72,26 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
     placeholderData: (previousData) => previousData, // Keep previous data during refresh
   });
 
+  console.log("🔍 [LIVE-PRICES-QUERY] Query state:", { isLoading, isFetching, pricesLength: prices?.length });
+
 
   // Add visual indicator for when data was last updated
   const lastUpdate = new Date(dataUpdatedAt).toLocaleTimeString();
 
   // Sort prices by market cap (highest price first) - memoize to prevent unnecessary re-sorts
   const sortedPrices = React.useMemo(() => {
-    if (!prices || !Array.isArray(prices) || prices.length === 0) return [];
-    return [...prices].sort((a, b) => b.current_price - a.current_price);
+    console.log("🔍 [LIVE-PRICES-DEBUG] Raw prices received:", prices);
+    console.log("🔍 [LIVE-PRICES-DEBUG] Prices length:", prices?.length);
+    console.log("🔍 [LIVE-PRICES-DEBUG] Is array?", Array.isArray(prices));
+    
+    if (!prices || !Array.isArray(prices) || prices.length === 0) {
+      console.log("🔴 [LIVE-PRICES-DEBUG] No valid prices data - returning empty array");
+      return [];
+    }
+    
+    const sorted = [...prices].sort((a, b) => b.current_price - a.current_price);
+    console.log("✅ [LIVE-PRICES-DEBUG] Sorted prices:", sorted.length, "items");
+    return sorted;
   }, [prices]);
 
   // Only show skeleton on very first load when no data exists

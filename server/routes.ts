@@ -2854,7 +2854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get Pyth Network prices only (real-time institutional grade)
+  // Get Pyth Network prices with CoinGecko fallback (real-time institutional grade)
   app.get("/api/crypto/pyth-prices", async (req, res) => {
     console.log('🟡 [PYTH] ENDPOINT HIT: /api/crypto/pyth-prices - Starting execution');
     try {
@@ -2864,12 +2864,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pythPrices = await pythPriceService.getLatestPrices();
       console.log(`✅ [PYTH] Successfully fetched ${pythPrices.length} prices from Pyth Network`);
       
-      // Return the Pyth Network prices directly since they already match CryptoPrice format
-      res.json(pythPrices);
+      // If Pyth returns empty or insufficient data, fallback to CoinGecko 
+      if (pythPrices.length < 10) {
+        console.log(`🔄 [PYTH-FALLBACK] Pyth returned ${pythPrices.length} prices (insufficient), using CoinGecko fallback...`);
+        const coinGeckoPrices = await cryptoService.getCurrentPrices();
+        console.log(`✅ [PYTH-FALLBACK] Using ${coinGeckoPrices.length} prices from CoinGecko fallback`);
+        res.json(coinGeckoPrices);
+      } else {
+        // Return the Pyth Network prices directly since they already match CryptoPrice format
+        console.log(`✅ [PYTH-SUCCESS] Using ${pythPrices.length} prices from Pyth Network`);
+        res.json(pythPrices);
+      }
     } catch (error: any) {
-      console.error('❌ [PYTH] Error fetching Pyth prices:', error);
-      console.error('❌ [PYTH] Error stack:', error.stack);
-      res.status(500).json({ message: 'Failed to get Pyth Network prices', error: error.message });
+      console.error('❌ [PYTH] Error fetching Pyth prices, falling back to CoinGecko:', error);
+      try {
+        const fallbackPrices = await cryptoService.getCurrentPrices();
+        console.log(`✅ [PYTH-FALLBACK] Emergency fallback: ${fallbackPrices.length} prices from CoinGecko`);
+        res.json(fallbackPrices);
+      } catch (fallbackError) {
+        console.error('❌ [PYTH-FALLBACK] Both Pyth and CoinGecko failed:', fallbackError);
+        res.status(500).json({ message: 'Failed to get cryptocurrency prices from all sources' });
+      }
     }
     console.log('🔚 [PYTH] ENDPOINT COMPLETE: /api/crypto/pyth-prices - Finished execution');
   });
