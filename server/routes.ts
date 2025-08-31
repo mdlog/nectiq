@@ -3100,7 +3100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Market Sentiment Dashboard endpoint
   app.get('/api/market/sentiment', async (req, res) => {
     try {
-      logger.log("🔍 [MARKET-SENTIMENT] Analyzing market sentiment from active predictions...");
+      logger.info("🔍 [MARKET-SENTIMENT] Analyzing market sentiment from active predictions...");
       
       // Get all active predictions
       const allPredictions = await storage.getAllPredictions();
@@ -3205,7 +3205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                    overallBullishPercentage > 35 ? 'Pessimistic' : 'Very Pessimistic'
       };
       
-      logger.log(`✅ [MARKET-SENTIMENT] Generated sentiment data for ${sentimentData.length} cryptocurrencies`);
+      logger.info(`✅ [MARKET-SENTIMENT] Generated sentiment data for ${sentimentData.length} cryptocurrencies`);
       
       res.json({
         cryptoSentiment: sentimentData,
@@ -3214,7 +3214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
-      logger.log(`❌ [MARKET-SENTIMENT] Error generating sentiment data: ${error}`);
+      logger.error(`❌ [MARKET-SENTIMENT] Error generating sentiment data: ${error}`);
       res.status(500).json({ message: "Failed to generate market sentiment data" });
     }
   });
