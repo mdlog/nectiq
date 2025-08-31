@@ -819,7 +819,22 @@ export default function UserDashboard() {
                 {/* Daily Challenges Tab */}
                 <TabsContent value="challenges" className="flex-1 h-full">
                   <div className="h-full">
-                    <DailyChallenges />
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Calendar className="mr-2" size={20} />
+                          Daily Challenges
+                        </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          Complete daily challenges to earn bonus NTIQ rewards!
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-y-auto">
+                          <DailyChallenges />
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
@@ -965,7 +980,22 @@ export default function UserDashboard() {
                 {/* Referral Program Tab */}
                 <TabsContent value="referral" className="flex-1 h-full">
                   <div className="h-full">
-                    <ReferralSystem />
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Users className="mr-2" size={20} />
+                          Referral Program
+                        </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          Refer friends and earn NTIQ rewards together!
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-y-auto">
+                          <ReferralSystem />
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
@@ -1131,172 +1161,224 @@ export default function UserDashboard() {
 
                 {/* Market Watch Tab */}
                 <TabsContent value="market" className="flex-1 h-full">
-                  <div className="h-full space-y-6">
-                    {/* Live Prices Section - Moved to Top */}
-                    <div className="mb-6">
-                      <LivePrices onCryptoSelect={handleCryptoSelect} />
-                    </div>
-
-                    {/* Chart Section - Now Takes Full Width */}
-                    <div className="space-y-6">
-                      {selectedCrypto && showChart ? (
-                        <>
-                          <Card>
-                            <CardContent className="p-0">
-                              <TradingViewChart
-                                cryptoId={selectedCrypto.id}
-                              />
-                            </CardContent>
-                          </Card>
-                          
-                          {/* Make Prediction Button Below Chart */}
-                          <div className="mb-6">
-                            <Button 
-                              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                              onClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
-                            >
-                              <Target className="mr-2" size={16} />
-                              Make Prediction
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <Card className="bg-surface border-surface-light mb-6">
-                          <CardContent className="text-center py-12">
-                            <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
-                            <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
-                            <p className="text-slate-400 mb-4">
-                              Click on any cryptocurrency from the Live Prices panel to view its professional TradingView Charts with Pyth Network data
-                            </p>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-
-                    {/* Market Statistics - Moved to Bottom */}
-                    <Card className="bg-surface border-surface-light">
+                  <div className="h-full">
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
                       <CardHeader>
                         <CardTitle className="flex items-center">
-                          <TrendingUp className="mr-2" size={20} />
-                          Market Statistics
+                          <BarChart3 className="mr-2" size={20} />
+                          Market Watch
                         </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          Monitor live prices and view interactive charts with real-time data
+                        </p>
                       </CardHeader>
-                      <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Total Cryptocurrencies</span>
-                        <span className="font-semibold">{prices.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Gainers (24h)</span>
-                        <span className="font-semibold text-success">
-                          {prices.filter(p => p.price_change_percentage_24h > 0).length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Losers (24h)</span>
-                        <span className="font-semibold text-error">
-                          {prices.filter(p => p.price_change_percentage_24h < 0).length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Top Performer</span>
-                        <span className="font-semibold text-success">
-                          {prices.length > 0 ? 
-                            prices.reduce((prev, current) => 
-                              prev.price_change_percentage_24h > current.price_change_percentage_24h ? prev : current
-                            ).symbol : 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <CardContent className="flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-y-auto space-y-6">
+                          {/* Live Prices Section - Moved to Top */}
+                          <div className="mb-6">
+                            <LivePrices onCryptoSelect={handleCryptoSelect} />
+                          </div>
+
+                          {/* Chart Section - Now Takes Full Width */}
+                          <div className="space-y-6">
+                            {selectedCrypto && showChart ? (
+                              <>
+                                <Card>
+                                  <CardContent className="p-0">
+                                    <TradingViewChart
+                                      cryptoId={selectedCrypto.id}
+                                    />
+                                  </CardContent>
+                                </Card>
+                                
+                                {/* Make Prediction Button Below Chart */}
+                                <div className="mb-6">
+                                  <Button 
+                                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                                    onClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
+                                  >
+                                    <Target className="mr-2" size={16} />
+                                    Make Prediction
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <Card className="bg-surface border-surface-light mb-6">
+                                <CardContent className="text-center py-12">
+                                  <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
+                                  <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
+                                  <p className="text-slate-400 mb-4">
+                                    Click on any cryptocurrency from the Live Prices panel to view its professional TradingView Charts with Pyth Network data
+                                  </p>
+                                </CardContent>
+                              </Card>
+                            )}
+                          </div>
+
+                          {/* Market Statistics - Moved to Bottom */}
+                          <Card className="bg-surface border-surface-light">
+                            <CardHeader>
+                              <CardTitle className="flex items-center">
+                                <TrendingUp className="mr-2" size={20} />
+                                Market Statistics
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                          <div className="space-y-3">
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Total Cryptocurrencies</span>
+                              <span className="font-semibold">{prices.length}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Gainers (24h)</span>
+                              <span className="font-semibold text-success">
+                                {prices.filter(p => p.price_change_percentage_24h > 0).length}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Losers (24h)</span>
+                              <span className="font-semibold text-error">
+                                {prices.filter(p => p.price_change_percentage_24h < 0).length}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Top Performer</span>
+                              <span className="font-semibold text-success">
+                                {prices.length > 0 ? 
+                                  prices.reduce((prev, current) => 
+                                    prev.price_change_percentage_24h > current.price_change_percentage_24h ? prev : current
+                                  ).symbol : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
                 {/* Performance Tab */}
                 <TabsContent value="performance" className="flex-1 h-full">
                   <div className="h-full">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle>Performance Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Accuracy Level</span>
-                    <span className={`font-semibold ${accuracyLevel.color}`}>{accuracyLevel.label}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Success Rate</span>
-                    <span className="font-semibold">{stats?.accuracy || 0}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Total Predictions</span>
-                    <span className="font-semibold">{stats?.totalPredictions || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Earnings</span>
-                    <span className="font-semibold text-success">{stats?.totalRewards || 0} NTIQ</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Global Rank</span>
-                    <span className="font-semibold text-warning">
-                      {stats?.rank ? `#${stats.rank}` : "Unranked"}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Activity className="mr-2" size={20} />
+                          Performance Overview
+                        </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          Track your prediction accuracy and earnings performance
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-y-auto">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <Card className="bg-surface border-surface-light">
+                              <CardHeader>
+                                <CardTitle>Performance Summary</CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-slate-400">Accuracy Level</span>
+                                  <span className={`font-semibold ${accuracyLevel.color}`}>{accuracyLevel.label}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-slate-400">Success Rate</span>
+                                  <span className="font-semibold">{stats?.accuracy || 0}%</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-slate-400">Total Predictions</span>
+                                  <span className="font-semibold">{stats?.totalPredictions || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-slate-400">Earnings</span>
+                                  <span className="font-semibold text-success">{stats?.totalRewards || 0} NTIQ</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-slate-400">Global Rank</span>
+                                  <span className="font-semibold text-warning">
+                                    {stats?.rank ? `#${stats.rank}` : "Unranked"}
+                                  </span>
+                                </div>
+                              </CardContent>
+                            </Card>
 
-              <Card className="bg-surface border-surface-light">
-                <CardHeader>
-                  <CardTitle>Next Level Progress</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Predictions Progress</span>
-                      <span>{stats?.totalPredictions || 0}/10</span>
-                    </div>
-                    <Progress value={Math.min(((stats?.totalPredictions || 0) / 10) * 100, 100)} />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Accuracy Goal</span>
-                      <span>{stats?.accuracy || 0}%/75%</span>
-                    </div>
-                    <Progress value={Math.min(((stats?.accuracy || 0) / 75) * 100, 100)} />
-                  </div>
-                  <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <p className="text-sm text-primary">
-                      💡 Keep making accurate predictions to climb the leaderboard and unlock achievement badges!
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-                    </div>
+                            <Card className="bg-surface border-surface-light">
+                              <CardHeader>
+                                <CardTitle>Next Level Progress</CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                <div>
+                                  <div className="flex justify-between text-sm mb-2">
+                                    <span>Predictions Progress</span>
+                                    <span>{stats?.totalPredictions || 0}/10</span>
+                                  </div>
+                                  <Progress value={Math.min(((stats?.totalPredictions || 0) / 10) * 100, 100)} />
+                                </div>
+                                <div>
+                                  <div className="flex justify-between text-sm mb-2">
+                                    <span>Accuracy Goal</span>
+                                    <span>{stats?.accuracy || 0}%/75%</span>
+                                  </div>
+                                  <Progress value={Math.min(((stats?.accuracy || 0) / 75) * 100, 100)} />
+                                </div>
+                                <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                                  <p className="text-sm text-primary">
+                                    💡 Keep making accurate predictions to climb the leaderboard and unlock achievement badges!
+                                  </p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
                 {/* Financial Tab - Deposit Only */}
                 <TabsContent value="financial" className="flex-1 h-full">
                   <div className="h-full">
-            <div className="space-y-6">
-              <div className="text-center p-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <h3 className="text-lg font-bold mb-2 text-black dark:text-black">Multi-Chain Financial System</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Deposit and withdrawal system for multiple blockchains
-                </p>
-              </div>
-              <MultiChainFinancial />
-                    </div>
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Wallet className="mr-2" size={20} />
+                          Multi-Chain Financial System
+                        </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          Deposit and withdrawal system for multiple blockchains
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-y-auto">
+                          <MultiChainFinancial />
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
                 {/* Battles Tab */}
                 <TabsContent value="battles" className="flex-1 h-full">
                   <div className="h-full">
-                    <BattlesSection />
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Swords className="mr-2" size={20} />
+                          Prediction Battles
+                        </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          Challenge other players and compete for rewards!
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-y-auto">
+                          <BattlesSection />
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
               </div>

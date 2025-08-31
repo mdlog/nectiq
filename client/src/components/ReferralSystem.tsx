@@ -260,7 +260,7 @@ export function ReferralSystem() {
                   <Input
                     value={referralData.referralCode}
                     readOnly
-                    className="text-center text-xl font-bold tracking-wider bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    className="text-center text-xl font-bold tracking-wider bg-gray-50 dark:bg-gray-800 text-black dark:text-white"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -286,14 +286,14 @@ export function ReferralSystem() {
               {/* Referral Link */}
               {referralData.referralLink && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="text-sm font-medium text-black dark:text-white">
                     Referral Link:
                   </label>
                   <div className="flex gap-2">
                     <Input
                       value={referralData.referralLink}
                       readOnly
-                      className="text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      className="text-sm bg-gray-50 dark:bg-gray-800 text-black dark:text-white"
                     />
                     <Button
                       onClick={() => handleCopyLink(referralData.referralLink!)}
@@ -308,7 +308,7 @@ export function ReferralSystem() {
             </div>
           ) : (
             <div className="text-center space-y-4">
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-black dark:text-white">
                 {isLoading ? "Checking for existing referral code..." : "You don't have a referral code yet. Generate one now to start inviting friends!"}
               </p>
               <Button
@@ -404,7 +404,7 @@ export function ReferralSystem() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Referrals</p>
+                <p className="text-sm font-medium text-black dark:text-white">Total Referrals</p>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {referralData?.totalReferrals || 0}
                 </p>
@@ -418,7 +418,7 @@ export function ReferralSystem() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Rewards</p>
+                <p className="text-sm font-medium text-black dark:text-white">Total Rewards</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {referralData?.referralRewards || 0} NTIQ
                 </p>
@@ -432,7 +432,7 @@ export function ReferralSystem() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Reward per Referral</p>
+                <p className="text-sm font-medium text-black dark:text-white">Reward per Referral</p>
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">100 NTIQ</p>
               </div>
               <QrCode className="w-8 h-8 text-purple-500" />
@@ -460,7 +460,7 @@ export function ReferralSystem() {
                     </div>
                     <div>
                       <p className="font-medium">{user.username}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-black dark:text-white">
                         Joined: {new Date(user.joinedAt).toLocaleDateString('en-US')}
                       </p>
                     </div>
@@ -488,7 +488,7 @@ export function ReferralSystem() {
               </div>
               <div>
                 <p className="font-medium">Share Referral Code</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-black dark:text-white">
                   Share your referral code or link to friends
                 </p>
               </div>
@@ -500,7 +500,7 @@ export function ReferralSystem() {
               </div>
               <div>
                 <p className="font-medium">Friend Joins</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-black dark:text-white">
                   Friend registers using your referral code
                 </p>
               </div>
@@ -512,7 +512,7 @@ export function ReferralSystem() {
               </div>
               <div>
                 <p className="font-medium">Get Rewards</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-black dark:text-white">
                   You and your friend get 100 NTIQ bonus automatically
                 </p>
               </div>
