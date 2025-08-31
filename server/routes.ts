@@ -4439,7 +4439,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('🔴 [ANALYTICS] Error details:', {
         error: error.message,
         stack: error.stack,
-        userId: userId,
         period: period
       });
       res.status(500).json({ message: "Failed to get user analytics" });
