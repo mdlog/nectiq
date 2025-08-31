@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Plus, TrendingUp, TrendingDown } from "lucide-react";
+import { useMaintenanceMode } from "@/hooks/useMaintenanceMode";
+import { Trash2, Plus, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
@@ -36,6 +37,7 @@ export default function TrendRideSimple() {
   const [totalMultiplier, setTotalMultiplier] = useState(1);
   const [currentTime, setCurrentTime] = useState(new Date());
   const { toast } = useToast();
+  const { isMaintenanceMode } = useMaintenanceMode();
   const queryClient = useQueryClient();
 
   // Update current time every second for countdown
@@ -473,13 +475,25 @@ export default function TrendRideSimple() {
                   </div>
                 </div>
 
+                {isMaintenanceMode && (
+                  <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg text-orange-400 text-sm">
+                    <AlertTriangle size={16} />
+                    <span>Platform is currently under maintenance. TrendRide creation is temporarily disabled.</span>
+                  </div>
+                )}
+                
                 <Button 
                   onClick={handleSubmit} 
-                  className="w-full" 
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed" 
                   size="lg"
-                  disabled={trendRideCards.length < 2 || !stakeAmount || createTrendRideMutation.isPending}
+                  disabled={trendRideCards.length < 2 || !stakeAmount || createTrendRideMutation.isPending || isMaintenanceMode}
+                  data-testid="button-create-trendride"
                 >
-                  {createTrendRideMutation.isPending ? "Creating..." : "Create TrendRide"}
+                  {isMaintenanceMode 
+                    ? "Maintenance Mode" 
+                    : createTrendRideMutation.isPending 
+                    ? "Creating..." 
+                    : "Create TrendRide"}
                 </Button>
               </CardContent>
             </Card>

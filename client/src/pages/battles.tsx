@@ -15,7 +15,8 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { CountdownTimer } from '@/components/countdown-timer';
 import { useWalletRequired } from '@/hooks/useWalletRequired';
-import { Swords, Plus, Search, Filter, Trophy, Clock, Users, DollarSign, Award } from 'lucide-react';
+import { useMaintenanceMode } from '@/hooks/useMaintenanceMode';
+import { Swords, Plus, Search, Filter, Trophy, Clock, Users, DollarSign, Award, AlertTriangle } from 'lucide-react';
 
 interface Battle {
   id: number;
@@ -76,6 +77,7 @@ export default function BattlesPage() {
   });
 
   const { toast } = useToast();
+  const { isMaintenanceMode } = useMaintenanceMode();
   
   // Wallet requirement system
   const { isModalOpen, actionType, checkWalletRequired, onWalletConnected, closeModal } = useWalletRequired();
@@ -838,12 +840,24 @@ export default function BattlesPage() {
                   >
                     Cancel
                   </Button>
+                  {isMaintenanceMode && (
+                    <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg text-orange-400 text-sm">
+                      <AlertTriangle size={16} />
+                      <span>Platform is currently under maintenance. Battle creation is temporarily disabled.</span>
+                    </div>
+                  )}
+                  
                   <Button 
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={submitCreateBattle}
-                    disabled={createBattleMutation.isPending || !createBattleForm.cryptocurrency || !createBattleForm.timeframe || !createBattleForm.stakeAmount || !createBattleForm.challengerPrediction}
+                    disabled={createBattleMutation.isPending || isMaintenanceMode || !createBattleForm.cryptocurrency || !createBattleForm.timeframe || !createBattleForm.stakeAmount || !createBattleForm.challengerPrediction}
+                    data-testid="button-create-battle"
                   >
-                    {createBattleMutation.isPending ? 'Creating...' : 'Create Battle'}
+                    {isMaintenanceMode 
+                      ? 'Maintenance Mode' 
+                      : createBattleMutation.isPending 
+                      ? 'Creating...' 
+                      : 'Create Battle'}
                   </Button>
                 </div>
               </div>
