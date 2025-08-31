@@ -509,27 +509,32 @@ export default function AdminPanel() {
   const { data: systemSettings, isLoading: settingsLoading } = useQuery({
     queryKey: ["/api/admin/settings"],
     refetchInterval: 30000,
-    onSuccess: (data) => {
-      if (data) {
-        console.log('🔧 [SETTINGS] Loaded settings:', data);
-        setSettings({
-          platform: {
-            startingBalance: data.platform?.startingBalance || 1000,
-            minStakeAmount: data.platform?.minStakeAmount || 50,
-            maxStakeAmount: data.platform?.maxStakeAmount || 500,
-            maxPredictionsPerUser: data.platform?.maxPredictionsPerUser || 10,
-            maintenanceMode: data.platform?.maintenanceMode || false,
-            userRegistrationEnabled: data.platform?.userRegistrationEnabled !== false
-          },
-          token: {
-            startingBalance: data.platform?.startingBalance || 1000,
-            minStakeAmount: data.platform?.minStakeAmount || 50,
-            maxStakeAmount: data.platform?.maxStakeAmount || 500
-          }
-        });
-      }
-    }
+    staleTime: 0, // Don't use stale data
+    cacheTime: 0, // Don't cache
   });
+
+  // Update settings state when systemSettings changes
+  useEffect(() => {
+    if (systemSettings) {
+      console.log('🔧 [SETTINGS] Updating settings from query data:', systemSettings);
+      setSettings({
+        platform: {
+          startingBalance: systemSettings.platform?.startingBalance || 1000,
+          minStakeAmount: systemSettings.platform?.minStakeAmount || 50,
+          maxStakeAmount: systemSettings.platform?.maxStakeAmount || 500,
+          maxPredictionsPerUser: systemSettings.platform?.maxPredictionsPerUser || 10,
+          maintenanceMode: systemSettings.platform?.maintenanceMode || false,
+          userRegistrationEnabled: systemSettings.platform?.userRegistrationEnabled !== false
+        },
+        token: {
+          startingBalance: systemSettings.platform?.startingBalance || 1000,
+          minStakeAmount: systemSettings.platform?.minStakeAmount || 50,
+          maxStakeAmount: systemSettings.platform?.maxStakeAmount || 500
+        }
+      });
+      console.log('✅ [SETTINGS] Settings state updated, maintenance mode:', systemSettings.platform?.maintenanceMode);
+    }
+  }, [systemSettings]);
 
   // Query untuk data parlay predictions - gunakan detailed endpoint
   const { data: trendRideData, isLoading: trendRideLoading, refetch: refetchTrendRides } = useQuery({
@@ -783,9 +788,16 @@ export default function AdminPanel() {
     }
   };
 
-  const toggleMaintenanceMode = () => {
+  const toggleMaintenanceMode = async () => {
     const newValue = !settings.platform.maintenanceMode;
-    updatePlatformSetting('maintenanceMode', newValue);
+    console.log(`🔧 [TOGGLE] Current maintenance mode: ${settings.platform.maintenanceMode}, toggling to: ${newValue}`);
+    
+    try {
+      await updatePlatformSetting('maintenanceMode', newValue);
+      console.log(`✅ [TOGGLE] Successfully toggled maintenance mode to: ${newValue}`);
+    } catch (error) {
+      console.error(`❌ [TOGGLE] Failed to toggle maintenance mode:`, error);
+    }
   };
 
   const toggleUserRegistration = () => {
@@ -4320,7 +4332,8 @@ export default function AdminPanel() {
                       data-testid="button-toggle-maintenance"
                     >
                       <Settings className="mr-2" size={16} />
-                      {settings.platform.maintenanceMode ? 'Disable' : 'Enable'}
+                      {updateSettingsMutation.isPending ? 'Updating...' : 
+                        (settings.platform.maintenanceMode ? 'Disable' : 'Enable')}
                     </Button>
                   </div>
                   
