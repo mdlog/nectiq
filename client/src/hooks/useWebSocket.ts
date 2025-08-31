@@ -41,19 +41,25 @@ class WebSocketManager {
   connect(userId: number) {
     // If already connected for the same user, don't create new connection
     if (this.ws && this.ws.readyState === WebSocket.OPEN && this.currentUserId === userId) {
-      console.log(`📱 [WEBSOCKET-MANAGER] Already connected for user ${userId}`);
+      if (import.meta.env.DEV) {
+        console.log(`📱 [WEBSOCKET-MANAGER] Already connected for user ${userId}`);
+      }
       return Promise.resolve(this.ws);
     }
 
     // If connecting for different user, close existing connection
     if (this.currentUserId && this.currentUserId !== userId) {
-      console.log(`📱 [WEBSOCKET-MANAGER] Switching user from ${this.currentUserId} to ${userId}`);
+      if (import.meta.env.DEV) {
+        console.log(`📱 [WEBSOCKET-MANAGER] Switching user from ${this.currentUserId} to ${userId}`);
+      }
       this.disconnect();
     }
 
     // If already connecting, wait for it to complete
     if (this.isConnecting) {
-      console.log(`📱 [WEBSOCKET-MANAGER] Already connecting, waiting...`);
+      if (import.meta.env.DEV) {
+        console.log(`📱 [WEBSOCKET-MANAGER] Already connecting, waiting...`);
+      }
       return this.waitForConnection();
     }
 
@@ -84,13 +90,17 @@ class WebSocketManager {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const wsUrl = `${protocol}//${window.location.host}/ws`;
         
-        console.log(`📱 [WEBSOCKET-MANAGER] Creating connection to: ${wsUrl} for user ${this.currentUserId}`);
+        if (import.meta.env.DEV) {
+          console.log(`📱 [WEBSOCKET-MANAGER] Creating connection to: ${wsUrl} for user ${this.currentUserId}`);
+        }
         
         const ws = new WebSocket(wsUrl);
         this.ws = ws;
 
         ws.onopen = () => {
-          console.log('✅ [WEBSOCKET-MANAGER] Connected successfully');
+          if (import.meta.env.DEV) {
+            console.log('✅ [WEBSOCKET-MANAGER] Connected successfully');
+          }
           this.isConnecting = false;
           this.reconnectAttempts = 0;
           
@@ -102,7 +112,9 @@ class WebSocketManager {
             };
             
             ws.send(JSON.stringify(registrationMessage));
-            console.log(`📱 [WEBSOCKET-MANAGER] Registered for notifications, user ID: ${this.currentUserId}`);
+            if (import.meta.env.DEV) {
+              console.log(`📱 [WEBSOCKET-MANAGER] Registered for notifications, user ID: ${this.currentUserId}`);
+            }
           }
           
           // Setup ping interval
@@ -120,27 +132,37 @@ class WebSocketManager {
         ws.onmessage = (event) => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
-            console.log('📨 [WEBSOCKET-MANAGER] Received message:', message);
+            if (import.meta.env.DEV) {
+              console.log('📨 [WEBSOCKET-MANAGER] Received message:', message);
+            }
             
             switch (message.type) {
               case 'user_registered':
-                console.log('📱 [WEBSOCKET-MANAGER] Successfully registered for notifications');
+                if (import.meta.env.DEV) {
+                  console.log('📱 [WEBSOCKET-MANAGER] Successfully registered for notifications');
+                }
                 break;
                 
               case 'notification':
                 if (message.data) {
-                  console.log('🔔 [WEBSOCKET-MANAGER] Received notification:', message.data);
+                  if (import.meta.env.DEV) {
+                    console.log('🔔 [WEBSOCKET-MANAGER] Received notification:', message.data);
+                  }
                   // Broadcast to all callbacks
                   this.callbacks.forEach(callback => callback.onNotification?.(message.data!));
                 }
                 break;
                 
               case 'pong':
-                console.log('🏓 [WEBSOCKET-MANAGER] Ping response received');
+                if (import.meta.env.DEV) {
+                  console.log('🏓 [WEBSOCKET-MANAGER] Ping response received');
+                }
                 break;
                 
               default:
-                console.log('📨 [WEBSOCKET-MANAGER] Unknown message type:', message.type);
+                if (import.meta.env.DEV) {
+                  console.log('📨 [WEBSOCKET-MANAGER] Unknown message type:', message.type);
+                }
             }
           } catch (error) {
             console.error('❌ [WEBSOCKET-MANAGER] Error parsing message:', error);
@@ -148,7 +170,9 @@ class WebSocketManager {
         };
 
         ws.onclose = (event) => {
-          console.log('🔌 [WEBSOCKET-MANAGER] Connection closed:', event.code, event.reason);
+          if (import.meta.env.DEV) {
+            console.log('🔌 [WEBSOCKET-MANAGER] Connection closed:', event.code, event.reason);
+          }
           this.ws = null;
           this.isConnecting = false;
           this.clearPingInterval();
@@ -163,7 +187,9 @@ class WebSocketManager {
           if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts && this.currentUserId) {
             this.scheduleReconnect();
           } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error('❌ [WEBSOCKET-MANAGER] Max reconnection attempts reached');
+            if (import.meta.env.DEV) {
+              console.error('❌ [WEBSOCKET-MANAGER] Max reconnection attempts reached');
+            }
           }
         };
 
@@ -266,7 +292,7 @@ class WebSocketManager {
 const wsManager = new WebSocketManager();
 
 export function useWebSocket(options: UseWebSocketOptions = {}) {
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<{ id: number }>({
     queryKey: ["/api/user"],
     refetchInterval: 10000,
     staleTime: 5000,
@@ -321,7 +347,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     // Subscribe to connection status changes
     const unsubscribe = wsManager.onConnectionStatusChange((connected) => {
       setIsConnected(connected);
-      console.log('📊 [WEBSOCKET-HOOK] Connection status updated:', connected);
+      if (import.meta.env.DEV) {
+        console.log('📊 [WEBSOCKET-HOOK] Connection status updated:', connected);
+      }
     });
     
     return unsubscribe;

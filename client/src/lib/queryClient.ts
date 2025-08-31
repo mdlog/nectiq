@@ -5,7 +5,9 @@ let globalWalletAddress: string | null = null;
 
 export function setGlobalWalletAddress(address: string | null) {
   globalWalletAddress = address;
-  console.log('🔐 [QUERY-CLIENT] Global wallet address set:', address ? address.substring(0, 8) + '...' : 'null');
+  if (import.meta.env.DEV) {
+    console.log('🔐 [QUERY-CLIENT] Global wallet address set:', address ? address.substring(0, 8) + '...' : 'null');
+  }
 }
 
 async function throwIfResNotOk(res: Response) {
@@ -27,7 +29,9 @@ export async function apiRequest(
   // Add wallet address header if available
   if (globalWalletAddress) {
     headers['x-wallet-address'] = globalWalletAddress;
-    console.log('🔐 [API-REQUEST] Including wallet address in headers for:', url);
+    if (import.meta.env.DEV) {
+      console.log('🔐 [API-REQUEST] Including wallet address in headers for:', url);
+    }
   }
 
   const res = await fetch(url, {
@@ -51,7 +55,9 @@ export const getQueryFn: <T>(options: {
     // Add wallet address header if available
     if (globalWalletAddress) {
       headers['x-wallet-address'] = globalWalletAddress;
-      console.log('🔐 [GET-QUERY] Including wallet address in headers for:', queryKey[0]);
+      if (import.meta.env.DEV) {
+        console.log('🔐 [GET-QUERY] Including wallet address in headers for:', queryKey[0]);
+      }
     }
 
     const res = await fetch(queryKey[0] as string, {

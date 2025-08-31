@@ -45,7 +45,9 @@ export function useAdminWebSocket() {
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
-        console.log('Admin WebSocket connected');
+        if (import.meta.env.DEV) {
+          console.log('Admin WebSocket connected');
+        }
         setIsConnected(true);
         
         // Register as admin client
@@ -64,7 +66,9 @@ export function useAdminWebSocket() {
           const message: WebSocketMessage = JSON.parse(event.data);
           
           if (message.type === 'registered') {
-            console.log('Admin client registered successfully');
+            if (import.meta.env.DEV) {
+              console.log('Admin client registered successfully');
+            }
           } else if (message.type === 'transaction_update' && message.data) {
             const transaction = message.data;
             setLastTransaction(transaction);
@@ -121,13 +125,17 @@ export function useAdminWebSocket() {
       };
 
       wsRef.current.onclose = (event) => {
-        console.log('Admin WebSocket disconnected:', event.code, event.reason);
+        if (import.meta.env.DEV) {
+          console.log('Admin WebSocket disconnected:', event.code, event.reason);
+        }
         setIsConnected(false);
         
         // Reconnect after 3 seconds if not a manual close
         if (event.code !== 1000) {
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('Attempting to reconnect...');
+            if (import.meta.env.DEV) {
+              console.log('Attempting to reconnect...');
+            }
             connect();
           }, 3000);
         }

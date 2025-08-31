@@ -12,19 +12,25 @@ export function handleReferralFromURL(): string | null {
     const referralCode = urlParams.get('ref');
     
     if (referralCode) {
-      console.log('🎯 [REFERRAL] Found referral code in URL:', referralCode);
+      if (import.meta.env.DEV) {
+        console.log('🎯 [REFERRAL] Found referral code in URL:', referralCode);
+      }
       
       // Validate referral code format (should be 8 characters)
       if (referralCode.length === 8 && /^[A-Z0-9]+$/.test(referralCode)) {
         // Store in localStorage for later use
         localStorage.setItem(REFERRAL_STORAGE_KEY, referralCode);
-        console.log('✅ [REFERRAL] Valid referral code stored in localStorage:', referralCode);
+        if (import.meta.env.DEV) {
+          console.log('✅ [REFERRAL] Valid referral code stored in localStorage:', referralCode);
+        }
         
         // Clean up URL by removing ref parameter without page reload
         const url = new URL(window.location.href);
         url.searchParams.delete('ref');
         window.history.replaceState({}, '', url.toString());
-        console.log('🧹 [REFERRAL] Cleaned up URL from referral parameter');
+        if (import.meta.env.DEV) {
+          console.log('🧹 [REFERRAL] Cleaned up URL from referral parameter');
+        }
         
         return referralCode;
       } else {

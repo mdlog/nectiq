@@ -29,13 +29,17 @@ export function useRainbowAuth() {
   // Wallet authentication mutation
   const authenticateWalletMutation = useMutation({
     mutationFn: async (walletAddress: string) => {
-      console.log('🌈 [RAINBOW] Authenticating wallet:', walletAddress);
-      console.log('🌈 [RAINBOW] Chain info:', { chainId: chain?.id, chainName: chain?.name });
-      console.log('🌈 [RAINBOW] Current URL:', window.location.href);
+      if (import.meta.env.DEV) {
+        console.log('🌈 [RAINBOW] Authenticating wallet:', walletAddress);
+        console.log('🌈 [RAINBOW] Chain info:', { chainId: chain?.id, chainName: chain?.name });
+        console.log('🌈 [RAINBOW] Current URL:', window.location.href);
+      }
       
       // Check for stored referral code
       const referralCode = getStoredReferralCode();
-      console.log('🎯 [REFERRAL] Found stored referral code:', referralCode);
+      if (import.meta.env.DEV) {
+        console.log('🎯 [REFERRAL] Found stored referral code:', referralCode);
+      }
       
       try {
         const requestBody = { 
@@ -45,7 +49,9 @@ export function useRainbowAuth() {
           ...(referralCode && { referralCode })
         };
         
-        console.log('🌈 [RAINBOW] Request payload:', requestBody);
+        if (import.meta.env.DEV) {
+          console.log('🌈 [RAINBOW] Request payload:', requestBody);
+        }
         
         const response = await fetch('/api/auth/wallet-connect', {
           method: 'POST',
@@ -56,8 +62,10 @@ export function useRainbowAuth() {
           body: JSON.stringify(requestBody),
         });
 
-        console.log('🌈 [RAINBOW] Response status:', response.status);
-        console.log('🌈 [RAINBOW] Response headers:', Object.fromEntries(response.headers.entries()));
+        if (import.meta.env.DEV) {
+          console.log('🌈 [RAINBOW] Response status:', response.status);
+          console.log('🌈 [RAINBOW] Response headers:', Object.fromEntries(response.headers.entries()));
+        }
 
         if (!response.ok) {
           const errorData = await response.text();
@@ -66,7 +74,9 @@ export function useRainbowAuth() {
         }
 
         const result = await response.json();
-        console.log('🌈 [RAINBOW] Success response:', result);
+        if (import.meta.env.DEV) {
+          console.log('🌈 [RAINBOW] Success response:', result);
+        }
         return result;
       } catch (error) {
         console.error('🌈 [RAINBOW] Network error:', error);
@@ -77,12 +87,16 @@ export function useRainbowAuth() {
       }
     },
     onSuccess: (data) => {
-      console.log('✅ [RAINBOW] Wallet authenticated successfully:', data);
+      if (import.meta.env.DEV) {
+        console.log('✅ [RAINBOW] Wallet authenticated successfully:', data);
+      }
       
       // Clear referral code after successful authentication (it's been processed)
       if (getStoredReferralCode()) {
         clearStoredReferralCode();
-        console.log('🧹 [REFERRAL] Cleared processed referral code');
+        if (import.meta.env.DEV) {
+          console.log('🧹 [REFERRAL] Cleared processed referral code');
+        }
       }
       
       // Note: Wallet connection notification is handled by useWalletConnectionStatus
@@ -161,31 +175,39 @@ export function useRainbowAuth() {
 
   // Auto-authenticate when wallet connects and clear state when disconnected
   React.useEffect(() => {
-    console.log('🔍 [RAINBOW] useEffect state check:', {
-      isConnected,
-      hasAddress: !!address,
-      hasUser: !!user,
-      isUserLoading: isLoading,
-      isPending: authenticateWalletMutation.isPending,
-      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : null
-    });
-
-    if (!isConnected) {
-      // Wallet is disconnected - clear all user state
-      console.log('🌈 [RAINBOW] Wallet disconnected - clearing user state');
-      queryClient.removeQueries({ queryKey: ["/api/user"] });
-      setGlobalWalletAddress(null);
-    } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
-      console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
-      authenticateWalletMutation.mutate(address);
-    } else if (isConnected && address && !user && !isLoading) {
-      console.log('🔍 [RAINBOW] Authentication conditions not met:', {
+    if (import.meta.env.DEV) {
+      console.log('🔍 [RAINBOW] useEffect state check:', {
         isConnected,
         hasAddress: !!address,
         hasUser: !!user,
         isUserLoading: isLoading,
-        isPending: authenticateWalletMutation.isPending
+        isPending: authenticateWalletMutation.isPending,
+        address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : null
       });
+    }
+
+    if (!isConnected) {
+      // Wallet is disconnected - clear all user state
+      if (import.meta.env.DEV) {
+        console.log('🌈 [RAINBOW] Wallet disconnected - clearing user state');
+      }
+      queryClient.removeQueries({ queryKey: ["/api/user"] });
+      setGlobalWalletAddress(null);
+    } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
+      if (import.meta.env.DEV) {
+        console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
+      }
+      authenticateWalletMutation.mutate(address);
+    } else if (isConnected && address && !user && !isLoading) {
+      if (import.meta.env.DEV) {
+        console.log('🔍 [RAINBOW] Authentication conditions not met:', {
+          isConnected,
+          hasAddress: !!address,
+          hasUser: !!user,
+          isUserLoading: isLoading,
+          isPending: authenticateWalletMutation.isPending
+        });
+      }
     }
   }, [isConnected, address, user, isLoading]);
 
@@ -194,11 +216,15 @@ export function useRainbowAuth() {
     if (!isConnected) {
       // If wallet is disconnected, clear global address
       setGlobalWalletAddress(null);
-      console.log('🔐 [RAINBOW] Wallet disconnected - cleared global wallet address');
+      if (import.meta.env.DEV) {
+        console.log('🔐 [RAINBOW] Wallet disconnected - cleared global wallet address');
+      }
     } else {
       const walletAddress = user?.walletAddress || address;
       setGlobalWalletAddress(walletAddress || null);
-      console.log('🔐 [RAINBOW] Updated global wallet address for API requests:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
+      if (import.meta.env.DEV) {
+        console.log('🔐 [RAINBOW] Updated global wallet address for API requests:', walletAddress ? walletAddress.substring(0, 8) + '...' : 'null');
+      }
     }
   }, [isConnected, user?.walletAddress, address]);
 

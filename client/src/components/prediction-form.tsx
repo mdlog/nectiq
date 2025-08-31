@@ -127,7 +127,9 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
       return { success: true };
     },
     onSuccess: (data) => {
-      console.log('Prediction success response:', data);
+      if (import.meta.env.DEV) {
+        console.log('Prediction success response:', data);
+      }
       
       toast({
         title: "Prediction submitted!",

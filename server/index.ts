@@ -16,9 +16,11 @@ import { eq, desc } from "drizzle-orm";
 dotenv.config();
 
 // Debug environment variables immediately after loading
-console.log("🔍 Environment variables loaded:");
-console.log("   ADMIN_WALLET_ADDRESSES:", process.env.ADMIN_WALLET_ADDRESSES);
-console.log("   NODE_ENV:", process.env.NODE_ENV);
+if (process.env.NODE_ENV === 'development') {
+  console.log("🔍 Environment variables loaded:");
+  console.log("   ADMIN_WALLET_ADDRESSES:", process.env.ADMIN_WALLET_ADDRESSES);
+  console.log("   NODE_ENV:", process.env.NODE_ENV);
+}
 
 // Extend Express Request to include session
 declare module 'express-session' {
@@ -41,7 +43,9 @@ const app = express();
 
 // ===== LIVE ACTIVITIES ENDPOINT - EARLY PLACEMENT TO BYPASS MIDDLEWARE =====
 app.get('/api/activities/live', async (req, res) => {
-  console.log('🚀 [LIVE ACTIVITIES] Endpoint called');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🚀 [LIVE ACTIVITIES] Endpoint called');
+  }
   try {
     // Build live activities from existing data
     const activities = [];
@@ -69,9 +73,11 @@ app.get('/api/activities/live', async (req, res) => {
     .orderBy(desc(predictions.completedAt))
     .limit(10);
 
-    console.log('🔍 [LIVE ACTIVITIES] Recent predictions found:', recentPredictions.length);
-    if (recentPredictions.length > 0) {
-      console.log('🔍 [LIVE ACTIVITIES] Sample prediction:', JSON.stringify(recentPredictions[0], null, 2));
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 [LIVE ACTIVITIES] Recent predictions found:', recentPredictions.length);
+      if (recentPredictions.length > 0) {
+        console.log('🔍 [LIVE ACTIVITIES] Sample prediction:', JSON.stringify(recentPredictions[0], null, 2));
+      }
     }
     
     for (const prediction of recentPredictions) {

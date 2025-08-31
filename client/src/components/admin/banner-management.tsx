@@ -238,7 +238,9 @@ export function BannerManagement() {
       priority: parseInt(formData.priority.toString()) || 0
     };
 
-    console.log("Submitting banner data:", submitData);
+    if (import.meta.env.DEV) {
+      console.log("Submitting banner data:", submitData);
+    }
 
     if (editingBanner) {
       updateBannerMutation.mutate({ id: editingBanner.id, data: submitData });

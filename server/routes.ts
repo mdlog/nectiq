@@ -27,6 +27,7 @@ import { SurvivalRoundService } from "./services/survivalRoundService.js";
 import { BalanceService } from "./services/balanceService.js";
 import AutomatedDepositSecurity from './automated-deposit-security.js';
 import { requireAuth as requireWalletAuth, isAuthorizedAdmin } from './simpleAuth.js';
+import { logger } from "../shared/logger";
 
 // Maintenance mode middleware
 const checkMaintenanceMode = async (req: any, res: any, next: any) => {
@@ -395,7 +396,7 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     const userId = (req as any).session?.userId;
     
     // DEBUG: Log session details for troubleshooting
-    console.log("🔍 [SESSION-DEBUG] Admin endpoint access attempt:");
+    logger.debug("🔍 [SESSION-DEBUG] Admin endpoint access attempt:");
     console.log("   Session exists:", !!req.session);
     console.log("   Session ID:", req.sessionID || 'NONE');
     console.log("   User ID in session:", userId);
@@ -408,7 +409,7 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
     console.log("   Request URL:", req.url);
     
     // Extended debug for session values
-    console.log("🔧 [SESSION-VALUES-DEBUG]:");
+    logger.debug("🔧 [SESSION-VALUES-DEBUG]:");
     console.log("   Raw session userId:", (req as any).session?.userId, typeof (req as any).session?.userId);
     console.log("   Raw session walletAddress:", (req as any).session?.walletAddress, typeof (req as any).session?.walletAddress);
     console.log("   Raw session isAdmin:", (req as any).session?.isAdmin, typeof (req as any).session?.isAdmin);
@@ -1016,26 +1017,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Security check for wallet login
-        console.log(`🔍 [WALLET-DEBUG] Starting security check for ${normalizedAddress.slice(0, 8)}...`);
+        logger.debug(`🔍 [WALLET-DEBUG] Starting security check for ${normalizedAddress.slice(0, 8)}...`);
         const { WalletSecurityService } = await import('./walletSecurity');
         const securityCheck = await WalletSecurityService.validateWalletLogin(normalizedAddress, req);
         
         if (!securityCheck.success) {
-          console.log(`❌ [WALLET-DEBUG] Security check failed: ${securityCheck.message}`);
+          logger.debug(`❌ [WALLET-DEBUG] Security check failed: ${securityCheck.message}`);
           return res.status(403).json({ 
             message: securityCheck.message,
             securityBlock: true 
           });
         }
-        console.log(`✅ [WALLET-DEBUG] Security check passed`);
+        logger.debug(`✅ [WALLET-DEBUG] Security check passed`);
 
         // Find or create user by wallet
-        console.log(`🔍 [WALLET-DEBUG] Looking up user by wallet address`);
+        logger.debug(`🔍 [WALLET-DEBUG] Looking up user by wallet address`);
         dbUser = await storage.getUserByWalletAddress(normalizedAddress);
         
         const isNewUser = !dbUser;
         if (!dbUser) {
-          console.log(`🔍 [WALLET-DEBUG] User not found, checking registration settings`);
+          logger.debug(`🔍 [WALLET-DEBUG] User not found, checking registration settings`);
           const adminWallets = getAdminWalletAddresses();
           const isAdmin = adminWallets.includes(normalizedAddress);
           
@@ -5000,7 +5001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("📊 [ADMIN-TRANSACTIONS] Fetching all transactions for admin panel...");
       
       // Check if user is authenticated admin (via session)
-      console.log("🔍 [SESSION-DEBUG] Admin endpoint access attempt:");
+      logger.debug("🔍 [SESSION-DEBUG] Admin endpoint access attempt:");
       console.log("   Session exists:", !!req.session);
       console.log("   Session ID:", req.session?.id);
       console.log("   User ID in session:", req.session?.user?.id);

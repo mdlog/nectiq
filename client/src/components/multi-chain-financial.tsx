@@ -395,7 +395,9 @@ export function MultiChainFinancial() {
 
   // Function to calculate token amount from USD for deposit history action view
   const calculateTokenAmountForHistory = (usdAmount: number, tokenType: string, ethPriceSnapshot?: string): string => {
-    console.log(`🔍 [ETH-CALC] Calculating for ${tokenType}, USD: ${usdAmount}, snapshot: ${ethPriceSnapshot}`);
+    if (import.meta.env.DEV) {
+      console.log(`🔍 [ETH-CALC] Calculating for ${tokenType}, USD: ${usdAmount}, snapshot: ${ethPriceSnapshot}`);
+    }
     
     if (tokenType === 'USDC' || tokenType === 'USDT') {
       // For USDC/USDT, add 2% fee to the amount user needs to send
@@ -409,19 +411,27 @@ export function MultiChainFinancial() {
       
       if (ethPriceSnapshot && ethPriceSnapshot !== 'null') {
         price = parseFloat(ethPriceSnapshot);
-        console.log(`🔍 [ETH-CALC] Using snapshot price: ${price}`);
+        if (import.meta.env.DEV) {
+          console.log(`🔍 [ETH-CALC] Using snapshot price: ${price}`);
+        }
       } else if (cryptoPrices && cryptoPrices.length > 0) {
         const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
         price = ethPrice?.current_price || 0;
-        console.log(`🔍 [ETH-CALC] Using current price: ${price}, cryptoPrices length: ${cryptoPrices.length}`);
+        if (import.meta.env.DEV) {
+          console.log(`🔍 [ETH-CALC] Using current price: ${price}, cryptoPrices length: ${cryptoPrices.length}`);
+        }
       } else {
         // Emergency fallback price (approximate current ETH price)
         price = 3400; // Use a reasonable ETH price as fallback
-        console.log(`🔍 [ETH-CALC] Using fallback price: ${price}`);
+        if (import.meta.env.DEV) {
+          console.log(`🔍 [ETH-CALC] Using fallback price: ${price}`);
+        }
       }
       
       if (price === 0) {
-        console.log(`❌ [ETH-CALC] No valid price found, returning 0.000000`);
+        if (import.meta.env.DEV) {
+          console.log(`❌ [ETH-CALC] No valid price found, returning 0.000000`);
+        }
         return "0.000000";
       }
       
@@ -429,7 +439,9 @@ export function MultiChainFinancial() {
       const baseTokenAmount = usdAmount / price;
       const tokenAmountWithFee = baseTokenAmount * 1.02;
       const result = tokenAmountWithFee.toFixed(6);
-      console.log(`✅ [ETH-CALC] Final result: ${result} ETH (base: ${baseTokenAmount}, with fee: ${tokenAmountWithFee})`);
+      if (import.meta.env.DEV) {
+        console.log(`✅ [ETH-CALC] Final result: ${result} ETH (base: ${baseTokenAmount}, with fee: ${tokenAmountWithFee})`);
+      }
       return result;
     }
     
@@ -551,7 +563,9 @@ export function MultiChainFinancial() {
 
   // Effect to calculate fixed ETH amount when deposit amount changes for ETH deposits
   useEffect(() => {
-    console.log(`🔍 [DEPOSIT-CALC] useEffect triggered - Token: ${selectedToken}, Amount: ${depositAmount}, CryptoPrices: ${cryptoPrices?.length || 0}`);
+    if (import.meta.env.DEV) {
+      console.log(`🔍 [DEPOSIT-CALC] useEffect triggered - Token: ${selectedToken}, Amount: ${depositAmount}, CryptoPrices: ${cryptoPrices?.length || 0}`);
+    }
     
     if (selectedToken === "ETH" && depositAmount) {
       const usd = parseFloat(depositAmount);
@@ -561,7 +575,9 @@ export function MultiChainFinancial() {
         if (cryptoPrices && cryptoPrices.length > 0) {
           const ethData = cryptoPrices.find((crypto: any) => crypto.id === "ethereum");
           ethPrice = ethData?.current_price || 0;
-          console.log(`🔍 [DEPOSIT-CALC] Found ETH price from API: ${ethPrice}`);
+          if (import.meta.env.DEV) {
+            console.log(`🔍 [DEPOSIT-CALC] Found ETH price from API: ${ethPrice}`);
+          }
         }
         
         if (ethPrice === 0) {

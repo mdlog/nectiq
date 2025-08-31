@@ -3,6 +3,7 @@ import { CryptoPrice } from "./cryptoService";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
 import { cryptocurrencies } from "../../shared/schema";
+import { logger } from "../../shared/logger";
 
 export interface PythPriceData {
   id: string;
@@ -49,13 +50,13 @@ export class PythPriceService {
       this.cryptoDataCache.clear();
       this.lastCacheUpdate = 0;
 
-      console.log("🔄 [PYTH] Loading cryptocurrency data from database...");
+      logger.debug("🔄 [PYTH] Loading cryptocurrency data from database...");
       const cryptos = await db.select().from(cryptocurrencies);
       
       this.cryptoDataCache.clear();
       for (const crypto of cryptos) {
         if (crypto.pythFeedId) {
-          console.log(`🔍 [PYTH-DEBUG] Loading crypto: ${crypto.id}, image: ${crypto.image}`);
+          logger.debug(`🔍 [PYTH-DEBUG] Loading crypto: ${crypto.id}, image: ${crypto.image}`);
           this.cryptoDataCache.set(crypto.id, {
             id: crypto.id,
             name: crypto.name,
@@ -80,7 +81,7 @@ export class PythPriceService {
   clearCache(): void {
     this.cryptoDataCache.clear();
     this.lastCacheUpdate = 0;
-    console.log("🔄 [PYTH] Cache manually cleared - fresh database load on next request");
+    logger.debug("🔄 [PYTH] Cache manually cleared - fresh database load on next request");
   }
 
   /**
@@ -88,11 +89,11 @@ export class PythPriceService {
    */
   async getLatestPrices(): Promise<CryptoPrice[]> {
     try {
-      console.log("🔍 [PYTH] getLatestPrices called - force loading from database");
+      logger.debug("🔍 [PYTH] getLatestPrices called - force loading from database");
       await this.loadCryptocurrenciesFromDB();
       
       const priceIds = Array.from(this.cryptoDataCache.values()).map(crypto => crypto.pythFeedId);
-      console.log("🔍 [PYTH] Fetching latest prices for", priceIds.length, "cryptocurrencies");
+      logger.debug("🔍 [PYTH] Fetching latest prices for", priceIds.length, "cryptocurrencies");
       
       if (priceIds.length === 0) {
         console.warn("⚠️ [PYTH] No cryptocurrencies with Pyth Feed IDs found in database");
@@ -123,7 +124,7 @@ export class PythPriceService {
       await this.loadCryptocurrenciesFromDB();
       
       const priceIds = Array.from(this.cryptoDataCache.values()).map(crypto => crypto.pythFeedId);
-      console.log("🔄 [PYTH] Starting price stream for", priceIds.length, "cryptocurrencies");
+      logger.debug("🔄 [PYTH] Starting price stream for", priceIds.length, "cryptocurrencies");
       
       if (priceIds.length === 0) {
         throw new Error("No cryptocurrencies with Pyth Feed IDs found in database");
@@ -136,7 +137,7 @@ export class PythPriceService {
           const update: PythPriceUpdate = JSON.parse(event.data);
           if (update.parsed && update.parsed.length > 0) {
             const formattedPrices = this.formatPrices(update.parsed);
-            console.log("📡 [PYTH] Received streaming update for", formattedPrices.length, "prices");
+            logger.debug("📡 [PYTH] Received streaming update for", formattedPrices.length, "prices");
             callback(formattedPrices);
           }
         } catch (error) {
@@ -148,7 +149,7 @@ export class PythPriceService {
         console.error("❌ [PYTH] Stream error:", error);
       };
 
-      console.log("✅ [PYTH] Price stream started successfully");
+      logger.debug("✅ [PYTH] Price stream started successfully");
       return eventSource;
     } catch (error) {
       console.error("❌ [PYTH] Error starting price stream:", error);
@@ -169,7 +170,7 @@ export class PythPriceService {
         continue;
       }
 
-      console.log(`🔍 [PYTH-FORMAT] Processing ${cryptoInfo.id}, image: ${cryptoInfo.image}`);
+      logger.debug(`🔍 [PYTH-FORMAT] Processing ${cryptoInfo.id}, image: ${cryptoInfo.image}`);
 
       try {
         // Convert price from Pyth format (price * 10^expo) to regular decimal

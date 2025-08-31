@@ -493,14 +493,18 @@ export function PredictionBattles() {
     // CRITICAL: Use EXACT same data source as Live Prices
     const cacheData = livePricesFromCache.length > 0 ? livePricesFromCache : cryptoPricesData;
     
-    console.log('🔍 [PRICE-DEBUG] Getting price for:', cryptoId);
-    console.log('🔍 [PRICE-DEBUG] Cache data length:', livePricesFromCache.length, 'Query data length:', cryptoPricesData.length);
+    if (import.meta.env.DEV) {
+      console.log('🔍 [PRICE-DEBUG] Getting price for:', cryptoId);
+      console.log('🔍 [PRICE-DEBUG] Cache data length:', livePricesFromCache.length, 'Query data length:', cryptoPricesData.length);
+    }
     
     if (cacheData && Array.isArray(cacheData) && cacheData.length > 0) {
       const crypto = cacheData.find((c: any) => c.id === cryptoId);
       if (crypto && crypto.current_price) {
-        console.log('💰 [PRICE-EXACT] Found price for', cryptoId, ':', crypto.current_price);
-        console.log('💰 [PRICE-RAW] Raw data object:', crypto);
+        if (import.meta.env.DEV) {
+          console.log('💰 [PRICE-EXACT] Found price for', cryptoId, ':', crypto.current_price);
+          console.log('💰 [PRICE-RAW] Raw data object:', crypto);
+        }
         return crypto.current_price;
       } else {
         console.log('🔴 [PRICE-MISSING] NOT FOUND crypto for', cryptoId, 'in cache');

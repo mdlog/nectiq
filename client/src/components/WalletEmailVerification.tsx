@@ -38,7 +38,9 @@ export function WalletEmailVerification({
   const queryClient = useQueryClient();
 
   // Debug logging
-  console.log('🔧 [WalletEmailVerification] Component rendered with props:', { walletAddress, step });
+  if (import.meta.env.DEV) {
+    console.log('🔧 [WalletEmailVerification] Component rendered with props:', { walletAddress, step });
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -67,7 +69,9 @@ export function WalletEmailVerification({
       });
     },
     onError: (error: any) => {
-      console.error('Link wallet email error:', error);
+      if (import.meta.env.DEV) {
+        console.error('Link wallet email error:', error);
+      }
       
       // Handle specific error codes for better user experience
       let title = "Verification Failed";
@@ -97,11 +101,15 @@ export function WalletEmailVerification({
     setIsSigningIn(true);
     setErrorMessage(null); // Reset error message
     try {
-      console.log('🔥 [FIREBASE] Attempting Google Sign-In...');
-      console.log('🔥 [FIREBASE] Current domain:', window.location.hostname);
+      if (import.meta.env.DEV) {
+        console.log('🔥 [FIREBASE] Attempting Google Sign-In...');
+        console.log('🔥 [FIREBASE] Current domain:', window.location.hostname);
+      }
       const user = await signInWithGoogle();
       if (user) {
-        console.log('✅ [FIREBASE] Google Sign-In successful:', user.email);
+        if (import.meta.env.DEV) {
+          console.log('✅ [FIREBASE] Google Sign-In successful:', user.email);
+        }
         setStep('gmail');
       }
     } catch (error: any) {

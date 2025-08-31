@@ -305,7 +305,9 @@ export default function AdminPanel() {
     setTwoFAToken(token);
     
     // In real implementation, send code via email/SMS
-    console.log('🔐 [2FA] Generated code for database reset:', code);
+    if (import.meta.env.DEV) {
+      console.log('🔐 [2FA] Generated code for database reset:', code);
+    }
     
     // Store code temporarily (in real app, store on server)
     sessionStorage.setItem(`2fa_code_${token}`, code);
@@ -380,7 +382,9 @@ export default function AdminPanel() {
   }>({
     queryKey: ["/api/admin/users", currentPage, usersPerPage], // Use main endpoint
     queryFn: async () => {
-      console.log(`🎯 [USERS-MAIN] Calling main admin users endpoint: /api/admin/users?page=${currentPage}&limit=${usersPerPage}`);
+      if (import.meta.env.DEV) {
+        console.log(`🎯 [USERS-MAIN] Calling main admin users endpoint: /api/admin/users?page=${currentPage}&limit=${usersPerPage}`);
+      }
       
       try {
         const response = await fetch(`/api/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
@@ -393,7 +397,9 @@ export default function AdminPanel() {
         });
         
         if (!response.ok) {
-          console.log(`❌ [USERS-MAIN] Main endpoint failed, trying debug fallback`);
+          if (import.meta.env.DEV) {
+            console.log(`❌ [USERS-MAIN] Main endpoint failed, trying debug fallback`);
+          }
           // Fallback to debug endpoint
           const debugResponse = await fetch(`/api/debug/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
             method: 'GET',
@@ -409,12 +415,16 @@ export default function AdminPanel() {
           }
           
           const debugResult = await debugResponse.json();
-          console.log(`✅ [USERS-FALLBACK] Debug fallback success:`, debugResult);
+          if (import.meta.env.DEV) {
+            console.log(`✅ [USERS-FALLBACK] Debug fallback success:`, debugResult);
+          }
           return debugResult;
         }
         
         const result = await response.json();
-        console.log(`✅ [USERS-MAIN] Main endpoint success:`, result);
+        if (import.meta.env.DEV) {
+          console.log(`✅ [USERS-MAIN] Main endpoint success:`, result);
+        }
         return result;
       } catch (error) {
         console.error(`❌ [USERS-ERROR] All endpoints failed:`, error);
@@ -433,28 +443,31 @@ export default function AdminPanel() {
 
   // Enhanced debug logging untuk user query
   useEffect(() => {
-    console.log("🔍 [USER-QUERY-DEBUG] Users query state:", {
-      data: usersData,
-      loading: usersLoading,
-      error: usersError,
-      dataType: typeof usersData,
-      isArray: Array.isArray(usersData),
-      length: usersData?.length,
-      fullResponse: usersResponse,
-      pagination: pagination
-    });
+    if (import.meta.env.DEV) {
+      console.log("🔍 [USER-QUERY-DEBUG] Users query state:", {
+        data: usersData,
+        loading: usersLoading,
+        error: usersError,
+        dataType: typeof usersData,
+        isArray: Array.isArray(usersData),
+        length: usersData?.length,
+        fullResponse: usersResponse,
+        pagination: pagination
+      });
 
-    // Additional debug untuk troubleshooting
+      // Additional debug untuk troubleshooting
+      if (usersData && usersData.length === 0) {
+        console.warn("⚠️ [USER-QUERY-WARN] Users array is empty but defined");
+      }
+      
+      if (!usersLoading && !usersData && !usersError) {
+        console.warn("⚠️ [USER-QUERY-WARN] No loading, no data, no error - this might indicate a query problem");
+      }
+    }
+
+    // Error logging should stay in production
     if (usersError) {
       console.error("🔥 [USER-QUERY-ERROR] Detailed error:", usersError);
-    }
-    
-    if (usersData && usersData.length === 0) {
-      console.warn("⚠️ [USER-QUERY-WARN] Users array is empty but defined");
-    }
-    
-    if (!usersLoading && !usersData && !usersError) {
-      console.warn("⚠️ [USER-QUERY-WARN] No loading, no data, no error - this might indicate a query problem");
     }
   }, [usersData, usersLoading, usersError, usersResponse, pagination]);
 
@@ -516,7 +529,9 @@ export default function AdminPanel() {
   // Update settings state when systemSettings changes
   useEffect(() => {
     if (systemSettings) {
-      console.log('🔧 [SETTINGS] Updating settings from query data:', systemSettings);
+      if (import.meta.env.DEV) {
+        console.log('🔧 [SETTINGS] Updating settings from query data:', systemSettings);
+      }
       setSettings({
         platform: {
           startingBalance: systemSettings.platform?.startingBalance || 1000,
@@ -532,7 +547,9 @@ export default function AdminPanel() {
           maxStakeAmount: systemSettings.platform?.maxStakeAmount || 500
         }
       });
-      console.log('✅ [SETTINGS] Settings state updated, maintenance mode:', systemSettings.platform?.maintenanceMode);
+      if (import.meta.env.DEV) {
+        console.log('✅ [SETTINGS] Settings state updated, maintenance mode:', systemSettings.platform?.maintenanceMode);
+      }
     }
   }, [systemSettings]);
 
@@ -547,13 +564,15 @@ export default function AdminPanel() {
 
   // Debug: Tambahkan effect untuk debug trendride data
   useEffect(() => {
-    console.log('🔍 [TRENDRIDE-DETAILED-DEBUG] Query state:', { 
-      trendRideData, 
-      trendRideLoading, 
-      dataLength: trendRideData?.length 
-    });
-    if (trendRideData) {
-      console.log('📊 [TRENDRIDE-DETAILED-DEBUG] Sample detailed data:', trendRideData[0]);
+    if (import.meta.env.DEV) {
+      console.log('🔍 [TRENDRIDE-DETAILED-DEBUG] Query state:', { 
+        trendRideData, 
+        trendRideLoading, 
+        dataLength: trendRideData?.length 
+      });
+      if (trendRideData) {
+        console.log('📊 [TRENDRIDE-DETAILED-DEBUG] Sample detailed data:', trendRideData[0]);
+      }
     }
   }, [trendRideData, trendRideLoading]);
 
@@ -692,7 +711,9 @@ export default function AdminPanel() {
 
   const addCryptoMutation = useMutation({
     mutationFn: async (cryptoData: any) => {
-      console.log('🔧 Sending cryptocurrency data:', cryptoData);
+      if (import.meta.env.DEV) {
+        console.log('🔧 Sending cryptocurrency data:', cryptoData);
+      }
       return apiRequest("/api/admin/cryptocurrencies", {
         method: "POST",
         body: JSON.stringify(cryptoData),
@@ -736,12 +757,16 @@ export default function AdminPanel() {
   // Settings mutations
   const updateSettingsMutation = useMutation({
     mutationFn: async (settingsData: any) => {
-      console.log('🔧 [MUTATION] Sending settings update:', settingsData);
+      if (import.meta.env.DEV) {
+        console.log('🔧 [MUTATION] Sending settings update:', settingsData);
+      }
       const response = await apiRequest("/api/admin/settings", {
         method: "POST",
         body: JSON.stringify(settingsData),
       });
-      console.log('✅ [MUTATION] Settings update response received');
+      if (import.meta.env.DEV) {
+        console.log('✅ [MUTATION] Settings update response received');
+      }
       return response;
     },
     onSuccess: async () => {
@@ -765,7 +790,9 @@ export default function AdminPanel() {
 
   // Settings update handlers
   const updatePlatformSetting = async (key: string, value: any) => {
-    console.log(`🔧 [SETTINGS] Updating platform.${key} to:`, value);
+    if (import.meta.env.DEV) {
+      console.log(`🔧 [SETTINGS] Updating platform.${key} to:`, value);
+    }
     
     const settingData = {
       platform: {
@@ -794,7 +821,9 @@ export default function AdminPanel() {
     
     try {
       await updatePlatformSetting('maintenanceMode', newValue);
-      console.log(`✅ [TOGGLE] Successfully toggled maintenance mode to: ${newValue}`);
+      if (import.meta.env.DEV) {
+        console.log(`✅ [TOGGLE] Successfully toggled maintenance mode to: ${newValue}`);
+      }
     } catch (error) {
       console.error(`❌ [TOGGLE] Failed to toggle maintenance mode:`, error);
     }
@@ -1062,11 +1091,13 @@ export default function AdminPanel() {
         }
 
         // Additional debugging info
-        console.log(`🔍 [WALLET-DEBUG] Connected: ${isConnected}`);
-        console.log(`🔍 [WALLET-DEBUG] Address: ${address}`);
-        console.log(`🔍 [WALLET-DEBUG] Chain: ${chain?.name} (ID: ${chain?.id})`);
-        console.log(`🔍 [WALLET-DEBUG] Write pending: ${isWritePending}`);
-        console.log(`🔍 [WALLET-DEBUG] Send pending: ${isSendPending}`);
+        if (import.meta.env.DEV) {
+          console.log(`🔍 [WALLET-DEBUG] Connected: ${isConnected}`);
+          console.log(`🔍 [WALLET-DEBUG] Address: ${address}`);
+          console.log(`🔍 [WALLET-DEBUG] Chain: ${chain?.name} (ID: ${chain?.id})`);
+          console.log(`🔍 [WALLET-DEBUG] Write pending: ${isWritePending}`);
+          console.log(`🔍 [WALLET-DEBUG] Send pending: ${isSendPending}`);
+        }
 
         // Prepare transaction parameters
         const cryptoAmount = withdrawal.netAmount || (withdrawal.amount / 1000).toString(); // Use netAmount or fallback

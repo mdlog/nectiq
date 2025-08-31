@@ -9,12 +9,14 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-console.log('🔧 Firebase Configuration:', {
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  currentDomain: window.location.hostname,
-  fullUrl: window.location.href
-});
+if (import.meta.env.DEV) {
+  console.log('🔧 Firebase Configuration:', {
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+    currentDomain: window.location.hostname,
+    fullUrl: window.location.href
+  });
+}
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
@@ -28,7 +30,9 @@ export const signInWithGoogle = async (): Promise<User | null> => {
     const result = await signInWithPopup(auth, provider);
     return result.user;
   } catch (error) {
-    console.error("Firebase Google sign-in error:", error);
+    if (import.meta.env.DEV) {
+      console.error("Firebase Google sign-in error:", error);
+    }
     throw error;
   }
 };
@@ -37,7 +41,9 @@ export const signOutFromFirebase = async (): Promise<void> => {
   try {
     await signOut(auth);
   } catch (error) {
-    console.error("Firebase sign-out error:", error);
+    if (import.meta.env.DEV) {
+      console.error("Firebase sign-out error:", error);
+    }
     throw error;
   }
 };
