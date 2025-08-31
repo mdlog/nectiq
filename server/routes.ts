@@ -4303,22 +4303,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user analytics data for charts and statistics
   app.get("/api/user/analytics", async (req, res) => {
     try {
-      const userId = (req as any).session?.userId;
+      let userId = (req as any).session?.userId;
       
-      // Enhanced debugging for analytics endpoint
-      console.log('🔍 [ANALYTICS] Session debug:', {
-        hasSession: !!req.session,
-        sessionId: req.sessionID || 'NONE',
-        userId: userId,
-        sessionData: (req as any).session
-      });
-      
+      // If session doesn't have userId, check wallet address header (like other endpoints)
       if (!userId) {
-        console.log('❌ [ANALYTICS] No userId in session, returning 401');
-        return res.status(401).json({ message: "Authentication required" });
+        const walletAddress = req.headers['x-wallet-address'] as string;
+        if (walletAddress) {
+          const user = await storage.getUserByWalletAddress(walletAddress);
+          if (user) {
+            userId = user.id;
+          }
+        }
       }
       
-      console.log(`✅ [ANALYTICS] Valid session found for userId: ${userId}`);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
 
       const period = req.query.period as string || '30'; // days
       const periodDays = parseInt(period);
