@@ -1,4 +1,4 @@
-import { ChartLine, Coins, User, LogOut, Menu, X, ChevronDown, Copy, Check, Wallet } from "lucide-react";
+import { ChartLine, Coins, User, LogOut, Menu, X, ChevronDown, Copy, Check, Wallet, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { RainbowConnectButton } from "@/components/RainbowConnectButton";
@@ -180,9 +180,19 @@ export function Header() {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="w-8 h-8 bg-primary rounded-full flex items-center justify-center p-0 hover:bg-primary/80"
+                      className="w-8 h-8 rounded-full flex items-center justify-center p-0 overflow-hidden border-2 border-primary hover:border-primary/80"
                     >
-                      <User className="text-white" size={16} />
+                      {user?.profilePhoto ? (
+                        <img
+                          src={user.profilePhoto}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
+                          <UserCircle className="text-white" size={16} />
+                        </div>
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64">
@@ -272,9 +282,11 @@ export function Header() {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="w-8 h-8 bg-primary rounded-full flex items-center justify-center p-0 hover:bg-primary/80"
+                      className="w-8 h-8 rounded-full flex items-center justify-center p-0 overflow-hidden border-2 border-primary hover:border-primary/80"
                     >
-                      <User className="text-white" size={16} />
+                      <div className="w-full h-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
+                        <UserCircle className="text-white" size={16} />
+                      </div>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64">
@@ -454,8 +466,18 @@ export function Header() {
                       User Information
                     </p>
                     {/* Mobile Profile Badge */}
-                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                      <User className="text-white" size={16} />
+                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary">
+                      {user?.profilePhoto ? (
+                        <img
+                          src={user.profilePhoto}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
+                          <UserCircle className="text-white" size={16} />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2">
