@@ -2,9 +2,33 @@ import { Settings, AlertTriangle, Clock, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useState, useEffect } from 'react';
 
 export function MaintenancePage() {
   const { openConnectModal } = useConnectModal();
+  const [showAdminAccess, setShowAdminAccess] = useState(false);
+  const [keySequence, setKeySequence] = useState<string[]>([]);
+  
+  // Secret sequence to reveal admin access: N-E-C-T-I-Q-A-D-M-I-N
+  const secretSequence = ['KeyN', 'KeyE', 'KeyC', 'KeyT', 'KeyI', 'KeyQ', 'KeyA', 'KeyD', 'KeyM', 'KeyI', 'KeyN'];
+  
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      const newSequence = [...keySequence, event.code].slice(-secretSequence.length);
+      setKeySequence(newSequence);
+      
+      // Check if the sequence matches the secret
+      if (newSequence.length === secretSequence.length && 
+          newSequence.every((key, index) => key === secretSequence[index])) {
+        setShowAdminAccess(true);
+        // Hide admin access after 30 seconds for security
+        setTimeout(() => setShowAdminAccess(false), 30000);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [keySequence, secretSequence]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center px-4">
@@ -48,21 +72,23 @@ export function MaintenancePage() {
             <span className="text-sm font-medium">Maintenance Mode Active</span>
           </div>
 
-          {/* Admin Access Button */}
-          <div className="pt-4 border-t border-slate-700">
-            <Button
-              onClick={openConnectModal}
-              variant="outline"
-              className="w-full bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600/50 hover:text-white hover:border-slate-500 transition-all duration-200"
-              data-testid="button-admin-login"
-            >
-              <Shield className="h-4 w-4 mr-2" />
-              Admin Login
-            </Button>
-            <p className="text-xs text-slate-500 mt-2 text-center">
-              Connect admin wallet to access system during maintenance
-            </p>
-          </div>
+          {/* Admin Access Button - Only shown after secret sequence */}
+          {showAdminAccess && (
+            <div className="pt-4 border-t border-slate-700">
+              <Button
+                onClick={openConnectModal}
+                variant="outline"
+                className="w-full bg-red-700/50 border-red-600 text-red-300 hover:bg-red-600/50 hover:text-white hover:border-red-500 transition-all duration-200"
+                data-testid="button-admin-login"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Admin Access
+              </Button>
+              <p className="text-xs text-slate-500 mt-2 text-center">
+                Authorized admin access enabled
+              </p>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="text-xs text-slate-500 pt-4">
