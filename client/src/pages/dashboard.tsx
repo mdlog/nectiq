@@ -13,7 +13,7 @@ import { RainbowConnectButton } from "@/components/RainbowConnectButton";
 import { PredictionBattles } from "@/components/prediction-battles";
 import { BannerSection } from "@/components/banner-section";
 import { EventsSection } from "@/components/events-section";
-import { SimpleActivityFeed } from "@/components/simple-activity-feed";
+import { MarketSentimentDashboard } from "@/components/market-sentiment-dashboard";
 import TradingViewChart from "@/components/TradingViewChart";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -246,9 +246,9 @@ export default function Dashboard() {
           <BannerSection position="below_live_prices" className="horizontal-banners" />
         </div>
         
-        {/* Live Activity Feed */}
+        {/* Market Sentiment Dashboard */}
         <div className="mt-6">
-          <SimpleActivityFeed />
+          <MarketSentimentDashboard />
         </div>
       </main>
       

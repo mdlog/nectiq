@@ -3097,6 +3097,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Market Sentiment Dashboard endpoint
+  app.get('/api/market/sentiment', async (req, res) => {
+    try {
+      logger.log("🔍 [MARKET-SENTIMENT] Analyzing market sentiment from active predictions...");
+      
+      // Get all active predictions
+      const allPredictions = await storage.getAllPredictions();
+      const activePredictions = allPredictions.filter(p => p.status === "pending");
+      
+      // Get current crypto prices for trend analysis
+      const cryptoPrices = await cryptoService.getCurrentPrices();
+      const priceMap = new Map(cryptoPrices.map((p: any) => [p.id, p.current_price]));
+      
+      // Calculate sentiment by cryptocurrency
+      const cryptoStats = new Map();
+      
+      activePredictions.forEach((prediction: any) => {
+        const crypto = prediction.cryptocurrency;
+        const currentPrice = priceMap.get(crypto) || 0;
+        const predictedPrice = Number(prediction.predictedPrice);
+        
+        if (!cryptoStats.has(crypto)) {
+          cryptoStats.set(crypto, {
+            totalPredictions: 0,
+            bullishPredictions: 0,
+            bearishPredictions: 0,
+            totalStaked: 0,
+            averagePredictedPrice: 0,
+            currentPrice: currentPrice,
+            priceSum: 0
+          });
+        }
+        
+        const stats = cryptoStats.get(crypto);
+        stats.totalPredictions++;
+        stats.totalStaked += Number(prediction.stakeAmount);
+        stats.priceSum += predictedPrice;
+        stats.averagePredictedPrice = stats.priceSum / stats.totalPredictions;
+        
+        // Determine bullish/bearish sentiment
+        if (predictedPrice > currentPrice) {
+          stats.bullishPredictions++;
+        } else {
+          stats.bearishPredictions++;
+        }
+      });
+      
+      // Format sentiment data
+      const sentimentData = Array.from(cryptoStats.entries())
+        .map(([crypto, stats]) => {
+          const bullishPercentage = stats.totalPredictions > 0 
+            ? Math.round((stats.bullishPredictions / stats.totalPredictions) * 100) 
+            : 0;
+          const bearishPercentage = 100 - bullishPercentage;
+          
+          // Calculate predicted vs current price difference
+          const priceDifference = stats.currentPrice > 0 
+            ? ((stats.averagePredictedPrice - stats.currentPrice) / stats.currentPrice) * 100 
+            : 0;
+          
+          return {
+            cryptocurrency: crypto,
+            totalPredictions: stats.totalPredictions,
+            bullishPercentage,
+            bearishPercentage,
+            bullishPredictions: stats.bullishPredictions,
+            bearishPredictions: stats.bearishPredictions,
+            totalStaked: stats.totalStaked,
+            averagePredictedPrice: stats.averagePredictedPrice,
+            currentPrice: stats.currentPrice,
+            priceDifference: priceDifference,
+            sentiment: bullishPercentage > 60 ? 'Very Bullish' : 
+                     bullishPercentage > 50 ? 'Bullish' : 
+                     bearishPercentage > 60 ? 'Very Bearish' : 'Bearish'
+          };
+        })
+        .sort((a, b) => b.totalPredictions - a.totalPredictions)
+        .slice(0, 10); // Top 10 most predicted cryptos
+      
+      // Calculate overall market sentiment
+      const totalPredictions = activePredictions.length;
+      const totalBullish = sentimentData.reduce((sum, item) => 
+        sum + (item.bullishPredictions || 0), 0);
+      const totalBearish = sentimentData.reduce((sum, item) => 
+        sum + (item.bearishPredictions || 0), 0);
+      
+      const overallBullishPercentage = totalPredictions > 0 
+        ? Math.round((totalBullish / totalPredictions) * 100) 
+        : 50;
+      
+      // Platform statistics
+      const platformStats = {
+        totalActivePredictions: totalPredictions,
+        totalActiveStake: activePredictions.reduce((sum: number, p: any) => 
+          sum + Number(p.stakeAmount), 0),
+        averageStakeAmount: totalPredictions > 0 
+          ? Math.round(activePredictions.reduce((sum: number, p: any) => 
+              sum + Number(p.stakeAmount), 0) / totalPredictions) 
+          : 0,
+        uniqueCryptocurrencies: cryptoStats.size,
+        overallBullishPercentage,
+        overallBearishPercentage: 100 - overallBullishPercentage,
+        marketMood: overallBullishPercentage > 65 ? 'Very Optimistic' :
+                   overallBullishPercentage > 55 ? 'Optimistic' :
+                   overallBullishPercentage > 45 ? 'Neutral' :
+                   overallBullishPercentage > 35 ? 'Pessimistic' : 'Very Pessimistic'
+      };
+      
+      logger.log(`✅ [MARKET-SENTIMENT] Generated sentiment data for ${sentimentData.length} cryptocurrencies`);
+      
+      res.json({
+        cryptoSentiment: sentimentData,
+        platformStats,
+        lastUpdated: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      logger.log(`❌ [MARKET-SENTIMENT] Error generating sentiment data: ${error}`);
+      res.status(500).json({ message: "Failed to generate market sentiment data" });
+    }
+  });
+
   // Get trending cryptocurrencies by prediction volume
   app.get('/api/predictions/trending', async (req, res) => {
     try {
