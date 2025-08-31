@@ -59,7 +59,7 @@ interface LivePricesProps {
 export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) {
 
   // REAL-TIME PRICES - Synchronized with other components
-  const { data: prices = [], isLoading, dataUpdatedAt } = useQuery<CryptoPrice[]>({
+  const { data: prices = [], isLoading, dataUpdatedAt, isFetching } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/pyth-prices"], 
     refetchInterval: 1000, // Same as Active Predictions and Battles - 1 second refresh
     refetchIntervalInBackground: true, // Enable background updates
@@ -76,7 +76,8 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   // Sort prices by market cap (highest price first)
   const sortedPrices = prices.sort((a, b) => b.current_price - a.current_price);
 
-  if (isLoading) {
+  // Only show skeleton on initial load, not on refresh
+  if (isLoading && prices.length === 0) {
     return (
       <div className="bg-surface rounded-lg p-2 border border-surface-light">
         <h3 className="text-base font-bold mb-3 flex items-center">
@@ -106,7 +107,7 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           </span>
         </h3>
         <div className="flex items-center text-xs text-green-400">
-          <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse mr-1"></div>
+          <div className={`w-1.5 h-1.5 rounded-full mr-1 ${isFetching ? 'bg-orange-400 animate-spin' : 'bg-green-400 animate-pulse'}`}></div>
           REAL-TIME {lastUpdate}
         </div>
       </div>
