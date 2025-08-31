@@ -19,9 +19,10 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 
 import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
 import { handleReferralFromURL } from "@/lib/referralHandler";
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { ForceWalletAuth } from "@/components/ForceWalletAuth";
 import { AuthDebugPanel } from "@/components/AuthDebugPanel";
+import { LoadingFallback } from "@/components/LoadingFallback";
 
 
 // Suppress wallet extension conflicts in console
@@ -150,7 +151,9 @@ function App() {
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground">
         <Toaster />
-        <Router />
+        <Suspense fallback={<LoadingFallback />}>
+          <Router />
+        </Suspense>
         <MobileWarning isOpen={showWarning} onClose={dismissWarning} />
         <ForceWalletAuth />
         <AuthDebugPanel />
