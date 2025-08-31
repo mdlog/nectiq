@@ -159,6 +159,7 @@ app.use((req, res, next) => {
     'https://dynamicauth.com',
     'https://replit.dev',
     'https://replit.app',
+    'https://nectiq.replit.app', // Production deployment domain
     // Add your production domain here
     process.env.FRONTEND_URL || 'https://nectiq.app'
   ];
@@ -203,12 +204,12 @@ app.use((req, res, next) => {
   // Balanced CSP for Web3 and TradingView charts security
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev *.tradingview.com s3.tradingview.com",
-    "style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev *.tradingview.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com s3.tradingview.com",
+    "style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com",
     "font-src 'self' data: *.dynamicauth.com *.tradingview.com",
-    "img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app *.tradingview.com",
-    "connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev *.tradingview.com",
-    "frame-src 'self' *.dynamicauth.com *.replit.app *.tradingview.com tradingview.com",
+    "img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com",
+    "connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com",
+    "frame-src 'self' *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com tradingview.com",
     "child-src 'self' *.dynamicauth.com *.tradingview.com",
     "worker-src 'self' blob: *.tradingview.com",
     "object-src 'none'",
