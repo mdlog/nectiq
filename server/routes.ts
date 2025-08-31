@@ -238,14 +238,11 @@ function getAdminWalletAddresses(): string[] {
 
 // Admin IP whitelist for bypassing rate limiting - loaded from environment
 function getAdminIPWhitelist(): Set<string> {
-  // Production-safe IP whitelist - only localhost for development
-  const defaultIPs = process.env.NODE_ENV === 'production' ? [] : ['127.0.0.1', '::1', 'localhost'];
+  const defaultIPs = ['127.0.0.1', '::1', 'localhost', '172.31.128.37', '172.31.128.39', '172.31.128.87', '172.31.90.130', '172.31.106.226'];
   const envIPs = process.env.ADMIN_IP_WHITELIST;
   
   if (!envIPs) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔐 [SECURITY] Using default admin IP whitelist (development only)');
-    }
+    console.log('🔐 [SECURITY] Using default admin IP whitelist (localhost only)');
     return new Set(defaultIPs);
   }
   
@@ -499,14 +496,13 @@ const requireAdmin = async (req: Request, res: Response, next: NextFunction) => 
       ADMIN_WALLET_ADDRESSES.includes(normalizedUserWallet) &&
       (user.authMethod === 'wallet' || user.authMethod === 'both'); // Allow both wallet-only and wallet+email authentication
 
-    // Debug admin check (only in development)
-    if (process.env.NODE_ENV !== 'production') {
-      console.log("🔍 Admin verification debug:");
-      console.log("   User wallet:", normalizedUserWallet);
-      console.log("   Authorized wallets count:", ADMIN_WALLET_ADDRESSES.length);
-      console.log("   Auth method:", user.authMethod);
-      console.log("   Is admin authorized:", isAuthorizedAdmin);
-    }
+    // Debug admin check
+    console.log("🔍 Admin verification debug:");
+    console.log("   User wallet:", normalizedUserWallet);
+    console.log("   Environment variable:", process.env.ADMIN_WALLET_ADDRESSES);
+    console.log("   Authorized wallets:", ADMIN_WALLET_ADDRESSES);
+    console.log("   Auth method:", user.authMethod);
+    console.log("   Is admin authorized:", isAuthorizedAdmin);
 
     if (!isAuthorizedAdmin) {
       adminAttempts.set(clientIP, { 
@@ -1599,34 +1595,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user with activity tracking
   app.get("/api/user", async (req, res) => {
     try {
-      console.log('🔍 [USER-API] Session data:', { 
-        sessionID: req.sessionID,
-        userId: (req as any).session?.userId,
-        walletAddress: (req as any).session?.walletAddress,
-        hasSession: !!(req as any).session
-      });
-      
       const userId = (req as any).session?.userId;
       if (!userId) {
-        console.log('❌ [USER-API] No userId in session, authentication required');
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      console.log('✅ [USER-API] Found userId in session:', userId);
       const user = await storage.getUser(userId);
       if (!user) {
-        console.log('❌ [USER-API] User not found in database for ID:', userId);
         return res.status(404).json({ message: "User not found" });
       }
-      
-      console.log('✅ [USER-API] User found:', { id: user.id, username: user.username, uid: user.uid });
       
       // Track user activity for real-time monitoring
       updateUserActivity(user.id, req.ip, req.get('User-Agent'), user.username, user.isAdmin || false);
       
       res.json(user);
     } catch (error) {
-      console.error('💥 [USER-API] Error getting user:', error);
       res.status(500).json({ message: "Failed to get user" });
     }
   });
@@ -8956,8 +8939,7 @@ Manual balance correction required IMMEDIATELY!`;
               } catch (apiError) {
                 console.log('CoinGecko API failed, trying internal fallback...');
                 // Try internal crypto prices as fallback
-                const baseUrl = process.env.PRODUCTION_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
-                const internalResponse = await fetch(`${baseUrl}/api/crypto/prices`);
+                const internalResponse = await fetch('http://localhost:5000/api/crypto/prices');
                 const internalData = await internalResponse.json();
                 const cryptoMatch = internalData.find(crypto => 
                   crypto.id === tournament.cryptocurrency || 
@@ -9090,8 +9072,7 @@ Manual balance correction required IMMEDIATELY!`;
         // Try alternative approach - use our existing crypto prices endpoint as fallback
         try {
           console.log('Attempting fallback to internal crypto prices...');
-          const baseUrl = process.env.PRODUCTION_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
-          const internalResponse = await fetch(`${baseUrl}/api/crypto/prices`);
+          const internalResponse = await fetch('http://localhost:5000/api/crypto/prices');
           const internalData = await internalResponse.json();
           
           // Find matching cryptocurrency in our internal data
@@ -9265,8 +9246,7 @@ Manual balance correction required IMMEDIATELY!`;
         console.log(`🎯 Creating Round 1 for tournament ${tournamentId} immediately upon activation`);
         
         // Get current cryptocurrency price for start price
-        const baseUrl = process.env.PRODUCTION_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
-        const cryptoResponse = await fetch(`${baseUrl}/api/crypto/prices`);
+        const cryptoResponse = await fetch(`http://localhost:5000/api/crypto/prices`);
         const cryptoData = await cryptoResponse.json();
         const currentCrypto = cryptoData.find((crypto: any) => crypto.id === tournament.cryptocurrency);
         const startPrice = currentCrypto?.current_price || 0;

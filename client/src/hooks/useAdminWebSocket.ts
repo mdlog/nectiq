@@ -39,14 +39,7 @@ export function useAdminWebSocket() {
     }
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    // Ensure port is properly set for WebSocket connection
-    const host = window.location.host;
-    const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
-    const wsUrl = window.location.port 
-      ? `${protocol}//${host}/ws`
-      : `${protocol}//${window.location.hostname}:${window.location.protocol === 'https:' ? '443' : '80'}/ws`;
-    
-    console.log(`🔧 [ADMIN-WEBSOCKET-DEBUG] Host: ${host}, Port: ${port}, Final URL: ${wsUrl}`);
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     
     try {
       wsRef.current = new WebSocket(wsUrl);
@@ -94,12 +87,12 @@ export function useAdminWebSocket() {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/transaction-stats"] });
             queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
           } else if (message.type === 'prediction_update' && message.data) {
-            const prediction = message.data as any;
+            const prediction = message.data;
             
             // Show toast notification for new predictions
             toast({
               title: `New Prediction`,
-              description: `${prediction.user?.username}: ${prediction.prediction?.cryptocurrency} - ${prediction.prediction?.stakeAmount} NTIQ`,
+              description: `${prediction.user.username}: ${prediction.prediction.cryptocurrency} - ${prediction.prediction.stakeAmount} NTIQ`,
               duration: 5000,
             });
 
@@ -108,12 +101,12 @@ export function useAdminWebSocket() {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/activity"] });
             queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
           } else if (message.type === 'user_deleted' && message.data) {
-            const deletion = message.data as any;
+            const deletion = message.data;
             
             // Show toast notification for user deletion
             toast({
               title: `User Deleted`,
-              description: `${deletion.adminUser?.username} deleted user: ${deletion.deletedUser?.username}`,
+              description: `${deletion.adminUser.username} deleted user: ${deletion.deletedUser.username}`,
               duration: 5000,
               variant: 'destructive'
             });

@@ -82,14 +82,7 @@ class WebSocketManager {
     return new Promise((resolve, reject) => {
       try {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        // Ensure port is properly set for WebSocket connection
-        const host = window.location.host;
-        const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
-        const wsUrl = window.location.port 
-          ? `${protocol}//${host}/ws`
-          : `${protocol}//${window.location.hostname}:${window.location.protocol === 'https:' ? '443' : '80'}/ws`;
-        
-        console.log(`📱 [WEBSOCKET-DEBUG] Host: ${host}, Port: ${port}, Final URL: ${wsUrl}`);
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
         
         console.log(`📱 [WEBSOCKET-MANAGER] Creating connection to: ${wsUrl} for user ${this.currentUserId}`);
         
@@ -138,7 +131,7 @@ class WebSocketManager {
                 if (message.data) {
                   console.log('🔔 [WEBSOCKET-MANAGER] Received notification:', message.data);
                   // Broadcast to all callbacks
-                  this.callbacks.forEach(callback => callback.onNotification?.(message.data as any));
+                  this.callbacks.forEach(callback => callback.onNotification?.(message.data!));
                 }
                 break;
                 
@@ -273,7 +266,7 @@ class WebSocketManager {
 const wsManager = new WebSocketManager();
 
 export function useWebSocket(options: UseWebSocketOptions = {}) {
-  const { data: user } = useQuery<{id: number}>({
+  const { data: user } = useQuery({
     queryKey: ["/api/user"],
     refetchInterval: 10000,
     staleTime: 5000,

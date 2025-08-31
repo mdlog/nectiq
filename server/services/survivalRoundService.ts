@@ -131,8 +131,7 @@ export class SurvivalRoundService {
   // Get current price for any cryptocurrency from CoinGecko API
   private async getCurrentCryptoPrice(cryptoId: string): Promise<number> {
     try {
-      const baseUrl = process.env.PRODUCTION_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
-      const response = await axios.get(`${baseUrl}/api/crypto/prices`);
+      const response = await axios.get('http://localhost:5000/api/crypto/prices');
       const cryptoData = response.data.find((crypto: any) => crypto.id === cryptoId);
       return cryptoData?.current_price || 0;
     } catch (error) {

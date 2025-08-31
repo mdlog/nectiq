@@ -85,13 +85,13 @@ export function useWalletConnectionStatus() {
     toastTimeouts.current.set(toastKey, timeout);
   };
 
-  // Check if this is a frequent disconnection pattern - be more lenient
+  // Check if this is a frequent disconnection pattern
   const isFrequentDisconnection = () => {
     const recentEvents = connectionHistory.current
       .filter(event => event.type === 'disconnected')
-      .filter(event => Date.now() - event.timestamp < 300000); // Last 5 minutes (more time window)
+      .filter(event => Date.now() - event.timestamp < 60000); // Last minute
     
-    return recentEvents.length >= 4; // Need more disconnections to be considered unstable
+    return recentEvents.length >= 3;
   };
 
   // Handle wallet connection changes
@@ -146,13 +146,13 @@ export function useWalletConnectionStatus() {
       
       const isFrequent = isFrequentDisconnection();
       
-      // Different messages based on disconnection frequency - but be much more tolerant
-      if (isFrequent && connectionQuality.disconnectCount > 5) {
+      // Different messages based on disconnection frequency
+      if (isFrequent) {
         showConnectionNotification(
           "Wallet Connection Unstable",
           "Multiple disconnections detected. Please check your wallet extension.",
           'destructive',
-          4000
+          6000
         );
         
         setConnectionQuality(prev => ({

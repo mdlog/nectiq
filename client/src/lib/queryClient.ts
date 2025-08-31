@@ -5,9 +5,7 @@ let globalWalletAddress: string | null = null;
 
 export function setGlobalWalletAddress(address: string | null) {
   globalWalletAddress = address;
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('🔐 [QUERY-CLIENT] Global wallet address set:', address ? address.substring(0, 8) + '...' : 'null');
-  }
+  console.log('🔐 [QUERY-CLIENT] Global wallet address set:', address ? address.substring(0, 8) + '...' : 'null');
 }
 
 async function throwIfResNotOk(res: Response) {
@@ -29,9 +27,7 @@ export async function apiRequest(
   // Add wallet address header if available
   if (globalWalletAddress) {
     headers['x-wallet-address'] = globalWalletAddress;
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔐 [API-REQUEST] Including wallet address in headers for:', url);
-    }
+    console.log('🔐 [API-REQUEST] Including wallet address in headers for:', url);
   }
 
   const res = await fetch(url, {
@@ -50,34 +46,25 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const url = queryKey[0] as string;
-    console.log('📡 [QUERY-CLIENT] Making request to:', url);
-    
     const headers: Record<string, string> = {};
     
     // Add wallet address header if available
     if (globalWalletAddress) {
       headers['x-wallet-address'] = globalWalletAddress;
-      console.log('🔐 [QUERY-CLIENT] Including wallet address in headers for:', url);
+      console.log('🔐 [GET-QUERY] Including wallet address in headers for:', queryKey[0]);
     }
 
-    const res = await fetch(url, {
+    const res = await fetch(queryKey[0] as string, {
       credentials: "include",
       headers,
     });
 
-    console.log('📡 [QUERY-CLIENT] Response status for', url, ':', res.status);
-    console.log('📡 [QUERY-CLIENT] Response headers:', Object.fromEntries(res.headers.entries()));
-
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      console.log('📡 [QUERY-CLIENT] Returning null for 401 response:', url);
       return null;
     }
 
     await throwIfResNotOk(res);
-    const data = await res.json();
-    console.log('📡 [QUERY-CLIENT] Success response for', url, ':', data);
-    return data;
+    return await res.json();
   };
 
 // Add global error handler for unhandled promise rejections

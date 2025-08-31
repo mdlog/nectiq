@@ -13,8 +13,8 @@ export interface AuthenticatedRequest extends Request {
 
 // Secure admin wallet management
 function getAdminWallets(): string[] {
-  // Method 1: Environment Variables (Primary) - check both possible env var names
-  const envWallets = process.env.ADMIN_WALLETS || process.env.ADMIN_WALLET_ADDRESSES;
+  // Method 1: Environment Variables (Primary)
+  const envWallets = process.env.ADMIN_WALLETS;
   if (envWallets) {
     return envWallets.split(',').map(wallet => wallet.trim().toLowerCase());
   }
@@ -26,30 +26,21 @@ function getAdminWallets(): string[] {
 
 // Encrypt sensitive data with secure algorithm
 function encryptWalletAddress(address: string): string {
-  const key = process.env.ADMIN_SECRET_KEY || process.env.SESSION_SECRET;
+  const key = process.env.ADMIN_SECRET_KEY;
   if (!key || key === 'default-fallback-key-change-this') {
-    console.warn('⚠️ [AUTH] ADMIN_SECRET_KEY not found, using SESSION_SECRET for encryption');
-    // Fallback to a deterministic key based on wallet address for production compatibility
-    const fallbackKey = crypto.createHash('sha256').update(address + (process.env.SESSION_SECRET || 'fallback-key')).digest('hex');
-    return crypto.createHash('sha256').update(address + fallbackKey).digest('hex');
+    throw new Error('🚨 SECURITY: Valid ADMIN_SECRET_KEY required in environment');
   }
   
-  // Use secure CBC mode with proper key handling (createCipherGCM not available in all Node versions)
-  try {
-    const algorithm = 'aes-256-cbc';
-    const keyBuffer = key.length === 64 ? Buffer.from(key, 'hex') : crypto.createHash('sha256').update(key).digest();
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipher('aes-256-cbc', keyBuffer.toString('hex'));
-    
-    let encrypted = cipher.update(address, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    
-    // Include IV in result for proper decryption
-    return iv.toString('hex') + ':' + encrypted;
-  } catch (error) {
-    console.warn('⚠️ [AUTH] Encryption failed, using fallback hash method');
-    return crypto.createHash('sha256').update(address + key).digest('hex');
-  }
+  // Use secure GCM mode instead of deprecated CBC
+  const algorithm = 'aes-256-gcm';
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipherGCM(algorithm, Buffer.from(key, 'hex'), iv);
+  
+  let encrypted = cipher.update(address, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  
+  // Include IV in result for proper decryption
+  return iv.toString('hex') + ':' + encrypted;
 }
 
 // Admin verification with multiple security layers
@@ -111,7 +102,7 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
         user = await storage.createUser({
           username: `admin_${walletAddress.slice(-6)}`,
           walletAddress: walletAddress,
-          authMethod: "wallet" as "wallet",
+          authMethod: "wallet",
           isAdmin: true
         });
         console.log(`🔐 New admin user created for wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`);

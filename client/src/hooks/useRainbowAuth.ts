@@ -9,7 +9,7 @@ import { useWalletConnectionStatus } from './useWalletConnectionStatus';
 import { getStoredReferralCode, clearStoredReferralCode } from '@/lib/referralHandler';
 
 export function useRainbowAuth() {
-  const { address, isConnected, chain, status, isConnecting, isReconnecting } = useAccount();
+  const { address, isConnected, chain } = useAccount();
   const { disconnect } = useDisconnect();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -18,61 +18,13 @@ export function useRainbowAuth() {
   // Initialize connection status monitoring
   const connectionStatus = useWalletConnectionStatus();
 
-  // Debug wagmi account state
-  React.useEffect(() => {
-    console.log('🔗 [WAGMI-DEBUG] Account state change:', {
-      address,
-      isConnected,
-      status,
-      isConnecting,
-      isReconnecting,
-      chainId: chain?.id,
-      chainName: chain?.name
-    });
-    
-    // Also log if this is a successful connection
-    if (isConnected && address) {
-      console.log('✅ [WAGMI-SUCCESS] Wallet successfully connected:', {
-        address: `${address.slice(0, 6)}...${address.slice(-4)}`,
-        chain: chain?.name || 'Unknown'
-      });
-    }
-  }, [address, isConnected, status, isConnecting, isReconnecting, chain]);
-
   // Get user data from backend
-  const { data: user, isLoading, error, refetch } = useQuery<User>({
+  const { data: user, isLoading } = useQuery<User>({
     queryKey: ["/api/user"],
     enabled: isConnected && !!address,
-    refetchInterval: 5000,
-    staleTime: 1000,
-    retry: (failureCount, error: any) => {
-      console.log('🔄 [RAINBOW] Query retry attempt:', failureCount, 'Error:', error?.message);
-      
-      // If we get 401 (auth required), try to authenticate first
-      if (error?.message?.includes('401') || error?.message?.includes('Authentication required')) {
-        console.log('🔐 [RAINBOW] Got 401, triggering authentication...');
-        if (address && !authenticateWalletMutation.isPending) {
-          setTimeout(() => authenticateWalletMutation.mutate(address), 100);
-        }
-        return failureCount < 1; // Only retry once for auth errors
-      }
-      
-      return failureCount < 3;
-    },
-    retryDelay: 1000,
+    refetchInterval: 10000,
+    staleTime: 5000,
   });
-
-  // Debug logging
-  React.useEffect(() => {
-    console.log('🔍 [RAINBOW-AUTH] Query state:', {
-      isConnected,
-      address,
-      enabled: isConnected && !!address,
-      isLoading,
-      hasUser: !!user,
-      error: error?.message
-    });
-  }, [isConnected, address, isLoading, user, error]);
 
   // Wallet authentication mutation
   const authenticateWalletMutation = useMutation({
@@ -135,13 +87,8 @@ export function useRainbowAuth() {
       // Note: Wallet connection notification is handled by useWalletConnectionStatus
       // to prevent duplicate notifications and ensure it only shows on first connection
 
-      // Refresh user data immediately
+      // Refresh user data
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      
-      // Force refetch after a short delay
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ["/api/user"] });
-      }, 500);
       
       // Redirect to dashboard if on landing page
       setLocation('/');
@@ -229,17 +176,7 @@ export function useRainbowAuth() {
       setGlobalWalletAddress(null);
     } else if (isConnected && address && !user && !isLoading && !authenticateWalletMutation.isPending) {
       console.log('🌈 [RAINBOW] Auto-authenticating connected wallet:', address);
-      console.log('🌈 [RAINBOW] Authentication mutation will be triggered...');
-      // Add small delay to ensure wagmi is fully ready
-      setTimeout(() => {
-        authenticateWalletMutation.mutate(address);
-      }, 500);
-    } else if (isConnected && address && user && user.walletAddress?.toLowerCase() !== address.toLowerCase()) {
-      console.log('🔄 [RAINBOW] Wallet changed - re-authenticating:', address);
-      queryClient.removeQueries({ queryKey: ["/api/user"] });
-      setTimeout(() => {
-        authenticateWalletMutation.mutate(address);
-      }, 500);
+      authenticateWalletMutation.mutate(address);
     } else if (isConnected && address && !user && !isLoading) {
       console.log('🔍 [RAINBOW] Authentication conditions not met:', {
         isConnected,

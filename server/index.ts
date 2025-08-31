@@ -15,20 +15,10 @@ import { eq, desc } from "drizzle-orm";
 // Load environment variables
 dotenv.config();
 
-// Validate critical environment variables (DO NOT LOG SENSITIVE DATA)
-const isProduction = process.env.NODE_ENV === 'production';
-console.log("🔍 Environment validation:");
+// Debug environment variables immediately after loading
+console.log("🔍 Environment variables loaded:");
+console.log("   ADMIN_WALLET_ADDRESSES:", process.env.ADMIN_WALLET_ADDRESSES);
 console.log("   NODE_ENV:", process.env.NODE_ENV);
-console.log("   Admin wallets configured:", !!process.env.ADMIN_WALLET_ADDRESSES);
-console.log("   Session secret configured:", !!process.env.SESSION_SECRET);
-
-// Critical security check for production
-if (isProduction && !process.env.SESSION_SECRET) {
-  throw new Error('🚨 SECURITY: SESSION_SECRET is required in production');
-}
-if (isProduction && !process.env.ADMIN_WALLET_ADDRESSES) {
-  throw new Error('🚨 SECURITY: ADMIN_WALLET_ADDRESSES is required in production');
-}
 
 // Extend Express Request to include session
 declare module 'express-session' {
@@ -140,7 +130,7 @@ app.get('/api/activities/live', async (req, res) => {
 // Session configuration with persistent MemoryStore
 const sessionStore = MemoryStore(session);
 app.use(session({
-  secret: process.env.SESSION_SECRET || (!isProduction ? 'dev-only-fallback-secret' : (() => { throw new Error('SESSION_SECRET required in production'); })()),
+  secret: process.env.SESSION_SECRET || 'crypto-predict-session-secret-key',
   store: new sessionStore({
     checkPeriod: 86400000, // prune expired entries every 24h
     max: 100000, // Maximum number of sessions
@@ -149,45 +139,35 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: isProduction, // Enable HTTPS requirement in production
-    httpOnly: false, // Allow JavaScript access for Web3 compatibility
+    secure: false, // Set to true in production with HTTPS
+    httpOnly: false, // Allow frontend access to session
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax', // Balance security with Web3 functionality
-    domain: undefined // Let browser set domain automatically
+    sameSite: 'lax' // Allow cross-origin requests
   },
-  name: 'connect.sid'
+  name: 'connect.sid' // Explicit session name for proper authentication
 }));
 
-// Production-ready CORS middleware
+// Enhanced CORS middleware - Complete Dynamic SDK support
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Production-specific allowed origins
+  // Dynamic Labs specific domains for CORS
   const allowedOrigins = [
     'https://app.dynamicauth.com',
-    'https://api.dynamicauth.com', 
+    'https://api.dynamicauth.com',
     'https://auth.dynamicauth.com',
     'https://dynamicauth.com',
     'https://replit.dev',
-    'https://replit.app',
-    'https://nectiq.replit.app', // Current production domain
-    'https://nectiq.xyz', // Main production domain
-    // Additional production domains
-    process.env.PRODUCTION_DOMAIN,
-    ...process.env.REPLIT_DOMAINS?.split(',') || []
-  ].filter(Boolean);
+    'https://replit.app'
+  ];
   
-  let corsOrigin: string | boolean = false; // Default: reject unknown origins
-  
+  // Handle undefined origin and determine CORS origin
+  let corsOrigin = '*';
   if (origin && allowedOrigins.includes(origin)) {
-    corsOrigin = origin; // Allow whitelisted origins
-  } else if (!isProduction && origin) {
-    corsOrigin = origin; // Allow any origin in development only
-  } else if (!origin) {
-    corsOrigin = false; // No origin header (direct API calls)
+    corsOrigin = origin;
+  } else if (origin) {
+    corsOrigin = origin; // Allow the current origin if defined
   }
-  
-  console.log(`🔒 [CORS] Origin: ${origin || 'none'}, Allowed: ${corsOrigin}`);
   
   res.setHeader('Access-Control-Allow-Origin', corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
@@ -209,29 +189,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// Enhanced security headers middleware with XSS protection
+// Enhanced security headers middleware for Dynamic SDK
 app.use((req, res, next) => {
-  // Strong security headers for production safety
+  // Relaxed security headers for development and Dynamic SDK
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Prevent clickjacking attacks
-  res.setHeader('X-XSS-Protection', '1; mode=block'); // Enable XSS protection
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin'); // Secure referrer policy
+  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Allow all frames for Dynamic SDK
+  res.setHeader('X-XSS-Protection', '0'); // Disable XSS protection to avoid conflicts
+  res.setHeader('Referrer-Policy', 'unsafe-url'); // Allow full referrer for Dynamic SDK
   
-  // Balanced CSP - secure but allows essential Web3 functionality
+  // Ultra-permissive CSP for Dynamic SDK and wallet authentication
   res.setHeader('Content-Security-Policy', [
-    "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: wss: ws: data: blob:",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:",
-    "style-src 'self' 'unsafe-inline' https: data:",
-    "font-src 'self' https: data:",
-    "img-src 'self' https: http: data: blob:",
-    "connect-src 'self' https: wss: ws: data: blob:",
-    "frame-src 'self' https:",
-    "child-src 'self' https: blob:",
-    "worker-src 'self' https: blob:",
+    "default-src 'self' 'unsafe-inline' 'unsafe-eval' *",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' * data: blob:",
+    "style-src 'self' 'unsafe-inline' * data:",
+    "font-src 'self' * data:",
+    "img-src 'self' * data: blob:",
+    "connect-src 'self' * data: blob: ws: wss:",
+    "frame-src 'self' *",
+    "child-src 'self' *",
+    "worker-src 'self' * blob:",
     "object-src 'none'",
-    "media-src 'self' https: data: blob:",
-    "base-uri 'self'",
-    "form-action 'self'"
+    "media-src 'self' * data: blob:"
   ].join('; '));
   
   // HSTS for HTTPS
@@ -252,10 +230,10 @@ app.use('/attached_assets', express.static('attached_assets'));
 // Serve uploaded files (profile photos, banners, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Production-ready rate limiting
+// Simple rate limiting middleware - adjusted for development
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = isProduction ? 100 : 500; // Stricter for production
+const MAX_REQUESTS_PER_WINDOW = 500; // Increased for development
 
 app.use((req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
