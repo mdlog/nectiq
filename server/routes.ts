@@ -2618,6 +2618,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public endpoint untuk maintenance mode status
+  app.get("/api/maintenance-status", async (req, res) => {
+    try {
+      const settings = await storage.getSystemSettings();
+      res.json({ 
+        maintenanceMode: settings.platform?.maintenanceMode || false,
+        message: "Platform is currently under maintenance. Please check back later."
+      });
+    } catch (error) {
+      console.error("Error fetching maintenance status:", error);
+      res.json({ maintenanceMode: false, message: "" });
+    }
+  });
+
   // Get Pyth Network prices only (real-time institutional grade)
   app.get("/api/crypto/pyth-prices", async (req, res) => {
     console.log('🟡 [PYTH] ENDPOINT HIT: /api/crypto/pyth-prices - Starting execution');

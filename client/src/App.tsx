@@ -18,8 +18,10 @@ import TermsConditions from "@/pages/terms-conditions";
 import PrivacyPolicy from "@/pages/privacy-policy";
 
 import { MobileWarning, useMobileDetection } from "@/components/mobile-warning";
+import { MaintenancePage } from "@/components/MaintenancePage";
 import { handleReferralFromURL } from "@/lib/referralHandler";
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 // Simple console test to verify React rendering
 console.log('🚀 Starting Nectiq application...');
@@ -149,6 +151,13 @@ function Router() {
 function App() {
   const { isMobile } = useMobileDetection();
 
+  // Check maintenance mode status
+  const { data: maintenanceData, isLoading: maintenanceLoading } = useQuery({
+    queryKey: ["/api/maintenance-status"],
+    refetchInterval: 10000, // Check every 10 seconds
+    staleTime: 5000, // Consider data stale after 5 seconds
+  });
+
   // Handle referral code on mount
   useEffect(() => {
     handleReferralFromURL();
@@ -161,6 +170,11 @@ function App() {
   if (debugMode) {
     console.log('✅ Root element found, rendering TestApp...');
     return <TestApp />;
+  }
+
+  // Show maintenance page if maintenance mode is active
+  if (!maintenanceLoading && maintenanceData?.maintenanceMode) {
+    return <MaintenancePage />;
   }
 
   if (isMobile) {
