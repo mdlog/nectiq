@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, ChartLine } from "lucide-react";
 import type { CryptoPrice } from "@/types";
@@ -63,21 +64,25 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
     queryKey: ["/api/crypto/pyth-prices"], 
     refetchInterval: 1000, // Same as Active Predictions and Battles - 1 second refresh
     refetchIntervalInBackground: true, // Enable background updates
-    staleTime: 500, // Fresh data - same as other components
+    staleTime: 0, // Always consider data stale to ensure fresh updates
     retry: 3,
     refetchOnWindowFocus: true, // Enable refresh on window focus for consistency
     refetchOnMount: true, // Fetch on component mount
+    placeholderData: (previousData) => previousData, // Keep previous data during refresh
   });
 
 
   // Add visual indicator for when data was last updated
   const lastUpdate = new Date(dataUpdatedAt).toLocaleTimeString();
 
-  // Sort prices by market cap (highest price first)
-  const sortedPrices = prices.sort((a, b) => b.current_price - a.current_price);
+  // Sort prices by market cap (highest price first) - memoize to prevent unnecessary re-sorts
+  const sortedPrices = React.useMemo(() => {
+    if (!prices || !Array.isArray(prices) || prices.length === 0) return [];
+    return [...prices].sort((a, b) => b.current_price - a.current_price);
+  }, [prices]);
 
-  // Only show skeleton on initial load, not on refresh
-  if (isLoading && prices.length === 0) {
+  // Only show skeleton on very first load when no data exists
+  if (isLoading && sortedPrices.length === 0) {
     return (
       <div className="bg-surface rounded-lg p-2 border border-surface-light">
         <h3 className="text-base font-bold mb-3 flex items-center">
