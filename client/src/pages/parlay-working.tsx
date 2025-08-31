@@ -71,7 +71,7 @@ export default function ParlayWorking() {
   }) as { data: ActiveParlay[], isLoading: boolean };
 
   // Calculate duration multiplier
-  const getDurationMultiplier = (duration: string) => {
+  const getTimeframeMultiplier = (duration: string) => {
     switch (duration) {
       case '1h': return 1.2;
       case '6h': return 1.5;
@@ -84,7 +84,7 @@ export default function ParlayWorking() {
   // Update total multiplier when cards change
   useEffect(() => {
     const newMultiplier = parlayCards.reduce((acc, card) => {
-      return acc * (1.5 * getDurationMultiplier(card.duration));
+      return acc * (1.5 * getTimeframeMultiplier(card.duration));
     }, 1);
     setTotalMultiplier(newMultiplier);
   }, [parlayCards]);

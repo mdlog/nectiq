@@ -69,7 +69,7 @@ export default function TrendRideSimple() {
   console.log("📊 [TRENDRIDE] User TrendRides:", { count: safeTrendRides.length, loading: trendRidesLoading, error: trendRidesError });
 
   // Calculate duration multiplier
-  const getDurationMultiplier = (duration: string) => {
+  const getTimeframeMultiplier = (duration: string) => {
     switch (duration) {
       case '1h': return 1.2;
       case '6h': return 1.5;
@@ -112,7 +112,7 @@ export default function TrendRideSimple() {
   // Update total multiplier when cards change
   useEffect(() => {
     const newMultiplier = trendRideCards.reduce((acc, card) => {
-      return acc * (1.5 * getDurationMultiplier(card.duration));
+      return acc * (1.5 * getTimeframeMultiplier(card.duration));
     }, 1);
     setTotalMultiplier(newMultiplier);
   }, [trendRideCards]);
@@ -390,9 +390,9 @@ export default function TrendRideSimple() {
                             </div>
                           </div>
 
-                          {/* Duration Selection */}
+                          {/* Timeframe Selection */}
                           <div>
-                            <label className="text-xs font-medium text-gray-400 mb-1 block">Duration</label>
+                            <label className="text-xs font-medium text-gray-400 mb-1 block">Timeframe</label>
                             <Select
                               value={card.duration}
                               onValueChange={(value) => updateTrendRideCard(card.id, 'duration', value as TrendRideCard['duration'])}

@@ -273,7 +273,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
               name="timeframe"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300">Prediction Time</FormLabel>
+                  <FormLabel className="text-slate-300">Timeframe</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="bg-surface-light border-surface-light">

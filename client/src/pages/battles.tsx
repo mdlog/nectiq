@@ -598,7 +598,7 @@ export default function BattlesPage() {
                       Stake: {battle.stakeAmount} NTIQ
                     </div>
                     <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">
-                      Duration: {battle.timeframe}
+                      Timeframe: {battle.timeframe}
                     </div>
                   </div>
                   
@@ -1024,7 +1024,7 @@ export default function BattlesPage() {
                               Stake: {battle.stakeAmount} NTIQ
                             </div>
                             <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">
-                              Duration: {battle.timeframe}
+                              Timeframe: {battle.timeframe}
                             </div>
                           </div>
                           

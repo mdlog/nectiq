@@ -60,10 +60,10 @@ export default function HowToPlay() {
   }
 
   const timeframes = [
-    { duration: "1 Hour", multiplier: "1.5x", difficulty: "Easy" },
-    { duration: "6 Hours", multiplier: "2x", difficulty: "Medium" },
-    { duration: "24 Hours", multiplier: "3x", difficulty: "Hard" },
-    { duration: "7 Days", multiplier: "3x", difficulty: "Expert" }
+    { timeframe: "1 Hour", multiplier: "1.5x", difficulty: "Easy" },
+    { timeframe: "6 Hours", multiplier: "2x", difficulty: "Medium" },
+    { timeframe: "24 Hours", multiplier: "3x", difficulty: "Hard" },
+    { timeframe: "7 Days", multiplier: "3x", difficulty: "Expert" }
   ];
 
   const accuracyRewards = [
@@ -270,7 +270,7 @@ export default function HowToPlay() {
                       {timeframe.difficulty}
                     </Badge>
                   </div>
-                  <CardTitle className="text-xl">{timeframe.duration}</CardTitle>
+                  <CardTitle className="text-xl">{timeframe.timeframe}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
@@ -511,12 +511,12 @@ export default function HowToPlay() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground mb-4">
-                      Multiplier is calculated based on number of predictions AND duration:
+                      Multiplier is calculated based on number of predictions AND timeframe:
                     </p>
                     
-                    {/* Duration Multipliers */}
+                    {/* Timeframe Multipliers */}
                     <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
-                      <h5 className="font-semibold mb-3">Duration Multiplier:</h5>
+                      <h5 className="font-semibold mb-3">Timeframe Multiplier:</h5>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                         <div className="text-center p-2 bg-emerald-500/20 rounded">
                           <div className="font-bold">1 Hour</div>
@@ -541,7 +541,7 @@ export default function HowToPlay() {
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                       <h5 className="font-semibold mb-2">Calculation Formula:</h5>
                       <div className="font-mono text-sm">
-                        Final Multiplier = (1.5 × Duration Multiplier)^Number_of_Predictions
+                        Final Multiplier = (1.5 × Timeframe Multiplier)^Number_of_Predictions
                       </div>
                     </div>
                   </CardContent>
@@ -593,22 +593,22 @@ export default function HowToPlay() {
                     <h4 className="font-semibold text-lg mb-3 text-center">Actual Calculation Formula</h4>
                     <div className="text-center">
                       <div className="font-mono text-xl mb-2">
-                        Final Multiplier = (1.5 × Duration Multiplier)^Number_of_Predictions
+                        Final Multiplier = (1.5 × Timeframe Multiplier)^Number_of_Predictions
                       </div>
                       <div className="font-mono text-lg mb-2">
                         Potential Win = Stake × Final Multiplier
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Duration greatly affects the total multiplier!
+                        Timeframe greatly affects the total multiplier!
                       </div>
                     </div>
                   </div>
 
-                  {/* Detailed Examples with Different Durations */}
+                  {/* Detailed Examples with Different Timeframes */}
                   <div className="grid md:grid-cols-2 gap-6">
-                    {/* 2-Prediction with 1h duration */}
+                    {/* 2-Prediction with 1h timeframe */}
                     <div className="space-y-4">
-                      <h5 className="font-semibold text-blue-600">Example: 2 Predictions Duration 1 Hour</h5>
+                      <h5 className="font-semibold text-blue-600">Example: 2 Predictions Timeframe 1 Hour</h5>
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-3">
                         <div className="text-sm">
                           <div className="font-medium mb-2">TrendRide Setup:</div>
@@ -618,7 +618,7 @@ export default function HowToPlay() {
                         </div>
                         <div className="border-t pt-3">
                           <div className="font-mono text-xs">
-                            Duration Multiplier: 1.2x<br/>
+                            Timeframe Multiplier: 1.2x<br/>
                             Final Multiplier = (1.5 × 1.2)² = 1.8² = 3.24x
                           </div>
                           <div className="font-mono text-sm mt-2">
@@ -628,9 +628,9 @@ export default function HowToPlay() {
                       </div>
                     </div>
 
-                    {/* 2-Prediction with 7d duration */}
+                    {/* 2-Prediction with 7d timeframe */}
                     <div className="space-y-4">
-                      <h5 className="font-semibold text-purple-600">Example: 2 Predictions Duration 7 Days</h5>
+                      <h5 className="font-semibold text-purple-600">Example: 2 Predictions Timeframe 7 Days</h5>
                       <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 space-y-3">
                         <div className="text-sm">
                           <div className="font-medium mb-2">TrendRide Setup:</div>
@@ -640,7 +640,7 @@ export default function HowToPlay() {
                         </div>
                         <div className="border-t pt-3">
                           <div className="font-mono text-xs">
-                            Duration Multiplier: 3.0x<br/>
+                            Timeframe Multiplier: 3.0x<br/>
                             Final Multiplier = (1.5 × 3.0)² = 4.5² = 20.25x
                           </div>
                           <div className="font-mono text-sm mt-2">
@@ -653,7 +653,7 @@ export default function HowToPlay() {
 
                   {/* Comprehensive Examples Table */}
                   <div className="bg-slate-800 dark:bg-slate-900 rounded-lg p-4 border border-slate-700">
-                    <h5 className="font-semibold mb-3 text-center text-white">Multiplier Table Based on Duration & Number of Predictions</h5>
+                    <h5 className="font-semibold mb-3 text-center text-white">Multiplier Table Based on Timeframe & Number of Predictions</h5>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
@@ -850,12 +850,12 @@ export default function HowToPlay() {
                 </CardContent>
               </Card>
 
-              {/* Duration Options */}
+              {/* Timeframe Options */}
               <Card className="mt-6 border-purple-500/20 bg-purple-500/5">
                 <CardHeader>
                   <CardTitle className="flex items-center text-purple-600">
                     <Clock className="mr-2 h-5 w-5" />
-                    Duration Options & Impact
+                    Timeframe Options & Impact
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -886,18 +886,18 @@ export default function HowToPlay() {
                     <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
                       <p className="text-sm font-semibold mb-2">📋 Important Rules:</p>
                       <p className="text-sm text-muted-foreground">
-                        • All predictions in one TrendRide MUST have the same duration<br/>
-                        • Longer duration provides higher multiplier<br/>
-                        • Longer duration = higher prediction difficulty = higher reward
+                        • All predictions in one TrendRide MUST have the same timeframe<br/>
+                        • Longer timeframe provides higher multiplier<br/>
+                        • Longer timeframe = higher prediction difficulty = higher reward
                       </p>
                     </div>
                     
                     <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
                       <p className="text-sm font-semibold mb-2 text-yellow-600">⚠️ Strategy Tips:</p>
                       <p className="text-sm text-muted-foreground">
-                        • Choose 7 days for maximum multiplier but with high risk<br/>
-                        • Choose 1 hour for quick results with smaller multiplier<br/>
-                        • 5 predictions × 7 days = potential multiplier up to 1,845x!
+                        • Choose 7 days timeframe for maximum multiplier but with high risk<br/>
+                        • Choose 1 hour timeframe for quick results with smaller multiplier<br/>
+                        • 5 predictions × 7 days timeframe = potential multiplier up to 1,845x!
                       </p>
                     </div>
                   </div>
@@ -935,7 +935,7 @@ export default function HowToPlay() {
                   <div className="flex items-start">
                     <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">2</div>
                     <div>
-                      <p className="font-medium">Set Battle Duration</p>
+                      <p className="font-medium">Set Battle Timeframe</p>
                       <p className="text-sm text-muted-foreground">Choose timeframe: 1 hour, 6 hours, 24 hours, or 7 days</p>
                     </div>
                   </div>

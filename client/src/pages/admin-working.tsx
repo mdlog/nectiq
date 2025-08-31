@@ -1648,7 +1648,7 @@ export default function AdminPanel() {
   const exportTrendRidePredictions = () => {
     if (!trendRideData || !Array.isArray(trendRideData)) return;
     const csvContent = [
-      ["TrendRide ID", "User ID", "Username", "Coin ID", "Cryptocurrency", "Prediction", "Duration", "Start Price", "End Price", "Is Correct", "Coin Status", "TrendRide Status", "Stake Amount", "Total Multiplier", "Coin Multiplier", "Reward Amount", "Total Coin Count", "Correct Predictions", "Target Time", "Created At"].join(","),
+      ["TrendRide ID", "User ID", "Username", "Coin ID", "Cryptocurrency", "Prediction", "Timeframe", "Start Price", "End Price", "Is Correct", "Coin Status", "TrendRide Status", "Stake Amount", "Total Multiplier", "Coin Multiplier", "Reward Amount", "Total Coin Count", "Correct Predictions", "Target Time", "Created At"].join(","),
       ...trendRideData.map((trendRide: any) => [
         trendRide.parlayId || "N/A",
         trendRide.userId || "N/A",
@@ -1804,7 +1804,7 @@ export default function AdminPanel() {
   const exportSurvival = () => {
     if (!survival || !Array.isArray(survival)) return;
     const csvContent = [
-      ["ID", "User ID", "Username", "Round", "Cryptocurrency", "Prediction", "Duration", "Start Price", "End Price", "Is Correct", "Status", "Stake Amount", "Reward Amount", "Elimination Round", "Tournament ID", "Created At", "Target Time", "Processed At"].join(","),
+      ["ID", "User ID", "Username", "Round", "Cryptocurrency", "Prediction", "Timeframe", "Start Price", "End Price", "Is Correct", "Status", "Stake Amount", "Reward Amount", "Elimination Round", "Tournament ID", "Created At", "Target Time", "Processed At"].join(","),
       ...survival.map((survivalItem: any) => [
         survivalItem.id || "N/A",
         survivalItem.userId || "N/A",
@@ -3219,7 +3219,7 @@ export default function AdminPanel() {
                         <TableHead>User</TableHead>
                         <TableHead>Cryptocurrency</TableHead>
                         <TableHead>Prediction</TableHead>
-                        <TableHead>Duration</TableHead>
+                        <TableHead>Timeframe</TableHead>
                         <TableHead>Start Price</TableHead>
                         <TableHead>End Price</TableHead>
                         <TableHead>Status</TableHead>
