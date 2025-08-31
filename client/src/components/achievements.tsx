@@ -96,11 +96,6 @@ export function Achievements() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">🏆 Achievements</h2>
-        <p className="text-gray-600 dark:text-gray-400">Complete challenges and earn NTIQ rewards!</p>
-      </div>
 
       {/* Stats Header */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -797,7 +797,22 @@ export default function UserDashboard() {
                 {/* Achievements Tab */}
                 <TabsContent value="achievements" className="flex-1 h-full">
                   <div className="h-full">
-                    <Achievements />
+                    <Card className="bg-surface border-surface-light h-full flex flex-col">
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Trophy className="mr-2" size={20} />
+                          Achievements
+                        </CardTitle>
+                        <p className="text-sm text-slate-400">
+                          Complete challenges and earn NTIQ rewards!
+                        </p>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col overflow-hidden">
+                        <div className="overflow-y-auto">
+                          <Achievements />
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
