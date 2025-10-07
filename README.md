@@ -20,20 +20,23 @@
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Running the Application](#running-the-application)
-- [Architecture](#architecture)
-- [API Documentation](#api-documentation)
-- [Database Schema](#database-schema)
-- [Deployment](#deployment)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
+- [🌟 Overview](#-overview)
+- [✨ Features](#-features)
+- [🛠 Tech Stack](#-tech-stack)
+- [📦 Prerequisites](#-prerequisites)
+- [🚀 Installation](#-installation)
+- [⚙️ Configuration](#️-configuration)
+- [🏃 Running the Application](#-running-the-application)
+- [🏗 Architecture](#-architecture)
+- [📡 API Documentation](#-api-documentation)
+- [🗄 Database Schema](#-database-schema)
+- [🚀 Deployment](#-deployment)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [🙏 Acknowledgments](#-acknowledgments)
+- [📞 Support](#-support)
+- [🗺 Roadmap](#-roadmap)
 
 ---
 
