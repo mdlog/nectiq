@@ -66,12 +66,12 @@ app.get('/api/activities/live', async (req, res) => {
       username: users.username,
       cryptocurrencyName: cryptocurrencies.name
     })
-    .from(predictions)
-    .innerJoin(users, eq(predictions.userId, users.id))
-    .innerJoin(cryptocurrencies, eq(predictions.cryptocurrency, cryptocurrencies.id))
-    .where(eq(predictions.status, 'completed'))
-    .orderBy(desc(predictions.completedAt))
-    .limit(10);
+      .from(predictions)
+      .innerJoin(users, eq(predictions.userId, users.id))
+      .innerJoin(cryptocurrencies, eq(predictions.cryptocurrency, cryptocurrencies.id))
+      .where(eq(predictions.status, 'completed'))
+      .orderBy(desc(predictions.completedAt))
+      .limit(10);
 
     if (process.env.NODE_ENV === 'development') {
       console.log('🔍 [LIVE ACTIVITIES] Recent predictions found:', recentPredictions.length);
@@ -79,18 +79,18 @@ app.get('/api/activities/live', async (req, res) => {
         console.log('🔍 [LIVE ACTIVITIES] Sample prediction:', JSON.stringify(recentPredictions[0], null, 2));
       }
     }
-    
+
     for (const prediction of recentPredictions) {
       const isCorrect = prediction.accuracy && Number(prediction.accuracy) < 5;
       const rewardAmount = prediction.rewardAmount || 0;
       const hasEarnings = rewardAmount > prediction.stakeAmount;
-      
+
       activities.push({
         id: `prediction_${prediction.id}`,
         type: 'prediction',
         username: prediction.username,
-        description: hasEarnings 
-          ? `Won ${rewardAmount} NTIQ predicting ${prediction.cryptocurrencyName}` 
+        description: hasEarnings
+          ? `Won ${rewardAmount} NTIQ predicting ${prediction.cryptocurrencyName}`
           : `Lost ${prediction.stakeAmount} NTIQ predicting ${prediction.cryptocurrencyName}`,
         amount: hasEarnings ? rewardAmount : prediction.stakeAmount,
         cryptocurrency: prediction.cryptocurrency,
@@ -157,7 +157,7 @@ app.use(session({
 // Enhanced CORS middleware - Secure configuration
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  
+
   // Strict whitelist of allowed origins
   const allowedOrigins = [
     'https://app.dynamicauth.com',
@@ -168,10 +168,14 @@ app.use((req, res, next) => {
     'https://replit.app',
     'https://nectiq.replit.app', // Production deployment domain
     'https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev', // Development domain
+    'http://localhost:5003', // Local development
+    'http://localhost:5000', // Local development
+    'http://127.0.0.1:5003', // Local development
+    'http://127.0.0.1:5000', // Local development
     // Add your production domain here
     process.env.FRONTEND_URL || 'https://nectiq.app'
   ];
-  
+
   // Strict CORS configuration - only allow whitelisted origins
   let corsOrigin: string | boolean = false; // Default to false (block)
   if (origin && allowedOrigins.includes(origin)) {
@@ -180,29 +184,29 @@ app.use((req, res, next) => {
     // Allow same-origin requests (no origin header)
     corsOrigin = '*';
   }
-  
+
   // Debug CORS for deployment issues
   if (origin && !allowedOrigins.includes(origin)) {
     console.log('🚫 [CORS] Blocked origin:', origin, 'Allowed:', allowedOrigins);
   }
-  
+
   res.setHeader('Access-Control-Allow-Origin', corsOrigin === false ? 'null' : corsOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-Frame-Options, Cache-Control, X-Dynamic-Authorization, X-Dynamic-Token, X-Dynamic-User-Id, X-Dynamic-Environment-Id, Origin, User-Agent, DNT, Cache-Control, X-Mx-ReqToken, Keep-Alive, X-Requested-With, If-Modified-Since');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
-  
+
   // Enhanced security for Dynamic SDK and WebSocket connections
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
-  
+
   next();
 });
 
@@ -213,27 +217,44 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Prevent clickjacking
   res.setHeader('X-XSS-Protection', '1; mode=block'); // Enable XSS protection
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin'); // Secure referrer
-  
-  // Balanced CSP for Web3 and TradingView charts security
-  res.setHeader('Content-Security-Policy', [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com s3.tradingview.com",
-    "style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com",
-    "font-src 'self' data: *.dynamicauth.com *.tradingview.com",
-    "img-src 'self' data: blob: *.coingecko.com *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com",
-    "connect-src 'self' wss: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com",
-    "frame-src 'self' *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com tradingview.com",
-    "child-src 'self' *.dynamicauth.com *.tradingview.com",
-    "worker-src 'self' blob: *.tradingview.com",
-    "object-src 'none'",
-    "media-src 'self' data: blob:"
-  ].join('; '));
-  
+
+  // Relaxed CSP for localhost development - allows all wallet connections
+  if (process.env.NODE_ENV === 'development' || req.hostname === 'localhost' || req.hostname === '127.0.0.1') {
+    res.setHeader('Content-Security-Policy', [
+      "default-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' *",
+      "style-src 'self' 'unsafe-inline' *",
+      "font-src 'self' data: *",
+      "img-src 'self' data: blob: https: *",
+      "connect-src 'self' wss: ws: https: *",
+      "frame-src 'self' *",
+      "child-src 'self' *",
+      "worker-src 'self' blob: *",
+      "object-src 'none'",
+      "media-src 'self' data: blob: *"
+    ].join('; '));
+  } else {
+    // Strict CSP for production
+    res.setHeader('Content-Security-Policy', [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev replit.com *.replit.com nectiq.replit.app *.tradingview.com s3.tradingview.com *.walletconnect.com *.walletconnect.org",
+      "style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com *.walletconnect.com",
+      "font-src 'self' data: *.dynamicauth.com *.tradingview.com",
+      "img-src 'self' data: blob: https: *.coingecko.com *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com *.walletconnect.com *.walletconnect.org *.coinbase.com",
+      "connect-src 'self' wss: ws: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com *.firebaseio.com *.googleapis.com *.walletconnect.com *.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org *.infura.io *.alchemy.com *.coinbase.com *.metamask.io rpc.ankr.com *.publicnode.com",
+      "frame-src 'self' *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com tradingview.com *.walletconnect.com *.walletconnect.org *.coinbase.com",
+      "child-src 'self' *.dynamicauth.com *.tradingview.com *.walletconnect.com",
+      "worker-src 'self' blob: *.tradingview.com",
+      "object-src 'none'",
+      "media-src 'self' data: blob:"
+    ].join('; '));
+  }
+
   // HSTS for HTTPS
   if (req.secure) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
-  
+
   next();
 });
 
@@ -255,23 +276,23 @@ const MAX_REQUESTS_PER_WINDOW = 500; // Increased for development
 app.use((req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
   const now = Date.now();
-  
+
   if (!rateLimitMap.has(clientIP)) {
     rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     return next();
   }
-  
+
   const clientData = rateLimitMap.get(clientIP);
-  
+
   if (now > clientData.resetTime) {
     rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     return next();
   }
-  
+
   if (clientData.count >= MAX_REQUESTS_PER_WINDOW) {
     return res.status(429).json({ message: 'Too many requests. Please try again later.' });
   }
-  
+
   clientData.count++;
   next();
 });
@@ -351,11 +372,11 @@ try {
 try {
   console.log('🔧 Initializing Processing Withdrawals Blockchain Monitor...');
   const { AutomatedWithdrawalService } = await import('./automated-withdrawal-service');
-  
+
   // Only initialize if admin private key exists
   if (process.env.ADMIN_PRIVATE_KEY) {
     const networks = {
-      ethereum: { 
+      ethereum: {
         rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
         chainId: 11155111,
         gasLimit: '21000',
@@ -365,7 +386,7 @@ try {
           USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
         }
       },
-      sepolia: { 
+      sepolia: {
         rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
         chainId: 11155111,
         gasLimit: '21000',
@@ -376,7 +397,7 @@ try {
         }
       }
     };
-    
+
     const automatedService = new AutomatedWithdrawalService({
       adminPrivateKey: process.env.ADMIN_PRIVATE_KEY,
       networks,
@@ -384,7 +405,7 @@ try {
       maxSingleWithdrawal: 5000,
       autoApprovalThreshold: 100
     }, storage as any);
-    
+
     // Check processing withdrawals every 2 minutes
     setInterval(async () => {
       try {
@@ -394,7 +415,7 @@ try {
         console.error('❌ [PROCESSING-MONITOR] Error:', error);
       }
     }, 120000); // 2 minutes
-    
+
     console.log('✅ Processing withdrawals blockchain monitor started - checking every 2 minutes');
   } else {
     console.log('⚠️ Processing withdrawals monitor disabled - ADMIN_PRIVATE_KEY not found');
@@ -407,7 +428,7 @@ try {
 try {
   console.log('🔧 Initializing Parlay Processor Service...');
   const parlayProcessorService = new ParlayProcessorService();
-  
+
   // Start periodic processing every 30 seconds
   setInterval(async () => {
     try {
@@ -416,7 +437,7 @@ try {
       console.error('❌ [PARLAY-PROCESSOR] Periodic processing error:', error);
     }
   }, 30000); // 30 seconds
-  
+
   // Run initial processing
   await parlayProcessorService.processExpiredParlayPredictions();
   console.log('✅ Parlay processor service started successfully - processing every 30 seconds');
@@ -454,10 +475,9 @@ try {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+  // Serve the app on the specified port (default 5000)
   // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
   server.listen({
     port,
     host: "0.0.0.0",

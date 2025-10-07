@@ -1,18 +1,18 @@
 // Dynamic Labs handles wallet connections - this config is only for fallback/backup
 import { defaultWagmiConfig } from '@web3modal/wagmi';
-import { mainnet, arbitrum, polygon, optimism, base } from 'wagmi/chains';
+import { mainnet, arbitrum, polygon, optimism, base, sepolia } from 'wagmi/chains';
 
-// Simple config for Dynamic Labs compatibility
-const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id';
+// WalletConnect Project ID - get from https://cloud.walletconnect.com/
+const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'ba0e679a5831cee26576868ecd70fdbf';
 
 const metadata = {
   name: 'Nectiq',
-  description: 'Cryptocurrency prediction platform',
-  url: window.location.origin,
-  icons: ['https://nectiq.app/logo.png']
+  description: 'Cryptocurrency prediction platform - Tactics. Timing. Triumph.',
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://nectiq.app',
+  icons: [typeof window !== 'undefined' ? `${window.location.origin}/nectiq-logo.png` : 'https://nectiq.app/logo.png']
 };
 
-const chains = [mainnet, arbitrum, polygon, optimism, base] as const;
+const chains = [mainnet, arbitrum, polygon, optimism, base, sepolia] as const;
 
 export const config = defaultWagmiConfig({
   chains,
@@ -22,6 +22,9 @@ export const config = defaultWagmiConfig({
   enableInjected: true,
   enableEIP6963: true,
   enableCoinbase: true,
+  auth: {
+    email: false, // Disable email login for wallet-only mode
+  }
 });
 
 export { projectId };

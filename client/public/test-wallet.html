@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Connection Test - Nectiq</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .card {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 2px solid #3a3a3a;
+        }
+
+        button {
+            background: #06b6d4;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #0891b2;
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: #065f46;
+            border: 2px solid #10b981;
+        }
+
+        .error {
+            background: #7f1d1d;
+            border: 2px solid #ef4444;
+        }
+
+        .info {
+            background: #1e3a8a;
+            border: 2px solid #3b82f6;
+        }
+
+        pre {
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        h1 {
+            color: #06b6d4;
+        }
+
+        .section {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔧 Wallet Connection Test</h1>
+    <p>Simple test untuk debugging wallet connection tanpa framework</p>
+
+    <div class="card">
+        <h2>📊 Status</h2>
+        <div id="status" class="status info">
+            ⏳ Checking MetaMask availability...
+        </div>
+
+        <div id="walletInfo"></div>
+
+        <div class="section">
+            <button id="detectBtn" onclick="detectWallet()">🔍 Detect Wallet</button>
+            <button id="connectBtn" onclick="connectWallet()" disabled>🔗 Connect Wallet</button>
+            <button id="disconnectBtn" onclick="disconnectWallet()" disabled>❌ Disconnect</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Console Log</h2>
+        <pre id="log"></pre>
+    </div>
+
+    <div class="card">
+        <h2>💡 Info</h2>
+        <ul>
+            <li>Test ini TIDAK menggunakan RainbowKit/Wagmi</li>
+            <li>Test langsung dengan window.ethereum API</li>
+            <li>Jika ini berhasil, masalah ada di RainbowKit config</li>
+            <li>Jika ini gagal, masalah ada di MetaMask/browser</li>
+        </ul>
+    </div>
+
+    <script>
+        let logs = [];
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logs.push(logEntry);
+            document.getElementById('log').textContent = logs.join('\n');
+            console.log(logEntry);
+        }
+
+        function updateStatus(message, className) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${className}`;
+        }
+
+        function detectWallet() {
+            addLog('Starting wallet detection...', 'info');
+
+            if (typeof window.ethereum === 'undefined') {
+                updateStatus('❌ MetaMask not detected! Please install MetaMask extension.', 'error');
+                addLog('window.ethereum is undefined', 'error');
+                return;
+            }
+
+            updateStatus('✅ MetaMask detected!', 'success');
+            addLog('window.ethereum found', 'success');
+
+            // Get provider info
+            const providerInfo = {
+                isMetaMask: window.ethereum.isMetaMask,
+                chainId: window.ethereum.chainId,
+                networkVersion: window.ethereum.networkVersion,
+                selectedAddress: window.ethereum.selectedAddress
+            };
+
+            addLog('Provider info: ' + JSON.stringify(providerInfo, null, 2), 'info');
+
+            document.getElementById('connectBtn').disabled = false;
+
+            // Display provider info
+            document.getElementById('walletInfo').innerHTML = `
+                <div style="margin-top: 15px;">
+                    <strong>Wallet Info:</strong><br>
+                    IsMetaMask: ${providerInfo.isMetaMask ? '✅' : '❌'}<br>
+                    Chain ID: ${providerInfo.chainId || 'Not connected'}<br>
+                    Selected Address: ${providerInfo.selectedAddress || 'None'}
+                </div>
+            `;
+        }
+
+        async function connectWallet() {
+            addLog('Attempting to connect wallet...', 'info');
+            updateStatus('⏳ Requesting connection...', 'info');
+
+            try {
+                addLog('Calling eth_requestAccounts...', 'info');
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                if (accounts && accounts.length > 0) {
+                    const address = accounts[0];
+                    updateStatus(`✅ Connected! Address: ${address}`, 'success');
+                    addLog(`Successfully connected to ${address}`, 'success');
+
+                    // Get chain info
+                    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    addLog(`Chain ID: ${chainId}`, 'info');
+
+                    // Get balance
+                    const balance = await window.ethereum.request({
+                        method: 'eth_getBalance',
+                        params: [address, 'latest']
+                    });
+                    const balanceInEth = parseInt(balance, 16) / 1e18;
+                    addLog(`Balance: ${balanceInEth.toFixed(4)} ETH`, 'info');
+
+                    document.getElementById('disconnectBtn').disabled = false;
+                    document.getElementById('connectBtn').disabled = true;
+
+                    // Update wallet info
+                    document.getElementById('walletInfo').innerHTML = `
+                        <div style="margin-top: 15px; background: #065f46; padding: 15px; border-radius: 8px;">
+                            <strong>✅ Connected!</strong><br>
+                            Address: ${address}<br>
+                            Chain ID: ${chainId}<br>
+                            Balance: ${balanceInEth.toFixed(4)} ETH
+                        </div>
+                    `;
+
+                    // Setup listeners
+                    setupListeners();
+                } else {
+                    throw new Error('No accounts returned');
+                }
+            } catch (error) {
+                updateStatus(`❌ Connection failed: ${error.message}`, 'error');
+                addLog(`Connection error: ${error.message}`, 'error');
+                addLog(`Error stack: ${error.stack}`, 'error');
+            }
+        }
+
+        function setupListeners() {
+            addLog('Setting up event listeners...', 'info');
+
+            window.ethereum.on('accountsChanged', (accounts) => {
+                addLog(`Account changed: ${accounts[0] || 'disconnected'}`, 'info');
+                if (accounts.length === 0) {
+                    updateStatus('⚠️ Disconnected by user', 'error');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                }
+            });
+
+            window.ethereum.on('chainChanged', (chainId) => {
+                addLog(`Chain changed to: ${chainId}`, 'info');
+                window.location.reload();
+            });
+
+            window.ethereum.on('disconnect', (error) => {
+                addLog(`Disconnected: ${error.message}`, 'error');
+                updateStatus('⚠️ Connection lost', 'error');
+            });
+        }
+
+        function disconnectWallet() {
+            addLog('Manual disconnect requested', 'info');
+            updateStatus('ℹ️ Please disconnect from MetaMask extension', 'info');
+            addLog('Note: Use MetaMask extension to disconnect', 'info');
+        }
+
+        // Auto-detect on load
+        window.addEventListener('load', () => {
+            addLog('Page loaded, starting auto-detection...', 'info');
+            setTimeout(detectWallet, 500);
+        });
+    </script>
+</body>
+
+</html>

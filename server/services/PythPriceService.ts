@@ -42,6 +42,24 @@ export class PythPriceService {
   }
 
   /**
+   * Fallback cryptocurrency data for localhost development
+   */
+  private getHardcodedCryptos() {
+    return [
+      { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', pythFeedId: '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43', image: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png' },
+      { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', pythFeedId: '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace', image: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png' },
+      { id: 'binancecoin', name: 'BNB', symbol: 'BNB', pythFeedId: '0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f', image: 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png' },
+      { id: 'ripple', name: 'XRP', symbol: 'XRP', pythFeedId: '0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8', image: 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png' },
+      { id: 'solana', name: 'Solana', symbol: 'SOL', pythFeedId: '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d', image: 'https://assets.coingecko.com/coins/images/4128/large/solana.png' },
+      { id: 'cardano', name: 'Cardano', symbol: 'ADA', pythFeedId: '0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d', image: 'https://assets.coingecko.com/coins/images/975/large/cardano.png' },
+      { id: 'dogecoin', name: 'Dogecoin', symbol: 'DOGE', pythFeedId: '0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c', image: 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png' },
+      { id: 'tron', name: 'TRON', symbol: 'TRX', pythFeedId: '0x67aed5a24fdad045475e7195c98a98aea119c763f272d4523f5bac93a4f33c2b', image: 'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png' },
+      { id: 'matic-network', name: 'Polygon', symbol: 'MATIC', pythFeedId: '0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52', image: 'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png' },
+      { id: 'polkadot', name: 'Polkadot', symbol: 'DOT', pythFeedId: '0xca3eed9b267293f6595901c734c7525ce8ef49adafe8284606ceb307afa2ca5b', image: 'https://assets.coingecko.com/coins/images/12171/large/polkadot.png' }
+    ];
+  }
+
+  /**
    * Load cryptocurrency data from database
    */
   private async loadCryptocurrenciesFromDB(): Promise<void> {
@@ -69,9 +87,19 @@ export class PythPriceService {
 
       this.lastCacheUpdate = Date.now();
       console.log(`✅ [PYTH] Loaded ${this.cryptoDataCache.size} cryptocurrencies from database`);
-    } catch (error) {
-      console.error("❌ [PYTH] Error loading cryptocurrencies from database:", error);
-      throw error;
+    } catch (error: any) {
+      console.error("❌ [PYTH] Error loading cryptocurrencies from database:", error.message);
+      console.warn("🔓 [PYTH] Falling back to hardcoded cryptocurrency list");
+      
+      // Fallback to hardcoded list
+      const hardcodedCryptos = this.getHardcodedCryptos();
+      this.cryptoDataCache.clear();
+      for (const crypto of hardcodedCryptos) {
+        this.cryptoDataCache.set(crypto.id, crypto);
+      }
+      
+      this.lastCacheUpdate = Date.now();
+      console.log(`✅ [PYTH] Loaded ${this.cryptoDataCache.size} cryptocurrencies from fallback list`);
     }
   }
 

@@ -50,7 +50,7 @@ export class CryptoService {
       // Use a seed based on current time to ensure all users get the same variation
       const seed = Math.floor(Date.now() / 3000) * 3000; // Round to 3-second intervals
       const variation = Math.sin(seed / 10000) * 0.003; // Consistent variation for all users
-      
+
       this.cachedRealPrices = this.cachedRealPrices.map(crypto => ({
         ...crypto,
         current_price: crypto.current_price * (1 + variation),
@@ -62,12 +62,12 @@ export class CryptoService {
 
   private async fetchFreshPrices(): Promise<CryptoPrice[]> {
     const now = Date.now();
-    
+
     try {
       // PYTH-ONLY APPROACH: Get Pyth Network prices directly
       console.log('📡 [PYTH-ONLY] Fetching prices from Pyth Network exclusively');
       const pythPrices = await pythPriceService.getLatestPrices();
-      
+
       if (pythPrices.length === 0) {
         console.log('⚠️ [PYTH-ONLY] No Pyth prices available');
         this.cachedRealPrices = [];
@@ -90,11 +90,11 @@ export class CryptoService {
       }));
 
       console.log(`✅ [PYTH-ONLY] Successfully fetched ${realPrices.length} prices from Pyth Network`);
-      
+
       this.cachedRealPrices = realPrices;
       this.lastFetchTime = now;
       this.fetchPromise = null;
-      
+
       return realPrices;
     } catch (error: any) {
       console.error('❌ [PYTH-ONLY] Error fetching Pyth prices:', error.message);
@@ -117,12 +117,22 @@ export class CryptoService {
   private async fetchHybridPrices(): Promise<CryptoPrice[]> {
     const now = Date.now();
     console.log('🔗 [HYBRID] Starting hybrid price fetch (Pyth + CoinGecko)');
-    
+
     try {
       // Get supported cryptocurrencies from database
-      const supportedCryptos = await storage.getAllCryptocurrencies();
-      const cryptoIds = supportedCryptos.map(crypto => crypto.id);
-      
+      let cryptoIds: string[] = [];
+      try {
+        const supportedCryptos = await storage.getAllCryptocurrencies();
+        cryptoIds = supportedCryptos.map(crypto => crypto.id);
+      } catch (dbError: any) {
+        console.warn('⚠️ [HYBRID] Failed to load cryptos from DB, using fallback list:', dbError.message);
+        // Fallback to hardcoded list
+        cryptoIds = [
+          'bitcoin', 'ethereum', 'binancecoin', 'ripple', 'solana',
+          'cardano', 'dogecoin', 'tron', 'matic-network', 'polkadot'
+        ];
+      }
+
       if (cryptoIds.length === 0) {
         this.cachedRealPrices = [];
         this.lastFetchTime = now;
@@ -131,8 +141,8 @@ export class CryptoService {
 
       let pythPrices: CryptoPrice[] = [];
       let coinGeckoPrices: CryptoPrice[] = [];
-      
-      // Try to fetch from Pyth Network first
+
+      // ALWAYS try Pyth Network first (removed development mode skip)
       try {
         console.log('📡 [PYTH] Attempting to fetch prices from Pyth Network...');
         pythPrices = await pythPriceService.getLatestPrices();
@@ -177,23 +187,23 @@ export class CryptoService {
 
       // Merge prices: Prefer Pyth for supported cryptos, fallback to CoinGecko
       const mergedPrices = this.mergeHybridPrices(pythPrices, coinGeckoPrices, cryptoIds);
-      
+
       this.cachedRealPrices = mergedPrices;
       this.lastFetchTime = now;
-      
+
       console.log(`🔄 [HYBRID] Hybrid fetch completed: ${mergedPrices.length} total prices`);
       return this.getMergedPriceData();
-      
+
     } catch (error: any) {
       console.error('❌ [HYBRID] Error in hybrid price fetch:', error);
       this.fetchPromise = null;
-      
+
       if (error.response?.status === 429) {
         console.log('⏳ [HYBRID] Rate limit reached, using micro-variations on cached data');
         this.generateMicroVariations();
         this.lastFetchTime = now + 10000;
       }
-      
+
       return this.getMergedPriceData();
     }
   }
@@ -227,7 +237,7 @@ export class CryptoService {
         };
         mergedPrices.push(hybridPrice);
         console.log(`🤝 [${cryptoId.toUpperCase()}] Hybrid: Pyth price ($${pythPrice.current_price.toFixed(4)}) + CoinGecko market data`);
-        
+
       } else if (pythPrice) {
         // Only Pyth available
         mergedPrices.push({
@@ -235,7 +245,7 @@ export class CryptoService {
           source: 'pyth'
         });
         console.log(`📡 [${cryptoId.toUpperCase()}] Pyth only: $${pythPrice.current_price.toFixed(4)}`);
-        
+
       } else if (coinGeckoPrice) {
         // Only CoinGecko available
         mergedPrices.push({
@@ -252,31 +262,31 @@ export class CryptoService {
 
   async getCurrentPrices(): Promise<CryptoPrice[]> {
     const now = Date.now();
-    
+
     // If there's already a fetch in progress, wait for it
     if (this.fetchPromise) {
       return this.fetchPromise;
     }
-    
+
     // Try to fetch real prices every 45 seconds to avoid rate limits while keeping prices current
     if (now - this.lastFetchTime > this.CACHE_DURATION) {
       // Create and store the fetch promise to prevent concurrent fetches
-      this.fetchPromise = this.fetchFreshPrices(); // Pyth-only approach
+      this.fetchPromise = this.fetchHybridPrices(); // Hybrid approach with CoinGecko fallback
       return this.fetchPromise;
     }
-    
+
     // Return cached Pyth data
     return this.cachedRealPrices;
   }
-  
+
   private async getMergedPriceData(): Promise<CryptoPrice[]> {
     // Get database cryptocurrencies and merge with CoinGecko data
     let allPrices: CryptoPrice[] = [];
-    
+
     try {
       // Get all cryptocurrencies from database
       const dbCryptos = await storage.getAllCryptocurrencies();
-      
+
       // Convert database cryptos to CryptoPrice format with database image URLs
       const dbPrices: CryptoPrice[] = dbCryptos.map(crypto => ({
         id: crypto.id,
@@ -286,15 +296,15 @@ export class CryptoService {
         price_change_percentage_24h: parseFloat(crypto.priceChange24h || '0'),
         image: crypto.image || undefined
       }));
-      
+
       // If we have real cached prices from CoinGecko, merge them
       if (this.cachedRealPrices.length > 0) {
         // Create a map of CoinGecko prices for easier lookup
         const coinGeckoMap = new Map(this.cachedRealPrices.map(p => [p.id, p]));
-        
+
         // Start with database prices
         allPrices = [...dbPrices];
-        
+
         // Update with CoinGecko prices where available, adding synchronized real-time variation
         // Use time rounded to 3-second intervals so all users see identical prices
         const syncTime = Math.floor(Date.now() / 3000) * 3000;
@@ -302,7 +312,7 @@ export class CryptoService {
         const slowVariation = Math.cos(syncTime / 5000) * 0.001; // Synchronized background movement
         const microVariation = fastVariation + slowVariation;
         console.log(`🔄 [SYNCHRONIZED] Applied ${(microVariation * 100).toFixed(4)}% variation to prices (sync time: ${syncTime})`);
-        
+
         allPrices = allPrices.map(dbPrice => {
           const coinGeckoPrice = coinGeckoMap.get(dbPrice.id);
           if (coinGeckoPrice) {
@@ -319,7 +329,7 @@ export class CryptoService {
           }
           return dbPrice;
         });
-        
+
         // Add any CoinGecko prices that aren't in database yet
         for (const cgPrice of this.cachedRealPrices) {
           const existsInDb = allPrices.find(p => p.id === cgPrice.id);
@@ -337,7 +347,7 @@ export class CryptoService {
         const fastVariation = Math.sin(now / 2500) * 0.003; // Even faster variations when no fresh data
         const slowVariation = Math.cos(now / 7000) * 0.0015;
         const microVariation = fastVariation + slowVariation;
-        
+
         allPrices = dbPrices.map(price => ({
           ...price,
           current_price: price.current_price * (1 + microVariation)
@@ -348,12 +358,12 @@ export class CryptoService {
       // Return cached real prices or fallback if no DB data available
       allPrices = this.cachedRealPrices.length > 0 ? this.cachedRealPrices : this.getFallbackPrices();
     }
-    
+
     // If no data available from any source, use fallback
     if (allPrices.length === 0) {
       allPrices = this.getFallbackPrices();
     }
-    
+
     return allPrices;
   }
 
@@ -411,7 +421,7 @@ export class CryptoService {
   private getFallbackMetrics(coinId: string): any {
     const prices = this.getFallbackPrices();
     const crypto = prices.find(p => p.id === coinId);
-    
+
     if (!crypto) {
       return {
         id: coinId,
@@ -496,7 +506,7 @@ export class CryptoService {
     // Create more realistic price movement with faster changes
     const timeVariation = Math.sin(now / 10000) * 0.02 + Math.cos(now / 15000) * 0.015; // Faster oscillation
     const microVariation = (Math.random() - 0.5) * 0.005; // Slightly larger random fluctuation for noticeable changes
-    
+
     // Updated with more current cryptocurrency prices (June 2025)
     return [
       {

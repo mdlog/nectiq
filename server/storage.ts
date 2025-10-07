@@ -19,7 +19,7 @@ async function generateUniqueUID(): Promise<string> {
   let uid: string;
   let attempts = 0;
   const maxAttempts = 10;
-  
+
   do {
     uid = generateUID();
     const existingUser = await db.select().from(users).where(eq(users.uid, uid)).limit(1);
@@ -28,7 +28,7 @@ async function generateUniqueUID(): Promise<string> {
     }
     attempts++;
   } while (attempts < maxAttempts);
-  
+
   throw new Error("Failed to generate unique UID after multiple attempts");
 }
 
@@ -75,6 +75,7 @@ export interface IStorage {
   createDeposit(deposit: any): Promise<any>;
   getUserDeposits(userId: number, limit?: number): Promise<any[]>;
   getDepositsByStatus(status: string): Promise<any[]>;
+  getDepositById(id: number): Promise<any>;
   updateDepositStatus(id: number, status: string, transactionHash?: string, blockNumber?: number): Promise<void>;
   getDepositByTransactionHash(hash: string): Promise<any>;
   getUserById(id: number): Promise<User | undefined>;
@@ -98,7 +99,7 @@ export interface IStorage {
 
   // User management operations
   deleteUser(id: number): Promise<void>;
-  
+
   // Email and Twitter verification operations
   updateUserVerification(id: number, email?: string, twitterHandle?: string): Promise<User>;
   verifyUserEmail(id: number): Promise<User>;
@@ -126,7 +127,7 @@ export interface IStorage {
   createTransactionLog(transaction: any): Promise<any>;
   getTransactionLogs(filters?: any): Promise<any[]>;
   getTransactionStats(): Promise<any>;
-  
+
   // Crypto transaction operations
   createCryptoTransaction(transaction: any): Promise<any>;
 
@@ -221,7 +222,7 @@ export interface IStorage {
   getActiveParlayPredictions(): Promise<any[]>;
   updateParlayPredictionCoinEndPrice(coinId: number, endPrice: number, isCorrect: boolean): Promise<void>;
   getExpiredParlayPredictionCoins(): Promise<any[]>;
-  
+
   // Notification operations
   createNotification(notification: any): Promise<any>;
   getUserNotifications(userId: number, limit?: number): Promise<any[]>;
@@ -269,14 +270,14 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const uid = await generateUniqueUID();
-    
+
     // Normalize wallet address before insertion
     const normalizedUser = {
       ...insertUser,
       uid,
       walletAddress: insertUser.walletAddress ? normalizeWalletAddress(insertUser.walletAddress) : null
     };
-    
+
     const [user] = await db
       .insert(users)
       .values(normalizedUser)
@@ -324,7 +325,7 @@ export class DatabaseStorage implements IStorage {
       updates.twitterHandle = twitterHandle;
       updates.twitterVerified = false;
     }
-    
+
     const [user] = await db
       .update(users)
       .set(updates)
@@ -373,9 +374,9 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
     if (email) conditions.push(eq(users.email, email));
     if (twitterHandle) conditions.push(eq(users.twitterHandle, twitterHandle));
-    
+
     if (conditions.length === 0) return [];
-    
+
     return await db.select().from(users).where(or(...conditions));
   }
 
@@ -416,9 +417,9 @@ export class DatabaseStorage implements IStorage {
       username: users.username,
       walletAddress: users.walletAddress
     })
-    .from(predictions)
-    .leftJoin(users, eq(predictions.userId, users.id))
-    .orderBy(desc(predictions.createdAt));
+      .from(predictions)
+      .leftJoin(users, eq(predictions.userId, users.id))
+      .orderBy(desc(predictions.createdAt));
   }
 
   async getActivePredictions(): Promise<Prediction[]> {
@@ -428,12 +429,12 @@ export class DatabaseStorage implements IStorage {
   async updatePredictionResult(id: number, actualPrice: string, accuracy: string, rewardAmount: number, status: string): Promise<void> {
     await db
       .update(predictions)
-      .set({ 
-        actualPrice, 
-        accuracy, 
-        rewardAmount, 
-        status, 
-        completedAt: new Date() 
+      .set({
+        actualPrice,
+        accuracy,
+        rewardAmount,
+        status,
+        completedAt: new Date()
       })
       .where(eq(predictions.id, id));
   }
@@ -483,7 +484,7 @@ export class DatabaseStorage implements IStorage {
   async createPredictionReward(userId: number, predictionId: number, amount: number, cryptocurrency: string, accuracy: string): Promise<void> {
     try {
       const isWin = amount > 0;
-      const description = isWin 
+      const description = isWin
         ? `${cryptocurrency.toUpperCase()} prediction win (${accuracy}% accuracy)`
         : `${cryptocurrency.toUpperCase()} prediction loss`;
 
@@ -523,13 +524,13 @@ export class DatabaseStorage implements IStorage {
       completedAt: predictions.completedAt,
       createdAt: predictions.createdAt
     })
-    .from(predictions)
-    .where(and(
-      eq(predictions.userId, userId),
-      eq(predictions.status, 'completed')
-    ))
-    .orderBy(desc(predictions.completedAt))
-    .limit(limit);
+      .from(predictions)
+      .where(and(
+        eq(predictions.userId, userId),
+        eq(predictions.status, 'completed')
+      ))
+      .orderBy(desc(predictions.completedAt))
+      .limit(limit);
 
     return results;
   }
@@ -596,27 +597,27 @@ export class DatabaseStorage implements IStorage {
         totalBattles: sql<number>`COUNT(*)::int`,
         wonBattles: sql<number>`COALESCE(SUM(CASE WHEN ${predictionBattles.winnerId} = ${user.id} THEN 1 ELSE 0 END), 0)::int`
       }).from(predictionBattles)
-      .where(
-        and(
-          or(
-            eq(predictionBattles.challengerId, user.id),
-            eq(predictionBattles.challengedId, user.id)
-          ),
-          eq(predictionBattles.status, 'completed')
-        )
-      );
+        .where(
+          and(
+            or(
+              eq(predictionBattles.challengerId, user.id),
+              eq(predictionBattles.challengedId, user.id)
+            ),
+            eq(predictionBattles.status, 'completed')
+          )
+        );
 
       // Get battle rewards from transaction_logs instead of battles table
       const battleRewardsQuery = await db.select({
         battleRewards: sql<number>`COALESCE(SUM(${transactionLogs.amount}), 0)::int`
       }).from(transactionLogs)
-      .where(
-        and(
-          eq(transactionLogs.userId, user.id),
-          eq(transactionLogs.type, 'battle_reward'),
-          eq(transactionLogs.status, 'completed')
-        )
-      );
+        .where(
+          and(
+            eq(transactionLogs.userId, user.id),
+            eq(transactionLogs.type, 'battle_reward'),
+            eq(transactionLogs.status, 'completed')
+          )
+        );
 
       const battleStats = battleStatsQuery[0] || {
         totalBattles: 0,
@@ -633,8 +634,8 @@ export class DatabaseStorage implements IStorage {
         wonTournaments: sql<number>`COUNT(DISTINCT CASE WHEN ${survivalTournaments.winnerId} = ${user.id} THEN ${survivalParticipants.tournamentId} END)::int`,
         survivalRewards: sql<number>`COALESCE(SUM(CASE WHEN ${survivalTournaments.winnerId} = ${user.id} THEN ${survivalTournaments.prizePool} ELSE 0 END), 0)::int`
       }).from(survivalParticipants)
-      .leftJoin(survivalTournaments, eq(survivalParticipants.tournamentId, survivalTournaments.id))
-      .where(eq(survivalParticipants.userId, user.id));
+        .leftJoin(survivalTournaments, eq(survivalParticipants.tournamentId, survivalTournaments.id))
+        .where(eq(survivalParticipants.userId, user.id));
 
       const survivalStats = survivalStatsQuery[0] || {
         totalTournaments: 0,
@@ -643,9 +644,9 @@ export class DatabaseStorage implements IStorage {
       };
 
       // Calculate win rates
-      const predictionWinRate = user.totalPredictions > 0 ? 
+      const predictionWinRate = user.totalPredictions > 0 ?
         (user.correctPredictions / user.totalPredictions) * 100 : 0;
-      const battleWinRate = battleStats.totalBattles > 0 ? 
+      const battleWinRate = battleStats.totalBattles > 0 ?
         (battleStats.wonBattles / battleStats.totalBattles) * 100 : 0;
 
       // Calculate total rewards including survival rewards - ensure numeric values
@@ -675,7 +676,7 @@ export class DatabaseStorage implements IStorage {
 
     // Apply sorting based on sortBy parameter
     let sortedUsers = [...enhancedUsers];
-    
+
     switch (sortBy) {
       case 'accuracy':
         sortedUsers.sort((a, b) => {
@@ -699,18 +700,18 @@ export class DatabaseStorage implements IStorage {
       default:
         sortedUsers.sort((a, b) => b.totalRewards - a.totalRewards);
     }
-    
+
     // Apply pagination
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedUsers = sortedUsers.slice(startIndex, endIndex);
-    
+
     // Add ranks and additional leaderboard stats
     const usersWithRanks = paginatedUsers.map((user, index) => {
       const accuracy = user.totalPredictions > 0 ? (user.correctPredictions / user.totalPredictions) * 100 : 0;
       const streak = user.totalPredictions; // Using totalPredictions as streak for now
       const avgMultiplier = accuracy >= 95 ? 2.5 : accuracy >= 85 ? 2.0 : accuracy >= 75 ? 1.5 : 1.0;
-      
+
       return {
         ...user,
         rank: startIndex + index + 1,
@@ -719,7 +720,7 @@ export class DatabaseStorage implements IStorage {
         avgMultiplier: avgMultiplier
       };
     });
-    
+
     return {
       users: usersWithRanks,
       totalUsers: sortedUsers.length,
@@ -742,10 +743,10 @@ export class DatabaseStorage implements IStorage {
   async createDeposit(deposit: any): Promise<any> {
     try {
       console.log('🔧 [STORAGE] Creating deposit in database:', deposit);
-      
+
       // Generate unique 8-digit transaction ID if not provided
       const uniqueTransactionId = deposit.uniqueTransactionId || Math.floor(10000000 + Math.random() * 90000000).toString();
-      
+
       const [newDeposit] = await db.insert(deposits).values({
         ...deposit,
         uniqueTransactionId
@@ -785,6 +786,14 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getDepositById(id: number): Promise<any> {
+    const result = await db.select()
+      .from(deposits)
+      .where(eq(deposits.id, id))
+      .limit(1);
+    return result[0];
+  }
+
   async getDepositsByStatus(status: string): Promise<any[]> {
     return await db.select()
       .from(deposits)
@@ -807,7 +816,7 @@ export class DatabaseStorage implements IStorage {
 
   async cancelExpiredDeposit(id: number): Promise<void> {
     await db.update(deposits)
-      .set({ 
+      .set({
         status: 'cancelled',
         processedAt: new Date()
       })
@@ -823,7 +832,7 @@ export class DatabaseStorage implements IStorage {
   async createWithdrawal(insertWithdrawal: InsertWithdrawal): Promise<Withdrawal> {
     // Generate unique 8-digit transaction ID if not provided
     const uniqueTransactionId = insertWithdrawal.uniqueTransactionId || Math.floor(10000000 + Math.random() * 90000000).toString();
-    
+
     const [withdrawal] = await db
       .insert(withdrawals)
       .values({
@@ -863,7 +872,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateWithdrawalHash(uniqueTransactionId: string, hash: string, status: string): Promise<void> {
     await db.update(withdrawals)
-      .set({ 
+      .set({
         transactionHash: hash,
         status: status,
         processedAt: new Date()
@@ -887,7 +896,7 @@ export class DatabaseStorage implements IStorage {
   async rejectWithdrawal(withdrawalId: number, adminId: number, adminNote: string): Promise<void> {
     // Get withdrawal details first
     const [withdrawal] = await db.select().from(withdrawals).where(eq(withdrawals.id, withdrawalId));
-    
+
     if (!withdrawal) {
       throw new Error("Withdrawal not found");
     }
@@ -959,65 +968,65 @@ export class DatabaseStorage implements IStorage {
     // Clean deleteUser implementation - only use tables that exist in database
     try {
       console.log(`🧹 Starting clean deletion process for user ${id}`);
-      
+
       // Get user info first
-      const [user] = await db.select({ 
+      const [user] = await db.select({
         username: users.username,
-        walletAddress: users.walletAddress 
+        walletAddress: users.walletAddress
       }).from(users).where(eq(users.id, id));
-      
+
       if (!user) {
         throw new Error('User not found');
       }
-      
+
       console.log(`👤 Deleting user: ${user.username} (${user.walletAddress})`);
-      
+
       // Delete in safe order using drizzle delete methods
-      
+
       // 1. Delete battle comments
       console.log('🔹 Deleting battle comments...');
       await db.delete(battleComments).where(eq(battleComments.userId, id));
-      
+
       // 2. Delete prediction battles
       console.log('🔹 Deleting prediction battles...');
       await db.delete(predictionBattles).where(or(
         eq(predictionBattles.challengerId, id),
         eq(predictionBattles.challengedId, id)
       ));
-      
+
       // 3. Delete survival data
       console.log('🔹 Deleting survival predictions...');
       await db.delete(survivalPredictions).where(eq(survivalPredictions.userId, id));
-      
+
       console.log('🔹 Deleting survival participants...');
       await db.delete(survivalParticipants).where(eq(survivalParticipants.userId, id));
-      
+
       // 4. Delete achievements and challenges
       console.log('🔹 Deleting user achievements...');
       await db.delete(userAchievements).where(eq(userAchievements.userId, id));
-      
+
       console.log('🔹 Deleting daily challenges...');
       await db.delete(userDailyChallenges).where(eq(userDailyChallenges.userId, id));
-      
+
       // 5. Delete core data
       console.log('🔹 Deleting transaction logs...');
       await db.delete(transactionLogs).where(eq(transactionLogs.userId, id));
-      
+
       console.log('🔹 Deleting security events...');
       await db.delete(securityEvents).where(eq(securityEvents.userId, id));
-      
+
       console.log('🔹 Deleting rewards...');
       await db.delete(rewards).where(eq(rewards.userId, id));
-      
+
       console.log('🔹 Deleting predictions...');
       await db.delete(predictions).where(eq(predictions.userId, id));
-      
+
       console.log('🔹 Deleting purchases...');
       await db.delete(purchases).where(eq(purchases.userId, id));
-      
+
       console.log('🔹 Deleting withdrawals...');
       await db.delete(withdrawals).where(eq(withdrawals.userId, id));
-      
+
       // 6. Delete wallet and security data - only if they exist
       if (user?.walletAddress) {
         try {
@@ -1026,7 +1035,7 @@ export class DatabaseStorage implements IStorage {
         } catch (error) {
           console.warn('❌ walletFingerprints table not found, skipping...');
         }
-        
+
         try {
           console.log('🔹 Deleting abuse detections...');
           await db.delete(abuseDetections).where(eq(abuseDetections.primaryWalletAddress, user.walletAddress));
@@ -1034,18 +1043,18 @@ export class DatabaseStorage implements IStorage {
           console.warn('❌ abuseDetections table not found, skipping...');
         }
       }
-      
+
       // 7. Update referral references
       console.log('🔹 Updating referral references...');
       await db.update(users).set({ referredBy: null }).where(eq(users.referredBy, id));
-      
+
       // 8. Finally delete the user
       console.log('🔹 Deleting user account...');
       await db.delete(users).where(eq(users.id, id));
-      
+
       console.log(`✅ Successfully deleted user ${id} (${user.username}) and all related data`);
       return { success: true, message: `User ${user.username} deleted successfully` };
-      
+
     } catch (error: any) {
       console.error(`❌ Error deleting user ${id}:`, error);
       console.error('💥 Error details:', error?.message || 'Unknown error');
@@ -1057,19 +1066,19 @@ export class DatabaseStorage implements IStorage {
     // Reset user to initial state - clear all data but keep user account
     try {
       console.log(`Starting user reset process for user ${id}`);
-      
+
       // Get user info first for logging
-      const [user] = await db.select({ 
-        username: users.username, 
-        walletAddress: users.walletAddress 
+      const [user] = await db.select({
+        username: users.username,
+        walletAddress: users.walletAddress
       }).from(users).where(eq(users.id, id));
-      
+
       if (!user) {
         throw new Error('User not found');
       }
-      
+
       console.log(`Resetting user: ${user.username} (${user.walletAddress})`);
-      
+
       // Reset user data to initial state
       // 1. Reset basic user fields to initial values
       console.log('Resetting user profile to initial state...');
@@ -1085,7 +1094,7 @@ export class DatabaseStorage implements IStorage {
         twitterVerified: false,
         referralCode: null
       }).where(eq(users.id, id));
-      
+
       // 2. Delete all battle-related data
       console.log('Clearing battle data...');
       await db.delete(battleComments).where(eq(battleComments.userId, id));
@@ -1093,21 +1102,21 @@ export class DatabaseStorage implements IStorage {
         eq(predictionBattles.challengerId, id),
         eq(predictionBattles.challengedId, id)
       ));
-      
+
       // 3. Delete survival tournament data
       console.log('Clearing survival tournament data...');
       await db.delete(survivalPredictions).where(eq(survivalPredictions.userId, id));
       await db.delete(survivalParticipants).where(eq(survivalParticipants.userId, id));
-      
+
       // 4. Delete achievements and challenges
       console.log('Clearing achievements and challenges...');
       await db.delete(userAchievements).where(eq(userAchievements.userId, id));
       await db.delete(userDailyChallenges).where(eq(userDailyChallenges.userId, id));
-      
+
       // 5. Delete social and interaction data (skip non-existent tables)
       console.log('Clearing social data...');
       // Note: predictionReactions and predictionComments tables don't exist
-      
+
       // 6. Delete transaction and financial logs
       console.log('Clearing transaction history...');
       try {
@@ -1115,13 +1124,13 @@ export class DatabaseStorage implements IStorage {
       } catch (error: any) {
         console.warn('transactionLogs table operation failed:', error.message);
       }
-      
+
       try {
         await db.delete(cryptoTransactions).where(eq(cryptoTransactions.userId, id));
       } catch (error: any) {
         console.warn('cryptoTransactions table operation failed:', error.message);
       }
-      
+
       // 7. Delete analytics and security data (but keep basic security for protection)
       console.log('Clearing analytics and some security data...');
       try {
@@ -1129,36 +1138,36 @@ export class DatabaseStorage implements IStorage {
       } catch (error: any) {
         console.warn('userAnalytics table operation failed:', error.message);
       }
-      
+
       // Note: Keep some security events for protection, only delete abuse detections
       try {
         await db.delete(abuseDetections).where(eq(abuseDetections.userId, id));
       } catch (error: any) {
         console.warn('abuseDetections table operation failed:', error.message);
       }
-      
+
       // 8. Delete all financial records
       console.log('Clearing financial records...');
       await db.delete(rewards).where(eq(rewards.userId, id));
       await db.delete(predictions).where(eq(predictions.userId, id));
       await db.delete(purchases).where(eq(purchases.userId, id));
       await db.delete(withdrawals).where(eq(withdrawals.userId, id));
-      
+
       // 9. Delete referral data
       console.log('Clearing referral data...');
       await db.delete(referrals).where(or(
         eq(referrals.referrerId, id),
         eq(referrals.referredUserId, id)
       ));
-      
+
       // 10. Update any users who were referred by this user
       console.log('Updating referral references...');
       await db.update(users).set({
         referredBy: null
       }).where(eq(users.referredBy, id));
-      
+
       console.log(`✅ Successfully reset user ${id} (${user.username}) - all data cleared, user reset to initial state with 1000 NTIQ balance`);
-      
+
     } catch (error: any) {
       console.error(`Error resetting user ${id}:`, error);
       console.error('Error details:', error?.message || 'Unknown error');
@@ -1174,19 +1183,19 @@ export class DatabaseStorage implements IStorage {
 
   async getSecurityEvents(filters: any = {}): Promise<any[]> {
     let query = db.select().from(securityEvents);
-    
+
     if (filters.severity && filters.severity !== 'all') {
       query = query.where(eq(securityEvents.severity, filters.severity));
     }
-    
+
     if (filters.resolved !== undefined) {
       query = query.where(eq(securityEvents.resolved, filters.resolved));
     }
-    
+
     if (filters.startDate) {
       query = query.where(gte(securityEvents.createdAt, new Date(filters.startDate)));
     }
-    
+
     if (filters.endDate) {
       query = query.where(lte(securityEvents.createdAt, new Date(filters.endDate)));
     }
@@ -1201,7 +1210,7 @@ export class DatabaseStorage implements IStorage {
 
   async getSecurityStats(): Promise<any> {
     const events = await db.select().from(securityEvents);
-    
+
     return {
       totalEvents: events.length,
       criticalEvents: events.filter(e => e.severity === 'critical').length,
@@ -1221,11 +1230,11 @@ export class DatabaseStorage implements IStorage {
   async getAdminLogs(filters: any = {}): Promise<any[]> {
     let query = db.select().from(adminLogs)
       .leftJoin(users, eq(adminLogs.adminId, users.id));
-    
+
     if (filters.adminId) {
       query = query.where(eq(adminLogs.adminId, filters.adminId));
     }
-    
+
     if (filters.action) {
       query = query.where(like(adminLogs.action, `%${filters.action}%`));
     }
@@ -1241,7 +1250,7 @@ export class DatabaseStorage implements IStorage {
   async getUserRewardHistory(userId: number, limit: number = 20): Promise<any[]> {
     try {
       console.log(`🔍 [STORAGE] Getting real reward history for user ${userId}, limit: ${limit}`);
-      
+
       // Get REAL rewards data from the database instead of sample data
       const userRewards = await db
         .select()
@@ -1254,7 +1263,7 @@ export class DatabaseStorage implements IStorage {
       return userRewards;
     } catch (error) {
       console.error(`❌ [STORAGE] Error fetching real reward history for user ${userId}:`, error);
-      
+
       // Return empty array instead of sample data when there's an error
       console.log(`🔍 [STORAGE] Returning empty rewards array for user ${userId} due to error`);
       return [];
@@ -1270,15 +1279,15 @@ export class DatabaseStorage implements IStorage {
   async getTransactionLogs(filters: any = {}): Promise<any[]> {
     let query = db.select().from(transactionLogs)
       .leftJoin(users, eq(transactionLogs.userId, users.id));
-    
+
     if (filters.type && filters.type !== 'all') {
       query = query.where(eq(transactionLogs.type, filters.type));
     }
-    
+
     if (filters.status && filters.status !== 'all') {
       query = query.where(eq(transactionLogs.status, filters.status));
     }
-    
+
     if (filters.token && filters.token !== 'all') {
       query = query.where(eq(transactionLogs.token, filters.token));
     }
@@ -1293,11 +1302,11 @@ export class DatabaseStorage implements IStorage {
 
   async getTransactionStats(): Promise<any> {
     const transactions = await db.select().from(transactionLogs);
-    
+
     const purchases = transactions.filter(t => t.type === 'purchase');
     const withdrawals = transactions.filter(t => t.type === 'withdrawal');
     const rewards = transactions.filter(t => t.type === 'reward');
-    
+
     return {
       totalTransactions: transactions.length,
       totalPurchases: purchases.length,
@@ -1341,18 +1350,18 @@ export class DatabaseStorage implements IStorage {
   // System settings operations
   async getSystemSettings(): Promise<any> {
     const settings = await db.select().from(systemSettings);
-    
+
     const settingsObj: any = {
       platform: {},
       security: {},
       exchangeRates: {}
     };
-    
+
     settings.forEach(setting => {
       if (!settingsObj[setting.category]) {
         settingsObj[setting.category] = {};
       }
-      
+
       let value = setting.value;
       if (setting.dataType === 'number') {
         value = parseFloat(setting.value);
@@ -1361,10 +1370,10 @@ export class DatabaseStorage implements IStorage {
       } else if (setting.dataType === 'json') {
         value = JSON.parse(setting.value);
       }
-      
+
       settingsObj[setting.category][setting.key] = value;
     });
-    
+
     // Set defaults if not found
     return {
       platform: {
@@ -1397,17 +1406,17 @@ export class DatabaseStorage implements IStorage {
         eq(systemSettings.category, category),
         eq(systemSettings.key, key)
       ));
-    
+
     return setting ? setting.value : null;
   }
 
   async updateSystemSetting(category: string, key: string, value: any, adminId: number): Promise<void> {
-    const dataType = typeof value === 'number' ? 'number' : 
-                     typeof value === 'boolean' ? 'boolean' : 
-                     typeof value === 'object' ? 'json' : 'string';
-    
+    const dataType = typeof value === 'number' ? 'number' :
+      typeof value === 'boolean' ? 'boolean' :
+        typeof value === 'object' ? 'json' : 'string';
+
     const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-    
+
     // Check if setting exists first
     const existing = await db.select()
       .from(systemSettings)
@@ -1415,7 +1424,7 @@ export class DatabaseStorage implements IStorage {
         eq(systemSettings.category, category),
         eq(systemSettings.key, key)
       ));
-    
+
     if (existing.length > 0) {
       // Update existing setting
       await db.update(systemSettings)
@@ -1576,14 +1585,14 @@ export class DatabaseStorage implements IStorage {
     const now = new Date();
     const targetTime = new Date(battleData.targetTime);
     const timeframeMinutes = this.getTimeframeInMinutes(battleData.timeframe);
-    
+
     // Join deadline adalah 80% dari total waktu battle
     const joinDeadlineMinutes = Math.floor(timeframeMinutes * 0.8);
     const joinDeadline = new Date(now.getTime() + joinDeadlineMinutes * 60 * 1000);
-    
+
     // Get current price untuk fairness calculation
     const currentPrice = await this.getCurrentCryptoPrice(battleData.cryptocurrency);
-    
+
     const enhancedBattleData = {
       ...battleData,
       joinDeadline,
@@ -1594,7 +1603,7 @@ export class DatabaseStorage implements IStorage {
       joinTimeBonus: "1.00"
     };
 
-    console.log(`🔍 [BATTLE-CREATE] Battle created with minimumJoinTime: ${enhancedBattleData.minimumJoinTime} seconds (${enhancedBattleData.minimumJoinTime/60} minutes)`);
+    console.log(`🔍 [BATTLE-CREATE] Battle created with minimumJoinTime: ${enhancedBattleData.minimumJoinTime} seconds (${enhancedBattleData.minimumJoinTime / 60} minutes)`);
 
     const [battle] = await db
       .insert(predictionBattles)
@@ -1604,7 +1613,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   private getTimeframeInMinutes(timeframe: string): number {
-    switch(timeframe) {
+    switch (timeframe) {
       case '1h': return 60;
       case '6h': return 360;
       case '24h': return 1440;
@@ -1691,7 +1700,7 @@ export class DatabaseStorage implements IStorage {
 
       // Refund stake to challenger using BalanceService
       const stakeAmount = parseFloat(String(battle.stakeAmount));
-      
+
       try {
         await BalanceService.processTransaction({
           userId: battle.challengerId,
@@ -1736,12 +1745,12 @@ export class DatabaseStorage implements IStorage {
 
       // Get current crypto price
       const currentPrice = await this.getCurrentCryptoPrice(battle.cryptocurrency);
-      
+
       if (!currentPrice || !battle.challengerPrediction || !battle.challengedPrediction) {
         // If we can't get price or missing predictions, mark as cancelled
         await db
           .update(predictionBattles)
-          .set({ 
+          .set({
             status: 'cancelled',
             actualPrice: currentPrice?.toString() || '0'
           })
@@ -1779,18 +1788,18 @@ export class DatabaseStorage implements IStorage {
             stakeAmount,
             this
           );
-          
+
           // Update user total rewards for statistics
           const [winner] = await db.select().from(users).where(eq(users.id, winnerId));
           if (winner) {
             await db
               .update(users)
-              .set({ 
+              .set({
                 totalRewards: winner.totalRewards + winnerReward
               })
               .where(eq(users.id, winnerId));
           }
-          
+
           console.log(`✅ BATTLE REWARD: Battle ${battleId} winner ${winnerId} received ${winnerReward} NTIQ`);
         } catch (error) {
           console.error(`❌ BATTLE REWARD ERROR: Failed to process battle ${battleId} reward:`, error);
@@ -1799,7 +1808,7 @@ export class DatabaseStorage implements IStorage {
           if (winner) {
             await db
               .update(users)
-              .set({ 
+              .set({
                 balance: winner.balance + winnerReward,
                 totalRewards: winner.totalRewards + winnerReward
               })
@@ -1818,7 +1827,7 @@ export class DatabaseStorage implements IStorage {
       } else {
         // It's a tie - refund both players using BalanceService
         const stakeAmount = parseFloat(String(battle.stakeAmount));
-        
+
         try {
           // Refund challenger
           await BalanceService.processTransaction({
@@ -1828,7 +1837,7 @@ export class DatabaseStorage implements IStorage {
             description: `Battle tie refund - Battle #${battleId}`,
             relatedId: battleId
           }, this);
-          
+
           // Refund challenged player
           if (battle.challengedId) {
             await BalanceService.processTransaction({
@@ -1839,7 +1848,7 @@ export class DatabaseStorage implements IStorage {
               relatedId: battleId
             }, this);
           }
-          
+
           console.log(`✅ BATTLE TIE: Battle ${battleId} both players refunded ${stakeAmount} NTIQ each`);
         } catch (error) {
           console.error(`❌ BATTLE REFUND ERROR: Failed to process battle ${battleId} refunds:`, error);
@@ -1860,7 +1869,7 @@ export class DatabaseStorage implements IStorage {
               relatedId: battleId
             });
           }
-          
+
           if (battle.challengedId) {
             const [challenged] = await db.select().from(users).where(eq(users.id, battle.challengedId));
             if (challenged) {
@@ -1943,7 +1952,7 @@ export class DatabaseStorage implements IStorage {
             })
             .from(users)
             .where(eq(users.id, battle.challengedId));
-          
+
           if (challengedUser) {
             challenged = {
               username: challengedUser.username,
@@ -1954,7 +1963,7 @@ export class DatabaseStorage implements IStorage {
 
         // Get current crypto price
         const currentPrice = await this.getCurrentCryptoPrice(battle.cryptocurrency);
-        
+
         return {
           ...battle,
           challenger: {
@@ -2020,7 +2029,7 @@ export class DatabaseStorage implements IStorage {
               };
             }
           }
-          
+
           return {
             ...battle,
             challenger,
@@ -2095,7 +2104,7 @@ export class DatabaseStorage implements IStorage {
             .select({ username: users.username })
             .from(users)
             .where(eq(users.id, battle.challengedId));
-          
+
           if (challengedUser) {
             challengedUsername = challengedUser.username;
           }
@@ -2129,13 +2138,13 @@ export class DatabaseStorage implements IStorage {
   async clearAllBattles(): Promise<number> {
     // First, delete all battle comments
     await db.delete(battleComments);
-    
+
     // Then delete all battles and get count
     const battles = await db.select().from(predictionBattles);
     const deletedCount = battles.length;
-    
+
     await db.delete(predictionBattles);
-    
+
     return deletedCount;
   }
 
@@ -2196,7 +2205,7 @@ export class DatabaseStorage implements IStorage {
             .select({ username: users.username, uid: users.uid, profilePhoto: users.profilePhoto })
             .from(users)
             .where(eq(users.id, battle.challengedId));
-          
+
           if (challengedUser) {
             challengedUsername = challengedUser.username;
             challengedUid = challengedUser.uid;
@@ -2211,7 +2220,7 @@ export class DatabaseStorage implements IStorage {
             .select({ username: users.username })
             .from(users)
             .where(eq(users.id, battle.winnerId));
-          
+
           if (winnerUser) {
             winnerUsername = winnerUser.username;
           }
@@ -2242,7 +2251,7 @@ export class DatabaseStorage implements IStorage {
   async addToUserBalance(userId: number, amount: number): Promise<void> {
     await db
       .update(users)
-      .set({ 
+      .set({
         balance: sql`${users.balance} + ${amount}`
       })
       .where(eq(users.id, userId));
@@ -2269,7 +2278,7 @@ export class DatabaseStorage implements IStorage {
           .select({ username: users.username })
           .from(users)
           .where(eq(users.id, battle.challengerId));
-        
+
         if (challenger) {
           challengerUsername = challenger.username;
         }
@@ -2280,7 +2289,7 @@ export class DatabaseStorage implements IStorage {
             .select({ username: users.username })
             .from(users)
             .where(eq(users.id, battle.challengedId));
-          
+
           if (challenged) {
             challengedUsername = challenged.username;
           }
@@ -2301,7 +2310,7 @@ export class DatabaseStorage implements IStorage {
 
   async getBattleStats(): Promise<any> {
     const battles = await db.select().from(predictionBattles);
-    
+
     const totalBattles = battles.length;
     const activeBattles = battles.filter(b => b.status === 'active').length;
     const completedBattles = battles.filter(b => b.status === 'completed').length;
@@ -2314,14 +2323,14 @@ export class DatabaseStorage implements IStorage {
       const multiplier = (battle.status === 'open') ? 1 : 2;
       return sum + (stakeAmount * multiplier);
     }, 0);
-    
+
     // Calculate average battle duration
     const completedBattlesWithDuration = battles.filter(b => b.status === 'completed' && b.targetTime && b.createdAt);
-    const avgDuration = completedBattlesWithDuration.length > 0 
+    const avgDuration = completedBattlesWithDuration.length > 0
       ? completedBattlesWithDuration.reduce((sum, battle) => {
-          const duration = new Date(battle.targetTime).getTime() - new Date(battle.createdAt).getTime();
-          return sum + duration;
-        }, 0) / completedBattlesWithDuration.length
+        const duration = new Date(battle.targetTime).getTime() - new Date(battle.createdAt).getTime();
+        return sum + duration;
+      }, 0) / completedBattlesWithDuration.length
       : 0;
 
     return {
@@ -2343,13 +2352,13 @@ export class DatabaseStorage implements IStorage {
     const now = new Date();
     const createdAt = new Date(battle.createdAt);
     const targetTime = new Date(battle.targetTime);
-    
+
     // Calculate 80% join deadline if not set
     const battleDuration = targetTime.getTime() - createdAt.getTime();
-    const joinDeadline = battle.joinDeadline ? 
-      new Date(battle.joinDeadline) : 
+    const joinDeadline = battle.joinDeadline ?
+      new Date(battle.joinDeadline) :
       new Date(createdAt.getTime() + (battleDuration * 0.8));
-    
+
     // 🚨 CRITICAL FIX: Ensure consistent unit (seconds) for minimumJoinTime
     const minimumJoinTime = battle.minimumJoinTime || 300; // Default 300 seconds (5 minutes)
 
@@ -2364,11 +2373,11 @@ export class DatabaseStorage implements IStorage {
     // Check 2: Has minimum join time passed
     const timeSinceCreation = (now.getTime() - createdAt.getTime()) / 1000; // in seconds
     console.log(`🔍 [BATTLE-JOIN] Battle ${battleId} - timeSinceCreation: ${timeSinceCreation} seconds`);
-    
+
     if (timeSinceCreation < minimumJoinTime) {
       const remainingTime = Math.ceil(minimumJoinTime - timeSinceCreation);
       console.log(`⚠️ [BATTLE-JOIN] Battle ${battleId} - remainingTime: ${remainingTime} seconds`);
-      
+
       if (remainingTime > 60) {
         const remainingMinutes = Math.ceil(remainingTime / 60);
         console.log(`❌ [BATTLE-JOIN] Battle ${battleId} - ERROR: Must wait ${remainingMinutes} more minutes`);
@@ -2396,7 +2405,7 @@ export class DatabaseStorage implements IStorage {
     const totalBattleTime = (joinDeadline.getTime() - createdAt.getTime()) / 1000;
     const joinTimePercentage = timeSinceCreation / totalBattleTime;
     let joinTimeBonus = 1.0;
-    
+
     if (joinTimePercentage < 0.3) {
       joinTimeBonus = 1.2; // 20% bonus for joining in first 30%
     } else if (joinTimePercentage < 0.5) {
@@ -2572,7 +2581,7 @@ export class DatabaseStorage implements IStorage {
       .from(survivalTournaments)
       .leftJoin(users, eq(survivalTournaments.createdBy, users.id))
       .where(eq(survivalTournaments.id, id));
-    
+
     return tournament || undefined;
   }
 
@@ -2583,13 +2592,13 @@ export class DatabaseStorage implements IStorage {
       currentParticipants: survivalTournaments.currentParticipants,
       prizePool: survivalTournaments.prizePool
     }).from(survivalTournaments).where(eq(survivalTournaments.id, tournamentId));
-    
+
     if (!tournament[0]) {
       throw new Error('Tournament not found');
     }
-    
+
     const { entryFee, currentParticipants, prizePool } = tournament[0];
-    
+
     // Insert participant
     const [participant] = await db
       .insert(survivalParticipants)
@@ -2599,7 +2608,7 @@ export class DatabaseStorage implements IStorage {
         status: 'active'
       })
       .returning();
-    
+
     // Update participant count and prize pool
     await db
       .update(survivalTournaments)
@@ -2608,7 +2617,7 @@ export class DatabaseStorage implements IStorage {
         prizePool: prizePool + entryFee
       })
       .where(eq(survivalTournaments.id, tournamentId));
-    
+
     return participant;
   }
 
@@ -2688,7 +2697,7 @@ export class DatabaseStorage implements IStorage {
   async getTournamentParticipantsWithPredictions(tournamentId: number): Promise<any[]> {
     // Get current round
     const currentRound = await this.getCurrentRound(tournamentId);
-    
+
     // Get all participants
     const participants = await db
       .select({
@@ -2862,7 +2871,7 @@ export class DatabaseStorage implements IStorage {
   async completeRound(roundId: number, endPrice: number): Promise<void> {
     await db
       .update(survivalRounds)
-      .set({ 
+      .set({
         status: 'completed',
         endPrice: endPrice.toString()
       })
@@ -2881,9 +2890,9 @@ export class DatabaseStorage implements IStorage {
           eq(survivalRounds.roundNumber, roundNumber)
         )
       );
-    
+
     if (!round) return null;
-    
+
     // Then get the prediction for this round
     const [prediction] = await db
       .select()
@@ -2924,7 +2933,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(survivalTournaments.id, tournamentId));
   }
 
-  async getCompletedTournamentsWithWinners(): Promise<Array<{id: number, winnerId: number, prizePool: number}>> {
+  async getCompletedTournamentsWithWinners(): Promise<Array<{ id: number, winnerId: number, prizePool: number }>> {
     const tournaments = await db
       .select({
         id: survivalTournaments.id,
@@ -2936,7 +2945,7 @@ export class DatabaseStorage implements IStorage {
         eq(survivalTournaments.status, 'completed'),
         isNotNull(survivalTournaments.winnerId)
       ));
-    
+
     return tournaments.filter(t => t.winnerId !== null).map(t => ({
       id: t.id,
       winnerId: t.winnerId!,
@@ -2953,7 +2962,7 @@ export class DatabaseStorage implements IStorage {
         eq(transactionLogs.relatedId, tournamentId)
       ))
       .limit(1);
-    
+
     return reward.length > 0;
   }
 
@@ -2988,11 +2997,11 @@ export class DatabaseStorage implements IStorage {
 
   // Update tournament status with optional winnerId
   async updateTournamentStatus(tournamentId: number, status: string, winnerId?: number | null): Promise<void> {
-    const updates: any = { 
-      status, 
-      completedAt: new Date() 
+    const updates: any = {
+      status,
+      completedAt: new Date()
     };
-    
+
     if (winnerId) {
       updates.winnerId = winnerId;
     }
@@ -3080,7 +3089,7 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
     const uid = generateUID();
-    const user: User = { 
+    const user: User = {
       id,
       uid,
       username: insertUser.username,
@@ -3243,7 +3252,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     };
     // Note: Using a simple Map for deposits (in real scenario would be separate)
-    this.withdrawals.set(`deposit_${id}`, newDeposit); 
+    this.withdrawals.set(`deposit_${id}`, newDeposit);
     return newDeposit;
   }
 
@@ -3258,8 +3267,8 @@ export class MemStorage implements IStorage {
   async updateDepositStatus(id: number, status: string, transactionHash?: string, blockNumber?: number): Promise<void> {
     const deposit = this.withdrawals.get(`deposit_${id}`);
     if (deposit) {
-      const updated = { 
-        ...deposit, 
+      const updated = {
+        ...deposit,
         status,
         ...(transactionHash && { transactionHash }),
         ...(blockNumber && { blockNumber }),
@@ -3277,10 +3286,10 @@ export class MemStorage implements IStorage {
   async getExpiredDeposits(): Promise<any[]> {
     const now = new Date();
     return Array.from(this.withdrawals.values())
-      .filter((item: any) => 
-        item.amountUSD && 
-        item.status === 'pending' && 
-        item.expiresAt && 
+      .filter((item: any) =>
+        item.amountUSD &&
+        item.status === 'pending' &&
+        item.expiresAt &&
         new Date(item.expiresAt) < now
       );
   }
@@ -3288,8 +3297,8 @@ export class MemStorage implements IStorage {
   async cancelExpiredDeposit(id: number): Promise<void> {
     const deposit = this.withdrawals.get(`deposit_${id}`);
     if (deposit) {
-      const updated = { 
-        ...deposit, 
+      const updated = {
+        ...deposit,
         status: 'cancelled',
         processedAt: new Date()
       };
@@ -3324,8 +3333,8 @@ export class MemStorage implements IStorage {
   async updateWithdrawalStatus(id: number, status: string, transactionHash?: string, adminNote?: string, processedBy?: number): Promise<void> {
     const withdrawal = this.withdrawals.get(id);
     if (withdrawal) {
-      const updated = { 
-        ...withdrawal, 
+      const updated = {
+        ...withdrawal,
         status,
         ...(transactionHash && { transactionHash }),
         ...(adminNote && { adminNote }),
@@ -3382,9 +3391,9 @@ export class MemStorage implements IStorage {
     const user = await db.select({
       referralCode: users.referralCode,
     })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     const referralCode = user[0]?.referralCode || null;
 
@@ -3393,8 +3402,8 @@ export class MemStorage implements IStorage {
       totalReferrals: count(referrals.id),
       referralRewards: sql<number>`COALESCE(SUM(${referrals.reward}), 0)`,
     })
-    .from(referrals)
-    .where(eq(referrals.referrerId, userId));
+      .from(referrals)
+      .where(eq(referrals.referrerId, userId));
 
     // Get referred users
     const referredUsers = await db.select({
@@ -3404,10 +3413,10 @@ export class MemStorage implements IStorage {
       joinedAt: referrals.createdAt,
       rewardAmount: referrals.reward,
     })
-    .from(referrals)
-    .innerJoin(users, eq(referrals.referredId, users.id))
-    .where(eq(referrals.referrerId, userId))
-    .orderBy(desc(referrals.createdAt));
+      .from(referrals)
+      .innerJoin(users, eq(referrals.referredId, users.id))
+      .where(eq(referrals.referrerId, userId))
+      .orderBy(desc(referrals.createdAt));
 
     return {
       referralCode,
@@ -3436,7 +3445,7 @@ export class MemStorage implements IStorage {
         .from(users)
         .where(eq(users.referralCode, referralCode))
         .limit(1);
-      
+
       return user || undefined;
     } catch (error) {
       console.error('Error getting user by referral code:', error);
@@ -3449,8 +3458,8 @@ export class MemStorage implements IStorage {
       totalReferrals: count(),
       totalRewards: sql<number>`COALESCE(SUM(${referrals.reward}), 0)`.as('totalRewards'),
     })
-    .from(referrals)
-    .where(eq(referrals.referrerId, userId));
+      .from(referrals)
+      .where(eq(referrals.referrerId, userId));
 
     return {
       totalReferrals: stats?.totalReferrals || 0,
@@ -3492,7 +3501,7 @@ export class MemStorage implements IStorage {
     const tournaments = await Promise.all(participations.map(async (p: any) => {
       // Get remaining participants for this tournament
       const allParticipants = await this.getSurvivalParticipants(p.tournamentId);
-      const remainingParticipants = allParticipants.filter((participant: any) => 
+      const remainingParticipants = allParticipants.filter((participant: any) =>
         participant.status === 'active'
       ).length;
 
@@ -3514,7 +3523,7 @@ export class MemStorage implements IStorage {
       // Determine final position if eliminated or completed
       let finalPosition = null;
       if (p.status === 'eliminated' || p.status === 'winner') {
-        const allFinishedParticipants = allParticipants.filter((participant: any) => 
+        const allFinishedParticipants = allParticipants.filter((participant: any) =>
           participant.status === 'eliminated' || participant.status === 'winner'
         );
         // Sort by elimination round (higher round = better position)
@@ -3523,7 +3532,7 @@ export class MemStorage implements IStorage {
           if (b.status === 'winner') return 1;
           return (b.eliminatedRound || 0) - (a.eliminatedRound || 0);
         });
-        finalPosition = allFinishedParticipants.findIndex((participant: any) => 
+        finalPosition = allFinishedParticipants.findIndex((participant: any) =>
           participant.userId === userId
         ) + 1;
       }
@@ -3554,19 +3563,19 @@ export class MemStorage implements IStorage {
     const totalWinnings = tournaments
       .filter(t => t.status === 'winner')
       .reduce((sum, t) => sum + t.prizePool, 0);
-    
+
     const eliminatedTournaments = tournaments.filter(t => t.eliminatedRound);
-    const averageRoundsReached = eliminatedTournaments.length > 0 
+    const averageRoundsReached = eliminatedTournaments.length > 0
       ? eliminatedTournaments.reduce((sum, t) => sum + (t.eliminatedRound || 0), 0) / eliminatedTournaments.length
       : 0;
-    
+
     const bestFinish = tournaments.reduce((best, t) => {
       if (t.finalPosition && (best === 0 || t.finalPosition < best)) {
         return t.finalPosition;
       }
       return best;
     }, 0);
-    
+
     const winRate = totalTournaments > 0 ? (tournamentsWon / totalTournaments) * 100 : 0;
 
     return {
@@ -3632,7 +3641,7 @@ export class MemStorage implements IStorage {
   // Platform statistics method - using direct database queries for reliability
   async getPlatformStats(): Promise<any> {
     console.log('📊 [PLATFORM STATS] Fetching platform statistics...');
-    
+
     try {
       // Get basic count data
       const allPredictions = await db.select().from(predictions);
@@ -3649,7 +3658,7 @@ export class MemStorage implements IStorage {
       // Calculate stake amounts
       const totalPredictionStakes = allPredictions.reduce((sum, p) => sum + (Number(p.stakeAmount) || 0), 0);
       console.log(`📊 [PLATFORM STATS] Total Prediction Stakes: ${totalPredictionStakes} NTIQ`);
-      
+
       const totalBattleStakes = allBattles.reduce((sum, battle) => {
         const stakeAmount = Number(battle.stakeAmount) || 0;
         // Only multiply by 2 if battle has 2 participants (active or completed)
@@ -3661,10 +3670,10 @@ export class MemStorage implements IStorage {
       console.log(`📊 [PLATFORM STATS] Total Battle Stakes: ${totalBattleStakes} NTIQ`);
 
       // Calculate total rewards from transaction logs
-      const rewardTransactions = allTransactions.filter(t => 
-        t.type === 'prediction_reward' || 
-        t.type === 'battle_reward' || 
-        t.type === 'achievement_reward' || 
+      const rewardTransactions = allTransactions.filter(t =>
+        t.type === 'prediction_reward' ||
+        t.type === 'battle_reward' ||
+        t.type === 'achievement_reward' ||
         t.type === 'daily_challenge_reward'
       );
       const totalRewardsDistributed = rewardTransactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
@@ -3698,7 +3707,7 @@ export class MemStorage implements IStorage {
     try {
       // Get users with comprehensive stats
       const allUsers = await db.select().from(users);
-      
+
       // Get all data needed for calculations
       const allPredictions = await db.select().from(predictions);
       const allBattles = await db.select().from(predictionBattles);
@@ -3737,7 +3746,7 @@ export class MemStorage implements IStorage {
           ...user,
           totalPredictions: userPredictions.length,
           correctPredictions: userPredictions.filter(p => p.status === 'completed' && Number(p.accuracy) >= 80).length,
-          accuracyRate: userPredictions.length > 0 ? 
+          accuracyRate: userPredictions.length > 0 ?
             (userPredictions.filter(p => p.status === 'completed' && Number(p.accuracy) >= 80).length / userPredictions.length * 100) : 0,
           battleParticipation: userBattles.length,
           battleWins,
@@ -3755,10 +3764,10 @@ export class MemStorage implements IStorage {
       enhancedUsers.sort((a, b) => {
         let aVal = a[sortBy];
         let bVal = b[sortBy];
-        
+
         if (typeof aVal === 'string') aVal = aVal.toLowerCase();
         if (typeof bVal === 'string') bVal = bVal.toLowerCase();
-        
+
         if (sortOrder === 'desc') {
           return bVal > aVal ? 1 : bVal < aVal ? -1 : 0;
         } else {
@@ -3804,7 +3813,7 @@ export class MemStorage implements IStorage {
   }
 
   // ==================== REFERRAL SYSTEM METHODS ====================
-  
+
   async generateReferralCode(userId: number): Promise<string> {
     try {
       const user = await this.getUser(userId);
@@ -3831,7 +3840,7 @@ export class MemStorage implements IStorage {
 
       // Update user with new referral code
       await db.update(users).set({ referralCode: code }).where(eq(users.id, userId));
-      
+
       console.log('✅ [GENERATE-REFERRAL] Generated code:', code, 'for user:', userId);
       return code;
     } catch (error) {
@@ -3843,7 +3852,7 @@ export class MemStorage implements IStorage {
   async processReferral(referralCode: string, newUserId: number): Promise<void> {
     try {
       console.log('🎯 [PROCESS-REFERRAL] Starting process:', { referralCode, newUserId });
-      
+
       // Find referrer by code
       const [referrer] = await db
         .select()
@@ -3933,7 +3942,7 @@ export class MemStorage implements IStorage {
 
       const user = await this.getUser(userId);
       console.log('🔍 [GET-REFERRAL-DATA] User found:', user ? 'YES' : 'NO', user?.referralCode ? `(Code: ${user.referralCode})` : '(No Code)');
-      
+
       if (!user) {
         console.log('❌ [GET-REFERRAL-DATA] User not found for ID:', userId);
         throw new Error('User not found');
@@ -3943,9 +3952,9 @@ export class MemStorage implements IStorage {
       let referredUsers = [];
       try {
         const referredUsersResult = await db
-          .select({ 
-            id: users.id, 
-            username: users.username, 
+          .select({
+            id: users.id,
+            username: users.username,
             uid: users.uid,
             createdAt: sql<string>`CAST(${users.createdAt} as TEXT)`.as('createdAt')
           })
@@ -3988,8 +3997,8 @@ export class MemStorage implements IStorage {
 
       const response = {
         referralCode: user.referralCode || null,
-        referralLink: user.referralCode ? 
-          `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/?ref=${user.referralCode}` : 
+        referralLink: user.referralCode ?
+          `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/?ref=${user.referralCode}` :
           null,
         totalReferrals: referredUsers.length || user.totalReferrals || 0,
         referralRewards: totalEarnings,
@@ -4001,7 +4010,7 @@ export class MemStorage implements IStorage {
       return response;
     } catch (error) {
       console.error('❌ [GET-REFERRAL-DATA] Error:', error);
-      
+
       // Return a safe default response instead of throwing
       const safeResponse = {
         referralCode: null,
@@ -4011,7 +4020,7 @@ export class MemStorage implements IStorage {
         referredUsers: [],
         bonusPerReferral: 100
       };
-      
+
       console.log('🔄 [GET-REFERRAL-DATA] Returning safe default response');
       return safeResponse;
     }
@@ -4022,7 +4031,7 @@ export class MemStorage implements IStorage {
       // This method can be used for creating referral records if needed
       // For now, referrals are handled through user.referredBy field
       console.log('🎯 [CREATE-REFERRAL] Creating referral record:', data);
-      
+
       // Implementation can be extended if separate referrals table is needed
       return { success: true, message: 'Referral handled through user referredBy field' };
     } catch (error) {
@@ -4032,7 +4041,7 @@ export class MemStorage implements IStorage {
   }
 
   // ==================== PLATFORM STATISTICS METHODS ====================
-  
+
   async getPlatformStats(): Promise<any> {
     try {
       // Get comprehensive platform statistics
@@ -4046,7 +4055,7 @@ export class MemStorage implements IStorage {
       // Get active users (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+
       const [activeUsers] = await db
         .select({ count: count() })
         .from(users)
@@ -4120,12 +4129,12 @@ export class MemStorage implements IStorage {
   async createParlayPrediction(parlay: InsertParlayPrediction): Promise<ParlayPrediction> {
     try {
       console.log("🔍 [STORAGE] Creating parlay with data:", JSON.stringify(parlay, null, 2));
-      
+
       const [newParlay] = await db
         .insert(parlayPredictions)
         .values(parlay)
         .returning();
-        
+
       console.log("✅ [STORAGE] Successfully created parlay:", newParlay);
       return newParlay;
     } catch (error) {
@@ -4142,12 +4151,12 @@ export class MemStorage implements IStorage {
   async createParlayPredictionCoin(coin: InsertParlayPredictionCoin): Promise<ParlayPredictionCoin> {
     try {
       console.log("🔍 [STORAGE] Creating parlay coin with data:", JSON.stringify(coin, null, 2));
-      
+
       const [newCoin] = await db
         .insert(parlayPredictionCoins)
         .values(coin)
         .returning();
-        
+
       console.log("✅ [STORAGE] Successfully created parlay coin:", newCoin);
       return newCoin;
     } catch (error) {
@@ -4175,7 +4184,7 @@ export class MemStorage implements IStorage {
         totalCoinCount: parlayPredictions.totalCoinCount,
         correctPredictions: parlayPredictions.correctPredictions,
       })
-      .from(parlayPredictions) 
+      .from(parlayPredictions)
       .where(eq(parlayPredictions.userId, userId))
       .orderBy(desc(parlayPredictions.createdAt));
 
@@ -4264,16 +4273,16 @@ export class MemStorage implements IStorage {
       .select()
       .from(parlayPredictionCoins)
       .where(eq(parlayPredictionCoins.parlayId, id));
-    
+
     return { ...parlay, coins };
   }
 
   async updateParlayPredictionResult(id: number, status: string, rewardAmount: number, correctPredictions: number): Promise<void> {
     await db
       .update(parlayPredictions)
-      .set({ 
-        status, 
-        rewardAmount, 
+      .set({
+        status,
+        rewardAmount,
         correctPredictions,
         completedAt: new Date()
       })
@@ -4284,7 +4293,7 @@ export class MemStorage implements IStorage {
   async updateParlayPredictionCoinEndPrice(coinId: number, endPrice: number, isCorrect: boolean): Promise<void> {
     await db
       .update(parlayPredictionCoins)
-      .set({ 
+      .set({
         endPrice: endPrice.toString(),
         isCorrect
       })
@@ -4305,7 +4314,7 @@ export class MemStorage implements IStorage {
           eq(parlayPredictions.status, 'active')
         )
       );
-    
+
     return result;
   }
 
@@ -4349,10 +4358,10 @@ export class MemStorage implements IStorage {
   async getPlatformStats(): Promise<any> {
     const [userCount] = await db.select({ count: count() }).from(users);
     const [predictionCount] = await db.select({ count: count() }).from(predictions);
-    const totalRewardsResult = await db.select({ 
-      total: sql<number>`sum(${users.totalRewards})` 
+    const totalRewardsResult = await db.select({
+      total: sql<number>`sum(${users.totalRewards})`
     }).from(users);
-    
+
     return {
       totalUsers: userCount.count,
       totalPredictions: predictionCount.count,

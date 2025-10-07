@@ -40,7 +40,7 @@ declare global {
 // Helper functions for blockchain explorer URLs
 const getBlockchainExplorerUrl = (hash: string, token: string): string => {
   const lowerToken = token.toLowerCase();
-  
+
   switch (lowerToken) {
     case 'eth':
     case 'usdc':
@@ -82,7 +82,7 @@ const getBlockchainExplorerUrl = (hash: string, token: string): string => {
 
 const getExplorerName = (token: string): string => {
   const lowerToken = token.toLowerCase();
-  
+
   switch (lowerToken) {
     case 'eth':
     case 'usdc':
@@ -114,7 +114,7 @@ const getExplorerName = (token: string): string => {
 
 const getChainDisplayName = (token: string): string => {
   const lowerToken = token.toLowerCase();
-  
+
   switch (lowerToken) {
     case 'eth':
     case 'usdc':
@@ -196,18 +196,18 @@ export default function AdminPanel() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("statistics");
   const [predictionSubTab, setPredictionSubTab] = useState("predictions");
-  
+
   // Web3 hooks
   const { isConnected, address, chain } = useAccount();
   const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
   const { sendTransaction, isPending: isSendPending, error: sendError } = useSendTransaction();
-  
+
   // State for various admin functions
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showAddUser, setShowAddUser] = useState(false);
   const [showAddCrypto, setShowAddCrypto] = useState(false);
-  
+
   // State untuk event management
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
@@ -229,7 +229,7 @@ export default function AdminPanel() {
   const [newCrypto, setNewCrypto] = useState({ id: "", name: "", symbol: "", image: "", pythFeedId: "" });
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterTimeframe, setFilterTimeframe] = useState("all");
-  
+
   // Settings state
   const [settings, setSettings] = useState({
     platform: {
@@ -246,7 +246,7 @@ export default function AdminPanel() {
       maxStakeAmount: 500
     }
   });
-  
+
   // State untuk pagination users
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
@@ -259,7 +259,7 @@ export default function AdminPanel() {
   const [twoFACode, setTwoFACode] = useState('');
   const [twoFAStep, setTwoFAStep] = useState(false);
   const [twoFAToken, setTwoFAToken] = useState('');
-  
+
   // Transaction filter and pagination states
   const [transactionFilter, setTransactionFilter] = useState({
     type: 'all', // all, deposit, withdrawal
@@ -303,34 +303,34 @@ export default function AdminPanel() {
     const code = generate2FACode();
     const token = Date.now().toString(); // Simple token based on timestamp
     setTwoFAToken(token);
-    
+
     // In real implementation, send code via email/SMS
     if (import.meta.env.DEV) {
       console.log('🔐 [2FA] Generated code for database reset:', code);
     }
-    
+
     // Store code temporarily (in real app, store on server)
     sessionStorage.setItem(`2fa_code_${token}`, code);
     sessionStorage.setItem(`2fa_time_${token}`, Date.now().toString());
-    
+
     toast({
       title: "2FA Code Generated",
       description: `Security code: ${code} (Check console for demo)`,
       variant: "default"
     });
-    
+
     setTwoFAStep(true);
   };
 
   // Verify 2FA code
   const verify2FACode = (inputCode: string): boolean => {
     if (!twoFAToken) return false;
-    
+
     const storedCode = sessionStorage.getItem(`2fa_code_${twoFAToken}`);
     const storedTime = sessionStorage.getItem(`2fa_time_${twoFAToken}`);
-    
+
     if (!storedCode || !storedTime) return false;
-    
+
     // Check if code is expired (5 minutes)
     const codeAge = Date.now() - parseInt(storedTime);
     if (codeAge > 5 * 60 * 1000) {
@@ -341,7 +341,7 @@ export default function AdminPanel() {
       });
       return false;
     }
-    
+
     return storedCode === inputCode;
   };
 
@@ -385,7 +385,7 @@ export default function AdminPanel() {
       if (import.meta.env.DEV) {
         console.log(`🎯 [USERS-MAIN] Calling main admin users endpoint: /api/admin/users?page=${currentPage}&limit=${usersPerPage}`);
       }
-      
+
       try {
         const response = await fetch(`/api/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
           method: 'GET',
@@ -395,7 +395,7 @@ export default function AdminPanel() {
             'Content-Type': 'application/json'
           }
         });
-        
+
         if (!response.ok) {
           if (import.meta.env.DEV) {
             console.log(`❌ [USERS-MAIN] Main endpoint failed, trying debug fallback`);
@@ -409,18 +409,18 @@ export default function AdminPanel() {
               'Content-Type': 'application/json'
             }
           });
-          
+
           if (!debugResponse.ok) {
             throw new Error(`Both endpoints failed: ${response.status} and ${debugResponse.status}`);
           }
-          
+
           const debugResult = await debugResponse.json();
           if (import.meta.env.DEV) {
             console.log(`✅ [USERS-FALLBACK] Debug fallback success:`, debugResult);
           }
           return debugResult;
         }
-        
+
         const result = await response.json();
         if (import.meta.env.DEV) {
           console.log(`✅ [USERS-MAIN] Main endpoint success:`, result);
@@ -459,7 +459,7 @@ export default function AdminPanel() {
       if (usersData && usersData.length === 0) {
         console.warn("⚠️ [USER-QUERY-WARN] Users array is empty but defined");
       }
-      
+
       if (!usersLoading && !usersData && !usersError) {
         console.warn("⚠️ [USER-QUERY-WARN] No loading, no data, no error - this might indicate a query problem");
       }
@@ -512,10 +512,16 @@ export default function AdminPanel() {
     refetchInterval: 30000,
   });
 
-  // Query untuk data harga real-time
-  const { data: cryptoPrices } = useQuery({
+  // Query untuk data harga real-time - SYNCHRONIZED with Live Prices
+  const { data: cryptoPrices, dataUpdatedAt: pricesUpdatedAt, isFetching: pricesFetching } = useQuery({
     queryKey: ["/api/crypto/pyth-prices"],
-    refetchInterval: 3000, // Update setiap 3 detik
+    refetchInterval: 1000, // Update setiap 1 detik - ULTRA-FAST real-time
+    refetchIntervalInBackground: true, // Enable background updates
+    staleTime: 500, // Same as Live Prices - 500ms stale time
+    retry: 3,
+    refetchOnWindowFocus: true, // Enable refresh on window focus
+    refetchOnMount: true, // Fetch on component mount
+    placeholderData: (previousData) => previousData, // Keep previous data during refresh
   });
 
   // Query untuk system settings
@@ -565,10 +571,10 @@ export default function AdminPanel() {
   // Debug: Tambahkan effect untuk debug trendride data
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log('🔍 [TRENDRIDE-DETAILED-DEBUG] Query state:', { 
-        trendRideData, 
-        trendRideLoading, 
-        dataLength: trendRideData?.length 
+      console.log('🔍 [TRENDRIDE-DETAILED-DEBUG] Query state:', {
+        trendRideData,
+        trendRideLoading,
+        dataLength: trendRideData?.length
       });
       if (trendRideData) {
         console.log('📊 [TRENDRIDE-DETAILED-DEBUG] Sample detailed data:', trendRideData[0]);
@@ -593,10 +599,10 @@ export default function AdminPanel() {
       setCurrentPage(1); // Reset to first page after adding user
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Failed", 
+      toast({
+        title: "Failed",
         description: error.message || "Failed to add user",
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
@@ -615,10 +621,10 @@ export default function AdminPanel() {
       setSelectedUser(null);
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Failed", 
+      toast({
+        title: "Failed",
         description: error.message || "Failed to update user",
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
@@ -639,10 +645,10 @@ export default function AdminPanel() {
       setSelectedEvent(null);
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: error.message || "Failed to update event",
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
@@ -658,10 +664,10 @@ export default function AdminPanel() {
       toast({ title: "Success", description: "Event deleted successfully" });
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: error.message || "Failed to delete event",
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
@@ -681,10 +687,10 @@ export default function AdminPanel() {
       resetEventForm();
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: error.message || "Failed to create event",
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
@@ -701,10 +707,10 @@ export default function AdminPanel() {
       toast({ title: "Successfully", description: "User deleted successfully" });
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Failed", 
+      toast({
+        title: "Failed",
         description: error.message || "Failed to delete user",
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
@@ -727,10 +733,10 @@ export default function AdminPanel() {
       setFetchedLogoUrl("");
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Failed", 
+      toast({
+        title: "Failed",
         description: error.message || "Failed to add cryptocurrency",
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
@@ -746,10 +752,10 @@ export default function AdminPanel() {
       toast({ title: "Successfully", description: "Cryptocurrency deleted successfully" });
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Failed", 
+      toast({
+        title: "Failed",
         description: error.message || "Failed to delete cryptocurrency",
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
@@ -772,18 +778,18 @@ export default function AdminPanel() {
     onSuccess: async () => {
       console.log('🔧 [MUTATION] onSuccess: Invalidating cache and showing toast');
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
-      toast({ 
-        title: "Settings Updated", 
+      toast({
+        title: "Settings Updated",
         description: "Platform settings have been updated successfully",
         variant: "default"
       });
     },
     onError: (error: any) => {
       console.error('❌ [SETTINGS] Update failed:', error);
-      toast({ 
-        title: "Update Failed", 
+      toast({
+        title: "Update Failed",
         description: error.message || "Failed to update settings",
-        variant: "destructive" 
+        variant: "destructive"
       });
     },
   });
@@ -793,20 +799,20 @@ export default function AdminPanel() {
     if (import.meta.env.DEV) {
       console.log(`🔧 [SETTINGS] Updating platform.${key} to:`, value);
     }
-    
+
     const settingData = {
       platform: {
         [key]: value
       }
     };
-    
+
     try {
       await updateSettingsMutation.mutateAsync(settingData);
-      
+
       // Force immediate cache invalidation and refetch
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
       await queryClient.refetchQueries({ queryKey: ["/api/admin/settings"] });
-      
+
       console.log(`✅ [SETTINGS] Successfully updated platform.${key} to:`, value);
     } catch (error) {
       console.error(`❌ [SETTINGS] Failed to update ${key}:`, error);
@@ -818,7 +824,7 @@ export default function AdminPanel() {
   const toggleMaintenanceMode = async () => {
     const newValue = !settings.platform.maintenanceMode;
     console.log(`🔧 [TOGGLE] Current maintenance mode: ${settings.platform.maintenanceMode}, toggling to: ${newValue}`);
-    
+
     try {
       await updatePlatformSetting('maintenanceMode', newValue);
       if (import.meta.env.DEV) {
@@ -909,7 +915,7 @@ export default function AdminPanel() {
   // Helper function to detect mobile device
   const isMobileDevice = () => {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-           window.innerWidth <= 768;
+      window.innerWidth <= 768;
   };
 
   // Helper function to switch MetaMask chain (Mobile & Desktop Compatible)
@@ -921,22 +927,22 @@ export default function AdminPanel() {
       // For mobile devices, use wagmi's built-in chain switching if available
       if (mobile && window.ethereum && window.ethereum.isMobile) {
         console.log(`📱 [MOBILE-CHAIN] Using mobile-optimized chain switching for ${chainName}`);
-        
+
         try {
           // Mobile wallets often need different approach
           const chainIdHex = `0x${targetChainId.toString(16)}`;
-          
+
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: chainIdHex }],
           });
-          
+
           toast({
             title: "Chain Switched (Mobile)",
             description: `Successfully switched to ${chainName}`,
             variant: "default"
           });
-          
+
           return true;
         } catch (mobileError: any) {
           console.log(`📱 [MOBILE-CHAIN] Mobile switch failed, trying standard method:`, mobileError);
@@ -946,37 +952,37 @@ export default function AdminPanel() {
 
       // Standard method for desktop and mobile fallback
       if (!window.ethereum) {
-        const errorMsg = mobile 
+        const errorMsg = mobile
           ? 'Please open this page in MetaMask mobile app or install a Web3 wallet'
           : 'MetaMask not found. Please install MetaMask extension';
         throw new Error(errorMsg);
       }
 
       const chainIdHex = `0x${targetChainId.toString(16)}`;
-      
+
       try {
         console.log(`🔗 [CHAIN-SWITCH] Attempting to switch to ${chainName} (Chain ID: ${targetChainId})`);
-        
+
         // Try to switch to the chain
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: chainIdHex }],
         });
-        
+
         toast({
           title: "Chain Switched",
           description: `Successfully switched to ${chainName}`,
           variant: "default"
         });
-        
+
         return true;
       } catch (switchError: any) {
         console.log(`🔗 [CHAIN-SWITCH] Switch error:`, switchError);
-        
+
         // Chain not added to wallet, add it first
         if (switchError.code === 4902) {
           console.log(`🔗 [CHAIN-SWITCH] Adding ${chainName} network to wallet...`);
-          
+
           const networkParams = getNetworkParams(targetChainId);
           if (!networkParams) {
             throw new Error(`Unsupported chain ID: ${targetChainId}`);
@@ -986,13 +992,13 @@ export default function AdminPanel() {
             method: 'wallet_addEthereumChain',
             params: [networkParams],
           });
-          
+
           toast({
             title: mobile ? "Network Added (Mobile)" : "Network Added & Switched",
             description: `Added and switched to ${chainName}`,
             variant: "default"
           });
-          
+
           return true;
         } else if (switchError.code === 4001) {
           // User rejected the request
@@ -1008,12 +1014,12 @@ export default function AdminPanel() {
       }
     } catch (error: any) {
       console.error(`❌ [CHAIN-SWITCH] Failed to switch to ${chainName}:`, error);
-      
+
       const mobile = isMobileDevice();
-      const errorMessage = mobile 
+      const errorMessage = mobile
         ? `Failed to switch to ${chainName}. Try opening this page in MetaMask mobile app or switch manually in your wallet.`
         : `Failed to switch to ${chainName}: ${error.message}`;
-      
+
       toast({
         title: "Chain Switch Failed",
         description: errorMessage,
@@ -1055,7 +1061,7 @@ export default function AdminPanel() {
         blockExplorerUrls: ['https://testnet.bscscan.com/']
       }
     };
-    
+
     return networks[chainId] || null;
   };
 
@@ -1068,19 +1074,19 @@ export default function AdminPanel() {
       'BNB': { chainId: 97, chainName: 'BNB Testnet' },
       // Add more tokens and their respective chains as needed
     };
-    
+
     return chainMap[token] || { chainId: 11155111, chainName: 'Sepolia Testnet' }; // Default to Sepolia
   };
 
   // Withdrawal action handler
   const handleWithdrawalAction = async (withdrawalId: number, action: 'approve' | 'reject') => {
     setProcessingWithdrawal(withdrawalId);
-    
+
     try {
       if (action === 'approve') {
         // Find the withdrawal transaction data
         const withdrawal = Array.isArray(transactionsData) ? transactionsData.find((tx: any) => tx.id === withdrawalId && tx.type === 'withdrawal') : null;
-        
+
         if (!withdrawal) {
           throw new Error('Withdrawal data not found');
         }
@@ -1114,10 +1120,10 @@ export default function AdminPanel() {
         // Check if we need to switch chains
         if (currentChainId !== targetChainId) {
           const mobile = isMobileDevice();
-          
+
           toast({
             title: "Chain Switch Required",
-            description: mobile 
+            description: mobile
               ? `Switching to ${targetChainName} for ${tokenSymbol} withdrawal (Mobile)`
               : `Switching to ${targetChainName} for ${tokenSymbol} withdrawal...`,
             variant: "default"
@@ -1125,10 +1131,10 @@ export default function AdminPanel() {
 
           console.log(`🔗 [CHAIN-SWITCH] Need to switch from ${chain?.name} (${currentChainId}) to ${targetChainName} (${targetChainId})`);
           console.log(`📱 [MOBILE-CHECK] Mobile device detected: ${mobile}`);
-          
+
           const switchSuccess = await switchToChain(targetChainId, targetChainName);
           if (!switchSuccess) {
-            const errorMsg = mobile 
+            const errorMsg = mobile
               ? `Failed to switch to ${targetChainName}. Please open this page in MetaMask mobile app or switch network manually in your wallet.`
               : `Failed to switch to ${targetChainName}. Please switch manually in MetaMask.`;
             throw new Error(errorMsg);
@@ -1137,7 +1143,7 @@ export default function AdminPanel() {
           // Wait longer for mobile devices as they might need more time
           const waitTime = mobile ? 3000 : 1500;
           await new Promise(resolve => setTimeout(resolve, waitTime));
-          
+
           // Show additional mobile guidance if needed
           if (mobile) {
             toast({
@@ -1148,14 +1154,14 @@ export default function AdminPanel() {
           }
         }
 
-        toast({ 
-          title: "MetaMask Required", 
-          description: `Please confirm transaction in MetaMask: ${cryptoAmount} ${tokenSymbol} to ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}` 
+        toast({
+          title: "MetaMask Required",
+          description: `Please confirm transaction in MetaMask: ${cryptoAmount} ${tokenSymbol} to ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}`
         });
 
         // Call MetaMask transaction with proper error handling
         let transactionHash = '';
-        
+
         if (tokenSymbol === 'ETH') {
           // For ETH transactions - use sendTransaction
           try {
@@ -1182,13 +1188,13 @@ export default function AdminPanel() {
         } else {
           // For ERC-20 tokens (USDC, USDT) - Simulation mode untuk testing
           console.log(`🔍 [USDC-DEBUG] Starting USDC withdrawal for ${cryptoAmount} ${tokenSymbol}`);
-          
+
           // Get token addresses from environment variables for security
           const tokenAddresses = {
             'USDC': import.meta.env.VITE_SEPOLIA_USDC_CONTRACT || '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8', // Sepolia USDC testnet (official)
             'USDT': import.meta.env.VITE_SEPOLIA_USDT_CONTRACT || '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'  // Sepolia USDT testnet
           };
-          
+
           const tokenAddress = tokenAddresses[tokenSymbol as keyof typeof tokenAddresses];
           if (!tokenAddress) {
             throw new Error(`Unsupported token: ${tokenSymbol}`);
@@ -1196,19 +1202,19 @@ export default function AdminPanel() {
 
           console.log(`🔍 [USDC-DEBUG] Token address: ${tokenAddress}`);
           console.log(`🔍 [USDC-DEBUG] Recipient: ${recipientAddress}`);
-          
+
           // ERC-20 transfer function
           const decimals = tokenSymbol === 'USDC' || tokenSymbol === 'USDT' ? 6 : 18;
           const amountInWei = parseUnits(cryptoAmount, decimals);
-          
+
           console.log(`🔍 [USDC-DEBUG] Amount in wei: ${amountInWei.toString()}`);
           console.log(`🔍 [USDC-DEBUG] Calling writeContract...`);
-          
+
           // Show current wallet info and USDC contract details
           console.log(`🔍 [USDC-INFO] Using official Sepolia USDC contract: ${tokenAddress}`);
           console.log(`🔍 [USDC-INFO] Connected wallet: ${address}`);
           console.log(`🔍 [USDC-INFO] Chain: ${chain?.name} (ID: ${chain?.id})`);
-          
+
           // Ask user to check their wallet for actual USDC balance
           toast({
             title: "USDC Withdrawal Ready",
@@ -1223,7 +1229,7 @@ export default function AdminPanel() {
           console.log(`💡 [USDC-HELP] 3. Select Sepolia testnet`);
           console.log(`💡 [USDC-HELP] 4. Request USDC testnet tokens`);
           console.log(`💡 [USDC-HELP] 5. Contract USDC: ${tokenAddress}`);
-          
+
           try {
             console.log(`🔄 [USDC-DEBUG] About to call writeContract with params:`, {
               address: tokenAddress,
@@ -1235,9 +1241,9 @@ export default function AdminPanel() {
 
             // Wait a moment to ensure wallet is ready
             await new Promise(resolve => setTimeout(resolve, 500));
-            
+
             console.log(`🔍 [USDC-DEBUG] Attempting real transaction...`);
-            
+
             const tx = await writeContract({
               address: tokenAddress as `0x${string}`,
               abi: [
@@ -1255,7 +1261,7 @@ export default function AdminPanel() {
               functionName: 'transfer',
               args: [recipientAddress as `0x${string}`, amountInWei]
             });
-            
+
             console.log(`✅ [USDC-DEBUG] Transaction submitted successfully: ${tx}`);
             console.log(`✅ [USDC-DEBUG] Transaction type:`, typeof tx);
             transactionHash = tx || '';
@@ -1264,7 +1270,7 @@ export default function AdminPanel() {
             if (writeError?.code === 4001 || writeError?.message?.includes('rejected') || writeError?.message?.includes('denied')) {
               console.log('🚫 [USDC-CANCEL] User cancelled MetaMask transaction');
               toast({
-                title: "Transaction Cancelled", 
+                title: "Transaction Cancelled",
                 description: "Transaction was cancelled by user. You can try again.",
                 variant: "default"
               });
@@ -1278,7 +1284,7 @@ export default function AdminPanel() {
               code: writeError?.code,
               reason: writeError?.reason
             });
-            
+
             // Check if error is due to insufficient balance
             if (writeError?.message?.includes('insufficient') || writeError?.message?.includes('balance')) {
               console.log(`💡 [USDC-DEBUG] Detected insufficient balance - wallet needs USDC testnet tokens`);
@@ -1288,7 +1294,7 @@ export default function AdminPanel() {
                 variant: "destructive",
               });
             }
-            
+
             throw writeError;
           }
         }
@@ -1296,17 +1302,17 @@ export default function AdminPanel() {
         // First, update status to processing with hash
         await apiRequest(`/api/admin/withdrawals/${withdrawalId}/processing`, {
           method: 'POST',
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             transactionHash,
             cryptoAmount,
-            tokenSymbol 
+            tokenSymbol
           })
         });
 
         // Show processing message
-        toast({ 
-          title: "Transaction Submitted", 
-          description: `Transaction submitted to blockchain: ${transactionHash.slice(0, 10)}... Waiting for confirmation...` 
+        toast({
+          title: "Transaction Submitted",
+          description: `Transaction submitted to blockchain: ${transactionHash.slice(0, 10)}... Waiting for confirmation...`
         });
 
         // Invalidate queries to show processing status
@@ -1318,21 +1324,21 @@ export default function AdminPanel() {
             // Check transaction status after delay to simulate real blockchain confirmation
             const response = await fetch(`https://sepolia.etherscan.io/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=YourApiKeyToken`);
             const data = await response.json();
-            
+
             if (data.status === '1' && data.result.status === '1') {
               // Transaction successful
               await apiRequest(`/api/admin/withdrawals/${withdrawalId}/complete`, {
                 method: 'POST',
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                   transactionHash,
                   confirmed: true
                 })
               });
-              
+
               queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-              toast({ 
-                title: "Transaction Confirmed", 
-                description: `Withdrawal completed! Transaction confirmed on blockchain.` 
+              toast({
+                title: "Transaction Confirmed",
+                description: `Withdrawal completed! Transaction confirmed on blockchain.`
               });
             }
           } catch (error) {
@@ -1344,12 +1350,12 @@ export default function AdminPanel() {
         const response = await apiRequest(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
           method: 'POST',
         });
-        
+
         if (response) {
           queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-          toast({ 
-            title: "Success", 
-            description: `Withdrawal rejected successfully` 
+          toast({
+            title: "Success",
+            description: `Withdrawal rejected successfully`
           });
         }
       } else if (action === 'complete') {
@@ -1361,20 +1367,20 @@ export default function AdminPanel() {
             transactionHash: "manual_completion"
           })
         });
-        
+
         if (response) {
           queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-          toast({ 
-            title: "Success", 
-            description: `Withdrawal completed successfully` 
+          toast({
+            title: "Success",
+            description: `Withdrawal completed successfully`
           });
         }
       }
     } catch (error: any) {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: error.message || `Failed to ${action} withdrawal`,
-        variant: "destructive" 
+        variant: "destructive"
       });
     } finally {
       setProcessingWithdrawal(null);
@@ -1384,24 +1390,52 @@ export default function AdminPanel() {
   // Fetch crypto logo from CoinGecko
   const fetchCryptoLogo = async () => {
     if (!newCrypto.id.trim()) {
-      toast({ 
-        title: "Error", 
+      toast({
+        title: "Error",
         description: "Please enter a Crypto ID first",
-        variant: "destructive" 
+        variant: "destructive"
       });
       return;
     }
 
     setIsFetchingLogo(true);
+    let response: Response | null = null;
+
     try {
-      const response = await fetch(`https://api.coingecko.com/api/v3/coins/${newCrypto.id.toLowerCase()}`);
-      
-      if (!response.ok) {
-        throw new Error(`CoinGecko API error: ${response.status}`);
+      console.log(`🔍 [ADMIN] Fetching logo for crypto ID: ${newCrypto.id.toLowerCase()}`);
+
+      // Fetch with timeout and better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/${newCrypto.id.toLowerCase()}`,
+        {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      console.log(`📡 [ADMIN] CoinGecko response status: ${response?.status}`);
+
+      if (!response || !response.ok) {
+        const statusCode = response?.status || 'unknown';
+        if (statusCode === 404) {
+          throw new Error(`Cryptocurrency "${newCrypto.id}" not found on CoinGecko. Please check the ID.`);
+        } else if (statusCode === 429) {
+          throw new Error('Rate limit exceeded. Please try again in a few minutes.');
+        } else {
+          throw new Error(`CoinGecko API error: ${statusCode}`);
+        }
       }
-      
+
       const data = await response.json();
-      
+      console.log(`✅ [ADMIN] Data received:`, { hasImage: !!data.image, name: data.name });
+
       if (data.image && data.image.large) {
         setFetchedLogoUrl(data.image.large);
         setNewCrypto(prev => ({
@@ -1410,20 +1444,29 @@ export default function AdminPanel() {
           name: data.name || prev.name,
           symbol: data.symbol?.toUpperCase() || prev.symbol
         }));
-        
-        toast({ 
-          title: "Success", 
-          description: `Logo fetched successfully for ${data.name}` 
+
+        toast({
+          title: "Success",
+          description: `Logo fetched successfully for ${data.name}`
         });
       } else {
         throw new Error("Logo not found in API response");
       }
     } catch (error: any) {
-      console.error("Error fetching logo:", error);
-      toast({ 
-        title: "Failed", 
-        description: error.message || "Failed to fetch logo from CoinGecko",
-        variant: "destructive" 
+      console.error("❌ [ADMIN] Error fetching logo:", error);
+
+      let errorMessage = "Failed to fetch logo from CoinGecko";
+
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout. Please check your internet connection.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      toast({
+        title: "Failed",
+        description: errorMessage,
+        variant: "destructive"
       });
     } finally {
       setIsFetchingLogo(false);
@@ -1449,7 +1492,7 @@ export default function AdminPanel() {
         image: crypto.image
       } : null;
     }
-    
+
     const crypto = cryptocurrencies.find((c: Cryptocurrency) => c.id === cryptoId);
     return crypto ? {
       name: crypto.name,
@@ -1463,7 +1506,7 @@ export default function AdminPanel() {
     // Remove duplicates by id - keep first occurrence
     const isFirstOccurrence = array.findIndex(u => u.id === user.id) === index;
     if (!isFirstOccurrence) return false;
-    
+
     // Apply search filter
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
@@ -1496,18 +1539,18 @@ export default function AdminPanel() {
   const filteredTransactions = transactionsData && Array.isArray(transactionsData) ? transactionsData.filter((transaction: any) => {
     // Filter by type
     if (transactionFilter.type !== 'all' && transaction.type !== transactionFilter.type) return false;
-    
+
     // Filter by status
     if (transactionFilter.status !== 'all' && transaction.status !== transactionFilter.status) return false;
-    
+
     // Filter by token
     if (transactionFilter.token !== 'all' && transaction.token?.toLowerCase() !== transactionFilter.token.toLowerCase()) return false;
-    
+
     // Filter by date range
     if (transactionFilter.dateRange !== 'all') {
       const transactionDate = new Date(transaction.createdAt);
       const now = new Date();
-      
+
       switch (transactionFilter.dateRange) {
         case 'today':
           const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1523,7 +1566,7 @@ export default function AdminPanel() {
           break;
       }
     }
-    
+
     return true;
   }) : [];
 
@@ -1563,7 +1606,7 @@ export default function AdminPanel() {
   const paginatedSurvival = survivalData?.slice(survivalStartIndex, survivalEndIndex) || [];
 
   // Get unique tokens for filter dropdown
-  const availableTokens = transactionsData && Array.isArray(transactionsData) 
+  const availableTokens = transactionsData && Array.isArray(transactionsData)
     ? [...new Set(transactionsData.map((t: any) => t.token).filter(Boolean))]
     : [];
 
@@ -1588,7 +1631,7 @@ export default function AdminPanel() {
       } else if (transaction.type === 'withdrawal' && transaction.status === 'completed') {
         totalWithdrawals += parseFloat(transaction.usdAmount || transaction.amount || 0);
       }
-      
+
       if (transaction.status === 'pending') {
         pendingTransactions += 1;
       }
@@ -1625,7 +1668,7 @@ export default function AdminPanel() {
         user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
-    
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1663,7 +1706,7 @@ export default function AdminPanel() {
         ].join(",");
       })
     ].join("\n");
-    
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1703,7 +1746,7 @@ export default function AdminPanel() {
         trendRide.createdAt ? new Date(trendRide.createdAt).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
-    
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1743,7 +1786,7 @@ export default function AdminPanel() {
         tx.processedAt ? new Date(tx.processedAt).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
-    
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1778,7 +1821,7 @@ export default function AdminPanel() {
         ].join(",");
       })
     ].join("\n");
-    
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1819,7 +1862,7 @@ export default function AdminPanel() {
         battle.endedAt ? new Date(battle.endedAt).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
-    
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1857,7 +1900,7 @@ export default function AdminPanel() {
         survivalItem.processedAt ? new Date(survivalItem.processedAt).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
-    
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1896,7 +1939,7 @@ export default function AdminPanel() {
         user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"
       ].join(","))
     ].join("\n");
-    
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1915,25 +1958,25 @@ export default function AdminPanel() {
     // Compare current data with previous snapshot
     if (lastTransactionSnapshot.length > 0) {
       const hashUpdates: string[] = [];
-      
+
       transactionsData.forEach((currentTx: any) => {
         const previousTx = lastTransactionSnapshot.find((prev: any) => prev.id === currentTx.id);
-        
+
         if (previousTx) {
           // Check if hash was updated from empty/null to a real hash
           const prevHash = previousTx.hash || '';
           const currentHash = currentTx.hash || '';
-          
+
           if (!prevHash && currentHash && currentHash !== '3' && currentHash.startsWith('0x')) {
             hashUpdates.push(`NTIQ-${currentTx.uniqueTransactionId || currentTx.id.toString().padStart(8, '0')}`);
-            
+
             // Show success toast for hash update
             toast({
               title: "🔗 Hash Updated!",
               description: `Transaction ${currentTx.type} has been processed and hash is now available`,
             });
           }
-          
+
           // Check if status changed from processing to completed
           if (previousTx.status === 'processing' && currentTx.status === 'completed') {
             toast({
@@ -1949,7 +1992,7 @@ export default function AdminPanel() {
         setRecentHashUpdates(prev => {
           const newSet = new Set(prev);
           hashUpdates.forEach(id => newSet.add(id));
-          
+
           // Clear after 10 seconds
           setTimeout(() => {
             setRecentHashUpdates(current => {
@@ -1958,7 +2001,7 @@ export default function AdminPanel() {
               return updatedSet;
             });
           }, 10000);
-          
+
           return newSet;
         });
       }
@@ -2019,66 +2062,66 @@ export default function AdminPanel() {
           <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-1 sm:p-1 md:p-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="bg-transparent w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-0.5 sm:gap-1 md:gap-2 h-auto p-0">
-                <TabsTrigger 
-                  value="statistics" 
+                <TabsTrigger
+                  value="statistics"
                   className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
                   <BarChart3 className="h-4 w-4 md:h-6 md:w-6 mb-1" />
                   <span className="hidden sm:inline">Statistics</span>
                   <span className="sm:hidden">Stats</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="users" 
+                <TabsTrigger
+                  value="users"
                   className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
                   <Users className="h-4 w-4 md:h-6 md:w-6 mb-1" />
                   Users
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="cryptocurrencies" 
+                <TabsTrigger
+                  value="cryptocurrencies"
                   className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-yellow-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
                   <Database className="h-4 w-4 md:h-6 md:w-6 mb-1" />
                   Crypto
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="predictions" 
+                <TabsTrigger
+                  value="predictions"
                   className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
                   <TrendingUp className="h-4 w-4 md:h-6 md:w-6 mb-1" />
                   <span className="hidden sm:inline">Predictions</span>
                   <span className="sm:hidden">Pred</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="leaderboard" 
+                <TabsTrigger
+                  value="leaderboard"
                   className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
                 >
                   <Trophy className="h-6 w-6 mb-1" />
                   Leaderboard
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="transactions" 
+                <TabsTrigger
+                  value="transactions"
                   className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-500 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
                 >
                   <DollarSign className="h-6 w-6 mb-1" />
                   Transactions
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="security" 
+                <TabsTrigger
+                  value="security"
                   className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-pink-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
                 >
                   <Lock className="h-6 w-6 mb-1" />
                   Security
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="events" 
+                <TabsTrigger
+                  value="events"
                   className="flex-col h-20 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
                 >
                   <Calendar className="h-6 w-6 mb-1" />
                   Events
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="settings" 
+                <TabsTrigger
+                  value="settings"
                   className="flex-col h-16 md:h-20 text-xs sm:text-sm data-[state=active]:bg-gradient-to-br data-[state=active]:from-violet-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0 px-1 md:px-2"
                 >
                   <Settings className="h-4 w-4 md:h-6 md:w-6 mb-1" />
@@ -2111,7 +2154,7 @@ export default function AdminPanel() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border-slate-600/50 backdrop-blur-sm hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -2299,7 +2342,7 @@ export default function AdminPanel() {
                             <Label className="text-white">Username</Label>
                             <Input
                               value={newUser.username}
-                              onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                              onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
                               className="bg-slate-700 border-slate-600 text-white"
                               placeholder="Enter username"
                             />
@@ -2308,7 +2351,7 @@ export default function AdminPanel() {
                             <Label className="text-white">Wallet Address</Label>
                             <Input
                               value={newUser.walletAddress}
-                              onChange={(e) => setNewUser({...newUser, walletAddress: e.target.value})}
+                              onChange={(e) => setNewUser({ ...newUser, walletAddress: e.target.value })}
                               className="bg-slate-700 border-slate-600 text-white"
                               placeholder="0x..."
                             />
@@ -2316,12 +2359,12 @@ export default function AdminPanel() {
                           <div className="flex items-center space-x-2">
                             <Switch
                               checked={newUser.isAdmin}
-                              onCheckedChange={(checked) => setNewUser({...newUser, isAdmin: checked})}
+                              onCheckedChange={(checked) => setNewUser({ ...newUser, isAdmin: checked })}
                             />
                             <Label className="text-white">Admin privileges</Label>
                           </div>
                           <div className="flex gap-2">
-                            <Button 
+                            <Button
                               onClick={() => addUserMutation.mutate(newUser)}
                               disabled={addUserMutation.isPending}
                               className="bg-blue-600 hover:bg-blue-700"
@@ -2337,7 +2380,7 @@ export default function AdminPanel() {
                     </Dialog>
                   </div>
                 </CardTitle>
-                
+
                 {/* Search Bar */}
                 <div className="mt-4">
                   <div className="relative">
@@ -2454,7 +2497,7 @@ export default function AdminPanel() {
                                         <Label className="text-white">Username</Label>
                                         <Input
                                           value={selectedUser.username || ""}
-                                          onChange={(e) => setSelectedUser({...selectedUser, username: e.target.value})}
+                                          onChange={(e) => setSelectedUser({ ...selectedUser, username: e.target.value })}
                                           className="bg-slate-700 border-slate-600 text-white"
                                           placeholder="Enter username"
                                         />
@@ -2463,7 +2506,7 @@ export default function AdminPanel() {
                                         <Label className="text-white">Email</Label>
                                         <Input
                                           value={selectedUser.email || ""}
-                                          onChange={(e) => setSelectedUser({...selectedUser, email: e.target.value})}
+                                          onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })}
                                           className="bg-slate-700 border-slate-600 text-white"
                                           placeholder="user@example.com"
                                         />
@@ -2473,7 +2516,7 @@ export default function AdminPanel() {
                                         <Input
                                           type="number"
                                           value={selectedUser.balance || 0}
-                                          onChange={(e) => setSelectedUser({...selectedUser, balance: Number(e.target.value)})}
+                                          onChange={(e) => setSelectedUser({ ...selectedUser, balance: Number(e.target.value) })}
                                           className="bg-slate-700 border-slate-600 text-white"
                                           placeholder="1000"
                                         />
@@ -2481,12 +2524,12 @@ export default function AdminPanel() {
                                       <div className="flex items-center space-x-2">
                                         <Switch
                                           checked={selectedUser.isAdmin || false}
-                                          onCheckedChange={(checked) => setSelectedUser({...selectedUser, isAdmin: checked})}
+                                          onCheckedChange={(checked) => setSelectedUser({ ...selectedUser, isAdmin: checked })}
                                         />
                                         <Label className="text-white">Admin privileges</Label>
                                       </div>
                                       <div className="flex gap-2">
-                                        <Button 
+                                        <Button
                                           onClick={() => updateUserMutation.mutate({ id: selectedUser.id, data: selectedUser })}
                                           disabled={updateUserMutation.isPending}
                                           className="bg-blue-600 hover:bg-blue-700"
@@ -2574,13 +2617,13 @@ export default function AdminPanel() {
                         <ChevronLeft className="h-4 w-4" />
                         Previous
                       </Button>
-                      
+
                       <div className="flex items-center space-x-1">
                         {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
                           .filter(page => {
                             const current = pagination.currentPage;
-                            return page === 1 || page === pagination.totalPages || 
-                                   (page >= current - 2 && page <= current + 2);
+                            return page === 1 || page === pagination.totalPages ||
+                              (page >= current - 2 && page <= current + 2);
                           })
                           .map((page, index, array) => (
                             <div key={page} className="flex items-center">
@@ -2591,8 +2634,8 @@ export default function AdminPanel() {
                                 variant={page === pagination.currentPage ? "default" : "outline"}
                                 size="sm"
                                 onClick={() => setCurrentPage(page)}
-                                className={page === pagination.currentPage 
-                                  ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                                className={page === pagination.currentPage
+                                  ? "bg-blue-600 hover:bg-blue-700 text-white"
                                   : "bg-slate-800 border-slate-600 hover:bg-slate-700"
                                 }
                               >
@@ -2648,125 +2691,146 @@ export default function AdminPanel() {
                           Add New Cryptocurrency
                         </Button>
                       </DialogTrigger>
-                    <DialogContent className="bg-slate-800 border-slate-700">
-                      <DialogHeader>
-                        <DialogTitle className="text-white">Add New Cryptocurrency</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label className="text-white">Crypto ID</Label>
-                          <Input
-                            value={newCrypto.id}
-                            onChange={(e) => setNewCrypto({...newCrypto, id: e.target.value})}
-                            className="bg-slate-700 border-slate-600 text-white"
-                            placeholder="bitcoin"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-white">Name</Label>
-                          <Input
-                            value={newCrypto.name}
-                            onChange={(e) => setNewCrypto({...newCrypto, name: e.target.value})}
-                            className="bg-slate-700 border-slate-600 text-white"
-                            placeholder="Bitcoin"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-white">Symbol</Label>
-                          <Input
-                            value={newCrypto.symbol}
-                            onChange={(e) => setNewCrypto({...newCrypto, symbol: e.target.value})}
-                            className="bg-slate-700 border-slate-600 text-white"
-                            placeholder="BTC"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-white">Image URL</Label>
-                          <div className="flex gap-2">
+                      <DialogContent className="bg-slate-800 border-slate-700">
+                        <DialogHeader>
+                          <DialogTitle className="text-white">Add New Cryptocurrency</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-white">Crypto ID</Label>
                             <Input
-                              value={newCrypto.image}
-                              onChange={(e) => setNewCrypto({...newCrypto, image: e.target.value})}
-                              className="bg-slate-700 border-slate-600 text-white flex-1"
-                              placeholder="https://..."
+                              value={newCrypto.id}
+                              onChange={(e) => setNewCrypto({ ...newCrypto, id: e.target.value })}
+                              className="bg-slate-700 border-slate-600 text-white"
+                              placeholder="bitcoin"
                             />
+                          </div>
+                          <div>
+                            <Label className="text-white">Name</Label>
+                            <Input
+                              value={newCrypto.name}
+                              onChange={(e) => setNewCrypto({ ...newCrypto, name: e.target.value })}
+                              className="bg-slate-700 border-slate-600 text-white"
+                              placeholder="Bitcoin"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-white">Symbol</Label>
+                            <Input
+                              value={newCrypto.symbol}
+                              onChange={(e) => setNewCrypto({ ...newCrypto, symbol: e.target.value })}
+                              className="bg-slate-700 border-slate-600 text-white"
+                              placeholder="BTC"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-white">Image URL</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                value={newCrypto.image}
+                                onChange={(e) => setNewCrypto({ ...newCrypto, image: e.target.value })}
+                                className="bg-slate-700 border-slate-600 text-white flex-1"
+                                placeholder="https://..."
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={fetchCryptoLogo}
+                                disabled={isFetchingLogo || !newCrypto.id.trim()}
+                                className="bg-green-600 hover:bg-green-700 border-green-600 text-white"
+                              >
+                                {isFetchingLogo ? (
+                                  <>
+                                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                    Fetching...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Fetch Logo
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                            {fetchedLogoUrl && (
+                              <div className="mt-2 p-2 bg-slate-700 border border-slate-600 rounded flex items-center gap-3">
+                                <img
+                                  src={fetchedLogoUrl}
+                                  alt="Logo preview"
+                                  className="w-10 h-10 rounded-full bg-white p-1"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                                <div className="text-sm">
+                                  <div className="text-green-400 font-medium">✓ Logo fetched from CoinGecko</div>
+                                  <div className="text-slate-400 truncate max-w-xs">{fetchedLogoUrl}</div>
+                                </div>
+                              </div>
+                            )}
+                            <p className="text-xs text-slate-400 mt-1">
+                              Enter Crypto ID above, then click "Fetch Logo" to get logo from CoinGecko
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-white">Pyth Network Feed ID</Label>
+                            <Input
+                              value={newCrypto.pythFeedId}
+                              onChange={(e) => setNewCrypto({ ...newCrypto, pythFeedId: e.target.value })}
+                              className="bg-slate-700 border-slate-600 text-white"
+                              placeholder="0x..."
+                            />
+                          </div>
+                          <div className="flex gap-2">
                             <Button
-                              type="button"
-                              variant="outline"
-                              onClick={fetchCryptoLogo}
-                              disabled={isFetchingLogo || !newCrypto.id.trim()}
-                              className="bg-green-600 hover:bg-green-700 border-green-600 text-white"
+                              onClick={() => {
+                                // Format data according to backend expectation
+                                const cryptoData = {
+                                  cryptoId: newCrypto.id,
+                                  name: newCrypto.name,
+                                  symbol: newCrypto.symbol,
+                                  image: newCrypto.image,
+                                  pythFeedId: newCrypto.pythFeedId
+                                };
+                                addCryptoMutation.mutate(cryptoData);
+                              }}
+                              disabled={addCryptoMutation.isPending || !newCrypto.id || !newCrypto.name || !newCrypto.symbol || !newCrypto.pythFeedId}
+                              className="bg-blue-600 hover:bg-blue-700"
                             >
-                              {isFetchingLogo ? (
-                                <>
-                                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                  Fetching...
-                                </>
-                              ) : (
-                                <>
-                                  <Download className="mr-2 h-4 w-4" />
-                                  Fetch Logo
-                                </>
-                              )}
+                              {addCryptoMutation.isPending ? "Adding..." : "Add Cryptocurrency"}
+                            </Button>
+                            <Button variant="outline" onClick={() => setShowAddCrypto(false)}>
+                              Cancel
                             </Button>
                           </div>
-                          {fetchedLogoUrl && (
-                            <div className="mt-2 p-2 bg-slate-700 border border-slate-600 rounded flex items-center gap-3">
-                              <img 
-                                src={fetchedLogoUrl} 
-                                alt="Logo preview" 
-                                className="w-10 h-10 rounded-full bg-white p-1"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
-                              <div className="text-sm">
-                                <div className="text-green-400 font-medium">✓ Logo fetched from CoinGecko</div>
-                                <div className="text-slate-400 truncate max-w-xs">{fetchedLogoUrl}</div>
-                              </div>
-                            </div>
-                          )}
-                          <p className="text-xs text-slate-400 mt-1">
-                            Enter Crypto ID above, then click "Fetch Logo" to get logo from CoinGecko
-                          </p>
                         </div>
-                        <div>
-                          <Label className="text-white">Pyth Network Feed ID</Label>
-                          <Input
-                            value={newCrypto.pythFeedId}
-                            onChange={(e) => setNewCrypto({...newCrypto, pythFeedId: e.target.value})}
-                            className="bg-slate-700 border-slate-600 text-white"
-                            placeholder="0x..."
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            onClick={() => {
-                              // Format data according to backend expectation
-                              const cryptoData = {
-                                cryptoId: newCrypto.id,
-                                name: newCrypto.name,
-                                symbol: newCrypto.symbol,
-                                image: newCrypto.image,
-                                pythFeedId: newCrypto.pythFeedId
-                              };
-                              addCryptoMutation.mutate(cryptoData);
-                            }}
-                            disabled={addCryptoMutation.isPending || !newCrypto.id || !newCrypto.name || !newCrypto.symbol || !newCrypto.pythFeedId}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            {addCryptoMutation.isPending ? "Adding..." : "Add Cryptocurrency"}
-                          </Button>
-                          <Button variant="outline" onClick={() => setShowAddCrypto(false)}>
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Real-time Price Update Indicator */}
+                <div className="mb-4 flex items-center justify-between bg-slate-700/50 p-3 rounded-lg border border-slate-600">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${pricesFetching ? 'bg-orange-400 animate-spin' : 'bg-green-400 animate-pulse'}`}></div>
+                    <span className="text-sm text-green-400 font-medium">
+                      REAL-TIME PRICES
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      • Updates every 1 second
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">
+                      Last update: {new Date(pricesUpdatedAt).toLocaleTimeString()}
+                    </span>
+                    <span className="text-xs bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2 py-0.5 rounded-full font-medium">
+                      Pyth Network
+                    </span>
+                  </div>
+                </div>
+
                 {cryptoLoading ? (
                   <div className="text-center py-8">
                     <div className="text-slate-400">Loading cryptocurrencies...</div>
@@ -2776,12 +2840,12 @@ export default function AdminPanel() {
                     {cryptocurrencies.map((crypto) => {
                       const priceData = getCryptoPrice(crypto.id);
                       return (
-                        <Card key={crypto.id} className="bg-slate-700 border-slate-600">
+                        <Card key={crypto.id} className="bg-slate-700 border-slate-600 transition-all duration-200 hover:border-slate-500">
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
-                                <img 
-                                  src={crypto.image} 
+                                <img
+                                  src={crypto.image}
                                   alt={crypto.name}
                                   className="w-10 h-10 rounded-full"
                                   onError={(e) => {
@@ -2865,29 +2929,29 @@ export default function AdminPanel() {
             <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-2">
               <Tabs value={predictionSubTab} onValueChange={setPredictionSubTab} className="w-full">
                 <TabsList className="bg-transparent w-full grid grid-cols-4 gap-2 h-auto p-0">
-                  <TabsTrigger 
-                    value="predictions" 
+                  <TabsTrigger
+                    value="predictions"
                     className="flex-col h-16 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
                   >
                     <TrendingUp className="h-5 w-5 mb-1" />
                     Predictions
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="battles" 
+                  <TabsTrigger
+                    value="battles"
                     className="flex-col h-16 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
                   >
                     <Swords className="h-5 w-5 mb-1" />
                     Battles
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="parlays" 
+                  <TabsTrigger
+                    value="parlays"
                     className="flex-col h-16 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
                   >
                     <Layers className="h-5 w-5 mb-1" />
                     Parlays
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="survival" 
+                  <TabsTrigger
+                    value="survival"
                     className="flex-col h-16 text-xs data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-200 rounded-lg border-0"
                   >
                     <Target className="h-5 w-5 mb-1" />
@@ -2909,7 +2973,7 @@ export default function AdminPanel() {
                           Export CSV
                         </Button>
                       </CardTitle>
-                      
+
                       {/* Filters */}
                       <div className="mt-4 flex gap-4">
                         <div>
@@ -2950,580 +3014,580 @@ export default function AdminPanel() {
                         </div>
                       ) : paginatedPredictions && paginatedPredictions.length > 0 ? (
                         <div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>ID</TableHead>
-                              <TableHead>User</TableHead>
-                              <TableHead>Crypto</TableHead>
-                              <TableHead>Predicted Price</TableHead>
-                              <TableHead>Actual Price</TableHead>
-                              <TableHead>Timeframe</TableHead>
-                              <TableHead>Stake</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead>Reward</TableHead>
-                              <TableHead>Created</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                      {paginatedPredictions.map((prediction) => (
-                        <TableRow key={prediction.id}>
-                          <TableCell>{prediction.id}</TableCell>
-                          <TableCell>
-                            <div className="font-medium text-white">
-                              {prediction.username || `User ${prediction.userId}`}
-                            </div>
-                            <div className="text-xs text-slate-400">ID: {prediction.userId}</div>
-                          </TableCell>
-                          <TableCell>
-                            {(() => {
-                              const cryptoInfo = getCryptoInfo(prediction.cryptocurrency);
-                              return cryptoInfo ? (
-                                <div className="flex items-center space-x-2">
-                                  <img 
-                                    src={cryptoInfo.image} 
-                                    alt={cryptoInfo.name}
-                                    className="w-6 h-6 rounded-full"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="%23666"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="8">${cryptoInfo.symbol}</text></svg>`;
-                                    }}
-                                  />
-                                  <div>
-                                    <div className="font-medium text-white">{cryptoInfo.name}</div>
-                                    <div className="text-xs text-slate-400">{cryptoInfo.symbol}</div>
-                                  </div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>ID</TableHead>
+                                <TableHead>User</TableHead>
+                                <TableHead>Crypto</TableHead>
+                                <TableHead>Predicted Price</TableHead>
+                                <TableHead>Actual Price</TableHead>
+                                <TableHead>Timeframe</TableHead>
+                                <TableHead>Stake</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Reward</TableHead>
+                                <TableHead>Created</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedPredictions.map((prediction) => (
+                                <TableRow key={prediction.id}>
+                                  <TableCell>{prediction.id}</TableCell>
+                                  <TableCell>
+                                    <div className="font-medium text-white">
+                                      {prediction.username || `User ${prediction.userId}`}
+                                    </div>
+                                    <div className="text-xs text-slate-400">ID: {prediction.userId}</div>
+                                  </TableCell>
+                                  <TableCell>
+                                    {(() => {
+                                      const cryptoInfo = getCryptoInfo(prediction.cryptocurrency);
+                                      return cryptoInfo ? (
+                                        <div className="flex items-center space-x-2">
+                                          <img
+                                            src={cryptoInfo.image}
+                                            alt={cryptoInfo.name}
+                                            className="w-6 h-6 rounded-full"
+                                            onError={(e) => {
+                                              const target = e.target as HTMLImageElement;
+                                              target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="%23666"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="8">${cryptoInfo.symbol}</text></svg>`;
+                                            }}
+                                          />
+                                          <div>
+                                            <div className="font-medium text-white">{cryptoInfo.name}</div>
+                                            <div className="text-xs text-slate-400">{cryptoInfo.symbol}</div>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <span className="font-mono text-slate-400">{prediction.cryptocurrency}</span>
+                                      );
+                                    })()}
+                                  </TableCell>
+                                  <TableCell>${prediction.predictedPrice.toLocaleString()}</TableCell>
+                                  <TableCell>
+                                    {prediction.actualPrice ? `$${prediction.actualPrice.toLocaleString()}` : 'Pending'}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="outline">{prediction.timeframe}</Badge>
+                                  </TableCell>
+                                  <TableCell>{prediction.stakeAmount} NTIQ</TableCell>
+                                  <TableCell>
+                                    <Badge variant={
+                                      prediction.status === 'completed' ? 'default' :
+                                        prediction.status === 'active' ? 'secondary' : 'outline'
+                                    }>
+                                      {prediction.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    {prediction.rewardAmount ? `${prediction.rewardAmount} NTIQ` : 'N/A'}
+                                  </TableCell>
+                                  <TableCell className="text-xs text-slate-400">
+                                    {new Date(prediction.createdAt).toLocaleDateString()}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+
+                          {/* Predictions Pagination */}
+                          {totalPredictionsPages > 1 && (
+                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
+                              <div className="text-sm text-slate-400">
+                                Showing {predictionsStartIndex + 1}-{Math.min(predictionsEndIndex, totalPredictions)} of {totalPredictions} predictions
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setPredictionsPage(Math.max(1, predictionsPage - 1))}
+                                  disabled={predictionsPage === 1}
+                                  className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                >
+                                  <ChevronLeft className="h-4 w-4" />
+                                  Previous
+                                </Button>
+
+                                <div className="flex space-x-1">
+                                  {Array.from({ length: totalPredictionsPages }, (_, i) => i + 1).map((page) => (
+                                    <Button
+                                      key={page}
+                                      variant={page === predictionsPage ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => setPredictionsPage(page)}
+                                      className={page === predictionsPage
+                                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                        : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                      }
+                                    >
+                                      {page}
+                                    </Button>
+                                  ))}
                                 </div>
-                              ) : (
-                                <span className="font-mono text-slate-400">{prediction.cryptocurrency}</span>
-                              );
-                            })()}
-                          </TableCell>
-                          <TableCell>${prediction.predictedPrice.toLocaleString()}</TableCell>
-                          <TableCell>
-                            {prediction.actualPrice ? `$${prediction.actualPrice.toLocaleString()}` : 'Pending'}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{prediction.timeframe}</Badge>
-                          </TableCell>
-                          <TableCell>{prediction.stakeAmount} NTIQ</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              prediction.status === 'completed' ? 'default' : 
-                              prediction.status === 'active' ? 'secondary' : 'outline'
-                            }>
-                              {prediction.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {prediction.rewardAmount ? `${prediction.rewardAmount} NTIQ` : 'N/A'}
-                          </TableCell>
-                          <TableCell className="text-xs text-slate-400">
-                            {new Date(prediction.createdAt).toLocaleDateString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  
-                  {/* Predictions Pagination */}
-                  {totalPredictionsPages > 1 && (
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
-                      <div className="text-sm text-slate-400">
-                        Showing {predictionsStartIndex + 1}-{Math.min(predictionsEndIndex, totalPredictions)} of {totalPredictions} predictions
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setPredictionsPage(Math.max(1, predictionsPage - 1))}
-                          disabled={predictionsPage === 1}
-                          className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          Previous
-                        </Button>
-                        
-                        <div className="flex space-x-1">
-                          {Array.from({ length: totalPredictionsPages }, (_, i) => i + 1).map((page) => (
-                            <Button
-                              key={page}
-                              variant={page === predictionsPage ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setPredictionsPage(page)}
-                              className={page === predictionsPage 
-                                ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                                : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                              }
-                            >
-                              {page}
-                            </Button>
-                          ))}
-                        </div>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setPredictionsPage(Math.min(totalPredictionsPages, predictionsPage + 1))}
-                          disabled={predictionsPage === totalPredictionsPages}
-                          className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                        >
-                          Next
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <TrendingUp className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-300 mb-2">No Predictions</h3>
-                    <p className="text-slate-400">Predictions will appear here when users start making them</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          {/* Battles Sub-Tab */}
-          <TabsContent value="battles" className="mt-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Swords className="mr-2" size={20} />
-                    Prediction Battles ({totalBattles})
-                  </div>
-                  <Button onClick={() => {}} variant="outline" size="sm">
-                    <Download className="mr-2" size={16} />
-                    Export CSV
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {battlesLoading ? (
-                  <div className="text-center py-8">
-                    <div className="text-slate-400">Loading battles...</div>
-                  </div>
-                ) : paginatedBattles && paginatedBattles.length > 0 ? (
-                  <div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Battle ID</TableHead>
-                          <TableHead>Challenger</TableHead>
-                          <TableHead>Opponent</TableHead>
-                          <TableHead>Cryptocurrency</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Winner</TableHead>
-                          <TableHead>Stake</TableHead>
-                          <TableHead>Created</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedBattles.map((battle: any) => (
-                          <TableRow key={battle.id}>
-                            <TableCell>#{battle.id}</TableCell>
-                            <TableCell className="font-medium text-white">
-                              {battle.challengerUsername || `User ${battle.challengerId}`}
-                            </TableCell>
-                            <TableCell className="font-medium text-white">
-                              {battle.opponentUsername || `User ${battle.opponentId}`}
-                            </TableCell>
-                            <TableCell className="font-medium text-white capitalize">
-                              {battle.cryptocurrency}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={
-                                battle.status === 'completed' ? 'default' : 
-                                battle.status === 'active' ? 'secondary' : 'outline'
-                              }>
-                                {battle.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {battle.winnerId ? 
-                                <span className="text-green-400 font-semibold">
-                                  {battle.winnerUsername || `User ${battle.winnerId}`}
-                                </span> : 
-                                <span className="text-slate-400">Pending</span>
-                              }
-                            </TableCell>
-                            <TableCell className="text-yellow-400 font-semibold">
-                              {battle.stakeAmount} NTIQ
-                            </TableCell>
-                            <TableCell className="text-xs text-slate-400">
-                              {new Date(battle.createdAt).toLocaleDateString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    
-                    {/* Battles Pagination */}
-                    {totalBattlesPages > 1 && (
-                      <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
-                        <div className="text-sm text-slate-400">
-                          Showing {battlesStartIndex + 1}-{Math.min(battlesEndIndex, totalBattles)} of {totalBattles} battles
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setBattlesPage(Math.max(1, battlesPage - 1))}
-                            disabled={battlesPage === 1}
-                            className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                            Previous
-                          </Button>
-                          
-                          <div className="flex space-x-1">
-                            {Array.from({ length: totalBattlesPages }, (_, i) => i + 1).map((page) => (
-                              <Button
-                                key={page}
-                                variant={page === battlesPage ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setBattlesPage(page)}
-                                className={page === battlesPage 
-                                  ? "bg-red-600 hover:bg-red-700 text-white" 
-                                  : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                                }
-                              >
-                                {page}
-                              </Button>
-                            ))}
-                          </div>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setBattlesPage(Math.min(totalBattlesPages, battlesPage + 1))}
-                            disabled={battlesPage === totalBattlesPages}
-                            className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                          >
-                            Next
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Swords className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-300 mb-2">No Battles Yet</h3>
-                    <p className="text-slate-400">Prediction battles will appear here when users start challenging each other</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* TrendRides Sub-Tab */}
-          <TabsContent value="parlays" className="mt-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Layers className="mr-2" size={20} />
-                    TrendRide Predictions ({trendRideData?.length || 0})
-                  </div>
-                  <Button onClick={exportTrendRidePredictions} variant="outline" size="sm">
-                    <Download className="mr-2" size={16} />
-                    Export CSV
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {trendRideLoading ? (
-                  <div className="text-center py-8">
-                    <div className="text-slate-400">Loading TrendRide predictions...</div>
-                  </div>
-                ) : trendRideData && trendRideData.length > 0 ? (
-                  <div>
-                    <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>TrendRide ID</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead>Cryptocurrency</TableHead>
-                        <TableHead>Prediction</TableHead>
-                        <TableHead>Timeframe</TableHead>
-                        <TableHead>Start Price</TableHead>
-                        <TableHead>End Price</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Coin Result</TableHead>
-                        <TableHead>Stake Amount</TableHead>
-                        <TableHead>Created</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedTrendRides.map((coin: any) => (
-                        <TableRow key={`${coin.parlayId}-${coin.coinId}`}>
-                          <TableCell>
-                            <div className="font-medium text-white">#{coin.parlayId}</div>
-                            <div className="text-xs text-slate-400">
-                              {coin.correctPredictions}/{coin.totalCoinCount} correct
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setPredictionsPage(Math.min(totalPredictionsPages, predictionsPage + 1))}
+                                  disabled={predictionsPage === totalPredictionsPages}
+                                  className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                >
+                                  Next
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium text-white">
-                              {coin.username || `User ${coin.userId}`}
-                            </div>
-                            <div className="text-xs text-slate-400">ID: {coin.userId}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium text-white capitalize">
-                              {coin.cryptocurrency || 'Unknown'}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={coin.prediction === 'up' ? 'default' : 'destructive'}>
-                              {coin.prediction?.toUpperCase() || 'N/A'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-slate-300">{coin.duration || 'N/A'}</span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-blue-400 font-mono">
-                              ${coin.startPrice ? parseFloat(coin.startPrice).toFixed(4) : '0.0000'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-green-400 font-mono">
-                              {coin.endPrice ? `$${parseFloat(coin.endPrice).toFixed(4)}` : 'Pending'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              coin.parlayStatus === 'completed' ? 'default' : 
-                              coin.parlayStatus === 'active' ? 'secondary' : 'outline'
-                            }>
-                              {coin.parlayStatus}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              coin.coinStatus === 'correct' ? 'default' : 
-                              coin.coinStatus === 'incorrect' ? 'destructive' : 'outline'
-                            }>
-                              {coin.coinStatus === 'correct' ? '✓ Correct' : 
-                               coin.coinStatus === 'incorrect' ? '✗ Wrong' : '⏳ Pending'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-yellow-400 font-semibold">
-                              {coin.stakeAmount} NTIQ
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-xs text-slate-400">
-                            {new Date(coin.createdAt).toLocaleDateString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  
-                  {/* TrendRides Pagination */}
-                  {totalTrendRidesPages > 1 && (
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
-                      <div className="text-sm text-slate-400">
-                        Showing {trendRidesStartIndex + 1}-{Math.min(trendRidesEndIndex, totalTrendRides)} of {totalTrendRides} TrendRide predictions
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setTrendRidesPage(Math.max(1, trendRidesPage - 1))}
-                          disabled={trendRidesPage === 1}
-                          className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          Previous
-                        </Button>
-                        
-                        <div className="flex space-x-1">
-                          {Array.from({ length: totalTrendRidesPages }, (_, i) => i + 1).map((page) => (
-                            <Button
-                              key={page}
-                              variant={page === trendRidesPage ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setTrendRidesPage(page)}
-                              className={page === trendRidesPage 
-                                ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                                : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                              }
-                            >
-                              {page}
-                            </Button>
-                          ))}
+                          )}
                         </div>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setTrendRidesPage(Math.min(totalTrendRidesPages, trendRidesPage + 1))}
-                          disabled={trendRidesPage === totalTrendRidesPages}
-                          className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                        >
-                          Next
-                          <ChevronRight className="h-4 w-4" />
+                      ) : (
+                        <div className="text-center py-8">
+                          <TrendingUp className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold text-slate-300 mb-2">No Predictions</h3>
+                          <p className="text-slate-400">Predictions will appear here when users start making them</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Battles Sub-Tab */}
+                <TabsContent value="battles" className="mt-6">
+                  <Card className="bg-slate-800 border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Swords className="mr-2" size={20} />
+                          Prediction Battles ({totalBattles})
+                        </div>
+                        <Button onClick={() => { }} variant="outline" size="sm">
+                          <Download className="mr-2" size={16} />
+                          Export CSV
                         </Button>
-                      </div>
-                    </div>
-                  )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Layers className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-300 mb-2">No Parlays</h3>
-                    <p className="text-slate-400">Parlay predictions will appear here when users create them</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {battlesLoading ? (
+                        <div className="text-center py-8">
+                          <div className="text-slate-400">Loading battles...</div>
+                        </div>
+                      ) : paginatedBattles && paginatedBattles.length > 0 ? (
+                        <div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Battle ID</TableHead>
+                                <TableHead>Challenger</TableHead>
+                                <TableHead>Opponent</TableHead>
+                                <TableHead>Cryptocurrency</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Winner</TableHead>
+                                <TableHead>Stake</TableHead>
+                                <TableHead>Created</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedBattles.map((battle: any) => (
+                                <TableRow key={battle.id}>
+                                  <TableCell>#{battle.id}</TableCell>
+                                  <TableCell className="font-medium text-white">
+                                    {battle.challengerUsername || `User ${battle.challengerId}`}
+                                  </TableCell>
+                                  <TableCell className="font-medium text-white">
+                                    {battle.opponentUsername || `User ${battle.opponentId}`}
+                                  </TableCell>
+                                  <TableCell className="font-medium text-white capitalize">
+                                    {battle.cryptocurrency}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={
+                                      battle.status === 'completed' ? 'default' :
+                                        battle.status === 'active' ? 'secondary' : 'outline'
+                                    }>
+                                      {battle.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    {battle.winnerId ?
+                                      <span className="text-green-400 font-semibold">
+                                        {battle.winnerUsername || `User ${battle.winnerId}`}
+                                      </span> :
+                                      <span className="text-slate-400">Pending</span>
+                                    }
+                                  </TableCell>
+                                  <TableCell className="text-yellow-400 font-semibold">
+                                    {battle.stakeAmount} NTIQ
+                                  </TableCell>
+                                  <TableCell className="text-xs text-slate-400">
+                                    {new Date(battle.createdAt).toLocaleDateString()}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+
+                          {/* Battles Pagination */}
+                          {totalBattlesPages > 1 && (
+                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
+                              <div className="text-sm text-slate-400">
+                                Showing {battlesStartIndex + 1}-{Math.min(battlesEndIndex, totalBattles)} of {totalBattles} battles
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setBattlesPage(Math.max(1, battlesPage - 1))}
+                                  disabled={battlesPage === 1}
+                                  className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                >
+                                  <ChevronLeft className="h-4 w-4" />
+                                  Previous
+                                </Button>
+
+                                <div className="flex space-x-1">
+                                  {Array.from({ length: totalBattlesPages }, (_, i) => i + 1).map((page) => (
+                                    <Button
+                                      key={page}
+                                      variant={page === battlesPage ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => setBattlesPage(page)}
+                                      className={page === battlesPage
+                                        ? "bg-red-600 hover:bg-red-700 text-white"
+                                        : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                      }
+                                    >
+                                      {page}
+                                    </Button>
+                                  ))}
+                                </div>
+
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setBattlesPage(Math.min(totalBattlesPages, battlesPage + 1))}
+                                  disabled={battlesPage === totalBattlesPages}
+                                  className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                >
+                                  Next
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Swords className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold text-slate-300 mb-2">No Battles Yet</h3>
+                          <p className="text-slate-400">Prediction battles will appear here when users start challenging each other</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* TrendRides Sub-Tab */}
+                <TabsContent value="parlays" className="mt-6">
+                  <Card className="bg-slate-800 border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Layers className="mr-2" size={20} />
+                          TrendRide Predictions ({trendRideData?.length || 0})
+                        </div>
+                        <Button onClick={exportTrendRidePredictions} variant="outline" size="sm">
+                          <Download className="mr-2" size={16} />
+                          Export CSV
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {trendRideLoading ? (
+                        <div className="text-center py-8">
+                          <div className="text-slate-400">Loading TrendRide predictions...</div>
+                        </div>
+                      ) : trendRideData && trendRideData.length > 0 ? (
+                        <div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>TrendRide ID</TableHead>
+                                <TableHead>User</TableHead>
+                                <TableHead>Cryptocurrency</TableHead>
+                                <TableHead>Prediction</TableHead>
+                                <TableHead>Timeframe</TableHead>
+                                <TableHead>Start Price</TableHead>
+                                <TableHead>End Price</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Coin Result</TableHead>
+                                <TableHead>Stake Amount</TableHead>
+                                <TableHead>Created</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedTrendRides.map((coin: any) => (
+                                <TableRow key={`${coin.parlayId}-${coin.coinId}`}>
+                                  <TableCell>
+                                    <div className="font-medium text-white">#{coin.parlayId}</div>
+                                    <div className="text-xs text-slate-400">
+                                      {coin.correctPredictions}/{coin.totalCoinCount} correct
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="font-medium text-white">
+                                      {coin.username || `User ${coin.userId}`}
+                                    </div>
+                                    <div className="text-xs text-slate-400">ID: {coin.userId}</div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="font-medium text-white capitalize">
+                                      {coin.cryptocurrency || 'Unknown'}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={coin.prediction === 'up' ? 'default' : 'destructive'}>
+                                      {coin.prediction?.toUpperCase() || 'N/A'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="text-slate-300">{coin.duration || 'N/A'}</span>
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="text-blue-400 font-mono">
+                                      ${coin.startPrice ? parseFloat(coin.startPrice).toFixed(4) : '0.0000'}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="text-green-400 font-mono">
+                                      {coin.endPrice ? `$${parseFloat(coin.endPrice).toFixed(4)}` : 'Pending'}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={
+                                      coin.parlayStatus === 'completed' ? 'default' :
+                                        coin.parlayStatus === 'active' ? 'secondary' : 'outline'
+                                    }>
+                                      {coin.parlayStatus}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={
+                                      coin.coinStatus === 'correct' ? 'default' :
+                                        coin.coinStatus === 'incorrect' ? 'destructive' : 'outline'
+                                    }>
+                                      {coin.coinStatus === 'correct' ? '✓ Correct' :
+                                        coin.coinStatus === 'incorrect' ? '✗ Wrong' : '⏳ Pending'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="text-yellow-400 font-semibold">
+                                      {coin.stakeAmount} NTIQ
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-xs text-slate-400">
+                                    {new Date(coin.createdAt).toLocaleDateString()}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+
+                          {/* TrendRides Pagination */}
+                          {totalTrendRidesPages > 1 && (
+                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
+                              <div className="text-sm text-slate-400">
+                                Showing {trendRidesStartIndex + 1}-{Math.min(trendRidesEndIndex, totalTrendRides)} of {totalTrendRides} TrendRide predictions
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setTrendRidesPage(Math.max(1, trendRidesPage - 1))}
+                                  disabled={trendRidesPage === 1}
+                                  className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                >
+                                  <ChevronLeft className="h-4 w-4" />
+                                  Previous
+                                </Button>
+
+                                <div className="flex space-x-1">
+                                  {Array.from({ length: totalTrendRidesPages }, (_, i) => i + 1).map((page) => (
+                                    <Button
+                                      key={page}
+                                      variant={page === trendRidesPage ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => setTrendRidesPage(page)}
+                                      className={page === trendRidesPage
+                                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                        : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                      }
+                                    >
+                                      {page}
+                                    </Button>
+                                  ))}
+                                </div>
+
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setTrendRidesPage(Math.min(totalTrendRidesPages, trendRidesPage + 1))}
+                                  disabled={trendRidesPage === totalTrendRidesPages}
+                                  className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                >
+                                  Next
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Layers className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold text-slate-300 mb-2">No Parlays</h3>
+                          <p className="text-slate-400">Parlay predictions will appear here when users create them</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Survival Sub-Tab */}
+                <TabsContent value="survival" className="mt-6">
+                  <Card className="bg-slate-800 border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Target className="mr-2" size={20} />
+                          Survival Tournaments ({totalSurvival})
+                        </div>
+                        <Button onClick={() => { }} variant="outline" size="sm">
+                          <Download className="mr-2" size={16} />
+                          Export CSV
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {survivalLoading ? (
+                        <div className="text-center py-8">
+                          <div className="text-slate-400">Loading survival tournaments...</div>
+                        </div>
+                      ) : paginatedSurvival && paginatedSurvival.length > 0 ? (
+                        <div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Tournament ID</TableHead>
+                                <TableHead>Player</TableHead>
+                                <TableHead>Round</TableHead>
+                                <TableHead>Cryptocurrency</TableHead>
+                                <TableHead>Prediction</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Score</TableHead>
+                                <TableHead>Created</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedSurvival.map((entry: any) => (
+                                <TableRow key={`${entry.tournamentId}-${entry.userId}-${entry.round}`}>
+                                  <TableCell>#{entry.tournamentId}</TableCell>
+                                  <TableCell className="font-medium text-white">
+                                    {entry.username || `User ${entry.userId}`}
+                                  </TableCell>
+                                  <TableCell className="font-semibold text-blue-400">
+                                    Round {entry.round}
+                                  </TableCell>
+                                  <TableCell className="font-medium text-white capitalize">
+                                    {entry.cryptocurrency}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="outline" className="text-green-400 border-green-400">
+                                      {entry.direction === 'up' ? '↑ Higher' : '↓ Lower'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={
+                                      entry.status === 'eliminated' ? 'destructive' :
+                                        entry.status === 'advancing' ? 'default' : 'secondary'
+                                    }>
+                                      {entry.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-yellow-400 font-semibold">
+                                    {entry.score || 0} pts
+                                  </TableCell>
+                                  <TableCell className="text-xs text-slate-400">
+                                    {new Date(entry.createdAt).toLocaleDateString()}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+
+                          {/* Survival Pagination */}
+                          {totalSurvivalPages > 1 && (
+                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
+                              <div className="text-sm text-slate-400">
+                                Showing {survivalStartIndex + 1}-{Math.min(survivalEndIndex, totalSurvival)} of {totalSurvival} tournament entries
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSurvivalPage(Math.max(1, survivalPage - 1))}
+                                  disabled={survivalPage === 1}
+                                  className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                >
+                                  <ChevronLeft className="h-4 w-4" />
+                                  Previous
+                                </Button>
+
+                                <div className="flex space-x-1">
+                                  {Array.from({ length: totalSurvivalPages }, (_, i) => i + 1).map((page) => (
+                                    <Button
+                                      key={page}
+                                      variant={page === survivalPage ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => setSurvivalPage(page)}
+                                      className={page === survivalPage
+                                        ? "bg-orange-600 hover:bg-orange-700 text-white"
+                                        : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                      }
+                                    >
+                                      {page}
+                                    </Button>
+                                  ))}
+                                </div>
+
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSurvivalPage(Math.min(totalSurvivalPages, survivalPage + 1))}
+                                  disabled={survivalPage === totalSurvivalPages}
+                                  className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
+                                >
+                                  Next
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold text-slate-300 mb-2">No Tournaments</h3>
+                          <p className="text-slate-400">Survival tournaments will appear here when they are active</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+              </Tabs>
+            </div>
           </TabsContent>
 
-          {/* Survival Sub-Tab */}
-          <TabsContent value="survival" className="mt-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Target className="mr-2" size={20} />
-                    Survival Tournaments ({totalSurvival})
-                  </div>
-                  <Button onClick={() => {}} variant="outline" size="sm">
-                    <Download className="mr-2" size={16} />
-                    Export CSV
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {survivalLoading ? (
-                  <div className="text-center py-8">
-                    <div className="text-slate-400">Loading survival tournaments...</div>
-                  </div>
-                ) : paginatedSurvival && paginatedSurvival.length > 0 ? (
-                  <div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Tournament ID</TableHead>
-                          <TableHead>Player</TableHead>
-                          <TableHead>Round</TableHead>
-                          <TableHead>Cryptocurrency</TableHead>
-                          <TableHead>Prediction</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Score</TableHead>
-                          <TableHead>Created</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedSurvival.map((entry: any) => (
-                          <TableRow key={`${entry.tournamentId}-${entry.userId}-${entry.round}`}>
-                            <TableCell>#{entry.tournamentId}</TableCell>
-                            <TableCell className="font-medium text-white">
-                              {entry.username || `User ${entry.userId}`}
-                            </TableCell>
-                            <TableCell className="font-semibold text-blue-400">
-                              Round {entry.round}
-                            </TableCell>
-                            <TableCell className="font-medium text-white capitalize">
-                              {entry.cryptocurrency}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-green-400 border-green-400">
-                                {entry.direction === 'up' ? '↑ Higher' : '↓ Lower'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={
-                                entry.status === 'eliminated' ? 'destructive' : 
-                                entry.status === 'advancing' ? 'default' : 'secondary'
-                              }>
-                                {entry.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-yellow-400 font-semibold">
-                              {entry.score || 0} pts
-                            </TableCell>
-                            <TableCell className="text-xs text-slate-400">
-                              {new Date(entry.createdAt).toLocaleDateString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    
-                    {/* Survival Pagination */}
-                    {totalSurvivalPages > 1 && (
-                      <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
-                        <div className="text-sm text-slate-400">
-                          Showing {survivalStartIndex + 1}-{Math.min(survivalEndIndex, totalSurvival)} of {totalSurvival} tournament entries
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSurvivalPage(Math.max(1, survivalPage - 1))}
-                            disabled={survivalPage === 1}
-                            className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                            Previous
-                          </Button>
-                          
-                          <div className="flex space-x-1">
-                            {Array.from({ length: totalSurvivalPages }, (_, i) => i + 1).map((page) => (
-                              <Button
-                                key={page}
-                                variant={page === survivalPage ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setSurvivalPage(page)}
-                                className={page === survivalPage 
-                                  ? "bg-orange-600 hover:bg-orange-700 text-white" 
-                                  : "bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                                }
-                              >
-                                {page}
-                              </Button>
-                            ))}
-                          </div>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSurvivalPage(Math.min(totalSurvivalPages, survivalPage + 1))}
-                            disabled={survivalPage === totalSurvivalPages}
-                            className="bg-slate-700 border-slate-600 hover:bg-slate-600 text-white"
-                          >
-                            Next
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-300 mb-2">No Tournaments</h3>
-                    <p className="text-slate-400">Survival tournaments will appear here when they are active</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-        </Tabs>
-      </div>
-    </TabsContent>
-
-    {/* Leaderboard Tab */}
+          {/* Leaderboard Tab */}
           <TabsContent value="leaderboard" className="space-y-6">
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
@@ -3648,7 +3712,7 @@ export default function AdminPanel() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-gradient-to-br from-red-900 to-red-800 border-red-700">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -3663,7 +3727,7 @@ export default function AdminPanel() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-gradient-to-br from-blue-900 to-blue-800 border-blue-700">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -3678,7 +3742,7 @@ export default function AdminPanel() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-gradient-to-br from-yellow-900 to-yellow-800 border-yellow-700">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -3709,13 +3773,13 @@ export default function AdminPanel() {
                     </Button>
                   </div>
                 </CardTitle>
-                
+
                 {/* Filter Controls */}
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                   <div>
                     <Label className="text-white text-sm">Type</Label>
-                    <Select 
-                      value={transactionFilter.type} 
+                    <Select
+                      value={transactionFilter.type}
                       onValueChange={(value) => {
                         setTransactionFilter(prev => ({ ...prev, type: value }));
                         setTransactionPage(1); // Reset to first page
@@ -3731,11 +3795,11 @@ export default function AdminPanel() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label className="text-white text-sm">Status</Label>
-                    <Select 
-                      value={transactionFilter.status} 
+                    <Select
+                      value={transactionFilter.status}
                       onValueChange={(value) => {
                         setTransactionFilter(prev => ({ ...prev, status: value }));
                         setTransactionPage(1);
@@ -3752,11 +3816,11 @@ export default function AdminPanel() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label className="text-white text-sm">Token</Label>
-                    <Select 
-                      value={transactionFilter.token} 
+                    <Select
+                      value={transactionFilter.token}
                       onValueChange={(value) => {
                         setTransactionFilter(prev => ({ ...prev, token: value }));
                         setTransactionPage(1);
@@ -3773,11 +3837,11 @@ export default function AdminPanel() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label className="text-white text-sm">Date Range</Label>
-                    <Select 
-                      value={transactionFilter.dateRange} 
+                    <Select
+                      value={transactionFilter.dateRange}
                       onValueChange={(value) => {
                         setTransactionFilter(prev => ({ ...prev, dateRange: value }));
                         setTransactionPage(1);
@@ -3821,15 +3885,15 @@ export default function AdminPanel() {
                         <TableRow key={transaction.id}>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <div 
+                              <div
                                 className="px-2 py-1 bg-slate-700 rounded-md font-mono text-sm cursor-pointer hover:bg-slate-600 transition-colors"
                                 onClick={() => {
                                   const uniqueId = transaction.uniqueTransactionId || transaction.id.toString().padStart(8, '0');
                                   const transactionId = `NTIQ-${uniqueId}`;
                                   navigator.clipboard.writeText(transactionId);
-                                  toast({ 
-                                    title: "Copied!", 
-                                    description: `Transaction ID ${transactionId} copied to clipboard` 
+                                  toast({
+                                    title: "Copied!",
+                                    description: `Transaction ID ${transactionId} copied to clipboard`
                                   });
                                 }}
                                 title="Click to copy transaction ID"
@@ -3837,18 +3901,18 @@ export default function AdminPanel() {
                                 #{transaction.uniqueTransactionId || transaction.id.toString().padStart(8, '0')}
                               </div>
                               <div className="text-xs text-slate-400">
-                                {transaction.type === 'deposit' ? 'DEP' : 
-                                 transaction.type === 'withdrawal' ? 'WDL' : 'PUR'}
+                                {transaction.type === 'deposit' ? 'DEP' :
+                                  transaction.type === 'withdrawal' ? 'WDL' : 'PUR'}
                               </div>
-                              <Copy 
-                                className="w-3 h-3 text-slate-400 hover:text-slate-200 cursor-pointer" 
+                              <Copy
+                                className="w-3 h-3 text-slate-400 hover:text-slate-200 cursor-pointer"
                                 onClick={() => {
                                   const uniqueId = transaction.uniqueTransactionId || transaction.id.toString().padStart(8, '0');
                                   const transactionId = `NTIQ-${uniqueId}`;
                                   navigator.clipboard.writeText(transactionId);
-                                  toast({ 
-                                    title: "Copied!", 
-                                    description: `Transaction ID ${transactionId} copied to clipboard` 
+                                  toast({
+                                    title: "Copied!",
+                                    description: `Transaction ID ${transactionId} copied to clipboard`
                                   });
                                 }}
                                 title="Copy transaction ID"
@@ -3859,14 +3923,14 @@ export default function AdminPanel() {
                           <TableCell>
                             <Badge variant={
                               transaction.type === 'deposit' ? 'default' :
-                              transaction.type === 'withdrawal' ? 'destructive' :
-                              'secondary'
+                                transaction.type === 'withdrawal' ? 'destructive' :
+                                  'secondary'
                             }>
                               {transaction.type}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {transaction.type === 'deposit' 
+                            {transaction.type === 'deposit'
                               ? `${transaction.amount.toLocaleString()} NTIQ`
                               : `${transaction.amount.toLocaleString()} NTIQ`
                             }
@@ -3875,7 +3939,7 @@ export default function AdminPanel() {
                             {transaction.type === 'withdrawal' && transaction.netAmount
                               ? `${parseFloat(transaction.netAmount).toFixed(6)} ${transaction.token}` // Untuk withdrawal: tampilkan setelah dipotong fee
                               : transaction.type === 'deposit' && transaction.usdAmount && transaction.token === 'ETH'
-                              ? (() => {
+                                ? (() => {
                                   // Untuk deposit ETH: hitung crypto amount yang benar berdasarkan USD / harga snapshot + fee 2%
                                   // Menggunakan data historis dari database yang disimpan di ethPriceSnapshot
                                   const ethPriceSnapshot = transaction.ethPriceSnapshot || 3477; // Harga ETH saat deposit dari database
@@ -3883,23 +3947,23 @@ export default function AdminPanel() {
                                   const cryptoAmountWithFee = baseCryptoAmount * 1.02; // Tambahkan fee 2% sesuai user dashboard
                                   return `${cryptoAmountWithFee.toFixed(6)} ${transaction.token}`;
                                 })()
-                              : transaction.type === 'deposit' && transaction.usdAmount
-                              ? (() => {
-                                  // Untuk deposit USDC/USDT: tambahkan fee 2% sesuai user dashboard
-                                  const baseAmount = parseFloat(transaction.usdAmount);
-                                  const amountWithFee = baseAmount * 1.02; // Tambahkan fee 2%
-                                  return `${amountWithFee.toFixed(6)} ${transaction.token}`;
-                                })() // Untuk token USDC/USDT dengan fee 2%
-                              : transaction.usdAmount 
-                              ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}`
-                              : `${(transaction.amount / 1000).toFixed(6)} ${transaction.token}`
+                                : transaction.type === 'deposit' && transaction.usdAmount
+                                  ? (() => {
+                                    // Untuk deposit USDC/USDT: tambahkan fee 2% sesuai user dashboard
+                                    const baseAmount = parseFloat(transaction.usdAmount);
+                                    const amountWithFee = baseAmount * 1.02; // Tambahkan fee 2%
+                                    return `${amountWithFee.toFixed(6)} ${transaction.token}`;
+                                  })() // Untuk token USDC/USDT dengan fee 2%
+                                  : transaction.usdAmount
+                                    ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}`
+                                    : `${(transaction.amount / 1000).toFixed(6)} ${transaction.token}`
                             }
                           </TableCell>
                           <TableCell>
                             <Badge variant={
                               transaction.status === 'completed' ? 'default' :
-                              transaction.status === 'pending' ? 'secondary' :
-                              'destructive'
+                                transaction.status === 'pending' ? 'secondary' :
+                                  'destructive'
                             }>
                               {transaction.status}
                             </Badge>
@@ -3909,7 +3973,7 @@ export default function AdminPanel() {
                               const uniqueId = transaction.uniqueTransactionId || transaction.id.toString().padStart(8, '0');
                               const transactionId = `NTIQ-${uniqueId}`;
                               const isRecentlyUpdated = recentHashUpdates.has(transactionId);
-                              
+
                               return transaction.hash && transaction.hash !== '3' && (transaction.hash.startsWith('0x') && transaction.hash.length >= 42) ? (
                                 <div className={`flex items-center gap-2 ${isRecentlyUpdated ? 'animate-pulse bg-green-900/20 p-2 rounded-lg border border-green-500/30' : ''}`}>
                                   {isRecentlyUpdated && (
@@ -3932,7 +3996,7 @@ export default function AdminPanel() {
                                     title={`View transaction on ${getExplorerName(transaction.token)}`}
                                   >
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                   </a>
                                   <span className="text-xs text-slate-400 font-mono">
@@ -3940,21 +4004,21 @@ export default function AdminPanel() {
                                   </span>
                                 </div>
                               ) : transaction.hash === '3' ? (
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1 px-2 py-1 bg-orange-900/50 rounded-md">
-                                  <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                                  <span className="text-orange-300 text-xs font-medium">Invalid Hash</span>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1 px-2 py-1 bg-orange-900/50 rounded-md">
+                                    <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                                    <span className="text-orange-300 text-xs font-medium">Invalid Hash</span>
+                                  </div>
+                                  <span className="text-xs text-slate-500">Database contains placeholder value</span>
                                 </div>
-                                <span className="text-xs text-slate-500">Database contains placeholder value</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/50 rounded-md">
-                                  <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
-                                  <span className="text-slate-400 text-xs font-medium">Pending</span>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/50 rounded-md">
+                                    <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                                    <span className="text-slate-400 text-xs font-medium">Pending</span>
+                                  </div>
                                 </div>
-                              </div>
-                            );
+                              );
                             })()}
                           </TableCell>
                           <TableCell className="text-xs text-slate-400">
@@ -4010,7 +4074,7 @@ export default function AdminPanel() {
                     <p className="text-slate-400">Transaction history will appear here</p>
                   </div>
                 )}
-                
+
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <div className="mt-6 flex items-center justify-between border-t border-slate-700 pt-4">
@@ -4028,7 +4092,7 @@ export default function AdminPanel() {
                         <ChevronLeft className="h-4 w-4" />
                         Previous
                       </Button>
-                      
+
                       <div className="flex items-center gap-1">
                         {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                           let pageNum;
@@ -4041,24 +4105,23 @@ export default function AdminPanel() {
                           } else {
                             pageNum = transactionPage - 2 + i;
                           }
-                          
+
                           return (
                             <Button
                               key={pageNum}
                               variant={transactionPage === pageNum ? "default" : "outline"}
                               size="sm"
                               onClick={() => setTransactionPage(pageNum)}
-                              className={`min-w-[40px] ${
-                                transactionPage === pageNum 
-                                  ? "bg-blue-600 border-blue-600 text-white hover:bg-blue-700" 
-                                  : "bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                              }`}
+                              className={`min-w-[40px] ${transactionPage === pageNum
+                                ? "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
+                                : "bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                                }`}
                             >
                               {pageNum}
                             </Button>
                           );
                         })}
-                        
+
                         {totalPages > 5 && transactionPage < totalPages - 2 && (
                           <>
                             <span className="text-slate-400 px-2">...</span>
@@ -4073,7 +4136,7 @@ export default function AdminPanel() {
                           </>
                         )}
                       </div>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -4104,7 +4167,7 @@ export default function AdminPanel() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-gradient-to-br from-yellow-900 to-yellow-800 border-yellow-700">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -4116,7 +4179,7 @@ export default function AdminPanel() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-gradient-to-br from-red-900 to-red-800 border-red-700">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -4182,8 +4245,8 @@ export default function AdminPanel() {
                           <TableCell>
                             <Badge variant={
                               event.status === 'success' ? 'default' :
-                              event.status === 'failed' ? 'destructive' :
-                              'secondary'
+                                event.status === 'failed' ? 'destructive' :
+                                  'secondary'
                             }>
                               {event.status}
                             </Badge>
@@ -4191,8 +4254,8 @@ export default function AdminPanel() {
                           <TableCell>
                             <Badge variant={
                               event.riskLevel === 'high' ? 'destructive' :
-                              event.riskLevel === 'medium' ? 'secondary' :
-                              'outline'
+                                event.riskLevel === 'medium' ? 'secondary' :
+                                  'outline'
                             }>
                               {event.riskLevel || 'low'}
                             </Badge>
@@ -4255,7 +4318,7 @@ export default function AdminPanel() {
                     <Calendar className="mr-2" size={20} />
                     Event Management
                   </div>
-                  <Button 
+                  <Button
                     className="bg-blue-600 hover:bg-blue-700"
                     onClick={handleCreateEvent}
                     data-testid="button-create-event"
@@ -4308,16 +4371,16 @@ export default function AdminPanel() {
                                 </div>
                               </div>
                               <div className="flex gap-2">
-                                <Button 
-                                  size="sm" 
+                                <Button
+                                  size="sm"
                                   variant="outline"
                                   onClick={() => handleEditEvent(event)}
                                   data-testid={`button-edit-event-${event.id}`}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  size="sm" 
+                                <Button
+                                  size="sm"
                                   variant="destructive"
                                   onClick={() => handleDeleteEvent(event.id)}
                                   data-testid={`button-delete-event-${event.id}`}
@@ -4356,26 +4419,26 @@ export default function AdminPanel() {
                       <Label className="text-white">Maintenance Mode</Label>
                       <p className="text-sm text-slate-400">Enable platform maintenance</p>
                     </div>
-                    <Button 
-                      variant={settings.platform.maintenanceMode ? "destructive" : "outline"} 
+                    <Button
+                      variant={settings.platform.maintenanceMode ? "destructive" : "outline"}
                       size="sm"
                       onClick={toggleMaintenanceMode}
                       disabled={updateSettingsMutation.isPending}
                       data-testid="button-toggle-maintenance"
                     >
                       <Settings className="mr-2" size={16} />
-                      {updateSettingsMutation.isPending ? 'Updating...' : 
+                      {updateSettingsMutation.isPending ? 'Updating...' :
                         (settings.platform.maintenanceMode ? 'Disable' : 'Enable')}
                     </Button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-white">New User Registration</Label>
                       <p className="text-sm text-slate-400">Allow new users to register</p>
                     </div>
-                    <Button 
-                      variant={settings.platform.userRegistrationEnabled ? "default" : "outline"} 
+                    <Button
+                      variant={settings.platform.userRegistrationEnabled ? "default" : "outline"}
                       size="sm"
                       onClick={toggleUserRegistration}
                       disabled={updateSettingsMutation.isPending}
@@ -4385,7 +4448,7 @@ export default function AdminPanel() {
                       {settings.platform.userRegistrationEnabled ? 'Enabled' : 'Disabled'}
                     </Button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-white">Prediction Limits</Label>
@@ -4405,8 +4468,8 @@ export default function AdminPanel() {
                         className="w-20 bg-slate-700 border-slate-600 text-white"
                         data-testid="input-prediction-limits"
                       />
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => updatePlatformSetting('maxPredictionsPerUser', settings.platform.maxPredictionsPerUser)}
                         disabled={updateSettingsMutation.isPending}
@@ -4447,8 +4510,8 @@ export default function AdminPanel() {
                         className="w-24 bg-slate-700 border-slate-600 text-white"
                         data-testid="input-starting-balance"
                       />
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => updatePlatformSetting('startingBalance', settings.token.startingBalance)}
                         disabled={updateSettingsMutation.isPending}
@@ -4458,7 +4521,7 @@ export default function AdminPanel() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-white">Min Stake Amount</Label>
@@ -4479,8 +4542,8 @@ export default function AdminPanel() {
                         className="w-20 bg-slate-700 border-slate-600 text-white"
                         data-testid="input-min-stake"
                       />
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => updatePlatformSetting('minStakeAmount', settings.token.minStakeAmount)}
                         disabled={updateSettingsMutation.isPending}
@@ -4490,7 +4553,7 @@ export default function AdminPanel() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-white">Max Stake Amount</Label>
@@ -4511,8 +4574,8 @@ export default function AdminPanel() {
                         className="w-20 bg-slate-700 border-slate-600 text-white"
                         data-testid="input-max-stake"
                       />
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => updatePlatformSetting('maxStakeAmount', settings.token.maxStakeAmount)}
                         disabled={updateSettingsMutation.isPending}
@@ -4566,7 +4629,7 @@ export default function AdminPanel() {
                         <Alert className="border-red-600/50 bg-red-950/20">
                           <AlertTriangle className="h-4 w-4 text-red-400" />
                           <AlertDescription className="text-red-300">
-                            {!twoFAStep 
+                            {!twoFAStep
                               ? "This action cannot be undone. All users, predictions, transactions, and settings will be permanently deleted."
                               : "Enter the 6-digit security code to complete database reset."
                             }
@@ -4589,8 +4652,8 @@ export default function AdminPanel() {
                               />
                             </div>
                             <div className="flex gap-2">
-                              <Button 
-                                variant="destructive" 
+                              <Button
+                                variant="destructive"
                                 disabled={resetConfirmText !== 'RESET'}
                                 className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
                                 onClick={send2FACode}
@@ -4622,13 +4685,13 @@ export default function AdminPanel() {
                               </p>
                             </div>
                             <div className="flex gap-2">
-                              <Button 
-                                variant="destructive" 
+                              <Button
+                                variant="destructive"
                                 disabled={twoFACode.length !== 6 || isResetting}
                                 className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
                                 onClick={async () => {
                                   console.log('🔐 [2FA] Verifying code:', twoFACode);
-                                  
+
                                   if (!verify2FACode(twoFACode)) {
                                     toast({
                                       title: "Invalid 2FA Code",
@@ -4641,68 +4704,68 @@ export default function AdminPanel() {
                                   console.log('✅ [2FA] Code verified successfully');
                                   console.log('🚀 [RESET-DEBUG] Starting database reset with 2FA...');
                                   console.log('🔥 [RESET-DEBUG] Confirm Reset button clicked!');
-                              
-                              if (resetConfirmText !== 'RESET') {
-                                console.log('❌ [RESET-DEBUG] Invalid confirmation code:', resetConfirmText);
-                                return;
-                              }
-                              
-                              console.log('🚀 [RESET-DEBUG] Starting reset process...');
-                              console.log('🔍 [RESET-DEBUG] Confirm text:', resetConfirmText);
-                              
-                              setIsResetting(true);
-                              
-                              try {
-                                console.log('📡 [RESET-DEBUG] Making API call to /api/admin/reset-database');
-                                const response = await fetch('/api/admin/reset-database', {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-Admin-Operation': 'database-reset',
-                                    'X-Bypass-Rate-Limit': 'true',
-                                    'X-Admin-IP-Override': 'true'
-                                  },
-                                  credentials: 'include',
-                                  body: JSON.stringify({ confirmationCode: 'RESET' })
-                                });
-                                
-                                console.log('📄 [RESET-DEBUG] Response status:', response.status);
-                                console.log('📄 [RESET-DEBUG] Response headers:', Object.fromEntries(response.headers.entries()));
-                                
-                                let result;
-                                try {
-                                  result = await response.json();
-                                  console.log('✅ [RESET-DEBUG] Reset response JSON:', result);
-                                } catch (jsonError) {
-                                  console.error('❌ [RESET-DEBUG] JSON parse error:', jsonError);
-                                  const text = await response.text();
-                                  console.log('📄 [RESET-DEBUG] Raw response text:', text);
-                                  result = { message: 'Failed to parse response: ' + text };
-                                }
-                                
-                                if (response.ok && result.success) {
-                                  console.log('🎉 [RESET-DEBUG] Reset successful!');
-                                  toast({ 
-                                    title: "Database Reset Successful", 
-                                    description: "All data has been cleared. Page will reload...",
-                                    variant: "default"
-                                  });
-                                  setTimeout(() => window.location.reload(), 2000);
-                                } else {
-                                  console.error('❌ [RESET-DEBUG] Reset failed:', result);
-                                  toast({ 
-                                    title: "Reset Failed", 
-                                    description: result.message || result.error || 'Unknown error',
-                                    variant: "destructive"
-                                  });
-                                }
-                              } catch (error: any) {
-                                console.error('❌ [RESET-DEBUG] Network/Fetch error:', error);
-                                toast({ 
-                                  title: "Network Error", 
-                                  description: 'Reset failed: ' + error.message,
-                                  variant: "destructive"
-                                });
+
+                                  if (resetConfirmText !== 'RESET') {
+                                    console.log('❌ [RESET-DEBUG] Invalid confirmation code:', resetConfirmText);
+                                    return;
+                                  }
+
+                                  console.log('🚀 [RESET-DEBUG] Starting reset process...');
+                                  console.log('🔍 [RESET-DEBUG] Confirm text:', resetConfirmText);
+
+                                  setIsResetting(true);
+
+                                  try {
+                                    console.log('📡 [RESET-DEBUG] Making API call to /api/admin/reset-database');
+                                    const response = await fetch('/api/admin/reset-database', {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Admin-Operation': 'database-reset',
+                                        'X-Bypass-Rate-Limit': 'true',
+                                        'X-Admin-IP-Override': 'true'
+                                      },
+                                      credentials: 'include',
+                                      body: JSON.stringify({ confirmationCode: 'RESET' })
+                                    });
+
+                                    console.log('📄 [RESET-DEBUG] Response status:', response.status);
+                                    console.log('📄 [RESET-DEBUG] Response headers:', Object.fromEntries(response.headers.entries()));
+
+                                    let result;
+                                    try {
+                                      result = await response.json();
+                                      console.log('✅ [RESET-DEBUG] Reset response JSON:', result);
+                                    } catch (jsonError) {
+                                      console.error('❌ [RESET-DEBUG] JSON parse error:', jsonError);
+                                      const text = await response.text();
+                                      console.log('📄 [RESET-DEBUG] Raw response text:', text);
+                                      result = { message: 'Failed to parse response: ' + text };
+                                    }
+
+                                    if (response.ok && result.success) {
+                                      console.log('🎉 [RESET-DEBUG] Reset successful!');
+                                      toast({
+                                        title: "Database Reset Successful",
+                                        description: "All data has been cleared. Page will reload...",
+                                        variant: "default"
+                                      });
+                                      setTimeout(() => window.location.reload(), 2000);
+                                    } else {
+                                      console.error('❌ [RESET-DEBUG] Reset failed:', result);
+                                      toast({
+                                        title: "Reset Failed",
+                                        description: result.message || result.error || 'Unknown error',
+                                        variant: "destructive"
+                                      });
+                                    }
+                                  } catch (error: any) {
+                                    console.error('❌ [RESET-DEBUG] Network/Fetch error:', error);
+                                    toast({
+                                      title: "Network Error",
+                                      description: 'Reset failed: ' + error.message,
+                                      variant: "destructive"
+                                    });
                                   } finally {
                                     setIsResetting(false);
                                     reset2FAState();
@@ -4711,8 +4774,8 @@ export default function AdminPanel() {
                               >
                                 {isResetting ? "Resetting..." : "Confirm Reset"}
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 onClick={() => {
                                   setTwoFAStep(false);
                                   setTwoFACode('');
@@ -4903,15 +4966,15 @@ export default function AdminPanel() {
               className="bg-blue-600 hover:bg-blue-700"
               data-testid="button-save-event"
             >
-              {createEventMutation.isPending || updateEventMutation.isPending 
-                ? "Saving..." 
+              {createEventMutation.isPending || updateEventMutation.isPending
+                ? "Saving..."
                 : selectedEvent ? "Update Event" : "Create Event"
               }
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-      
+
       <Footer />
     </div>
   );
