@@ -24,6 +24,42 @@
 
 ---
 
+## 🚀 Current Deployment Status
+
+### **Live on Sepolia Testnet** 🧪
+
+NECTIQ is currently deployed and operational on the **Ethereum Sepolia Testnet** for development and testing purposes. This allows us to:
+
+- ✅ **Test all features** without real financial risk
+- ✅ **Gather user feedback** before mainnet launch
+- ✅ **Iterate quickly** on improvements
+- ✅ **Demonstrate functionality** to Polygon Buildathons judges
+- ✅ **Perfect the user experience** before production
+
+**Network Details:**
+- **Network:** Ethereum Sepolia Testnet
+- **Chain ID:** 11155111
+- **RPC:** `https://eth-sepolia.public.blastapi.io`
+- **Explorer:** `https://sepolia.etherscan.io`
+- **Faucet:** Available for test ETH
+
+**What's Working:**
+- 🎮 Full prediction gaming functionality
+- 💰 Multi-wallet authentication (MetaMask, WalletConnect, etc.)
+- 📊 Real-time Pyth Network price feeds
+- 💸 Deposit/withdrawal simulation (testnet tokens)
+- 🏆 Tournaments, battles, and challenges
+- 📈 Live leaderboards and statistics
+
+**Planned Migration:**
+- **Wave 2-3:** Deploy to Polygon Mumbai (Polygon testnet)
+- **Wave 4:** Launch on Polygon PoS Mainnet
+- **Wave 5:** Expand to Polygon zkEVM
+
+> 💡 **Note for Users:** All transactions on Sepolia are FREE (gas paid with test ETH). This is a testing environment - no real funds are at risk. Once we migrate to Polygon mainnet, transactions will cost less than $0.01 due to Polygon's low gas fees.
+
+---
+
 ## 📊 Development Progress Overview
 
 ```
@@ -56,10 +92,11 @@ Build **NECTIQ** as a **fully decentralized, community-governed prediction gamin
 
 ## 🌊 Wave 1: Foundation & Web3 Integration (Week 1-2) ✅
 
-**Status:** 🟢 **COMPLETED** | **Decentralization:** 10% | **Polygon Focus:** Basic Integration
+**Status:** 🟢 **COMPLETED** | **Decentralization:** 10% | **Polygon Focus:** Basic Integration  
+**Deployment:** 🧪 **Live on Sepolia Testnet** | **Network:** Ethereum Sepolia (Chain ID: 11155111)
 
 ### 🎯 Objectives
-Establish core platform with Web3 wallet integration and multi-chain support.
+Establish core platform with Web3 wallet integration and multi-chain support on testnet.
 
 ### ✅ Completed Milestones
 
@@ -95,26 +132,57 @@ Establish core platform with Web3 wallet integration and multi-chain support.
 - Deposit monitoring service
 
 ### 📝 Buildathons Deliverables (Wave 1)
-✅ Working demo on Polygon Sepolia testnet  
-✅ Multi-wallet authentication  
-✅ Core gameplay functional  
-✅ Real-time price feeds  
-✅ Comprehensive documentation (README.md)  
+✅ Working demo on **Ethereum Sepolia Testnet** (primary)  
+✅ Multi-wallet authentication (MetaMask, WalletConnect, Coinbase, Pelagus)  
+✅ Core gameplay functional (predictions, battles, tournaments)  
+✅ Real-time Pyth Network price feeds (1-second updates)  
+✅ Comprehensive documentation (README.md + ROADMAP.md + SECURITY_AUDIT_REPORT.md)  
+✅ Security audit completed (9/10 score)  
 
-### 🔗 Polygon Integration
-- ✅ Polygon Sepolia testnet support
-- ✅ MATIC token support
-- ✅ Polygonscan API integration
-- 🔜 Preparing for Polygon PoS mainnet
+### 🧪 Testnet Deployment Details
+
+**Current Network: Ethereum Sepolia**
+- **Why Sepolia?** It's a stable, well-supported testnet perfect for initial development and Buildathons demonstrations
+- **Chain ID:** 11155111
+- **RPC Endpoint:** `https://eth-sepolia.public.blastapi.io`
+- **Block Explorer:** `https://sepolia.etherscan.io`
+- **Test Faucets:** Multiple faucets available for free test ETH
+
+**Features Live on Sepolia:**
+- ✅ Full wallet authentication and session management
+- ✅ Real-time cryptocurrency price predictions
+- ✅ Prediction battles (1min to 7 days)
+- ✅ Head-to-head prediction battles
+- ✅ Survival tournaments
+- ✅ TrendRide multi-coin predictions
+- ✅ Deposit simulation (testnet tokens)
+- ✅ Leaderboards and achievements
+- ✅ Admin panel for platform management
+- ✅ WebSocket real-time notifications
+
+**Migration Path:**
+1. **Current (Wave 1):** Ethereum Sepolia Testnet ✅
+2. **Wave 2-3:** Polygon Mumbai Testnet (testing Polygon-specific features)
+3. **Wave 4:** Polygon PoS Mainnet (production launch)
+4. **Wave 5:** Polygon zkEVM (scaling and privacy)
+
+### 🔗 Polygon Integration (Wave 1)
+- ✅ Multi-chain architecture ready for Polygon
+- ✅ Polygonscan API integration prepared
+- ✅ MATIC token support in codebase
+- ✅ Polygon-compatible wallet support
+- 🔜 Awaiting Wave 2 for Polygon testnet deployment
+- 🔜 Preparing smart contracts for Polygon PoS mainnet
 
 ---
 
 ## 🌊 Wave 2: Smart Contract Foundation (Week 3-4)
 
-**Status:** 🟡 **NEXT WAVE** | **Target Decentralization:** 20% | **Polygon Focus:** Smart Contracts
+**Status:** 🟡 **NEXT WAVE** | **Target Decentralization:** 20% | **Polygon Focus:** Smart Contracts  
+**Deployment Plan:** 🧪 **Polygon Mumbai Testnet** → 🚀 **Polygon PoS Mainnet**
 
 ### 🎯 Objectives
-Deploy core smart contracts on Polygon PoS and begin on-chain game logic.
+Deploy core smart contracts on Polygon Mumbai (testnet) and Polygon PoS (mainnet), begin on-chain game logic.
 
 ### 🚀 Key Deliverables
 
