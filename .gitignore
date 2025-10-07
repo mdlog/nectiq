@@ -9,4 +9,4 @@ vite.config.ts.*
 # Environment variables
 .env
 .env.local
-.env.*.local
+.env.*.localattached_assets/
