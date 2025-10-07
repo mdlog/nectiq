@@ -740,25 +740,24 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🗺 Roadmap
 
-### Phase 1 (Current)
+**NECTIQ is on a journey to become 100% decentralized.**
+
+For our complete roadmap with 10 waves of progressive decentralization, see **[ROADMAP.md](ROADMAP.md)**.
+
+### Current Status: Wave 1 (Foundation) ✅
 - ✅ Multi-chain deposit system
 - ✅ Automated deposit verification
-- ✅ Real-time price feeds
+- ✅ Real-time price feeds (Pyth Network)
 - ✅ Wallet-based authentication
-- ✅ Admin panel
+- ✅ Admin panel & security features
 
-### Phase 2 (In Progress)
-- 🔄 Mobile responsive design improvements
-- 🔄 Enhanced referral system
-- 🔄 Achievement badges
-- 🔄 Daily challenges
+### Next Milestone: Wave 2 (Q2 2025)
+- 🎯 NTIQ Token Smart Contract deployment
+- 🎯 On-chain deposit/withdrawal contracts
+- 🎯 Basic prediction smart contracts
+- 🎯 Oracle integration (Pyth on-chain)
 
-### Phase 3 (Planned)
-- 📋 NFT rewards
-- 📋 DAO governance
-- 📋 Mobile app (iOS/Android)
-- 📋 Advanced analytics
-- 📋 Social features
+**View the full decentralization roadmap:** [ROADMAP.md](ROADMAP.md)
 
 ---
 
