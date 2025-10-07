@@ -743,24 +743,37 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🗺 Roadmap
 
-**NECTIQ is on a journey to become 100% decentralized.**
+**Current Status:** Wave 1-2 Complete ✅ | **Next:** Wave 3-4 (Build & Optimize) 🔜
 
-For our complete roadmap with 10 waves of progressive decentralization, see **[ROADMAP.md](ROADMAP.md)**.
+### 🎯 Development Path (5 Months)
 
-### Current Status: Wave 1 (Foundation) ✅
-- ✅ Multi-chain deposit system
-- ✅ Automated deposit verification
-- ✅ Real-time price feeds (Pyth Network)
-- ✅ Wallet-based authentication
-- ✅ Admin panel & security features
+**PHASE 1: PATH TO FUNDING (2.5 Months)**
+- ✅ **Wave 1-2 (Week 1-4):** Foundation & Setup - COMPLETED
+  - MVP built, Sepolia testnet live, investor materials ready
+- 🔜 **Wave 3-4 (Week 5-8):** Build & Optimize - NEXT
+  - User acquisition (1,000+ beta users), Polygon Mumbai testnet, business model validation
+- 🎯 **Wave 5 (Week 9-10):** Pitch & Raise - FUNDING FOCUSED
+  - **Target: $500K-$1M seed round**, 20+ VC meetings, term sheet execution
 
-### Next Milestone: Wave 2 (Q2 2025)
-- 🎯 NTIQ Token Smart Contract deployment
-- 🎯 On-chain deposit/withdrawal contracts
-- 🎯 Basic prediction smart contracts
-- 🎯 Oracle integration (Pyth on-chain)
+**PHASE 2: POST-FUNDING (2.5 Months)**
+- 📋 **Wave 6-7:** Smart contracts & on-chain logic on Polygon PoS mainnet
+- 📋 **Wave 8-9:** DAO governance, zkEVM integration, scaling optimization
+- 🚀 **Wave 10:** Production mainnet launch with full features
 
-**View the full decentralization roadmap:** [ROADMAP.md](ROADMAP.md)
+### 📊 Application Category
+
+**NECTIQ is a hybrid DeFi + GameFi + SocialFi platform:**
+- 🎮 **GameFi (45%)** - 4 game modes, play-to-earn, tournaments, gamification
+- 💰 **DeFi (40%)** - Multi-chain, smart contracts, token economics, DAO governance
+- 👥 **SocialFi (15%)** - Referrals, leaderboards, social features, community
+
+**Primary Classification:** "GameFi Prediction Platform with DeFi Infrastructure on Polygon"
+
+### 📄 Documentation
+
+- **[Full Roadmap](ROADMAP.md)** - Complete 10-wave development plan with funding strategy
+- **[Security Audit](SECURITY_AUDIT_REPORT.md)** - Security audit results (9/10 score)
+- **[API Documentation](#-api-documentation)** - Complete API reference below
 
 ---
 
