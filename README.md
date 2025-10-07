@@ -29,7 +29,6 @@
 - [🏃 Running the Application](#-running-the-application)
 - [🏗 Architecture](#-architecture)
 - [📡 API Documentation](#-api-documentation)
-- [🗄 Database Schema](#-database-schema)
 - [🚀 Deployment](#-deployment)
 - [🔧 Troubleshooting](#-troubleshooting)
 - [🤝 Contributing](#-contributing)
@@ -499,61 +498,6 @@ Get platform statistics (admin only).
   "platformBalance": 500000
 }
 ```
-
----
-
-## 🗄 Database Schema
-
-### Core Tables
-
-#### Users
-```sql
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  username VARCHAR(50) UNIQUE NOT NULL,
-  wallet_address VARCHAR(42) UNIQUE,
-  balance INTEGER DEFAULT 1000,
-  is_admin BOOLEAN DEFAULT FALSE,
-  auth_method VARCHAR(20) DEFAULT 'wallet',
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-#### Deposits
-```sql
-CREATE TABLE deposits (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
-  unique_transaction_id VARCHAR(8) UNIQUE,
-  chain_name VARCHAR(20) NOT NULL,
-  token_type VARCHAR(10) NOT NULL,
-  amount_usd NUMERIC(18,6) NOT NULL,
-  ntiq_amount INTEGER NOT NULL,
-  transaction_hash VARCHAR(66) UNIQUE,
-  status VARCHAR(20) DEFAULT 'pending',
-  processed_at TIMESTAMP,
-  expires_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-#### Predictions
-```sql
-CREATE TABLE predictions (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
-  crypto_id VARCHAR(50) NOT NULL,
-  prediction VARCHAR(10) NOT NULL,
-  entry_price NUMERIC(20,8) NOT NULL,
-  exit_price NUMERIC(20,8),
-  stake INTEGER NOT NULL,
-  result VARCHAR(10),
-  profit INTEGER,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-See `shared/schema.ts` for complete schema definitions.
 
 ---
 
