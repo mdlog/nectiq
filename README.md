@@ -47,7 +47,7 @@
 - 🔐 **Web3 Wallet Integration** (MetaMask, WalletConnect, Coinbase, Pelagus)
 - 💰 **Multi-Chain Deposits** (Ethereum, Base, BSC, Optimism, Arbitrum, Sepolia, Holesky)
 - ⚡ **Automated Deposit Verification** using blockchain explorers
-- 🎮 **Multiple Game Modes** (Predictions, Battles, Survival, Parlay)
+- 🎮 **Multiple Game Modes** (Predictions, Battles, Survival, TrendRide)
 - 📊 **Live Leaderboards** and achievements
 - 🎁 **Referral System** with rewards
 - 🔔 **Real-time Notifications** via WebSocket
@@ -79,7 +79,7 @@
 - Grand prizes for winners
 - Live tournament brackets
 
-#### 4. **Parlay Predictions**
+#### 4. **TrendRide Predictions**
 - Combine multiple predictions
 - Higher risk, higher rewards
 - All predictions must win
