@@ -17,10 +17,11 @@
 
 ## 🏆 Polygon Buildathons Program
 
-**Program:** Polygon Buildathons 10 Waves  
-**Duration:** 5 Months (20 Weeks)  
-**Focus:** Building Production-Ready Decentralized Gaming DApp  
-**Target:** Fully Decentralized Prediction Gaming Platform on Polygon
+**Program:** Polygon Buildathons - Accelerated Path  
+**Phase 1 Duration:** 2.5 Months (10 Weeks) - **FUNDING FOCUSED**  
+**Phase 2 Duration:** 2.5 Months (10 Weeks) - Post-Funding Development  
+**Focus:** Secure First Funding Round → Build Production Platform  
+**Target:** Series A Funding + Fully Functional Platform on Polygon
 
 ---
 
@@ -62,17 +63,20 @@ NECTIQ is currently deployed and operational on the **Ethereum Sepolia Testnet**
 
 ## 📊 Development Progress Overview
 
+**PHASE 1: PATH TO FUNDING (2.5 Months)**
 ```
-Wave 1  ████░░░░░░░░░░░░░░░░  Week 1-2   ✅ COMPLETED (Foundation)
-Wave 2  ░░░░░░░░░░░░░░░░░░░░  Week 3-4   🔜 NEXT (Smart Contracts)
-Wave 3  ░░░░░░░░░░░░░░░░░░░░  Week 5-6   📋 PLANNED (On-Chain Logic)
-Wave 4  ░░░░░░░░░░░░░░░░░░░░  Week 7-8   📋 PLANNED (Polygon PoS)
-Wave 5  ░░░░░░░░░░░░░░░░░░░░  Week 9-10  📋 PLANNED (zkEVM Integration)
-Wave 6  ░░░░░░░░░░░░░░░░░░░░  Week 11-12 📋 PLANNED (DAO Launch)
-Wave 7  ░░░░░░░░░░░░░░░░░░░░  Week 13-14 📋 PLANNED (Cross-Chain)
-Wave 8  ░░░░░░░░░░░░░░░░░░░░  Week 15-16 📋 PLANNED (Scaling)
-Wave 9  ░░░░░░░░░░░░░░░░░░░░  Week 17-18 📋 PLANNED (Optimization)
-Wave 10 ░░░░░░░░░░░░░░░░░░░░  Week 19-20 🎯 FINAL (Full Launch)
+Wave 1-2  ████████░░░░░░░░░░░  Week 1-4   ✅ Foundation & Setup
+Wave 3-4  ░░░░░░░░░░░░░░░░░░░  Week 5-8   🔜 Build & Optimize
+Wave 5    ░░░░░░░░░░░░░░░░░░░  Week 9-10  🎯 PITCH & RAISE 💰
+```
+
+**PHASE 2: POST-FUNDING DEVELOPMENT (2.5 Months)**
+```
+Wave 6    ░░░░░░░░░░░░░░░░░░░  Week 11-12 📋 Smart Contracts
+Wave 7    ░░░░░░░░░░░░░░░░░░░  Week 13-14 📋 On-Chain Logic
+Wave 8    ░░░░░░░░░░░░░░░░░░░  Week 15-16 📋 DAO & Governance
+Wave 9    ░░░░░░░░░░░░░░░░░░░  Week 17-18 📋 Scaling & Optimization
+Wave 10   ░░░░░░░░░░░░░░░░░░░  Week 19-20 🚀 Production Launch
 ```
 
 ---
@@ -90,13 +94,14 @@ Build **NECTIQ** as a **fully decentralized, community-governed prediction gamin
 
 ---
 
-## 🌊 Wave 1: Foundation & Web3 Integration (Week 1-2) ✅
+## 🌊 Wave 1-2: Foundation & Setup (Week 1-4) ✅
 
-**Status:** 🟢 **COMPLETED** | **Decentralization:** 10% | **Polygon Focus:** Basic Integration  
-**Deployment:** 🧪 **Live on Sepolia Testnet** | **Network:** Ethereum Sepolia (Chain ID: 11155111)
+**Status:** 🟢 **COMPLETED** | **Phase:** Foundation & Setup  
+**Deployment:** 🧪 **Live on Sepolia Testnet** | **Network:** Ethereum Sepolia (Chain ID: 11155111)  
+**Goal:** Polygon integration, technical setup, product-market fit validation
 
-### 🎯 Objectives
-Establish core platform with Web3 wallet integration and multi-chain support on testnet.
+### 🎯 Objectives (Foundation & Setup)
+Build MVP, validate product-market fit, integrate Polygon ecosystem, prepare for investor pitch.
 
 ### ✅ Completed Milestones
 
@@ -131,13 +136,39 @@ Establish core platform with Web3 wallet integration and multi-chain support on 
 - WebSocket real-time notifications
 - Deposit monitoring service
 
-### 📝 Buildathons Deliverables (Wave 1)
-✅ Working demo on **Ethereum Sepolia Testnet** (primary)  
-✅ Multi-wallet authentication (MetaMask, WalletConnect, Coinbase, Pelagus)  
-✅ Core gameplay functional (predictions, battles, tournaments)  
-✅ Real-time Pyth Network price feeds (1-second updates)  
-✅ Comprehensive documentation (README.md + ROADMAP.md + SECURITY_AUDIT_REPORT.md)  
-✅ Security audit completed (9/10 score)  
+### 📝 Wave 1-2 Deliverables (Foundation & Setup)
+
+**✅ Technical Foundation**
+- Working demo on **Ethereum Sepolia Testnet**
+- Multi-wallet authentication (MetaMask, WalletConnect, Coinbase, Pelagus)
+- Core gameplay functional (predictions, battles, tournaments, TrendRide)
+- Real-time Pyth Network price feeds (1-second updates)
+- 110+ React components, 14 backend services, 25+ database tables
+
+**✅ Polygon Integration**
+- Multi-chain architecture ready for Polygon PoS
+- Polygonscan API integration prepared
+- MATIC token support in codebase
+- Polygon-compatible wallet support
+- Ready for Polygon Mumbai testnet deployment
+
+**✅ Product-Market Fit Validation**
+- 4 distinct game modes demonstrating market versatility
+- Gamification system (achievements, loyalty tiers, referrals, daily challenges)
+- User retention features (leaderboards, tournaments, social sharing)
+- Multi-chain deposit/withdrawal system (7 networks supported)
+
+**✅ Documentation & Security**
+- Professional README.md with complete feature documentation
+- Comprehensive ROADMAP.md (this document)
+- Security audit completed (9/10 score)
+- API documentation (100+ endpoints)
+
+**✅ Investor-Ready Materials**
+- Live functional demo (accessible via testnet)
+- Technical architecture documentation
+- Business model documentation (tokenomics, revenue streams)
+- Competitive analysis and market positioning  
 
 ### 🧪 Testnet Deployment Details
 
@@ -176,155 +207,345 @@ Establish core platform with Web3 wallet integration and multi-chain support on 
 
 ---
 
-## 🌊 Wave 2: Smart Contract Foundation (Week 3-4)
+### 💼 Investor Value Proposition (Wave 1-2)
 
-**Status:** 🟡 **NEXT WAVE** | **Target Decentralization:** 20% | **Polygon Focus:** Smart Contracts  
-**Deployment Plan:** 🧪 **Polygon Mumbai Testnet** → 🚀 **Polygon PoS Mainnet**
+**🎯 Market Opportunity**
+- $4.5B+ prediction market size
+- $150B+ global gaming market
+- Crypto gaming growing 40% YoY
+- First comprehensive prediction gaming platform on Polygon
 
-### 🎯 Objectives
-Deploy core smart contracts on Polygon Mumbai (testnet) and Polygon PoS (mainnet), begin on-chain game logic.
+**💪 Competitive Advantages**
+- Ultra-fast price updates (1 second vs. industry 5-10 seconds)
+- Multi-chain support (7 networks vs. competitors' 1-2)
+- 4 game modes (vs. competitors' 1-2)
+- Comprehensive gamification system
+- Production-ready codebase (not prototype)
 
-### 🚀 Key Deliverables
+**📈 Traction Metrics (Testnet)**
+- 592MB professional codebase
+- 110+ React components
+- 25+ database tables
+- 100+ API endpoints
+- Security score: 9/10
 
-**📜 Basic Token Contract (For Testing)**
-- Simple ERC-20 token for game testing
-- Faucet contract for Mumbai testnet
-- Basic transfer and approval functions
-- Test token distribution mechanism
+**💰 Revenue Model**
+- 5% platform fees on battles
+- Tournament entry fees
+- Premium features (future)
+- Token economics (sustainable)
 
-**💎 Deposit/Withdrawal Contracts**
-- On-chain deposit tracking
-- Multi-token support (MATIC, test tokens)
-- Basic withdrawal logic
-- Testing on Mumbai testnet
+**🚀 Go-to-Market Strategy**
+- Phase 1: Polygon ecosystem (gaming guilds, DAOs)
+- Phase 2: Crypto traders (Twitter, Discord, Telegram)
+- Phase 3: Mainstream gamers (partnerships, influencers)
 
-**🎲 Prediction Contract (Prototype)**
-- Simple prediction logic
-- Price oracle integration preparation
-- Basic winner calculation
-- Test with Pyth Network data
-
-**🔧 Development & Testing**
-- Unit tests with Hardhat
-- Mumbai testnet deployment
-- Gas cost analysis
-- Basic security checks
-
-### 📊 Success Metrics
-- Smart contracts deployed on Polygon PoS
-- Gas costs < $0.01 per transaction
-- 100+ test predictions executed
-- Zero critical security issues
-
-### 🔗 Polygon Tools Used
-- Polygon PoS RPC
-- Hardhat deployment
-- Polygonscan verification
-- MATIC gas token
+**🎯 Funding Ask (Wave 5 Target)**
+- Seed Round: $500K - $1M
+- Use of Funds:
+  - 40% Development (smart contracts, scaling, mobile)
+  - 30% Marketing & User Acquisition
+  - 20% Operations & Team
+  - 10% Legal & Compliance
 
 ---
 
-## 🌊 Wave 3: On-Chain Game Logic (Week 5-6)
+---
 
-**Status:** 📋 **PLANNED** | **Target Decentralization:** 30% | **Polygon Focus:** Game Contracts
+## 🌊 Wave 3-4: Build & Optimize (Week 5-8)
+
+**Status:** 🟡 **NEXT PHASE** | **Phase:** Build & Optimize  
+**Deployment:** 🧪 **Polygon Mumbai Testnet** → 🚀 **Polygon PoS Mainnet**  
+**Goal:** Feature development, user acquisition, business model refinement
+
+### 🎯 Objectives (Build & Optimize)
+Enhance features, acquire early users, refine business model, prepare demo for investors.
+
+### 🚀 Wave 3-4 Key Deliverables
+
+**📱 Feature Development**
+- Mobile-responsive PWA (Progressive Web App)
+- Enhanced user onboarding flow
+- Tutorial system for new users
+- Social sharing features (Twitter, Discord integration)
+- Advanced analytics dashboard
+- Referral tracking system improvements
+
+**👥 User Acquisition (Target: 1,000+ Beta Users)**
+- Launch beta testing program on testnet
+- Community building (Discord, Telegram, Twitter)
+- Content marketing (Medium articles, video tutorials)
+- Influencer partnerships (crypto gaming YouTubers)
+- Polygon gaming guild outreach
+- Airdrop campaign for early users
+
+**💼 Business Model Refinement**
+- A/B testing on fee structures (3% vs 5% platform fee)
+- User lifetime value (LTV) analysis
+- Churn rate optimization
+- Premium tier feature testing
+- Token utility expansion (staking, governance preparation)
+
+**🔧 Technical Enhancements**
+- Deploy to Polygon Mumbai Testnet
+- Basic smart contracts (ERC-20 test token)
+- Deposit/withdrawal contracts on Polygon
+- Gas optimization for Polygon deployment
+- Performance improvements (target: < 500ms page load)
+
+**📊 Polygon Integration (Deeper)**
+- Polygon PoS testnet deployment (Mumbai)
+- MATIC as primary gas token
+- QuickSwap integration (DEX listing preparation)
+- Polygon Studios partnership outreach
+- Polygonscan verification for all contracts
+
+### 📊 Success Metrics (Wave 3-4)
+- 1,000+ registered beta users
+- 10,000+ total predictions made
+- 80%+ user retention (7-day)
+- 500+ daily active users
+- $10K+ in testnet volume
+- 50+ community members (Discord/Telegram)
+- 5+ gaming guild partnerships
+
+### 💰 Business Metrics (Critical for Funding)
+- Validated product-market fit (user feedback)
+- Clear unit economics (CAC < $10, LTV > $100)
+- Proven engagement metrics (5+ sessions per week)
+- Revenue model validation (fee acceptance rate)
+- Growth rate > 20% week-over-week
+
+---
+
+---
+
+## 🌊 Wave 5: Pitch & Raise (Week 9-10) 💰
+
+**Status:** 🎯 **FUNDING WAVE** | **Phase:** Pitch & Raise  
+**Goal:** Demo presentation, VC meetings, funding round execution  
+**Target:** **Secure $500K - $1M Seed Funding**
+
+### 🎯 Objectives (Pitch & Raise)
+Prepare investor materials, conduct VC meetings, close seed funding round.
+
+### 🚀 Wave 5 Key Deliverables
+
+**📊 Pitch Deck Preparation**
+- Professional pitch deck (15-20 slides)
+  - Problem & Solution
+  - Market Opportunity ($4.5B prediction market)
+  - Product Demo & Traction
+  - Business Model & Unit Economics
+  - Competitive Landscape
+  - Go-to-Market Strategy
+  - Team & Advisors
+  - Roadmap & Milestones
+  - Financial Projections
+  - Funding Ask & Use of Funds
+
+**🎥 Demo Materials**
+- 3-minute product demo video
+- Live demo walkthrough script
+- Technical architecture presentation
+- Case studies & user testimonials
+- Traction metrics dashboard
+
+**💼 Investor Outreach**
+- Target investor list (50+ VCs/Angels)
+  - Crypto-focused VCs (Polygon Ventures, Animoca Brands, etc.)
+  - Gaming VCs (Bitkraft, Griffin Gaming, etc.)
+  - Web3 angels & influencers
+- Warm introductions via Polygon network
+- Email campaign & LinkedIn outreach
+- Attend Web3 conferences & pitch events
+
+**📈 Traction Validation**
+- User growth metrics (MoM, WoW)
+- Engagement metrics (DAU, MAU, retention)
+- Financial metrics (volume, revenue)
+- Product-market fit evidence (NPS score, user feedback)
+- Waitlist for mainnet launch
+
+**💰 Funding Round Execution**
+- Term sheet negotiation
+- Due diligence support
+- Legal documentation (SAFE/Equity)
+- Closing mechanics
+- Post-closing communications
+
+### 📊 Funding Target (Wave 5)
+
+**💰 Seed Round: $500K - $1M**
+
+**Use of Funds Breakdown:**
+| Category | Allocation | Amount (at $750K) | Purpose |
+|----------|-----------|-------------------|---------|
+| **Development** | 40% | $300K | Smart contracts, mainnet launch, mobile app |
+| **Marketing & Growth** | 30% | $225K | User acquisition, influencer marketing, community |
+| **Operations & Team** | 20% | $150K | Core team salaries, operational costs |
+| **Legal & Compliance** | 10% | $75K | Legal structure, compliance, audits |
+
+**📈 Post-Funding Milestones (6 Months)**
+- Deploy on Polygon PoS Mainnet
+- 50,000+ registered users
+- $1M+ TVL
+- $100K+ monthly revenue
+- Series A readiness
+
+### 🎯 Investor Pitch Key Points
+
+**1. Problem (Market Pain)**
+- Prediction markets are boring, inaccessible, centralized
+- Crypto gaming lacks engaging, fair, transparent platforms
+- Existing platforms have high fees, slow transactions, single-chain
+
+**2. Solution (NECTIQ)**
+- Gamified prediction platform on Polygon
+- 4 game modes: Predictions, Battles, Tournaments, TrendRide
+- 1-second price updates (Pyth Network)
+- Multi-chain support (7 networks)
+- Ultra-low fees (< $0.01 per transaction on Polygon)
+
+**3. Traction (Proof of Concept)**
+- ✅ Production-ready MVP on testnet
+- ✅ 1,000+ beta users (Wave 3-4 target)
+- ✅ 10,000+ predictions made
+- ✅ 80%+ retention rate
+- ✅ Security audit: 9/10 score
+
+**4. Market Opportunity**
+- $4.5B prediction market (growing 30% CAGR)
+- $150B global gaming market
+- 300M+ crypto users (40% play Web3 games)
+- Polygon ecosystem: 7,000+ DApps, $5B TVL
+
+**5. Business Model**
+- 5% platform fee on battles (validated)
+- Tournament entry fees
+- Premium subscriptions (future)
+- Token appreciation (NTIQ)
+- **Unit Economics:** CAC $10, LTV $100, LTV:CAC = 10:1
+
+**6. Competitive Advantages**
+- ⚡ 10x faster price updates (1s vs 10s)
+- 💰 100x lower fees (Polygon vs Ethereum)
+- 🎮 4 game modes (vs competitors' 1-2)
+- 🔗 Multi-chain (7 networks)
+- 🏆 Comprehensive gamification
+
+**7. Team**
+- Full-stack development experience
+- Web3 & gaming expertise
+- Polygon Buildathons participant
+- Backed by Polygon ecosystem mentors
+
+**8. Roadmap (Post-Funding)**
+- Wave 6-7: Smart contracts & on-chain logic (Month 3-4)
+- Wave 8-9: DAO governance & scaling (Month 4-5)
+- Wave 10: Production mainnet launch (Month 5)
+- Beyond: Mobile app, global expansion, Series A
+
+**9. Funding Ask**
+- **Seeking:** $500K - $1M seed round
+- **Valuation:** $5M - $8M (negotiable)
+- **Structure:** SAFE or equity
+- **Use:** 40% dev, 30% marketing, 20% ops, 10% legal
+
+**10. Exit Potential**
+- Strategic acquisition (Polygon Studios, Animoca Brands, gaming studios)
+- Token Generation Event (TGE) → Public market liquidity
+- Series A/B/C growth path
+- Comparable exits: $50M-$500M (Polymarket, Augur, PredictIt)
+
+### 📅 Wave 5 Timeline (Week 9-10)
+
+**Week 9: Preparation & Outreach**
+- Day 1-2: Finalize pitch deck & demo video
+- Day 3-4: Create investor list & outreach strategy
+- Day 5-7: Begin warm introductions & email campaign
+
+**Week 10: Meetings & Closing**
+- Day 8-10: First round of VC meetings (8-10 meetings)
+- Day 11-12: Follow-ups, send materials, due diligence
+- Day 13-14: Term sheet negotiation & closing prep
+
+**Post-Wave 5: Closing**
+- Week 11-12: Legal documentation & closing (if term sheet secured)
+- Announce funding round
+- Begin Wave 6 development with capital
+
+### 🎯 Success Criteria (Wave 5)
+- ✅ Complete pitch deck & demo materials
+- ✅ 20+ VC meetings conducted
+- ✅ 3-5 term sheets received
+- 🎯 **1 term sheet accepted & signed**
+- 🎯 **$500K - $1M funding secured**
+
+---
+
+---
+
+## 📍 POST-FUNDING WAVES (Wave 6-10)
+
+> **Note:** The following waves will be executed AFTER securing seed funding in Wave 5. Timeline and scope may adjust based on funding amount and market conditions.
+
+---
+
+## 🌊 Wave 6-7: Smart Contracts & On-Chain Logic (Week 11-14)
+
+**Status:** 📋 **POST-FUNDING** | **Phase:** Smart Contract Development  
+**Deployment:** 🚀 **Polygon PoS Mainnet**
 
 ### 🎯 Objectives
-Move core game logic on-chain with smart contracts on Polygon PoS.
+Deploy production smart contracts on Polygon PoS mainnet with real funds.
 
 ### 🚀 Key Deliverables
 
-**🎮 Prediction Battle Contracts**
-- Create battle contract
-- Join battle mechanism
-- Stake management
-- Automated result calculation
-- Winner distribution
+**📜 Token Contracts**
+- NTIQ ERC-20 token deployment
+- Token distribution contracts
+- Vesting contracts (team, advisors)
+- Staking contract (basic)
 
-**🏆 Survival Tournament Contracts**
-- Tournament creation & management
-- Round progression logic
-- Elimination mechanisms
-- Prize pool distribution
-
-**🎰 TrendRide Multi-Prediction**
-- Multiple cryptocurrency predictions
-- Complex scoring algorithms
-- Bonus multipliers
-- Dynamic payouts
+**🎮 Game Logic Contracts**
+- Prediction battle smart contracts
+- Tournament management contracts
+- TrendRide multi-prediction logic
+- Prize distribution automation
 
 **🔮 Oracle Integration**
 - Pyth Network on Polygon PoS
-- Price feed verification
-- Result finalization
-- Dispute resolution (basic)
+- Chainlink as backup oracle
+- Price verification mechanism
+- Result finalization system
 
-### 📊 Success Metrics
-- All game modes on-chain
-- < 2 second transaction finality
-- Gas cost < $0.02 per game
-- 1000+ on-chain predictions
+**💰 Treasury & Economics**
+- Multi-sig treasury (Gnosis Safe)
+- Fee collection contracts
+- Revenue distribution logic
+- Liquidity pool setup (QuickSwap)
 
-### 🔗 Polygon Benefits
-- Fast finality (~2 seconds)
-- Low gas fees (~$0.001)
-- EVM compatibility
-- Ethereum security
-
----
-
-## 🌊 Wave 4: Polygon PoS Mainnet Launch (Week 7-8)
-
-**Status:** 📋 **PLANNED** | **Target Decentralization:** 40% | **Polygon Focus:** Production Deployment
-
-### 🎯 Objectives
-Full production launch on Polygon PoS mainnet with real MATIC and tokens.
-
-### 🚀 Key Deliverables
-
-**🚀 Mainnet Deployment**
-- Deploy all contracts to Polygon PoS mainnet
-- NTIQ token launch
-- Liquidity setup (QuickSwap/Uniswap V3)
-- CEX listing preparation
-
-**💰 Tokenomics Implementation**
-- Community airdrop (15% - 150M NTIQ)
-- Liquidity mining (10% - 100M NTIQ)
-- Player rewards pool (15% - 150M NTIQ)
-- Team vesting contracts (4-year)
-
-**🔐 Security Enhancements**
-- Professional smart contract audit (CertiK/OpenZeppelin)
-- Bug bounty program ($50K pool)
-- Multi-sig treasury (Gnosis Safe on Polygon)
+**🔐 Security**
+- Professional audit (CertiK/OpenZeppelin)
+- Bug bounty program ($50K)
 - Emergency pause mechanisms
-
-**📈 User Onboarding**
-- MATIC faucet for new users
-- Tutorial contracts
-- Demo predictions
-- Referral system
+- Upgradability patterns
 
 ### 📊 Success Metrics
-- 5,000+ active wallets
-- $100K+ TVL in prediction pools
-- 10,000+ daily predictions
+- Mainnet deployment successful
 - Zero security incidents
-
-### 🔗 Polygon Ecosystem Integration
-- QuickSwap liquidity pool
-- Polygon wallet integration
-- Polygon ID (future consideration)
-- Polygon Gas Station API
+- Gas costs < $0.01 per transaction
+- 10,000+ on-chain predictions
 
 ---
 
-## 🌊 Wave 5: Polygon zkEVM Integration (Week 9-10)
+## 🌊 Wave 8-9: DAO Governance & Scaling (Week 15-18)
 
-**Status:** 📋 **PLANNED** | **Target Decentralization:** 50% | **Polygon Focus:** L2 Scaling
+**Status:** 📋 **POST-FUNDING** | **Phase:** DAO & Scaling
 
 ### 🎯 Objectives
-Expand to Polygon zkEVM for enhanced privacy and scalability.
+Launch DAO governance and optimize for scale (100K+ users).
 
 ### 🚀 Key Deliverables
 
