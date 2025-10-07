@@ -3054,14 +3054,34 @@ export class MemStorage implements IStorage {
     this.currentWithdrawalId = 1;
     this.currentPurchaseId = 1;
 
-    // Create default users with some test data
-    this.createUser({ username: "demo", password: "demo" });
-    this.createUser({ username: "alice", password: "alice123" });
-    this.createUser({ username: "bob", password: "bob123" });
-    this.createUser({ username: "charlie", password: "charlie123" });
+    // 🔒 SECURITY FIX: Only create test users in development mode
+    // Production should NEVER have hardcoded test accounts
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🧪 [DEV] Creating test users for development environment');
 
-    // Add some test predictions and stats for demo purposes
-    this.initializeDemoData();
+      // Generate random passwords for test users (not the weak hardcoded ones)
+      const crypto = require('crypto');
+      const demoPassword = crypto.randomBytes(16).toString('hex');
+      const alicePassword = crypto.randomBytes(16).toString('hex');
+      const bobPassword = crypto.randomBytes(16).toString('hex');
+      const charliePassword = crypto.randomBytes(16).toString('hex');
+
+      console.log('🔑 [DEV] Test user credentials:');
+      console.log('   demo:', demoPassword);
+      console.log('   alice:', alicePassword);
+      console.log('   bob:', bobPassword);
+      console.log('   charlie:', charliePassword);
+
+      this.createUser({ username: "demo", password: demoPassword });
+      this.createUser({ username: "alice", password: alicePassword });
+      this.createUser({ username: "bob", password: bobPassword });
+      this.createUser({ username: "charlie", password: charliePassword });
+
+      // Add some test predictions and stats for demo purposes
+      this.initializeDemoData();
+    } else {
+      console.log('🔒 [PRODUCTION] Skipping test user creation in production mode');
+    }
   }
 
   private async initializeDemoData() {

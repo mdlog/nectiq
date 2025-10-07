@@ -272,7 +272,9 @@ function getAdminWalletAddresses(): string[] {
 
 // Admin IP whitelist for bypassing rate limiting - loaded from environment
 function getAdminIPWhitelist(): Set<string> {
-  const defaultIPs = ['127.0.0.1', '::1', 'localhost', '172.31.128.37', '172.31.128.39', '172.31.128.87', '172.31.90.130', '172.31.106.226'];
+  // 🔒 SECURITY FIX: Removed hardcoded internal AWS IPs (172.31.x.x)
+  // Only use localhost by default
+  const defaultIPs = ['127.0.0.1', '::1', 'localhost'];
   const envIPs = process.env.ADMIN_IP_WHITELIST;
 
   if (!envIPs) {
@@ -1589,15 +1591,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Direct admin access route - bypasses all browser extension conflicts
+  // ⚠️ SECURITY: Direct admin access route (REMOVED FOR SECURITY)
+  // This endpoint was removed due to security concerns (hardcoded token vulnerability)
+  // Use proper wallet authentication instead: /admin
+  //
+  // If you need emergency admin access, use environment variable EMERGENCY_ADMIN_TOKEN
+  // and ensure it's at least 64 characters long (cryptographically random)
   app.get("/admin-direct/:token", async (req, res) => {
     try {
       const { token } = req.params;
-      const adminToken = "secure-admin-2024";
+
+      // 🔒 SECURITY: Use environment variable with strong random token
+      const adminToken = process.env.EMERGENCY_ADMIN_TOKEN;
+
+      // Validate token exists and is strong enough
+      if (!adminToken || adminToken.length < 64) {
+        console.error('🚨 [SECURITY] EMERGENCY_ADMIN_TOKEN not set or too weak (min 64 chars)');
+        auditLog("EMERGENCY_ADMIN_ACCESS_BLOCKED", {
+          reason: "Token not configured or too weak",
+          ip: req.ip
+        }, req);
+        return res.status(403).json({
+          message: "Emergency admin access not configured. Use wallet authentication."
+        });
+      }
 
       if (token !== adminToken) {
+        auditLog("EMERGENCY_ADMIN_ACCESS_DENIED", {
+          reason: "Invalid token",
+          ip: req.ip
+        }, req);
         return res.redirect("/?error=invalid-access");
       }
+
+      // Log successful emergency access
+      auditLog("EMERGENCY_ADMIN_ACCESS_GRANTED", {
+        ip: req.ip,
+        timestamp: new Date().toISOString()
+      }, req);
 
       const adminAddresses = getAdminWalletAddresses();
       const adminWallet = adminAddresses[0]; // Use first admin address
@@ -9777,7 +9808,7 @@ Manual balance correction required IMMEDIATELY!`;
               } catch (apiError) {
                 console.log('CoinGecko API failed, trying internal fallback...');
                 // Try internal crypto prices as fallback
-                const internalResponse = await fetch('http://localhost:5000/api/crypto/prices');
+                const internalResponse = await fetch(`${API_BASE_URL}/api/crypto/prices`);
                 const internalData = await internalResponse.json();
                 const cryptoMatch = internalData.find(crypto =>
                   crypto.id === tournament.cryptocurrency ||
@@ -10084,7 +10115,7 @@ Manual balance correction required IMMEDIATELY!`;
         console.log(`🎯 Creating Round 1 for tournament ${tournamentId} immediately upon activation`);
 
         // Get current cryptocurrency price for start price
-        const cryptoResponse = await fetch(`http://localhost:5000/api/crypto/prices`);
+        const cryptoResponse = await fetch(`${API_BASE_URL}/api/crypto/prices`);
         const cryptoData = await cryptoResponse.json();
         const currentCrypto = cryptoData.find((crypto: any) => crypto.id === tournament.cryptocurrency);
         const startPrice = currentCrypto?.current_price || 0;

@@ -23,20 +23,23 @@ interface EtherscanResponse {
 export class WithdrawalMonitorService {
   private intervalId: NodeJS.Timeout | null = null;
   private readonly CHECK_INTERVAL = 30000; // 30 seconds
-  private readonly ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || 'YOUR_API_KEY_HERE';
+  // 🔒 SECURITY FIX: Removed insecure fallback 'YOUR_API_KEY_HERE'
+  // If ETHERSCAN_API_KEY not set, service will log warning but continue
+  // (Etherscan allows limited requests without API key)
+  private readonly ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || '';
 
   async start() {
     console.log('🚀 [WITHDRAWAL-MONITOR] Starting automated withdrawal hash detection...');
-    
+
     // Initial check
     await this.checkPendingWithdrawals();
-    
+
     // Set up interval for continuous monitoring
     this.intervalId = setInterval(() => {
       this.checkPendingWithdrawals();
     }, this.CHECK_INTERVAL);
-    
-    console.log(`✅ [WITHDRAWAL-MONITOR] Withdrawal monitoring started - checking every ${this.CHECK_INTERVAL/1000} seconds`);
+
+    console.log(`✅ [WITHDRAWAL-MONITOR] Withdrawal monitoring started - checking every ${this.CHECK_INTERVAL / 1000} seconds`);
   }
 
   async stop() {
@@ -50,15 +53,15 @@ export class WithdrawalMonitorService {
   private async checkPendingWithdrawals() {
     try {
       console.log('🔍 [WITHDRAWAL-MONITOR] Checking pending withdrawals...');
-      
+
       const allWithdrawals = await storage.getAllWithdrawals();
-      
+
       // Filter withdrawals that need hash detection
-      const pendingWithdrawals = allWithdrawals.filter(w => 
-        (w.status === 'processing' || w.status === 'pending') && 
+      const pendingWithdrawals = allWithdrawals.filter(w =>
+        (w.status === 'processing' || w.status === 'pending') &&
         (!w.transactionHash || w.transactionHash === '3' || w.transactionHash === 'pending' || !w.transactionHash.startsWith('0x'))
       );
-      
+
       if (pendingWithdrawals.length === 0) {
         console.log('✅ [WITHDRAWAL-MONITOR] No pending withdrawals found');
         return;
@@ -77,7 +80,7 @@ export class WithdrawalMonitorService {
   private async searchWithdrawalHash(withdrawal: any) {
     try {
       console.log(`🔍 [WITHDRAWAL-MONITOR] Searching hash for withdrawal ${withdrawal.uniqueTransactionId}`);
-      
+
       if (!withdrawal.toWalletAddress) {
         console.log(`⚠️ [WITHDRAWAL-MONITOR] Withdrawal ${withdrawal.uniqueTransactionId} has no target address, skipping`);
         return;
@@ -87,13 +90,13 @@ export class WithdrawalMonitorService {
       const createdTime = new Date(withdrawal.createdAt);
       const searchStartTime = Math.floor(createdTime.getTime() / 1000);
       const searchEndTime = Math.floor((Date.now()) / 1000); // Current time
-      
+
       console.log(`🔍 [WITHDRAWAL-MONITOR] Searching from ${new Date(searchStartTime * 1000).toISOString()} to ${new Date(searchEndTime * 1000).toISOString()}`);
 
       // Determine network and API URL
       const network = this.getNetworkFromToken(withdrawal.tokenType);
       const apiUrl = this.getApiUrl(network);
-      
+
       if (!apiUrl) {
         console.log(`⚠️ [WITHDRAWAL-MONITOR] Unsupported network for token ${withdrawal.tokenType}`);
         return;
@@ -103,7 +106,7 @@ export class WithdrawalMonitorService {
 
       // Search for transactions
       let foundHash = null;
-      
+
       if (withdrawal.tokenType.toUpperCase() === 'USDC' || withdrawal.tokenType.toUpperCase() === 'USDT') {
         // Token transfers
         foundHash = await this.searchTokenTransfer(apiUrl, withdrawal, searchStartTime, searchEndTime);
@@ -118,7 +121,7 @@ export class WithdrawalMonitorService {
       } else {
         console.log(`❌ [WITHDRAWAL-MONITOR] No matching transaction found for withdrawal ${withdrawal.uniqueTransactionId}`);
       }
-      
+
     } catch (error) {
       console.error(`❌ [WITHDRAWAL-MONITOR] Error searching withdrawal ${withdrawal.uniqueTransactionId}:`, error);
     }
@@ -150,7 +153,7 @@ export class WithdrawalMonitorService {
       console.log(`📊 [WITHDRAWAL-MONITOR] Found ${transactions.length} transactions for address ${withdrawal.toWalletAddress}`);
 
       // Filter transactions within timeframe and to correct address
-      const relevantTxs = transactions.filter(tx => 
+      const relevantTxs = transactions.filter(tx =>
         parseInt(tx.timeStamp) >= startTime &&
         parseInt(tx.timeStamp) <= endTime &&
         tx.isError === '0' &&
@@ -161,15 +164,15 @@ export class WithdrawalMonitorService {
 
       // Get expected ETH amount directly from net_amount field (already calculated)
       const expectedETH = parseFloat(withdrawal.netAmount || '0');
-      
+
       console.log(`🔍 [WITHDRAWAL-MONITOR] Expected ETH amount: ${expectedETH}`);
-      
+
       for (const tx of relevantTxs) {
         const txValueWei = tx.value;
         const txValueEth = parseFloat(txValueWei) / Math.pow(10, 18);
-        
+
         console.log(`🔍 [WITHDRAWAL-MONITOR] Checking tx ${tx.hash}: ${txValueEth} ETH vs expected ${expectedETH} ETH`);
-        
+
         // Direct ETH amount comparison with tight tolerance
         if (this.isAmountMatch(txValueEth, expectedETH, 0.001)) { // 0.1% tolerance for exact ETH amounts
           console.log(`✅ [WITHDRAWAL-MONITOR] ETH amount match found: ${txValueEth} ETH ≈ ${expectedETH} ETH`);
@@ -207,7 +210,7 @@ export class WithdrawalMonitorService {
       const tokenTxs = response.data.result || [];
       console.log(`📊 [WITHDRAWAL-MONITOR] Found ${tokenTxs.length} token transactions for address ${withdrawal.toWalletAddress}`);
 
-      const relevantTxs = tokenTxs.filter(tx => 
+      const relevantTxs = tokenTxs.filter(tx =>
         parseInt(tx.timeStamp) >= startTime &&
         parseInt(tx.timeStamp) <= endTime &&
         tx.to.toLowerCase() === withdrawal.toWalletAddress.toLowerCase()
@@ -219,13 +222,13 @@ export class WithdrawalMonitorService {
 
       for (const tx of relevantTxs) {
         const tokenSymbol = (tx as any).tokenSymbol?.toLowerCase();
-        
+
         if (tokenSymbol === withdrawal.tokenType.toLowerCase()) {
           const tokenDecimals = parseInt((tx as any).tokenDecimal || '6');
           const txValueTokens = parseFloat(tx.value) / Math.pow(10, tokenDecimals);
-          
+
           console.log(`🔍 [WITHDRAWAL-MONITOR] Checking ${tokenSymbol.toUpperCase()} tx ${tx.hash}: ${txValueTokens} tokens`);
-          
+
           // For stablecoins, token amount should approximately equal USD amount
           if (this.isAmountMatch(txValueTokens, expectedUSD, 0.05)) { // 5% tolerance for stablecoins
             console.log(`✅ [WITHDRAWAL-MONITOR] Amount match found: ${txValueTokens} ${tokenSymbol.toUpperCase()} ≈ ${expectedUSD} USD`);
@@ -244,14 +247,14 @@ export class WithdrawalMonitorService {
   private async updateWithdrawalHash(withdrawal: any, hash: string) {
     try {
       console.log(`🔄 [WITHDRAWAL-MONITOR] Updating withdrawal ${withdrawal.uniqueTransactionId} with hash ${hash}`);
-      
+
       await storage.updateWithdrawalHash(withdrawal.uniqueTransactionId, hash, 'completed');
-      
+
       console.log(`✅ [WITHDRAWAL-MONITOR] Successfully updated withdrawal ${withdrawal.uniqueTransactionId} - Status: completed, Hash: ${hash}`);
-      
+
       // Log success for admin monitoring
       console.log(`🎉 [WITHDRAWAL-MONITOR] Automatic hash detection successful for withdrawal ${withdrawal.uniqueTransactionId}`);
-      
+
       // Send WebSocket notification to user
       try {
         broadcastNotificationCallback(withdrawal.userId, {
@@ -266,7 +269,7 @@ export class WithdrawalMonitorService {
       } catch (notifError) {
         console.error(`❌ [WITHDRAWAL-MONITOR] Failed to send WebSocket notification:`, notifError);
       }
-      
+
     } catch (error) {
       console.error(`❌ [WITHDRAWAL-MONITOR] Error updating withdrawal ${withdrawal.uniqueTransactionId}:`, error);
     }
@@ -302,7 +305,7 @@ export class WithdrawalMonitorService {
 
   private isAmountMatch(actual: number, expected: number, tolerance: number): boolean {
     if (expected === 0) return actual === 0;
-    
+
     const diff = Math.abs(actual - expected) / expected;
     return diff <= tolerance;
   }
