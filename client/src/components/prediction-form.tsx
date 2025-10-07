@@ -52,30 +52,55 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // 🔑 STATE: Store last valid data to prevent disappearing during refresh
+  const [lastValidCryptos, setLastValidCryptos] = useState<any[]>([]);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
   // Fetch live Pyth Network prices for real-time updates
   const { data: livePrices, isLoading: pricesLoading } = useQuery({
     queryKey: ["/api/crypto/pyth-prices"],
     refetchInterval: 1000, // Same as other pages - ultra-fast updates
     refetchIntervalInBackground: true, // Enable background updates
     staleTime: 500, // Same as other pages - very fresh data
-    retry: 3, // More retry attempts for reliability
+    retry: 5, // Increased from 3 to 5 for better reliability
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
+    keepPreviousData: true, // 🔑 Keep data during refetch
+    placeholderData: (previousData) => previousData, // 🔑 Show previous data while loading
+    gcTime: 600000, // 10 minutes cache
     select: (data: any[]) => {
       const priceMap: Record<string, number> = {};
       data.forEach(crypto => {
         priceMap[crypto.id] = crypto.current_price;
       });
       return priceMap;
-    }
+    },
+    onError: (error) => {
+      console.error("❌ [PREDICTION-FORM-ERROR] Price query failed:", error);
+    },
   });
 
   // Fetch available cryptocurrencies from database
-  const { data: availableCryptos, isLoading: cryptosLoading } = useQuery({
+  const { data: availableCryptos = [], isLoading: cryptosLoading, isError } = useQuery({
     queryKey: ["/api/crypto/pyth-prices"],
     refetchInterval: 1000, // Same as other pages - ultra-fast updates
     refetchIntervalInBackground: true, // Enable background updates
     staleTime: 500, // Same as other pages - very fresh data
-    retry: 3, // More retry attempts for reliability
-    select: (data: any[]) => data // Return full crypto data with image, price, etc.
+    retry: 5, // Increased from 3 to 5 for better reliability
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
+    keepPreviousData: true, // 🔑 Keep data during refetch to prevent disappearing
+    placeholderData: (previousData) => previousData, // 🔑 Show previous data while loading
+    gcTime: 600000, // 10 minutes cache
+    select: (data: any[]) => data, // Return full crypto data with image, price, etc.
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        console.log("✅ [PREDICTION-FORM-SUCCESS] Received", data.length, "cryptocurrencies");
+        setLastValidCryptos(data);
+        setHasLoadedOnce(true);
+      }
+    },
+    onError: (error) => {
+      console.error("❌ [PREDICTION-FORM-ERROR] Crypto query failed:", error);
+    },
   });
 
   // Update current prices when live prices change
@@ -85,8 +110,30 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
     }
   }, [livePrices]);
 
+  // 🔑 CRITICAL FIX: Update lastValidCryptos only if we receive non-empty data
+  useEffect(() => {
+    if (availableCryptos && Array.isArray(availableCryptos) && availableCryptos.length > 0) {
+      console.log("✅ [PREDICTION-FORM-UPDATE] Updating last valid cryptos with", availableCryptos.length, "items");
+      setLastValidCryptos(availableCryptos);
+    } else {
+      console.log("⚠️ [PREDICTION-FORM-SKIP] Skipping update - empty/invalid data, keeping previous data");
+    }
+  }, [availableCryptos]);
+
+  // 🔑 USE LAST VALID DATA: Always use last valid data if current is empty
+  const cryptosToUse = (availableCryptos && availableCryptos.length > 0) ? availableCryptos : lastValidCryptos;
+
+  console.log("🔍 [PREDICTION-FORM-DEBUG] Crypto state:", {
+    availableCryptosLength: availableCryptos?.length || 0,
+    lastValidLength: lastValidCryptos.length,
+    usingLength: cryptosToUse.length,
+    hasLoadedOnce,
+    isLoading: cryptosLoading,
+    isError
+  });
+
   // Create dynamic schema based on available cryptocurrencies
-  const cryptoIds = availableCryptos?.map(crypto => crypto.id) || [];
+  const cryptoIds = cryptosToUse?.map(crypto => crypto.id) || [];
   const predictionFormSchema = createPredictionFormSchema(cryptoIds);
 
   const form = useForm<PredictionFormData>({
@@ -116,13 +163,13 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
           currentPrice: currentPrices[data.cryptocurrency] || 0, // Include live Pyth price
         }),
       });
-      
+
       // Parse response if it's JSON
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         return await response.json();
       }
-      
+
       // For non-JSON responses, return success indicator
       return { success: true };
     },
@@ -130,7 +177,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
       if (import.meta.env.DEV) {
         console.log('Prediction success response:', data);
       }
-      
+
       toast({
         title: "Prediction submitted!",
         description: "Your prediction has been recorded successfully.",
@@ -139,7 +186,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
       setSelectedStake(null);
       queryClient.invalidateQueries({ queryKey: ["/api/predictions/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      
+
       // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
@@ -147,7 +194,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
     },
     onError: (error: any) => {
       console.error("Error creating prediction:", error);
-      
+
       // Handle authentication error specifically
       if (error.message?.includes('401') || error.message?.includes('Authentication required')) {
         toast({
@@ -155,14 +202,14 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
           description: "Please connect your wallet or login to make predictions.",
           variant: "destructive",
         });
-        
+
         // Close the modal if authentication fails
         if (onSuccess) {
           onSuccess();
         }
         return;
       }
-      
+
       toast({
         title: "Error",
         description: error.message || "Failed to submit prediction. Please try again.",
@@ -180,8 +227,9 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
     form.setValue("stakeAmount", amount);
   };
 
-  // Show loading state while cryptocurrencies are being fetched
-  if (cryptosLoading) {
+  // Show loading state ONLY on FIRST LOAD when no data exists and actively loading
+  // Never show loading during subsequent fetches - this prevents form from disappearing
+  if (cryptosLoading && cryptosToUse.length === 0 && !hasLoadedOnce) {
     return (
       <div className="bg-surface rounded-xl p-6 border border-surface-light">
         <h2 className="text-xl font-bold mb-6 flex items-center">
@@ -198,8 +246,8 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
     );
   }
 
-  // Don't render form if no cryptocurrencies are available
-  if (!availableCryptos || availableCryptos.length === 0) {
+  // Don't render form if no cryptocurrencies are available AND we never had data before (first load failure)
+  if (!cryptosLoading && cryptosToUse.length === 0 && !hasLoadedOnce) {
     return (
       <div className="bg-surface rounded-xl p-6 border border-surface-light">
         <h2 className="text-xl font-bold mb-6 flex items-center">
@@ -208,8 +256,12 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
         </h2>
         <div className="text-center py-8">
           <Gem className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">No Cryptocurrencies Available</h3>
-          <p className="text-slate-400">Please add cryptocurrencies in the admin panel to start making predictions.</p>
+          <h3 className="text-lg font-semibold text-slate-300 mb-2">
+            {isError ? 'Error Loading Cryptocurrencies' : 'No Cryptocurrencies Available'}
+          </h3>
+          <p className="text-slate-400">
+            {isError ? 'Retrying connection...' : 'Please add cryptocurrencies in the admin panel to start making predictions.'}
+          </p>
         </div>
       </div>
     );
@@ -218,7 +270,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
   return (
     <div>
       {/* Remove the header since modal already has it */}
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -235,7 +287,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
                           <HelpCircle className="ml-2 h-4 w-4 text-slate-400 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Choose from our list of supported cryptocurrencies.<br/>Click to see real-time prices and make predictions.</p>
+                          <p>Choose from our list of supported cryptocurrencies.<br />Click to see real-time prices and make predictions.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -247,10 +299,10 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {cryptosLoading ? (
+                      {cryptosLoading && cryptosToUse.length === 0 ? (
                         <SelectItem value="loading" disabled>Loading cryptocurrencies...</SelectItem>
-                      ) : availableCryptos && availableCryptos.length > 0 ? (
-                        availableCryptos.map((crypto) => (
+                      ) : cryptosToUse && cryptosToUse.length > 0 ? (
+                        cryptosToUse.map((crypto) => (
                           <SelectItem key={crypto.id} value={crypto.id}>
                             <div className="flex items-center gap-2">
                               <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
@@ -269,7 +321,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="timeframe"
@@ -295,7 +347,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
               )}
             />
           </div>
-          
+
           <FormField
             control={form.control}
             name="predictedPrice"
@@ -328,7 +380,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="stakeAmount"
@@ -342,11 +394,10 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
                         key={amount}
                         type="button"
                         variant={selectedStake === amount ? "default" : "outline"}
-                        className={`${
-                          selectedStake === amount
+                        className={`${selectedStake === amount
                             ? "gradient-bg"
                             : "bg-surface-light hover:bg-primary transition-colors border-surface-light"
-                        }`}
+                          }`}
                         onClick={() => handleStakePreset(amount)}
                       >
                         {amount} NTIQ
@@ -371,7 +422,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
               </FormItem>
             )}
           />
-          
+
           <Button
             type="submit"
             disabled={createPredictionMutation.isPending}

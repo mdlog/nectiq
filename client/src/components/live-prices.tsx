@@ -63,22 +63,45 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   // 🔑 STATE: Store last valid data to prevent disappearing during empty API responses
   const [lastValidData, setLastValidData] = React.useState<CryptoPrice[]>([]);
 
+  // 🔑 STATE: Track if we ever had data (to prevent showing loading on refresh)
+  const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
+
   // REAL-TIME PRICES FROM PYTH NETWORK - Synchronized with other components
   // OPTIMISTIC UPDATES: Keep previous data visible while fetching new data
-  const { data: prices = [], isLoading, dataUpdatedAt, isFetching } = useQuery<CryptoPrice[]>({
+  const { data: prices = [], isLoading, dataUpdatedAt, isFetching, error, isError } = useQuery<CryptoPrice[]>({
     queryKey: ["/api/crypto/pyth-prices"], // Using Pyth Network for ultra-fast real-time data
     refetchInterval: 1000, // Same as Active Predictions and Battles - 1 second refresh
     refetchIntervalInBackground: true, // Enable background updates
     staleTime: 500, // Same as other components - 500ms stale time
-    retry: 3,
-    retryDelay: 500, // Wait 500ms between retries
+    retry: 5, // Increased from 3 to 5 attempts
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
     refetchOnWindowFocus: true, // Enable refresh on window focus for consistency
     refetchOnMount: true, // Fetch on component mount
     placeholderData: (previousData) => previousData, // ✅ KEEP OLD DATA VISIBLE during fetch
-    gcTime: 300000, // Keep cached data for 5 minutes (300 seconds)
+    gcTime: 600000, // Increased to 10 minutes (600 seconds)
+    // 🔑 CRITICAL: Keep previous data during refetch to prevent flickering
+    keepPreviousData: true,
+    // Error handling
+    onError: (error) => {
+      console.error("❌ [LIVE-PRICES-ERROR] Query failed:", error);
+    },
+    // Success handling
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        console.log("✅ [LIVE-PRICES-SUCCESS] Received", data.length, "prices");
+        setHasLoadedOnce(true);
+      }
+    },
   });
 
-  console.log("🔍 [LIVE-PRICES-QUERY] Query state:", { isLoading, isFetching, pricesLength: prices?.length });
+  console.log("🔍 [LIVE-PRICES-QUERY] Query state:", {
+    isLoading,
+    isFetching,
+    isError,
+    pricesLength: prices?.length,
+    hasLoadedOnce,
+    lastValidLength: lastValidData.length
+  });
 
   // 🔑 CRITICAL FIX: Update lastValidData only if we receive non-empty data
   // This prevents data from disappearing when API temporarily returns empty array
@@ -118,7 +141,8 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
 
   // Only show skeleton on FIRST LOAD when no data exists and actively loading
   // Never show skeleton during subsequent fetches (isFetching) - this prevents flicker
-  if (isLoading && sortedPrices.length === 0) {
+  // Also check hasLoadedOnce to prevent showing skeleton on refresh
+  if (isLoading && sortedPrices.length === 0 && !hasLoadedOnce) {
     return (
       <div className="bg-surface rounded-lg p-2 border border-surface-light">
         <h3 className="text-base font-bold mb-3 flex items-center">
@@ -137,7 +161,8 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
   }
 
   // If no data even after loading, show empty state (not loading skeleton)
-  if (!isLoading && sortedPrices.length === 0) {
+  // But only if we never had data before (first load failure)
+  if (!isLoading && sortedPrices.length === 0 && !hasLoadedOnce) {
     return (
       <div className="bg-surface rounded-lg p-2 border border-surface-light">
         <h3 className="text-base font-bold mb-3 flex items-center">
@@ -145,8 +170,8 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           Live Prices
         </h3>
         <div className="text-center py-4 text-slate-400">
-          <p className="text-sm">No price data available</p>
-          <p className="text-xs mt-1">Prices will appear shortly...</p>
+          <p className="text-sm">{isError ? 'Error loading prices' : 'No price data available'}</p>
+          <p className="text-xs mt-1">{isError ? 'Retrying...' : 'Prices will appear shortly...'}</p>
         </div>
       </div>
     );
@@ -164,8 +189,11 @@ export function LivePrices({ onCryptoSelect, onPredictClick }: LivePricesProps) 
           </span>
         </h3>
         <div className="flex items-center text-xs text-green-400">
-          <div className={`w-1.5 h-1.5 rounded-full mr-1 ${isFetching ? 'bg-orange-400 animate-spin' : 'bg-green-400 animate-pulse'}`}></div>
-          REAL-TIME {lastUpdate}
+          <div className={`w-1.5 h-1.5 rounded-full mr-1 ${isError ? 'bg-red-400 animate-pulse' :
+              isFetching ? 'bg-orange-400' :
+                'bg-green-400 animate-pulse'
+            }`}></div>
+          {isError ? 'RECONNECTING' : `REAL-TIME ${lastUpdate}`}
         </div>
       </div>
 
