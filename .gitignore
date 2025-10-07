@@ -11,3 +11,4 @@ vite.config.ts.*
 .env.local
 .env.*.localattached_assets/
 .local/
+replit.md
