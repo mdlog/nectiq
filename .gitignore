@@ -5,10 +5,42 @@ server/public
 vite.config.ts.*
 *.tar.gz
 
-
 # Environment variables
 .env
 .env.local
-.env.*.localattached_assets/
+.env.*.local
 .local/
+
+# Old files
+attached_assets/
 replit.md
+
+# Test files
+test_*.js
+*.test.js
+!test/*.test.js
+!test/*.test.cjs
+
+# Temporary files
+*.tmp
+*.temp
+*.backup
+*.old.*
+cookies.txt
+
+# Debug files
+*-debug.html
+test-*.html
+debug-*.js
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
