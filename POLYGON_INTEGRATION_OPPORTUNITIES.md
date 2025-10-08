@@ -31,8 +31,25 @@
 - **Blockchain:** Ethereum Sepolia Testnet (Live & Functional)
 - **Status:** Production-ready MVP with wallet integration
 - **Deployment:** 🧪 Testnet with 4 game modes, real-time price feeds
-- **Next Step:** Polygon Mumbai Testnet (Wave 2-3)
+- **Next Step:** Polygon Amoy Testnet (Wave 2-3) - *Mumbai deprecated since April 2024*
 - **Goal:** Migrate to Polygon PoS Mainnet (Wave 4) with progressive decentralization
+
+#### Polygon Amoy Testnet Details
+```
+Network Name:    Polygon Amoy Testnet
+Chain ID:        80002
+Currency:        MATIC
+RPC URL:         https://rpc-amoy.polygon.technology/
+Block Explorer:  https://amoy.polygonscan.com/
+Faucet:          https://faucet.polygon.technology/
+
+Key Differences from Mumbai:
+✅ More stable and maintained
+✅ Better aligned with Polygon PoS mainnet
+✅ Improved RPC reliability
+✅ Active developer support
+❌ Mumbai sunset: April 2024
+```
 
 ### Integration Opportunity Score: **9.2/10**
 
@@ -106,6 +123,14 @@ Location: contracts/SimpleContracts.sol
 - 💰 **$0.01 average transaction cost** → Enables micro-transactions
 - 🔐 **EVM-compatible** → Easy migration from Ethereum
 - 🌍 **High throughput** → Handles 7,000+ TPS
+
+#### Testing Environment: Polygon Amoy
+**Amoy** is the official Polygon testnet (replaced Mumbai in April 2024):
+- **Chain ID:** 80002
+- **RPC:** https://rpc-amoy.polygon.technology/
+- **Explorer:** https://amoy.polygonscan.com/
+- **Faucet:** https://faucet.polygon.technology/
+- **Add to MetaMask:** [ChainList - Amoy](https://chainlist.org/?search=amoy&testnets=true)
 
 #### What to Migrate:
 | Feature | Current (Sepolia) | Target (Polygon PoS) | Priority |
@@ -327,7 +352,7 @@ contract PredictionMarket {
 - ✅ **Lower fees** → $0.01 per prediction (vs $5+ on Ethereum)
 
 #### Migration Strategy:
-1. **Phase 1 (Wave 2):** Deploy smart contract on Polygon Mumbai testnet
+1. **Phase 1 (Wave 2):** Deploy smart contract on Polygon Amoy testnet
 2. **Phase 2 (Wave 3):** Parallel system (DB + SC)
 3. **Phase 3 (Wave 4):** Gradual migration (10% → 50% → 100%)
 4. **Phase 4 (Wave 5):** Deprecate off-chain predictions
@@ -1195,7 +1220,7 @@ export function useTrendRide() {
 ```
 
 #### Migration Strategy:
-1. **Phase 1 (Wave 2):** Deploy TrendRideMarket contract on Polygon Mumbai testnet
+1. **Phase 1 (Wave 2):** Deploy TrendRideMarket contract on Polygon Amoy testnet
 2. **Phase 2 (Wave 3):** Parallel system (DB + Smart Contract)
 3. **Phase 3 (Wave 4):** User migration with incentives (2x rewards for on-chain TrendRides)
 4. **Phase 4 (Wave 5):** 100% on-chain TrendRide system
@@ -1293,7 +1318,7 @@ PredictIt         | ❌ No     | ❌ No    | ❌ No   | ❌ Limited
 - Airdrop campaign for early adopters
 
 **🔧 Technical Enhancements**
-- Deploy to Polygon Mumbai Testnet
+- Deploy to Polygon Amoy Testnet
 - Basic smart contracts (ERC-20 test token)
 - Deposit/withdrawal contracts on Polygon
 - Gas optimization for Polygon
@@ -1575,7 +1600,7 @@ PredictIt         | ❌ No     | ❌ No    | ❌ No   | ❌ Limited
 ### Priority 1: Smart Contract Development
 - [ ] Finalize `PredictionMarket.sol` contract
 - [ ] Write comprehensive unit tests
-- [ ] Deploy to Mumbai testnet
+- [ ] Deploy to Amoy testnet (Mumbai deprecated)
 - [ ] Test with real users
 
 ### Priority 2: Token Deployment

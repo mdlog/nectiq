@@ -53,7 +53,7 @@ NECTIQ is currently deployed and operational on the **Ethereum Sepolia Testnet**
 - 📈 Live leaderboards and statistics
 
 **Planned Migration:**
-- **Wave 2-3:** Deploy to Polygon Mumbai (Polygon testnet)
+- **Wave 2-3:** Deploy to Polygon Amoy (Polygon testnet) - *Mumbai deprecated*
 - **Wave 4:** Launch on Polygon PoS Mainnet
 - **Wave 5:** Expand to Polygon zkEVM
 
@@ -150,7 +150,7 @@ Build MVP, validate product-market fit, integrate Polygon ecosystem, prepare for
 - Polygonscan API integration prepared
 - MATIC token support in codebase
 - Polygon-compatible wallet support
-- Ready for Polygon Mumbai testnet deployment
+- Ready for Polygon Amoy testnet deployment
 
 **✅ Product-Market Fit Validation**
 - 4 distinct game modes demonstrating market versatility
@@ -193,7 +193,7 @@ Build MVP, validate product-market fit, integrate Polygon ecosystem, prepare for
 
 **Migration Path:**
 1. **Current (Wave 1):** Ethereum Sepolia Testnet ✅
-2. **Wave 2-3:** Polygon Mumbai Testnet (testing Polygon-specific features)
+2. **Wave 2-3:** Polygon Amoy Testnet (testing Polygon-specific features)
 3. **Wave 4:** Polygon PoS Mainnet (production launch)
 4. **Wave 5:** Polygon zkEVM (scaling and privacy)
 
@@ -255,7 +255,7 @@ Build MVP, validate product-market fit, integrate Polygon ecosystem, prepare for
 ## 🌊 Wave 3-4: Build & Optimize (Week 5-8)
 
 **Status:** 🟡 **NEXT PHASE** | **Phase:** Build & Optimize  
-**Deployment:** 🧪 **Polygon Mumbai Testnet** → 🚀 **Polygon PoS Mainnet**  
+**Deployment:** 🧪 **Polygon Amoy Testnet** → 🚀 **Polygon PoS Mainnet**  
 **Goal:** Feature development, user acquisition, business model refinement
 
 ### 🎯 Objectives (Build & Optimize)
@@ -287,14 +287,14 @@ Enhance features, acquire early users, refine business model, prepare demo for i
 - Token utility expansion (staking, governance preparation)
 
 **🔧 Technical Enhancements**
-- Deploy to Polygon Mumbai Testnet
+- Deploy to Polygon Amoy Testnet
 - Basic smart contracts (ERC-20 test token)
 - Deposit/withdrawal contracts on Polygon
 - Gas optimization for Polygon deployment
 - Performance improvements (target: < 500ms page load)
 
 **📊 Polygon Integration (Deeper)**
-- Polygon PoS testnet deployment (Mumbai)
+- Polygon PoS testnet deployment (Amoy)
 - MATIC as primary gas token
 - QuickSwap integration (DEX listing preparation)
 - Polygon Studios partnership outreach
