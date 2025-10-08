@@ -1,0 +1,463 @@
+/* Mobile Dashboard Enhancements - Responsive Professional UI/UX */
+
+/* ===== MOBILE BREAKPOINTS ===== */
+/* Tablet: 768px and below */
+/* Mobile: 480px and below */
+
+/* ===== MOBILE HERO SECTION ===== */
+@media (max-width: 768px) {
+
+    /* Hero gradient background for mobile */
+    .hero-gradient {
+        background-size: 200% 200% !important;
+        animation: gradientShift 10s ease infinite;
+    }
+
+    /* Hero container mobile */
+    .dashboard-hero-mobile {
+        padding: 1.5rem 1rem !important;
+        min-height: auto !important;
+        border-radius: 1rem !important;
+    }
+
+    /* Balance display mobile */
+    .balance-display-mobile {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        text-align: center !important;
+    }
+
+    .balance-amount-mobile {
+        font-size: 2rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .balance-glow {
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.5),
+            0 0 30px rgba(255, 215, 0, 0.3);
+    }
+
+    /* Welcome message mobile */
+    .welcome-message-mobile {
+        font-size: 1.25rem !important;
+        line-height: 1.4 !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Quick action buttons in hero - 2x2 grid on mobile */
+    .hero-quick-actions-mobile {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+        margin-top: 1rem !important;
+    }
+
+    .hero-action-button-mobile {
+        padding: 0.75rem 0.5rem !important;
+        font-size: 0.75rem !important;
+        min-height: 44px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 0.25rem !important;
+    }
+
+    .hero-action-icon-mobile {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+    }
+}
+
+/* ===== MOBILE GLASSMORPHISM STATS CARDS ===== */
+@media (max-width: 768px) {
+
+    /* Stats grid - 2 columns on mobile */
+    .stats-grid-mobile {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+        margin: 1rem 0 !important;
+    }
+
+    /* Glass card mobile adjustments */
+    .glass-card-mobile {
+        padding: 1rem !important;
+        border-radius: 0.75rem !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+    }
+
+    /* Stats card content mobile */
+    .stat-card-content-mobile {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Stats icon mobile */
+    .stat-icon-mobile {
+        width: 1.75rem !important;
+        height: 1.75rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    /* Stats value mobile */
+    .stat-value-mobile {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Stats label mobile */
+    .stat-label-mobile {
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        opacity: 0.8 !important;
+    }
+
+    /* Reduce glow intensity for mobile performance */
+    .icon-glow-blue,
+    .icon-glow-green,
+    .icon-glow-yellow,
+    .icon-glow-purple {
+        filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.4));
+    }
+}
+
+/* ===== MOBILE QUICK ACTIONS GRID ===== */
+@media (max-width: 768px) {
+
+    /* Quick actions section mobile */
+    .quick-actions-section-mobile {
+        padding: 1rem !important;
+        margin: 1rem 0 !important;
+    }
+
+    /* 2x2 grid for action buttons */
+    .quick-actions-grid-mobile {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+    }
+
+    /* Action button mobile */
+    .action-button-mobile {
+        padding: 1rem !important;
+        border-radius: 0.75rem !important;
+        min-height: 80px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.5rem !important;
+        text-align: center !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .action-button-mobile:active {
+        transform: scale(0.95) !important;
+    }
+
+    /* Action button icon mobile */
+    .action-icon-mobile {
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    /* Action button text mobile */
+    .action-text-mobile {
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        line-height: 1.2 !important;
+    }
+}
+
+/* ===== MOBILE SIDEBAR NAVIGATION ===== */
+@media (max-width: 768px) {
+
+    /* Sidebar mobile - horizontal scroll or bottom nav */
+    .sidebar-mobile {
+        width: 100% !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 50 !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        padding: 0.5rem !important;
+    }
+
+    /* Sidebar tabs mobile - horizontal scroll */
+    .sidebar-tabs-mobile {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        gap: 0.5rem !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    .sidebar-tabs-mobile::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* Sidebar tab button mobile */
+    .sidebar-tab-mobile {
+        flex-shrink: 0 !important;
+        min-width: 70px !important;
+        padding: 0.5rem 0.75rem !important;
+        border-radius: 0.5rem !important;
+        font-size: 0.75rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 0.25rem !important;
+        white-space: nowrap !important;
+    }
+
+    /* Adjust main content for bottom nav */
+    .dashboard-content-mobile {
+        padding-bottom: 80px !important;
+    }
+}
+
+/* ===== MOBILE ANIMATIONS (Optimized) ===== */
+@media (max-width: 768px) {
+
+    /* Reduce animation complexity for mobile performance */
+    .fade-in-up {
+        animation: fadeInUpMobile 0.4s ease-out;
+    }
+
+    @keyframes fadeInUpMobile {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Stagger delays mobile */
+    .fade-in-delay-1 {
+        animation-delay: 0.05s;
+    }
+
+    .fade-in-delay-2 {
+        animation-delay: 0.1s;
+    }
+
+    .fade-in-delay-3 {
+        animation-delay: 0.15s;
+    }
+
+    .fade-in-delay-4 {
+        animation-delay: 0.2s;
+    }
+
+    /* Simplified hover effects for mobile (tap) */
+    .glass-card-hover:active {
+        transform: scale(0.98) !important;
+    }
+
+    /* Disable complex animations on mobile for performance */
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+/* ===== EXTRA SMALL MOBILE (480px and below) ===== */
+@media (max-width: 480px) {
+
+    /* Hero section xs */
+    .dashboard-hero-mobile {
+        padding: 1rem 0.75rem !important;
+    }
+
+    .balance-amount-mobile {
+        font-size: 1.75rem !important;
+    }
+
+    .welcome-message-mobile {
+        font-size: 1.125rem !important;
+    }
+
+    /* Stats grid - single column on very small screens */
+    .stats-grid-mobile {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Stats card xs */
+    .stat-value-mobile {
+        font-size: 1.25rem !important;
+    }
+
+    .stat-label-mobile {
+        font-size: 0.6875rem !important;
+    }
+
+    /* Quick actions xs */
+    .action-button-mobile {
+        padding: 0.75rem !important;
+        min-height: 70px !important;
+    }
+
+    .action-text-mobile {
+        font-size: 0.6875rem !important;
+    }
+
+    /* Sidebar xs */
+    .sidebar-tab-mobile {
+        min-width: 60px !important;
+        padding: 0.375rem 0.5rem !important;
+        font-size: 0.6875rem !important;
+    }
+}
+
+/* ===== MOBILE TOUCH ENHANCEMENTS ===== */
+@media (max-width: 768px) {
+
+    /* Ensure all interactive elements are touch-friendly */
+    .mobile-tap-target {
+        min-height: 44px !important;
+        min-width: 44px !important;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Active states for touch feedback */
+    button:active,
+    .button:active,
+    [role="button"]:active {
+        opacity: 0.8 !important;
+        transform: scale(0.98) !important;
+    }
+
+    /* Prevent accidental zoom on inputs */
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+
+    /* Smooth scrolling for mobile */
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ===== MOBILE LANDSCAPE MODE ===== */
+@media (max-width: 768px) and (orientation: landscape) {
+
+    /* Reduce padding in landscape */
+    .dashboard-hero-mobile {
+        padding: 1rem !important;
+        min-height: auto !important;
+    }
+
+    /* Horizontal layout for stats in landscape */
+    .stats-grid-mobile {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Compact action buttons in landscape */
+    .action-button-mobile {
+        min-height: 60px !important;
+        padding: 0.5rem !important;
+    }
+
+    /* Sidebar stays at bottom in landscape */
+    .sidebar-mobile {
+        padding: 0.375rem !important;
+    }
+}
+
+/* ===== MOBILE DARK MODE ENHANCEMENTS ===== */
+@media (max-width: 768px) {
+
+    /* Glassmorphism adjustments for mobile */
+    .glass-card-mobile {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Better contrast for mobile readability */
+    .stat-value-mobile,
+    .action-text-mobile {
+        color: rgba(255, 255, 255, 0.95) !important;
+    }
+
+    .stat-label-mobile {
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+}
+
+/* ===== MOBILE LOADING STATES ===== */
+@media (max-width: 768px) {
+
+    /* Skeleton loader mobile */
+    .skeleton-mobile {
+        background: linear-gradient(90deg,
+                rgba(255, 255, 255, 0.05) 25%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 255, 255, 0.05) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 0.5rem;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+
+        100% {
+            background-position: 200% 0;
+        }
+    }
+}
+
+/* ===== MOBILE SAFE AREA (iOS Notch) ===== */
+@supports (padding: max(0px)) {
+    @media (max-width: 768px) {
+        .sidebar-mobile {
+            padding-bottom: max(0.5rem, env(safe-area-inset-bottom)) !important;
+        }
+
+        .dashboard-content-mobile {
+            padding-bottom: max(80px, calc(80px + env(safe-area-inset-bottom))) !important;
+        }
+    }
+}
+
+/* ===== MOBILE PERFORMANCE OPTIMIZATIONS ===== */
+@media (max-width: 768px) {
+
+    /* Use GPU acceleration for smooth animations */
+    .glass-card-mobile,
+    .action-button-mobile,
+    .stat-card-gradient {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        will-change: transform;
+    }
+
+    /* Optimize backdrop filters for mobile */
+    .glass-card-mobile {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+}

@@ -21,6 +21,7 @@ import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import "../styles/mobile-user-dashboard.css";
 import "../styles/dashboard-enhancements.css";
+import "../styles/mobile-dashboard-enhancements.css";
 // import { WalletBalances } from "@/components/wallet-balances"; // Removed - not needed
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 import { ReferralSystem } from "@/components/ReferralSystem";
@@ -1229,11 +1230,11 @@ export default function UserDashboard() {
                                     <div className="relative w-8 h-8 flex-shrink-0">
                                       {/* Activity Type Badge */}
                                       <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${rewardType === 'battle' ? 'bg-purple-500' :
-                                          rewardType === 'survival' ? 'bg-orange-500' :
-                                            rewardType === 'parlay' ? 'bg-indigo-500' :
-                                              rewardType === 'achievement' ? 'bg-yellow-500' :
-                                                rewardType === 'daily_challenge' ? 'bg-blue-500' :
-                                                  'bg-green-500'
+                                        rewardType === 'survival' ? 'bg-orange-500' :
+                                          rewardType === 'parlay' ? 'bg-indigo-500' :
+                                            rewardType === 'achievement' ? 'bg-yellow-500' :
+                                              rewardType === 'daily_challenge' ? 'bg-blue-500' :
+                                                'bg-green-500'
                                         }`}>
                                         {rewardType === 'battle' ? '⚔' :
                                           rewardType === 'survival' ? '🏆' :
