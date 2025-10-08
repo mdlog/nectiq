@@ -6397,11 +6397,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const RESET_ADMIN_IPS = new Set([
         '127.0.0.1', 'localhost', '::1',
         '172.31.128.37', '172.31.128.107',
-        '180.249.63.149', // User's real IP
-        '10.81.0.0/16' // Replit internal network range
+        '180.249.63.149' // User's real IP
       ]);
 
-      // Check if IP is in admin whitelist or Replit internal network
+      // Check if IP is in admin whitelist
       const isAdminIP = RESET_ADMIN_IPS.has(clientIP) ||
         ADMIN_IP_WHITELIST.has(clientIP) ||
         clientIP.startsWith('10.81.') ||

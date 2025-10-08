@@ -25,7 +25,7 @@ if command -v psql &> /dev/null && [ ! -z "$DATABASE_URL" ]; then
     BATTLE_COUNT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM battles;" 2>/dev/null || echo "0")
     echo "Total Battles: $BATTLE_COUNT"
 else
-    echo "Database: Not accessible (normal in Replit environment)"
+    echo "Database: Not accessible (database not configured)"
 fi
 
 # File uploads size

@@ -20,6 +20,7 @@ import TradingViewChart from "@/components/TradingViewChart";
 import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import "../styles/mobile-user-dashboard.css";
+import "../styles/dashboard-enhancements.css";
 // import { WalletBalances } from "@/components/wallet-balances"; // Removed - not needed
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 import { ReferralSystem } from "@/components/ReferralSystem";
@@ -171,7 +172,7 @@ export default function UserDashboard() {
     setForceRefreshRewards(prev => prev + 1);
     // Also invalidate query cache for good measure
     queryClient.invalidateQueries({ queryKey: ["/api/user/rewards/history"] });
-    
+
     toast({
       title: "Rewards Refreshed",
       description: "Latest reward data has been loaded from server",
@@ -322,10 +323,10 @@ export default function UserDashboard() {
 
   const formatTimeLeft = (timeLeft: number): string => {
     if (timeLeft <= 0) return "Expired";
-    
+
     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -337,7 +338,7 @@ export default function UserDashboard() {
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
       return `${diffInMinutes}m ago`;
@@ -373,7 +374,7 @@ export default function UserDashboard() {
 
   const getRankBadge = (rank: number | null | undefined) => {
     if (!rank) return <Badge variant="outline">Unranked</Badge>;
-    
+
     if (rank === 1) return <Badge className="bg-warning text-dark">🥇 #1</Badge>;
     if (rank === 2) return <Badge className="bg-slate-400 text-dark">🥈 #2</Badge>;
     if (rank === 3) return <Badge className="bg-amber-600 text-white">🥉 #3</Badge>;
@@ -411,14 +412,14 @@ export default function UserDashboard() {
   }
 
   // Temporary: Skip authentication check to allow dashboard access
-  console.log("🎯 [USER-DASHBOARD] Rendering dashboard", { 
-    user: !!user, 
+  console.log("🎯 [USER-DASHBOARD] Rendering dashboard", {
+    user: !!user,
     userLoading,
-    error: userError?.message 
+    error: userError?.message
   });
 
-  console.log("🎯 [USER-DASHBOARD] Dashboard rendering started", { 
-    userId: user?.id, 
+  console.log("🎯 [USER-DASHBOARD] Dashboard rendering started", {
+    userId: user?.id,
     username: user?.username,
     userLoading,
     userError: userError?.message,
@@ -441,219 +442,331 @@ export default function UserDashboard() {
 
   // Dashboard content for authenticated users
   console.log("🎯 [RENDER] Dashboard JSX about to return for user:", user?.username);
-  
+
   return (
     <div className="min-h-screen bg-background text-foreground" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>
 
-      
-      {/* Header */}
-      <div className="bg-surface border-b border-surface-light" style={{ backgroundColor: '#2a2a2a' }}>
-        <div className="container max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
+
+      {/* Enhanced Hero Section */}
+      <div className="relative overflow-hidden">
+        {/* Animated Gradient Background */}
+        <div className="hero-gradient absolute inset-0 opacity-20"></div>
+        <div className="hero-gradient-overlay absolute inset-0"></div>
+
+        <div className="relative z-10 container max-w-7xl mx-auto px-4 py-8 sm:py-12">
+          {/* Top Navigation */}
+          <div className="flex justify-between items-center mb-8">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-                <Star className="text-white" size={16} />
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Star className="text-white" size={20} />
               </div>
-              <h1 className="text-lg sm:text-xl font-bold">My Dashboard</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">My Dashboard</h1>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="flex items-center space-x-1 sm:space-x-2 bg-surface-light px-2 sm:px-3 py-1 rounded-lg">
-                <Coins className="text-warning" size={14} />
-                <span className="text-sm sm:text-base font-semibold text-yellow-400 dark:text-yellow-300">{user?.balance?.toLocaleString() || "0"}</span>
-                <span className="text-xs text-yellow-200 dark:text-yellow-200">NTIQ</span>
-              </div>
-              <div className="hidden sm:block">
-                {getRankBadge(stats?.rank)}
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="bg-surface-light border-surface-light text-xs sm:text-sm" 
-                onClick={() => setLocation('/home')}
-              >
-                <ArrowLeft className="mr-1 sm:mr-2" size={14} />
-                <span className="hidden sm:inline">Back to App</span>
-                <span className="sm:hidden">Back</span>
-              </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="glass-card hover:bg-white/10 border-white/20 text-sm"
+              onClick={() => setLocation('/home')}
+            >
+              <ArrowLeft className="mr-2" size={16} />
+              <span className="hidden sm:inline">Back to App</span>
+              <span className="sm:hidden">Back</span>
+            </Button>
+          </div>
+
+          {/* Hero Content */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
+            {/* Welcome Message */}
+            <div className="flex-1 text-center md:text-left fade-in-up">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
+                Welcome back,
+                <span className="gradient-text block mt-2">{user?.username || "User"}!</span>
+              </h2>
+              <p className="text-slate-300 text-base sm:text-lg">
+                Track your predictions, analyze performance, and climb the leaderboard.
+              </p>
             </div>
+
+            {/* Prominent Balance Display */}
+            <div className="glass-card glass-card-hover rounded-2xl p-6 sm:p-8 min-w-[280px] sm:min-w-[320px] fade-in-delay-1">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Coins className="text-yellow-400 icon-glow-yellow" size={24} />
+                  <p className="text-slate-400 text-sm uppercase tracking-wider">Your Balance</p>
+                </div>
+                <div className="text-5xl sm:text-6xl font-bold mb-2 balance-glow text-yellow-400">
+                  {user?.balance?.toLocaleString() || "0"}
+                </div>
+                <p className="text-xl text-yellow-300 font-semibold">NTIQ</p>
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <div className="flex items-center justify-center gap-2">
+                    {getRankBadge(stats?.rank)}
+                    <span className="text-sm text-slate-400">
+                      {stats?.rank ? `Rank #${stats.rank}` : "Unranked"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Action Buttons */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 fade-in-delay-2">
+            <button
+              onClick={() => setLocation('/home')}
+              className="action-button glass-card rounded-xl p-4 text-center hover:border-blue-500/50 group"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Target className="text-white" size={24} />
+              </div>
+              <p className="text-white font-semibold text-sm sm:text-base">Make Prediction</p>
+              <p className="text-slate-400 text-xs mt-1">Start predicting</p>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('financial')}
+              className="action-button glass-card rounded-xl p-4 text-center hover:border-green-500/50 group"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Wallet className="text-white" size={24} />
+              </div>
+              <p className="text-white font-semibold text-sm sm:text-base">Deposit Funds</p>
+              <p className="text-slate-400 text-xs mt-1">Add NTIQ</p>
+            </button>
+
+            <button
+              onClick={() => setLocation('/battles')}
+              className="action-button glass-card rounded-xl p-4 text-center hover:border-purple-500/50 group"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Swords className="text-white" size={24} />
+              </div>
+              <p className="text-white font-semibold text-sm sm:text-base">Join Battle</p>
+              <p className="text-slate-400 text-xs mt-1">Compete now</p>
+            </button>
+
+            <button
+              onClick={() => setLocation('/leaderboard')}
+              className="action-button glass-card rounded-xl p-4 text-center hover:border-yellow-500/50 group"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Trophy className="text-white" size={24} />
+              </div>
+              <p className="text-white font-semibold text-sm sm:text-base">Leaderboard</p>
+              <p className="text-slate-400 text-xs mt-1">View rankings</p>
+            </button>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4 md:py-8">
-        {/* Welcome Section */}
-        <div className="mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">Welcome back, {user?.username || "User"}!</h2>
-          <p className="text-slate-400 text-xs sm:text-sm md:text-base">Track your predictions, analyze performance, and climb the leaderboard.</p>
-        </div>
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6 md:py-8">
 
-        {/* Key Stats */}
-        <div className="admin-stats-grid grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-6 mb-4 sm:mb-6 md:mb-8">
-          <Card className="admin-card bg-surface border-surface-light">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="admin-card-title text-xs sm:text-sm font-medium text-slate-400">Total Predictions</CardTitle>
-              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="admin-card-value text-lg sm:text-2xl font-bold">{stats?.totalPredictions?.toLocaleString() || "0"}</div>
-              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Lifetime predictions made</div>
-            </CardContent>
-          </Card>
+        {/* Glassmorphism Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 fade-in-delay-3">
+          {/* Total Predictions Card */}
+          <div className="glass-card glass-card-hover stat-card-gradient rounded-xl p-6 group">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-blue-500/20 rounded-lg group-hover:scale-110 transition-transform">
+                <BarChart3 className="h-6 w-6 text-blue-400 icon-glow-blue" />
+              </div>
+              <div className="text-xs text-slate-400 bg-blue-500/10 px-2 py-1 rounded">
+                All Time
+              </div>
+            </div>
+            <div className="count-animation text-3xl sm:text-4xl font-bold text-white mb-2">
+              {stats?.totalPredictions?.toLocaleString() || "0"}
+            </div>
+            <p className="text-slate-400 text-sm mb-1">Total Predictions</p>
+            <div className="flex items-center gap-2 text-xs text-blue-400">
+              <TrendingUp size={14} />
+              <span>Lifetime made</span>
+            </div>
+          </div>
 
-          <Card className="admin-card bg-surface border-surface-light">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="admin-card-title text-xs sm:text-sm font-medium text-slate-400">Accuracy Rate</CardTitle>
-              <Target className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="admin-card-value text-lg sm:text-2xl font-bold text-success">{stats?.accuracy || 0}%</div>
-              <div className={`text-xs px-1 sm:px-2 py-1 rounded-full inline-block mt-1 ${accuracyLevel.bg} ${accuracyLevel.color} hidden sm:block`}>
+          {/* Accuracy Rate Card */}
+          <div className="glass-card glass-card-hover stat-card-gradient rounded-xl p-6 group">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-green-500/20 rounded-lg group-hover:scale-110 transition-transform">
+                <Target className="h-6 w-6 text-green-400 icon-glow-green" />
+              </div>
+              <div className={`text-xs px-2 py-1 rounded ${accuracyLevel.bg} ${accuracyLevel.color}`}>
                 {accuracyLevel.label}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="count-animation text-3xl sm:text-4xl font-bold text-green-400 mb-2">
+              {stats?.accuracy || 0}%
+            </div>
+            <p className="text-slate-400 text-sm mb-1">Accuracy Rate</p>
+            <div className="w-full bg-slate-700 rounded-full h-2 mt-2">
+              <div
+                className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${stats?.accuracy || 0}%` }}
+              ></div>
+            </div>
+          </div>
 
-          <Card className="admin-card bg-surface border-surface-light">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="admin-card-title text-xs sm:text-sm font-medium text-slate-400">Current Rank</CardTitle>
-              <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-warning" />
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="admin-card-value text-lg sm:text-2xl font-bold text-warning">
-                {stats?.rank ? `#${stats.rank}` : "N/A"}
+          {/* Current Rank Card */}
+          <div className="glass-card glass-card-hover stat-card-gradient rounded-xl p-6 group">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-yellow-500/20 rounded-lg group-hover:scale-110 transition-transform">
+                <Trophy className="h-6 w-6 text-yellow-400 icon-glow-yellow" />
               </div>
-              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Global ranking</div>
-            </CardContent>
-          </Card>
+              <div className="text-xs text-slate-400 bg-yellow-500/10 px-2 py-1 rounded">
+                Global
+              </div>
+            </div>
+            <div className="count-animation text-3xl sm:text-4xl font-bold text-yellow-400 mb-2">
+              {stats?.rank ? `#${stats.rank}` : "N/A"}
+            </div>
+            <p className="text-slate-400 text-sm mb-1">Current Rank</p>
+            <div className="flex items-center gap-2 text-xs text-yellow-400">
+              <Crown size={14} />
+              <span>Leaderboard position</span>
+            </div>
+          </div>
 
-          <Card className="bg-surface border-surface-light">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-slate-400">Total Rewards</CardTitle>
-              <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="pb-3">
-              <div className="text-lg sm:text-2xl font-bold text-primary">{stats?.totalRewards?.toLocaleString() || "0"}</div>
-              <div className="text-xs text-slate-400 mt-1 hidden sm:block">Points earned</div>
-            </CardContent>
-          </Card>
+          {/* Total Rewards Card */}
+          <div className="glass-card glass-card-hover stat-card-gradient rounded-xl p-6 group">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-purple-500/20 rounded-lg group-hover:scale-110 transition-transform">
+                <Gift className="h-6 w-6 text-purple-400 icon-glow-purple" />
+              </div>
+              <div className="text-xs text-slate-400 bg-purple-500/10 px-2 py-1 rounded">
+                NTIQ
+              </div>
+            </div>
+            <div className="count-animation text-3xl sm:text-4xl font-bold text-purple-400 mb-2">
+              {stats?.totalRewards?.toLocaleString() || "0"}
+            </div>
+            <p className="text-slate-400 text-sm mb-1">Total Rewards</p>
+            <div className="flex items-center gap-2 text-xs text-purple-400">
+              <Gem size={14} />
+              <span>Points earned</span>
+            </div>
+          </div>
         </div>
 
         {/* Main Content with Sidebar Layout */}
         <div className="admin-layout grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Sidebar Navigation - 1/3 of width */}
-          <div className="lg:col-span-1">
-            <div className="admin-sidebar bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 shadow-2xl sticky top-4 h-fit">
-              <div className="mb-4 sm:mb-5 md:mb-6">
-                <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">Dashboard Menu</h3>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">Manage your account and track your performance</p>
+          <div className="lg:col-span-1 fade-in-delay-4">
+            <div className="glass-card bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 rounded-xl md:rounded-2xl p-5 md:p-6 shadow-2xl sticky top-4 h-fit">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <Activity className="text-white" size={16} />
+                  </div>
+                  Dashboard Menu
+                </h3>
+                <p className="text-sm text-slate-400 leading-relaxed">Manage your account and track your performance</p>
               </div>
-              
+
               <Tabs value={activeTab} onValueChange={handleTabChange} orientation="vertical" className="w-full">
                 <div className="space-y-1 sm:space-y-2 md:space-y-3">
                   <TabsList className="admin-tabs-nav bg-transparent w-full h-auto p-0 flex-col space-y-1 sm:space-y-2 md:space-y-3">
-                    <TabsTrigger 
-                      value="profile" 
-                      className="admin-tab-button w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-blue-400/50 text-slate-300"
+                    <TabsTrigger
+                      value="profile"
+                      className="sidebar-tab sidebar-tab-active w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-xl hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 px-4 py-4 text-sm font-medium rounded-xl border border-transparent data-[state=active]:border-blue-400/50 text-slate-300 relative"
                     >
-                      <UserCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <UserCircle className="h-5 w-5" />
                       <span>Profile</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="predictions" 
+
+                    <TabsTrigger
+                      value="predictions"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-green-400/50 text-slate-300"
                     >
                       <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span>My Predictions</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="achievements" 
+
+                    <TabsTrigger
+                      value="achievements"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-yellow-400/50 text-slate-300"
                     >
                       <Award className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span>Achievements</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="challenges" 
+
+                    <TabsTrigger
+                      value="challenges"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-purple-400/50 text-slate-300"
                     >
                       <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span className="hidden sm:inline">Daily Challenges</span>
                       <span className="sm:hidden">Challenges</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="loyalty" 
+
+                    <TabsTrigger
+                      value="loyalty"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-red-400/50 text-slate-300"
                     >
                       <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span>Loyalty</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="market" 
+
+                    <TabsTrigger
+                      value="market"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-orange-400/50 text-slate-300"
                     >
                       <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span className="hidden sm:inline">Market Watch</span>
                       <span className="sm:hidden">Market</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="performance" 
+
+                    <TabsTrigger
+                      value="performance"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-amber-400/50 text-slate-300"
                     >
                       <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span>Performance</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="battles" 
+
+                    <TabsTrigger
+                      value="battles"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-emerald-400/50 text-slate-300"
                     >
                       <Swords className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span>Battles</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="financial" 
+
+                    <TabsTrigger
+                      value="financial"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-600 data-[state=active]:to-rose-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-rose-400/50 text-slate-300"
                     >
                       <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span>Financial</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="referral" 
+
+                    <TabsTrigger
+                      value="referral"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-pink-400/50 text-slate-300"
                     >
                       <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span className="hidden sm:inline">Referral Program</span>
                       <span className="sm:hidden">Referral</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="history" 
+
+                    <TabsTrigger
+                      value="history"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-indigo-400/50 text-slate-300"
                     >
                       <History className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span className="hidden sm:inline">History</span>
                       <span className="sm:hidden">History</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="analytics" 
+
+                    <TabsTrigger
+                      value="analytics"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-violet-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-violet-400/50 text-slate-300"
                     >
                       <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span className="hidden sm:inline">Analytics</span>
                       <span className="sm:hidden">Analytics</span>
                     </TabsTrigger>
-                    
-                    <TabsTrigger 
-                      value="rewards" 
+
+                    <TabsTrigger
+                      value="rewards"
                       className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-cyan-400/50 text-slate-300"
                     >
                       <Gift className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -682,133 +795,133 @@ export default function UserDashboard() {
                 <TabsContent value="predictions" className="flex-1 h-full">
                   <div className="h-full">
                     <Card className="bg-surface border-surface-light h-full flex flex-col">
-              <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="flex items-center text-sm sm:text-base">
-                  <Clock className="mr-2" size={16} />
-                  Active Predictions ({activePredictions.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col p-3 sm:p-4 md:p-6">
-                {activePredictions.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
-                    <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Target className="w-8 h-8 text-primary" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">Make Your First Prediction</h3>
-                    <p className="text-sm text-slate-400 mb-6">Start earning NTIQ rewards</p>
-                    
-                    <div className="space-y-3 text-left max-w-sm mx-auto">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        <span className="text-sm text-slate-300">Choose from 15+ cryptocurrencies</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span className="text-sm text-slate-300">Multiple time frames: 1h, 6h, 24h, 7d</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                        <span className="text-sm text-slate-300">Up to 3x multiplier for ≥99.5% accuracy</span>
-                      </div>
-                    </div>
-                    
-                    <p className="text-xs text-slate-500 mt-6">Select a cryptocurrency above to get started</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {activePredictions.map((prediction) => {
-                      // Calculate accuracy using the new formula: (1 - |Predicted - Current| / Current) × 100
-                      const predictedPrice = parseFloat(prediction.predictedPrice);
-                      const currentPrice = parseFloat(prediction.currentPrice);
-                      const accuracyDecimal = 1 - (Math.abs(predictedPrice - currentPrice) / currentPrice);
-                      const accuracy = accuracyDecimal * 100;
-                      const isPositive = accuracy >= 0;
-                      const isExpired = prediction.timeLeft <= 0;
-                      
-                      // Format time left properly
-                      const formatTimeLeft = (timeLeft: number): string => {
-                        if (timeLeft <= 0) return "Expired";
-                        
-                        const hours = Math.floor(timeLeft / 3600);
-                        const minutes = Math.floor((timeLeft % 3600) / 60);
-                        const seconds = timeLeft % 60;
-                        
-                        if (hours > 0) {
-                          return `${hours}h ${minutes}m`;
-                        } else if (minutes > 0) {
-                          return `${minutes}m ${seconds}s`;
-                        } else {
-                          return `${seconds}s`;
-                        }
-                      };
-                      
-                      return (
-                        <div key={prediction.id} className="p-4 bg-surface-light rounded-lg border border-slate-600">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center space-x-3">
-                              <div className="relative w-10 h-10 flex-shrink-0">
-                                <img 
-                                  src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || [])}
-                                  alt={prediction.cryptocurrency}
-                                  className="w-10 h-10 rounded-full object-cover"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    const fallback = target.nextElementSibling as HTMLElement;
-                                    if (fallback) {
-                                      target.style.display = 'none';
-                                      fallback.style.display = 'flex';
-                                    }
-                                  }}
-                                />
-                                <div className={`w-10 h-10 ${getCryptoColor(prediction.cryptocurrency)} rounded-full hidden items-center justify-center text-white font-bold`}>
-                                  {getCryptoIcon(prediction.cryptocurrency)}
+                      <CardHeader className="pb-3 sm:pb-4">
+                        <CardTitle className="flex items-center text-sm sm:text-base">
+                          <Clock className="mr-2" size={16} />
+                          Active Predictions ({activePredictions.length})
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col p-3 sm:p-4 md:p-6">
+                        {activePredictions.length === 0 ? (
+                          <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
+                            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                              <Target className="w-8 h-8 text-primary" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-white mb-2">Make Your First Prediction</h3>
+                            <p className="text-sm text-slate-400 mb-6">Start earning NTIQ rewards</p>
+
+                            <div className="space-y-3 text-left max-w-sm mx-auto">
+                              <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                <span className="text-sm text-slate-300">Choose from 15+ cryptocurrencies</span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                <span className="text-sm text-slate-300">Multiple time frames: 1h, 6h, 24h, 7d</span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                <span className="text-sm text-slate-300">Up to 3x multiplier for ≥99.5% accuracy</span>
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-slate-500 mt-6">Select a cryptocurrency above to get started</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {activePredictions.map((prediction) => {
+                              // Calculate accuracy using the new formula: (1 - |Predicted - Current| / Current) × 100
+                              const predictedPrice = parseFloat(prediction.predictedPrice);
+                              const currentPrice = parseFloat(prediction.currentPrice);
+                              const accuracyDecimal = 1 - (Math.abs(predictedPrice - currentPrice) / currentPrice);
+                              const accuracy = accuracyDecimal * 100;
+                              const isPositive = accuracy >= 0;
+                              const isExpired = prediction.timeLeft <= 0;
+
+                              // Format time left properly
+                              const formatTimeLeft = (timeLeft: number): string => {
+                                if (timeLeft <= 0) return "Expired";
+
+                                const hours = Math.floor(timeLeft / 3600);
+                                const minutes = Math.floor((timeLeft % 3600) / 60);
+                                const seconds = timeLeft % 60;
+
+                                if (hours > 0) {
+                                  return `${hours}h ${minutes}m`;
+                                } else if (minutes > 0) {
+                                  return `${minutes}m ${seconds}s`;
+                                } else {
+                                  return `${seconds}s`;
+                                }
+                              };
+
+                              return (
+                                <div key={prediction.id} className="p-4 bg-surface-light rounded-lg border border-slate-600">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="relative w-10 h-10 flex-shrink-0">
+                                        <img
+                                          src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || [])}
+                                          alt={prediction.cryptocurrency}
+                                          className="w-10 h-10 rounded-full object-cover"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            const fallback = target.nextElementSibling as HTMLElement;
+                                            if (fallback) {
+                                              target.style.display = 'none';
+                                              fallback.style.display = 'flex';
+                                            }
+                                          }}
+                                        />
+                                        <div className={`w-10 h-10 ${getCryptoColor(prediction.cryptocurrency)} rounded-full hidden items-center justify-center text-white font-bold`}>
+                                          {getCryptoIcon(prediction.cryptocurrency)}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
+                                        <p className="text-sm text-slate-400">{prediction.timeframe} prediction</p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className={`text-sm font-medium ${isExpired ? "text-error" : "text-success"}`}>
+                                        {formatTimeLeft(prediction.timeLeft)}
+                                      </p>
+                                      <p className="text-xs text-slate-400">Stake: {prediction.stakeAmount} NTIQ</p>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4 mb-3">
+                                    <div>
+                                      <p className="text-xs text-slate-400">Predicted Price</p>
+                                      <p className="font-semibold">${predictedPrice.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-slate-400">Current Price</p>
+                                      <p className={`font-semibold ${currentPrice >= predictedPrice ? "text-success" : "text-error"}`}>
+                                        ${currentPrice.toLocaleString()}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                      <div className={`w-2 h-2 rounded-full ${accuracy >= 90 ? "bg-success" : accuracy >= 70 ? "bg-warning" : "bg-error"}`}></div>
+                                      <span className={`text-sm font-medium ${accuracy >= 90 ? "text-success" : accuracy >= 70 ? "text-warning" : "text-error"}`}>
+                                        {accuracy.toFixed(2)}% accuracy
+                                      </span>
+                                    </div>
+                                    <Progress
+                                      value={Math.min(Math.abs(accuracy), 100)}
+                                      className="w-20 h-2"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                              <div>
-                                <p className="font-semibold capitalize">{prediction.cryptocurrency}</p>
-                                <p className="text-sm text-slate-400">{prediction.timeframe} prediction</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className={`text-sm font-medium ${isExpired ? "text-error" : "text-success"}`}>
-                                {formatTimeLeft(prediction.timeLeft)}
-                              </p>
-                              <p className="text-xs text-slate-400">Stake: {prediction.stakeAmount} NTIQ</p>
-                            </div>
+                              );
+                            })}
                           </div>
-                          
-                          <div className="grid grid-cols-2 gap-4 mb-3">
-                            <div>
-                              <p className="text-xs text-slate-400">Predicted Price</p>
-                              <p className="font-semibold">${predictedPrice.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-slate-400">Current Price</p>
-                              <p className={`font-semibold ${currentPrice >= predictedPrice ? "text-success" : "text-error"}`}>
-                                ${currentPrice.toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${accuracy >= 90 ? "bg-success" : accuracy >= 70 ? "bg-warning" : "bg-error"}`}></div>
-                              <span className={`text-sm font-medium ${accuracy >= 90 ? "text-success" : accuracy >= 70 ? "text-warning" : "text-error"}`}>
-                                {accuracy.toFixed(2)}% accuracy
-                              </span>
-                            </div>
-                            <Progress 
-                              value={Math.min(Math.abs(accuracy), 100)} 
-                              className="w-20 h-2"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                        )}
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
@@ -913,7 +1026,7 @@ export default function UserDashboard() {
                               <div className="text-2xl font-bold text-green-400">1.0x</div>
                               <div className="text-xs text-slate-400">Base reward rate</div>
                             </div>
-                            
+
                             <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
                               <div className="flex items-center space-x-2 mb-2">
                                 <Gift className="h-4 w-4 text-purple-400" />
@@ -922,7 +1035,7 @@ export default function UserDashboard() {
                               <div className="text-2xl font-bold text-purple-400">0 NTIQ</div>
                               <div className="text-xs text-slate-400">No monthly bonus yet</div>
                             </div>
-                            
+
                             <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
                               <div className="flex items-center space-x-2 mb-2">
                                 <Clock className="h-4 w-4 text-blue-400" />
@@ -930,7 +1043,7 @@ export default function UserDashboard() {
                               </div>
                               <div className="text-sm text-slate-400">Not available</div>
                             </div>
-                            
+
                             <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
                               <div className="flex items-center space-x-2 mb-2">
                                 <Zap className="h-4 w-4 text-yellow-400" />
@@ -954,7 +1067,7 @@ export default function UserDashboard() {
                                 </div>
                                 <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/30">Current</Badge>
                               </div>
-                              
+
                               <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <div className="flex items-center space-x-3">
                                   <Star className="h-5 w-5 text-slate-400" />
@@ -965,7 +1078,7 @@ export default function UserDashboard() {
                                 </div>
                                 <Badge variant="outline" className="bg-slate-700 text-slate-400 border-slate-600">Locked</Badge>
                               </div>
-                              
+
                               <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <div className="flex items-center space-x-3">
                                   <Zap className="h-5 w-5 text-slate-400" />
@@ -976,7 +1089,7 @@ export default function UserDashboard() {
                                 </div>
                                 <Badge variant="outline" className="bg-slate-700 text-slate-400 border-slate-600">Locked</Badge>
                               </div>
-                              
+
                               <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                                 <div className="flex items-center space-x-3">
                                   <Gift className="h-5 w-5 text-slate-400" />
@@ -1021,159 +1134,158 @@ export default function UserDashboard() {
                 <TabsContent value="rewards" className="flex-1 h-full">
                   <div className="h-full">
                     <Card className="bg-surface border-surface-light h-full flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Gift className="mr-2" size={20} />
-                    Recent Rewards
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRefreshRewards}
-                    className="text-xs hover:bg-primary/20 border-primary/30"
-                  >
-                    <RefreshCw className="mr-1" size={14} />
-                    Refresh
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                {rewardsLoading ? (
-                  <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
-                    <RefreshCw className="mx-auto mb-2 animate-spin" size={32} />
-                    <p>Loading rewards...</p>
-                    <p className="text-sm">Fetching latest data from server...</p>
-                  </div>
-                ) : rewardsError?.message?.includes('Authentication') || rewardsError?.message?.includes('401') ? (
-                  <div className="text-center py-8 text-amber-400 flex-1 flex flex-col justify-center">
-                    <AlertCircle className="mx-auto mb-2" size={32} />
-                    <p>Authentication Required</p>
-                    <p className="text-sm">Connect your wallet to view reward history</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-3 mx-auto" 
-                      onClick={handleRefreshRewards}
-                    >
-                      <RefreshCw className="mr-1" size={14} />
-                      Retry
-                    </Button>
-                  </div>
-                ) : recentRewards.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
-                    <Gift className="mx-auto mb-2" size={32} />
-                    <p>No rewards yet</p>
-                    <p className="text-sm">Make accurate predictions to earn rewards!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {recentRewards.map((reward) => {
-                      const isWin = reward.amount > 0;
-                      
-                      // Determine source type and display text
-                      let sourceText = '';
-                      let sourceIcon = <Gift size={16} />;
-                      
-                      const rewardType = (reward as any).type || 'prediction';
-                      switch (rewardType) {
-                        case 'prediction':
-                          sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
-                          sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
-                          break;
-                        case 'battle':
-                          // Parse battle description to extract opponent name
-                          const battleDescription = reward.description || '';
-                          const opponentMatch = battleDescription.match(/vs (.+?) -/);
-                          const opponentName = opponentMatch ? opponentMatch[1] : 'Opponent';
-                          sourceText = `Battle vs ${opponentName}`;
-                          sourceIcon = <TrendingUp size={16} />;
-                          break;
-                        case 'survival':
-                          sourceText = `Survival Tournament`;
-                          sourceIcon = <TrendingUp size={16} />;
-                          break;
-                        case 'parlay':
-                          sourceText = `Parlay Bet`;
-                          sourceIcon = <TrendingUp size={16} />;
-                          break;
-                        case 'achievement':
-                          sourceText = 'Achievement Reward';
-                          sourceIcon = <Check size={16} />;
-                          break;
-                        case 'daily_challenge':
-                          sourceText = 'Daily Challenge';
-                          sourceIcon = <Gift size={16} />;
-                          break;
-                        default:
-                          sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
-                          sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
-                      }
-                      
-                      return (
-                        <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="relative w-8 h-8 flex-shrink-0">
-                              {/* Activity Type Badge */}
-                              <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${
-                                rewardType === 'battle' ? 'bg-purple-500' :
-                                rewardType === 'survival' ? 'bg-orange-500' :
-                                rewardType === 'parlay' ? 'bg-indigo-500' :
-                                rewardType === 'achievement' ? 'bg-yellow-500' :
-                                rewardType === 'daily_challenge' ? 'bg-blue-500' :
-                                'bg-green-500'
-                              }`}>
-                                {rewardType === 'battle' ? '⚔' : 
-                                 rewardType === 'survival' ? '🏆' : 
-                                 rewardType === 'parlay' ? '🎲' :
-                                 rewardType === 'achievement' ? '🎯' :
-                                 rewardType === 'daily_challenge' ? '📅' :
-                                 '📈'}
-                              </div>
-                              
-                              {/* Main Icon */}
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${reward.amount > 0 ? 'bg-green-600' : 'bg-red-600'}`}>
-                                {sourceIcon}
-                              </div>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                                {sourceText}
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                {formatTimeAgo(reward.createdAt)}{reward.accuracy ? ` • ${parseFloat(reward.accuracy).toFixed(1)}% accuracy` : ''}
-                              </p>
-                            </div>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Gift className="mr-2" size={20} />
+                            Recent Rewards
                           </div>
-                          <div className="text-right flex items-center gap-2">
-                            <p className={`text-sm font-semibold ${reward.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                              {reward.amount > 0 ? '+' : ''}{reward.amount} NTIQ
-                            </p>
-                            
-                            {/* Share Button for Prediction Wins with Enhanced Details */}
-                            {reward.amount > 0 && rewardType === 'prediction' && (reward as any).sourceDetails && (
-                              <SocialShare
-                                compact={true}
-                                data={createShareData.predictionWithDetails(
-                                  reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
-                                  reward.amount,
-                                  parseFloat(reward.accuracy || '0'),
-                                  {
-                                    predictedPrice: (reward as any).sourceDetails.predictedPrice,
-                                    actualPrice: (reward as any).sourceDetails.actualPrice,
-                                    accuracy: (reward as any).sourceDetails.accuracy
-                                  }
-                                )}
-                              />
-                            )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRefreshRewards}
+                            className="text-xs hover:bg-primary/20 border-primary/30"
+                          >
+                            <RefreshCw className="mr-1" size={14} />
+                            Refresh
+                          </Button>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col">
+                        {rewardsLoading ? (
+                          <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
+                            <RefreshCw className="mx-auto mb-2 animate-spin" size={32} />
+                            <p>Loading rewards...</p>
+                            <p className="text-sm">Fetching latest data from server...</p>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                        ) : rewardsError?.message?.includes('Authentication') || rewardsError?.message?.includes('401') ? (
+                          <div className="text-center py-8 text-amber-400 flex-1 flex flex-col justify-center">
+                            <AlertCircle className="mx-auto mb-2" size={32} />
+                            <p>Authentication Required</p>
+                            <p className="text-sm">Connect your wallet to view reward history</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-3 mx-auto"
+                              onClick={handleRefreshRewards}
+                            >
+                              <RefreshCw className="mr-1" size={14} />
+                              Retry
+                            </Button>
+                          </div>
+                        ) : recentRewards.length === 0 ? (
+                          <div className="text-center py-8 text-slate-400 flex-1 flex flex-col justify-center">
+                            <Gift className="mx-auto mb-2" size={32} />
+                            <p>No rewards yet</p>
+                            <p className="text-sm">Make accurate predictions to earn rewards!</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {recentRewards.map((reward) => {
+                              const isWin = reward.amount > 0;
+
+                              // Determine source type and display text
+                              let sourceText = '';
+                              let sourceIcon = <Gift size={16} />;
+
+                              const rewardType = (reward as any).type || 'prediction';
+                              switch (rewardType) {
+                                case 'prediction':
+                                  sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
+                                  sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+                                  break;
+                                case 'battle':
+                                  // Parse battle description to extract opponent name
+                                  const battleDescription = reward.description || '';
+                                  const opponentMatch = battleDescription.match(/vs (.+?) -/);
+                                  const opponentName = opponentMatch ? opponentMatch[1] : 'Opponent';
+                                  sourceText = `Battle vs ${opponentName}`;
+                                  sourceIcon = <TrendingUp size={16} />;
+                                  break;
+                                case 'survival':
+                                  sourceText = `Survival Tournament`;
+                                  sourceIcon = <TrendingUp size={16} />;
+                                  break;
+                                case 'parlay':
+                                  sourceText = `Parlay Bet`;
+                                  sourceIcon = <TrendingUp size={16} />;
+                                  break;
+                                case 'achievement':
+                                  sourceText = 'Achievement Reward';
+                                  sourceIcon = <Check size={16} />;
+                                  break;
+                                case 'daily_challenge':
+                                  sourceText = 'Daily Challenge';
+                                  sourceIcon = <Gift size={16} />;
+                                  break;
+                                default:
+                                  sourceText = `${reward.cryptocurrency?.toUpperCase() || 'CRYPTO'} Prediction ${isWin ? 'Win' : 'Loss'}`;
+                                  sourceIcon = isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+                              }
+
+                              return (
+                                <div key={reward.id} className="flex items-center justify-between p-3 bg-surface-light rounded-lg">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="relative w-8 h-8 flex-shrink-0">
+                                      {/* Activity Type Badge */}
+                                      <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full text-xs font-bold flex items-center justify-center text-white z-10 ${rewardType === 'battle' ? 'bg-purple-500' :
+                                          rewardType === 'survival' ? 'bg-orange-500' :
+                                            rewardType === 'parlay' ? 'bg-indigo-500' :
+                                              rewardType === 'achievement' ? 'bg-yellow-500' :
+                                                rewardType === 'daily_challenge' ? 'bg-blue-500' :
+                                                  'bg-green-500'
+                                        }`}>
+                                        {rewardType === 'battle' ? '⚔' :
+                                          rewardType === 'survival' ? '🏆' :
+                                            rewardType === 'parlay' ? '🎲' :
+                                              rewardType === 'achievement' ? '🎯' :
+                                                rewardType === 'daily_challenge' ? '📅' :
+                                                  '📈'}
+                                      </div>
+
+                                      {/* Main Icon */}
+                                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${reward.amount > 0 ? 'bg-green-600' : 'bg-red-600'}`}>
+                                        {sourceIcon}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                                        {sourceText}
+                                      </p>
+                                      <p className="text-xs text-slate-400">
+                                        {formatTimeAgo(reward.createdAt)}{reward.accuracy ? ` • ${parseFloat(reward.accuracy).toFixed(1)}% accuracy` : ''}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right flex items-center gap-2">
+                                    <p className={`text-sm font-semibold ${reward.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                      {reward.amount > 0 ? '+' : ''}{reward.amount} NTIQ
+                                    </p>
+
+                                    {/* Share Button for Prediction Wins with Enhanced Details */}
+                                    {reward.amount > 0 && rewardType === 'prediction' && (reward as any).sourceDetails && (
+                                      <SocialShare
+                                        compact={true}
+                                        data={createShareData.predictionWithDetails(
+                                          reward.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                                          reward.amount,
+                                          parseFloat(reward.accuracy || '0'),
+                                          {
+                                            predictedPrice: (reward as any).sourceDetails.predictedPrice,
+                                            actualPrice: (reward as any).sourceDetails.actualPrice,
+                                            accuracy: (reward as any).sourceDetails.accuracy
+                                          }
+                                        )}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
@@ -1208,10 +1320,10 @@ export default function UserDashboard() {
                                     />
                                   </CardContent>
                                 </Card>
-                                
+
                                 {/* Make Prediction Button Below Chart */}
                                 <div className="mb-6">
-                                  <Button 
+                                  <Button
                                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                                     onClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
                                   >
@@ -1242,35 +1354,35 @@ export default function UserDashboard() {
                               </CardTitle>
                             </CardHeader>
                             <CardContent>
-                          <div className="space-y-3">
-                            <div className="flex justify-between">
-                              <span className="text-slate-400">Total Cryptocurrencies</span>
-                              <span className="font-semibold">{prices.length}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-slate-400">Gainers (24h)</span>
-                              <span className="font-semibold text-success">
-                                {prices.filter(p => p.price_change_percentage_24h > 0).length}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-slate-400">Losers (24h)</span>
-                              <span className="font-semibold text-error">
-                                {prices.filter(p => p.price_change_percentage_24h < 0).length}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-slate-400">Top Performer</span>
-                              <span className="font-semibold text-success">
-                                {prices.length > 0 ? 
-                                  prices.reduce((prev, current) => 
-                                    prev.price_change_percentage_24h > current.price_change_percentage_24h ? prev : current
-                                  ).symbol : 'N/A'}
-                              </span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                              <div className="space-y-3">
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400">Total Cryptocurrencies</span>
+                                  <span className="font-semibold">{prices.length}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400">Gainers (24h)</span>
+                                  <span className="font-semibold text-success">
+                                    {prices.filter(p => p.price_change_percentage_24h > 0).length}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400">Losers (24h)</span>
+                                  <span className="font-semibold text-error">
+                                    {prices.filter(p => p.price_change_percentage_24h < 0).length}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-400">Top Performer</span>
+                                  <span className="font-semibold text-success">
+                                    {prices.length > 0 ?
+                                      prices.reduce((prev, current) =>
+                                        prev.price_change_percentage_24h > current.price_change_percentage_24h ? prev : current
+                                      ).symbol : 'N/A'}
+                                  </span>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
                         </div>
                       </CardContent>
                     </Card>
@@ -1448,7 +1560,7 @@ export default function UserDashboard() {
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
@@ -1669,8 +1781,8 @@ function UserAnalytics() {
         <p className="text-slate-400 mb-4">
           {analyticsError instanceof Error ? analyticsError.message : 'Failed to load analytics data'}
         </p>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           className="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded transition-colors"
         >
           Retry
@@ -1862,8 +1974,8 @@ function UserAnalytics() {
             <div className="flex justify-between">
               <span className="text-slate-400">ROI:</span>
               <span className="text-purple-400 font-medium">
-                {overview.totalStaked ? 
-                  `${(((overview.totalRewards || 0) - (overview.totalStaked || 0)) / (overview.totalStaked || 1) * 100).toFixed(1)}%` : 
+                {overview.totalStaked ?
+                  `${(((overview.totalRewards || 0) - (overview.totalStaked || 0)) / (overview.totalStaked || 1) * 100).toFixed(1)}%` :
                   'N/A'
                 }
               </span>
@@ -1887,8 +1999,8 @@ function UserAnalytics() {
             <div className="flex justify-between">
               <span className="text-slate-400">Success Rate:</span>
               <span className="text-primary font-medium">
-                {overview.totalResolved ? 
-                  `${((overview.totalClaimed || 0) / (overview.totalResolved || 1) * 100).toFixed(1)}%` : 
+                {overview.totalResolved ?
+                  `${((overview.totalClaimed || 0) / (overview.totalResolved || 1) * 100).toFixed(1)}%` :
                   '0%'
                 }
               </span>
@@ -2049,50 +2161,50 @@ function BattlesSection() {
 
                     {/* Battle Status */}
                     <div className="flex items-center space-x-2">
-                      <Badge 
+                      <Badge
                         variant={
-                          battle.status === 'completed' ? 'default' : 
-                          battle.status === 'active' ? 'secondary' : 
-                          'outline'
+                          battle.status === 'completed' ? 'default' :
+                            battle.status === 'active' ? 'secondary' :
+                              'outline'
                         }
                         className={
                           battle.status === 'completed' ? 'bg-success text-white' :
-                          battle.status === 'active' ? 'bg-primary text-white' :
-                          'bg-orange-500 text-white'
+                            battle.status === 'active' ? 'bg-primary text-white' :
+                              'bg-orange-500 text-white'
                         }
                       >
                         {battle.status === 'completed' ? 'Completed' :
-                         battle.status === 'active' ? 'Active' : 'Pending'}
+                          battle.status === 'active' ? 'Active' : 'Pending'}
                       </Badge>
 
                       {/* Win/Loss Indicator */}
                       {battle.status === 'completed' && battle.winnerId && (
                         <>
-                          <Badge 
-                            variant={battle.winnerId === battle.challengerId && battle.isUserChallenger || 
-                                    battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'default' : 'destructive'}
+                          <Badge
+                            variant={battle.winnerId === battle.challengerId && battle.isUserChallenger ||
+                              battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'default' : 'destructive'}
                             className={
-                              battle.winnerId === battle.challengerId && battle.isUserChallenger || 
-                              battle.winnerId === battle.challengedId && !battle.isUserChallenger
+                              battle.winnerId === battle.challengerId && battle.isUserChallenger ||
+                                battle.winnerId === battle.challengedId && !battle.isUserChallenger
                                 ? 'bg-success text-white' : 'bg-red-500 text-white'
                             }
                           >
-                            {battle.winnerId === battle.challengerId && battle.isUserChallenger || 
-                             battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'Won' : 'Lost'}
+                            {battle.winnerId === battle.challengerId && battle.isUserChallenger ||
+                              battle.winnerId === battle.challengedId && !battle.isUserChallenger ? 'Won' : 'Lost'}
                           </Badge>
-                          
+
                           {/* Share Button for Battle Results */}
-                          {(battle.winnerId === battle.challengerId && battle.isUserChallenger || 
+                          {(battle.winnerId === battle.challengerId && battle.isUserChallenger ||
                             battle.winnerId === battle.challengedId && !battle.isUserChallenger) && (
-                            <SocialShare
-                              compact={true}
-                              data={createShareData.battle(
-                                battle.cryptocurrency?.toUpperCase() || 'CRYPTO',
-                                battle.isUserChallenger ? battle.challengedUsername || 'Opponent' : battle.challengerUsername || 'Opponent',
-                                battle.winnerReward?.toString() || '0'
-                              )}
-                            />
-                          )}
+                              <SocialShare
+                                compact={true}
+                                data={createShareData.battle(
+                                  battle.cryptocurrency?.toUpperCase() || 'CRYPTO',
+                                  battle.isUserChallenger ? battle.challengedUsername || 'Opponent' : battle.challengerUsername || 'Opponent',
+                                  battle.winnerReward?.toString() || '0'
+                                )}
+                              />
+                            )}
                         </>
                       )}
                     </div>
@@ -2150,7 +2262,7 @@ function BattlesSection() {
                             </span>
                           </div>
                         )}
-                        
+
                         {battle.challengedPrediction && (
                           <div className="flex justify-between">
                             <span className="text-slate-400">
@@ -2248,12 +2360,12 @@ function UserProfile() {
         credentials: 'include',
         body: JSON.stringify({ username }),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to update username');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -2279,18 +2391,18 @@ function UserProfile() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('profilePhoto', file);
-      
+
       const response = await fetch('/api/user/upload-profile-photo', {
         method: 'POST',
         credentials: 'include',
         body: formData,
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to upload photo');
       }
-      
+
       return response.json();
     },
     onSuccess: (data) => {
@@ -2513,7 +2625,7 @@ function UserProfile() {
               </div>
             </div>
           )}
-          
+
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-surface-light rounded-lg p-4 text-center">
@@ -2657,7 +2769,7 @@ function UserProfile() {
 
       {/* Email Verification Dialog */}
       {showEmailDialog && user && (
-        <WalletEmailVerification 
+        <WalletEmailVerification
           walletAddress={user.walletAddress || ''}
           onSuccess={() => {
             setShowEmailDialog(false);

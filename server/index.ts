@@ -164,10 +164,6 @@ app.use((req, res, next) => {
     'https://api.dynamicauth.com',
     'https://auth.dynamicauth.com',
     'https://dynamicauth.com',
-    'https://replit.dev',
-    'https://replit.app',
-    'https://nectiq.replit.app', // Production deployment domain
-    'https://47d29634-f8f3-4946-b3c4-6997a7be5fab-00-3emxal5465s4.picard.replit.dev', // Development domain
     'http://localhost:5003', // Local development
     'http://localhost:5000', // Local development
     'http://127.0.0.1:5003', // Local development
@@ -237,12 +233,12 @@ app.use((req, res, next) => {
     // Strict CSP for production
     res.setHeader('Content-Security-Policy', [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.replit.app *.replit.dev replit.com *.replit.com nectiq.replit.app *.tradingview.com s3.tradingview.com *.walletconnect.com *.walletconnect.org",
-      "style-src 'self' 'unsafe-inline' *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com *.walletconnect.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.dynamicauth.com *.tradingview.com s3.tradingview.com *.walletconnect.com *.walletconnect.org",
+      "style-src 'self' 'unsafe-inline' *.dynamicauth.com *.tradingview.com *.walletconnect.com",
       "font-src 'self' data: *.dynamicauth.com *.tradingview.com",
-      "img-src 'self' data: blob: https: *.coingecko.com *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com *.walletconnect.com *.walletconnect.org *.coinbase.com",
-      "connect-src 'self' wss: ws: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.replit.app *.replit.dev nectiq.replit.app *.tradingview.com *.firebaseio.com *.googleapis.com *.walletconnect.com *.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org *.infura.io *.alchemy.com *.coinbase.com *.metamask.io rpc.ankr.com *.publicnode.com",
-      "frame-src 'self' *.dynamicauth.com *.replit.app nectiq.replit.app *.tradingview.com tradingview.com *.walletconnect.com *.walletconnect.org *.coinbase.com",
+      "img-src 'self' data: blob: https: *.coingecko.com *.dynamicauth.com *.tradingview.com *.walletconnect.com *.walletconnect.org *.coinbase.com",
+      "connect-src 'self' wss: ws: https: *.coingecko.com *.pyth.network *.dynamicauth.com *.tradingview.com *.firebaseio.com *.googleapis.com *.walletconnect.com *.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org *.infura.io *.alchemy.com *.coinbase.com *.metamask.io rpc.ankr.com *.publicnode.com",
+      "frame-src 'self' *.dynamicauth.com *.tradingview.com tradingview.com *.walletconnect.com *.walletconnect.org *.coinbase.com",
       "child-src 'self' *.dynamicauth.com *.tradingview.com *.walletconnect.com",
       "worker-src 'self' blob: *.tradingview.com",
       "object-src 'none'",
