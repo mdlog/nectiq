@@ -917,6 +917,328 @@ contract Leaderboard {
 
 ---
 
+### **9. TRENDRIDE SYSTEM (Multi-Coin Predictions)**
+**Current State:** Partially implemented (off-chain)  
+**Polygon Integration Opportunity:** ⭐⭐⭐⭐⭐ (CRITICAL)
+
+#### What is TrendRide?
+TrendRide is NECTIQ's **unique multi-cryptocurrency prediction game** where users predict price movements across **multiple coins simultaneously**. Think of it as "Parlay betting" but for crypto prices - pick 3-10 cryptocurrencies, predict their price directions, and win multiplied rewards if all predictions are correct.
+
+#### Current Implementation:
+```typescript
+// server/storage.ts (Off-chain)
+
+interface TrendRidePrediction {
+  userId: number;
+  predictions: {
+    cryptoId: string;
+    direction: 'up' | 'down';
+    currentPrice: number;
+  }[];
+  stakeAmount: number;
+  multiplier: number; // 2x for 3 coins, 10x for 10 coins
+  targetTime: number;
+  status: 'active' | 'won' | 'lost';
+}
+```
+
+#### Smart Contract Design:
+```solidity
+// contracts/TrendRideMarket.sol
+
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
+contract TrendRideMarket {
+    IERC20 public ntiqToken;
+    
+    struct CryptoPrediction {
+        string symbol;
+        address priceFeed;
+        int256 startPrice;
+        bool predictedUp; // true = up, false = down
+    }
+    
+    struct TrendRide {
+        address user;
+        CryptoPrediction[] predictions;
+        uint256 stakeAmount;
+        uint256 targetTime;
+        uint256 multiplier;
+        bool resolved;
+        bool won;
+    }
+    
+    mapping(uint256 => TrendRide) public trendRides;
+    uint256 public trendRideCount;
+    
+    // Multipliers based on number of coins (3-10 coins)
+    mapping(uint256 => uint256) public multipliers;
+    
+    event TrendRideCreated(
+        uint256 indexed rideId,
+        address indexed user,
+        uint256 coinCount,
+        uint256 stakeAmount,
+        uint256 multiplier
+    );
+    
+    event TrendRideResolved(
+        uint256 indexed rideId,
+        bool won,
+        uint256 reward
+    );
+    
+    constructor(address _ntiqToken) {
+        ntiqToken = IERC20(_ntiqToken);
+        
+        // Set multipliers (risk-adjusted)
+        multipliers[3] = 200;  // 2x for 3 coins
+        multipliers[4] = 350;  // 3.5x for 4 coins
+        multipliers[5] = 500;  // 5x for 5 coins
+        multipliers[6] = 700;  // 7x for 6 coins
+        multipliers[7] = 1000; // 10x for 7 coins
+        multipliers[8] = 1500; // 15x for 8 coins
+        multipliers[9] = 2500; // 25x for 9 coins
+        multipliers[10] = 5000; // 50x for 10 coins
+    }
+    
+    function createTrendRide(
+        string[] memory _symbols,
+        address[] memory _priceFeeds,
+        bool[] memory _directions,
+        uint256 _stakeAmount,
+        uint256 _timeframe
+    ) external {
+        uint256 coinCount = _symbols.length;
+        require(coinCount >= 3 && coinCount <= 10, "Must predict 3-10 coins");
+        require(coinCount == _priceFeeds.length && coinCount == _directions.length, "Array length mismatch");
+        require(_stakeAmount > 0, "Stake must be > 0");
+        require(ntiqToken.transferFrom(msg.sender, address(this), _stakeAmount), "Transfer failed");
+        
+        // Create new TrendRide
+        TrendRide storage newRide = trendRides[trendRideCount];
+        newRide.user = msg.sender;
+        newRide.stakeAmount = _stakeAmount;
+        newRide.targetTime = block.timestamp + _timeframe;
+        newRide.multiplier = multipliers[coinCount];
+        newRide.resolved = false;
+        newRide.won = false;
+        
+        // Record all predictions with starting prices
+        for (uint256 i = 0; i < coinCount; i++) {
+            AggregatorV3Interface priceFeed = AggregatorV3Interface(_priceFeeds[i]);
+            (, int256 startPrice,,,) = priceFeed.latestRoundData();
+            
+            newRide.predictions.push(CryptoPrediction({
+                symbol: _symbols[i],
+                priceFeed: _priceFeeds[i],
+                startPrice: startPrice,
+                predictedUp: _directions[i]
+            }));
+        }
+        
+        emit TrendRideCreated(trendRideCount, msg.sender, coinCount, _stakeAmount, newRide.multiplier);
+        trendRideCount++;
+    }
+    
+    function resolveTrendRide(uint256 _rideId) external {
+        TrendRide storage ride = trendRides[_rideId];
+        require(!ride.resolved, "Already resolved");
+        require(block.timestamp >= ride.targetTime, "Not yet mature");
+        
+        // Check ALL predictions - must ALL be correct to win
+        bool allCorrect = true;
+        
+        for (uint256 i = 0; i < ride.predictions.length; i++) {
+            CryptoPrediction memory pred = ride.predictions[i];
+            AggregatorV3Interface priceFeed = AggregatorV3Interface(pred.priceFeed);
+            (, int256 currentPrice,,,) = priceFeed.latestRoundData();
+            
+            bool priceWentUp = currentPrice > pred.startPrice;
+            
+            if (pred.predictedUp != priceWentUp) {
+                allCorrect = false;
+                break;
+            }
+        }
+        
+        if (allCorrect) {
+            ride.won = true;
+            uint256 reward = (ride.stakeAmount * ride.multiplier) / 100;
+            require(ntiqToken.transfer(ride.user, reward), "Reward transfer failed");
+            emit TrendRideResolved(_rideId, true, reward);
+        } else {
+            ride.won = false;
+            emit TrendRideResolved(_rideId, false, 0);
+        }
+        
+        ride.resolved = true;
+    }
+    
+    function getTrendRideDetails(uint256 _rideId) external view returns (
+        address user,
+        uint256 coinCount,
+        uint256 stakeAmount,
+        uint256 multiplier,
+        uint256 targetTime,
+        bool resolved,
+        bool won
+    ) {
+        TrendRide storage ride = trendRides[_rideId];
+        return (
+            ride.user,
+            ride.predictions.length,
+            ride.stakeAmount,
+            ride.multiplier,
+            ride.targetTime,
+            ride.resolved,
+            ride.won
+        );
+    }
+    
+    function getPredictionDetails(uint256 _rideId, uint256 _index) external view returns (
+        string memory symbol,
+        int256 startPrice,
+        bool predictedUp
+    ) {
+        require(_index < trendRides[_rideId].predictions.length, "Invalid index");
+        CryptoPrediction memory pred = trendRides[_rideId].predictions[_index];
+        return (pred.symbol, pred.startPrice, pred.predictedUp);
+    }
+}
+```
+
+#### Integration Benefits:
+- ✅ **High reward potential** → Up to 50x multiplier for 10 correct predictions
+- ✅ **Transparent multipliers** → All odds visible on-chain
+- ✅ **Instant settlement** → Automated reward distribution
+- ✅ **Provably fair** → All logic verifiable on-chain
+- ✅ **Unique game mode** → No competitors offer this on Polygon
+
+#### Game Mechanics:
+```
+Example TrendRide (5 coins, 1 hour):
+
+1. User stakes: 100 NTIQ
+2. Predicts:
+   - BTC: UP (starts at $45,000)
+   - ETH: DOWN (starts at $2,500)
+   - MATIC: UP (starts at $0.80)
+   - SOL: UP (starts at $100)
+   - AVAX: DOWN (starts at $35)
+
+3. After 1 hour:
+   - BTC: $45,500 ✅ (went UP)
+   - ETH: $2,480 ✅ (went DOWN)
+   - MATIC: $0.82 ✅ (went UP)
+   - SOL: $102 ✅ (went UP)
+   - AVAX: $34 ✅ (went DOWN)
+
+4. All 5 correct! → Win 100 × 5 = 500 NTIQ
+   (5x multiplier for 5 coins)
+```
+
+#### Risk-Adjusted Multipliers:
+```
+Coins | Multiplier | Win Rate | Example Stake | Potential Win
+------|-----------|----------|---------------|---------------
+3     | 2x        | ~12.5%   | 100 NTIQ     | 200 NTIQ
+4     | 3.5x      | ~6.25%   | 100 NTIQ     | 350 NTIQ
+5     | 5x        | ~3.125%  | 100 NTIQ     | 500 NTIQ
+6     | 7x        | ~1.56%   | 100 NTIQ     | 700 NTIQ
+7     | 10x       | ~0.78%   | 100 NTIQ     | 1,000 NTIQ
+8     | 15x       | ~0.39%   | 100 NTIQ     | 1,500 NTIQ
+9     | 25x       | ~0.20%   | 100 NTIQ     | 2,500 NTIQ
+10    | 50x       | ~0.10%   | 100 NTIQ     | 5,000 NTIQ
+```
+
+#### Why TrendRide is Critical for Polygon:
+1. **High Transaction Volume** → Users create multiple TrendRides daily
+2. **Low Gas Costs Essential** → Creating 10 predictions on Ethereum = $50+ gas, on Polygon = $0.01
+3. **Fast Settlement** → 2-second blocks perfect for 1-minute TrendRides
+4. **Competitive Advantage** → First multi-coin prediction platform on Polygon
+5. **Viral Potential** → Users share big wins on social media
+
+#### Frontend Integration:
+```typescript
+// client/src/hooks/useTrendRide.ts
+
+import { useContractWrite } from 'wagmi';
+import { parseUnits } from 'viem';
+
+export function useTrendRide() {
+  const { write: createTrendRide } = useContractWrite({
+    address: TRENDRIDE_CONTRACT_ADDRESS,
+    abi: TrendRideABI,
+    functionName: 'createTrendRide',
+  });
+
+  const submitTrendRide = async (
+    coins: string[],
+    directions: boolean[],
+    stake: number,
+    timeframe: number
+  ) => {
+    const priceFeeds = await getPriceFeeds(coins);
+    const stakeAmount = parseUnits(stake.toString(), 18);
+    
+    await createTrendRide({
+      args: [coins, priceFeeds, directions, stakeAmount, timeframe],
+    });
+  };
+
+  return { submitTrendRide };
+}
+```
+
+#### Migration Strategy:
+1. **Phase 1 (Wave 2):** Deploy TrendRideMarket contract on Polygon Mumbai testnet
+2. **Phase 2 (Wave 3):** Parallel system (DB + Smart Contract)
+3. **Phase 3 (Wave 4):** User migration with incentives (2x rewards for on-chain TrendRides)
+4. **Phase 4 (Wave 5):** 100% on-chain TrendRide system
+
+#### Expected Impact:
+```
+Metrics (Post-Migration):
+
+Daily TrendRides:     1,000+ per day
+Average Stake:        50 NTIQ ($5)
+Daily Volume:         $50,000+
+Platform Fee (5%):    $2,500/day
+Monthly Revenue:      $75,000
+
+Gas Cost Savings:
+- Ethereum: $50 per TrendRide × 1,000 = $50,000/day
+- Polygon:  $0.01 per TrendRide × 1,000 = $10/day
+- SAVINGS:  $49,990/day = $1.5M/month 💰
+```
+
+#### Competitive Analysis:
+```
+Platform          | Multi-Coin | On-Chain | Polygon | Multipliers
+------------------|-----------|----------|---------|-------------
+NECTIQ (TrendRide)| ✅ Yes    | ✅ Yes   | ✅ Yes  | ✅ 2x-50x
+Polymarket        | ❌ No     | ✅ Yes   | ✅ Yes  | ❌ Fixed odds
+Augur             | ❌ No     | ✅ Yes   | ❌ No   | ❌ Binary
+PredictIt         | ❌ No     | ❌ No    | ❌ No   | ❌ Limited
+```
+
+**Result:** NECTIQ's TrendRide is **UNIQUE** on Polygon! 🏆
+
+#### Integration Priority: **CRITICAL** (Wave 2-3)
+
+**Why Critical:**
+- Most engaging game mode (highest user retention)
+- Highest revenue potential (platform fees)
+- Viral marketing potential (big wins shared socially)
+- Competitive moat (unique on Polygon)
+- Showcases Polygon's speed & cost advantages perfectly
+
+---
+
 ## 📅 TIMELINE & MILESTONES
 
 > **Note:** This timeline aligns with the **Polygon Buildathons 10-Wave Program** detailed in ROADMAP.md. Focus is on securing funding in Wave 5, then scaling post-funding.
