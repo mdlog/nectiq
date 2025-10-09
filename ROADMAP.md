@@ -1154,6 +1154,21 @@ Achieve 100% decentralization and establish thriving ecosystem on Polygon.
 | **Buildathons Allocation** | 5% | 50M NTIQ | Wave rewards |
 | **Investors & Partners** | 5% | 50M NTIQ | 2 years |
 
+**Token Utility**
+
+NTIQ token will serve multiple purposes within the ecosystem:
+
+| Utility | Description |
+|---------|-------------|
+| 🎯 **Prediction Stakes** | Use NTIQ to place prediction bets |
+| ⚔️ **Battle Entry Fees** | Pay with NTIQ to enter P2P battles |
+| 🏆 **Tournament Buy-ins** | Join tournaments using NTIQ |
+| 🗳️ **Governance Voting** | Lock NTIQ to receive vNTIQ for voting power |
+| 💰 **Staking Rewards** | Stake NTIQ to earn yield |
+| ⭐ **Premium Features** | Access exclusive features with NTIQ |
+| 🎨 **NFT Minting** | Mint achievement NFTs using NTIQ |
+| 🔮 **Oracle Node Rewards** | Earn NTIQ for providing oracle services |
+
 **vNTIQ (Governance Token) - Future**
 - Lock NTIQ → Receive vNTIQ
 - Longer lock = More voting power

@@ -560,6 +560,31 @@ Utility:
 ✅ Oracle node rewards
 ```
 
+#### vNTIQ (Governance Token):
+```
+Lock Mechanism:
+• Lock NTIQ → Receive vNTIQ
+• Longer lock = More voting power
+• Non-transferable governance power
+
+Lock Duration & Multipliers:
+• 1 week lock:  0.25x multiplier
+• 1 month lock: 0.50x multiplier  
+• 6 month lock: 0.75x multiplier
+• 4 year lock:  1.0x multiplier
+
+Example:
+Lock 1,000 NTIQ for 4 years = 1,000 vNTIQ (1.0x)
+Lock 1,000 NTIQ for 1 week = 250 vNTIQ (0.25x)
+
+Governance Rights:
+✅ Vote on protocol upgrades
+✅ Propose new features
+✅ Treasury allocation decisions
+✅ Fee structure changes
+✅ Token emission rates
+```
+
 #### Migration Strategy:
 1. **Wave 2:** Deploy ERC-20 token on Polygon PoS
 2. **Wave 3:** Create liquidity pool (NTIQ/USDC on QuickSwap)
