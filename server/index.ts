@@ -22,6 +22,48 @@ if (process.env.NODE_ENV === 'development') {
   console.log("   NODE_ENV:", process.env.NODE_ENV);
 }
 
+// Override console.error to filter out RPC "filter not found" spam
+const originalConsoleError = console.error;
+console.error = function (...args: any[]) {
+  // Convert args to string for checking
+  const errorString = args.map(arg =>
+    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+  ).join(' ');
+
+  // Suppress "filter not found" errors from ethers.js
+  if (errorString.includes('filter not found') ||
+    errorString.includes('could not coalesce error') ||
+    errorString.includes('eth_getFilterChanges')) {
+    // Silently ignore - this is normal RPC behavior
+    return;
+  }
+
+  // Pass through other errors
+  originalConsoleError.apply(console, args);
+};
+
+// Global error handler to suppress RPC "filter not found" errors
+process.on('unhandledRejection', (reason: any) => {
+  // Suppress "filter not found" errors from ethers.js event polling
+  if (reason?.message?.includes('filter not found') ||
+    reason?.error?.message?.includes('filter not found') ||
+    reason?.shortMessage?.includes('could not coalesce error')) {
+    // Silently ignore - this is normal RPC behavior when filters expire
+    return;
+  }
+  // Log other unhandled rejections
+  console.error('🚨 [UNHANDLED-REJECTION]:', reason);
+});
+
+process.on('uncaughtException', (error: any) => {
+  // Suppress "filter not found" errors
+  if (error?.message?.includes('filter not found')) {
+    return;
+  }
+  console.error('🚨 [UNCAUGHT-EXCEPTION]:', error);
+  // Don't exit process for non-critical errors
+});
+
 // Extend Express Request to include session
 declare module 'express-session' {
   interface SessionData {
@@ -38,6 +80,7 @@ import { withdrawalMonitorService } from "./services/withdrawalMonitorService.js
 import { initializeDepositExpiryService } from "./services/deposit-expiry-service";
 import { ParlayProcessorService } from "./services/parlayProcessorService.js";
 import { BattleExpiryService } from "./services/battleExpiryService.js";
+import { initVaultEventListener } from "./services/vaultEventListener.js";
 
 const app = express();
 
@@ -343,6 +386,16 @@ try {
   console.log('✅ Automated deposit monitoring system started successfully');
 } catch (error) {
   console.error('❌ Failed to initialize automated deposit monitoring system:', error);
+}
+
+// Initialize Vault Event Listener for Smart Contract deposits/withdrawals
+console.log('🔧 Initializing Vault Event Listener...');
+try {
+  const vaultListener = initVaultEventListener(storage);
+  await vaultListener.start();
+  console.log('✅ Vault event listener started successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize vault event listener:', error);
 }
 
 // Initialize Deposit Expiry Service for 1-hour auto-cancel

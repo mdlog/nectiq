@@ -16,12 +16,11 @@ import type { User, Withdrawal } from "@shared/schema";
 import type { UserStats, ActivePrediction, RecentReward, CryptoPrice } from "@/types";
 import { Achievements } from "@/components/achievements";
 import { DailyChallenges } from "@/components/daily-challenges";
-import TradingViewChart from "@/components/TradingViewChart";
-import { LivePrices } from "@/components/live-prices";
 import { WalletConnect } from "@/components/wallet-connect";
 import "../styles/mobile-user-dashboard.css";
 import "../styles/dashboard-enhancements.css";
 import "../styles/mobile-dashboard-enhancements.css";
+import "../styles/dashboard-professional.css";
 // import { WalletBalances } from "@/components/wallet-balances"; // Removed - not needed
 import { useWalletIntegration } from "@/hooks/useWalletIntegration";
 import { ReferralSystem } from "@/components/ReferralSystem";
@@ -140,8 +139,6 @@ export default function UserDashboard() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(null);
-  const [showChart, setShowChart] = useState(false);
   const [, setLocation] = useLocation();
   const [walletCopied, setWalletCopied] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -309,19 +306,6 @@ export default function UserDashboard() {
     };
   }, []);
 
-  // Auto-select Bitcoin as default when prices are loaded
-  useEffect(() => {
-    if (prices.length > 0 && !selectedCrypto) {
-      const bitcoin = prices.find(crypto => crypto.id === 'bitcoin');
-      if (bitcoin) {
-        setSelectedCrypto(bitcoin);
-        setShowChart(true);
-      }
-    }
-  }, [prices, selectedCrypto]);
-
-
-
   const formatTimeLeft = (timeLeft: number): string => {
     if (timeLeft <= 0) return "Expired";
 
@@ -392,12 +376,6 @@ export default function UserDashboard() {
   };
 
   const accuracyLevel = getAccuracyLevel(stats?.accuracy || 0);
-
-  // Handle crypto selection from Live Prices
-  const handleCryptoSelect = (crypto: CryptoPrice) => {
-    setSelectedCrypto(crypto);
-    setShowChart(true);
-  };
 
   // Show comprehensive loading state with debugging info
   if (userLoading) {
@@ -489,13 +467,13 @@ export default function UserDashboard() {
             </div>
 
             {/* Prominent Balance Display */}
-            <div className="glass-card glass-card-hover rounded-2xl p-6 sm:p-8 min-w-[280px] sm:min-w-[320px] fade-in-delay-1">
-              <div className="text-center">
+            <div className="balance-card-professional min-w-[280px] sm:min-w-[320px] fade-in-delay-1">
+              <div className="text-center relative z-10">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Coins className="text-yellow-400 icon-glow-yellow" size={24} />
-                  <p className="text-slate-400 text-sm uppercase tracking-wider">Your Balance</p>
+                  <p className="text-professional-muted text-sm uppercase tracking-wider">Your Balance</p>
                 </div>
-                <div className="text-5xl sm:text-6xl font-bold mb-2 balance-glow text-yellow-400">
+                <div className="balance-amount">
                   {user?.balance?.toLocaleString() || "0"}
                 </div>
                 <p className="text-xl text-yellow-300 font-semibold">NTIQ</p>
@@ -510,74 +488,27 @@ export default function UserDashboard() {
               </div>
             </div>
           </div>
-
-          {/* Quick Action Buttons */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 fade-in-delay-2">
-            <button
-              onClick={() => setLocation('/home')}
-              className="action-button glass-card rounded-xl p-4 text-center hover:border-blue-500/50 group"
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Target className="text-white" size={24} />
-              </div>
-              <p className="text-white font-semibold text-sm sm:text-base">Make Prediction</p>
-              <p className="text-slate-400 text-xs mt-1">Start predicting</p>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('financial')}
-              className="action-button glass-card rounded-xl p-4 text-center hover:border-green-500/50 group"
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Wallet className="text-white" size={24} />
-              </div>
-              <p className="text-white font-semibold text-sm sm:text-base">Deposit Funds</p>
-              <p className="text-slate-400 text-xs mt-1">Add NTIQ</p>
-            </button>
-
-            <button
-              onClick={() => setLocation('/battles')}
-              className="action-button glass-card rounded-xl p-4 text-center hover:border-purple-500/50 group"
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Swords className="text-white" size={24} />
-              </div>
-              <p className="text-white font-semibold text-sm sm:text-base">Join Battle</p>
-              <p className="text-slate-400 text-xs mt-1">Compete now</p>
-            </button>
-
-            <button
-              onClick={() => setLocation('/leaderboard')}
-              className="action-button glass-card rounded-xl p-4 text-center hover:border-yellow-500/50 group"
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Trophy className="text-white" size={24} />
-              </div>
-              <p className="text-white font-semibold text-sm sm:text-base">Leaderboard</p>
-              <p className="text-slate-400 text-xs mt-1">View rankings</p>
-            </button>
-          </div>
         </div>
       </div>
 
       <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6 md:py-8">
 
         {/* Glassmorphism Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 fade-in-delay-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8 fade-in-delay-3">
           {/* Total Predictions Card */}
-          <div className="glass-card glass-card-hover stat-card-gradient rounded-xl p-6 group">
+          <div className="stats-card-professional hover-lift animate-fade-in-up">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-blue-500/20 rounded-lg group-hover:scale-110 transition-transform">
+              <div className="stats-card-icon bg-blue-500/20">
                 <BarChart3 className="h-6 w-6 text-blue-400 icon-glow-blue" />
               </div>
-              <div className="text-xs text-slate-400 bg-blue-500/10 px-2 py-1 rounded">
+              <div className="badge-professional badge-professional-info">
                 All Time
               </div>
             </div>
-            <div className="count-animation text-3xl sm:text-4xl font-bold text-white mb-2">
+            <div className="stats-card-value text-white">
               {stats?.totalPredictions?.toLocaleString() || "0"}
             </div>
-            <p className="text-slate-400 text-sm mb-1">Total Predictions</p>
+            <p className="stats-card-label mb-1">Total Predictions</p>
             <div className="flex items-center gap-2 text-xs text-blue-400">
               <TrendingUp size={14} />
               <span>Lifetime made</span>
@@ -585,19 +516,19 @@ export default function UserDashboard() {
           </div>
 
           {/* Accuracy Rate Card */}
-          <div className="glass-card glass-card-hover stat-card-gradient rounded-xl p-6 group">
+          <div className="stats-card-professional hover-lift animate-fade-in-up animate-delay-100">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-green-500/20 rounded-lg group-hover:scale-110 transition-transform">
+              <div className="stats-card-icon bg-green-500/20">
                 <Target className="h-6 w-6 text-green-400 icon-glow-green" />
               </div>
-              <div className={`text-xs px-2 py-1 rounded ${accuracyLevel.bg} ${accuracyLevel.color}`}>
+              <div className={`badge-professional ${accuracyLevel.bg} ${accuracyLevel.color}`}>
                 {accuracyLevel.label}
               </div>
             </div>
-            <div className="count-animation text-3xl sm:text-4xl font-bold text-green-400 mb-2">
+            <div className="stats-card-value text-green-400">
               {stats?.accuracy || 0}%
             </div>
-            <p className="text-slate-400 text-sm mb-1">Accuracy Rate</p>
+            <p className="stats-card-label mb-1">Accuracy Rate</p>
             <div className="w-full bg-slate-700 rounded-full h-2 mt-2">
               <div
                 className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all duration-500"
@@ -607,19 +538,19 @@ export default function UserDashboard() {
           </div>
 
           {/* Current Rank Card */}
-          <div className="glass-card glass-card-hover stat-card-gradient rounded-xl p-6 group">
+          <div className="stats-card-professional hover-lift animate-fade-in-up animate-delay-200">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-yellow-500/20 rounded-lg group-hover:scale-110 transition-transform">
+              <div className="stats-card-icon bg-yellow-500/20">
                 <Trophy className="h-6 w-6 text-yellow-400 icon-glow-yellow" />
               </div>
-              <div className="text-xs text-slate-400 bg-yellow-500/10 px-2 py-1 rounded">
+              <div className="badge-professional badge-professional-warning">
                 Global
               </div>
             </div>
-            <div className="count-animation text-3xl sm:text-4xl font-bold text-yellow-400 mb-2">
+            <div className="stats-card-value text-yellow-400">
               {stats?.rank ? `#${stats.rank}` : "N/A"}
             </div>
-            <p className="text-slate-400 text-sm mb-1">Current Rank</p>
+            <p className="stats-card-label mb-1">Current Rank</p>
             <div className="flex items-center gap-2 text-xs text-yellow-400">
               <Crown size={14} />
               <span>Leaderboard position</span>
@@ -627,19 +558,19 @@ export default function UserDashboard() {
           </div>
 
           {/* Total Rewards Card */}
-          <div className="glass-card glass-card-hover stat-card-gradient rounded-xl p-6 group">
+          <div className="stats-card-professional hover-lift animate-fade-in-up animate-delay-300">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-purple-500/20 rounded-lg group-hover:scale-110 transition-transform">
+              <div className="stats-card-icon bg-purple-500/20">
                 <Gift className="h-6 w-6 text-purple-400 icon-glow-purple" />
               </div>
-              <div className="text-xs text-slate-400 bg-purple-500/10 px-2 py-1 rounded">
+              <div className="badge-professional badge-professional-info">
                 NTIQ
               </div>
             </div>
-            <div className="count-animation text-3xl sm:text-4xl font-bold text-purple-400 mb-2">
+            <div className="stats-card-value text-purple-400">
               {stats?.totalRewards?.toLocaleString() || "0"}
             </div>
-            <p className="text-slate-400 text-sm mb-1">Total Rewards</p>
+            <p className="stats-card-label mb-1">Total Rewards</p>
             <div className="flex items-center gap-2 text-xs text-purple-400">
               <Gem size={14} />
               <span>Points earned</span>
@@ -691,9 +622,9 @@ export default function UserDashboard() {
 
                     <TabsTrigger
                       value="challenges"
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-purple-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-purple-400/50 text-white hover:text-white"
                     >
-                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
                       <span className="hidden sm:inline">Daily Challenges</span>
                       <span className="sm:hidden">Challenges</span>
                     </TabsTrigger>
@@ -704,15 +635,6 @@ export default function UserDashboard() {
                     >
                       <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span>Loyalty</span>
-                    </TabsTrigger>
-
-                    <TabsTrigger
-                      value="market"
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-orange-400/50 text-slate-300"
-                    >
-                      <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
-                      <span className="hidden sm:inline">Market Watch</span>
-                      <span className="sm:hidden">Market</span>
                     </TabsTrigger>
 
                     <TabsTrigger
@@ -741,9 +663,9 @@ export default function UserDashboard() {
 
                     <TabsTrigger
                       value="referral"
-                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-pink-400/50 text-slate-300"
+                      className="w-full justify-start data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-600 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-700/50 transition-all duration-300 flex items-center gap-3 sm:gap-4 px-3 sm:px-4 md:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl border border-transparent data-[state=active]:border-pink-400/50 text-white hover:text-white"
                     >
-                      <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 text-pink-400" />
                       <span className="hidden sm:inline">Referral Program</span>
                       <span className="sm:hidden">Referral</span>
                     </TabsTrigger>
@@ -1285,106 +1207,6 @@ export default function UserDashboard() {
                             })}
                           </div>
                         )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                {/* Market Watch Tab */}
-                <TabsContent value="market" className="flex-1 h-full">
-                  <div className="h-full">
-                    <Card className="bg-surface border-surface-light h-full flex flex-col">
-                      <CardHeader>
-                        <CardTitle className="flex items-center">
-                          <BarChart3 className="mr-2" size={20} />
-                          Market Watch
-                        </CardTitle>
-                        <p className="text-sm text-slate-400">
-                          Monitor live prices and view interactive charts with real-time data
-                        </p>
-                      </CardHeader>
-                      <CardContent className="flex-1 flex flex-col overflow-hidden">
-                        <div className="overflow-y-auto space-y-6">
-                          {/* Live Prices Section - Moved to Top */}
-                          <div className="mb-6">
-                            <LivePrices onCryptoSelect={handleCryptoSelect} />
-                          </div>
-
-                          {/* Chart Section - Now Takes Full Width */}
-                          <div className="space-y-6">
-                            {selectedCrypto && showChart ? (
-                              <>
-                                <Card>
-                                  <CardContent className="p-0">
-                                    <TradingViewChart
-                                      cryptoId={selectedCrypto.id}
-                                    />
-                                  </CardContent>
-                                </Card>
-
-                                {/* Make Prediction Button Below Chart */}
-                                <div className="mb-6">
-                                  <Button
-                                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                                    onClick={() => setLocation(`/predict?crypto=${selectedCrypto.id}`)}
-                                  >
-                                    <Target className="mr-2" size={16} />
-                                    Make Prediction
-                                  </Button>
-                                </div>
-                              </>
-                            ) : (
-                              <Card className="bg-surface border-surface-light mb-6">
-                                <CardContent className="text-center py-12">
-                                  <BarChart3 className="mx-auto mb-4 text-slate-400" size={48} />
-                                  <h3 className="text-lg font-semibold mb-2">Interactive Price Charts</h3>
-                                  <p className="text-slate-400 mb-4">
-                                    Click on any cryptocurrency from the Live Prices panel to view its professional TradingView Charts with Pyth Network data
-                                  </p>
-                                </CardContent>
-                              </Card>
-                            )}
-                          </div>
-
-                          {/* Market Statistics - Moved to Bottom */}
-                          <Card className="bg-surface border-surface-light">
-                            <CardHeader>
-                              <CardTitle className="flex items-center">
-                                <TrendingUp className="mr-2" size={20} />
-                                Market Statistics
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-3">
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400">Total Cryptocurrencies</span>
-                                  <span className="font-semibold">{prices.length}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400">Gainers (24h)</span>
-                                  <span className="font-semibold text-success">
-                                    {prices.filter(p => p.price_change_percentage_24h > 0).length}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400">Losers (24h)</span>
-                                  <span className="font-semibold text-error">
-                                    {prices.filter(p => p.price_change_percentage_24h < 0).length}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400">Top Performer</span>
-                                  <span className="font-semibold text-success">
-                                    {prices.length > 0 ?
-                                      prices.reduce((prev, current) =>
-                                        prev.price_change_percentage_24h > current.price_change_percentage_24h ? prev : current
-                                      ).symbol : 'N/A'}
-                                  </span>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
                       </CardContent>
                     </Card>
                   </div>

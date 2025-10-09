@@ -13,7 +13,6 @@ vite.config.ts.*
 
 # Old files
 attached_assets/
-replit.md
 
 # Test files
 test_*.js
@@ -44,6 +43,3 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-# Internal strategy documents
-SECURITY_AUDIT_REPORT.md

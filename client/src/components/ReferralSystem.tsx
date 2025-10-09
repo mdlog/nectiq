@@ -44,11 +44,11 @@ export function ReferralSystem() {
 
   // Auto-initialize referral code on wallet connect
   useEffect(() => {
-    console.log("🔍 [REFERRAL] useEffect triggered:", { 
-      walletAddress, 
-      hasInitialized, 
-      isLoading, 
-      hasReferralCode: !!referralData?.referralCode 
+    console.log("🔍 [REFERRAL] useEffect triggered:", {
+      walletAddress,
+      hasInitialized,
+      isLoading,
+      hasReferralCode: !!referralData?.referralCode
     });
 
     // Only auto-initialize if:
@@ -59,23 +59,23 @@ export function ReferralSystem() {
     if (walletAddress && !hasInitialized && !isLoading && !referralData?.referralCode) {
       console.log("🔄 [REFERRAL] Auto-triggering referral code generation/retrieval...");
       setHasInitialized(true);
-      
+
       // Small delay to ensure user data is loaded
       const timeoutId = setTimeout(() => {
         generateCodeMutation.mutate();
       }, 1000);
-      
+
       return () => clearTimeout(timeoutId);
     }
-    
+
     if (referralData?.referralCode && !hasInitialized) {
       setHasInitialized(true);
     }
   }, [walletAddress, hasInitialized, isLoading, referralData?.referralCode]);
 
   // Debug logging
-  console.log("🔍 [REFERRAL] Component data:", { 
-    referralData, 
+  console.log("🔍 [REFERRAL] Component data:", {
+    referralData,
     isLoading,
     hasReferralCode: !!referralData?.referralCode,
     referralCode: referralData?.referralCode,
@@ -94,12 +94,12 @@ export function ReferralSystem() {
           "Content-Type": "application/json",
         },
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     },
     onSuccess: (data: any) => {
@@ -109,7 +109,7 @@ export function ReferralSystem() {
         description: data.message || "You and the referrer will receive 100 NTIQ bonus!",
       });
       setReferralCode("");
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
@@ -131,37 +131,37 @@ export function ReferralSystem() {
       const response = await apiRequest("/api/user/referral/generate", {
         method: "POST",
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     },
     onSuccess: async (data: any) => {
       console.log("🎉 [REFERRAL] Generation/retrieval success:", data);
-      
+
       // Get existing referral data or create new structure
       const currentData = referralData || {
         totalReferrals: 0,
         referralRewards: 0,
         referredUsers: []
       };
-      
+
       // Update the query cache with the referral code data
       const updatedData = {
         ...currentData,
         referralCode: data.referralCode,
         referralLink: `${window.location.origin}/?ref=${data.referralCode}`,
       };
-      
+
       queryClient.setQueryData(["/api/user/referral"], updatedData);
-      
+
       // Invalidate and refetch to ensure we have the latest data
       queryClient.invalidateQueries({ queryKey: ["/api/user/referral"] });
-      
+
       console.log("✅ [REFERRAL] Cache updated with referral code:", data.referralCode);
-      
+
       // Only show success message for newly generated codes
       if (data.success && !referralData?.referralCode) {
         toast({
@@ -246,8 +246,8 @@ export function ReferralSystem() {
       {/* Referral Code Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Your Referral Code</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-lg text-white">Your Referral Code</CardTitle>
+          <CardDescription className="text-slate-300">
             Share this code with your friends to earn rewards
           </CardDescription>
         </CardHeader>
@@ -260,7 +260,7 @@ export function ReferralSystem() {
                   <Input
                     value={referralData.referralCode}
                     readOnly
-                    className="text-center text-xl font-bold tracking-wider bg-gray-50 dark:bg-gray-800 text-black dark:text-white"
+                    className="text-center text-xl font-bold tracking-wider bg-gray-50 dark:bg-gray-800 text-white"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -286,14 +286,14 @@ export function ReferralSystem() {
               {/* Referral Link */}
               {referralData.referralLink && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-black dark:text-white">
+                  <label className="text-sm font-medium text-white">
                     Referral Link:
                   </label>
                   <div className="flex gap-2">
                     <Input
                       value={referralData.referralLink}
                       readOnly
-                      className="text-sm bg-gray-50 dark:bg-gray-800 text-black dark:text-white"
+                      className="text-sm bg-gray-50 dark:bg-gray-800 text-white"
                     />
                     <Button
                       onClick={() => handleCopyLink(referralData.referralLink!)}
@@ -308,7 +308,7 @@ export function ReferralSystem() {
             </div>
           ) : (
             <div className="text-center space-y-4">
-              <p className="text-black dark:text-white">
+              <p className="text-white">
                 {isLoading ? "Checking for existing referral code..." : "You don't have a referral code yet. Generate one now to start inviting friends!"}
               </p>
               <Button
@@ -319,9 +319,9 @@ export function ReferralSystem() {
                 disabled={generateCodeMutation.isPending || isLoading}
                 className="bg-purple-600 hover:bg-purple-700"
               >
-                {generateCodeMutation.isPending ? "Processing..." : 
-                 isLoading ? "Loading..." : 
-                 "Generate Referral Code"}
+                {generateCodeMutation.isPending ? "Processing..." :
+                  isLoading ? "Loading..." :
+                    "Generate Referral Code"}
               </Button>
             </div>
           )}
@@ -332,8 +332,8 @@ export function ReferralSystem() {
       {!referralData?.hasReferrer && !isLoading && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Apply Referral Code</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg text-white">Apply Referral Code</CardTitle>
+            <CardDescription className="text-slate-300">
               Enter a friend's referral code to earn bonus rewards (one-time only)
             </CardDescription>
           </CardHeader>
@@ -348,7 +348,7 @@ export function ReferralSystem() {
                   className="text-center text-lg font-mono tracking-wider"
                 />
               </div>
-              <Button 
+              <Button
                 onClick={() => {
                   if (referralCode.length === 8 && /^[A-Z0-9]+$/.test(referralCode)) {
                     applyReferralMutation.mutate(referralCode);
@@ -366,7 +366,7 @@ export function ReferralSystem() {
                 {applyReferralMutation.isPending ? "Applying..." : "Apply Code"}
               </Button>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-slate-300">
               💡 Note: You can only use one referral code per account. Both you and your referrer will receive 100 NTIQ bonus.
             </p>
           </CardContent>
@@ -377,8 +377,8 @@ export function ReferralSystem() {
       {referralData?.hasReferrer && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Your Referrer</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg text-white">Your Referrer</CardTitle>
+            <CardDescription className="text-slate-300">
               You were referred by someone and already received your bonus
             </CardDescription>
           </CardHeader>
@@ -404,7 +404,7 @@ export function ReferralSystem() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">Total Referrals</p>
+                <p className="text-sm font-medium text-white">Total Referrals</p>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {referralData?.totalReferrals || 0}
                 </p>
@@ -418,7 +418,7 @@ export function ReferralSystem() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">Total Rewards</p>
+                <p className="text-sm font-medium text-white">Total Rewards</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {referralData?.referralRewards || 0} NTIQ
                 </p>
@@ -432,7 +432,7 @@ export function ReferralSystem() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">Reward per Referral</p>
+                <p className="text-sm font-medium text-white">Reward per Referral</p>
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">100 NTIQ</p>
               </div>
               <QrCode className="w-8 h-8 text-purple-500" />
@@ -445,8 +445,8 @@ export function ReferralSystem() {
       {referralData?.referredUsers && referralData.referredUsers.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Referred Friends</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg text-white">Referred Friends</CardTitle>
+            <CardDescription className="text-slate-300">
               List of friends who joined using your referral code
             </CardDescription>
           </CardHeader>
@@ -459,8 +459,8 @@ export function ReferralSystem() {
                       {user.username.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium">{user.username}</p>
-                      <p className="text-sm text-black dark:text-white">
+                      <p className="font-medium text-white">{user.username}</p>
+                      <p className="text-sm text-slate-300">
                         Joined: {new Date(user.joinedAt).toLocaleDateString('en-US')}
                       </p>
                     </div>
@@ -478,7 +478,7 @@ export function ReferralSystem() {
       {/* How it Works */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">How Referral Works</CardTitle>
+          <CardTitle className="text-lg text-white">How Referral Works</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -487,32 +487,32 @@ export function ReferralSystem() {
                 1
               </div>
               <div>
-                <p className="font-medium">Share Referral Code</p>
-                <p className="text-sm text-black dark:text-white">
+                <p className="font-medium text-white">Share Referral Code</p>
+                <p className="text-sm text-slate-200">
                   Share your referral code or link to friends
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 font-bold text-sm">
                 2
               </div>
               <div>
-                <p className="font-medium">Friend Joins</p>
-                <p className="text-sm text-black dark:text-white">
+                <p className="font-medium text-white">Friend Joins</p>
+                <p className="text-sm text-slate-200">
                   Friend registers using your referral code
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold text-sm">
                 3
               </div>
               <div>
-                <p className="font-medium">Get Rewards</p>
-                <p className="text-sm text-black dark:text-white">
+                <p className="font-medium text-white">Get Rewards</p>
+                <p className="text-sm text-slate-200">
                   You and your friend get 100 NTIQ bonus automatically
                 </p>
               </div>

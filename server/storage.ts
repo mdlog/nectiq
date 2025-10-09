@@ -1740,6 +1740,30 @@ export class DatabaseStorage implements IStorage {
         .where(eq(predictionBattles.id, battleId));
 
       if (!battle || battle.status !== 'active') {
+        console.log(`⏭️  BATTLE SKIP: Battle ${battleId} status is '${battle?.status || 'not found'}', skipping resolution`);
+        return;
+      }
+
+      // ⚠️ CRITICAL: Check if reward already given (duplicate prevention)
+      const existingReward = await db
+        .select()
+        .from(transactionLogs)
+        .where(and(
+          eq(transactionLogs.type, 'battle_reward'),
+          eq(transactionLogs.relatedId, battleId),
+          eq(transactionLogs.status, 'completed')
+        ))
+        .limit(1);
+
+      if (existingReward.length > 0) {
+        console.log(`🚫 DUPLICATE PREVENTED: Battle ${battleId} reward already given, skipping`);
+        // Update status to completed if not already
+        if (battle.status === 'active') {
+          await db
+            .update(predictionBattles)
+            .set({ status: 'completed' })
+            .where(eq(predictionBattles.id, battleId));
+        }
         return;
       }
 
@@ -1772,6 +1796,19 @@ export class DatabaseStorage implements IStorage {
         winnerId = battle.challengedId;
       }
       // If equal accuracy, it's a tie (winnerId remains null)
+
+      // ⚠️ CRITICAL: Update status to 'completed' BEFORE giving reward
+      // This prevents race conditions and duplicate rewards
+      await db
+        .update(predictionBattles)
+        .set({
+          status: 'completed',
+          winnerId: winnerId || null,
+          actualPrice: currentPrice.toString()
+        })
+        .where(eq(predictionBattles.id, battleId));
+
+      console.log(`🔒 BATTLE LOCKED: Battle ${battleId} marked as completed, proceeding with reward distribution`);
 
       // Process reward for winner (Simplified System)
       if (winnerId) {
@@ -1891,17 +1928,8 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // Update battle status to completed
-      await db
-        .update(predictionBattles)
-        .set({
-          status: 'completed',
-          winnerId: winnerId || null,
-          actualPrice: currentPrice.toString()
-        })
-        .where(eq(predictionBattles.id, battleId));
-
-      console.log(`Battle ${battleId} resolved. Winner: ${winnerId || 'Tie'}, Reward: ${winnerReward}`);
+      // Status already updated to 'completed' before reward distribution (line 1800-1809)
+      console.log(`✅ BATTLE RESOLVED: Battle ${battleId} completed. Winner: ${winnerId || 'Tie'}, Reward: ${winnerReward}`);
 
     } catch (error) {
       console.error(`Error resolving battle ${battleId}:`, error);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAccount, useSwitchChain, useWriteContract, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
-import { parseEther, parseUnits } from 'viem';
+import { useAccount, useSwitchChain, useWriteContract, useSendTransaction, useWaitForTransactionReceipt, useBalance, useReadContract } from 'wagmi';
+import { parseEther, parseUnits, formatUnits } from 'viem';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,14 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Wallet, 
-  Plus, 
-  Send, 
-  Copy, 
-  ExternalLink, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  Wallet,
+  Plus,
+  Send,
+  Copy,
+  ExternalLink,
+  CheckCircle,
+  AlertCircle,
   Coins,
   Clock,
   ArrowDownCircle,
@@ -25,11 +25,15 @@ import {
   Eye,
   CreditCard,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Zap,
+  Shield
 } from "lucide-react";
 import { DepositCountdownTimer } from '@/components/deposit-countdown-timer';
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { VaultDepositModal } from '@/components/VaultDepositModal';
+import { VaultWithdrawalModal } from '@/components/VaultWithdrawalModal';
 
 // ERC-20 Transfer ABI for Wagmi
 const ERC20_TRANSFER_ABI = [
@@ -42,6 +46,17 @@ const ERC20_TRANSFER_ABI = [
       { name: 'amount', type: 'uint256' },
     ],
     outputs: [{ name: '', type: 'bool' }],
+  },
+] as const;
+
+// ERC-20 BalanceOf ABI for reading token balances
+const ERC20_BALANCE_ABI = [
+  {
+    name: 'balanceOf',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
   },
 ] as const;
 
@@ -81,7 +96,7 @@ const BaseLogo = ({ className = "w-5 h-5" }) => (
 
 const BSCLogo = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="10" fill="currentColor"/>
+    <circle cx="12" cy="12" r="10" fill="currentColor" />
     <path
       d="M8 12h8M12 8v8M9.5 9.5l5 5M14.5 9.5l-5 5"
       stroke="white"
@@ -93,7 +108,7 @@ const BSCLogo = ({ className = "w-5 h-5" }) => (
 
 const OptimismLogo = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="10" fill="currentColor"/>
+    <circle cx="12" cy="12" r="10" fill="currentColor" />
     <path
       d="M8 10c0-1.1.9-2 2-2s2 .9 2 2v4c0 1.1-.9 2-2 2s-2-.9-2-2v-4zM14 10c0-1.1.9-2 2-2s2 .9 2 2v4c0 1.1-.9 2-2 2s-2-.9-2-2v-4z"
       fill="white"
@@ -118,7 +133,7 @@ const ArbitrumLogo = ({ className = "w-5 h-5" }) => (
 
 const SepoliaLogo = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="10" fill="currentColor"/>
+    <circle cx="12" cy="12" r="10" fill="currentColor" />
     <path
       d="M12 7v10M7 12h10M9 9l6 6M15 9l-6 6"
       stroke="white"
@@ -130,9 +145,28 @@ const SepoliaLogo = ({ className = "w-5 h-5" }) => (
 
 const HoleskyLogo = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="10" fill="currentColor"/>
-    <circle cx="12" cy="12" r="4" fill="white"/>
-    <circle cx="12" cy="12" r="2" fill="currentColor"/>
+    <circle cx="12" cy="12" r="10" fill="currentColor" />
+    <circle cx="12" cy="12" r="4" fill="white" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" />
+  </svg>
+);
+
+const PolygonLogo = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M15.5 8.5L12 6.5L8.5 8.5V12.5L12 14.5L15.5 12.5V8.5Z"
+      fill="currentColor"
+    />
+    <path
+      d="M8.5 12.5L5 10.5V14.5L8.5 16.5V12.5Z"
+      fill="currentColor"
+      opacity="0.7"
+    />
+    <path
+      d="M15.5 12.5L19 10.5V14.5L15.5 16.5V12.5Z"
+      fill="currentColor"
+      opacity="0.7"
+    />
   </svg>
 );
 
@@ -235,6 +269,22 @@ const SUPPORTED_CHAINS = [
       USDC: { address: "0x449cde79f489e2ae32e6314d8d966ca64e040409", decimals: 6 }, // Official Circle USDC on Holesky
       USDT: { address: "0x87350147a24099bf1e7e677576f01c1415857c75", decimals: 6 }  // Verified USDT on Holesky
     }
+  },
+  {
+    chainId: 80002,
+    name: "Polygon Amoy",
+    symbol: "POL",
+    shortName: "amoy",
+    color: "text-purple-500",
+    logo: PolygonLogo,
+    explorerUrl: "https://amoy.polygonscan.com",
+    tokens: {
+      ETH: { address: "native", decimals: 18 }, // Native POL
+      USDC: { address: "0x8B0180f2101c8260d49339abfEe87927412494B4", decimals: 6 }, // USDC on Polygon Amoy (Official)
+      USDT: { address: "0x2c852e740B62308c46DD29B982FBb650D063Bd07", decimals: 6 }, // USDT on Polygon Amoy
+      WETH: { address: "0x52eF3d68BaB452a294342DC3e5f464d7f610f72E", decimals: 18 }, // WETH on Polygon Amoy
+      LINK: { address: "0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904", decimals: 18 }  // Chainlink on Polygon Amoy
+    }
   }
 ];
 
@@ -269,7 +319,7 @@ interface WithdrawalData {
 export function MultiChainFinancial() {
   const [selectedAction, setSelectedAction] = useState<"deposit" | "withdraw">("deposit");
   const [selectedChain, setSelectedChain] = useState(SUPPORTED_CHAINS[0]);
-  const [selectedToken, setSelectedToken] = useState<"ETH" | "USDC" | "USDT">("ETH");
+  const [selectedToken, setSelectedToken] = useState<"ETH" | "USDC" | "USDT" | "WETH" | "LINK">("ETH");
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -279,24 +329,28 @@ export function MultiChainFinancial() {
   const [expandedDeposits, setExpandedDeposits] = useState<Set<number>>(new Set());
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
   const [processedHashes, setProcessedHashes] = useState<Set<string>>(new Set());
-  
+
   // Pagination states
   const [depositPage, setDepositPage] = useState(1);
   const [withdrawalPage, setWithdrawalPage] = useState(1);
   const itemsPerPage = 5;
-  
+
+  // Smart Contract Modal states
+  const [showVaultDepositModal, setShowVaultDepositModal] = useState(false);
+  const [showVaultWithdrawalModal, setShowVaultWithdrawalModal] = useState(false);
+
   const queryClient = useQueryClient();
-  
+
   // Wagmi hooks for consistent wallet technology
   const { address, isConnected, chain } = useAccount();
   const { switchChain } = useSwitchChain();
   const { writeContract, data: contractTxHash, isPending: isContractPending } = useWriteContract();
   const { sendTransaction, data: ethTxHash, isPending: isEthPending } = useSendTransaction();
-  
+
   // Use the appropriate transaction hash based on transaction type
   const txHash = ethTxHash || contractTxHash;
   const isTransactionPending = isEthPending || isContractPending;
-  
+
   const { data: transactionReceipt, isLoading: isReceiptLoading } = useWaitForTransactionReceipt({
     hash: txHash,
   });
@@ -309,14 +363,14 @@ export function MultiChainFinancial() {
   });
 
   // Pagination component
-  const PaginationControls = ({ 
-    currentPage, 
-    totalPages, 
-    onPageChange 
-  }: { 
-    currentPage: number; 
-    totalPages: number; 
-    onPageChange: (page: number) => void; 
+  const PaginationControls = ({
+    currentPage,
+    totalPages,
+    onPageChange
+  }: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
   }) => {
     if (totalPages <= 1) return null;
 
@@ -398,17 +452,17 @@ export function MultiChainFinancial() {
     if (import.meta.env.DEV) {
       console.log(`🔍 [ETH-CALC] Calculating for ${tokenType}, USD: ${usdAmount}, snapshot: ${ethPriceSnapshot}`);
     }
-    
+
     if (tokenType === 'USDC' || tokenType === 'USDT') {
       // For USDC/USDT, add 2% fee to the amount user needs to send
       const amountWithFee = usdAmount * 1.02;
       return amountWithFee.toFixed(2);
     }
-    
-    if (tokenType === 'ETH') {
-      // For ETH deposits, use snapshot price if available, otherwise use current price
+
+    if (tokenType === 'ETH' || tokenType === 'WETH') {
+      // For ETH/WETH deposits, use snapshot price if available, otherwise use current price
       let price = 0;
-      
+
       if (ethPriceSnapshot && ethPriceSnapshot !== 'null') {
         price = parseFloat(ethPriceSnapshot);
         if (import.meta.env.DEV) {
@@ -427,14 +481,14 @@ export function MultiChainFinancial() {
           console.log(`🔍 [ETH-CALC] Using fallback price: ${price}`);
         }
       }
-      
+
       if (price === 0) {
         if (import.meta.env.DEV) {
           console.log(`❌ [ETH-CALC] No valid price found, returning 0.000000`);
         }
         return "0.000000";
       }
-      
+
       // Calculate base ETH amount and add 2% fee
       const baseTokenAmount = usdAmount / price;
       const tokenAmountWithFee = baseTokenAmount * 1.02;
@@ -444,7 +498,25 @@ export function MultiChainFinancial() {
       }
       return result;
     }
-    
+
+    if (tokenType === 'LINK') {
+      // For LINK token, get current price from crypto prices
+      if (cryptoPrices && cryptoPrices.length > 0) {
+        const linkPrice = cryptoPrices.find((crypto: any) => crypto.id === 'chainlink');
+        if (linkPrice?.current_price) {
+          const price = linkPrice.current_price;
+          const baseTokenAmount = usdAmount / price;
+          const tokenAmountWithFee = baseTokenAmount * 1.02; // Add 2% fee
+          return tokenAmountWithFee.toFixed(6);
+        }
+      }
+      // Fallback: Use approximate LINK price if not available
+      const estimatedLinkPrice = 15.0; // Approximate LINK price in USD
+      const baseTokenAmount = usdAmount / estimatedLinkPrice;
+      const tokenAmountWithFee = baseTokenAmount * 1.02;
+      return tokenAmountWithFee.toFixed(6);
+    }
+
     return "0.000000";
   };
 
@@ -454,21 +526,28 @@ export function MultiChainFinancial() {
     if (!deposit.amountUSD || deposit.amountUSD === "NaN" || isNaN(parseFloat(deposit.amountUSD))) {
       return `0.00 ${deposit.tokenType}`;
     }
-    
+
     if (deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') {
       // Use calculateTokenAmountForHistory to get amount with fee included
       const parsedAmount = parseFloat(deposit.amountUSD);
       const amountWithFee = calculateTokenAmountForHistory(parsedAmount, deposit.tokenType, deposit.ethPriceSnapshot);
       return `${amountWithFee} ${deposit.tokenType}`;
     }
-    
-    if (deposit.tokenType === 'ETH') {
-      // Calculate ETH amount from USD amount with fee included
+
+    if (deposit.tokenType === 'ETH' || deposit.tokenType === 'WETH') {
+      // Calculate ETH/WETH amount from USD amount with fee included
       const parsedAmount = parseFloat(deposit.amountUSD);
       const ethAmount = calculateTokenAmountForHistory(parsedAmount, deposit.tokenType, deposit.ethPriceSnapshot);
-      return `${ethAmount} ETH`;
+      return `${ethAmount} ${deposit.tokenType}`;
     }
-    
+
+    if (deposit.tokenType === 'LINK') {
+      // Calculate LINK amount from USD amount with fee included
+      const parsedAmount = parseFloat(deposit.amountUSD);
+      const linkAmount = calculateTokenAmountForHistory(parsedAmount, deposit.tokenType, deposit.ethPriceSnapshot);
+      return `${linkAmount} LINK`;
+    }
+
     // For other tokens, also use calculateTokenAmountForHistory
     const parsedAmount = parseFloat(deposit.amountUSD);
     const amountWithFee = calculateTokenAmountForHistory(parsedAmount, deposit.tokenType, deposit.ethPriceSnapshot);
@@ -478,14 +557,14 @@ export function MultiChainFinancial() {
   // Function to calculate withdrawal amount for different tokens
   const calculateWithdrawalAmount = (ntiqAmount: number, tokenType: string): string => {
     const usdAmount = ntiqAmount * 0.01; // 1 NTIQ = $0.01
-    
+
     if (tokenType === 'USDC' || tokenType === 'USDT') {
       // Apply 2.5% fee for stablecoins too
       const netAmount = usdAmount * 0.975; // 97.5% after 2.5% fee
       return netAmount.toFixed(2);
     }
-    
-    if (tokenType === 'ETH') {
+
+    if (tokenType === 'ETH' || tokenType === 'WETH') {
       if (cryptoPrices && cryptoPrices.length > 0) {
         const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
         if (ethPrice?.current_price) {
@@ -496,7 +575,19 @@ export function MultiChainFinancial() {
       }
       return "0.000000";
     }
-    
+
+    if (tokenType === 'LINK') {
+      if (cryptoPrices && cryptoPrices.length > 0) {
+        const linkPrice = cryptoPrices.find((crypto: any) => crypto.id === 'chainlink');
+        if (linkPrice?.current_price) {
+          const linkAmount = usdAmount / linkPrice.current_price;
+          const netLinkAmount = linkAmount * 0.975; // 97.5% after 2.5% fee
+          return netLinkAmount.toFixed(6);
+        }
+      }
+      return "0.000000";
+    }
+
     return "0.000000";
   };
 
@@ -504,12 +595,12 @@ export function MultiChainFinancial() {
   const calculateWithdrawalFee = (ntiqAmount: number, tokenType: string): string => {
     const usdAmount = ntiqAmount * 0.01; // 1 NTIQ = $0.01
     const feeUsd = usdAmount * 0.025; // 2.5% fee
-    
+
     if (tokenType === 'USDC' || tokenType === 'USDT') {
       return feeUsd.toFixed(2);
     }
-    
-    if (tokenType === 'ETH') {
+
+    if (tokenType === 'ETH' || tokenType === 'WETH') {
       if (cryptoPrices && cryptoPrices.length > 0) {
         const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
         if (ethPrice?.current_price) {
@@ -519,7 +610,18 @@ export function MultiChainFinancial() {
       }
       return "0.000000";
     }
-    
+
+    if (tokenType === 'LINK') {
+      if (cryptoPrices && cryptoPrices.length > 0) {
+        const linkPrice = cryptoPrices.find((crypto: any) => crypto.id === 'chainlink');
+        if (linkPrice?.current_price) {
+          const feeLinkAmount = feeUsd / linkPrice.current_price;
+          return feeLinkAmount.toFixed(6);
+        }
+      }
+      return "0.000000";
+    }
+
     return "0.000000";
   };
 
@@ -540,7 +642,7 @@ export function MultiChainFinancial() {
       // First, force refresh all deposit data from server
       await queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
       await queryClient.refetchQueries({ queryKey: ["/api/user/deposits"] });
-      
+
       // Also refresh user balance
       await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       await queryClient.refetchQueries({ queryKey: ["/api/user"] });
@@ -566,12 +668,12 @@ export function MultiChainFinancial() {
     if (import.meta.env.DEV) {
       console.log(`🔍 [DEPOSIT-CALC] useEffect triggered - Token: ${selectedToken}, Amount: ${depositAmount}, CryptoPrices: ${cryptoPrices?.length || 0}`);
     }
-    
+
     if (selectedToken === "ETH" && depositAmount) {
       const usd = parseFloat(depositAmount);
       if (!isNaN(usd) && usd > 0) {
         let ethPrice = 0;
-        
+
         if (cryptoPrices && cryptoPrices.length > 0) {
           const ethData = cryptoPrices.find((crypto: any) => crypto.id === "ethereum");
           ethPrice = ethData?.current_price || 0;
@@ -579,18 +681,18 @@ export function MultiChainFinancial() {
             console.log(`🔍 [DEPOSIT-CALC] Found ETH price from API: ${ethPrice}`);
           }
         }
-        
+
         if (ethPrice === 0) {
           // Use fallback price when API data is not available
           ethPrice = 3400; // Reasonable ETH price fallback
           console.log(`🔍 [DEPOSIT-CALC] Using fallback ETH price: ${ethPrice}`);
         }
-        
+
         // Calculate ETH amount based on USD + add 2% fee on ETH payment
         const baseEthAmount = usd / ethPrice;
         const ethAmountWithFee = baseEthAmount * 1.02; // Add 2% fee to ETH payment
         const result = ethAmountWithFee.toFixed(6);
-        
+
         console.log(`✅ [DEPOSIT-CALC] Setting fixedEthAmount: ${result} (USD: ${usd}, ETH Price: ${ethPrice})`);
         setFixedEthAmount(result);
       } else {
@@ -665,7 +767,7 @@ export function MultiChainFinancial() {
     },
     onError: (error: any) => {
       console.error('Withdrawal error:', error);
-      
+
       // Check if it's an authentication error
       if (error.message?.includes('401') || error.message?.toLowerCase().includes('authentication')) {
         toast({
@@ -767,7 +869,7 @@ export function MultiChainFinancial() {
   const sendViaWallet = async (deposit: any) => {
     try {
       console.log('🔧 [MOBILE-DEBUG] sendViaWallet called, checking connection...');
-      
+
       // Check wallet connection using consistent RainbowKit/Wagmi technology
       if (!isConnected || !address) {
         console.log('🚨 [MOBILE-DEBUG] Wallet not connected:', { isConnected, address });
@@ -778,7 +880,7 @@ export function MultiChainFinancial() {
         });
         return;
       }
-      
+
       console.log('🔧 [MOBILE-DEBUG] Wallet connected, proceeding with transaction...');
 
       // Get chain configuration
@@ -840,7 +942,7 @@ export function MultiChainFinancial() {
       // Handle ETH transfer using Wagmi sendTransaction
       if (deposit.tokenType === 'ETH') {
         const ethValue = parseEther(tokenAmount);
-        
+
         console.log('🔧 [WALLET-DEBUG] Attempting ETH transaction:', {
           to: secureAdminWallet,
           value: ethValue.toString(),
@@ -850,25 +952,25 @@ export function MultiChainFinancial() {
           isConnected,
           address
         });
-        
+
         // MOBILE-OPTIMIZED ETH transaction - Direct call without Promise wrapper
         try {
           console.log('🔧 [MOBILE-DEBUG] Attempting ETH sendTransaction...');
-          
+
           // CRITICAL MOBILE FIX: Direct call to sendTransaction for better mobile compatibility
           const result = sendTransaction({
             to: secureAdminWallet as `0x${string}`,
             value: ethValue,
           });
-          
+
           console.log('🔧 [MOBILE-DEBUG] ETH transaction initiated:', result);
-          
+
           // Mobile-specific success feedback
           toast({
             title: "Transaction Initiated",
             description: "Check your MetaMask mobile app to confirm the transaction",
           });
-          
+
         } catch (sendError: any) {
           console.error('🚨 [MOBILE-ERROR] sendTransaction failed:', sendError);
           toast({
@@ -927,15 +1029,15 @@ export function MultiChainFinancial() {
       // This fixes the issue where deposits were created without transaction hashes
       if (deposits && deposits.length > 0) {
         console.log(`📱 [MOBILE-DEBUG] Found ${deposits.length} deposits, searching for pending deposit...`);
-        
+
         const latestDeposit = deposits.find(d => d.status === 'pending' && !d.transactionHash);
         if (latestDeposit) {
           console.log(`🔧 [DEPOSIT-FIX] Updating deposit ${latestDeposit.id} with transaction hash:`, txHash);
           console.log(`📱 [MOBILE-SUCCESS] Mobile deposit auto-update triggered for deposit ${latestDeposit.id}`);
-          
+
           // Mark this hash as processed to prevent duplicates
           setProcessedHashes(prev => new Set(prev).add(txHash));
-          
+
           updateDepositMutation.mutate({
             depositId: latestDeposit.id,
             transactionHash: txHash,
@@ -965,15 +1067,15 @@ export function MultiChainFinancial() {
       // CRITICAL FIX: Update the most recent deposit with contract transaction hash
       if (deposits && deposits.length > 0) {
         console.log(`📱 [MOBILE-CONTRACT-DEBUG] Found ${deposits.length} deposits, searching for pending deposit...`);
-        
+
         const latestDeposit = deposits.find(d => d.status === 'pending' && !d.transactionHash);
         if (latestDeposit) {
           console.log(`🔧 [DEPOSIT-FIX] Updating deposit ${latestDeposit.id} with contract transaction hash:`, contractTxHash);
           console.log(`📱 [MOBILE-CONTRACT-SUCCESS] Mobile contract deposit auto-update triggered for deposit ${latestDeposit.id}`);
-          
+
           // Mark this hash as processed to prevent duplicates
           setProcessedHashes(prev => new Set(prev).add(contractTxHash));
-          
+
           updateDepositMutation.mutate({
             depositId: latestDeposit.id,
             transactionHash: contractTxHash,
@@ -1014,20 +1116,20 @@ export function MultiChainFinancial() {
   useEffect(() => {
     if (transactionReceipt && !isReceiptLoading && transactionReceipt.transactionHash) {
       console.log('🎉 [MOBILE-RECEIPT] Transaction receipt received:', transactionReceipt.transactionHash);
-      
+
       // MOBILE FIX: Ensure deposit gets updated with confirmed transaction hash
       if (deposits && deposits.length > 0) {
-        const latestDeposit = deposits.find(d => 
-          (d.status === 'pending' || d.status === 'processing') && 
+        const latestDeposit = deposits.find(d =>
+          (d.status === 'pending' || d.status === 'processing') &&
           (!d.transactionHash || d.transactionHash === transactionReceipt.transactionHash)
         );
-        
+
         if (latestDeposit && !processedHashes.has(transactionReceipt.transactionHash)) {
           console.log(`🔧 [MOBILE-RECEIPT-FIX] Updating deposit ${latestDeposit.id} with confirmed transaction hash:`, transactionReceipt.transactionHash);
-          
+
           // Mark this hash as processed to prevent duplicates
           setProcessedHashes(prev => new Set(prev).add(transactionReceipt.transactionHash));
-          
+
           updateDepositMutation.mutate({
             depositId: latestDeposit.id,
             transactionHash: transactionReceipt.transactionHash,
@@ -1035,16 +1137,16 @@ export function MultiChainFinancial() {
           });
         }
       }
-      
+
       toast({
         title: "Transaction Confirmed",
         description: "Transaction confirmed on blockchain and deposit updated",
       });
-      
+
       // Refresh deposit data with priority for mobile
       queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      
+
       // Force refetch immediately for mobile reliability
       setTimeout(() => {
         queryClient.refetchQueries({ queryKey: ["/api/user/deposits"] });
@@ -1135,11 +1237,11 @@ export function MultiChainFinancial() {
       // Handle ERC-20 token transfer using Wagmi
       const decimals = tokenConfig.decimals || 6; // USDC/USDT typically use 6 decimals
       const tokenValue = parseUnits(tokenAmount, decimals);
-      
+
       // MOBILE-OPTIMIZED ERC-20 token transaction - Direct call without Promise wrapper
       try {
         console.log('🔧 [MOBILE-DEBUG] Attempting token writeContract...');
-        
+
         // CRITICAL MOBILE FIX: Direct call to writeContract for better mobile compatibility
         const result = writeContract({
           address: tokenConfig.address as `0x${string}`,
@@ -1147,15 +1249,15 @@ export function MultiChainFinancial() {
           functionName: 'transfer',
           args: [secureAdminWallet as `0x${string}`, tokenValue],
         });
-        
+
         console.log('🔧 [MOBILE-DEBUG] Token transaction initiated:', result);
-        
+
         // Mobile-specific success feedback
         toast({
           title: "Transaction Initiated",
           description: "Check your MetaMask mobile app to confirm the token transaction",
         });
-        
+
       } catch (contractError: any) {
         console.error('🚨 [MOBILE-ERROR] writeContract failed:', contractError);
         toast({
@@ -1203,6 +1305,44 @@ export function MultiChainFinancial() {
     return <Badge className={`${config.color} text-white`}>{config.text}</Badge>;
   };
 
+  // Wallet balances for Polygon Amoy tokens
+  const { data: nativeBalance } = useBalance({
+    address: address as `0x${string}`,
+    chainId: 80002, // Polygon Amoy
+  });
+
+  const { data: wethBalance } = useReadContract({
+    address: '0x52eF3d68BaB452a294342DC3e5f464d7f610f72E' as `0x${string}`,
+    abi: ERC20_BALANCE_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address as `0x${string}`] : undefined,
+    chainId: 80002,
+  });
+
+  const { data: usdcBalance } = useReadContract({
+    address: '0x8B0180f2101c8260d49339abfEe87927412494B4' as `0x${string}`,
+    abi: ERC20_BALANCE_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address as `0x${string}`] : undefined,
+    chainId: 80002,
+  });
+
+  const { data: usdtBalance } = useReadContract({
+    address: '0x2c852e740B62308c46DD29B982FBb650D063Bd07' as `0x${string}`,
+    abi: ERC20_BALANCE_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address as `0x${string}`] : undefined,
+    chainId: 80002,
+  });
+
+  const { data: linkBalance } = useReadContract({
+    address: '0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904' as `0x${string}`,
+    abi: ERC20_BALANCE_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address as `0x${string}`] : undefined,
+    chainId: 80002,
+  });
+
   return (
     <div className="space-y-6">
       {/* Balance Overview */}
@@ -1227,830 +1367,1054 @@ export function MultiChainFinancial() {
         </CardContent>
       </Card>
 
-      {/* Action Tabs */}
-      <Tabs value={selectedAction} onValueChange={(value) => setSelectedAction(value as "deposit" | "withdraw")}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="deposit" className="flex items-center space-x-2">
-            <ArrowDownCircle className="w-4 h-4" />
-            <span>Deposit</span>
-          </TabsTrigger>
-          <TabsTrigger value="withdraw" className="flex items-center space-x-2">
-            <ArrowUpCircle className="w-4 h-4" />
-            <span>Withdraw</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Deposit Tab */}
-        <TabsContent value="deposit" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Deposit Form */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <ArrowDownCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-sm">Deposit ETH/USDC/USDT to NTIQ</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Chain Selection */}
-                <div>
-                  <Label>Select Blockchain</Label>
-                  <Select value={selectedChain.shortName} onValueChange={(value) => {
-                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === value);
-                    if (chain) setSelectedChain(chain);
-                  }}>
-                    <SelectTrigger>
-                      <div className="flex items-center space-x-2">
-                        <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
-                        <span>{selectedChain.name}</span>
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUPPORTED_CHAINS.map((chain) => (
-                        <SelectItem key={chain.chainId} value={chain.shortName}>
-                          <div className="flex items-center space-x-2">
-                            <chain.logo className={`w-5 h-5 ${chain.color}`} />
-                            <span>{chain.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+      {/* Wallet Balances (Polygon Amoy) */}
+      {isConnected && address && (
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-white">
+              <Wallet className="w-5 h-5 text-purple-400" />
+              <span>Connected Wallet Balances (Polygon Amoy)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {/* POL Balance */}
+              <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center space-x-2 mb-2">
+                  <PolygonLogo className="w-5 h-5 text-purple-500" />
+                  <span className="text-sm font-medium text-slate-300">POL</span>
                 </div>
-
-                {/* Token Selection */}
-                <div>
-                  <Label>Select Token</Label>
-                  <Select value={selectedToken} onValueChange={(value) => setSelectedToken(value as "ETH" | "USDC" | "USDT")}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ETH">ETH</SelectItem>
-                      <SelectItem value="USDC">USDC</SelectItem>
-                      <SelectItem value="USDT">USDT</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <p className="text-xl font-bold text-white">
+                  {nativeBalance ? parseFloat(formatUnits(nativeBalance.value, 18)).toFixed(4) : '0.0000'}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">Native Token</p>
               </div>
 
-              {/* Deposit Amount */}
-              <div>
-                <Label>Deposit Amount (USD)</Label>
-                <Input
-                  type="number"
-                  placeholder="Enter amount in USD"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  min="1"
-                  step="0.01"
-                />
-                {depositAmount && (
-                  <div className="text-sm mt-1 space-y-1">
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded border border-blue-200 dark:border-blue-800 space-y-1">
-                      <p className="text-gray-700 dark:text-gray-300">
-                        USD Amount: <span className="font-bold text-gray-900 dark:text-white">${parseFloat(depositAmount).toFixed(2)}</span>
-                      </p>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 100).toLocaleString()} NTIQ</span>
-                      </p>
-                      {selectedToken !== "ETH" && (
-                        <p className="text-gray-700 dark:text-gray-300">
-                          Payment Fee (2%): <span className="font-bold text-orange-600">+${(parseFloat(depositAmount) * 0.02).toFixed(2)}</span>
-                        </p>
-                      )}
-                    </div>
-                    {selectedToken === "ETH" && fixedEthAmount !== "0" && (
-                      <div className="text-orange-600 space-y-1">
-                        <p>ETH to send: <span className="font-bold">{getFixedETHAmount()} ETH</span></p>
-                        <p className="text-xs text-orange-500">
-                          (Includes 2% processing fee on ETH payment)
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+              {/* WETH Balance */}
+              <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center space-x-2 mb-2">
+                  <EthereumLogo className="w-5 h-5 text-blue-400" />
+                  <span className="text-sm font-medium text-slate-300">WETH</span>
+                </div>
+                <p className="text-xl font-bold text-white">
+                  {wethBalance ? parseFloat(formatUnits(wethBalance as bigint, 18)).toFixed(4) : '0.0000'}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">Wrapped ETH</p>
               </div>
 
-              <Dialog open={showDepositModal} onOpenChange={setShowDepositModal}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    disabled={!depositAmount || parseFloat(depositAmount) <= 0}
-                    onClick={() => {
-                      // Capture fixed ETH amount when dialog opens
-                      if (selectedToken === "ETH" && fixedEthAmount !== "0") {
-                        setConfirmationEthAmount(fixedEthAmount);
-                      }
-                    }}
+              {/* USDC Balance */}
+              <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Coins className="w-5 h-5 text-blue-500" />
+                  <span className="text-sm font-medium text-slate-300">USDC</span>
+                </div>
+                <p className="text-xl font-bold text-white">
+                  {usdcBalance ? parseFloat(formatUnits(usdcBalance as bigint, 6)).toFixed(2) : '0.00'}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">Stablecoin</p>
+              </div>
+
+              {/* USDT Balance */}
+              <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Coins className="w-5 h-5 text-green-500" />
+                  <span className="text-sm font-medium text-slate-300">USDT</span>
+                </div>
+                <p className="text-xl font-bold text-white">
+                  {usdtBalance ? parseFloat(formatUnits(usdtBalance as bigint, 6)).toFixed(2) : '0.00'}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">Stablecoin</p>
+              </div>
+
+              {/* LINK Balance */}
+              <div className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Coins className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-medium text-slate-300">LINK</span>
+                </div>
+                <p className="text-xl font-bold text-white">
+                  {linkBalance ? parseFloat(formatUnits(linkBalance as bigint, 18)).toFixed(4) : '0.0000'}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">Chainlink</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-400 mt-4 flex items-center space-x-1">
+              <Eye className="w-3 h-3" />
+              <span>Real-time balances from your connected wallet on Polygon Amoy network</span>
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Smart Contract Quick Actions (Polygon Amoy Only) */}
+      {isConnected && address && (
+        <Card className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 border-0 text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Zap className="w-6 h-6 text-yellow-300" />
+              <span>Smart Contract (Instant & Automated) ⚡</span>
+            </CardTitle>
+            <p className="text-sm text-white/80">
+              Deposit & Withdraw instantly using Polygon Amoy smart contract - No admin approval needed!
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Instant Deposit Card */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div className="flex items-center space-x-2 mb-3">
+                  <ArrowDownCircle className="w-5 h-5 text-green-300" />
+                  <h3 className="font-semibold">Instant Deposit</h3>
+                </div>
+                <ul className="text-sm space-y-2 mb-4 text-white/90">
+                  <li className="flex items-center space-x-2">
+                    <Zap className="w-4 h-4 text-yellow-300" />
+                    <span>5 seconds (600x faster!)</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Shield className="w-4 h-4 text-green-300" />
+                    <span>100% Trustless & Secure</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-blue-300" />
+                    <span>Auto-credited NTIQ</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Coins className="w-4 h-4 text-purple-300" />
+                    <span>1 POL = 1,000 NTIQ</span>
+                  </li>
+                </ul>
+                <Button
+                  onClick={() => setShowVaultDepositModal(true)}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                >
+                  <ArrowDownCircle className="w-4 h-4 mr-2" />
+                  Deposit POL (Instant)
+                </Button>
+              </div>
+
+              {/* Instant Withdrawal Card */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div className="flex items-center space-x-2 mb-3">
+                  <ArrowUpCircle className="w-5 h-5 text-orange-300" />
+                  <h3 className="font-semibold">Instant Withdrawal</h3>
+                </div>
+                <ul className="text-sm space-y-2 mb-4 text-white/90">
+                  <li className="flex items-center space-x-2">
+                    <Zap className="w-4 h-4 text-yellow-300" />
+                    <span>30 seconds (2,880x faster!)</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Shield className="w-4 h-4 text-green-300" />
+                    <span>Signature-verified</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-blue-300" />
+                    <span>Direct to your wallet</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Coins className="w-4 h-4 text-purple-300" />
+                    <span>1,000 NTIQ = 1 POL</span>
+                  </li>
+                </ul>
+                <Button
+                  onClick={() => setShowVaultWithdrawalModal(true)}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold"
+                  disabled={!user?.balance || user.balance < 10}
+                >
+                  <ArrowUpCircle className="w-4 h-4 mr-2" />
+                  Withdraw POL (Instant)
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-4 p-3 bg-white/10 rounded-lg border border-white/20">
+              <p className="text-xs text-white/80 flex items-center space-x-2">
+                <Shield className="w-4 h-4" />
+                <span>
+                  Smart Contract Address: 0xBf28daDaAc0efB62Ee5693f7f46e1409528C277F
+                  <a
+                    href="https://amoy.polygonscan.com/address/0xBf28daDaAc0efB62Ee5693f7f46e1409528C277F"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 text-yellow-300 hover:text-yellow-200 underline"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Deposit Request
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Confirm Deposit</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">Chain:</span>
-                        <div className="flex items-center space-x-2">
-                          <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
-                          <span className="font-medium text-gray-900 dark:text-white">{selectedChain.name}</span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">Token:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{selectedToken}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">Amount:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">${depositAmount} USD</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
-                        <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 100).toLocaleString()} NTIQ</span>
-                      </div>
-                      {selectedToken !== "ETH" && (
-                        <div className="border-t pt-2 space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-gray-700 dark:text-gray-300">Payment Fee (2%):</span>
-                            <span className="font-bold text-orange-600">+${(parseFloat(depositAmount || "0") * 0.02).toFixed(2)}</span>
-                          </div>
-                        </div>
-                      )}
-                      {selectedToken === "ETH" && depositAmount && confirmationEthAmount !== "0" && (
-                        <div className="border-t pt-2 mt-2 space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-gray-700 dark:text-gray-300">ETH to send:</span>
-                            <span className="font-bold text-orange-600">{confirmationEthAmount} ETH</span>
-                          </div>
-                          <div className="text-xs text-orange-500 text-right">
-                            (Includes 2% processing fee on ETH payment)
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    View on Polygonscan ↗
+                  </a>
+                </span>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                      <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Deposit Destination Address:</h4>
-                      <div className="flex items-center space-x-2 p-2 bg-white dark:bg-gray-700 rounded border">
-                        <code className="flex-1 text-sm text-gray-900 dark:text-gray-100">
-                          {adminWalletLoading ? "Loading secure address..." : adminWalletData?.adminWallet || "Loading..."}
-                        </code>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => copyToClipboard(adminWalletData?.adminWallet || "")}
-                          disabled={adminWalletLoading || !adminWalletData?.adminWallet}
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      {selectedToken === "ETH" && depositAmount && confirmationEthAmount !== "0" ? (
-                        <div className="text-xs text-blue-600 dark:text-blue-300 mt-2 space-y-1">
-                          <p>⚠️ Make sure to transfer from the same wallet as your login wallet</p>
-                          <p className="font-bold bg-orange-100 dark:bg-orange-900/30 p-2 rounded border-orange-300 border">
-                            📤 Send exactly <span className="text-orange-700 dark:text-orange-300">{confirmationEthAmount} ETH</span> to the address above
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
-                          ⚠️ Make sure to transfer from the same wallet as your login wallet
-                        </p>
-                      )}
-                    </div>
+      {/* Manual Deposit/Withdrawal (Traditional Method) */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between text-white">
+            <span className="flex items-center space-x-2">
+              <Clock className="w-5 h-5 text-slate-400" />
+              <span>Manual Deposit/Withdrawal (Requires Admin Approval)</span>
+            </span>
+            <Badge variant="outline" className="text-slate-400">Traditional</Badge>
+          </CardTitle>
+          <p className="text-sm text-slate-400">
+            For users who prefer manual verification - Slower but supports multiple chains
+          </p>
+        </CardHeader>
+        <CardContent>
 
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setShowDepositModal(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        className="flex-1 bg-green-600 hover:bg-green-700"
-                        onClick={handleDeposit}
-                        disabled={createDepositMutation.isPending}
-                      >
-                        {createDepositMutation.isPending ? "Processing..." : "Confirm"}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
+          {/* Action Tabs */}
+          <Tabs value={selectedAction} onValueChange={(value) => setSelectedAction(value as "deposit" | "withdraw")}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="deposit" className="flex items-center space-x-2">
+                <ArrowDownCircle className="w-4 h-4" />
+                <span>Deposit</span>
+              </TabsTrigger>
+              <TabsTrigger value="withdraw" className="flex items-center space-x-2">
+                <ArrowUpCircle className="w-4 h-4" />
+                <span>Withdraw</span>
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Deposit History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Clock className="w-5 h-5" />
-                <span className="text-sm">Deposit History</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {depositsLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : deposits?.length ? (
-                <>
-                <div className="space-y-3">
-                  {getPaginatedDeposits().map((deposit: DepositData) => (
-                    <div key={deposit.id} className="border rounded-lg">
-                      <div className="flex items-center justify-between p-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">{formatDepositDisplay(deposit)}</span>
-                            <span>→</span>
-                            <span className="font-bold text-blue-600">{deposit.ntiqAmount.toLocaleString()} NTIQ</span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-sm text-gray-600">
-                            <div className="flex items-center space-x-1">
-                              {(() => {
-                                const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
-                                if (chain) {
-                                  const LogoComponent = chain.logo;
-                                  return <LogoComponent className={`w-4 h-4 ${chain.color}`} />;
-                                }
-                                return null;
-                              })()}
-                              <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}</span>
+            {/* Deposit Tab */}
+            <TabsContent value="deposit" className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Deposit Form */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <ArrowDownCircle className="w-5 h-5 text-green-600" />
+                      <span className="text-sm">Deposit ETH/USDC/USDT to NTIQ</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Chain Selection */}
+                      <div>
+                        <Label>Select Blockchain</Label>
+                        <Select value={selectedChain.shortName} onValueChange={(value) => {
+                          const chain = SUPPORTED_CHAINS.find(c => c.shortName === value);
+                          if (chain) setSelectedChain(chain);
+                        }}>
+                          <SelectTrigger>
+                            <div className="flex items-center space-x-2">
+                              <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                              <span>{selectedChain.name}</span>
                             </div>
-                            {deposit.transactionHash && (
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SUPPORTED_CHAINS.map((chain) => (
+                              <SelectItem key={chain.chainId} value={chain.shortName}>
+                                <div className="flex items-center space-x-2">
+                                  <chain.logo className={`w-5 h-5 ${chain.color}`} />
+                                  <span>{chain.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Token Selection */}
+                      <div>
+                        <Label>Select Token</Label>
+                        <Select value={selectedToken} onValueChange={(value) => setSelectedToken(value as "ETH" | "USDC" | "USDT" | "WETH" | "LINK")}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.keys(selectedChain.tokens).map((token) => (
+                              <SelectItem key={token} value={token}>
+                                {token === "ETH" && selectedChain.symbol !== "ETH" ? selectedChain.symbol : token}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Deposit Amount */}
+                    <div>
+                      <Label>Deposit Amount (USD)</Label>
+                      <Input
+                        type="number"
+                        placeholder="Enter amount in USD"
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)}
+                        min="1"
+                        step="0.01"
+                      />
+                      {depositAmount && (
+                        <div className="text-sm mt-1 space-y-1">
+                          <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded border border-blue-200 dark:border-blue-800 space-y-1">
+                            <p className="text-gray-700 dark:text-gray-300">
+                              USD Amount: <span className="font-bold text-gray-900 dark:text-white">${parseFloat(depositAmount).toFixed(2)}</span>
+                            </p>
+                            <p className="text-gray-700 dark:text-gray-300">
+                              You will receive: <span className="font-bold text-blue-600">{(parseFloat(depositAmount) * 100).toLocaleString()} NTIQ</span>
+                            </p>
+                            {selectedToken !== "ETH" && (
+                              <p className="text-gray-700 dark:text-gray-300">
+                                Payment Fee (2%): <span className="font-bold text-orange-600">+${(parseFloat(depositAmount) * 0.02).toFixed(2)}</span>
+                              </p>
+                            )}
+                          </div>
+                          {selectedToken === "ETH" && fixedEthAmount !== "0" && (
+                            <div className="text-orange-600 space-y-1">
+                              <p>ETH to send: <span className="font-bold">{getFixedETHAmount()} ETH</span></p>
+                              <p className="text-xs text-orange-500">
+                                (Includes 2% processing fee on ETH payment)
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <Dialog open={showDepositModal} onOpenChange={setShowDepositModal}>
+                      <DialogTrigger asChild>
+                        <Button
+                          className="w-full bg-green-600 hover:bg-green-700"
+                          disabled={!depositAmount || parseFloat(depositAmount) <= 0}
+                          onClick={() => {
+                            // Capture fixed ETH amount when dialog opens
+                            if (selectedToken === "ETH" && fixedEthAmount !== "0") {
+                              setConfirmationEthAmount(fixedEthAmount);
+                            }
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Create Deposit Request
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Confirm Deposit</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">Chain:</span>
+                              <div className="flex items-center space-x-2">
+                                <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                                <span className="font-medium text-gray-900 dark:text-white">{selectedChain.name}</span>
+                              </div>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">Token:</span>
+                              <span className="font-medium text-gray-900 dark:text-white">{selectedToken}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">Amount:</span>
+                              <span className="font-medium text-gray-900 dark:text-white">${depositAmount} USD</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">NTIQ received:</span>
+                              <span className="font-bold text-blue-600">{(parseFloat(depositAmount || "0") * 100).toLocaleString()} NTIQ</span>
+                            </div>
+                            {selectedToken !== "ETH" && (
+                              <div className="border-t pt-2 space-y-1">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-700 dark:text-gray-300">Payment Fee (2%):</span>
+                                  <span className="font-bold text-orange-600">+${(parseFloat(depositAmount || "0") * 0.02).toFixed(2)}</span>
+                                </div>
+                              </div>
+                            )}
+                            {selectedToken === "ETH" && depositAmount && confirmationEthAmount !== "0" && (
+                              <div className="border-t pt-2 mt-2 space-y-1">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-700 dark:text-gray-300">ETH to send:</span>
+                                  <span className="font-bold text-orange-600">{confirmationEthAmount} ETH</span>
+                                </div>
+                                <div className="text-xs text-orange-500 text-right">
+                                  (Includes 2% processing fee on ETH payment)
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Deposit Destination Address:</h4>
+                            <div className="flex items-center space-x-2 p-2 bg-white dark:bg-gray-700 rounded border">
+                              <code className="flex-1 text-sm text-gray-900 dark:text-gray-100">
+                                {adminWalletLoading ? "Loading secure address..." : adminWalletData?.adminWallet || "Loading..."}
+                              </code>
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-auto p-1"
-                                onClick={() => {
-                                  const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
-                                  if (chain) {
-                                    window.open(`${chain.explorerUrl}/tx/${deposit.transactionHash}`, '_blank');
-                                  }
-                                }}
+                                onClick={() => copyToClipboard(adminWalletData?.adminWallet || "")}
+                                disabled={adminWalletLoading || !adminWalletData?.adminWallet}
                               >
-                                <ExternalLink className="w-3 h-3" />
+                                <Copy className="w-4 h-4" />
                               </Button>
+                            </div>
+                            {selectedToken === "ETH" && depositAmount && confirmationEthAmount !== "0" ? (
+                              <div className="text-xs text-blue-600 dark:text-blue-300 mt-2 space-y-1">
+                                <p>⚠️ Make sure to transfer from the same wallet as your login wallet</p>
+                                <p className="font-bold bg-orange-100 dark:bg-orange-900/30 p-2 rounded border-orange-300 border">
+                                  📤 Send exactly <span className="text-orange-700 dark:text-orange-300">{confirmationEthAmount} ETH</span> to the address above
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
+                                ⚠️ Make sure to transfer from the same wallet as your login wallet
+                              </p>
                             )}
                           </div>
-                        </div>
-                        <div className="text-right space-y-1">
-                          {getStatusBadge(deposit.status)}
-                          <div className="text-xs text-gray-500">
-                            {new Date(deposit.createdAt).toLocaleDateString('en-US')}
-                          </div>
-                          {deposit.status === 'pending' && (
+
+                          <div className="flex space-x-2">
                             <Button
-                              size="sm"
                               variant="outline"
-                              className="mt-2"
-                              onClick={() => toggleDepositExpanded(deposit.id)}
+                              className="flex-1"
+                              onClick={() => setShowDepositModal(false)}
                             >
-                              <Eye className="w-3 h-3 mr-1" />
-                              {expandedDeposits.has(deposit.id) ? 'Hide Action' : 'Action View'}
+                              Cancel
                             </Button>
-                          )}
-                          {deposit.status === 'processing' && deposit.transactionHash && (
                             <Button
-                              size="sm"
-                              variant="default"
-                              className="mt-2 bg-blue-600 hover:bg-blue-700"
-                              onClick={() => checkBlockchainStatus(deposit.id)}
-                              disabled={isCheckingStatus}
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                              onClick={handleDeposit}
+                              disabled={createDepositMutation.isPending}
                             >
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              {isCheckingStatus ? 'Checking...' : 'Check Status'}
+                              {createDepositMutation.isPending ? "Processing..." : "Confirm"}
                             </Button>
-                          )}
+                          </div>
                         </div>
+                      </DialogContent>
+                    </Dialog>
+                  </CardContent>
+                </Card>
+
+                {/* Deposit History */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Clock className="w-5 h-5" />
+                      <span className="text-sm">Deposit History</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {depositsLoading ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
+                        ))}
                       </div>
-                      
-                      {/* Countdown Timer for Pending Deposits */}
-                      {deposit.status === 'pending' && deposit.expiresAt && (
-                        <div className="border-t">
-                          <DepositCountdownTimer 
-                            expiresAt={deposit.expiresAt}
-                            status={deposit.status}
-                            onExpired={() => {
-                              // Refresh deposits when timer expires
-                              refetchDeposits();
-                            }}
-                            className="m-3"
-                          />
-                        </div>
-                      )}
-                      
-                      {/* Action View for Pending Deposits */}
-                      {deposit.status === 'pending' && expandedDeposits.has(deposit.id) && (
-                        <div className="border-t bg-orange-50 dark:bg-orange-900/20 p-4">
-                          <h4 className="font-medium text-orange-800 dark:text-orange-200 mb-3 flex items-center">
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            Transfer Details for Completion
-                          </h4>
-                          
-                          <div className="space-y-3">
-                            {/* Token Amount to Transfer */}
-                            <div className="p-3 bg-white dark:bg-gray-800 rounded border">
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">{deposit.tokenType} Amount to Send:</span>
-                                <div className="text-right">
-                                  <span className="font-bold text-lg text-blue-600">
-                                    {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} {deposit.tokenType}
-                                  </span>
-                                  <div className="text-xs text-gray-500">
-                                    (≈ ${deposit.amountUSD} USD + 2% fee)
+                    ) : deposits?.length ? (
+                      <>
+                        <div className="space-y-3">
+                          {getPaginatedDeposits().map((deposit: DepositData) => (
+                            <div key={deposit.id} className="border rounded-lg">
+                              <div className="flex items-center justify-between p-3">
+                                <div className="space-y-1">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-medium">{formatDepositDisplay(deposit)}</span>
+                                    <span>→</span>
+                                    <span className="font-bold text-blue-600">{deposit.ntiqAmount.toLocaleString()} NTIQ</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                    <div className="flex items-center space-x-1">
+                                      {(() => {
+                                        const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                        if (chain) {
+                                          const LogoComponent = chain.logo;
+                                          return <LogoComponent className={`w-4 h-4 ${chain.color}`} />;
+                                        }
+                                        return null;
+                                      })()}
+                                      <span>{SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}</span>
+                                    </div>
+                                    {deposit.transactionHash && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-auto p-1"
+                                        onClick={() => {
+                                          const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                          if (chain) {
+                                            window.open(`${chain.explorerUrl}/tx/${deposit.transactionHash}`, '_blank');
+                                          }
+                                        }}
+                                      >
+                                        <ExternalLink className="w-3 h-3" />
+                                      </Button>
+                                    )}
                                   </div>
                                 </div>
-                              </div>
-                            </div>
-                            
-                            {/* Destination Address */}
-                            <div className="p-3 bg-white dark:bg-gray-800 rounded border">
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Send To Address:</span>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    if (adminWalletData?.adminWallet) {
-                                      copyToClipboard(adminWalletData.adminWallet);
-                                    }
-                                  }}
-                                  disabled={adminWalletLoading || !adminWalletData?.adminWallet}
-                                >
-                                  <Copy className="w-3 h-3" />
-                                </Button>
-                              </div>
-                              <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all text-gray-900 dark:text-gray-100">
-                                {adminWalletLoading ? "Loading secure address..." : adminWalletData?.adminWallet || "Loading..."}
-                              </code>
-                            </div>
-                            
-                            {/* Network Info */}
-                            <div className="p-3 bg-white dark:bg-gray-800 rounded border">
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Network:</span>
-                                <div className="flex items-center space-x-2">
-                                  {(() => {
-                                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
-                                    if (chain) {
-                                      const LogoComponent = chain.logo;
-                                      return <LogoComponent className={`w-5 h-5 ${chain.color}`} />;
-                                    }
-                                    return null;
-                                  })()}
-                                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                                    {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}
-                                  </span>
+                                <div className="text-right space-y-1">
+                                  {getStatusBadge(deposit.status)}
+                                  <div className="text-xs text-gray-500">
+                                    {new Date(deposit.createdAt).toLocaleDateString('en-US')}
+                                  </div>
+                                  {deposit.status === 'pending' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="mt-2"
+                                      onClick={() => toggleDepositExpanded(deposit.id)}
+                                    >
+                                      <Eye className="w-3 h-3 mr-1" />
+                                      {expandedDeposits.has(deposit.id) ? 'Hide Action' : 'Action View'}
+                                    </Button>
+                                  )}
+                                  {deposit.status === 'processing' && deposit.transactionHash && (
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      className="mt-2 bg-blue-600 hover:bg-blue-700"
+                                      onClick={() => checkBlockchainStatus(deposit.id)}
+                                      disabled={isCheckingStatus}
+                                    >
+                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                      {isCheckingStatus ? 'Checking...' : 'Check Status'}
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
-                            </div>
-                            
-                            {/* Token Contract Address (for USDC/USDT) */}
-                            {(deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') && (
-                              <div className="p-3 bg-white dark:bg-gray-800 rounded border">
-                                <div className="flex justify-between items-center mb-2">
-                                  <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{deposit.tokenType} Contract:</span>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                      const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
-                                      const tokenAddress = chain?.tokens[deposit.tokenType as keyof typeof chain.tokens]?.address;
-                                      if (tokenAddress && tokenAddress !== 'native') {
-                                        copyToClipboard(tokenAddress);
-                                      }
+
+                              {/* Countdown Timer for Pending Deposits */}
+                              {deposit.status === 'pending' && deposit.expiresAt && (
+                                <div className="border-t">
+                                  <DepositCountdownTimer
+                                    expiresAt={deposit.expiresAt}
+                                    status={deposit.status}
+                                    onExpired={() => {
+                                      // Refresh deposits when timer expires
+                                      refetchDeposits();
                                     }}
-                                  >
-                                    <Copy className="w-3 h-3" />
-                                  </Button>
+                                    className="m-3"
+                                  />
                                 </div>
-                                <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all text-gray-900 dark:text-gray-100">
-                                  {(() => {
-                                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
-                                    const tokenAddress = chain?.tokens[deposit.tokenType as keyof typeof chain.tokens]?.address;
-                                    return tokenAddress !== 'native' ? tokenAddress : 'Native Token';
-                                  })()}
-                                </code>
-                              </div>
-                            )}
-                            
-                            {/* Warning */}
-                            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded border border-yellow-200 dark:border-yellow-800">
-                              <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                                ⚠️ Make sure to transfer the exact amount to complete your deposit. Status will automatically update to "completed" once the transaction is confirmed.
-                              </p>
+                              )}
+
+                              {/* Action View for Pending Deposits */}
+                              {deposit.status === 'pending' && expandedDeposits.has(deposit.id) && (
+                                <div className="border-t bg-orange-50 dark:bg-orange-900/20 p-4">
+                                  <h4 className="font-medium text-orange-800 dark:text-orange-200 mb-3 flex items-center">
+                                    <CreditCard className="w-4 h-4 mr-2" />
+                                    Transfer Details for Completion
+                                  </h4>
+
+                                  <div className="space-y-3">
+                                    {/* Token Amount to Transfer */}
+                                    <div className="p-3 bg-white dark:bg-gray-800 rounded border">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">{deposit.tokenType} Amount to Send:</span>
+                                        <div className="text-right">
+                                          <span className="font-bold text-lg text-blue-600">
+                                            {calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} {deposit.tokenType}
+                                          </span>
+                                          <div className="text-xs text-gray-500">
+                                            (≈ ${deposit.amountUSD} USD + 2% fee)
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Destination Address */}
+                                    <div className="p-3 bg-white dark:bg-gray-800 rounded border">
+                                      <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Send To Address:</span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => {
+                                            if (adminWalletData?.adminWallet) {
+                                              copyToClipboard(adminWalletData.adminWallet);
+                                            }
+                                          }}
+                                          disabled={adminWalletLoading || !adminWalletData?.adminWallet}
+                                        >
+                                          <Copy className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                      <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all text-gray-900 dark:text-gray-100">
+                                        {adminWalletLoading ? "Loading secure address..." : adminWalletData?.adminWallet || "Loading..."}
+                                      </code>
+                                    </div>
+
+                                    {/* Network Info */}
+                                    <div className="p-3 bg-white dark:bg-gray-800 rounded border">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Network:</span>
+                                        <div className="flex items-center space-x-2">
+                                          {(() => {
+                                            const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                            if (chain) {
+                                              const LogoComponent = chain.logo;
+                                              return <LogoComponent className={`w-5 h-5 ${chain.color}`} />;
+                                            }
+                                            return null;
+                                          })()}
+                                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                                            {SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName)?.name}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Token Contract Address (for USDC/USDT) */}
+                                    {(deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') && (
+                                      <div className="p-3 bg-white dark:bg-gray-800 rounded border">
+                                        <div className="flex justify-between items-center mb-2">
+                                          <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{deposit.tokenType} Contract:</span>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => {
+                                              const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                              const tokenAddress = chain?.tokens[deposit.tokenType as keyof typeof chain.tokens]?.address;
+                                              if (tokenAddress && tokenAddress !== 'native') {
+                                                copyToClipboard(tokenAddress);
+                                              }
+                                            }}
+                                          >
+                                            <Copy className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+                                        <code className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded block break-all text-gray-900 dark:text-gray-100">
+                                          {(() => {
+                                            const chain = SUPPORTED_CHAINS.find(c => c.shortName === deposit.chainName);
+                                            const tokenAddress = chain?.tokens[deposit.tokenType as keyof typeof chain.tokens]?.address;
+                                            return tokenAddress !== 'native' ? tokenAddress : 'Native Token';
+                                          })()}
+                                        </code>
+                                      </div>
+                                    )}
+
+                                    {/* Warning */}
+                                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded border border-yellow-200 dark:border-yellow-800">
+                                      <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                                        ⚠️ Make sure to transfer the exact amount to complete your deposit. Status will automatically update to "completed" once the transaction is confirmed.
+                                      </p>
+                                    </div>
+
+                                    {/* MOBILE-OPTIMIZED Wallet Send Button (for ETH deposits only) - Enhanced for Mobile MetaMask */}
+                                    {deposit.tokenType === 'ETH' && (
+                                      <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <Button
+                                          onClick={(e) => {
+                                            console.log('🔧 [MOBILE-DEBUG] ETH wallet button clicked');
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            sendViaWallet(deposit);
+                                          }}
+                                          onTouchStart={(e) => {
+                                            console.log('🔧 [MOBILE-DEBUG] ETH wallet button touched');
+                                            e.currentTarget.focus();
+                                          }}
+                                          className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-medium touch-manipulation"
+                                          size="lg"
+                                          disabled={isTransactionPending || !isConnected}
+                                          style={{ minHeight: '48px', touchAction: 'manipulation' }}
+                                          data-testid="send-eth-wallet-button"
+                                        >
+                                          <Send className="w-4 h-4 mr-2" />
+                                          {isTransactionPending ? 'Sending...' : `Send ${calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ETH via Wallet`}
+                                        </Button>
+                                        <p className="text-xs text-gray-500 text-center mt-2">
+                                          Tap to send ETH via MetaMask mobile (includes 2% processing fee)
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {/* MOBILE-OPTIMIZED Wallet Send Button (for USDC/USDT deposits) - Enhanced for Mobile MetaMask */}
+                                    {(deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') && (
+                                      <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+                                        <Button
+                                          onClick={(e) => {
+                                            console.log('🔧 [MOBILE-DEBUG] Token wallet button clicked');
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            sendStablecoinViaWallet(deposit);
+                                          }}
+                                          onTouchStart={(e) => {
+                                            console.log('🔧 [MOBILE-DEBUG] Token wallet button touched');
+                                            e.currentTarget.focus();
+                                          }}
+                                          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium touch-manipulation"
+                                          size="lg"
+                                          disabled={isTransactionPending || !isConnected}
+                                          style={{ minHeight: '48px', touchAction: 'manipulation' }}
+                                          data-testid="send-token-wallet-button"
+                                        >
+                                          <Send className="w-4 h-4 mr-2" />
+                                          {isTransactionPending ? 'Sending...' : `Send ${calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ${deposit.tokenType} via Wallet`}
+                                        </Button>
+                                        <p className="text-xs text-gray-500 text-center mt-2">
+                                          Tap to send {deposit.tokenType} via MetaMask mobile (includes 2% processing fee)
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            
-                            {/* MOBILE-OPTIMIZED Wallet Send Button (for ETH deposits only) - Enhanced for Mobile MetaMask */}
-                            {deposit.tokenType === 'ETH' && (
-                              <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-                                <Button
-                                  onClick={(e) => {
-                                    console.log('🔧 [MOBILE-DEBUG] ETH wallet button clicked');
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    sendViaWallet(deposit);
-                                  }}
-                                  onTouchStart={(e) => {
-                                    console.log('🔧 [MOBILE-DEBUG] ETH wallet button touched');
-                                    e.currentTarget.focus();
-                                  }}
-                                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-medium touch-manipulation"
-                                  size="lg"
-                                  disabled={isTransactionPending || !isConnected}
-                                  style={{ minHeight: '48px', touchAction: 'manipulation' }}
-                                  data-testid="send-eth-wallet-button"
-                                >
-                                  <Send className="w-4 h-4 mr-2" />
-                                  {isTransactionPending ? 'Sending...' : `Send ${calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ETH via Wallet`}
-                                </Button>
-                                <p className="text-xs text-gray-500 text-center mt-2">
-                                  Tap to send ETH via MetaMask mobile (includes 2% processing fee)
-                                </p>
-                              </div>
-                            )}
-                            
-                            {/* MOBILE-OPTIMIZED Wallet Send Button (for USDC/USDT deposits) - Enhanced for Mobile MetaMask */}
-                            {(deposit.tokenType === 'USDC' || deposit.tokenType === 'USDT') && (
-                              <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-                                <Button
-                                  onClick={(e) => {
-                                    console.log('🔧 [MOBILE-DEBUG] Token wallet button clicked');
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    sendStablecoinViaWallet(deposit);
-                                  }}
-                                  onTouchStart={(e) => {
-                                    console.log('🔧 [MOBILE-DEBUG] Token wallet button touched');
-                                    e.currentTarget.focus();
-                                  }}
-                                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium touch-manipulation"
-                                  size="lg"
-                                  disabled={isTransactionPending || !isConnected}
-                                  style={{ minHeight: '48px', touchAction: 'manipulation' }}
-                                  data-testid="send-token-wallet-button"
-                                >
-                                  <Send className="w-4 h-4 mr-2" />
-                                  {isTransactionPending ? 'Sending...' : `Send ${calculateTokenAmountForHistory(parseFloat(deposit.amountUSD), deposit.tokenType, deposit.ethPriceSnapshot)} ${deposit.tokenType} via Wallet`}
-                                </Button>
-                                <p className="text-xs text-gray-500 text-center mt-2">
-                                  Tap to send {deposit.tokenType} via MetaMask mobile (includes 2% processing fee)
-                                </p>
-                              </div>
-                            )}
+                          ))}
+                        </div>
+                        <PaginationControls
+                          currentPage={depositPage}
+                          totalPages={totalDepositPages}
+                          onPageChange={setDepositPage}
+                        />
+                      </>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <ArrowDownCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No deposit history yet</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Withdraw Tab */}
+            <TabsContent value="withdraw" className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Withdrawal Form */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <ArrowUpCircle className="w-5 h-5 text-blue-600" />
+                      <span className="text-sm">Withdraw NTIQ to ETH/USDC/USDT</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Authentication Warning */}
+                    {!user && (
+                      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                        <div className="flex items-start space-x-3">
+                          <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-yellow-800 dark:text-yellow-200">Authentication Required</h4>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                              Please connect your wallet and login to access withdrawal features. All withdrawal requests require user authentication for security.
+                            </p>
                           </div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Chain Selection */}
+                      <div>
+                        <Label>Select Blockchain</Label>
+                        <Select value={selectedChain.shortName} onValueChange={(value) => {
+                          const chain = SUPPORTED_CHAINS.find(c => c.shortName === value);
+                          if (chain) setSelectedChain(chain);
+                        }}>
+                          <SelectTrigger>
+                            <div className="flex items-center space-x-2">
+                              <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                              <span>{selectedChain.name}</span>
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SUPPORTED_CHAINS.map((chain) => (
+                              <SelectItem key={chain.chainId} value={chain.shortName}>
+                                <div className="flex items-center space-x-2">
+                                  <chain.logo className={`w-5 h-5 ${chain.color}`} />
+                                  <span>{chain.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Token Selection */}
+                      <div>
+                        <Label>Select Token</Label>
+                        <Select value={selectedToken} onValueChange={(value) => setSelectedToken(value as "ETH" | "USDC" | "USDT")}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ETH">ETH</SelectItem>
+                            <SelectItem value="USDC">USDC</SelectItem>
+                            <SelectItem value="USDT">USDT</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Withdraw Amount */}
+                    <div>
+                      <Label>Withdrawal Amount (NTIQ)</Label>
+                      <Input
+                        type="number"
+                        placeholder="Enter NTIQ amount"
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        min="1"
+                        max={user?.balance || 0}
+                      />
+                      {withdrawAmount && (
+                        <div className="text-sm mt-1 space-y-1">
+                          <p className="text-gray-600">
+                            You will receive: <span className="font-bold text-blue-600">{calculateWithdrawalAmount(parseInt(withdrawAmount), selectedToken)} {selectedToken}</span>
+                          </p>
+                          <p className="text-orange-600 text-xs">
+                            Fee (2.5%): <span className="font-medium">{calculateWithdrawalFee(parseInt(withdrawAmount), selectedToken)} {selectedToken}</span>
+                          </p>
                         </div>
                       )}
-                    </div>
-                  ))}
-                </div>
-                <PaginationControls
-                  currentPage={depositPage}
-                  totalPages={totalDepositPages}
-                  onPageChange={setDepositPage}
-                />
-                </>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <ArrowDownCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No deposit history yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          </div>
-        </TabsContent>
-
-        {/* Withdraw Tab */}
-        <TabsContent value="withdraw" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Withdrawal Form */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <ArrowUpCircle className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm">Withdraw NTIQ to ETH/USDC/USDT</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Authentication Warning */}
-                {!user && (
-                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-                    <div className="flex items-start space-x-3">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="font-medium text-yellow-800 dark:text-yellow-200">Authentication Required</h4>
-                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                          Please connect your wallet and login to access withdrawal features. All withdrawal requests require user authentication for security.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Chain Selection */}
-                <div>
-                  <Label>Select Blockchain</Label>
-                  <Select value={selectedChain.shortName} onValueChange={(value) => {
-                    const chain = SUPPORTED_CHAINS.find(c => c.shortName === value);
-                    if (chain) setSelectedChain(chain);
-                  }}>
-                    <SelectTrigger>
-                      <div className="flex items-center space-x-2">
-                        <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
-                        <span>{selectedChain.name}</span>
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUPPORTED_CHAINS.map((chain) => (
-                        <SelectItem key={chain.chainId} value={chain.shortName}>
-                          <div className="flex items-center space-x-2">
-                            <chain.logo className={`w-5 h-5 ${chain.color}`} />
-                            <span>{chain.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Token Selection */}
-                <div>
-                  <Label>Select Token</Label>
-                  <Select value={selectedToken} onValueChange={(value) => setSelectedToken(value as "ETH" | "USDC" | "USDT")}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ETH">ETH</SelectItem>
-                      <SelectItem value="USDC">USDC</SelectItem>
-                      <SelectItem value="USDT">USDT</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Withdraw Amount */}
-              <div>
-                <Label>Withdrawal Amount (NTIQ)</Label>
-                <Input
-                  type="number"
-                  placeholder="Enter NTIQ amount"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  min="1"
-                  max={user?.balance || 0}
-                />
-                {withdrawAmount && (
-                  <div className="text-sm mt-1 space-y-1">
-                    <p className="text-gray-600">
-                      You will receive: <span className="font-bold text-blue-600">{calculateWithdrawalAmount(parseInt(withdrawAmount), selectedToken)} {selectedToken}</span>
-                    </p>
-                    <p className="text-orange-600 text-xs">
-                      Fee (2.5%): <span className="font-medium">{calculateWithdrawalFee(parseInt(withdrawAmount), selectedToken)} {selectedToken}</span>
-                    </p>
-                  </div>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Available balance: {user?.balance?.toLocaleString() || "0"} NTIQ
-                </p>
-              </div>
-
-              <Dialog open={showWithdrawModal} onOpenChange={setShowWithdrawModal}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    disabled={!withdrawAmount || parseInt(withdrawAmount) <= 0 || parseInt(withdrawAmount) > (user?.balance || 0)}
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    Create Withdrawal Request
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Confirm Withdrawal</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">Chain:</span>
-                        <div className="flex items-center space-x-2">
-                          <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
-                          <span className="font-medium text-gray-900 dark:text-white">{selectedChain.name}</span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">Token:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{selectedToken}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">NTIQ:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">{parseInt(withdrawAmount || "0").toLocaleString()} NTIQ</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">You will receive:</span>
-                        <span className="font-bold text-blue-600">{calculateWithdrawalAmount(parseInt(withdrawAmount || "0"), selectedToken)} {selectedToken}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">Processing fee (2.5%):</span>
-                        <span className="font-medium text-orange-600">{calculateWithdrawalFee(parseInt(withdrawAmount || "0"), selectedToken)} {selectedToken}</span>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
-                      <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Destination Address:</h4>
-                      <div className="flex items-center space-x-2 p-2 bg-white dark:bg-gray-700 rounded border">
-                        <code className="flex-1 text-sm text-gray-900 dark:text-gray-100">{formatAddress(user?.walletAddress || "")}</code>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => copyToClipboard(user?.walletAddress || "")}
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <p className="text-xs text-yellow-600 dark:text-yellow-300 mt-2">
-                        ⚠️ Withdrawal will be sent to the wallet address used for login
+                      <p className="text-xs text-gray-500 mt-1">
+                        Available balance: {user?.balance?.toLocaleString() || "0"} NTIQ
                       </p>
                     </div>
 
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setShowWithdrawModal(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        className="flex-1 bg-blue-600 hover:bg-blue-700"
-                        onClick={handleWithdraw}
-                        disabled={createWithdrawalMutation.isPending}
-                      >
-                        {createWithdrawalMutation.isPending ? "Processing..." : "Confirm"}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
-
-          {/* Withdrawal History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Clock className="w-5 h-5" />
-                <span className="text-sm">Withdrawal History</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {withdrawalsLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : withdrawals?.length ? (
-                <>
-                <div className="space-y-3">
-                  {getPaginatedWithdrawals().map((withdrawal: WithdrawalData) => (
-                    <div key={withdrawal.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium">{withdrawal.ntiqAmount.toLocaleString()} NTIQ</span>
-                          <span>→</span>
-                          <span className="font-bold text-blue-600">{(() => {
-                            // Calculate the actual token amount based on NTIQ amount and token type
-                            const ntiqAmount = withdrawal.ntiqAmount || 0;
-                            let tokenAmount = 'N/A';
-                            const tokenType = withdrawal.tokenType || 'N/A';
-                            
-                            if (tokenType === 'USDC' || tokenType === 'USDT') {
-                              // USDC/USDT: use stored net_amount if available, otherwise calculate
-                              if (withdrawal.netAmount) {
-                                // Use pre-calculated net amount from database (already includes fee deduction)
-                                tokenAmount = parseFloat(withdrawal.netAmount).toFixed(2);
-                              } else {
-                                // Fallback calculation for older withdrawals
-                                const usdValue = ntiqAmount * 0.01; // Total USD value
-                                const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction  
-                                tokenAmount = netUsdValue.toFixed(2);
-                              }
-                            } else if (tokenType === 'ETH') {
-                              // ETH: use stored net_amount if available, otherwise calculate from snapshot
-                              if (withdrawal.netAmount) {
-                                // Use pre-calculated net amount from database (already includes fee deduction)
-                                tokenAmount = parseFloat(withdrawal.netAmount).toFixed(6);
-                              } else if (withdrawal.ethPriceSnapshot) {
-                                // Calculate from stored ETH price snapshot
-                                const ethPrice = parseFloat(withdrawal.ethPriceSnapshot);
-                                const usdValue = ntiqAmount * 0.01; // Total USD value
-                                const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
-                                tokenAmount = (netUsdValue / ethPrice).toFixed(6);
-                              } else {
-                                // Fallback for older withdrawals without net amount or price snapshot
-                                const usdValue = ntiqAmount * 0.01; // Total USD value
-                                const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
-                                
-                                // Use real-time ETH price from cryptoPrices as fallback only
-                                if (cryptoPrices && cryptoPrices.length > 0) {
-                                  const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
-                                  if (ethPrice?.current_price) {
-                                    tokenAmount = (netUsdValue / ethPrice.current_price).toFixed(6);
-                                  } else {
-                                    // Final fallback to estimated price if real-time not available
-                                    tokenAmount = (netUsdValue / 2300).toFixed(6);
-                                  }
-                                } else {
-                                  // Final fallback to estimated price
-                                  tokenAmount = (netUsdValue / 2300).toFixed(6);
-                                }
-                              }
-                            } else {
-                              tokenAmount = (ntiqAmount * 0.01).toFixed(2);
-                            }
-                            
-                            return `${tokenAmount} ${tokenType}`;
-                          })()}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <div className="flex items-center space-x-1">
-                            {(() => {
-                              const chain = SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName);
-                              if (chain) {
-                                const LogoComponent = chain.logo;
-                                return <LogoComponent className={`w-4 h-4 ${chain.color}`} />;
-                              }
-                              return null;
-                            })()}
-                            <span>{SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName)?.name}</span>
-                          </div>
-                          {withdrawal.transactionHash && 
-                           withdrawal.transactionHash.length === 66 && 
-                           withdrawal.transactionHash.startsWith('0x') && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-auto p-1"
-                              onClick={() => {
-                                const chain = SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName);
-                                if (chain) {
-                                  window.open(`${chain.explorerUrl}/tx/${withdrawal.transactionHash}`, '_blank');
-                                }
-                              }}
-                              title="View transaction on blockchain explorer"
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                            </Button>
-                          )}
-                          {withdrawal.transactionHash && 
-                           withdrawal.transactionHash === 'VERIFIED_ON_BLOCKCHAIN' && (
-                            <div className="flex items-center space-x-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="text-xs text-green-600">Verified</span>
+                    <Dialog open={showWithdrawModal} onOpenChange={setShowWithdrawModal}>
+                      <DialogTrigger asChild>
+                        <Button
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                          disabled={!withdrawAmount || parseInt(withdrawAmount) <= 0 || parseInt(withdrawAmount) > (user?.balance || 0)}
+                        >
+                          <Send className="w-4 h-4 mr-2" />
+                          Create Withdrawal Request
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Confirm Withdrawal</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">Chain:</span>
+                              <div className="flex items-center space-x-2">
+                                <selectedChain.logo className={`w-5 h-5 ${selectedChain.color}`} />
+                                <span className="font-medium text-gray-900 dark:text-white">{selectedChain.name}</span>
+                              </div>
                             </div>
-                          )}
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">Token:</span>
+                              <span className="font-medium text-gray-900 dark:text-white">{selectedToken}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">NTIQ:</span>
+                              <span className="font-medium text-gray-900 dark:text-white">{parseInt(withdrawAmount || "0").toLocaleString()} NTIQ</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">You will receive:</span>
+                              <span className="font-bold text-blue-600">{calculateWithdrawalAmount(parseInt(withdrawAmount || "0"), selectedToken)} {selectedToken}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300">Processing fee (2.5%):</span>
+                              <span className="font-medium text-orange-600">{calculateWithdrawalFee(parseInt(withdrawAmount || "0"), selectedToken)} {selectedToken}</span>
+                            </div>
+                          </div>
+
+                          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
+                            <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Destination Address:</h4>
+                            <div className="flex items-center space-x-2 p-2 bg-white dark:bg-gray-700 rounded border">
+                              <code className="flex-1 text-sm text-gray-900 dark:text-gray-100">{formatAddress(user?.walletAddress || "")}</code>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => copyToClipboard(user?.walletAddress || "")}
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <p className="text-xs text-yellow-600 dark:text-yellow-300 mt-2">
+                              ⚠️ Withdrawal will be sent to the wallet address used for login
+                            </p>
+                          </div>
+
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => setShowWithdrawModal(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              className="flex-1 bg-blue-600 hover:bg-blue-700"
+                              onClick={handleWithdraw}
+                              disabled={createWithdrawalMutation.isPending}
+                            >
+                              {createWithdrawalMutation.isPending ? "Processing..." : "Confirm"}
+                            </Button>
+                          </div>
                         </div>
-                        {withdrawal.adminNote && (
-                          <p className="text-xs text-gray-500 italic">{withdrawal.adminNote}</p>
-                        )}
+                      </DialogContent>
+                    </Dialog>
+                  </CardContent>
+                </Card>
+
+                {/* Withdrawal History */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Clock className="w-5 h-5" />
+                      <span className="text-sm">Withdrawal History</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {withdrawalsLoading ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
+                        ))}
                       </div>
-                      <div className="text-right space-y-1">
-                        {getStatusBadge(withdrawal.status)}
-                        <div className="text-xs text-gray-500">
-                          {new Date(withdrawal.createdAt).toLocaleDateString('en-US')}
+                    ) : withdrawals?.length ? (
+                      <>
+                        <div className="space-y-3">
+                          {getPaginatedWithdrawals().map((withdrawal: WithdrawalData) => (
+                            <div key={withdrawal.id} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="space-y-1">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-medium">{withdrawal.ntiqAmount.toLocaleString()} NTIQ</span>
+                                  <span>→</span>
+                                  <span className="font-bold text-blue-600">{(() => {
+                                    // Calculate the actual token amount based on NTIQ amount and token type
+                                    const ntiqAmount = withdrawal.ntiqAmount || 0;
+                                    let tokenAmount = 'N/A';
+                                    const tokenType = withdrawal.tokenType || 'N/A';
+
+                                    if (tokenType === 'USDC' || tokenType === 'USDT') {
+                                      // USDC/USDT: use stored net_amount if available, otherwise calculate
+                                      if (withdrawal.netAmount) {
+                                        // Use pre-calculated net amount from database (already includes fee deduction)
+                                        tokenAmount = parseFloat(withdrawal.netAmount).toFixed(2);
+                                      } else {
+                                        // Fallback calculation for older withdrawals
+                                        const usdValue = ntiqAmount * 0.01; // Total USD value
+                                        const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction  
+                                        tokenAmount = netUsdValue.toFixed(2);
+                                      }
+                                    } else if (tokenType === 'ETH') {
+                                      // ETH: use stored net_amount if available, otherwise calculate from snapshot
+                                      if (withdrawal.netAmount) {
+                                        // Use pre-calculated net amount from database (already includes fee deduction)
+                                        tokenAmount = parseFloat(withdrawal.netAmount).toFixed(6);
+                                      } else if (withdrawal.ethPriceSnapshot) {
+                                        // Calculate from stored ETH price snapshot
+                                        const ethPrice = parseFloat(withdrawal.ethPriceSnapshot);
+                                        const usdValue = ntiqAmount * 0.01; // Total USD value
+                                        const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
+                                        tokenAmount = (netUsdValue / ethPrice).toFixed(6);
+                                      } else {
+                                        // Fallback for older withdrawals without net amount or price snapshot
+                                        const usdValue = ntiqAmount * 0.01; // Total USD value
+                                        const netUsdValue = usdValue * 0.975; // Apply 2.5% fee deduction
+
+                                        // Use real-time ETH price from cryptoPrices as fallback only
+                                        if (cryptoPrices && cryptoPrices.length > 0) {
+                                          const ethPrice = cryptoPrices.find((crypto: any) => crypto.id === 'ethereum');
+                                          if (ethPrice?.current_price) {
+                                            tokenAmount = (netUsdValue / ethPrice.current_price).toFixed(6);
+                                          } else {
+                                            // Final fallback to estimated price if real-time not available
+                                            tokenAmount = (netUsdValue / 2300).toFixed(6);
+                                          }
+                                        } else {
+                                          // Final fallback to estimated price
+                                          tokenAmount = (netUsdValue / 2300).toFixed(6);
+                                        }
+                                      }
+                                    } else {
+                                      tokenAmount = (ntiqAmount * 0.01).toFixed(2);
+                                    }
+
+                                    return `${tokenAmount} ${tokenType}`;
+                                  })()}</span>
+                                </div>
+                                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                  <div className="flex items-center space-x-1">
+                                    {(() => {
+                                      const chain = SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName);
+                                      if (chain) {
+                                        const LogoComponent = chain.logo;
+                                        return <LogoComponent className={`w-4 h-4 ${chain.color}`} />;
+                                      }
+                                      return null;
+                                    })()}
+                                    <span>{SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName)?.name}</span>
+                                  </div>
+                                  {withdrawal.transactionHash &&
+                                    withdrawal.transactionHash.length === 66 &&
+                                    withdrawal.transactionHash.startsWith('0x') && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-auto p-1"
+                                        onClick={() => {
+                                          const chain = SUPPORTED_CHAINS.find(c => c.shortName === withdrawal.chainName);
+                                          if (chain) {
+                                            window.open(`${chain.explorerUrl}/tx/${withdrawal.transactionHash}`, '_blank');
+                                          }
+                                        }}
+                                        title="View transaction on blockchain explorer"
+                                      >
+                                        <ExternalLink className="w-3 h-3" />
+                                      </Button>
+                                    )}
+                                  {withdrawal.transactionHash &&
+                                    withdrawal.transactionHash === 'VERIFIED_ON_BLOCKCHAIN' && (
+                                      <div className="flex items-center space-x-1">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span className="text-xs text-green-600">Verified</span>
+                                      </div>
+                                    )}
+                                </div>
+                                {withdrawal.adminNote && (
+                                  <p className="text-xs text-gray-500 italic">{withdrawal.adminNote}</p>
+                                )}
+                              </div>
+                              <div className="text-right space-y-1">
+                                {getStatusBadge(withdrawal.status)}
+                                <div className="text-xs text-gray-500">
+                                  {new Date(withdrawal.createdAt).toLocaleDateString('en-US')}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
+                        <PaginationControls
+                          currentPage={withdrawalPage}
+                          totalPages={totalWithdrawalPages}
+                          onPageChange={setWithdrawalPage}
+                        />
+                      </>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <ArrowUpCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No withdrawal history yet</p>
                       </div>
-                    </div>
-                  ))}
-                </div>
-                <PaginationControls
-                  currentPage={withdrawalPage}
-                  totalPages={totalWithdrawalPages}
-                  onPageChange={setWithdrawalPage}
-                />
-                </>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <ArrowUpCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No withdrawal history yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+        </CardContent>
+      </Card>
+
+      {/* Smart Contract Modals */}
+      <VaultDepositModal
+        isOpen={showVaultDepositModal}
+        onClose={() => setShowVaultDepositModal(false)}
+        onSuccess={() => {
+          setShowVaultDepositModal(false);
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+        }}
+      />
+
+      <VaultWithdrawalModal
+        isOpen={showVaultWithdrawalModal}
+        onClose={() => setShowVaultWithdrawalModal(false)}
+        userBalance={user?.balance || 0}
+        onSuccess={() => {
+          setShowVaultWithdrawalModal(false);
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/user/withdrawals"] });
+        }}
+      />
     </div>
   );
 }

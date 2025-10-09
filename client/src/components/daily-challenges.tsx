@@ -27,8 +27,8 @@ interface UserDailyChallenge {
 }
 
 function getChallengeIcon(type: string, isCompleted: boolean) {
-  const iconClass = `w-6 h-6 ${isCompleted ? 'text-green-500 dark:text-green-400' : 'text-black dark:text-white'}`;
-  
+  const iconClass = `w-6 h-6 ${isCompleted ? 'text-green-500 dark:text-green-400' : 'text-slate-100'}`;
+
   switch (type) {
     case 'make_predictions':
       return <Target className={iconClass} />;
@@ -60,10 +60,10 @@ function getChallengeTypeLabel(type: string) {
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { 
-    weekday: 'short', 
-    month: 'short', 
-    day: 'numeric' 
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
   });
 }
 
@@ -93,7 +93,7 @@ export function DailyChallenges() {
 
   const completedToday = todaysChallenges.filter(c => c.isCompleted);
   const totalRewardsToday = completedToday.reduce((sum, c) => sum + c.challenge.reward, 0);
-  const completionRate = todaysChallenges.length > 0 ? 
+  const completionRate = todaysChallenges.length > 0 ?
     Math.round((completedToday.length / todaysChallenges.length) * 100) : 0;
 
   // Calculate streak from history
@@ -134,8 +134,8 @@ export function DailyChallenges() {
             <div className="flex items-center space-x-3">
               <Calendar className="w-8 h-8 text-blue-500 dark:text-blue-400" />
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">Today's Progress</p>
-                <p className="text-2xl font-bold text-black dark:text-white">{completionRate}%</p>
+                <p className="text-sm font-medium text-white">Today's Progress</p>
+                <p className="text-2xl font-bold text-white">{completionRate}%</p>
               </div>
             </div>
           </CardContent>
@@ -146,8 +146,8 @@ export function DailyChallenges() {
             <div className="flex items-center space-x-3">
               <Target className="w-8 h-8 text-green-500 dark:text-green-400" />
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">Completed</p>
-                <p className="text-2xl font-bold text-black dark:text-white">{completedToday.length}/{todaysChallenges.length}</p>
+                <p className="text-sm font-medium text-white">Completed</p>
+                <p className="text-2xl font-bold text-white">{completedToday.length}/{todaysChallenges.length}</p>
               </div>
             </div>
           </CardContent>
@@ -158,8 +158,8 @@ export function DailyChallenges() {
             <div className="flex items-center space-x-3">
               <Coins className="w-8 h-8 text-yellow-500 dark:text-yellow-400" />
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">NTIQ Earned</p>
-                <p className="text-2xl font-bold text-black dark:text-white">{totalRewardsToday}</p>
+                <p className="text-sm font-medium text-white">NTIQ Earned</p>
+                <p className="text-2xl font-bold text-white">{totalRewardsToday}</p>
               </div>
             </div>
           </CardContent>
@@ -170,8 +170,8 @@ export function DailyChallenges() {
             <div className="flex items-center space-x-3">
               <TrendingUp className="w-8 h-8 text-purple-500 dark:text-purple-400" />
               <div>
-                <p className="text-sm font-medium text-black dark:text-white">Daily Streak</p>
-                <p className="text-2xl font-bold text-black dark:text-white">{currentStreak}</p>
+                <p className="text-sm font-medium text-white">Daily Streak</p>
+                <p className="text-2xl font-bold text-white">{currentStreak}</p>
               </div>
             </div>
           </CardContent>
@@ -182,12 +182,12 @@ export function DailyChallenges() {
       <div>
         <div className="flex items-center space-x-2 mb-4">
           <Calendar className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-          <h3 className="text-lg font-semibold text-black dark:text-white">Today's Challenges</h3>
-          <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-black dark:text-white">
-            {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              month: 'long', 
-              day: 'numeric' 
+          <h3 className="text-lg font-semibold text-white">Today's Challenges</h3>
+          <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-white">
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric'
             })}
           </Badge>
         </div>
@@ -196,19 +196,18 @@ export function DailyChallenges() {
           <Card>
             <CardContent className="p-6 text-center">
               <Target className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
-              <p className="text-gray-600 dark:text-gray-400">No challenges available today. Check back tomorrow!</p>
+              <p className="text-slate-300">No challenges available today. Check back tomorrow!</p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {todaysChallenges.map((userChallenge) => (
-              <Card 
-                key={userChallenge.id} 
-                className={`${
-                  userChallenge.isCompleted 
-                    ? 'border-green-200 bg-green-50 dark:bg-green-900/20' 
+              <Card
+                key={userChallenge.id}
+                className={`${userChallenge.isCompleted
+                    ? 'border-green-200 bg-green-50 dark:bg-green-900/20'
                     : 'border-blue-200'
-                }`}
+                  }`}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -218,42 +217,42 @@ export function DailyChallenges() {
                         <span className="text-lg">✅</span>
                       )}
                     </div>
-                    <Badge variant={userChallenge.isCompleted ? "default" : "outline"} 
-                           className={userChallenge.isCompleted ? 
-                             "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" : 
-                             "border-gray-300 dark:border-gray-600 text-black dark:text-white"}>
+                    <Badge variant={userChallenge.isCompleted ? "default" : "outline"}
+                      className={userChallenge.isCompleted ?
+                        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" :
+                        "border-gray-300 dark:border-gray-600 text-white"}>
                       +{userChallenge.challenge.reward} NTIQ
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg text-black dark:text-white">{userChallenge.challenge.name}</CardTitle>
+                  <CardTitle className="text-lg text-white">{userChallenge.challenge.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-black dark:text-white mb-3">
+                  <p className="text-sm text-slate-200 mb-3">
                     {userChallenge.challenge.description}
                   </p>
-                  
+
                   {!userChallenge.isCompleted && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-black dark:text-white">Progress</span>
-                        <span className="font-medium text-black dark:text-white">
+                        <span className="text-white">Progress</span>
+                        <span className="font-medium text-white">
                           {userChallenge.progress} / {userChallenge.challenge.target}
                         </span>
                       </div>
-                      <Progress 
-                        value={(userChallenge.progress / userChallenge.challenge.target) * 100} 
+                      <Progress
+                        value={(userChallenge.progress / userChallenge.challenge.target) * 100}
                         className="h-2"
                       />
                     </div>
                   )}
-                  
+
                   <div className="flex items-center justify-between mt-3">
-                    <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-black dark:text-white">
+                    <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-white">
                       {getChallengeTypeLabel(userChallenge.challenge.type)}
                     </Badge>
                     {userChallenge.isCompleted && (
                       <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                        Completed {userChallenge.completedAt && 
+                        Completed {userChallenge.completedAt &&
                           new Date(userChallenge.completedAt).toLocaleTimeString('en-US', {
                             hour: '2-digit',
                             minute: '2-digit'
@@ -272,19 +271,19 @@ export function DailyChallenges() {
       {/* Recent History */}
       {challengeHistory.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Recent Challenge History</h3>
+          <h3 className="text-lg font-semibold mb-4 text-white">Recent Challenge History</h3>
           <div className="space-y-2">
             {dailyCompletions.slice(0, 7).map(({ date, completionRate }) => (
               <Card key={date} className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                    <span className="font-medium text-black dark:text-white">{formatDate(date)}</span>
+                    <span className="font-medium text-white">{formatDate(date)}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-black dark:text-white">Completion:</span>
-                      <span className="font-medium text-black dark:text-white">{Math.round(completionRate)}%</span>
+                      <span className="text-sm text-white">Completion:</span>
+                      <span className="font-medium text-white">{Math.round(completionRate)}%</span>
                     </div>
                     <Progress value={completionRate} className="w-20 h-2" />
                   </div>

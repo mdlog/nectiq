@@ -1,6 +1,9 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || "0000000000000000000000000000000000000000000000000000000000000001";
+const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || "";
+
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
@@ -8,49 +11,43 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200,
-      },
-    },
+        runs: 200
+      }
+    }
   },
   networks: {
-    // Holesky Testnet
-    holesky: {
-      url: process.env.HOLESKY_RPC_URL || "https://ethereum-holesky.blockpi.network/v1/rpc/public",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 17000,
-      gasPrice: 20000000000, // 20 gwei
+    // Polygon Amoy Testnet
+    amoy: {
+      url: "https://rpc-amoy.polygon.technology",
+      accounts: [DEPLOYER_PRIVATE_KEY],
+      chainId: 80002,
+      gasPrice: 30000000000, // 30 gwei
+      timeout: 60000
     },
-    // Sepolia Testnet
-    sepolia: {
-      url: process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 11155111,
-      gasPrice: 20000000000, // 20 gwei
-    },
-    // Local Hardhat Network
-    localhost: {
-      url: "http://127.0.0.1:8545",
-      chainId: 31337,
-    },
+    // Hardhat local network
+    hardhat: {
+      chainId: 31337
+    }
   },
   etherscan: {
     apiKey: {
-      holesky: process.env.ETHERSCAN_API_KEY,
-      sepolia: process.env.ETHERSCAN_API_KEY,
+      polygonAmoy: POLYGONSCAN_API_KEY
     },
     customChains: [
       {
-        network: "holesky",
-        chainId: 17000,
+        network: "polygonAmoy",
+        chainId: 80002,
         urls: {
-          apiURL: "https://api-holesky.etherscan.io/api",
-          browserURL: "https://holesky.etherscan.io"
+          apiURL: "https://api-amoy.polygonscan.com/api",
+          browserURL: "https://amoy.polygonscan.com"
         }
       }
     ]
   },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
-    currency: "USD",
-  },
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts"
+  }
 };

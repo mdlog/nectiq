@@ -1,9 +1,9 @@
+/* Import mobile optimizations - must be at the top */
+@import './styles/mobile-optimizations.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import mobile optimizations */
-@import './styles/mobile-optimizations.css';
 
 :root {
   --background: hsl(222, 84%, 4.9%);
@@ -28,7 +28,7 @@
   --warning: hsl(38, 92%, 50%);
   --ring: hsl(217, 32.6%, 17.5%);
   --radius: 0.75rem;
-  
+
   /* Custom colors for crypto app */
   --surface: hsl(220, 26%, 18%);
   --surface-light: hsl(215, 16%, 32%);
@@ -71,90 +71,93 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     min-width: 320px;
     overflow-x: hidden;
-    -webkit-text-size-adjust: 100%; /* Prevent iOS text size adjustment */
-    -webkit-tap-highlight-color: transparent; /* Remove iOS tap highlight */
+    -webkit-text-size-adjust: 100%;
+    /* Prevent iOS text size adjustment */
+    -webkit-tap-highlight-color: transparent;
+    /* Remove iOS tap highlight */
   }
 }
 
 @layer utilities {
+
   /* Custom Scrollbar for Live Prices */
   .scrollbar-thin {
     scrollbar-width: thin;
   }
-  
+
   .scrollbar-track-surface-light {
     scrollbar-color: hsl(239, 62%, 56%) hsl(215, 16%, 32%);
   }
-  
+
   .scrollbar-thumb-primary {
     scrollbar-color: hsl(239, 62%, 56%) hsl(215, 16%, 32%);
   }
-  
+
   /* WebKit Scrollbar for Chrome/Safari */
   .scrollbar-thin::-webkit-scrollbar {
     height: 6px;
   }
-  
+
   .scrollbar-track-surface-light::-webkit-scrollbar-track {
     background: hsl(215, 16%, 32%);
     border-radius: 3px;
   }
-  
+
   .scrollbar-thumb-primary::-webkit-scrollbar-thumb {
     background: hsl(239, 62%, 56%);
     border-radius: 3px;
   }
-  
+
   .scrollbar-thumb-primary::-webkit-scrollbar-thumb:hover {
     background: hsl(239, 62%, 60%);
   }
-  
+
   /* TradingView Chart Styling */
   .tradingview-widget-container {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
-  
+
   .tradingview-widget-container__widget {
     height: 100% !important;
     width: 100% !important;
   }
-  
+
   .tradingview-widget-container iframe {
     border-radius: 8px;
   }
-  
+
   /* Responsive container fixes */
   .responsive-grid {
     display: grid;
     gap: 1.5rem;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
-  
+
   @media (min-width: 1024px) {
     .responsive-grid {
       grid-template-columns: 1fr 2fr 1fr;
     }
   }
-  
+
   /* Fix for zoom out issues */
   .zoom-stable {
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
   }
-  
+
   .crypto-card {
     transition: transform 0.2s ease-in-out;
     min-width: 0;
     flex-shrink: 0;
   }
-  
+
   .crypto-card:hover {
     transform: translateY(-2px);
   }
-  
+
   /* Prevent layout breaks at small zoom levels */
   .container-responsive {
     width: 100%;
@@ -162,13 +165,13 @@
     margin: 0 auto;
     padding: 0 1rem;
   }
-  
+
   @media (min-width: 640px) {
     .container-responsive {
       padding: 0 1.5rem;
     }
   }
-  
+
   @media (min-width: 1024px) {
     .container-responsive {
       padding: 0 2rem;
@@ -180,60 +183,63 @@
   .gradient-bg {
     background: linear-gradient(135deg, hsl(239, 62%, 56%) 0%, hsl(262, 83%, 58%) 100%);
   }
-  
+
   .crypto-card {
     transition: all 0.3s ease;
   }
-  
+
   .crypto-card:hover {
     transform: translateY(-2px);
   }
-  
+
   .pulse-green {
     animation: pulse-green 2s infinite;
   }
-  
+
   @keyframes pulse-green {
-    0%, 100% { 
-      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); 
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
     }
-    50% { 
-      box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); 
+
+    50% {
+      box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
     }
   }
-  
+
   .text-success {
     color: hsl(160, 84%, 39%);
   }
-  
+
   .text-warning {
     color: hsl(38, 92%, 50%);
   }
-  
+
   .text-error {
     color: hsl(0, 84.2%, 60.2%);
   }
-  
+
   .bg-success {
     background-color: hsl(160, 84%, 39%);
   }
-  
+
   .bg-warning {
     background-color: hsl(38, 92%, 50%);
   }
-  
+
   .bg-error {
     background-color: hsl(0, 84.2%, 60.2%);
   }
-  
+
   .bg-surface {
     background-color: hsl(220, 26%, 18%);
   }
-  
+
   .bg-surface-light {
     background-color: hsl(215, 16%, 32%);
   }
-  
+
   .border-surface-light {
     border-color: hsl(215, 16%, 32%);
   }
@@ -244,6 +250,7 @@
   0% {
     transform: translate3d(0, 0, 0);
   }
+
   100% {
     transform: translate3d(-50%, 0, 0);
   }
@@ -295,6 +302,7 @@
   0% {
     transform: translateY(0);
   }
+
   100% {
     transform: translateY(-50%);
   }

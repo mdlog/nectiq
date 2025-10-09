@@ -1,0 +1,90 @@
+# ============================================
+# VAULT ENVIRONMENT VARIABLES SETUP
+# ============================================
+# Add these variables to your .env file
+
+# Smart Contract Deployment
+DEPLOYER_PRIVATE_KEY="your-deployer-wallet-private-key-here"
+BACKEND_SIGNER_ADDRESS="0xYourBackendSignerWalletAddress"
+BACKEND_SIGNER_PRIVATE_KEY="your-backend-signer-private-key-here"
+
+# Polygonscan API (for contract verification)
+POLYGONSCAN_API_KEY="your-polygonscan-api-key-here"
+
+# Smart Contract Addresses (fill AFTER deployment)
+VAULT_CONTRACT_ADDRESS=""
+VITE_VAULT_CONTRACT_ADDRESS=""
+
+# ============================================
+# HOW TO GET THESE VALUES:
+# ============================================
+
+1. DEPLOYER_PRIVATE_KEY:
+   - Create a new wallet in MetaMask
+   - Export private key: Settings -> Security & Privacy -> Show private key
+   - Get testnet POL from: https://faucet.polygon.technology/
+   - You need: 0.5 POL for gas fees
+
+2. BACKEND_SIGNER_ADDRESS & PRIVATE_KEY:
+   - Create ANOTHER wallet (separate from deployer)
+   - This wallet signs withdrawal authorizations
+   - Export both address and private key
+   - Keep this key EXTREMELY secure!
+
+3. POLYGONSCAN_API_KEY:
+   - Sign up at: https://polygonscan.com/
+   - Go to: My Account -> API Keys
+   - Create free API key
+   - Copy the key
+
+4. VAULT_CONTRACT_ADDRESS & VITE_VAULT_CONTRACT_ADDRESS:
+   - These will be generated AFTER deployment
+   - Copy the same address to both variables
+   - Format: VAULT_CONTRACT_ADDRESS="0x..." (backend)
+   - Format: VITE_VAULT_CONTRACT_ADDRESS="0x..." (frontend)
+
+# ============================================
+# STEP-BY-STEP SETUP:
+# ============================================
+
+Step 1: Create two MetaMask wallets
+  - Wallet 1: Deployer (needs 0.5 POL)
+  - Wallet 2: Backend Signer (minimal POL)
+
+Step 2: Get testnet POL
+  - Visit: https://faucet.polygon.technology/
+  - Select "Polygon Amoy"
+  - Enter deployer wallet address
+  - Submit and wait 1-2 minutes
+
+Step 3: Get Polygonscan API key
+  - Sign up at polygonscan.com
+  - Generate free API key
+
+Step 4: Add to .env file
+  - Copy the variables above
+  - Fill in your actual values
+  - Save the file
+
+Step 5: Deploy contract
+  - Run: npx hardhat run scripts/deploy-vault.cjs --network amoy
+  - Copy the deployed address
+  - Add to VAULT_CONTRACT_ADDRESS and VITE_VAULT_CONTRACT_ADDRESS
+
+# ============================================
+# SECURITY WARNINGS:
+# ============================================
+
+⚠️  CRITICAL SECURITY RULES:
+
+1. NEVER commit .env to git
+2. NEVER share private keys with anyone
+3. Use DIFFERENT wallets for deployer and signer
+4. Keep backend signer key in secure storage
+5. Backend signer key = control of all withdrawals
+6. If signer key is compromised, all funds at risk
+7. Rotate keys regularly (every 3-6 months)
+8. Use hardware wallet for production mainnet
+
+# ============================================
+

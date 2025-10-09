@@ -1,0 +1,9 @@
+{
+  "network": "amoy",
+  "chainId": 80002,
+  "contractAddress": "0xBf28daDaAc0efB62Ee5693f7f46e1409528C277F",
+  "backendSigner": "0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4",
+  "deployedAt": "2025-10-08T17:55:18.871Z",
+  "deployer": "0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4",
+  "transactionHash": "0xe72146ac2f21f4afcb303afc2d5ca4f6c2c113c25297b7c291d69946387c3e71"
+}

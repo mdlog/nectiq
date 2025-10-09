@@ -9302,6 +9302,97 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
+  // ============ VAULT SMART CONTRACT ENDPOINTS ============
+
+  // Request withdrawal signature from backend (for smart contract withdrawal)
+  app.post("/api/vault/withdrawal-signature", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { ntiqAmount } = req.body;
+
+      if (!ntiqAmount || ntiqAmount <= 0) {
+        return res.status(400).json({ message: "Invalid withdrawal amount" });
+      }
+
+      // Get user and verify balance
+      const user = await storage.getUser(session.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.balance < ntiqAmount) {
+        return res.status(400).json({ message: "Insufficient NTIQ balance" });
+      }
+
+      if (!user.walletAddress) {
+        return res.status(400).json({ message: "No wallet address linked" });
+      }
+
+      // Convert NTIQ to POL (1000 NTIQ = 1 POL, configurable)
+      const CONVERSION_RATE = 1000;
+      const polAmount = ntiqAmount / CONVERSION_RATE;
+
+      // Generate nonce (timestamp-based for uniqueness)
+      const nonce = Date.now();
+
+      // Create message hash for signature
+      const messageHash = ethers.solidityPackedKeccak256(
+        ['address', 'uint256', 'uint256'],
+        [user.walletAddress, ethers.parseEther(polAmount.toString()), nonce]
+      );
+
+      // Sign the message with backend signer
+      const signerPrivateKey = process.env.BACKEND_SIGNER_PRIVATE_KEY;
+      if (!signerPrivateKey) {
+        console.error('❌ [VAULT] BACKEND_SIGNER_PRIVATE_KEY not configured');
+        return res.status(500).json({ message: "Withdrawal signing not configured" });
+      }
+
+      const wallet = new ethers.Wallet(signerPrivateKey);
+      const signature = await wallet.signMessage(ethers.getBytes(messageHash));
+
+      // Deduct NTIQ balance BEFORE signing (prevents double-spending)
+      await BalanceService.processTransaction({
+        userId: session.userId,
+        type: 'withdrawal_pending',
+        amount: -ntiqAmount,
+        description: `Smart contract withdrawal request: ${polAmount.toFixed(6)} POL`,
+        metadata: {
+          nonce,
+          polAmount,
+          conversionRate: CONVERSION_RATE,
+          network: 'Polygon Amoy',
+          chainId: 80002
+        }
+      }, storage);
+
+      console.log('✅ [VAULT] Withdrawal signature generated:', {
+        userId: session.userId,
+        walletAddress: user.walletAddress,
+        ntiqAmount,
+        polAmount,
+        nonce
+      });
+
+      res.json({
+        success: true,
+        signature,
+        nonce,
+        polAmount,
+        walletAddress: user.walletAddress,
+        contractAddress: process.env.VAULT_CONTRACT_ADDRESS
+      });
+
+    } catch (error: any) {
+      console.error('❌ [VAULT] Error generating withdrawal signature:', error);
+      res.status(500).json({ message: error.message || "Failed to generate withdrawal signature" });
+    }
+  });
+
   // Admin endpoints for deposit management
   app.get("/api/admin/deposits", requireAdmin, async (req, res) => {
     try {
