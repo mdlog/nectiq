@@ -45,15 +45,15 @@ const getBlockchainExplorerUrl = (hash: string, token: string): string => {
     case 'eth':
     case 'usdc':
     case 'usdt':
-      // Use Sepolia testnet explorer for Ethereum transactions
-      return `https://sepolia.etherscan.io/tx/${hash}`;
+      // Use Polygon Amoy testnet explorer
+      return `https://amoy.polygonscan.com/tx/${hash}`;
     case 'bnb':
       // Use BSC testnet
       return `https://testnet.bscscan.com/tx/${hash}`;
     case 'matic':
     case 'pol':
-      // Use Polygon Mumbai testnet
-      return `https://mumbai.polygonscan.com/tx/${hash}`;
+      // Use Polygon Amoy testnet
+      return `https://amoy.polygonscan.com/tx/${hash}`;
     case 'avax':
       // Use Avalanche Fuji testnet
       return `https://testnet.snowtrace.io/tx/${hash}`;
@@ -75,8 +75,8 @@ const getBlockchainExplorerUrl = (hash: string, token: string): string => {
       // Bitcoin testnet
       return `https://blockstream.info/testnet/tx/${hash}`;
     default:
-      // Default to Sepolia testnet
-      return `https://sepolia.etherscan.io/tx/${hash}`;
+      // Default to Polygon Amoy testnet
+      return `https://amoy.polygonscan.com/tx/${hash}`;
   }
 };
 
@@ -87,12 +87,12 @@ const getExplorerName = (token: string): string => {
     case 'eth':
     case 'usdc':
     case 'usdt':
-      return 'Sepolia Etherscan';
+      return 'Amoy PolygonScan';
     case 'bnb':
       return 'BSC Testnet';
     case 'matic':
     case 'pol':
-      return 'Mumbai PolygonScan';
+      return 'Amoy PolygonScan';
     case 'avax':
       return 'Fuji Snowtrace';
     case 'sol':
@@ -119,12 +119,12 @@ const getChainDisplayName = (token: string): string => {
     case 'eth':
     case 'usdc':
     case 'usdt':
-      return 'Sepolia';
+      return 'Polygon Amoy';
     case 'bnb':
       return 'BSC Testnet';
     case 'matic':
     case 'pol':
-      return 'Mumbai';
+      return 'Polygon Amoy';
     case 'avax':
       return 'Fuji';
     case 'sol':
@@ -140,7 +140,7 @@ const getChainDisplayName = (token: string): string => {
     case 'btc':
       return 'Bitcoin Testnet';
     default:
-      return 'Sepolia';
+      return 'Polygon Amoy';
   }
 };
 
@@ -1039,12 +1039,12 @@ export default function AdminPanel() {
         nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
         blockExplorerUrls: ['https://etherscan.io/']
       },
-      11155111: {
-        chainId: '0xaa36a7',
-        chainName: 'Sepolia Testnet',
-        rpcUrls: ['https://sepolia.infura.io/v3/'],
-        nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
-        blockExplorerUrls: ['https://sepolia.etherscan.io/']
+      80002: {
+        chainId: '0x13882',
+        chainName: 'Polygon Amoy Testnet',
+        rpcUrls: ['https://rpc-amoy.polygon.technology'],
+        nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+        blockExplorerUrls: ['https://amoy.polygonscan.com/']
       },
       56: {
         chainId: '0x38',
@@ -1068,14 +1068,16 @@ export default function AdminPanel() {
   // Get target chain ID based on withdrawal token
   const getTargetChainId = (token: string): { chainId: number; chainName: string } => {
     const chainMap: Record<string, { chainId: number; chainName: string }> = {
-      'ETH': { chainId: 11155111, chainName: 'Sepolia Testnet' }, // For testing
-      'USDC': { chainId: 11155111, chainName: 'Sepolia Testnet' },
-      'USDT': { chainId: 11155111, chainName: 'Sepolia Testnet' },
+      'ETH': { chainId: 80002, chainName: 'Polygon Amoy Testnet' },
+      'USDC': { chainId: 80002, chainName: 'Polygon Amoy Testnet' },
+      'USDT': { chainId: 80002, chainName: 'Polygon Amoy Testnet' },
+      'POL': { chainId: 80002, chainName: 'Polygon Amoy Testnet' },
+      'MATIC': { chainId: 80002, chainName: 'Polygon Amoy Testnet' },
       'BNB': { chainId: 97, chainName: 'BNB Testnet' },
       // Add more tokens and their respective chains as needed
     };
 
-    return chainMap[token] || { chainId: 11155111, chainName: 'Sepolia Testnet' }; // Default to Sepolia
+    return chainMap[token] || { chainId: 80002, chainName: 'Polygon Amoy Testnet' }; // Default to Amoy
   };
 
   // Withdrawal action handler
@@ -1191,8 +1193,8 @@ export default function AdminPanel() {
 
           // Get token addresses from environment variables for security
           const tokenAddresses = {
-            'USDC': import.meta.env.VITE_SEPOLIA_USDC_CONTRACT || '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8', // Sepolia USDC testnet (official)
-            'USDT': import.meta.env.VITE_SEPOLIA_USDT_CONTRACT || '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'  // Sepolia USDT testnet
+            'USDC': import.meta.env.VITE_AMOY_USDC_CONTRACT || '0x8B0180f2101c8260d49339abfEe87927412494B4', // Polygon Amoy USDC
+            'USDT': import.meta.env.VITE_AMOY_USDT_CONTRACT || '0x8B0180f2101c8260d49339abfEe87927412494B4'  // Polygon Amoy USDT (using USDC for now)
           };
 
           const tokenAddress = tokenAddresses[tokenSymbol as keyof typeof tokenAddresses];
@@ -1211,23 +1213,23 @@ export default function AdminPanel() {
           console.log(`🔍 [USDC-DEBUG] Calling writeContract...`);
 
           // Show current wallet info and USDC contract details
-          console.log(`🔍 [USDC-INFO] Using official Sepolia USDC contract: ${tokenAddress}`);
+          console.log(`🔍 [USDC-INFO] Using Polygon Amoy USDC contract: ${tokenAddress}`);
           console.log(`🔍 [USDC-INFO] Connected wallet: ${address}`);
           console.log(`🔍 [USDC-INFO] Chain: ${chain?.name} (ID: ${chain?.id})`);
 
           // Ask user to check their wallet for actual USDC balance
           toast({
             title: "USDC Withdrawal Ready",
-            description: `Menggunakan USDC testnet resmi Sepolia. Pastikan wallet memiliki ${cryptoAmount} USDC untuk transaksi.`,
+            description: `Menggunakan USDC testnet Polygon Amoy. Pastikan wallet memiliki ${cryptoAmount} USDC untuk transaksi.`,
             variant: "default",
           });
 
           // Add button to get testnet USDC if needed
-          console.log(`💡 [USDC-HELP] Cara mendapatkan USDC testnet Sepolia:`);
-          console.log(`💡 [USDC-HELP] 1. Visit: https://faucet.circle.com/`);
+          console.log(`💡 [USDC-HELP] Cara mendapatkan USDC testnet Polygon Amoy:`);
+          console.log(`💡 [USDC-HELP] 1. Visit: https://faucet.polygon.technology`);
           console.log(`💡 [USDC-HELP] 2. Connect wallet: ${address}`);
-          console.log(`💡 [USDC-HELP] 3. Select Sepolia testnet`);
-          console.log(`💡 [USDC-HELP] 4. Request USDC testnet tokens`);
+          console.log(`💡 [USDC-HELP] 3. Select Polygon Amoy testnet`);
+          console.log(`💡 [USDC-HELP] 4. Request testnet tokens`);
           console.log(`💡 [USDC-HELP] 5. Contract USDC: ${tokenAddress}`);
 
           try {
@@ -1290,7 +1292,7 @@ export default function AdminPanel() {
               console.log(`💡 [USDC-DEBUG] Detected insufficient balance - wallet needs USDC testnet tokens`);
               toast({
                 title: "Insufficient USDC Balance",
-                description: "Wallet admin tidak memiliki cukup USDC di Sepolia testnet. Silakan deposit USDC testnet terlebih dahulu.",
+                description: "Wallet admin tidak memiliki cukup USDC di Polygon Amoy testnet. Silakan deposit USDC testnet terlebih dahulu.",
                 variant: "destructive",
               });
             }
@@ -1322,7 +1324,7 @@ export default function AdminPanel() {
         setTimeout(async () => {
           try {
             // Check transaction status after delay to simulate real blockchain confirmation
-            const response = await fetch(`https://sepolia.etherscan.io/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=YourApiKeyToken`);
+            const response = await fetch(`https://api-amoy.polygonscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=${import.meta.env.VITE_POLYGONSCAN_API_KEY || ''}`);
             const data = await response.json();
 
             if (data.status === '1' && data.result.status === '1') {

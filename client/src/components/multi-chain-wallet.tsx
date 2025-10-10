@@ -82,12 +82,12 @@ export function MultiChainWallet() {
 
   // Mutation untuk withdrawal
   const withdrawMutation = useMutation({
-    mutationFn: async (withdrawData: { 
-      walletId: number; 
-      chainType: string; 
-      tokenSymbol: string; 
-      amount: string; 
-      toAddress: string; 
+    mutationFn: async (withdrawData: {
+      walletId: number;
+      chainType: string;
+      tokenSymbol: string;
+      amount: string;
+      toAddress: string;
     }) => {
       const response = await apiRequest("/api/wallet/withdraw", {
         method: "POST",
@@ -202,8 +202,8 @@ export function MultiChainWallet() {
                       <DialogHeader>
                         <DialogTitle>Tambah Wallet {chain.name}</DialogTitle>
                       </DialogHeader>
-                      <AddWalletForm 
-                        chainType={chain.chainId} 
+                      <AddWalletForm
+                        chainType={chain.chainId}
                         onSubmit={(data) => addWalletMutation.mutate(data)}
                         isLoading={addWalletMutation.isPending}
                       />
@@ -215,30 +215,30 @@ export function MultiChainWallet() {
                     {walletSummary?.wallets
                       ?.filter((w: WalletData) => w.chainType === chain.chainId)
                       ?.map((wallet: WalletData) => (
-                      <div key={wallet.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={wallet.isVerified ? "default" : "secondary"}>
-                              {wallet.walletType}
-                            </Badge>
-                            {wallet.isVerified && <CheckCircle className="h-4 w-4 text-green-500" />}
+                        <div key={wallet.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={wallet.isVerified ? "default" : "secondary"}>
+                                {wallet.walletType}
+                              </Badge>
+                              {wallet.isVerified && <CheckCircle className="h-4 w-4 text-green-500" />}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{formatAddress(wallet.walletAddress)}</p>
                           </div>
-                          <p className="text-sm text-muted-foreground">{formatAddress(wallet.walletAddress)}</p>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => copyToClipboard(wallet.walletAddress)}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => copyToClipboard(wallet.walletAddress)}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </CardContent>
               </Card>
@@ -258,7 +258,7 @@ export function MultiChainWallet() {
                       <DialogHeader>
                         <DialogTitle>Withdraw {chain.name}</DialogTitle>
                       </DialogHeader>
-                      <WithdrawForm 
+                      <WithdrawForm
                         chainType={chain.chainId}
                         wallets={walletSummary?.wallets?.filter((w: WalletData) => w.chainType === chain.chainId) || []}
                         balances={walletSummary?.balances?.filter((b: BalanceData) => b.chainType === chain.chainId) || []}
@@ -273,17 +273,17 @@ export function MultiChainWallet() {
                     {walletSummary?.balances
                       ?.filter((b: BalanceData) => b.chainType === chain.chainId)
                       ?.map((balance: BalanceData, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{balance.tokenSymbol}</p>
-                          <p className="text-sm text-muted-foreground">${balance.usdValue}</p>
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium">{balance.tokenSymbol}</p>
+                            <p className="text-sm text-muted-foreground">${balance.usdValue}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{parseFloat(balance.balance).toFixed(6)}</p>
+                            <p className="text-sm text-muted-foreground">{balance.tokenSymbol}</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">{parseFloat(balance.balance).toFixed(6)}</p>
-                          <p className="text-sm text-muted-foreground">{balance.tokenSymbol}</p>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </CardContent>
               </Card>
@@ -304,14 +304,14 @@ export function MultiChainWallet() {
               <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
             </TabsList>
             <TabsContent value="deposits">
-              <TransactionList 
-                transactions={walletSummary?.recentDeposits || []} 
+              <TransactionList
+                transactions={walletSummary?.recentDeposits || []}
                 type="deposit"
               />
             </TabsContent>
             <TabsContent value="withdrawals">
-              <TransactionList 
-                transactions={walletSummary?.recentWithdrawals || []} 
+              <TransactionList
+                transactions={walletSummary?.recentWithdrawals || []}
                 type="withdrawal"
               />
             </TabsContent>
@@ -323,13 +323,13 @@ export function MultiChainWallet() {
 }
 
 // Komponen untuk form add wallet
-function AddWalletForm({ 
-  chainType, 
-  onSubmit, 
-  isLoading 
-}: { 
-  chainType: string; 
-  onSubmit: (data: any) => void; 
+function AddWalletForm({
+  chainType,
+  onSubmit,
+  isLoading
+}: {
+  chainType: string;
+  onSubmit: (data: any) => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState({
@@ -357,7 +357,7 @@ function AddWalletForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="walletType">Wallet Type</Label>
-        <Select value={formData.walletType} onValueChange={(value) => setFormData({...formData, walletType: value})}>
+        <Select value={formData.walletType} onValueChange={(value) => setFormData({ ...formData, walletType: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Choose wallet type" />
           </SelectTrigger>
@@ -368,13 +368,13 @@ function AddWalletForm({
           </SelectContent>
         </Select>
       </div>
-      
+
       <div>
         <Label htmlFor="walletAddress">Wallet Address</Label>
         <Input
           id="walletAddress"
           value={formData.walletAddress}
-          onChange={(e) => setFormData({...formData, walletAddress: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, walletAddress: e.target.value })}
           placeholder="0x..."
           required
         />
@@ -386,7 +386,7 @@ function AddWalletForm({
           <Input
             id="publicKey"
             value={formData.publicKey}
-            onChange={(e) => setFormData({...formData, publicKey: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, publicKey: e.target.value })}
             placeholder="Public key untuk Solana"
           />
         </div>
@@ -400,17 +400,17 @@ function AddWalletForm({
 }
 
 // Komponen untuk form withdraw
-function WithdrawForm({ 
-  chainType, 
-  wallets, 
-  balances, 
-  onSubmit, 
-  isLoading 
-}: { 
+function WithdrawForm({
+  chainType,
+  wallets,
+  balances,
+  onSubmit,
+  isLoading
+}: {
   chainType: string;
   wallets: WalletData[];
   balances: BalanceData[];
-  onSubmit: (data: any) => void; 
+  onSubmit: (data: any) => void;
   isLoading: boolean;
 }) {
   const [formData, setFormData] = useState({
@@ -429,7 +429,7 @@ function WithdrawForm({
     });
   };
 
-  const selectedBalance = balances.find(b => 
+  const selectedBalance = balances.find(b =>
     b.tokenSymbol === formData.tokenSymbol
   );
 
@@ -437,7 +437,7 @@ function WithdrawForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="walletId">From Wallet</Label>
-        <Select value={formData.walletId} onValueChange={(value) => setFormData({...formData, walletId: value})}>
+        <Select value={formData.walletId} onValueChange={(value) => setFormData({ ...formData, walletId: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Choose wallet" />
           </SelectTrigger>
@@ -453,7 +453,7 @@ function WithdrawForm({
 
       <div>
         <Label htmlFor="tokenSymbol">Token</Label>
-        <Select value={formData.tokenSymbol} onValueChange={(value) => setFormData({...formData, tokenSymbol: value})}>
+        <Select value={formData.tokenSymbol} onValueChange={(value) => setFormData({ ...formData, tokenSymbol: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Choose token" />
           </SelectTrigger>
@@ -474,7 +474,7 @@ function WithdrawForm({
           type="number"
           step="0.000001"
           value={formData.amount}
-          onChange={(e) => setFormData({...formData, amount: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
           placeholder="0.0"
           max={selectedBalance?.balance || "0"}
           required
@@ -491,7 +491,7 @@ function WithdrawForm({
         <Input
           id="toAddress"
           value={formData.toAddress}
-          onChange={(e) => setFormData({...formData, toAddress: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, toAddress: e.target.value })}
           placeholder="Destination address"
           required
         />
@@ -549,8 +549,8 @@ function TransactionList({ transactions, type }: { transactions: TransactionData
             </div>
           </div>
           {tx.transactionHash && tx.transactionHash !== '3' && (tx.transactionHash.startsWith('0x') && tx.transactionHash.length >= 42) ? (
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant="outline"
               onClick={() => window.open(getBlockchainExplorerUrl(tx.transactionHash, tx.tokenSymbol), '_blank')}
               title={`View on ${getExplorerName(tx.tokenSymbol)}`}
@@ -582,18 +582,18 @@ function formatAddress(address: string) {
 // Helper functions for blockchain explorers
 function getBlockchainExplorerUrl(hash: string, tokenSymbol: string): string {
   const token = tokenSymbol?.toLowerCase();
-  
+
   switch (token) {
     case 'eth':
     case 'usdc':
     case 'usdt':
-      return `https://sepolia.etherscan.io/tx/${hash}`;
+      return `https://amoy.polygonscan.com/tx/${hash}`;
     case 'bnb':
     case 'busd':
       return `https://testnet.bscscan.com/tx/${hash}`;
     case 'matic':
     case 'pol':
-      return `https://mumbai.polygonscan.com/tx/${hash}`;
+      return `https://amoy.polygonscan.com/tx/${hash}`;
     case 'avax':
       return `https://testnet.snowtrace.io/tx/${hash}`;
     case 'ftm':
@@ -601,24 +601,24 @@ function getBlockchainExplorerUrl(hash: string, tokenSymbol: string): string {
     case 'sol':
       return `https://explorer.solana.com/tx/${hash}?cluster=devnet`;
     default:
-      return `https://sepolia.etherscan.io/tx/${hash}`;
+      return `https://amoy.polygonscan.com/tx/${hash}`;
   }
 }
 
 function getExplorerName(tokenSymbol: string): string {
   const token = tokenSymbol?.toLowerCase();
-  
+
   switch (token) {
     case 'eth':
     case 'usdc':
     case 'usdt':
-      return 'Sepolia Etherscan';
+      return 'Amoy PolygonScan';
     case 'bnb':
     case 'busd':
       return 'BSC Testnet Scan';
     case 'matic':
     case 'pol':
-      return 'Mumbai PolygonScan';
+      return 'Amoy PolygonScan';
     case 'avax':
       return 'Avalanche Testnet';
     case 'ftm':
@@ -626,6 +626,6 @@ function getExplorerName(tokenSymbol: string): string {
     case 'sol':
       return 'Solana Explorer';
     default:
-      return 'Sepolia Etherscan';
+      return 'Amoy PolygonScan';
   }
 }

@@ -39,7 +39,7 @@ if (import.meta.env.DEV) {
 export const rainbowConfig = getDefaultConfig({
   appName: 'Nectiq',
   projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'ba0e679a5831cee26576868ecd70fdbf',
-  chains: [polygonAmoy, sepolia, mainnet, base, polygon, optimism, arbitrum],
+  chains: [polygonAmoy, mainnet, base, polygon, optimism, arbitrum, sepolia],
   transports: {
     [polygonAmoy.id]: http(),
     [mainnet.id]: http(),

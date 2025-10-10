@@ -34,6 +34,7 @@ import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { VaultDepositModal } from '@/components/VaultDepositModal';
 import { VaultWithdrawalModal } from '@/components/VaultWithdrawalModal';
+import { MultiTokenVaultDepositModal } from '@/components/MultiTokenVaultDepositModal';
 
 // ERC-20 Transfer ABI for Wagmi
 const ERC20_TRANSFER_ABI = [
@@ -131,15 +132,23 @@ const ArbitrumLogo = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
-const SepoliaLogo = ({ className = "w-5 h-5" }) => (
+const PolygonAmoyLogo = ({ className = "w-5 h-5" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="10" fill="currentColor" />
     <path
-      d="M12 7v10M7 12h10M9 9l6 6M15 9l-6 6"
-      stroke="white"
-      strokeWidth="1.5"
-      strokeLinecap="round"
+      d="M15.5 8.5L12 6.5L8.5 8.5V12.5L12 14.5L15.5 12.5V8.5Z"
+      fill="currentColor"
     />
+    <path
+      d="M8.5 12.5L5 10.5V14.5L8.5 16.5V12.5Z"
+      fill="currentColor"
+      opacity="0.7"
+    />
+    <path
+      d="M15.5 12.5L19 10.5V14.5L15.5 16.5V12.5Z"
+      fill="currentColor"
+      opacity="0.7"
+    />
+    <text x="12" y="15" textAnchor="middle" fill="white" fontSize="6" fontWeight="bold">T</text>
   </svg>
 );
 
@@ -243,17 +252,18 @@ const SUPPORTED_CHAINS = [
     }
   },
   {
-    chainId: 11155111,
-    name: "Sepolia",
-    symbol: "ETH",
-    shortName: "sepolia",
+    chainId: 80002,
+    name: "Polygon Amoy",
+    symbol: "POL",
+    shortName: "polygon-amoy",
     color: "text-purple-600",
-    logo: SepoliaLogo,
-    explorerUrl: "https://sepolia.etherscan.io",
+    logo: PolygonAmoyLogo,
+    explorerUrl: "https://amoy.polygonscan.com",
     tokens: {
-      ETH: { address: "native", decimals: 18 },
-      USDC: { address: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8", decimals: 6 },
-      USDT: { address: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", decimals: 6 }
+      POL: { address: "native", decimals: 18 },
+      WETH: { address: "0x52eF3d68BaB452a294342DC3e5f464d7f610f72E", decimals: 18 },
+      USDC: { address: "0x8B0180f2101c8260d49339abfEe87927412494B4", decimals: 6 },
+      LINK: { address: "0x0Fd9e8d3aF1aaee056EB9e902c3A762a667b1904", decimals: 18 }
     }
   },
   {
@@ -338,6 +348,7 @@ export function MultiChainFinancial() {
   // Smart Contract Modal states
   const [showVaultDepositModal, setShowVaultDepositModal] = useState(false);
   const [showVaultWithdrawalModal, setShowVaultWithdrawalModal] = useState(false);
+  const [showMultiTokenDepositModal, setShowMultiTokenDepositModal] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -1452,21 +1463,25 @@ export function MultiChainFinancial() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Zap className="w-6 h-6 text-yellow-300" />
-              <span>Smart Contract (Instant & Automated) ⚡</span>
+              <span>Multi-Token Smart Contract (Instant & Automated) ⚡</span>
             </CardTitle>
             <p className="text-sm text-white/80">
-              Deposit & Withdraw instantly using Polygon Amoy smart contract - No admin approval needed!
+              Deposit & Withdraw POL, WETH, USDC, LINK instantly - No admin approval needed!
             </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Instant Deposit Card */}
+              {/* Instant Multi-Token Deposit Card */}
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                 <div className="flex items-center space-x-2 mb-3">
                   <ArrowDownCircle className="w-5 h-5 text-green-300" />
-                  <h3 className="font-semibold">Instant Deposit</h3>
+                  <h3 className="font-semibold">Multi-Token Deposit</h3>
                 </div>
                 <ul className="text-sm space-y-2 mb-4 text-white/90">
+                  <li className="flex items-center space-x-2">
+                    <Coins className="w-4 h-4 text-purple-300" />
+                    <span>💎 POL • 💠 WETH • 💵 USDC • 🔗 LINK</span>
+                  </li>
                   <li className="flex items-center space-x-2">
                     <Zap className="w-4 h-4 text-yellow-300" />
                     <span>5 seconds (600x faster!)</span>
@@ -1477,19 +1492,15 @@ export function MultiChainFinancial() {
                   </li>
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="w-4 h-4 text-blue-300" />
-                    <span>Auto-credited NTIQ</span>
-                  </li>
-                  <li className="flex items-center space-x-2">
-                    <Coins className="w-4 h-4 text-purple-300" />
-                    <span>1 POL = 1,000 NTIQ</span>
+                    <span>1 Token = 1,000 NTIQ</span>
                   </li>
                 </ul>
                 <Button
-                  onClick={() => setShowVaultDepositModal(true)}
+                  onClick={() => setShowMultiTokenDepositModal(true)}
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
                 >
                   <ArrowDownCircle className="w-4 h-4 mr-2" />
-                  Deposit POL (Instant)
+                  Deposit Tokens (Instant)
                 </Button>
               </div>
 
@@ -1532,9 +1543,9 @@ export function MultiChainFinancial() {
               <p className="text-xs text-white/80 flex items-center space-x-2">
                 <Shield className="w-4 h-4" />
                 <span>
-                  Smart Contract Address: 0xBf28daDaAc0efB62Ee5693f7f46e1409528C277F
+                  Multi-Token Vault: 0x07d47A12F2f1224e8a1bE4e25fA5Ce7d3C6812d2
                   <a
-                    href="https://amoy.polygonscan.com/address/0xBf28daDaAc0efB62Ee5693f7f46e1409528C277F"
+                    href="https://amoy.polygonscan.com/address/0x07d47A12F2f1224e8a1bE4e25fA5Ce7d3C6812d2"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ml-2 text-yellow-300 hover:text-yellow-200 underline"
@@ -2395,6 +2406,16 @@ export function MultiChainFinancial() {
       </Card>
 
       {/* Smart Contract Modals */}
+      <MultiTokenVaultDepositModal
+        isOpen={showMultiTokenDepositModal}
+        onClose={() => setShowMultiTokenDepositModal(false)}
+        onSuccess={() => {
+          setShowMultiTokenDepositModal(false);
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/user/deposits"] });
+        }}
+      />
+
       <VaultDepositModal
         isOpen={showVaultDepositModal}
         onClose={() => setShowVaultDepositModal(false)}
