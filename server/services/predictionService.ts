@@ -1,6 +1,7 @@
 import { storage } from '../storage';
 import { cryptoService } from './cryptoService';
 import { BalanceService } from './balanceService';
+import { PredictionInsuranceService } from './predictionInsuranceService';
 
 export class PredictionService {
   async checkAndProcessExpiredPredictions(): Promise<void> {
@@ -41,6 +42,9 @@ export class PredictionService {
         rewardAmount,
         'completed'
       );
+
+      // Process insurance claim if applicable (automatically refunds if prediction lost)
+      await PredictionInsuranceService.processInsuranceClaim(predictionId);
 
       // Update user stats and balance using BalanceService for guaranteed real-time updates
       const user = await storage.getUser(prediction.userId);
@@ -99,7 +103,7 @@ export class PredictionService {
     const difference = Math.abs(predictedPrice - actualPrice);
     const accuracyDecimal = 1 - (difference / actualPrice);
     const accuracyPercentage = accuracyDecimal * 100;
-    
+
     // Ensure accuracy is between 0 and 100
     return Math.max(0, Math.min(100, accuracyPercentage));
   }
@@ -122,7 +126,7 @@ export class PredictionService {
     } else if (accuracy >= 90) {
       return 0.9; // Good prediction: 0.9x stake (user rugi 10%, platform untung 10%)
     }
-    
+
     return 0; // Below minimal accuracy - stake hangus (platform untung 100%)
   }
 
@@ -140,20 +144,20 @@ export class PredictionService {
   private calculateReward(stakeAmount: number, accuracy: number): number {
     const multiplier = this.calculateAccuracyMultiplier(accuracy);
     const grossReward = stakeAmount * multiplier;
-    
+
     // Platform fee system: 3-5% dari reward untuk winning predictions (1.5x, 2.0x, 3.0x)
     // Untuk 0.9x multiplier: fee sudah tercakup dalam loss 10%
     let netReward = grossReward;
-    
+
     if (multiplier >= 1.5) {
       const platformFeeRate = 0.04; // 4% platform fee untuk winning predictions
       const platformFee = grossReward * platformFeeRate;
       netReward = grossReward - platformFee;
-      
+
       console.log(`💰 PLATFORM FEE: ${platformFeeRate * 100}% fee applied to ${multiplier}x multiplier reward`);
       console.log(`💰 Gross Reward: ${grossReward} NTIQ, Platform Fee: ${platformFee} NTIQ, Net Reward: ${netReward} NTIQ`);
     }
-    
+
     return Math.floor(netReward);
   }
 

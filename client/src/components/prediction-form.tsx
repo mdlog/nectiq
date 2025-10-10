@@ -3,12 +3,13 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Gem, HelpCircle } from "lucide-react";
+import { Gem, HelpCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -49,6 +50,7 @@ interface PredictionFormProps {
 export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: PredictionFormProps) {
   const [selectedStake, setSelectedStake] = useState<number | null>(null);
   const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
+  const [useInsurance, setUseInsurance] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -167,7 +169,25 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
       // Parse response if it's JSON
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
-        return await response.json();
+        const result = await response.json();
+
+        // If insurance is enabled, purchase insurance after prediction is created
+        if (useInsurance && result.prediction?.id) {
+          try {
+            await apiRequest("/api/insurance/purchase", {
+              method: "POST",
+              body: JSON.stringify({
+                predictionId: result.prediction.id,
+                stakeAmount: data.stakeAmount
+              }),
+            });
+          } catch (insuranceError) {
+            console.error('Failed to purchase insurance:', insuranceError);
+            // Continue even if insurance fails - prediction is already created
+          }
+        }
+
+        return result;
       }
 
       // For non-JSON responses, return success indicator
@@ -395,8 +415,8 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
                         type="button"
                         variant={selectedStake === amount ? "default" : "outline"}
                         className={`${selectedStake === amount
-                            ? "gradient-bg"
-                            : "bg-surface-light hover:bg-primary transition-colors border-surface-light"
+                          ? "gradient-bg"
+                          : "bg-surface-light hover:bg-primary transition-colors border-surface-light"
                           }`}
                         onClick={() => handleStakePreset(amount)}
                       >
@@ -422,6 +442,66 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
               </FormItem>
             )}
           />
+
+          {/* Insurance Option */}
+          <div className="bg-surface-light border border-primary/20 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <Checkbox
+                id="insurance"
+                checked={useInsurance}
+                onCheckedChange={(checked) => setUseInsurance(checked as boolean)}
+                className="mt-1 border-primary data-[state=checked]:bg-primary data-[state=checked]:text-white"
+              />
+              <div className="flex-1">
+                <label
+                  htmlFor="insurance"
+                  className="text-sm font-medium text-slate-300 flex items-center cursor-pointer"
+                >
+                  <Shield className="h-4 w-4 text-primary mr-2" />
+                  Protect this prediction with Insurance
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="ml-2 h-4 w-4 text-slate-400 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-sm">
+                          <strong>Prediction Insurance:</strong><br />
+                          • Cost: 10% of your stake<br />
+                          • Coverage: Get 50% back if you lose<br />
+                          • Example: Stake 1,000 NTIQ → Pay 100 for insurance → Get 500 back if wrong
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </label>
+                {form.watch('stakeAmount') > 0 && (
+                  <div className="mt-2 space-y-1 text-xs">
+                    <div className="flex justify-between text-slate-400">
+                      <span>Insurance Cost (10%):</span>
+                      <span className="text-primary font-medium">
+                        {Math.floor(form.watch('stakeAmount') * 0.10)} NTIQ
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-400">
+                      <span>Coverage (50%):</span>
+                      <span className="text-green-400 font-medium">
+                        {Math.floor(form.watch('stakeAmount') * 0.50)} NTIQ refund if loss
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-400 border-t border-surface-light pt-1">
+                      <span>Total Cost:</span>
+                      <span className="text-white font-medium">
+                        {useInsurance
+                          ? Math.floor(form.watch('stakeAmount') * 1.10)
+                          : form.watch('stakeAmount')} NTIQ
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           <Button
             type="submit"

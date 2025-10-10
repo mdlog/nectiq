@@ -29,6 +29,8 @@ import AutomatedDepositSecurity from './automated-deposit-security.js';
 import { requireAuth as requireWalletAuth, isAuthorizedAdmin } from './simpleAuth.js';
 import { logger } from "../shared/logger";
 import sharp from "sharp";
+import { PredictionInsuranceService } from "./services/predictionInsuranceService";
+import { CustomTournamentService } from "./services/customTournamentService";
 
 // Maintenance mode middleware
 const checkMaintenanceMode = async (req: any, res: any, next: any) => {
@@ -12160,6 +12162,293 @@ Manual balance correction required IMMEDIATELY!`;
     } catch (error) {
       console.error('Error broadcasting test notification:', error);
       res.status(500).json({ message: 'Failed to broadcast notification' });
+    }
+  });
+
+  // ============================================================================
+  // PREDICTION INSURANCE API ENDPOINTS
+  // ============================================================================
+
+  // Purchase insurance for a prediction
+  app.post('/api/insurance/purchase', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const { predictionId, stakeAmount } = req.body;
+
+      if (!predictionId || !stakeAmount) {
+        return res.status(400).json({ message: 'Missing required fields: predictionId, stakeAmount' });
+      }
+
+      const result = await PredictionInsuranceService.purchaseInsurance(userId, predictionId, stakeAmount);
+
+      if (result.success) {
+        // Broadcast notification to user
+        broadcastToUser(userId, {
+          type: 'insurance_purchased',
+          title: '🛡️ Insurance Purchased',
+          message: `You have purchased insurance for your prediction. Coverage: ${result.insurance?.coveredAmount} NTIQ`,
+          data: { insurance: result.insurance }
+        });
+
+        res.json({ success: true, insurance: result.insurance });
+      } else {
+        res.status(400).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      console.error('❌ Error purchasing insurance:', error);
+      res.status(500).json({ message: 'Failed to purchase insurance' });
+    }
+  });
+
+  // Get user's insurance history
+  app.get('/api/insurance/history', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 20;
+      const history = await PredictionInsuranceService.getUserInsuranceHistory(userId, limit);
+
+      res.json({ success: true, history });
+    } catch (error) {
+      console.error('❌ Error fetching insurance history:', error);
+      res.status(500).json({ message: 'Failed to fetch insurance history' });
+    }
+  });
+
+  // Get user's insurance statistics
+  app.get('/api/insurance/stats', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const stats = await PredictionInsuranceService.getUserInsuranceStats(userId);
+
+      res.json({ success: true, stats });
+    } catch (error) {
+      console.error('❌ Error fetching insurance stats:', error);
+      res.status(500).json({ message: 'Failed to fetch insurance stats' });
+    }
+  });
+
+  // Void/cancel insurance (before prediction completes)
+  app.post('/api/insurance/void', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const { predictionId } = req.body;
+
+      if (!predictionId) {
+        return res.status(400).json({ message: 'Missing required field: predictionId' });
+      }
+
+      const result = await PredictionInsuranceService.voidInsurance(predictionId, userId);
+
+      if (result.success) {
+        res.json({ success: true, message: 'Insurance voided successfully' });
+      } else {
+        res.status(400).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      console.error('❌ Error voiding insurance:', error);
+      res.status(500).json({ message: 'Failed to void insurance' });
+    }
+  });
+
+  // ============================================================================
+  // CUSTOM TOURNAMENTS API ENDPOINTS
+  // ============================================================================
+
+  // Create a new tournament
+  app.post('/api/tournaments/create', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const tournamentData = req.body;
+
+      // Validate required fields
+      const requiredFields = ['name', 'entryFee', 'maxParticipants', 'prizeDistribution', 'numberOfRounds', 'cryptocurrency', 'roundDuration', 'eliminationRules'];
+      const missingFields = requiredFields.filter(field => !tournamentData[field]);
+
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          message: `Missing required fields: ${missingFields.join(', ')}`
+        });
+      }
+
+      const result = await CustomTournamentService.createTournament(userId, tournamentData);
+
+      if (result.success) {
+        // Broadcast notification to user
+        broadcastToUser(userId, {
+          type: 'tournament_created',
+          title: '🏆 Tournament Created',
+          message: `Your tournament "${result.tournament?.name}" has been created! Code: ${result.tournament?.tournamentCode}`,
+          data: { tournament: result.tournament }
+        });
+
+        res.json({ success: true, tournament: result.tournament });
+      } else {
+        res.status(400).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      console.error('❌ Error creating tournament:', error);
+      res.status(500).json({ message: 'Failed to create tournament' });
+    }
+  });
+
+  // Join a tournament
+  app.post('/api/tournaments/join', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const { tournamentCode } = req.body;
+
+      if (!tournamentCode) {
+        return res.status(400).json({ message: 'Missing required field: tournamentCode' });
+      }
+
+      const result = await CustomTournamentService.joinTournament(userId, tournamentCode);
+
+      if (result.success) {
+        // Broadcast notification to user
+        broadcastToUser(userId, {
+          type: 'tournament_joined',
+          title: '✅ Joined Tournament',
+          message: `You have successfully joined the tournament!`,
+          data: { tournamentCode }
+        });
+
+        res.json({ success: true, message: 'Successfully joined tournament' });
+      } else {
+        res.status(400).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      console.error('❌ Error joining tournament:', error);
+      res.status(500).json({ message: 'Failed to join tournament' });
+    }
+  });
+
+  // Get tournament details
+  app.get('/api/tournaments/:code', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { code } = req.params;
+
+      const tournament = await CustomTournamentService.getTournamentDetails(code);
+
+      if (tournament) {
+        res.json({ success: true, tournament });
+      } else {
+        res.status(404).json({ success: false, message: 'Tournament not found' });
+      }
+    } catch (error) {
+      console.error('❌ Error fetching tournament details:', error);
+      res.status(500).json({ message: 'Failed to fetch tournament details' });
+    }
+  });
+
+  // Get available tournaments (open status)
+  app.get('/api/tournaments/available', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const tournaments = await CustomTournamentService.getAvailableTournaments(userId);
+
+      res.json({ success: true, tournaments });
+    } catch (error) {
+      console.error('❌ Error fetching available tournaments:', error);
+      res.status(500).json({ message: 'Failed to fetch available tournaments' });
+    }
+  });
+
+  // Get user's tournament history
+  app.get('/api/tournaments/my-tournaments', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const tournaments = await CustomTournamentService.getUserTournaments(userId);
+
+      res.json({ success: true, tournaments });
+    } catch (error) {
+      console.error('❌ Error fetching user tournaments:', error);
+      res.status(500).json({ message: 'Failed to fetch user tournaments' });
+    }
+  });
+
+  // Start a tournament (creator only)
+  app.post('/api/tournaments/:id/start', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const tournamentId = parseInt(req.params.id);
+
+      if (isNaN(tournamentId)) {
+        return res.status(400).json({ message: 'Invalid tournament ID' });
+      }
+
+      const result = await CustomTournamentService.startTournament(tournamentId, userId);
+
+      if (result.success) {
+        res.json({ success: true, message: 'Tournament started successfully' });
+      } else {
+        res.status(400).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      console.error('❌ Error starting tournament:', error);
+      res.status(500).json({ message: 'Failed to start tournament' });
+    }
+  });
+
+  // Cancel a tournament (creator only, before it starts)
+  app.delete('/api/tournaments/:id/cancel', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const tournamentId = parseInt(req.params.id);
+
+      if (isNaN(tournamentId)) {
+        return res.status(400).json({ message: 'Invalid tournament ID' });
+      }
+
+      const result = await CustomTournamentService.cancelTournament(tournamentId, userId);
+
+      if (result.success) {
+        res.json({ success: true, message: 'Tournament cancelled successfully' });
+      } else {
+        res.status(400).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      console.error('❌ Error cancelling tournament:', error);
+      res.status(500).json({ message: 'Failed to cancel tournament' });
     }
   });
 

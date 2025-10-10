@@ -579,8 +579,8 @@ export default function UserDashboard() {
         </div>
 
         {/* Main Content with Sidebar Layout */}
-        <div className="admin-layout grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          {/* Sidebar Navigation - 1/3 of width */}
+        <div className="admin-layout grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+          {/* Sidebar Navigation - 1/4 of width */}
           <div className="lg:col-span-1 fade-in-delay-4">
             <div className="glass-card bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 rounded-xl md:rounded-2xl p-5 md:p-6 shadow-2xl sticky top-4 h-fit">
               <div className="mb-6">
@@ -702,10 +702,10 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          {/* Main Content Area - 2/3 of width */}
-          <div className="lg:col-span-2 min-h-0">
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full">
-              <div className="flex flex-col h-full space-y-3 sm:space-y-4 md:space-y-6">
+          {/* Main Content Area - 3/4 of width */}
+          <div className="lg:col-span-3">
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <div className="space-y-3 sm:space-y-4 md:space-y-6">
 
                 {/* Profile Tab */}
                 <TabsContent value="profile" className="flex-1 h-full">
@@ -1336,25 +1336,21 @@ export default function UserDashboard() {
                 </TabsContent>
 
                 {/* Analytics Tab */}
-                <TabsContent value="analytics" className="flex-1 h-full">
-                  <div className="h-full">
-                    <Card className="bg-surface border-surface-light h-full flex flex-col">
-                      <CardHeader>
-                        <CardTitle className="flex items-center">
-                          <BarChart3 className="mr-2" size={20} />
-                          Performance Analytics
-                        </CardTitle>
-                        <p className="text-sm text-slate-400">
-                          Detailed analytics and performance insights
-                        </p>
-                      </CardHeader>
-                      <CardContent className="flex-1 flex flex-col overflow-hidden">
-                        <div className="overflow-y-auto">
-                          <UserAnalytics />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                <TabsContent value="analytics" className="mt-0">
+                  <Card className="bg-surface border-surface-light">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <BarChart3 className="mr-2" size={20} />
+                        Performance Analytics
+                      </CardTitle>
+                      <p className="text-sm text-slate-400">
+                        Detailed analytics and performance insights
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <UserAnalytics />
+                    </CardContent>
+                  </Card>
                 </TabsContent>
 
                 {/* Battles Tab */}

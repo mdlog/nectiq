@@ -410,7 +410,7 @@ export const predictionBattles = pgTable("prediction_battles", {
   completedAt: timestamp("completed_at"),
   spectatorCount: integer("spectator_count").default(0),
   isPublic: boolean("is_public").default(true),
-  
+
   // Anti-Late Joining Mechanisms
   joinDeadline: timestamp("join_deadline").notNull(), // Deadline untuk bergabung (misal: 80% dari total waktu)
   minimumJoinTime: integer("minimum_join_time").notNull().default(300), // Minimum 5 menit untuk bergabung
@@ -511,7 +511,7 @@ export const survivalPredictions = pgTable("survival_predictions", {
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   isCorrect: boolean("is_correct"),
   points: integer("points").default(0),
-  
+
   // Anti-Gaming System Fields
   roundStartTime: timestamp("round_start_time").notNull(), // When the round started
   roundDuration: integer("round_duration").notNull(), // Round duration in milliseconds
@@ -998,18 +998,18 @@ export type UserAnalytics = typeof userAnalytics.$inferSelect;
 export type InsertUserAnalytics = z.infer<typeof insertUserAnalyticsSchema>;
 
 // Transaction Log types
-export const insertTransactionLogSchema = createInsertSchema(transactionLogs).omit({ 
-  id: true, 
-  createdAt: true 
+export const insertTransactionLogSchema = createInsertSchema(transactionLogs).omit({
+  id: true,
+  createdAt: true
 });
 export type InsertTransactionLog = z.infer<typeof insertTransactionLogSchema>;
 export type TransactionLog = typeof transactionLogs.$inferSelect;
 
 // Banner types
-export const insertBannerSchema = createInsertSchema(banners).omit({ 
-  id: true, 
-  createdAt: true, 
-  updatedAt: true 
+export const insertBannerSchema = createInsertSchema(banners).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
 });
 export type InsertBanner = z.infer<typeof insertBannerSchema>;
 export type Banner = typeof banners.$inferSelect;
@@ -1066,10 +1066,10 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
 
 // Event types
-export const insertEventSchema = createInsertSchema(events).omit({ 
-  id: true, 
-  createdAt: true, 
-  updatedAt: true 
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
 });
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
@@ -1178,5 +1178,157 @@ export const insertCryptoTransactionSchema = createInsertSchema(cryptoTransactio
 
 export type CryptoTransaction = typeof cryptoTransactions.$inferSelect;
 export type InsertCryptoTransaction = z.infer<typeof insertCryptoTransactionSchema>;
+
+// =======================================================================================
+// PREDICTION INSURANCE FEATURE (High Priority Utility #1)
+// =======================================================================================
+
+export const predictionInsurance = pgTable("prediction_insurance", {
+  id: serial("id").primaryKey(),
+  predictionId: integer("prediction_id").notNull().references(() => predictions.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  insuranceCost: integer("insurance_cost").notNull(), // Cost in NTIQ (5-10% of stake)
+  coveredAmount: integer("covered_amount").notNull(), // Amount protected (50% of stake)
+  stakeAmount: integer("stake_amount").notNull(), // Original stake amount
+  status: varchar("status", { length: 20 }).notNull().default("active"), // active, claimed, expired, void
+  claimedAt: timestamp("claimed_at"),
+  claimAmount: integer("claim_amount"), // Amount paid out if claimed
+  purchasedAt: timestamp("purchased_at").notNull().defaultNow(),
+});
+
+export const insertPredictionInsuranceSchema = createInsertSchema(predictionInsurance).omit({
+  id: true,
+  claimedAt: true,
+  claimAmount: true,
+  purchasedAt: true,
+});
+
+export type PredictionInsurance = typeof predictionInsurance.$inferSelect;
+export type InsertPredictionInsurance = z.infer<typeof insertPredictionInsuranceSchema>;
+
+// =======================================================================================
+// CUSTOM TOURNAMENT FEATURE (High Priority Utility #2)
+// =======================================================================================
+
+export const customTournaments = pgTable("custom_tournaments", {
+  id: serial("id").primaryKey(),
+  tournamentCode: varchar("tournament_code", { length: 8 }).notNull().unique(), // Unique code for joining
+  creatorId: integer("creator_id").notNull().references(() => users.id),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  entryFee: integer("entry_fee").notNull(), // NTIQ entry fee
+  creationFee: integer("creation_fee").notNull(), // NTIQ fee to create (100-1000)
+  maxParticipants: integer("max_participants").notNull().default(50),
+  currentParticipants: integer("current_participants").notNull().default(0),
+  prizePool: integer("prize_pool").notNull().default(0), // Total prize pool
+  prizeDistribution: jsonb("prize_distribution").notNull(), // { first: 50%, second: 30%, third: 20% }
+  numberOfRounds: integer("number_of_rounds").notNull().default(3),
+  currentRound: integer("current_round").notNull().default(0),
+  cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(), // Which crypto to predict
+  roundDuration: integer("round_duration").notNull().default(60), // Minutes per round
+  eliminationRules: varchar("elimination_rules", { length: 50 }).notNull().default("bottom_50"), // bottom_50, bottom_25, all_wrong
+  status: varchar("status", { length: 20 }).notNull().default("open"), // open, in_progress, completed, cancelled
+  winnerId: integer("winner_id").references(() => users.id),
+  isPrivate: boolean("is_private").notNull().default(false),
+  startTime: timestamp("start_time"),
+  endTime: timestamp("end_time"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const customTournamentParticipants = pgTable("custom_tournament_participants", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").notNull().references(() => customTournaments.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  isEliminated: boolean("is_eliminated").notNull().default(false),
+  eliminatedRound: integer("eliminated_round"),
+  totalPoints: integer("total_points").notNull().default(0),
+  currentRank: integer("current_rank"),
+  prizeWon: integer("prize_won").default(0),
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  eliminatedAt: timestamp("eliminated_at"),
+});
+
+export const customTournamentRounds = pgTable("custom_tournament_rounds", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").notNull().references(() => customTournaments.id),
+  roundNumber: integer("round_number").notNull(),
+  cryptocurrency: varchar("cryptocurrency", { length: 20 }).notNull(),
+  startPrice: numeric("start_price", { precision: 18, scale: 8 }).notNull(),
+  endPrice: numeric("end_price", { precision: 18, scale: 8 }),
+  priceDirection: varchar("price_direction", { length: 10 }), // up, down, stable
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, active, completed
+  eliminatedCount: integer("eliminated_count").notNull().default(0),
+  survivorCount: integer("survivor_count"),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const customTournamentPredictions = pgTable("custom_tournament_predictions", {
+  id: serial("id").primaryKey(),
+  roundId: integer("round_id").notNull().references(() => customTournamentRounds.id),
+  tournamentId: integer("tournament_id").notNull().references(() => customTournaments.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  prediction: varchar("prediction", { length: 10 }).notNull(), // up, down
+  isCorrect: boolean("is_correct"),
+  points: integer("points").default(0),
+  submittedAt: timestamp("submitted_at").notNull().defaultNow(),
+});
+
+// Insert schemas
+export const insertCustomTournamentSchema = createInsertSchema(customTournaments).omit({
+  id: true,
+  tournamentCode: true,
+  currentParticipants: true,
+  prizePool: true,
+  currentRound: true,
+  winnerId: true,
+  startTime: true,
+  endTime: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCustomTournamentParticipantSchema = createInsertSchema(customTournamentParticipants).omit({
+  id: true,
+  currentRank: true,
+  prizeWon: true,
+  joinedAt: true,
+  eliminatedAt: true,
+});
+
+export const insertCustomTournamentRoundSchema = createInsertSchema(customTournamentRounds).omit({
+  id: true,
+  endPrice: true,
+  priceDirection: true,
+  eliminatedCount: true,
+  survivorCount: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export const insertCustomTournamentPredictionSchema = createInsertSchema(customTournamentPredictions).omit({
+  id: true,
+  isCorrect: true,
+  points: true,
+  submittedAt: true,
+}).extend({
+  prediction: z.enum(["up", "down"]),
+});
+
+// Types
+export type CustomTournament = typeof customTournaments.$inferSelect;
+export type InsertCustomTournament = z.infer<typeof insertCustomTournamentSchema>;
+
+export type CustomTournamentParticipant = typeof customTournamentParticipants.$inferSelect;
+export type InsertCustomTournamentParticipant = z.infer<typeof insertCustomTournamentParticipantSchema>;
+
+export type CustomTournamentRound = typeof customTournamentRounds.$inferSelect;
+export type InsertCustomTournamentRound = z.infer<typeof insertCustomTournamentRoundSchema>;
+
+export type CustomTournamentPrediction = typeof customTournamentPredictions.$inferSelect;
+export type InsertCustomTournamentPrediction = z.infer<typeof insertCustomTournamentPredictionSchema>;
 
 

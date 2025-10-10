@@ -128,6 +128,21 @@ Build MVP, validate product-market fit, integrate Polygon ecosystem, prepare for
 - Head-to-head prediction battles
 - Survival tournaments
 - TrendRide multi-coin predictions
+- ✨ **NEW:** Prediction Insurance (10% cost, 50% refund on loss)
+- ✨ **NEW:** Custom Tournament Creation (user-generated competitions)
+
+**💎 Token Utility Enhancements**
+- **Prediction Insurance** - Risk management for predictions
+  - Cost: 10% of stake amount
+  - Coverage: 50% refund if prediction loses
+  - Automatic claim processing
+  - Insurance history & statistics
+- **Custom Tournaments** - Community-driven competitions
+  - Tournament creation with dynamic pricing
+  - Flexible rules (elimination, rounds, duration)
+  - Prize pool distribution
+  - Tournament browsing & joining
+  - Real-time leaderboards
 
 **🏗️ Infrastructure**
 - PostgreSQL database (Neon)
