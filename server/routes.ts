@@ -5698,6 +5698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdAt: withdrawals.createdAt,
           username: users.username,
           walletAddress: users.walletAddress,
+          chainName: withdrawals.chainName, // Add chain name for better display
         })
         .from(withdrawals)
         .leftJoin(users, eq(withdrawals.userId, users.id));
@@ -5757,15 +5758,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...tx,
           hash: tx.transactionHash, // Map transactionHash to hash for frontend
           timestamp: tx.createdAt,
-          networkName: tx.type === 'withdrawal' ? 'Ethereum' : null,
-          chainName: tx.type === 'withdrawal' ? 'Ethereum' : null
+          networkName: tx.chainName || 'Ethereum', // Use actual chain name from database
+          chainName: tx.chainName || 'Ethereum' // Use actual chain name from database
         })),
         ...allDeposits.map(tx => ({
           ...tx,
           hash: tx.transactionHash, // Map transactionHash to hash for frontend
           timestamp: tx.createdAt,
-          networkName: 'Ethereum',
-          chainName: 'Ethereum'
+          networkName: tx.chainName || 'Ethereum', // Use actual chain name from database
+          chainName: tx.chainName || 'Ethereum' // Use actual chain name from database
         })),
         ...allPurchases.map(tx => ({
           ...tx,
@@ -9391,6 +9392,111 @@ Manual balance correction required IMMEDIATELY!`;
 
     } catch (error: any) {
       console.error('❌ [VAULT] Error generating withdrawal signature:', error);
+      res.status(500).json({ message: error.message || "Failed to generate withdrawal signature" });
+    }
+  });
+
+  // Request multi-token withdrawal signature from backend (for MultiTokenVault contract)
+  app.post("/api/vault/request-withdrawal", async (req, res) => {
+    try {
+      const session = req.session as any;
+      if (!session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { userAddress, tokenSymbol, tokenAddress, ntiqAmount, tokenAmount } = req.body;
+
+      if (!ntiqAmount || ntiqAmount <= 0) {
+        return res.status(400).json({ message: "Invalid withdrawal amount" });
+      }
+
+      if (!tokenSymbol || !tokenAddress) {
+        return res.status(400).json({ message: "Invalid token information" });
+      }
+
+      // Get user and verify balance
+      const user = await storage.getUser(session.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.balance < ntiqAmount) {
+        return res.status(400).json({ message: "Insufficient NTIQ balance" });
+      }
+
+      if (!user.walletAddress) {
+        return res.status(400).json({ message: "No wallet address linked" });
+      }
+
+      // Verify wallet address matches
+      if (user.walletAddress.toLowerCase() !== userAddress.toLowerCase()) {
+        return res.status(403).json({ message: "Wallet address mismatch" });
+      }
+
+      // Generate nonce (timestamp-based for uniqueness)
+      const nonce = Date.now();
+
+      // Determine token decimals
+      const decimals = tokenSymbol === 'USDC' ? 6 : 18;
+
+      // Convert token amount to wei/smallest unit
+      const amountInWei = tokenSymbol === 'POL'
+        ? ethers.parseEther(tokenAmount.toString())
+        : ethers.parseUnits(tokenAmount.toFixed(decimals), decimals);
+
+      // Create message hash for signature (matching contract's verification)
+      const messageHash = ethers.solidityPackedKeccak256(
+        ['address', 'uint256', 'uint256'],
+        [userAddress, amountInWei, nonce]
+      );
+
+      // Sign the message with backend signer
+      const signerPrivateKey = process.env.BACKEND_SIGNER_PRIVATE_KEY;
+      if (!signerPrivateKey) {
+        console.error('❌ [MULTI-TOKEN-VAULT] BACKEND_SIGNER_PRIVATE_KEY not configured');
+        return res.status(500).json({ message: "Withdrawal signing not configured" });
+      }
+
+      const wallet = new ethers.Wallet(signerPrivateKey);
+      const signature = await wallet.signMessage(ethers.getBytes(messageHash));
+
+      // Deduct NTIQ balance BEFORE signing (prevents double-spending)
+      await BalanceService.processTransaction({
+        userId: session.userId,
+        type: 'withdrawal_pending',
+        amount: -ntiqAmount,
+        description: `Multi-token withdrawal request: ${tokenAmount.toFixed(6)} ${tokenSymbol}`,
+        metadata: {
+          nonce,
+          tokenSymbol,
+          tokenAddress,
+          tokenAmount,
+          network: 'Polygon Amoy',
+          chainId: 80002
+        }
+      }, storage);
+
+      console.log('✅ [MULTI-TOKEN-VAULT] Withdrawal signature generated:', {
+        userId: session.userId,
+        walletAddress: user.walletAddress,
+        tokenSymbol,
+        ntiqAmount,
+        tokenAmount,
+        nonce
+      });
+
+      res.json({
+        success: true,
+        signature,
+        nonce,
+        amount: amountInWei.toString(),
+        tokenSymbol,
+        walletAddress: user.walletAddress,
+        contractAddress: process.env.MULTI_TOKEN_VAULT_ADDRESS
+      });
+
+    } catch (error: any) {
+      console.error('❌ [MULTI-TOKEN-VAULT] Error generating withdrawal signature:', error);
       res.status(500).json({ message: error.message || "Failed to generate withdrawal signature" });
     }
   });

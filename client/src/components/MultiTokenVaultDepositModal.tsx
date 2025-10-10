@@ -190,7 +190,25 @@ export function MultiTokenVaultDepositModal({ isOpen, onClose, onSuccess }: Mult
         isPending: isApprovePending,
         error: approveError,
         reset: resetApprove
-    } = useWriteContract();
+    } = useWriteContract({
+        mutation: {
+            onSuccess: (hash) => {
+                console.log('✅ [MULTI-TOKEN-MODAL] Approval transaction sent:', hash);
+                toast({
+                    title: "Approval Sent",
+                    description: "Please wait for approval confirmation.",
+                });
+            },
+            onError: (error) => {
+                console.error('❌ [MULTI-TOKEN-MODAL] Approval failed:', error);
+                toast({
+                    title: "Approval Failed",
+                    description: error.message || "Failed to approve token.",
+                    variant: "destructive",
+                });
+            },
+        },
+    });
 
     const {
         isLoading: isApproveConfirming,
@@ -206,7 +224,30 @@ export function MultiTokenVaultDepositModal({ isOpen, onClose, onSuccess }: Mult
         isPending: isDepositPending,
         error: depositError,
         reset: resetDeposit
-    } = useWriteContract();
+    } = useWriteContract({
+        mutation: {
+            onSuccess: (hash) => {
+                console.log('✅ [MULTI-TOKEN-MODAL] Deposit transaction sent:', hash);
+                toast({
+                    title: "Deposit Sent",
+                    description: "Please wait for deposit confirmation.",
+                });
+            },
+            onError: (error) => {
+                console.error('❌ [MULTI-TOKEN-MODAL] Deposit failed:', error);
+                console.error('❌ [MULTI-TOKEN-MODAL] Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    cause: error.cause
+                });
+                toast({
+                    title: "Deposit Failed",
+                    description: error.message || "Failed to deposit. Please check your balance and approval.",
+                    variant: "destructive",
+                });
+            },
+        },
+    });
 
     const {
         isLoading: isDepositConfirming,
@@ -332,7 +373,14 @@ export function MultiTokenVaultDepositModal({ isOpen, onClose, onSuccess }: Mult
         }
 
         try {
+            console.log('🔐 [MULTI-TOKEN-MODAL] Starting approval...');
+            console.log('🔐 [MULTI-TOKEN-MODAL] Token:', token.symbol);
+            console.log('🔐 [MULTI-TOKEN-MODAL] Token address:', token.address);
+            console.log('🔐 [MULTI-TOKEN-MODAL] Amount:', amount);
+            console.log('🔐 [MULTI-TOKEN-MODAL] Vault address:', MULTI_TOKEN_VAULT_ADDRESS);
+
             const amountInWei = parseUnits(amount, token.decimals);
+            console.log('🔐 [MULTI-TOKEN-MODAL] Amount in wei:', amountInWei.toString());
 
             writeApprove({
                 address: token.address,
@@ -341,7 +389,7 @@ export function MultiTokenVaultDepositModal({ isOpen, onClose, onSuccess }: Mult
                 args: [MULTI_TOKEN_VAULT_ADDRESS, amountInWei],
             });
         } catch (error: any) {
-            console.error('Approve error:', error);
+            console.error('❌ [MULTI-TOKEN-MODAL] Approve error:', error);
             toast({
                 title: "Approval Failed",
                 description: error.message || "Failed to approve token.",
@@ -380,9 +428,28 @@ export function MultiTokenVaultDepositModal({ isOpen, onClose, onSuccess }: Mult
             return;
         }
 
+        // For ERC-20 tokens, check if approval is needed first
+        if (token.symbol !== 'POL') {
+            const needsApprovalCheck = needsApproval();
+            if (needsApprovalCheck) {
+                toast({
+                    title: "Approval Required",
+                    description: `You need to approve ${token.symbol} spending first. Click "Approve ${token.symbol}" button.`,
+                    variant: "destructive",
+                });
+                return;
+            }
+        }
+
         try {
+            console.log('🚀 [MULTI-TOKEN-MODAL] Starting deposit...');
+            console.log('🚀 [MULTI-TOKEN-MODAL] Token:', token.symbol);
+            console.log('🚀 [MULTI-TOKEN-MODAL] Amount:', amount);
+            console.log('🚀 [MULTI-TOKEN-MODAL] Contract:', MULTI_TOKEN_VAULT_ADDRESS);
+
             if (token.symbol === 'POL') {
                 // Direct POL deposit
+                console.log('🚀 [MULTI-TOKEN-MODAL] Depositing POL...');
                 writeDeposit({
                     address: MULTI_TOKEN_VAULT_ADDRESS,
                     abi: VAULT_POL_ABI,
@@ -392,6 +459,10 @@ export function MultiTokenVaultDepositModal({ isOpen, onClose, onSuccess }: Mult
             } else {
                 // ERC-20 token deposit
                 const amountInWei = parseUnits(amount, token.decimals);
+                console.log('🚀 [MULTI-TOKEN-MODAL] Depositing token...');
+                console.log('🚀 [MULTI-TOKEN-MODAL] Token address:', token.address);
+                console.log('🚀 [MULTI-TOKEN-MODAL] Amount in wei:', amountInWei.toString());
+
                 writeDeposit({
                     address: MULTI_TOKEN_VAULT_ADDRESS,
                     abi: VAULT_TOKEN_ABI,
@@ -400,10 +471,10 @@ export function MultiTokenVaultDepositModal({ isOpen, onClose, onSuccess }: Mult
                 });
             }
         } catch (error: any) {
-            console.error('Deposit error:', error);
+            console.error('❌ [MULTI-TOKEN-MODAL] Deposit error:', error);
             toast({
                 title: "Deposit Failed",
-                description: error.message || "Failed to deposit.",
+                description: error.message || "Failed to deposit. Please check your balance and try again.",
                 variant: "destructive",
             });
         }

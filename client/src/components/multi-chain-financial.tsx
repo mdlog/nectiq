@@ -35,6 +35,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { VaultDepositModal } from '@/components/VaultDepositModal';
 import { VaultWithdrawalModal } from '@/components/VaultWithdrawalModal';
 import { MultiTokenVaultDepositModal } from '@/components/MultiTokenVaultDepositModal';
+import { MultiTokenVaultWithdrawalModal } from '@/components/MultiTokenVaultWithdrawalModal';
 
 // ERC-20 Transfer ABI for Wagmi
 const ERC20_TRANSFER_ABI = [
@@ -279,22 +280,6 @@ const SUPPORTED_CHAINS = [
       USDC: { address: "0x449cde79f489e2ae32e6314d8d966ca64e040409", decimals: 6 }, // Official Circle USDC on Holesky
       USDT: { address: "0x87350147a24099bf1e7e677576f01c1415857c75", decimals: 6 }  // Verified USDT on Holesky
     }
-  },
-  {
-    chainId: 80002,
-    name: "Polygon Amoy",
-    symbol: "POL",
-    shortName: "amoy",
-    color: "text-purple-500",
-    logo: PolygonLogo,
-    explorerUrl: "https://amoy.polygonscan.com",
-    tokens: {
-      ETH: { address: "native", decimals: 18 }, // Native POL
-      USDC: { address: "0x8B0180f2101c8260d49339abfEe87927412494B4", decimals: 6 }, // USDC on Polygon Amoy (Official)
-      USDT: { address: "0x2c852e740B62308c46DD29B982FBb650D063Bd07", decimals: 6 }, // USDT on Polygon Amoy
-      WETH: { address: "0x52eF3d68BaB452a294342DC3e5f464d7f610f72E", decimals: 18 }, // WETH on Polygon Amoy
-      LINK: { address: "0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904", decimals: 18 }  // Chainlink on Polygon Amoy
-    }
   }
 ];
 
@@ -349,6 +334,7 @@ export function MultiChainFinancial() {
   const [showVaultDepositModal, setShowVaultDepositModal] = useState(false);
   const [showVaultWithdrawalModal, setShowVaultWithdrawalModal] = useState(false);
   const [showMultiTokenDepositModal, setShowMultiTokenDepositModal] = useState(false);
+  const [showMultiTokenWithdrawalModal, setShowMultiTokenWithdrawalModal] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -1508,12 +1494,16 @@ export function MultiChainFinancial() {
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                 <div className="flex items-center space-x-2 mb-3">
                   <ArrowUpCircle className="w-5 h-5 text-orange-300" />
-                  <h3 className="font-semibold">Instant Withdrawal</h3>
+                  <h3 className="font-semibold">Multi-Token Withdrawal</h3>
                 </div>
                 <ul className="text-sm space-y-2 mb-4 text-white/90">
                   <li className="flex items-center space-x-2">
+                    <Coins className="w-4 h-4 text-purple-300" />
+                    <span>💎 POL • 💠 WETH • 💵 USDC • 🔗 LINK</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
                     <Zap className="w-4 h-4 text-yellow-300" />
-                    <span>30 seconds (2,880x faster!)</span>
+                    <span>30 seconds (Instant!)</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <Shield className="w-4 h-4 text-green-300" />
@@ -1521,20 +1511,16 @@ export function MultiChainFinancial() {
                   </li>
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="w-4 h-4 text-blue-300" />
-                    <span>Direct to your wallet</span>
-                  </li>
-                  <li className="flex items-center space-x-2">
-                    <Coins className="w-4 h-4 text-purple-300" />
-                    <span>1,000 NTIQ = 1 POL</span>
+                    <span>Minimum: 10 NTIQ</span>
                   </li>
                 </ul>
                 <Button
-                  onClick={() => setShowVaultWithdrawalModal(true)}
+                  onClick={() => setShowMultiTokenWithdrawalModal(true)}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold"
                   disabled={!user?.balance || user.balance < 10}
                 >
                   <ArrowUpCircle className="w-4 h-4 mr-2" />
-                  Withdraw POL (Instant)
+                  Withdraw Tokens (Instant)
                 </Button>
               </div>
             </div>
@@ -2432,6 +2418,17 @@ export function MultiChainFinancial() {
         userBalance={user?.balance || 0}
         onSuccess={() => {
           setShowVaultWithdrawalModal(false);
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/user/withdrawals"] });
+        }}
+      />
+
+      <MultiTokenVaultWithdrawalModal
+        isOpen={showMultiTokenWithdrawalModal}
+        onClose={() => setShowMultiTokenWithdrawalModal(false)}
+        userNTIQBalance={user?.balance || 0}
+        onSuccess={() => {
+          setShowMultiTokenWithdrawalModal(false);
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });
           queryClient.invalidateQueries({ queryKey: ["/api/user/withdrawals"] });
         }}
