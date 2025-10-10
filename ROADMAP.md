@@ -1157,8 +1157,8 @@ Achieve 100% decentralization and establish thriving ecosystem on Polygon.
 | Allocation | Percentage | Amount | Vesting |
 |------------|-----------|--------|---------|
 | **Community & Ecosystem** | 40% | 400M NTIQ | Various |
-| ↳ Early User Airdrop | 15% | 150M NTIQ | Immediate |
-| ↳ Liquidity Mining | 10% | 100M NTIQ | 2 years |
+| ↳ Early User Airdrop | 15% | 150M NTIQ | **5% immediate + 10% vested (12mo)** |
+| ↳ Liquidity Mining | 10% | 100M NTIQ | **4 years (declining emission)** |
 | ↳ DAO Treasury | 10% | 100M NTIQ | Governance |
 | ↳ Community Grants | 5% | 50M NTIQ | On-demand |
 | **Game Rewards** | 30% | 300M NTIQ | 4 years |
@@ -1179,10 +1179,11 @@ NTIQ token will serve multiple purposes within the ecosystem:
 | ⚔️ **Battle Entry Fees** | Pay with NTIQ to enter P2P battles |
 | 🏆 **Tournament Buy-ins** | Join tournaments using NTIQ |
 | 🗳️ **Governance Voting** | Lock NTIQ to receive vNTIQ for voting power |
-| 💰 **Staking Rewards** | Stake NTIQ to earn yield |
+| 💰 **Tiered Staking + Revenue Sharing** | **4 tiers (Bronze→Diamond) with real yield** |
 | ⭐ **Premium Features** | Access exclusive features with NTIQ |
 | 🎨 **NFT Minting** | Mint achievement NFTs using NTIQ |
 | 🔮 **Oracle Node Rewards** | Earn NTIQ for providing oracle services |
+| 🔥 **Deflationary Burn** | **50% of platform fees burned permanently** |
 
 **vNTIQ (Governance Token) - Future**
 - Lock NTIQ → Receive vNTIQ

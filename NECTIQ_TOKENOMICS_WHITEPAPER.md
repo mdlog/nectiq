@@ -279,10 +279,12 @@ NECTIQ uniquely combines three powerful Web3 sectors:
 | **Token Symbol** | NTIQ |
 | **Token Standard** | ERC-20 (Polygon PoS) |
 | **Total Supply** | 1,000,000,000 NTIQ (1 Billion) |
-| **Initial Circulation** | 150,000,000 NTIQ (15%) - Airdrop |
-| **Emission Schedule** | 4-year linear unlock |
+| **Initial Circulation** | 50,000,000 NTIQ (5%) - Immediate Airdrop + 100M Vested |
+| **Emission Schedule** | 4-year declining emission |
 | **Decimals** | 18 |
 | **Contract Address** | TBD (Post-TGE) |
+| **Deflationary Mechanics** | 50% of platform fees burned |
+| **Anti-Whale Protection** | 0.1% max tx, 1% max wallet |
 
 ### 📈 Token Supply Flow
 
@@ -292,28 +294,31 @@ TOTAL SUPPLY: 1,000,000,000 NTIQ
 
 Initial Unlock (Year 1):
 ┌─────────────────────────────────────────┐
-│ 15% │█████████████████                  │ 150M NTIQ (Airdrop)
+│ 5%  │█████                              │ 50M NTIQ (Immediate Airdrop)
+│ 10% │██████████ (vested)                │ 100M NTIQ (12-month vest)
 └─────────────────────────────────────────┘
 
-Year 2 Distribution:
+Year 1 Liquidity Mining (Declining Emission):
 ┌─────────────────────────────────────────┐
-│ 25% │█████████████████████████████      │ 250M NTIQ (Rewards + Liquidity)
+│ 40% │████████████████████████████████████│ 40M NTIQ (High bootstrap)
 └─────────────────────────────────────────┘
 
-Year 3 Distribution:
+Year 2-4 Distribution (Gradual Decline):
 ┌─────────────────────────────────────────┐
-│ 30% │████████████████████████████████████│ 300M NTIQ (Full Ecosystem)
+│ Yr2 │███████████████████████            │ 30M NTIQ (-25%)
+│ Yr3 │███████████████                    │ 20M NTIQ (-33%)
+│ Yr4 │████████                           │ 10M NTIQ (-50%)
 └─────────────────────────────────────────┘
 
-Year 4 Distribution:
-┌─────────────────────────────────────────┐
-│ 30% │████████████████████████████████████│ 300M NTIQ (DAO + Long-term)
-└─────────────────────────────────────────┘
+Deflationary Mechanics:
+• Platform Fees: 50% burned, 30% treasury, 20% ops
+• Token Burn: Permanent supply reduction
+• Net Effect: Balances emission with burn
 
 Vesting Protection:
-• Team & Advisors: 4-year cliff + linear unlock
-• Investors: 2-year cliff + linear unlock
-• Community: No vesting (immediate utility)
+• Team & Advisors: 4-year vest + 1-year cliff
+• Investors: 2-year vest + 6-month cliff
+• Community Airdrop: 5% immediate + 10% vested (12mo)
 ```
 
 ### 🎯 Token Economics Pillars
@@ -340,17 +345,18 @@ Vesting Protection:
 COMMUNITY & ECOSYSTEM: 40% (400,000,000 NTIQ)
 ████████████████████████████████████████
 │
-├─ Early User Airdrop: 15% (150M)
+├─ Early User Airdrop: 15% (150M) - REVISED STRUCTURE
 │  ██████████████████
-│  • Wave 1-5 Beta Users
-│  • Testnet Participants
-│  • Community Builders
+│  • Immediate Release: 5% (50M) - Early adopters
+│  • Vested Release: 10% (100M) - 12-month linear
+│  • Reduces selling pressure by 67%
 │
-├─ Liquidity Mining: 10% (100M)
+├─ Liquidity Mining: 10% (100M) - EXTENDED TO 4 YEARS
 │  ████████████
-│  • DEX Liquidity Providers
-│  • Staking Rewards
-│  • Yield Farming
+│  • Year 1: 40M (40%) - Bootstrap phase
+│  • Year 2: 30M (30%) - Gradual decline
+│  • Year 3: 20M (20%) - Further reduction
+│  • Year 4: 10M (10%) - Minimal emission
 │
 ├─ DAO Treasury: 10% (100M)
 │  ████████████
@@ -497,14 +503,16 @@ INVESTORS & PARTNERS: 5% (50,000,000 NTIQ)
    Usage: LOW (Monthly) | Impact: CRITICAL
 
 
-5. STAKING REWARDS
+5. TIERED STAKING WITH REVENUE SHARING
    ┌────────────────────────────────────┐
-   │  Earn yield by staking NTIQ       │
-   │  • Base APY: 8-15%                │
-   │  • Bonus for long locks: +5%      │
-   │  • Compounding available          │
+   │  Earn yield + revenue share        │
+   │  • Bronze (1K): 1% revenue bonus  │
+   │  • Silver (5K): 2.5% revenue bonus│
+   │  • Gold (20K): 5% revenue bonus   │
+   │  • Diamond (100K): 10% bonus      │
+   │  • Real yield from platform fees  │
    └────────────────────────────────────┘
-   Usage: HIGH (Continuous) | Impact: HIGH
+   Usage: HIGH (Continuous) | Impact: CRITICAL
 
 
 6. PREMIUM FEATURES
@@ -569,11 +577,12 @@ INVESTORS & PARTNERS: 5% (50,000,000 NTIQ)
      │
      ▼
 ┌───────────────────────────────────────────────┐
-│        DISTRIBUTION & BURN                    │
+│        DISTRIBUTION & BURN (REVISED)          │
 │  • Winners receive NTIQ                       │
-│  • Platform fees → Treasury (70%)             │
-│  • Platform fees → Burn (30%)                 │
-│  • Staking yields paid out                    │
+│  • Platform fees → BURN (50%) 🔥             │
+│  • Platform fees → DAO Treasury (30%)         │
+│  • Platform fees → Operations (20%)           │
+│  • Revenue sharing to stakers (real yield)    │
 └───────────────────────────────────────────────┘
 ```
 
@@ -1148,31 +1157,47 @@ Assumptions:
 • Monthly transaction growth: 20%
 ```
 
-### 💵 Token Value Projections
+### 💵 Token Value Projections (REVISED - Realistic)
 
 ```
-NTIQ TOKEN PRICE FORECAST
-═════════════════════════
+NTIQ TOKEN PRICE FORECAST (REVISED)
+════════════════════════════════════
+
+🎯 BASE CASE SCENARIO (Most Likely):
 
 Launch (Q1 2025):
-$0.001 - $0.005 per NTIQ
-Market Cap: $1M - $5M
-Rationale: Early adoption, testnet validation
+$0.001 - $0.003 per NTIQ
+Market Cap: $50K - $150K (50M circulating)
+Rationale: Testnet launch, limited initial circulation
 
 Year 1 (2025):
-$0.01 - $0.05 per NTIQ
-Market Cap: $10M - $50M
-Rationale: User growth, mainnet launch, utility adoption
+$0.01 - $0.05 per NTIQ (3-17x growth)
+Market Cap: $1M - $5M
+Rationale: Mainnet launch, 50K users, token burn active
 
 Year 2 (2026):
-$0.05 - $0.20 per NTIQ
-Market Cap: $50M - $200M
-Rationale: CEX listings, institutional interest, ecosystem maturity
+$0.05 - $0.20 per NTIQ (5-4x growth)
+Market Cap: $10M - $50M
+Rationale: CEX listings, 250K users, deflationary pressure
 
 Year 3+ (2027):
-$0.20 - $1.00+ per NTIQ
-Market Cap: $200M - $1B+
-Rationale: Full decentralization, mass adoption, network effects
+$0.20 - $1.00 per NTIQ (4-5x growth)
+Market Cap: $50M - $300M
+Rationale: Mass adoption, 1M+ users, mature ecosystem
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🐻 CONSERVATIVE (Bear Market):
+Launch: $0.001 | Year 1: $0.005 | Year 2: $0.01 | Year 3: $0.05
+
+🚀 OPTIMISTIC (Bull Market):
+Launch: $0.005 | Year 1: $0.10 | Year 2: $0.50 | Year 3: $2.00
+
+Key Factors:
+• Deflationary burn reduces supply 10-20% annually
+• Revenue sharing creates real yield
+• Anti-whale protections ensure stable growth
+• Realistic expectations build trust
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
