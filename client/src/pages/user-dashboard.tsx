@@ -28,6 +28,7 @@ import { LoyaltyTier } from "@/components/loyalty-tier";
 import { FinancialWallet } from "@/components/financial-wallet";
 import { SurvivalStatus } from "@/components/survival-status";
 import { MultiChainFinancial } from "@/components/multi-chain-financial";
+import { TransactionHistory } from "@/components/transaction-history";
 import { WalletEmailVerification } from "@/components/WalletEmailVerification";
 import { SocialShare, createShareData } from "@/components/SocialShare";
 
@@ -1291,7 +1292,7 @@ export default function UserDashboard() {
                   </div>
                 </TabsContent>
 
-                {/* Financial Tab - Deposit Only */}
+                {/* Financial Tab - Deposit, Withdrawal, and History */}
                 <TabsContent value="financial" className="flex-1 h-full">
                   <div className="h-full">
                     <Card className="bg-surface border-surface-light h-full flex flex-col">
@@ -1301,13 +1302,34 @@ export default function UserDashboard() {
                           Multi-Chain Financial System
                         </CardTitle>
                         <p className="text-sm text-slate-400">
-                          Deposit and withdrawal system for multiple blockchains
+                          Deposit, withdrawal, and transaction history for multiple blockchains
                         </p>
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col overflow-hidden">
-                        <div className="overflow-y-auto">
-                          <MultiChainFinancial />
-                        </div>
+                        <Tabs defaultValue="wallet" className="h-full flex flex-col">
+                          <TabsList className="grid w-full grid-cols-2 mb-4">
+                            <TabsTrigger value="wallet" className="flex items-center space-x-2">
+                              <Wallet className="h-4 w-4" />
+                              <span>Wallet</span>
+                            </TabsTrigger>
+                            <TabsTrigger value="history" className="flex items-center space-x-2">
+                              <History className="h-4 w-4" />
+                              <span>History</span>
+                            </TabsTrigger>
+                          </TabsList>
+
+                          <TabsContent value="wallet" className="flex-1 overflow-hidden">
+                            <div className="h-full overflow-y-auto">
+                              <MultiChainFinancial />
+                            </div>
+                          </TabsContent>
+
+                          <TabsContent value="history" className="flex-1 overflow-hidden">
+                            <div className="h-full overflow-y-auto">
+                              <TransactionHistory />
+                            </div>
+                          </TabsContent>
+                        </Tabs>
                       </CardContent>
                     </Card>
                   </div>

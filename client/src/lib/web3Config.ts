@@ -14,10 +14,17 @@ export const polygonAmoy = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc-amoy.polygon.technology'],
+      http: [
+        'https://rpc-amoy.polygon.technology',
+        'https://polygon-amoy.drpc.org',
+        'https://polygon-amoy.g.alchemy.com/v2/demo'
+      ],
     },
     public: {
-      http: ['https://rpc-amoy.polygon.technology'],
+      http: [
+        'https://rpc-amoy.polygon.technology',
+        'https://polygon-amoy.drpc.org'
+      ],
     },
   },
   blockExplorers: {

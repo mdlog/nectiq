@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { storage } from '../storage';
 import { logger } from '../../shared/logger';
 import { cryptoService } from './cryptoService';
+import { BalanceService } from './balanceService';
 
 const MULTI_TOKEN_VAULT_ABI = [
     // Events
@@ -119,7 +120,13 @@ class MultiTokenVaultEventListener {
     private isListening: boolean = false;
 
     constructor() {
-        const AMOY_RPC = process.env.AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology';
+        // Multiple RPC endpoints for fallback
+        const AMOY_RPCS = [
+            process.env.AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology',
+            'https://polygon-amoy.drpc.org',
+            'https://polygon-amoy.g.alchemy.com/v2/demo'
+        ];
+        const AMOY_RPC = AMOY_RPCS[0];
         const VAULT_ADDRESS = process.env.MULTI_TOKEN_VAULT_ADDRESS;
 
         if (!VAULT_ADDRESS) {
@@ -281,7 +288,7 @@ class MultiTokenVaultEventListener {
 
         try {
             // Find user in database
-            const dbUser = await storage.findUserByWalletAddress(user);
+            const dbUser = await storage.getUserByWalletAddress(user);
 
             if (!dbUser) {
                 logger.warn(`🔷 [MULTI-TOKEN-VAULT] User not found in database: ${user}`);
@@ -290,6 +297,28 @@ class MultiTokenVaultEventListener {
 
             // Get token contract address from constants
             const tokenContractAddress = TOKEN_ADDRESSES[tokenSymbol as keyof typeof TOKEN_ADDRESSES] || tokenAddress;
+
+            // CRITICAL FIX: Credit user balance using BalanceService
+            await BalanceService.processTransaction({
+                userId: dbUser.id,
+                type: 'deposit_credit',
+                amount: amountInNTIQ,
+                token: 'NTIQ',
+                hash: txHash,
+                description: `Multi-token vault deposit - ${amountInToken} ${tokenSymbol}`,
+                metadata: {
+                    source: 'multi_token_vault_contract',
+                    contractAddress: (this.contract.target as string).toLowerCase(),
+                    tokenSymbol,
+                    tokenAddress: tokenContractAddress.toLowerCase(),
+                    amountInToken,
+                    tokenPriceUSD,
+                    usdValue,
+                    conversionRate: NTIQ_PRICE_USD,
+                    network: 'Polygon Amoy',
+                    chainId: 80002
+                }
+            }, storage);
 
             // Create deposit record with correct field names matching schema
             await storage.createDeposit({
@@ -305,12 +334,15 @@ class MultiTokenVaultEventListener {
                 transactionHash: txHash,
                 blockNumber: blockNumber,
                 status: 'confirmed',
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+                processedAt: new Date(), // Mark as processed since balance was credited
+                expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year expiry (already processed)
             });
 
-            logger.info(`🔷 [MULTI-TOKEN-VAULT] ✅ Deposit record created`);
+            logger.info(`🔷 [MULTI-TOKEN-VAULT] ✅ Balance credited and deposit record created`);
             logger.info(`   User ID: ${dbUser.id}`);
             logger.info(`   NTIQ Balance Update: +${amountInNTIQ} NTIQ`);
+            logger.info(`   Transaction Hash: ${txHash}`);
+            logger.info(`   View on Polygonscan: https://amoy.polygonscan.com/tx/${txHash}`);
 
         } catch (error: any) {
             logger.error('🔷 [MULTI-TOKEN-VAULT] ❌ Failed to process deposit:', error);
@@ -366,7 +398,7 @@ class MultiTokenVaultEventListener {
 
         try {
             // Find user in database
-            const dbUser = await storage.findUserByWalletAddress(user);
+            const dbUser = await storage.getUserByWalletAddress(user);
 
             if (!dbUser) {
                 logger.warn(`🔷 [MULTI-TOKEN-VAULT] User not found in database: ${user}`);
@@ -376,6 +408,7 @@ class MultiTokenVaultEventListener {
             // Create withdrawal record with correct field names matching schema
             await storage.createWithdrawal({
                 userId: dbUser.id,
+                uniqueTransactionId: txHash.slice(-8), // Use last 8 chars of tx hash (max 8 chars)
                 ntiqAmount: amountInNTIQ,
                 usdAmount: usdValue.toFixed(6),
                 feeAmount: '0', // No fee for smart contract withdrawals

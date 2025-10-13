@@ -398,6 +398,16 @@ try {
   console.error('❌ Failed to initialize vault event listener:', error);
 }
 
+// Initialize Multi Token Vault Event Listener for Multi Token Vault deposits/withdrawals
+console.log('🔧 Initializing Multi Token Vault Event Listener...');
+try {
+  const { multiTokenVaultEventListener } = await import('./services/multiTokenVaultEventListener');
+  await multiTokenVaultEventListener.start();
+  console.log('✅ Multi Token Vault event listener started successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize Multi Token Vault event listener:', error);
+}
+
 // Initialize Deposit Expiry Service for 1-hour auto-cancel
 try {
   console.log('🔧 Initializing Deposit Expiry Service...');
@@ -417,60 +427,16 @@ try {
   console.error('❌ Failed to initialize withdrawal hash detection service:', error);
 }
 
-// Initialize Processing Withdrawals Blockchain Monitor
+// Initialize Automated Withdrawal Service
 try {
-  console.log('🔧 Initializing Processing Withdrawals Blockchain Monitor...');
-  const { AutomatedWithdrawalService } = await import('./automated-withdrawal-service');
+  console.log('🔧 Initializing Automated Withdrawal Service...');
+  const { setupAutomatedWithdrawals } = await import('./withdrawal-scheduler');
 
-  // Only initialize if admin private key exists
-  if (process.env.ADMIN_PRIVATE_KEY) {
-    const networks = {
-      ethereum: {
-        rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
-        chainId: 11155111,
-        gasLimit: '21000',
-        maxGasPrice: '20000000000',
-        tokenContracts: {
-          USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
-          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
-        }
-      },
-      sepolia: {
-        rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
-        chainId: 11155111,
-        gasLimit: '21000',
-        maxGasPrice: '20000000000',
-        tokenContracts: {
-          USDC: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8',
-          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
-        }
-      }
-    };
-
-    const automatedService = new AutomatedWithdrawalService({
-      adminPrivateKey: process.env.ADMIN_PRIVATE_KEY,
-      networks,
-      maxDailyWithdrawal: 10000,
-      maxSingleWithdrawal: 5000,
-      autoApprovalThreshold: 100
-    }, storage as any);
-
-    // Check processing withdrawals every 2 minutes
-    setInterval(async () => {
-      try {
-        console.log('🔍 [PROCESSING-MONITOR] Checking processing withdrawals for blockchain confirmation...');
-        await automatedService.monitorProcessingWithdrawals();
-      } catch (error) {
-        console.error('❌ [PROCESSING-MONITOR] Error:', error);
-      }
-    }, 120000); // 2 minutes
-
-    console.log('✅ Processing withdrawals blockchain monitor started - checking every 2 minutes');
-  } else {
-    console.log('⚠️ Processing withdrawals monitor disabled - ADMIN_PRIVATE_KEY not found');
-  }
+  // Setup automated withdrawal processing
+  setupAutomatedWithdrawals(storage);
+  console.log('✅ Automated withdrawal system initialized successfully');
 } catch (error) {
-  console.error('❌ Failed to initialize processing withdrawals monitor:', error);
+  console.error('❌ Failed to initialize automated withdrawal service:', error);
 }
 
 // Initialize Parlay Processor Service for automatic parlay completion

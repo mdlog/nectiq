@@ -192,6 +192,8 @@ export function MultiTokenVaultDepositModal({ isOpen, onClose, onSuccess }: Mult
         reset: resetApprove
     } = useWriteContract({
         mutation: {
+            retry: 3,
+            retryDelay: 2000,
             onSuccess: (hash) => {
                 console.log('✅ [MULTI-TOKEN-MODAL] Approval transaction sent:', hash);
                 toast({
@@ -387,6 +389,7 @@ export function MultiTokenVaultDepositModal({ isOpen, onClose, onSuccess }: Mult
                 abi: ERC20_ABI,
                 functionName: 'approve',
                 args: [MULTI_TOKEN_VAULT_ADDRESS, amountInWei],
+                gas: 100000n, // Set explicit gas limit
             });
         } catch (error: any) {
             console.error('❌ [MULTI-TOKEN-MODAL] Approve error:', error);

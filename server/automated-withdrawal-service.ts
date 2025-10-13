@@ -9,7 +9,7 @@ import { broadcastNotificationCallback } from './routes.js';
 interface AutoWithdrawalConfig {
   // Wallet Configuration
   adminPrivateKey: string; // Private key admin wallet untuk signing transaksi
-  
+
   // Network Configurations
   networks: {
     [key: string]: {
@@ -23,12 +23,12 @@ interface AutoWithdrawalConfig {
       }
     }
   };
-  
+
   // Security Settings
   maxDailyWithdrawal: number; // Maximum daily withdrawal dalam USD
   maxSingleWithdrawal: number; // Maximum single withdrawal dalam USD
   autoApprovalThreshold: number; // Auto approve jika dibawah threshold ini
-  
+
   // Monitoring
   webhookUrl?: string; // Untuk notifikasi ke Discord/Slack
   emailNotification?: string; // Email untuk notifikasi
@@ -51,16 +51,16 @@ export class AutomatedWithdrawalService {
   async processAllPendingWithdrawals(): Promise<void> {
     try {
       console.log('🔄 [AUTO-WD] Starting automated withdrawal processing...');
-      
+
       // PREVENTION: Check for suspicious withdrawals (rejected but with transaction hash)
       await this.checkForSuspiciousWithdrawals();
-      
+
       // Check processing withdrawals for blockchain confirmation
       await this.checkProcessingWithdrawals();
-      
+
       // Reset daily counter jika sudah lewat 24 jam
       this.resetDailyCounterIfNeeded();
-      
+
       // Ambil semua pending withdrawals
       const pendingWithdrawals = await db
         .select()
@@ -69,7 +69,7 @@ export class AutomatedWithdrawalService {
         .orderBy(withdrawals.createdAt);
 
       console.log(`📝 [AUTO-WD] Found ${pendingWithdrawals.length} pending withdrawals`);
-      
+
       // Debug: Log withdrawal details if any found
       if (pendingWithdrawals.length > 0) {
         console.log('🔍 [AUTO-WD] Pending withdrawal details:');
@@ -85,13 +85,13 @@ export class AutomatedWithdrawalService {
           console.log(`⚠️ [AUTO-WD] Pre-flight validation failed for withdrawal ${withdrawal.id}`);
           continue;
         }
-        
+
         await this.processSingleWithdrawal(withdrawal);
-        
+
         // Delay 2 detik antar transaksi untuk menghindari network congestion
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
-      
+
     } catch (error) {
       console.error('❌ [AUTO-WD] Error in processAllPendingWithdrawals:', error);
       await this.sendErrorNotification('Failed to process pending withdrawals', error);
@@ -117,7 +117,7 @@ export class AutomatedWithdrawalService {
   private async checkProcessingWithdrawals(): Promise<void> {
     try {
       console.log('🔍 [WITHDRAWAL-MONITOR] Checking processing withdrawals for blockchain confirmation...');
-      
+
       // Ambil semua withdrawal dengan status 'processing' yang memiliki transaction hash
       const processingWithdrawals = await db
         .select()
@@ -136,7 +136,7 @@ export class AutomatedWithdrawalService {
 
       for (const withdrawal of processingWithdrawals) {
         await this.verifyBlockchainTransaction(withdrawal);
-        
+
         // Small delay between checks
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
@@ -165,10 +165,10 @@ export class AutomatedWithdrawalService {
       }
 
       const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
-      
+
       // Check transaction receipt
       const receipt = await provider.getTransactionReceipt(transactionHash);
-      
+
       if (!receipt) {
         // Transaction not yet mined, keep waiting
         console.log(`⏳ [WITHDRAWAL-MONITOR] Transaction ${transactionHash} not yet mined`);
@@ -187,7 +187,7 @@ export class AutomatedWithdrawalService {
           .where(eq(withdrawals.id, withdrawal.id));
 
         console.log(`✅ [WITHDRAWAL-MONITOR] Withdrawal ${withdrawal.id} automatically marked as completed - TX: ${transactionHash}`);
-        
+
         // Send WebSocket notification to user
         try {
           broadcastNotificationCallback(withdrawal.userId, {
@@ -202,10 +202,10 @@ export class AutomatedWithdrawalService {
         } catch (notifError) {
           console.error(`❌ [WITHDRAWAL-MONITOR] Failed to send WebSocket notification:`, notifError);
         }
-        
+
         // Send success notification
         await this.sendSuccessNotification(withdrawal, transactionHash);
-        
+
       } else if (receipt.status === 0) {
         // Transaction failed - update to failed
         await db
@@ -218,7 +218,7 @@ export class AutomatedWithdrawalService {
           .where(eq(withdrawals.id, withdrawal.id));
 
         console.log(`❌ [WITHDRAWAL-MONITOR] Withdrawal ${withdrawal.id} marked as failed - TX failed: ${transactionHash}`);
-        
+
         // Send failure notification
         await this.sendFailureNotification(withdrawal, transactionHash);
       }
@@ -241,7 +241,7 @@ export class AutomatedWithdrawalService {
       console.log(`🎉 [AUTO-COMPLETE] Withdrawal ${withdrawal.id} for user ${withdrawal.userId} completed automatically`);
       console.log(`💰 Amount: ${withdrawal.ntiqAmount} NTIQ (${withdrawal.usdAmount} USD)`);
       console.log(`🔗 TX Hash: ${transactionHash}`);
-      
+
       // Here you could add webhook notification to Discord/Slack if needed
     } catch (error) {
       console.error('Error sending success notification:', error);
@@ -256,7 +256,7 @@ export class AutomatedWithdrawalService {
       console.log(`🚨 [AUTO-FAILED] Withdrawal ${withdrawal.id} for user ${withdrawal.userId} failed on blockchain`);
       console.log(`💰 Amount: ${withdrawal.ntiqAmount} NTIQ (${withdrawal.usdAmount} USD)`);
       console.log(`❌ Failed TX: ${transactionHash}`);
-      
+
       // Here you could add webhook notification for failed transactions
     } catch (error) {
       console.error('Error sending failure notification:', error);
@@ -321,7 +321,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
       const signer = new ethers.Wallet(this.config.adminPrivateKey, provider);
       const adminBalance = await provider.getBalance(signer.address);
       const requiredAmount = ethers.parseEther(withdrawal.netAmount.toString());
-      
+
       if (adminBalance < requiredAmount) {
         console.log(`❌ [AUTO-WD] Insufficient admin wallet balance for withdrawal ${withdrawal.id}`);
         return false;
@@ -329,7 +329,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
 
       console.log(`✅ [AUTO-WD] Pre-flight validation passed for withdrawal ${withdrawal.id}`);
       return true;
-      
+
     } catch (error) {
       console.error(`❌ [AUTO-WD] Pre-flight validation error for withdrawal ${withdrawal.id}:`, error);
       return false;
@@ -342,7 +342,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
   private async processSingleWithdrawal(withdrawal: any): Promise<void> {
     try {
       console.log(`🔍 [AUTO-WD] Processing withdrawal ID: ${withdrawal.id}`);
-      
+
       // 1. Security Validations
       const validationResult = await this.validateWithdrawal(withdrawal);
       if (!validationResult.isValid) {
@@ -359,7 +359,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
         console.log(`📋 [AUTO-WD] Withdrawal ${withdrawal.id} requires manual review`);
         await this.flagForManualReview(withdrawal);
       }
-      
+
     } catch (error) {
       console.error(`❌ [AUTO-WD] Error processing withdrawal ${withdrawal.id}:`, error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -370,7 +370,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
   /**
    * Validasi keamanan untuk withdrawal
    */
-  private async validateWithdrawal(withdrawal: any): Promise<{isValid: boolean, reason?: string}> {
+  private async validateWithdrawal(withdrawal: any): Promise<{ isValid: boolean, reason?: string }> {
     // 1. Cek user exists dan memiliki balance cukup
     const user = await db.select().from(users).where(eq(users.id, withdrawal.userId)).limit(1);
     if (!user.length) {
@@ -414,16 +414,16 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
   private async executeWithdrawal(withdrawal: any): Promise<void> {
     let txHash: string | null = null;
     let transactionSent = false;
-    
+
     try {
       // Update status ke processing
       await this.updateWithdrawalStatus(withdrawal.id, 'processing');
-      
+
       // Setup provider dan signer
       const networkConfig = this.config.networks[withdrawal.chainName];
       const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
       const signer = new ethers.Wallet(this.config.adminPrivateKey, provider);
-      
+
       if (withdrawal.tokenType === 'ETH') {
         // ETH Transfer
         txHash = await this.sendETH(signer, withdrawal, networkConfig);
@@ -431,20 +431,20 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
         // ERC-20 Token Transfer (USDC/USDT)
         txHash = await this.sendERC20Token(signer, withdrawal, networkConfig);
       }
-      
+
       // CRITICAL: Mark transaction as sent to prevent double rejection
       transactionSent = true;
       console.log(`🚀 [AUTO-WD] Blockchain transaction sent successfully: ${txHash}`);
-      
+
       // Update dengan transaction hash IMMEDIATELY after sending
       await this.updateWithdrawalStatus(withdrawal.id, 'completed', txHash);
       this.dailyWithdrawalTotal += parseFloat(withdrawal.usdAmount);
-      
+
       // CRITICAL: Deduct user balance after successful withdrawal
       await this.deductUserBalance(withdrawal);
-      
+
       console.log(`✅ [AUTO-WD] Withdrawal ${withdrawal.id} completed with TX: ${txHash}`);
-      
+
       // Send WebSocket notification to user
       try {
         broadcastNotificationCallback(withdrawal.userId, {
@@ -459,13 +459,13 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
       } catch (notifError) {
         console.error(`❌ [AUTO-WD] Failed to send WebSocket notification:`, notifError);
       }
-      
+
       // Send success notification
       await this.sendSuccessNotification(withdrawal, txHash);
-      
+
     } catch (error) {
       console.error(`❌ [AUTO-WD] Failed to execute withdrawal ${withdrawal.id}:`, error);
-      
+
       // CRITICAL FIX: Only reject if transaction was NOT sent to blockchain
       if (!transactionSent) {
         console.log(`🔄 [AUTO-WD] Transaction not sent to blockchain, safe to reject withdrawal ${withdrawal.id}`);
@@ -479,12 +479,12 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
         // Transaction already sent to blockchain, mark as completed with error note
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         await this.updateWithdrawalStatus(withdrawal.id, 'completed', txHash || undefined, `Post-processing error: ${errorMessage}`);
-        
+
         // Still try to deduct balance to maintain financial integrity
         try {
           await this.deductUserBalance(withdrawal);
           console.log(`✅ [AUTO-WD] Balance deducted despite post-processing error`);
-          
+
           // Send WebSocket notification to user (even with post-processing error, withdrawal is completed)
           try {
             broadcastNotificationCallback(withdrawal.userId, {
@@ -504,7 +504,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
           await this.sendCriticalErrorNotification(withdrawal, txHash || '', balanceError);
         }
       }
-      
+
       throw error;
     }
   }
@@ -519,7 +519,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
       gasLimit: networkConfig.gasLimit,
       maxFeePerGas: ethers.parseUnits(networkConfig.maxGasPrice, 'gwei'),
     });
-    
+
     await tx.wait(); // Wait for confirmation
     return tx.hash;
   }
@@ -529,24 +529,24 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
    */
   private async sendERC20Token(signer: ethers.Wallet, withdrawal: any, networkConfig: any): Promise<string> {
     const tokenAddress = networkConfig.tokenContracts[withdrawal.tokenType];
-    
+
     // ERC-20 ABI untuk transfer
     const erc20ABI = [
       "function transfer(address to, uint256 amount) returns (bool)",
       "function decimals() view returns (uint8)"
     ];
-    
+
     const tokenContract = new ethers.Contract(tokenAddress, erc20ABI, signer);
-    
+
     // Get token decimals
     const decimals = await tokenContract.decimals();
     const amount = ethers.parseUnits(withdrawal.netAmount.toString(), decimals);
-    
+
     const tx = await tokenContract.transfer(withdrawal.toWalletAddress, amount, {
-      gasLimit: '65000', // Higher gas limit for ERC-20 transfers
+      gasLimit: networkConfig.gasLimit, // Use network-specific gas limit
       maxFeePerGas: ethers.parseUnits(networkConfig.maxGasPrice, 'gwei'),
     });
-    
+
     await tx.wait(); // Wait for confirmation
     return tx.hash;
   }
@@ -560,10 +560,10 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
       processedAt: new Date(),
       processedBy: 1, // Admin user ID (system automated processing)
     };
-    
+
     if (txHash) updateData.transactionHash = txHash;
     if (adminNote) updateData.adminNote = adminNote;
-    
+
     await db.update(withdrawals).set(updateData).where(eq(withdrawals.id, id));
   }
 
@@ -573,7 +573,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
   private async deductUserBalance(withdrawal: any): Promise<void> {
     try {
       const { BalanceService } = await import('./services/balanceService.js');
-      
+
       // Deduct withdrawal amount from user balance
       await BalanceService.processTransaction({
         userId: withdrawal.userId,
@@ -582,9 +582,9 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
         description: `Withdrawal completed - TX: ${withdrawal.transactionHash || 'automated_withdrawal'}`,
         relatedId: withdrawal.id
       }, this.storage);
-      
+
       console.log(`💰 [AUTO-WD] Deducted ${withdrawal.ntiqAmount} NTIQ from user ${withdrawal.userId} balance`);
-      
+
     } catch (error) {
       console.error(`❌ [AUTO-WD] Failed to deduct balance for withdrawal ${withdrawal.id}:`, error);
       throw error;
@@ -596,7 +596,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
    */
   private async rejectWithdrawal(id: number, reason: string): Promise<void> {
     await this.updateWithdrawalStatus(id, 'rejected', undefined, `Auto-rejected: ${reason}`);
-    
+
     // Refund user balance menggunakan BalanceService
     await this.refundWithdrawalBalance({ id, userId: null, ntiqAmount: null });
   }
@@ -605,14 +605,14 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
    * Refund withdrawal balance (helper method)
    */
   private async refundWithdrawalBalance(withdrawal: any): Promise<void> {
-    const withdrawalData = withdrawal.userId ? 
-      [withdrawal] : 
+    const withdrawalData = withdrawal.userId ?
+      [withdrawal] :
       await db.select().from(withdrawals).where(eq(withdrawals.id, withdrawal.id)).limit(1);
-    
+
     if (withdrawalData.length > 0) {
       try {
         const { BalanceService } = await import('./services/balanceService.js');
-        
+
         await BalanceService.processTransaction({
           userId: withdrawalData[0].userId,
           type: 'withdrawal_refund',
@@ -620,7 +620,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
           description: `Withdrawal refund - Processing error prevented blockchain transaction`,
           relatedId: withdrawalData[0].id
         }, this.storage);
-        
+
         console.log(`💰 [AUTO-WD] Refunded ${withdrawalData[0].ntiqAmount} NTIQ to user ${withdrawalData[0].userId}`);
       } catch (error) {
         console.error(`❌ [AUTO-WD] Failed to refund balance for withdrawal ${withdrawal.id}:`, error);
@@ -633,12 +633,12 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
    */
   private async flagForManualReview(withdrawal: any): Promise<void> {
     await this.updateWithdrawalStatus(
-      withdrawal.id, 
-      'pending', 
-      undefined, 
+      withdrawal.id,
+      'pending',
+      undefined,
       'Requires manual review - exceeds auto-approval threshold'
     );
-    
+
     await this.sendManualReviewNotification(withdrawal);
   }
 
@@ -648,7 +648,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
   private resetDailyCounterIfNeeded(): void {
     const now = new Date();
     const diffHours = (now.getTime() - this.lastDailyReset.getTime()) / (1000 * 60 * 60);
-    
+
     if (diffHours >= 24) {
       this.dailyWithdrawalTotal = 0;
       this.lastDailyReset = now;
@@ -706,9 +706,9 @@ Amount: ${withdrawal.ntiqAmount} NTIQ
 Blockchain TX: ${txHash}
 Problem: Transaction sent to blockchain but balance deduction failed!
 Manual correction required IMMEDIATELY!`;
-    
+
     console.error(criticalMessage, error);
-    
+
     if (this.config.webhookUrl) {
       try {
         await axios.post(this.config.webhookUrl, {
@@ -724,7 +724,7 @@ Manual correction required IMMEDIATELY!`;
 // Secure configuration using environment variables only
 export const defaultAutoWithdrawalConfig: AutoWithdrawalConfig = {
   adminPrivateKey: process.env.ADMIN_PRIVATE_KEY || '',
-  
+
   networks: {
     'ethereum': {
       rpcUrl: process.env.ETHEREUM_RPC_URL || '',
@@ -795,13 +795,23 @@ export const defaultAutoWithdrawalConfig: AutoWithdrawalConfig = {
         USDC: process.env.HOLESKY_USDC_CONTRACT || '0x449cde79f489e2ae32e6314d8d966ca64e040409',
         USDT: process.env.HOLESKY_USDT_CONTRACT || '0x87350147a24099bf1e7e677576f01c1415857c75'
       }
+    },
+    'polygon-amoy': {
+      rpcUrl: process.env.AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology',
+      chainId: 80002,
+      gasLimit: '100000',
+      maxGasPrice: '30', // 30 gwei for Polygon Amoy
+      tokenContracts: {
+        USDC: process.env.AMOY_USDC_CONTRACT || '0x8B0180f2101c8260d49339abfEe87927412494B4',
+        USDT: process.env.AMOY_USDT_CONTRACT || '0x2c852e740B62308c46DD29B982FBb650D063Bd07'
+      }
     }
   },
-  
+
   maxDailyWithdrawal: parseInt(process.env.MAX_DAILY_WITHDRAWAL || '10000'), // $10,000 per hari
   maxSingleWithdrawal: parseInt(process.env.MAX_SINGLE_WITHDRAWAL || '1000'), // $1,000 per transaksi
   autoApprovalThreshold: parseInt(process.env.AUTO_APPROVAL_THRESHOLD || '500'), // Auto approve jika dibawah $500
-  
+
   webhookUrl: process.env.WEBHOOK_URL,
   emailNotification: process.env.ADMIN_EMAIL
 };

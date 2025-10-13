@@ -36,12 +36,22 @@ export class WithdrawalScheduler {
             USDC: '0x449cde79f489e2ae32e6314d8d966ca64e040409', // Official Circle USDC on Holesky
             USDT: '0x87350147a24099bf1e7e677576f01c1415857c75'  // Verified USDT on Holesky
           }
+        },
+        'polygon-amoy': {
+          rpcUrl: process.env.AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology',
+          chainId: 80002,
+          gasLimit: '100000',
+          maxGasPrice: '30',
+          tokenContracts: {
+            USDC: process.env.AMOY_USDC_CONTRACT || '0x8B0180f2101c8260d49339abfEe87927412494B4',
+            USDT: process.env.AMOY_USDT_CONTRACT || '0x2c852e740B62308c46DD29B982FBb650D063Bd07'
+          }
         }
       }
     };
-    
+
     console.log(`🌐 [SCHEDULER] Using Sepolia RPC: ${dynamicConfig.networks.sepolia.rpcUrl}`);
-    
+
     // Initialize automated withdrawal service dengan konfigurasi
     this.autoWithdrawalService = new AutomatedWithdrawalService(
       dynamicConfig,
@@ -60,15 +70,15 @@ export class WithdrawalScheduler {
     }
 
     console.log(`🚀 [SCHEDULER] Starting automated withdrawal processing every ${intervalMinutes} minutes`);
-    
+
     // Jalankan sekali di awal
     this.processWithdrawals();
-    
+
     // Setup interval
     this.intervalId = setInterval(() => {
       this.processWithdrawals();
     }, intervalMinutes * 60 * 1000);
-    
+
     this.isRunning = true;
   }
 
@@ -99,13 +109,13 @@ export class WithdrawalScheduler {
     try {
       const startTime = new Date();
       console.log(`🔄 [SCHEDULER] Starting withdrawal processing at ${startTime.toISOString()}`);
-      
+
       await this.autoWithdrawalService.processAllPendingWithdrawals();
-      
+
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
       console.log(`✅ [SCHEDULER] Withdrawal processing completed in ${duration}ms`);
-      
+
     } catch (error) {
       console.error('❌ [SCHEDULER] Error in automated withdrawal processing:', error);
     }
@@ -147,7 +157,7 @@ export function setupAutomatedWithdrawals(storage: IStorage): void {
   // Check environment variables - enable by default if ADMIN_PRIVATE_KEY is available
   const enableAutomation = process.env.ENABLE_AUTO_WITHDRAWALS !== 'false'; // Enable by default
   const intervalMinutes = parseInt(process.env.WITHDRAWAL_CHECK_INTERVAL || '5');
-  
+
   if (!enableAutomation) {
     console.log('ℹ️ [AUTO-WD] Automated withdrawals disabled via environment variable');
     return;
@@ -161,7 +171,7 @@ export function setupAutomatedWithdrawals(storage: IStorage): void {
   // Start automated withdrawal processing
   const scheduler = getWithdrawalScheduler(storage);
   scheduler.startScheduler(intervalMinutes);
-  
+
   console.log(`✅ [AUTO-WD] Automated withdrawal system initialized`);
   console.log(`📋 [AUTO-WD] Processing interval: ${intervalMinutes} minutes`);
   console.log(`🔑 [AUTO-WD] Admin private key configured: ${process.env.ADMIN_PRIVATE_KEY ? 'Yes' : 'No'}`);

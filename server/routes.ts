@@ -5712,7 +5712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           uniqueTransactionId: deposits.uniqueTransactionId,
           userId: deposits.userId,
           type: sql`'deposit'`.as('type'),
-          amount: deposits.ntiqAmount, // Use correct column name from deposits table
+          amount: sql`ROUND(${deposits.amountUSD} * 1000000)`, // Convert USD to smallest unit (multiply by 1M for USDC)
           usdAmount: deposits.amountUSD, // Use amount_usd from deposits table (correct column name)
           ethPriceSnapshot: deposits.ethPriceSnapshot, // ✅ CRITICAL: Add ethPriceSnapshot field for frontend calculations
           status: deposits.status,
@@ -8862,8 +8862,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rate limiting for transaction history endpoints
+  const transactionHistoryRateLimit = new Map();
+  const TRANSACTION_HISTORY_RATE_LIMIT = 10; // 10 requests per minute
+  const TRANSACTION_HISTORY_WINDOW = 60000; // 1 minute
+
+  const checkTransactionHistoryRateLimit = (req: any, res: any, next: any) => {
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+
+    if (!transactionHistoryRateLimit.has(clientIP)) {
+      transactionHistoryRateLimit.set(clientIP, { count: 1, resetTime: now + TRANSACTION_HISTORY_WINDOW });
+      return next();
+    }
+
+    const clientData = transactionHistoryRateLimit.get(clientIP);
+
+    if (now > clientData.resetTime) {
+      transactionHistoryRateLimit.set(clientIP, { count: 1, resetTime: now + TRANSACTION_HISTORY_WINDOW });
+      return next();
+    }
+
+    if (clientData.count >= TRANSACTION_HISTORY_RATE_LIMIT) {
+      return res.status(429).json({
+        message: "Too many requests. Please try again later.",
+        retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
+      });
+    }
+
+    clientData.count++;
+    next();
+  };
+
   // Get user deposits
-  app.get("/api/user/deposits", async (req, res) => {
+  app.get("/api/user/deposits", checkTransactionHistoryRateLimit, async (req, res) => {
     try {
       const session = req.session as any;
       console.log('🔍 [SESSION-DEBUG] Deposit endpoint access attempt:', {
@@ -9290,7 +9322,7 @@ Manual balance correction required IMMEDIATELY!`;
   });
 
   // Get user withdrawals
-  app.get("/api/user/withdrawals", async (req, res) => {
+  app.get("/api/user/withdrawals", checkTransactionHistoryRateLimit, async (req, res) => {
     try {
       const session = req.session as any;
       if (!session?.userId) {
@@ -9445,9 +9477,15 @@ Manual balance correction required IMMEDIATELY!`;
         : ethers.parseUnits(tokenAmount.toFixed(decimals), decimals);
 
       // Create message hash for signature (matching contract's verification)
+      // Contract expects: keccak256(abi.encodePacked(user, token, amount, nonce, address(this)))
+      const vaultAddress = process.env.MULTI_TOKEN_VAULT_ADDRESS;
+      if (!vaultAddress) {
+        return res.status(500).json({ message: "Vault address not configured" });
+      }
+
       const messageHash = ethers.solidityPackedKeccak256(
-        ['address', 'uint256', 'uint256'],
-        [userAddress, amountInWei, nonce]
+        ['address', 'address', 'uint256', 'uint256', 'address'],
+        [userAddress, tokenAddress, amountInWei, nonce, vaultAddress]
       );
 
       // Sign the message with backend signer

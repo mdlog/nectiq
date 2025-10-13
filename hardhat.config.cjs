@@ -24,6 +24,14 @@ module.exports = {
       gasPrice: 30000000000, // 30 gwei
       timeout: 60000
     },
+    // Polygon Mainnet
+    polygon: {
+      url: "https://polygon-rpc.com",
+      accounts: [DEPLOYER_PRIVATE_KEY],
+      chainId: 137,
+      gasPrice: 30000000000, // 30 gwei
+      timeout: 60000
+    },
     // Hardhat local network
     hardhat: {
       chainId: 31337
@@ -31,6 +39,7 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
+      polygon: POLYGONSCAN_API_KEY,
       polygonAmoy: POLYGONSCAN_API_KEY
     },
     customChains: [

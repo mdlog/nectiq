@@ -205,6 +205,8 @@ export function MultiTokenVaultWithdrawalModal({
         reset: resetWithdraw
     } = useWriteContract({
         mutation: {
+            retry: 3,
+            retryDelay: 2000,
             onSuccess: (hash) => {
                 console.log('✅ [MULTI-TOKEN-WITHDRAWAL] Withdrawal transaction sent:', hash);
                 toast({
@@ -325,6 +327,7 @@ export function MultiTokenVaultWithdrawalModal({
                     abi: VAULT_POL_ABI,
                     functionName: 'withdrawPOL',
                     args: [BigInt(amount), BigInt(nonce), signature as `0x${string}`],
+                    gas: 200000n, // Set explicit gas limit for POL withdrawal
                 });
             } else {
                 console.log('🚀 [MULTI-TOKEN-WITHDRAWAL] Withdrawing', token.symbol, '...');
@@ -333,6 +336,7 @@ export function MultiTokenVaultWithdrawalModal({
                     abi: VAULT_TOKEN_ABI,
                     functionName: 'withdrawToken',
                     args: [token.address, BigInt(amount), BigInt(nonce), signature as `0x${string}`],
+                    gas: 200000n, // Set explicit gas limit for withdrawal
                 });
             }
         } catch (error: any) {
