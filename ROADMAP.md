@@ -7,7 +7,7 @@
 *10 Waves of Progressive Development - 5 Months Journey*
 
 ![Buildathons](https://img.shields.io/badge/Polygon-Buildathons-8247E5.svg)
-![Progress](https://img.shields.io/badge/Current-Wave%201-blue.svg)
+![Progress](https://img.shields.io/badge/Current-Wave%204-green.svg)
 ![Duration](https://img.shields.io/badge/Duration-5%20Months-green.svg)
 ![Decentralization](https://img.shields.io/badge/Decentralization-10%25→100%25-orange.svg)
 
@@ -27,27 +27,33 @@
 
 ## 🚀 Current Deployment Status
 
-### **Live on Sepolia Testnet** 🧪
+### **Live on Polygon Amoy Testnet** 🧪
 
-NECTIQ is currently deployed and operational on the **Ethereum Sepolia Testnet** for development and testing purposes. This allows us to:
+NECTIQ is currently deployed and operational on the **Polygon Amoy Testnet** with full smart contract integration. This allows us to:
 
 - ✅ **Test all features** without real financial risk
 - ✅ **Gather user feedback** before mainnet launch
 - ✅ **Iterate quickly** on improvements
 - ✅ **Demonstrate functionality** to Polygon Buildathons judges
 - ✅ **Perfect the user experience** before production
+- ✅ **Real NTIQ token integration** with blockchain balance
+- ✅ **Multi-Token Vault smart contract** for deposits/withdrawals
 
 **Network Details:**
-- **Network:** Ethereum Sepolia Testnet
-- **Chain ID:** 11155111
-- **RPC:** `https://eth-sepolia.public.blastapi.io`
-- **Explorer:** `https://sepolia.etherscan.io`
-- **Faucet:** Available for test ETH
+- **Network:** Polygon Amoy Testnet
+- **Chain ID:** 80002
+- **RPC:** `https://polygon-amoy.infura.io/v3/your_project_id`
+- **Explorer:** `https://amoy.polygonscan.com`
+- **Faucet:** Available for test MATIC
 
 **What's Working:**
 - 🎮 Full prediction gaming functionality
 - 💰 Multi-wallet authentication (MetaMask, WalletConnect, etc.)
 - 📊 Real-time Pyth Network price feeds
+- 🪙 **Real NTIQ token** deployed and integrated
+- 🏦 **Multi-Token Vault** for instant deposits/withdrawals
+- 📈 **Transaction history** with real-time updates
+- 💎 **Individual user vault balances** tracking
 - 💸 Deposit/withdrawal simulation (testnet tokens)
 - 🏆 Tournaments, battles, and challenges
 - 📈 Live leaderboards and statistics

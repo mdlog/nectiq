@@ -23,7 +23,6 @@ import { handleReferralFromURL } from "@/lib/referralHandler";
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
-import TestPage from "@/test-page";
 
 // Simple console test to verify React rendering
 console.log('🚀 Starting Nectiq application...');
@@ -88,9 +87,6 @@ function Router() {
       {/* Home page - conditional content based on authentication */}
       <Route path="/" component={Dashboard} />
       <Route path="/home" component={Dashboard} />
-
-      {/* Test route to verify React rendering */}
-      <Route path="/test" component={TestPage} />
 
       <Route path="/user-dashboard">
         <ProtectedRoute requireWallet={true}>

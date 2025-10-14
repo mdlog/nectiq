@@ -108,11 +108,12 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 - Strategic gameplay
 
 #### 5. **Financial Management**
-- **Multi-chain deposits** (ETH, USDC, USDT)
+- **Multi-chain deposits** (POL, WETH, USDC, USDT, LINK)
 - **Automated deposit verification** (1-2 minutes)
-- **Safe withdrawals** with manual admin approval
-- **Transaction history** tracking
-- **Balance auditing** with transaction logs
+- **Smart contract withdrawals** (instant & automated)
+- **Transaction history** tracking with real-time updates
+- **Real NTIQ token balance** from blockchain
+- **Individual vault balances** per user
 
 ### 🔧 Technical Features
 
@@ -136,6 +137,8 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 - ✅ **Transaction Verification**
 - ✅ **Blockchain Explorer APIs**
 - ✅ **Gas Fee Optimization**
+- ✅ **NTIQ Token Integration** (real token balance)
+- ✅ **Multi-Token Vault Smart Contract**
 
 ---
 
@@ -164,8 +167,10 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 ### Blockchain & APIs
 - **Price Feeds:** Pyth Network
 - **Blockchain APIs:** Etherscan, BSCScan, BaseScan, Arbiscan, Optimism Etherscan
-- **Networks:** Ethereum, Base, BSC, Optimism, Arbitrum, Sepolia, Holesky
+- **Networks:** Ethereum, Base, BSC, Optimism, Arbitrum, Sepolia, Holesky, Polygon Amoy
 - **Wallets:** MetaMask, WalletConnect, Coinbase Wallet, Pelagus
+- **Smart Contracts:** NTIQ Token, Multi-Token Vault
+- **Development:** Hardhat, OpenZeppelin Contracts
 
 ### DevOps & Tools
 - **Package Manager:** npm
@@ -255,6 +260,15 @@ ETHERSCAN_API_KEY=your_etherscan_api_key_here
 # Wallets
 ADMIN_WALLET_ADDRESSES=0xYourAdminWallet
 DEPOSIT_WALLET_ADDRESS=0xYourDepositWallet
+DEPLOYER_PRIVATE_KEY=your_deployer_private_key
+
+# NTIQ Token (Polygon Amoy)
+NTIQ_TOKEN_ADDRESS_AMOY=0xYourDeployedNTIQTokenAddress
+POLYGON_AMOY_RPC_URL=https://polygon-amoy.infura.io/v3/your_project_id
+
+# Multi-Token Vault
+MULTI_TOKEN_VAULT_ADDRESS=0xYourDeployedVaultAddress
+BACKEND_SIGNER_PRIVATE_KEY=your_backend_signer_private_key
 
 # Session
 SESSION_SECRET=generate_a_strong_random_secret

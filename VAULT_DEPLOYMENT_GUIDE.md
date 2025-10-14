@@ -1,6 +1,6 @@
-# 🚀 VAULT DEPLOYMENT & TESTING GUIDE
+# 🚀 MULTI-TOKEN VAULT DEPLOYMENT & TESTING GUIDE
 
-Complete step-by-step guide to deploy and test the NectiqVault smart contract on Polygon Amoy.
+Complete step-by-step guide to deploy and test the MultiTokenVault smart contract on Polygon Amoy with real NTIQ token integration.
 
 ---
 
@@ -10,17 +10,23 @@ All necessary files have been created:
 
 ### Smart Contract & Deployment
 - ✅ `hardhat.config.cjs` - Hardhat configuration for Polygon Amoy
-- ✅ `contracts/NectiqVault.sol` - Smart contract (650+ lines)
-- ✅ `scripts/deploy-vault.cjs` - Deployment script with verification
+- ✅ `contracts/MultiTokenVault.sol` - Multi-token vault smart contract
+- ✅ `contracts/NTIQToken.sol` - NTIQ token smart contract (deployed)
+- ✅ `scripts/deploy-multi-token-vault.cjs` - Deployment script with verification
+- ✅ `scripts/deploy-ntiq-polygon-amoy.cjs` - NTIQ token deployment script
 - ✅ `VAULT_ENV_SETUP.txt` - Environment variables guide
 
 ### Backend Integration
-- ✅ `server/services/vaultEventListener.ts` - Event listener service
-- ✅ `server/routes.ts` - Added `/api/vault/withdrawal-signature` endpoint
+- ✅ `server/services/multiTokenVaultEventListener.ts` - Event listener service
+- ✅ `server/services/ntiqTokenService.ts` - NTIQ token interaction service
+- ✅ `server/routes.ts` - Added `/api/user/real-balance` endpoint
+- ✅ `server/storage.ts` - Real token balance integration
 
 ### Frontend Components
-- ✅ `client/src/components/VaultDepositModal.tsx` - Deposit UI
-- ✅ `client/src/components/VaultWithdrawalModal.tsx` - Withdrawal UI
+- ✅ `client/src/components/MultiTokenVaultDepositModal.tsx` - Deposit UI
+- ✅ `client/src/components/MultiTokenVaultWithdrawalModal.tsx` - Withdrawal UI
+- ✅ `client/src/components/transaction-history.tsx` - Transaction history
+- ✅ `client/src/pages/user-dashboard.tsx` - Real balance integration
 
 ---
 

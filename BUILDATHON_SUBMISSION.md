@@ -32,9 +32,10 @@
 
 **5. Complete DeFi Integration**
 - Wallet-based authentication (MetaMask, WalletConnect, Coinbase Wallet)
-- On-chain deposit/withdrawal system with blockchain verification
-- Native token (NTIQ) for platform economy
-- Transparent balance tracking and audit trails
+- Multi-Token Vault smart contract for instant deposits/withdrawals
+- Real NTIQ token deployed on Polygon Amoy with blockchain balance integration
+- Individual user vault balances tracking (POL, WETH, USDC, USDT, LINK)
+- Transparent transaction history with real-time updates
 
 **6. Social & Gamification Features**
 - Global leaderboard with ranking system
