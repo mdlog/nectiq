@@ -405,6 +405,14 @@ export function MultiChainFinancial() {
     staleTime: 30000,
   });
 
+  // Get real NTIQ balance from blockchain
+  const { data: realBalanceData, refetch: refetchRealBalance, isLoading: isRealBalanceLoading } = useQuery({
+    queryKey: ["/api/user/real-balance"],
+    enabled: !!user, // Only fetch when user is authenticated
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 10000, // Consider data stale after 10 seconds
+  });
+
   // Query to get deposit history
   const { data: deposits, isLoading: depositsLoading, refetch: refetchDeposits } = useQuery({
     queryKey: ["/api/user/deposits"],
@@ -837,7 +845,8 @@ export function MultiChainFinancial() {
     }
 
     const ntiqAmount = parseInt(withdrawAmount);
-    if (ntiqAmount > user.balance) {
+    const realBalance = realBalanceData?.realNTIQBalance || user.balance || 0;
+    if (ntiqAmount > realBalance) {
       toast({
         title: "Error",
         description: "Insufficient NTIQ balance",
@@ -1401,11 +1410,17 @@ export function MultiChainFinancial() {
               <h3 className="text-lg font-medium opacity-90">Your NTIQ Balance</h3>
               <div className="flex items-center space-x-2 mt-2">
                 <Coins className="w-6 h-6" />
-                <span className="text-3xl font-bold">{user?.balance?.toLocaleString() || "0"}</span>
+                <span className="text-3xl font-bold">
+                  {isRealBalanceLoading ? (
+                    <RefreshCw className="w-6 h-6 animate-spin" />
+                  ) : (
+                    realBalanceData?.realNTIQBalance?.toLocaleString() || user?.balance?.toLocaleString() || "0"
+                  )}
+                </span>
                 <span className="text-sm opacity-80">NTIQ</span>
               </div>
               <p className="text-sm opacity-70 mt-1">
-                ≈ ${((user?.balance || 0) * 0.01).toFixed(2)} USD (1 NTIQ = $0.01)
+                ≈ ${((realBalanceData?.realNTIQBalance || user?.balance || 0) * 0.01).toFixed(2)} USD (1 NTIQ = $0.01)
               </p>
             </div>
             <div className="text-right">
@@ -1541,7 +1556,7 @@ export function MultiChainFinancial() {
                 <Button
                   onClick={() => setShowMultiTokenWithdrawalModal(true)}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold"
-                  disabled={!user?.balance || user.balance < 10}
+                  disabled={!(realBalanceData?.realNTIQBalance || user?.balance) || (realBalanceData?.realNTIQBalance || user?.balance || 0) < 10}
                 >
                   <ArrowUpCircle className="w-4 h-4 mr-2" />
                   Withdraw Tokens
@@ -1588,7 +1603,7 @@ export function MultiChainFinancial() {
       <MultiTokenVaultWithdrawalModal
         isOpen={showMultiTokenWithdrawalModal}
         onClose={() => setShowMultiTokenWithdrawalModal(false)}
-        userNTIQBalance={user?.balance || 0}
+        userNTIQBalance={realBalanceData?.realNTIQBalance || user?.balance || 0}
         onSuccess={() => {
           setShowMultiTokenWithdrawalModal(false);
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });

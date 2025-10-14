@@ -3,7 +3,7 @@ const fs = require("fs");
 
 async function main() {
     const network = "amoy"; // Polygon Amoy testnet
-    console.log(`\n🚀 Deploying NTIQ Token to Polygon Amoy Testnet...`);
+    console.log(`\n🚀 Deploying NTIQ Token Simple to Polygon Amoy Testnet...`);
 
     const [deployer] = await ethers.getSigners();
 
@@ -19,19 +19,19 @@ async function main() {
         return;
     }
 
-    console.log("\n📋 NTIQ TOKEN DEPLOYMENT PLAN:");
-    console.log("1. Deploy NTIQToken Contract");
+    console.log("\n📋 NTIQ TOKEN SIMPLE DEPLOYMENT PLAN:");
+    console.log("1. Deploy NTIQTokenSimple Contract");
     console.log("2. Initialize token distribution");
     console.log("3. Setup initial allocations");
     console.log("4. Verify deployment");
     console.log("5. Save deployment info");
     console.log("\nStarting deployment...\n");
 
-    // Deploy NTIQ Token
-    console.log("1️⃣ Deploying NTIQToken...");
-    const NTIQToken = await ethers.getContractFactory("NTIQToken");
+    // Deploy NTIQ Token Simple
+    console.log("1️⃣ Deploying NTIQTokenSimple...");
+    const NTIQTokenSimple = await ethers.getContractFactory("NTIQTokenSimple");
 
-    console.log("   📝 Contract bytecode size:", NTIQToken.bytecode.length / 2, "bytes");
+    console.log("   📝 Contract bytecode size:", NTIQTokenSimple.bytecode.length / 2, "bytes");
     console.log("   ⏳ Deploying contract...");
 
     // Set treasury and operations wallet addresses
@@ -41,30 +41,11 @@ async function main() {
     console.log(`   DAO Treasury: ${treasuryAddress}`);
     console.log(`   Operations Wallet: ${opsWalletAddress}`);
 
-    // Deploy contract
-    let ntiqToken;
-    console.log("   🔍 Estimating gas...");
-    try {
-        const deploymentTx = await NTIQToken.getDeployTransaction(treasuryAddress, opsWalletAddress);
-        const gasEstimate = await ethers.provider.estimateGas(deploymentTx);
-        console.log(`   ⛽ Gas estimate: ${gasEstimate.toString()}`);
+    const ntiqToken = await NTIQTokenSimple.deploy(treasuryAddress, opsWalletAddress);
+    console.log("   ⏳ Waiting for deployment confirmation...");
+    await ntiqToken.waitForDeployment();
 
-        // Deploy with gas limit
-        ntiqToken = await NTIQToken.deploy(treasuryAddress, opsWalletAddress, {
-            gasLimit: gasEstimate * 120n / 100n // 20% buffer
-        });
-        console.log("   ⏳ Waiting for deployment confirmation...");
-        await ntiqToken.waitForDeployment();
-    } catch (gasError) {
-        console.log("   ❌ Gas estimation failed:", gasError.message);
-        console.log("   🔄 Trying deployment without gas estimation...");
-
-        ntiqToken = await NTIQToken.deploy(treasuryAddress, opsWalletAddress);
-        console.log("   ⏳ Waiting for deployment confirmation...");
-        await ntiqToken.waitForDeployment();
-    }
-
-    console.log("✅ NTIQToken deployed to:", await ntiqToken.getAddress());
+    console.log("✅ NTIQTokenSimple deployed to:", await ntiqToken.getAddress());
 
     // Get token info
     console.log("\n2️⃣ Getting token information...");
@@ -114,9 +95,27 @@ async function main() {
     if (deployerBalance > 0n) {
         console.log("   Testing transfer functionality...");
         try {
-            const transferAmount = ethers.parseEther("1");
+            const transferAmount = ethers.parseEther("100");
             if (deployerBalance >= transferAmount) {
                 console.log("   ✓ Transfer function available");
+
+                // Create a test recipient (using a valid address)
+                const testRecipient = "0x742d35Cc6634C0532925a3b8D5B8E0e7B8C8F8F8";
+                console.log(`   📤 Transferring ${ethers.formatEther(transferAmount)} ${symbol} to test recipient...`);
+
+                try {
+                    const transferTx = await ntiqToken.transfer(testRecipient, transferAmount);
+                    await transferTx.wait();
+
+                    const newBalance = await ntiqToken.balanceOf(deployer.address);
+                    const recipientBalance = await ntiqToken.balanceOf(testRecipient);
+
+                    console.log(`   ✅ Transfer successful!`);
+                    console.log(`   Deployer new balance: ${ethers.formatEther(newBalance)} ${symbol}`);
+                    console.log(`   Recipient balance: ${ethers.formatEther(recipientBalance)} ${symbol}`);
+                } catch (transferError) {
+                    console.log("   ⚠️ Transfer failed (likely address checksum issue):", transferError.message);
+                }
             }
         } catch (error) {
             console.log("   ⚠️ Transfer test failed:", error.message);
@@ -126,7 +125,24 @@ async function main() {
     // Test burn functionality
     console.log("   Testing burn functionality...");
     try {
-        console.log("   ✓ Burn function available");
+        const burnAmount = ethers.parseEther("10");
+        const currentBalance = await ntiqToken.balanceOf(deployer.address);
+
+        if (currentBalance >= burnAmount) {
+            console.log(`   🔥 Burning ${ethers.formatEther(burnAmount)} ${symbol}...`);
+
+            const burnTx = await ntiqToken.burn(burnAmount);
+            await burnTx.wait();
+
+            const newBalance = await ntiqToken.balanceOf(deployer.address);
+            const newTotalSupply = await ntiqToken.totalSupply();
+
+            console.log("   ✅ Burn successful!");
+            console.log(`   New balance: ${ethers.formatEther(newBalance)} ${symbol}`);
+            console.log(`   New total supply: ${ethers.formatEther(newTotalSupply)} ${symbol}`);
+        } else {
+            console.log("   ⚠️ Insufficient balance for burn test");
+        }
     } catch (error) {
         console.log("   ⚠️ Burn test failed:", error.message);
     }
@@ -136,6 +152,22 @@ async function main() {
     try {
         const isPaused = await ntiqToken.paused();
         console.log(`   ✓ Pause function available (Currently paused: ${isPaused})`);
+
+        if (!isPaused) {
+            console.log("   ⏸️ Testing pause...");
+            const pauseTx = await ntiqToken.pause();
+            await pauseTx.wait();
+
+            const pausedState = await ntiqToken.paused();
+            console.log(`   ✅ Token paused successfully! Paused: ${pausedState}`);
+
+            console.log("   ▶️ Testing unpause...");
+            const unpauseTx = await ntiqToken.unpause();
+            await unpauseTx.wait();
+
+            const finalPausedState = await ntiqToken.paused();
+            console.log(`   ✅ Token unpaused successfully! Paused: ${finalPausedState}`);
+        }
     } catch (error) {
         console.log("   ⚠️ Pause test failed:", error.message);
     }
@@ -146,7 +178,7 @@ async function main() {
         chainId: 80002,
         deployer: deployer.address,
         contracts: {
-            NTIQToken: ntiqToken.address
+            NTIQTokenSimple: await ntiqToken.getAddress()
         },
         tokenInfo: {
             name: name,
@@ -169,24 +201,22 @@ async function main() {
         blockExplorerUrls: {
             polygonAmoy: `https://amoy.polygonscan.com`
         },
-        deploymentTime: new Date().toISOString(),
-        gasUsed: "TBD", // Will be filled after transaction receipt
-        transactionHash: "TBD" // Will be filled after transaction receipt
+        deploymentTime: new Date().toISOString()
     };
 
     // Save deployment info to file
-    const fileName = `ntiq-deployment-polygon-amoy-${Date.now()}.json`;
+    const fileName = `ntiq-simple-deployment-polygon-amoy-${Date.now()}.json`;
     fs.writeFileSync(fileName, JSON.stringify(deploymentInfo, null, 2));
 
     console.log("\n" + "=".repeat(80));
-    console.log(`🎉 NTIQ TOKEN DEPLOYMENT TO POLYGON AMOY SUCCESSFUL!`);
+    console.log(`🎉 NTIQ TOKEN SIMPLE DEPLOYMENT TO POLYGON AMOY SUCCESSFUL!`);
     console.log("=".repeat(80));
 
     console.log("\n📋 CONTRACT ADDRESS:");
-    console.log(`NTIQToken: ${ntiqToken.address}`);
+    console.log(`NTIQTokenSimple: ${await ntiqToken.getAddress()}`);
 
     console.log("\n🔗 BLOCK EXPLORER LINKS:");
-    console.log(`NTIQToken: https://amoy.polygonscan.com/address/${ntiqToken.address}`);
+    console.log(`NTIQTokenSimple: https://amoy.polygonscan.com/address/${await ntiqToken.getAddress()}`);
 
     console.log("\n💡 NEXT STEPS:");
     console.log("1. Verify contract on Polygonscan (optional)");
@@ -200,7 +230,7 @@ async function main() {
     console.log(`npx hardhat run scripts/test-ntiq-interaction.cjs --network amoy`);
 
     console.log("\n🔍 VERIFICATION COMMAND:");
-    console.log(`npx hardhat verify --network amoy ${ntiqToken.address}`);
+    console.log(`npx hardhat verify --network amoy ${await ntiqToken.getAddress()} "${treasuryAddress}" "${opsWalletAddress}"`);
 
     console.log("\n💾 Deployment info saved to:", fileName);
     console.log("=".repeat(80));
@@ -210,16 +240,16 @@ async function main() {
     try {
         const envContent = fs.readFileSync('.env', 'utf8');
         const updatedEnvContent = envContent.replace(
-            /NTIQ_TOKEN_ADDRESS=.*/,
-            `NTIQ_TOKEN_ADDRESS=${ntiqToken.address}`
+            /NTIQ_TOKEN_SIMPLE_ADDRESS=.*/,
+            `NTIQ_TOKEN_SIMPLE_ADDRESS=${await ntiqToken.getAddress()}`
         );
 
-        if (!envContent.includes('NTIQ_TOKEN_ADDRESS')) {
-            fs.appendFileSync('.env', `\nNTIQ_TOKEN_ADDRESS=${ntiqToken.address}\n`);
-            console.log("✅ Added NTIQ_TOKEN_ADDRESS to .env file");
+        if (!envContent.includes('NTIQ_TOKEN_SIMPLE_ADDRESS')) {
+            fs.appendFileSync('.env', `\nNTIQ_TOKEN_SIMPLE_ADDRESS=${await ntiqToken.getAddress()}\n`);
+            console.log("✅ Added NTIQ_TOKEN_SIMPLE_ADDRESS to .env file");
         } else {
             fs.writeFileSync('.env', updatedEnvContent);
-            console.log("✅ Updated NTIQ_TOKEN_ADDRESS in .env file");
+            console.log("✅ Updated NTIQ_TOKEN_SIMPLE_ADDRESS in .env file");
         }
     } catch (error) {
         console.log("⚠️ Could not update .env file:", error.message);
@@ -231,7 +261,7 @@ async function main() {
 main()
     .then(() => process.exit(0))
     .catch((error) => {
-        console.error("\n❌ NTIQ TOKEN DEPLOYMENT FAILED:");
+        console.error("\n❌ NTIQ TOKEN SIMPLE DEPLOYMENT FAILED:");
         console.error(error);
         process.exit(1);
     });

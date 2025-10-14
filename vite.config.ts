@@ -4,8 +4,25 @@ import path from "path";
 
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      // Completely disable React refresh to avoid preamble issues
+      fastRefresh: false,
+      include: "**/*.{jsx,tsx}",
+      exclude: /node_modules/,
+    }),
   ],
+  define: {
+    global: 'globalThis',
+  },
+  server: {
+    hmr: false, // Disable hot module replacement
+  },
+  build: {
+    minify: false, // Disable minification for debugging
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom']
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),

@@ -23,16 +23,17 @@ import { handleReferralFromURL } from "@/lib/referralHandler";
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
+import TestPage from "@/test-page";
 
 // Simple console test to verify React rendering
 console.log('🚀 Starting Nectiq application...');
 
 function TestApp() {
   console.log('✅ TestApp rendered successfully!');
-  
+
   return (
-    <div style={{ 
-      padding: '20px', 
+    <div style={{
+      padding: '20px',
       fontFamily: 'Arial, sans-serif',
       background: '#f0f0f0',
       minHeight: '100vh'
@@ -87,7 +88,10 @@ function Router() {
       {/* Home page - conditional content based on authentication */}
       <Route path="/" component={Dashboard} />
       <Route path="/home" component={Dashboard} />
-      
+
+      {/* Test route to verify React rendering */}
+      <Route path="/test" component={TestPage} />
+
       <Route path="/user-dashboard">
         <ProtectedRoute requireWallet={true}>
           <UserDashboard />
@@ -95,7 +99,7 @@ function Router() {
       </Route>
 
 
-      
+
       <Route path="/dashboard">
         <ProtectedRoute requireWallet={true}>
           <UserDashboard />
@@ -129,7 +133,7 @@ function Router() {
           <AdminPanel />
         </ProtectedRoute>
       </Route>
-      
+
       {/* Legacy admin route for backward compatibility */}
       <Route path="/admin-main/:tab?">
         <ProtectedRoute requireWallet={true} requireAdmin={true}>
@@ -195,17 +199,17 @@ function App() {
   // Show maintenance page if maintenance mode is active AND user is not admin
   const isAdmin = (adminData as { isAdmin?: boolean })?.isAdmin || false;
   const isInMaintenanceMode = !maintenanceLoading && (maintenanceData as { maintenanceMode?: boolean })?.maintenanceMode;
-  
+
   // Debug logging can be removed in production
   // console.log('🔍 [MAINTENANCE-CHECK] Maintenance mode:', isInMaintenanceMode);
   // console.log('🔍 [MAINTENANCE-CHECK] User is admin:', isAdmin);
   // console.log('🔍 [MAINTENANCE-CHECK] Wallet address:', address);
-  
+
   if (isInMaintenanceMode && !isAdmin) {
     console.log('🚫 [MAINTENANCE] Blocking user access - showing maintenance page');
     return <MaintenancePage />;
   }
-  
+
   if (isInMaintenanceMode && isAdmin) {
     console.log('✅ [MAINTENANCE] Admin detected - allowing full access during maintenance');
   }
@@ -216,9 +220,9 @@ function App() {
       <Toaster />
       {/* Show mobile warning as overlay instead of blocking access */}
       {showWarning && (
-        <MobileWarning 
-          isOpen={showWarning} 
-          onClose={dismissWarning} 
+        <MobileWarning
+          isOpen={showWarning}
+          onClose={dismissWarning}
         />
       )}
     </TooltipProvider>

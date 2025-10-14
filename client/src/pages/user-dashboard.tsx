@@ -136,6 +136,20 @@ export default function UserDashboard() {
     throwOnError: false, // Don't throw errors
   });
 
+  // Get real NTIQ balance from blockchain
+  const { data: realBalanceData, refetch: refetchRealBalance, isLoading: isRealBalanceLoading, error: realBalanceError } = useQuery({
+    queryKey: ["/api/user/real-balance"],
+    enabled: !!user, // Only fetch when user is authenticated
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 10000, // Consider data stale after 10 seconds
+    onSuccess: (data) => {
+      console.log('✅ [FRONTEND] Real balance data received:', data);
+    },
+    onError: (error) => {
+      console.error('❌ [FRONTEND] Real balance error:', error);
+    }
+  });
+
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -472,12 +486,42 @@ export default function UserDashboard() {
               <div className="text-center relative z-10">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Coins className="text-yellow-400 icon-glow-yellow" size={24} />
-                  <p className="text-professional-muted text-sm uppercase tracking-wider">Your Balance</p>
+                  <p className="text-professional-muted text-sm uppercase tracking-wider">Real NTIQ Balance</p>
+                  {realBalanceData?.realNTIQBalance !== undefined && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => refetchRealBalance()}
+                      className="h-6 w-6 p-0 hover:bg-yellow-500/20 ml-1"
+                      title="Refresh real balance"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isRealBalanceLoading ? 'animate-spin' : ''}`} />
+                    </Button>
+                  )}
                 </div>
                 <div className="balance-amount">
-                  {user?.balance?.toLocaleString() || "0"}
+                  {isRealBalanceLoading ? (
+                    <RefreshCw className="w-8 h-8 animate-spin mx-auto" />
+                  ) : realBalanceError ? (
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-yellow-300">{user?.balance?.toLocaleString() || "0"}</div>
+                      <div className="text-xs text-orange-300 mt-1">Database Balance</div>
+                    </div>
+                  ) : realBalanceData?.realNTIQBalance !== undefined ? (
+                    realBalanceData.realNTIQBalance.toLocaleString()
+                  ) : (
+                    user?.balance?.toLocaleString() || "0"
+                  )}
                 </div>
                 <p className="text-xl text-yellow-300 font-semibold">NTIQ</p>
+                {/* Database Balance Comparison */}
+                {realBalanceData?.databaseBalance !== undefined && realBalanceData.databaseBalance !== realBalanceData.realNTIQBalance && (
+                  <div className="mt-2 pt-2 border-t border-white/10">
+                    <div className="text-xs text-slate-400">
+                      DB: {realBalanceData.databaseBalance.toLocaleString()} NTIQ
+                    </div>
+                  </div>
+                )}
                 <div className="mt-4 pt-4 border-t border-white/10">
                   <div className="flex items-center justify-center gap-2">
                     {getRankBadge(stats?.rank)}
@@ -2147,6 +2191,14 @@ function UserProfile() {
     staleTime: 30000,
   });
 
+  // Get real NTIQ balance from blockchain
+  const { data: realBalanceData, refetch: refetchRealBalance, isLoading: isRealBalanceLoading } = useQuery({
+    queryKey: ["/api/user/real-balance"],
+    enabled: !!user, // Only fetch when user is authenticated
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 10000, // Consider data stale after 10 seconds
+  });
+
   // Fetch user tier information
   const { data: userTier } = useQuery({
     queryKey: ["/api/user/tier"],
@@ -2470,8 +2522,37 @@ function UserProfile() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-surface-light rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-400 dark:text-yellow-300">{user.balance?.toLocaleString() || "0"}</div>
-              <div className="text-sm text-yellow-200 dark:text-yellow-200">NTIQ Balance</div>
+              <div className="text-2xl font-bold text-yellow-400 dark:text-yellow-300">
+                {isRealBalanceLoading ? (
+                  <RefreshCw className="w-6 h-6 animate-spin mx-auto" />
+                ) : realBalanceError ? (
+                  <div className="text-center">
+                    <div className="text-lg font-bold">{user.balance?.toLocaleString() || "0"}</div>
+                    <div className="text-xs text-orange-300 mt-1">Database</div>
+                  </div>
+                ) : realBalanceData?.realNTIQBalance !== undefined ? (
+                  realBalanceData.realNTIQBalance.toLocaleString()
+                ) : (
+                  user.balance?.toLocaleString() || "0"
+                )}
+              </div>
+              <div className="text-sm text-yellow-200 dark:text-yellow-200">
+                {realBalanceError ? "Database NTIQ Balance" : "Real NTIQ Balance"}
+              </div>
+              {realBalanceData?.databaseBalance !== undefined && realBalanceData.databaseBalance !== realBalanceData.realNTIQBalance && (
+                <div className="text-xs text-slate-400 mt-1">
+                  DB: {realBalanceData.databaseBalance.toLocaleString()}
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetchRealBalance()}
+                className="h-6 w-6 p-0 hover:bg-yellow-500/20 mt-1"
+                title="Refresh real balance"
+              >
+                <RefreshCw className={`w-3 h-3 ${isRealBalanceLoading ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
             <div className="bg-surface-light rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-green-400">{user.totalPredictions?.toLocaleString() || "0"}</div>

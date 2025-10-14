@@ -282,6 +282,20 @@ export class DatabaseStorage implements IStorage {
       .insert(users)
       .values(normalizedUser)
       .returning();
+
+    // If user has wallet address, automatically distribute 1000 NTIQ tokens
+    if (normalizedUser.walletAddress) {
+      try {
+        const { ntiqTokenService } = await import('./services/ntiqTokenService');
+        const tokenAmount = 1000; // Always give 1000 NTIQ to new users with wallet
+        await ntiqTokenService.transferToUser(normalizedUser.walletAddress, tokenAmount);
+        console.log(`🎁 [USER-CREATION] Distributed ${tokenAmount} NTIQ tokens to new user ${normalizedUser.walletAddress}`);
+      } catch (error) {
+        console.error(`❌ [USER-CREATION] Failed to distribute NTIQ tokens to ${normalizedUser.walletAddress}:`, error);
+        // Continue with user creation even if token distribution fails
+      }
+    }
+
     return user;
   }
 
@@ -292,6 +306,35 @@ export class DatabaseStorage implements IStorage {
       .set({ balance })
       .where(eq(users.id, id));
     console.log(`✅ [BALANCE UPDATE] Database update completed for user ${id}, new balance: ${balance}`);
+  }
+
+  /**
+   * Get real NTIQ token balance from blockchain
+   */
+  async getUserRealNTIQBalance(walletAddress: string): Promise<number> {
+    try {
+      const { ntiqTokenService } = await import('./services/ntiqTokenService');
+      return await ntiqTokenService.getBalance(walletAddress);
+    } catch (error) {
+      console.error(`❌ [REAL-BALANCE] Failed to get real NTIQ balance for ${walletAddress}:`, error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get user with real NTIQ balance
+   */
+  async getUserWithRealBalance(id: number): Promise<User & { realNTIQBalance: number } | undefined> {
+    const user = await this.getUser(id);
+    if (!user || !user.walletAddress) {
+      return undefined;
+    }
+
+    const realBalance = await this.getUserRealNTIQBalance(user.walletAddress);
+    return {
+      ...user,
+      realNTIQBalance: realBalance
+    };
   }
 
   async updateUserStats(id: number, totalPredictions: number, correctPredictions: number, totalRewards: number): Promise<void> {

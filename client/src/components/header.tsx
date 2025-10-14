@@ -1,4 +1,4 @@
-import { ChartLine, Coins, User, LogOut, Menu, X, ChevronDown, Copy, Check, Wallet, UserCircle } from "lucide-react";
+import { ChartLine, Coins, User, LogOut, Menu, X, ChevronDown, Copy, Check, Wallet, UserCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { RainbowConnectButton } from "@/components/RainbowConnectButton";
@@ -7,19 +7,28 @@ import { useRainbowAuth } from "@/hooks/useRainbowAuth";
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { useState } from 'react';
+import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
 import nectiqLogo from "@/assets/nectiq-logo.png";
 
 export function Header() {
   // Use Rainbow Kit authentication hook
-  const { 
-    user, 
-    isConnected, 
-    address, 
-    logout, 
-    isLoggingOut 
+  const {
+    user,
+    isConnected,
+    address,
+    logout,
+    isLoggingOut
   } = useRainbowAuth();
-  
+
+  // Get real NTIQ balance from blockchain
+  const { data: realBalanceData, refetch: refetchRealBalance, isLoading: isRealBalanceLoading } = useQuery({
+    queryKey: ["/api/user/real-balance"],
+    enabled: !!user && !!address, // Only fetch when user is authenticated and wallet is connected
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 10000, // Consider data stale after 10 seconds
+  });
+
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -33,7 +42,7 @@ export function Header() {
         title: "Copied successfully",
         description: `${itemType} copied to clipboard`,
       });
-      
+
       // Reset icon after 2 seconds
       setTimeout(() => {
         setCopiedItem(null);
@@ -55,66 +64,60 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-14 sm:h-16">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <img 
-              src={nectiqLogo} 
-              alt="Nectiq - Tactics. Timing. Triumph." 
-              className="h-8 sm:h-12 rounded-lg p-1" 
-              style={{ 
+            <img
+              src={nectiqLogo}
+              alt="Nectiq - Tactics. Timing. Triumph."
+              className="h-8 sm:h-12 rounded-lg p-1"
+              style={{
                 backgroundColor: 'var(--surface)',
                 filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
                 mixBlendMode: 'screen'
               }}
             />
           </div>
-          
+
           <nav className="hidden md:flex space-x-8">
-            <button 
-              onClick={() => setLocation('/home')} 
-              className={`transition-colors ${
-                location === '/home' ? "text-white font-bold" : "text-slate-300 hover:text-white"
-              }`}
+            <button
+              onClick={() => setLocation('/home')}
+              className={`transition-colors ${location === '/home' ? "text-white font-bold" : "text-slate-300 hover:text-white"
+                }`}
             >
               Home
             </button>
-            <button 
-              onClick={() => setLocation('/battles')} 
-              className={`transition-colors ${
-                location === '/battles' ? "text-white font-bold" : "text-slate-300 hover:text-white"
-              }`}
+            <button
+              onClick={() => setLocation('/battles')}
+              className={`transition-colors ${location === '/battles' ? "text-white font-bold" : "text-slate-300 hover:text-white"
+                }`}
             >
               Battles
             </button>
-            <button 
-              onClick={() => setLocation('/parlay')} 
-              className={`transition-colors ${
-                location === '/parlay' ? "text-white font-bold" : "text-slate-300 hover:text-white"
-              }`}
+            <button
+              onClick={() => setLocation('/parlay')}
+              className={`transition-colors ${location === '/parlay' ? "text-white font-bold" : "text-slate-300 hover:text-white"
+                }`}
             >
               TrendRide
             </button>
-            <button 
-              onClick={() => setLocation('/survival')} 
-              className={`transition-colors ${
-                location === '/survival' ? "text-white font-bold" : "text-slate-300 hover:text-white"
-              }`}
+            <button
+              onClick={() => setLocation('/survival')}
+              className={`transition-colors ${location === '/survival' ? "text-white font-bold" : "text-slate-300 hover:text-white"
+                }`}
             >
               Survival
             </button>
-            <button 
-              onClick={() => setLocation('/leaderboard')} 
-              className={`transition-colors ${
-                location === '/leaderboard' ? "text-white font-bold" : "text-slate-300 hover:text-white"
-              }`}
+            <button
+              onClick={() => setLocation('/leaderboard')}
+              className={`transition-colors ${location === '/leaderboard' ? "text-white font-bold" : "text-slate-300 hover:text-white"
+                }`}
             >
               Leaderboard
             </button>
 
             {user?.isAdmin && (
-              <button 
-                onClick={() => setLocation('/admin')} 
-                className={`transition-colors font-semibold ${
-                  location === '/admin' ? "text-white font-bold" : "text-primary hover:text-primary/80"
-                }`}
+              <button
+                onClick={() => setLocation('/admin')}
+                className={`transition-colors font-semibold ${location === '/admin' ? "text-white font-bold" : "text-primary hover:text-primary/80"
+                  }`}
               >
                 Admin
               </button>
@@ -127,10 +130,16 @@ export function Header() {
             {isConnected && user && (
               <div className="flex items-center space-x-1 bg-surface-light px-2 py-1 rounded-lg">
                 <Coins className="text-warning" size={14} />
-                <span className="font-semibold text-xs text-yellow-400">{(user.balance || 0).toLocaleString()}</span>
+                <span className="font-semibold text-xs text-yellow-400">
+                  {isRealBalanceLoading ? (
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                  ) : (
+                    (realBalanceData?.realNTIQBalance || user.balance || 0).toLocaleString()
+                  )}
+                </span>
               </div>
             )}
-            
+
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
@@ -147,16 +156,44 @@ export function Header() {
             {isConnected && user && (
               <div className="flex items-center space-x-2 bg-surface-light px-3 py-1 rounded-lg">
                 <Coins className="text-warning" size={16} />
-                <span className="font-semibold text-sm md:text-base text-yellow-400 dark:text-yellow-300">{user.balance?.toLocaleString() || "0"}</span>
-                <span className="text-xs text-yellow-200 dark:text-yellow-200">NTIQ</span>
+                <div className="flex flex-col">
+                  {/* Real NTIQ Balance */}
+                  <div className="flex items-center space-x-1">
+                    <span className="font-semibold text-sm md:text-base text-yellow-400 dark:text-yellow-300">
+                      {isRealBalanceLoading ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        realBalanceData?.realNTIQBalance?.toLocaleString() || "0"
+                      )}
+                    </span>
+                    <span className="text-xs text-yellow-200 dark:text-yellow-200">NTIQ</span>
+                    {realBalanceData?.realNTIQBalance !== undefined && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => refetchRealBalance()}
+                        className="h-4 w-4 p-0 hover:bg-yellow-500/20"
+                        title="Refresh real balance"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                  {/* Database Balance (for comparison) */}
+                  {realBalanceData?.databaseBalance !== undefined && realBalanceData.databaseBalance !== realBalanceData.realNTIQBalance && (
+                    <div className="text-xs text-slate-400">
+                      DB: {realBalanceData.databaseBalance.toLocaleString()}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-            
+
             {isConnected && address ? (
               <div className="flex items-center space-x-2">
                 {/* Notifications Badge */}
                 <NotificationsBadge />
-                
+
                 <div className="hidden sm:flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 px-3 py-1 rounded-lg border border-green-200 dark:border-green-800">
                   <Wallet className="text-green-600 dark:text-green-400" size={16} />
                   <span className="text-xs font-mono text-green-700 dark:text-green-300">
@@ -173,13 +210,13 @@ export function Header() {
                 >
                   <LogOut size={16} />
                 </Button>
-                
+
                 {/* User Profile Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="w-8 h-8 rounded-full flex items-center justify-center p-0 overflow-hidden border-2 border-primary hover:border-primary/80"
                     >
                       {user?.profilePhoto ? (
@@ -249,7 +286,7 @@ export function Header() {
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => setLocation('/user-dashboard')}
                       className="flex items-center space-x-2 p-3 cursor-pointer"
                     >
@@ -257,7 +294,7 @@ export function Header() {
                       <span>Go to Dashboard</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => logout()}
                       disabled={isLoggingOut}
                       className="flex items-center space-x-2 p-3 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
@@ -270,18 +307,18 @@ export function Header() {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <RainbowConnectButton 
-                  variant="outline" 
+                <RainbowConnectButton
+                  variant="outline"
                   size="sm"
                   className="flex items-center space-x-2"
                 />
-                
+
                 {/* User Profile Dropdown - Not Connected */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="w-8 h-8 rounded-full flex items-center justify-center p-0 overflow-hidden border-2 border-primary hover:border-primary/80"
                     >
                       <div className="w-full h-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
@@ -316,8 +353,8 @@ export function Header() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <div className="p-3">
-                      <RainbowConnectButton 
-                        variant="default" 
+                      <RainbowConnectButton
+                        variant="default"
                         size="sm"
                         className="w-full"
                       />
@@ -357,7 +394,13 @@ export function Header() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 bg-yellow-500/10 px-3 py-1 rounded-lg">
                       <Coins className="text-yellow-400" size={16} />
-                      <span className="font-semibold text-white">{user?.balance?.toLocaleString() || "0"}</span>
+                      <span className="font-semibold text-white">
+                        {isRealBalanceLoading ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          realBalanceData?.realNTIQBalance?.toLocaleString() || user?.balance?.toLocaleString() || "0"
+                        )}
+                      </span>
                       <span className="text-xs text-yellow-300">NTIQ</span>
                     </div>
                     <div className="flex items-center space-x-1 bg-green-100 dark:bg-green-900/20 px-2 py-1 rounded border border-green-200 dark:border-green-800">
@@ -376,8 +419,8 @@ export function Header() {
                       <span className="text-sm font-medium text-white">Wallet Not Connected</span>
                     </div>
                   </div>
-                  <RainbowConnectButton 
-                    variant="outline" 
+                  <RainbowConnectButton
+                    variant="outline"
                     size="sm"
                     className="w-full"
                   />
@@ -386,71 +429,65 @@ export function Header() {
 
               {/* Mobile Navigation */}
               <nav className="space-y-1">
-                <button 
+                <button
                   onClick={() => {
                     setLocation('/home');
                     setIsMobileMenuOpen(false);
-                  }} 
-                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    location === '/home' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
-                  }`}
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${location === '/home' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
+                    }`}
                 >
                   Home
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setLocation('/battles');
                     setIsMobileMenuOpen(false);
-                  }} 
-                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    location === '/battles' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
-                  }`}
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${location === '/battles' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
+                    }`}
                 >
                   Battles
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setLocation('/parlay');
                     setIsMobileMenuOpen(false);
-                  }} 
-                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    location === '/parlay' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
-                  }`}
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${location === '/parlay' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
+                    }`}
                 >
                   TrendRide
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setLocation('/survival');
                     setIsMobileMenuOpen(false);
-                  }} 
-                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    location === '/survival' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
-                  }`}
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${location === '/survival' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
+                    }`}
                 >
                   Survival
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setLocation('/leaderboard');
                     setIsMobileMenuOpen(false);
-                  }} 
-                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                    location === '/leaderboard' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
-                  }`}
+                  }}
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${location === '/leaderboard' ? "text-white font-bold bg-surface-light" : "text-slate-300 hover:text-white hover:bg-surface-light"
+                    }`}
                 >
                   Leaderboard
                 </button>
 
                 {user?.isAdmin && (
-                  <button 
+                  <button
                     onClick={() => {
                       setLocation('/admin');
                       setIsMobileMenuOpen(false);
-                    }} 
-                    className={`block w-full text-left px-3 py-2 rounded-lg transition-colors font-semibold ${
-                      location === '/admin' ? "text-white font-bold bg-primary" : "text-primary hover:text-primary/80 hover:bg-surface-light"
-                    }`}
+                    }}
+                    className={`block w-full text-left px-3 py-2 rounded-lg transition-colors font-semibold ${location === '/admin' ? "text-white font-bold bg-primary" : "text-primary hover:text-primary/80 hover:bg-surface-light"
+                      }`}
                   >
                     Admin
                   </button>
@@ -532,7 +569,7 @@ export function Header() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Go to Dashboard Button for Mobile */}
                   {user && (
                     <div className="mt-3 pt-2 border-t border-surface-light">

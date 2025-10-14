@@ -1289,6 +1289,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           console.log(`Updated existing user ${dbUser.username} with wallet address: ${normalizedAddress.slice(0, 6)}...`);
 
+          // Give 1000 NTIQ tokens to user who just connected their wallet
+          try {
+            const { ntiqTokenService } = await import('./services/ntiqTokenService');
+            const tokenAmount = 1000;
+            await ntiqTokenService.transferToUser(normalizedAddress, tokenAmount);
+            console.log(`🎁 [WALLET-CONNECT] Distributed ${tokenAmount} NTIQ tokens to existing user ${normalizedAddress} for connecting wallet`);
+          } catch (error) {
+            console.error(`❌ [WALLET-CONNECT] Failed to distribute NTIQ tokens to ${normalizedAddress}:`, error);
+          }
+
           // Track wallet connection for existing user
           auditLog('WALLET_CONNECTED_TO_EXISTING_USER', {
             userId: dbUser.id,
@@ -2079,6 +2089,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error uploading profile photo:', error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get user real NTIQ token balance
+  app.get("/api/user/real-balance", async (req, res) => {
+    try {
+      console.log('🔍 [REAL-BALANCE] Request received');
+      console.log('🔍 [REAL-BALANCE] Session:', (req as any).session);
+      console.log('🔍 [REAL-BALANCE] Headers:', req.headers);
+
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        console.log('❌ [REAL-BALANCE] No userId in session');
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      console.log('✅ [REAL-BALANCE] UserId found:', userId);
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.walletAddress) {
+        return res.json({
+          walletAddress: null,
+          realNTIQBalance: 0,
+          message: "No wallet address connected"
+        });
+      }
+
+      const realBalance = await storage.getUserRealNTIQBalance(user.walletAddress);
+
+      res.json({
+        walletAddress: user.walletAddress,
+        realNTIQBalance: realBalance,
+        databaseBalance: user.balance,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error getting real NTIQ balance:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

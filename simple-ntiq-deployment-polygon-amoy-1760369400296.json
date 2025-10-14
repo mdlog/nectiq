@@ -1,0 +1,19 @@
+{
+  "network": "polygonAmoy",
+  "chainId": 80002,
+  "deployer": "0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4",
+  "contracts": {
+    "SimpleNTIQ": "0x5AB53E1d87481750D8025D9E5dD26eCbAfc1EC85"
+  },
+  "tokenInfo": {
+    "name": "Nectiq Token",
+    "symbol": "NTIQ",
+    "decimals": "18",
+    "totalSupply": "1000000000000000000000000000",
+    "deployerBalance": "1000000000000000000000000000"
+  },
+  "blockExplorerUrls": {
+    "polygonAmoy": "https://amoy.polygonscan.com"
+  },
+  "deploymentTime": "2025-10-13T15:30:00.296Z"
+}

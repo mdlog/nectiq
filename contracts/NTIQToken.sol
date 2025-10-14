@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title NTIQToken
@@ -126,6 +126,8 @@ contract NTIQToken is ERC20, ERC20Burnable, ERC20Pausable, Ownable, ReentrancyGu
     event TokensBurned(address indexed from, uint256 amount);
     event MaxTransactionUpdated(uint256 newAmount);
     event MaxWalletUpdated(uint256 newAmount);
+    event InitialAllocationsDistributed();
+    event AirdropDistributed(uint256 recipientCount);
     
     // ============================================
     // ERRORS
@@ -157,8 +159,8 @@ contract NTIQToken is ERC20, ERC20Burnable, ERC20Pausable, Ownable, ReentrancyGu
         // Initialize tier system
         _initializeTiers();
         
-        // Mint total supply to contract
-        _mint(address(this), TOTAL_SUPPLY);
+        // Mint total supply to owner (will be distributed later)
+        _mint(owner(), TOTAL_SUPPLY);
         
         // Exempt critical addresses from limits and fees
         isExemptFromLimits[address(this)] = true;
@@ -166,10 +168,44 @@ contract NTIQToken is ERC20, ERC20Burnable, ERC20Pausable, Ownable, ReentrancyGu
         isExemptFromLimits[_daoTreasury] = true;
         isExemptFromFees[address(this)] = true;
         isExemptFromFees[owner()] = true;
+    }
+    
+    // ============================================
+    // DISTRIBUTION FUNCTIONS
+    // ============================================
+    
+    /**
+     * @notice Distribute initial token allocations
+     * @dev Can only be called by owner after deployment
+     */
+    function distributeInitialAllocations() external onlyOwner {
+        // Transfer DAO Treasury allocation
+        _transfer(owner(), daoTreasury, DAO_TREASURY);
         
-        // Distribute immediate allocations
-        _transfer(address(this), _daoTreasury, DAO_TREASURY);
-        _transfer(address(this), owner(), IMMEDIATE_AIRDROP); // Owner will distribute to early users
+        // Keep immediate airdrop with owner for manual distribution
+        // Owner will distribute IMMEDIATE_AIRDROP to early users manually
+        
+        emit InitialAllocationsDistributed();
+    }
+    
+    /**
+     * @notice Distribute airdrop tokens to multiple recipients
+     * @param recipients Array of recipient addresses
+     * @param amounts Array of amounts to distribute
+     */
+    function distributeAirdrop(
+        address[] calldata recipients,
+        uint256[] calldata amounts
+    ) external onlyOwner {
+        require(recipients.length == amounts.length, "Arrays length mismatch");
+        require(recipients.length <= 100, "Too many recipients");
+        
+        for (uint256 i = 0; i < recipients.length; i++) {
+            require(recipients[i] != address(0), "Invalid recipient");
+            _transfer(owner(), recipients[i], amounts[i]);
+        }
+        
+        emit AirdropDistributed(recipients.length);
     }
     
     // ============================================

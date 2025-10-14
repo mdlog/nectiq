@@ -307,32 +307,14 @@ app.use('/attached_assets', express.static('attached_assets'));
 // Serve uploaded files (profile photos, banners, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Simple rate limiting middleware - adjusted for development
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 500; // Increased for development
+// Simple rate limiting middleware - DISABLED for development
+// const rateLimitMap = new Map();
+// const RATE_LIMIT_WINDOW = 60000; // 1 minute
+// const MAX_REQUESTS_PER_WINDOW = 500; // Increased for development
 
+// Rate limiting disabled for development
 app.use((req, res, next) => {
-  const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-  const now = Date.now();
-
-  if (!rateLimitMap.has(clientIP)) {
-    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return next();
-  }
-
-  const clientData = rateLimitMap.get(clientIP);
-
-  if (now > clientData.resetTime) {
-    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return next();
-  }
-
-  if (clientData.count >= MAX_REQUESTS_PER_WINDOW) {
-    return res.status(429).json({ message: 'Too many requests. Please try again later.' });
-  }
-
-  clientData.count++;
+  // Skip rate limiting in development
   next();
 });
 
