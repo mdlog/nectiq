@@ -12993,6 +12993,104 @@ Manual balance correction required IMMEDIATELY!`;
     }
   });
 
+  // Blockchain parlay creation endpoint
+  app.post("/api/parlay/blockchain", checkMaintenanceMode, requireAuth, async (req, res) => {
+    console.log("🟢 [PARLAY-BLOCKCHAIN] Starting blockchain parlay creation");
+
+    try {
+      const user = req.user as any;
+      const { stakeAmount, coins, blockchainTxHash, parlayId } = req.body;
+
+      console.log("🟢 [PARLAY-BLOCKCHAIN] Request data:", {
+        userId: user?.id,
+        stakeAmount,
+        coinCount: Array.isArray(coins) ? coins.length : 'not array',
+        blockchainTxHash,
+        parlayId
+      });
+
+      // Validate inputs
+      if (!stakeAmount || isNaN(parseFloat(stakeAmount)) || parseFloat(stakeAmount) < 50) {
+        console.log("❌ [PARLAY-BLOCKCHAIN] Invalid stake amount");
+        return res.status(400).json({ message: "Minimum stake is 50 NTIQ" });
+      }
+
+      if (!coins || !Array.isArray(coins) || coins.length < 2) {
+        console.log("❌ [PARLAY-BLOCKCHAIN] Invalid coins array");
+        return res.status(400).json({ message: "At least 2 coins required for parlay" });
+      }
+
+      if (!blockchainTxHash) {
+        console.log("❌ [PARLAY-BLOCKCHAIN] Missing blockchain transaction hash");
+        return res.status(400).json({ message: "Blockchain transaction hash is required" });
+      }
+
+      console.log("✅ [PARLAY-BLOCKCHAIN] All validations passed");
+
+      // Calculate multiplier
+      let totalMultiplier = 1;
+      const durationMap = { '1h': 1.2, '6h': 1.5, '24h': 2.0, '7d': 3.0 };
+
+      for (const coin of coins) {
+        const coinMultiplier = 1.5 * (durationMap[coin.duration] || 1.2);
+        totalMultiplier *= coinMultiplier;
+      }
+
+      console.log("🟢 [PARLAY-BLOCKCHAIN] Total multiplier:", totalMultiplier);
+
+      // Create parlay in database
+      const stake = parseFloat(stakeAmount);
+      const now = new Date();
+      const targetTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      const [parlay] = await db.insert(parlayPredictions).values({
+        userId: user.id,
+        stakeAmount: stake,
+        targetTime,
+        totalMultiplier: totalMultiplier.toFixed(2),
+        totalCoinCount: coins.length,
+        status: 'active',
+        blockchainStakeHash: blockchainTxHash,
+        blockchainStatus: 'confirmed'
+      }).returning();
+
+      console.log("✅ [PARLAY-BLOCKCHAIN] Parlay created with ID:", parlay.id);
+
+      // Create coin predictions
+      for (const coin of coins) {
+        const coinTargetTime = new Date(now);
+        const hours = { '1h': 1, '6h': 6, '24h': 24, '7d': 168 }[coin.duration] || 1;
+        coinTargetTime.setHours(coinTargetTime.getHours() + hours);
+
+        await db.insert(parlayPredictionCoins).values({
+          parlayId: parlay.id,
+          cryptocurrency: coin.cryptocurrency,
+          prediction: coin.prediction,
+          startPrice: coin.startPrice.toString(),
+          duration: coin.duration,
+          targetTime: coinTargetTime
+        });
+      }
+
+      console.log("✅ [PARLAY-BLOCKCHAIN] All coin predictions created");
+
+      logger.info(`🔗 [BLOCKCHAIN] Parlay ${parlay.id} created from blockchain transaction: ${blockchainTxHash}`);
+
+      res.json({
+        success: true,
+        parlay,
+        message: "Parlay created successfully from blockchain transaction"
+      });
+
+    } catch (error) {
+      console.error("❌ [PARLAY-BLOCKCHAIN] Error:", error);
+      res.status(500).json({
+        message: "Failed to create parlay from blockchain transaction",
+        error: error.message
+      });
+    }
+  });
+
   // Notification endpoints
   app.get('/api/notifications', requireAuth, async (req: Request, res: Response) => {
     try {

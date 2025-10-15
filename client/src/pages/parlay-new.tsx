@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Plus, TrendingUp, TrendingDown } from "lucide-react";
+import { ParlayBlockchainForm } from "@/components/ParlayBlockchainForm";
 
 interface Cryptocurrency {
   id: string;
@@ -46,10 +47,11 @@ interface ActiveParlay {
 
 export default function ParlayNew() {
   console.log("🚀 [PARLAY] Component rendering...");
-  
+
   const [parlayCards, setParlayCards] = useState<ParlayCard[]>([]);
   const [stakeAmount, setStakeAmount] = useState("");
   const [totalMultiplier, setTotalMultiplier] = useState(1);
+  const [useBlockchainForm, setUseBlockchainForm] = useState(true); // Use blockchain by default
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -113,12 +115,12 @@ export default function ParlayNew() {
 
     let multiplier = 1;
     const durationMultipliers = { '1h': 1.2, '6h': 1.5, '24h': 2.0, '7d': 3.0 };
-    
+
     parlayCards.forEach(card => {
       const coinMultiplier = 1.5 * (durationMultipliers[card.duration] || 1.2);
       multiplier *= coinMultiplier;
     });
-    
+
     setTotalMultiplier(multiplier);
   }, [parlayCards]);
 
@@ -139,7 +141,7 @@ export default function ParlayNew() {
       duration: '1h',
       startPrice: 0
     };
-    
+
     setParlayCards([...parlayCards, newCard]);
   };
 
@@ -151,7 +153,7 @@ export default function ParlayNew() {
     setParlayCards(parlayCards.map(card => {
       if (card.id === id) {
         const updatedCard = { ...card, [field]: value };
-        
+
         // Update start price when cryptocurrency changes
         if (field === 'cryptocurrency' && value) {
           const crypto = cryptos.find((c: Cryptocurrency) => c.id === value);
@@ -159,7 +161,7 @@ export default function ParlayNew() {
             updatedCard.startPrice = crypto.current_price;
           }
         }
-        
+
         return updatedCard;
       }
       return card;
@@ -186,10 +188,10 @@ export default function ParlayNew() {
     }
 
     // Validate all cards are complete
-    const incompleteCard = parlayCards.find(card => 
+    const incompleteCard = parlayCards.find(card =>
       !card.cryptocurrency || card.startPrice === 0
     );
-    
+
     if (incompleteCard) {
       toast({
         title: "Incomplete Selection",
@@ -235,7 +237,7 @@ export default function ParlayNew() {
               </Badge>
             )}
           </div>
-          
+
           {parlaysLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
@@ -255,9 +257,9 @@ export default function ParlayNew() {
                           {parlay.coins.length} coins • {parlay.multiplier.toFixed(2)}x
                         </p>
                       </div>
-                      <Badge 
-                        variant={parlay.status === 'active' ? 'default' : 
-                                parlay.status === 'completed' ? 'secondary' : 'destructive'}
+                      <Badge
+                        variant={parlay.status === 'active' ? 'default' :
+                          parlay.status === 'completed' ? 'secondary' : 'destructive'}
                       >
                         {parlay.status}
                       </Badge>
@@ -280,8 +282,8 @@ export default function ParlayNew() {
                             <div className="flex items-center gap-2">
                               {crypto && <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />}
                               <span className="font-medium">{crypto?.symbol.toUpperCase()}</span>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className={coin.prediction === 'up' ? 'text-green-600' : 'text-red-600'}
                               >
                                 {coin.prediction === 'up' ? '↗' : '↘'}
@@ -310,7 +312,7 @@ export default function ParlayNew() {
                   <p className="text-muted-foreground mb-4">
                     You don't have any active parlay predictions yet. Create your first multi-coin prediction below to get started.
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => {
                       // Scroll to create section
                       const createSection = document.querySelector('#create-parlay-section');
@@ -487,14 +489,30 @@ export default function ParlayNew() {
                   </div>
                 </div>
 
-                <Button 
-                  onClick={handleSubmit} 
-                  className="w-full" 
-                  size="lg"
-                  disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
-                >
-                  {createParlayMutation.isPending ? "Creating..." : "Create TrendRide"}
-                </Button>
+                {useBlockchainForm ? (
+                  <ParlayBlockchainForm
+                    parlayCards={parlayCards}
+                    stakeAmount={stakeAmount}
+                    setStakeAmount={setStakeAmount}
+                    onClose={() => { }}
+                    onSuccess={() => {
+                      setParlayCards([]);
+                      setStakeAmount("");
+                      queryClient.invalidateQueries({ queryKey: ["/api/parlay/user"] });
+                    }}
+                    availableCryptos={cryptos}
+                    currentPrices={{}}
+                  />
+                ) : (
+                  <Button
+                    onClick={handleSubmit}
+                    className="w-full"
+                    size="lg"
+                    disabled={parlayCards.length < 2 || !stakeAmount || createParlayMutation.isPending}
+                  >
+                    {createParlayMutation.isPending ? "Creating..." : "Create TrendRide"}
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
