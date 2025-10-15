@@ -1,0 +1,14 @@
+{
+  "network": "polygonAmoy",
+  "chainId": 80002,
+  "deployer": "0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4",
+  "timestamp": "2025-10-14T15:01:56.131Z",
+  "contracts": {
+    "ntiqToken": "0xE276c3634b7747c46c1aBAB4Eff6b2f046C71A6f",
+    "treasury": "0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4",
+    "predictionStaking": "0xbd92d6D83103d4cc9F74cb65CAB779F4e2b36C47",
+    "battleEscrow": "0x65CBABb0864de26fc753F5044277644f72Df8490",
+    "parlayStaking": "0x599f08B2D1ae362d29612aA0F3b2E80f8fe31CE5",
+    "tournamentPool": "0x384cDE1104b1c75e6469E07e2eD40E674Ce04EBe"
+  }
+}

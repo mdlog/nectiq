@@ -4,7 +4,7 @@ export class BattleExpiryService {
   private static instance: BattleExpiryService;
   private intervalId: NodeJS.Timeout | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): BattleExpiryService {
     if (!BattleExpiryService.instance) {
@@ -18,10 +18,10 @@ export class BattleExpiryService {
    */
   public start(): void {
     console.log('🚀 [BATTLE-EXPIRY] Starting battle expiry monitoring service...');
-    
+
     // Run initial check
     this.processExpiredBattles();
-    
+
     // Set up interval to check every 30 seconds
     this.intervalId = setInterval(async () => {
       try {
@@ -30,7 +30,7 @@ export class BattleExpiryService {
         console.error('❌ [BATTLE-EXPIRY] Error in periodic processing:', error);
       }
     }, 30000); // 30 seconds
-    
+
     console.log('✅ [BATTLE-EXPIRY] Battle expiry monitoring started - checking every 30 seconds');
   }
 
@@ -51,15 +51,16 @@ export class BattleExpiryService {
   private async processExpiredBattles(): Promise<void> {
     try {
       console.log('🔍 [BATTLE-EXPIRY] Checking for expired battles...');
-      
+
       // Get all open battles (battles that haven't been joined yet)
       const openBattles = await storage.getLiveBattles();
-      
+
       if (!openBattles || openBattles.length === 0) {
         console.log('✅ [BATTLE-EXPIRY] No open battles found');
         return;
       }
 
+      // Use UTC time for consistent comparison
       const now = new Date();
       let expiredCount = 0;
 
@@ -70,15 +71,26 @@ export class BattleExpiryService {
         }
 
         // Check if battle has expired (past target time)
+        // Use UTC time for consistent comparison to avoid timezone issues
         const targetTime = new Date(battle.targetTime);
-        
-        if (now >= targetTime) {
+
+        // Debug logging for timezone comparison
+        console.log(`🔍 [BATTLE-EXPIRY] Checking battle ${battle.id}:`);
+        console.log(`   Now (UTC): ${now.toISOString()}`);
+        console.log(`   Target (UTC): ${targetTime.toISOString()}`);
+        console.log(`   Comparison: now >= targetTime = ${now >= targetTime}`);
+
+        // Additional safety check: only expire if target time is clearly in the past
+        const timeDiff = now.getTime() - targetTime.getTime();
+        console.log(`   Time difference: ${Math.round(timeDiff / 1000)} seconds`);
+
+        if (now >= targetTime && timeDiff > 0) {
           console.log(`⏰ [BATTLE-EXPIRY] Battle ${battle.id} expired - returning stake to challenger`);
-          
+
           try {
             await this.expireBattleAndReturnStake(battle);
             expiredCount++;
-            
+
             console.log(`✅ [BATTLE-EXPIRY] Battle ${battle.id} processed successfully - ${battle.stakeAmount} NTIQ returned to ${battle.challengerUsername}`);
           } catch (error) {
             console.error(`❌ [BATTLE-EXPIRY] Failed to process expired battle ${battle.id}:`, error);
@@ -104,7 +116,7 @@ export class BattleExpiryService {
     try {
       // Update battle status to expired
       await storage.updateBattleStatus(battle.id, 'expired');
-      
+
       // Return stake to challenger
       const challenger = await storage.getUserById(battle.challengerId);
       if (!challenger) {

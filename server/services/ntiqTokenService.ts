@@ -14,17 +14,17 @@ const NTIQ_TOKEN_ABI = [
   "function totalSupply() external view returns (uint256)",
   "function balanceOf(address account) external view returns (uint256)",
   "function allowance(address owner, address spender) external view returns (uint256)",
-  
+
   // Transfer functions
   "function transfer(address to, uint256 amount) external returns (bool)",
   "function transferFrom(address from, address to, uint256 amount) external returns (bool)",
   "function approve(address spender, uint256 amount) external returns (bool)",
-  
+
   // Owner functions
   "function owner() external view returns (address)",
   "function distributeAirdrop(address[] calldata recipients, uint256[] calldata amounts) external",
   "function transferToTreasury() external",
-  
+
   // Events
   "event Transfer(address indexed from, address indexed to, uint256 value)",
   "event Approval(address indexed owner, address indexed spender, uint256 value)",
@@ -39,10 +39,10 @@ export class NTIQTokenService {
   constructor() {
     // Initialize provider
     this.provider = new ethers.JsonRpcProvider(POLYGON_AMOY_RPC);
-    
+
     // Initialize contract
     this.contract = new ethers.Contract(NTIQ_TOKEN_ADDRESS, NTIQ_TOKEN_ABI, this.provider);
-    
+
     // Initialize deployer wallet if private key is available
     const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
     if (deployerPrivateKey) {
@@ -136,21 +136,21 @@ export class NTIQTokenService {
 
     try {
       // Connect contract with deployer wallet
-      const contractWithSigner = this.contract.connect(this.deployerWallet);
-      
+      const contractWithSigner = this.contract.connect(this.deployerWallet) as any;
+
       // Convert amounts to wei
       const amountsWei = amounts.map(amount => ethers.parseEther(amount.toString()));
-      
+
       // Execute airdrop
       const tx = await contractWithSigner.distributeAirdrop(recipients, amountsWei);
-      
+
       logger.info(`🎁 NTIQ Airdrop initiated: ${recipients.length} recipients, tx: ${tx.hash}`);
-      
+
       // Wait for confirmation
       await tx.wait();
-      
+
       logger.info(`✅ NTIQ Airdrop completed: ${tx.hash}`);
-      
+
       return tx.hash;
     } catch (error) {
       logger.error('Failed to distribute NTIQ airdrop:', error);
@@ -168,21 +168,21 @@ export class NTIQTokenService {
 
     try {
       // Connect contract with deployer wallet
-      const contractWithSigner = this.contract.connect(this.deployerWallet);
-      
+      const contractWithSigner = this.contract.connect(this.deployerWallet) as any;
+
       // Convert amount to wei
       const amountWei = ethers.parseEther(amount.toString());
-      
+
       // Execute transfer
       const tx = await contractWithSigner.transfer(userAddress, amountWei);
-      
+
       logger.info(`💸 NTIQ Transfer initiated: ${amount} NTIQ to ${userAddress}, tx: ${tx.hash}`);
-      
+
       // Wait for confirmation
       await tx.wait();
-      
+
       logger.info(`✅ NTIQ Transfer completed: ${tx.hash}`);
-      
+
       return tx.hash;
     } catch (error) {
       logger.error(`Failed to transfer NTIQ to ${userAddress}:`, error);

@@ -134,7 +134,7 @@ export function Header() {
                   {isRealBalanceLoading ? (
                     <RefreshCw className="w-3 h-3 animate-spin" />
                   ) : (
-                    (realBalanceData?.realNTIQBalance || user.balance || 0).toLocaleString()
+                    (realBalanceData?.realNTIQBalance || 0).toLocaleString()
                   )}
                 </span>
               </div>
@@ -173,18 +173,12 @@ export function Header() {
                         size="sm"
                         onClick={() => refetchRealBalance()}
                         className="h-4 w-4 p-0 hover:bg-yellow-500/20"
-                        title="Refresh real balance"
+                        title="Refresh blockchain balance"
                       >
                         <RefreshCw className="w-3 h-3" />
                       </Button>
                     )}
                   </div>
-                  {/* Database Balance (for comparison) */}
-                  {realBalanceData?.databaseBalance !== undefined && realBalanceData.databaseBalance !== realBalanceData.realNTIQBalance && (
-                    <div className="text-xs text-slate-400">
-                      DB: {realBalanceData.databaseBalance.toLocaleString()}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -398,7 +392,7 @@ export function Header() {
                         {isRealBalanceLoading ? (
                           <RefreshCw className="w-4 h-4 animate-spin" />
                         ) : (
-                          realBalanceData?.realNTIQBalance?.toLocaleString() || user?.balance?.toLocaleString() || "0"
+                          realBalanceData?.realNTIQBalance?.toLocaleString() || "0"
                         )}
                       </span>
                       <span className="text-xs text-yellow-300">NTIQ</span>

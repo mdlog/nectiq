@@ -1,310 +1,160 @@
-import { db } from "../db";
-import { predictionInsurance, predictions, users } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
-import type { InsertPredictionInsurance, PredictionInsurance } from "@shared/schema";
+import { ethers } from 'ethers';
+import { logger } from '../../shared/logger';
+import { blockchainService } from './blockchainService';
+
+export interface InsurancePolicy {
+    predictionId: string;
+    userAddress: string;
+    stakeAmount: string;
+    insuranceCost: string;
+    refundAmount: string;
+    claimed: boolean;
+    timestamp: number;
+}
 
 export class PredictionInsuranceService {
+    private static instance: PredictionInsuranceService;
+    private contract: ethers.Contract;
+
+    private constructor() {
+        this.contract = blockchainService.predictionInsuranceContract;
+    }
+
+    public static getInstance(): PredictionInsuranceService {
+        if (!PredictionInsuranceService.instance) {
+            PredictionInsuranceService.instance = new PredictionInsuranceService();
+        }
+        return PredictionInsuranceService.instance;
+    }
+
     /**
-     * Purchase insurance for a prediction
-     * Cost: 10% of stake, Coverage: 50% of stake
+     * Buy insurance for a prediction
      */
-    static async purchaseInsurance(
-        userId: number,
-        predictionId: number,
-        stakeAmount: number
-    ): Promise<{ success: boolean; insurance?: PredictionInsurance; error?: string }> {
+    public async buyInsurance(params: {
+        predictionId: string;
+        userAddress: string;
+        stakeAmount: string;
+    }): Promise<string> {
         try {
-            // Verify prediction exists and belongs to user
-            const [prediction] = await db
-                .select()
-                .from(predictions)
-                .where(and(
-                    eq(predictions.id, predictionId),
-                    eq(predictions.userId, userId),
-                    eq(predictions.status, 'pending')
-                ))
-                .limit(1);
+            logger.info(`🛡️ [INSURANCE] Buying insurance for prediction ${params.predictionId}`);
+            logger.info(`   User: ${params.userAddress}`);
+            logger.info(`   Stake Amount: ${params.stakeAmount}`);
 
-            if (!prediction) {
-                return { success: false, error: "Prediction not found or already completed" };
-            }
+            const tx = await this.contract.buyInsurance(
+                params.predictionId,
+                params.stakeAmount,
+                {
+                    from: params.userAddress
+                }
+            );
 
-            // Check if insurance already purchased for this prediction
-            const [existingInsurance] = await db
-                .select()
-                .from(predictionInsurance)
-                .where(eq(predictionInsurance.predictionId, predictionId))
-                .limit(1);
-
-            if (existingInsurance) {
-                return { success: false, error: "Insurance already purchased for this prediction" };
-            }
-
-            // Calculate insurance cost and coverage
-            const insuranceCost = Math.floor(stakeAmount * 0.10); // 10% of stake
-            const coveredAmount = Math.floor(stakeAmount * 0.50); // 50% coverage
-
-            // Check if user has enough balance
-            const [user] = await db
-                .select()
-                .from(users)
-                .where(eq(users.id, userId))
-                .limit(1);
-
-            if (!user || user.balance < insuranceCost) {
-                return { success: false, error: "Insufficient balance to purchase insurance" };
-            }
-
-            // Deduct insurance cost from user balance
-            await db
-                .update(users)
-                .set({ balance: user.balance - insuranceCost })
-                .where(eq(users.id, userId));
-
-            // Create insurance record
-            const [insurance] = await db
-                .insert(predictionInsurance)
-                .values({
-                    predictionId,
-                    userId,
-                    insuranceCost,
-                    coveredAmount,
-                    stakeAmount,
-                    status: 'active'
-                })
-                .returning();
-
-            console.log(`✅ Insurance purchased: User ${userId}, Prediction ${predictionId}, Cost: ${insuranceCost} NTIQ`);
-
-            return { success: true, insurance };
-        } catch (error) {
-            console.error('❌ Error purchasing insurance:', error);
-            return { success: false, error: "Failed to purchase insurance" };
+            logger.info(`✅ [INSURANCE] Insurance purchased: ${tx.hash}`);
+            return tx.hash;
+        } catch (error: any) {
+            logger.error(`❌ [INSURANCE] Failed to buy insurance:`, error);
+            throw error;
         }
     }
 
     /**
-     * Auto-process insurance claim when prediction loses
-     * Called automatically by prediction settlement service
+     * Claim insurance for a prediction
      */
-    static async processInsuranceClaim(predictionId: number): Promise<void> {
+    public async claimInsurance(params: {
+        predictionId: string;
+        userAddress: string;
+    }): Promise<string> {
         try {
-            // Get insurance record
-            const [insurance] = await db
-                .select()
-                .from(predictionInsurance)
-                .where(and(
-                    eq(predictionInsurance.predictionId, predictionId),
-                    eq(predictionInsurance.status, 'active')
-                ))
-                .limit(1);
+            logger.info(`🛡️ [INSURANCE] Claiming insurance for prediction ${params.predictionId}`);
+            logger.info(`   User: ${params.userAddress}`);
 
-            if (!insurance) {
-                return; // No insurance for this prediction
-            }
+            const tx = await this.contract.claimInsurance(
+                params.predictionId,
+                {
+                    from: params.userAddress
+                }
+            );
 
-            // Get prediction result
-            const [prediction] = await db
-                .select()
-                .from(predictions)
-                .where(eq(predictions.id, predictionId))
-                .limit(1);
-
-            if (!prediction) {
-                return;
-            }
-
-            // Check if prediction lost (rewardAmount = 0 means loss)
-            if (prediction.status === 'completed' && prediction.rewardAmount === 0) {
-                // Prediction lost - pay insurance claim
-                const claimAmount = insurance.coveredAmount;
-
-                // Update insurance status
-                await db
-                    .update(predictionInsurance)
-                    .set({
-                        status: 'claimed',
-                        claimAmount,
-                        claimedAt: new Date()
-                    })
-                    .where(eq(predictionInsurance.id, insurance.id));
-
-                // Credit user with claim amount
-                await db
-                    .update(users)
-                    .set({
-                        balance: db.$increment(users.balance, claimAmount)
-                    })
-                    .where(eq(users.id, insurance.userId));
-
-                console.log(`✅ Insurance claim processed: User ${insurance.userId}, Claim: ${claimAmount} NTIQ`);
-            } else if (prediction.status === 'completed' && prediction.rewardAmount > 0) {
-                // Prediction won - mark insurance as expired (not needed)
-                await db
-                    .update(predictionInsurance)
-                    .set({
-                        status: 'expired'
-                    })
-                    .where(eq(predictionInsurance.id, insurance.id));
-
-                console.log(`ℹ️  Insurance expired (prediction won): User ${insurance.userId}`);
-            }
-        } catch (error) {
-            console.error('❌ Error processing insurance claim:', error);
+            logger.info(`✅ [INSURANCE] Insurance claimed: ${tx.hash}`);
+            return tx.hash;
+        } catch (error: any) {
+            logger.error(`❌ [INSURANCE] Failed to claim insurance:`, error);
+            throw error;
         }
     }
 
     /**
-     * Get user's insurance history
+     * Get insurance claim details
      */
-    static async getUserInsuranceHistory(userId: number, limit: number = 20): Promise<any[]> {
+    public async getInsuranceClaim(predictionId: string): Promise<InsurancePolicy | null> {
         try {
-            const insuranceHistory = await db
-                .select({
-                    id: predictionInsurance.id,
-                    predictionId: predictionInsurance.predictionId,
-                    insuranceCost: predictionInsurance.insuranceCost,
-                    coveredAmount: predictionInsurance.coveredAmount,
-                    stakeAmount: predictionInsurance.stakeAmount,
-                    status: predictionInsurance.status,
-                    claimAmount: predictionInsurance.claimAmount,
-                    claimedAt: predictionInsurance.claimedAt,
-                    purchasedAt: predictionInsurance.purchasedAt,
-                    // Prediction details
-                    cryptocurrency: predictions.cryptocurrency,
-                    predictionStatus: predictions.status,
-                    rewardAmount: predictions.rewardAmount,
-                    createdAt: predictions.createdAt,
-                    completedAt: predictions.completedAt
-                })
-                .from(predictionInsurance)
-                .innerJoin(predictions, eq(predictionInsurance.predictionId, predictions.id))
-                .where(eq(predictionInsurance.userId, userId))
-                .orderBy(desc(predictionInsurance.purchasedAt))
-                .limit(limit);
+            const claim = await this.contract.getInsuranceClaim(predictionId);
 
-            return insuranceHistory;
-        } catch (error) {
-            console.error('❌ Error fetching insurance history:', error);
-            return [];
-        }
-    }
-
-    /**
-     * Get insurance statistics for a user
-     */
-    static async getUserInsuranceStats(userId: number): Promise<any> {
-        try {
-            const allInsurance = await db
-                .select()
-                .from(predictionInsurance)
-                .where(eq(predictionInsurance.userId, userId));
-
-            const totalPurchased = allInsurance.length;
-            const totalCost = allInsurance.reduce((sum, ins) => sum + ins.insuranceCost, 0);
-            const totalClaimed = allInsurance.filter(ins => ins.status === 'claimed').length;
-            const totalClaimAmount = allInsurance
-                .filter(ins => ins.status === 'claimed')
-                .reduce((sum, ins) => sum + (ins.claimAmount || 0), 0);
-
-            const netBenefit = totalClaimAmount - totalCost;
+            if (!claim || claim.user === ethers.ZeroAddress) {
+                return null;
+            }
 
             return {
-                totalPurchased,
-                totalCost,
-                totalClaimed,
-                totalClaimAmount,
-                netBenefit,
-                claimRate: totalPurchased > 0 ? ((totalClaimed / totalPurchased) * 100).toFixed(1) : '0'
+                predictionId,
+                userAddress: claim.user,
+                stakeAmount: claim.stakeAmount.toString(),
+                insuranceCost: claim.insuranceCost.toString(),
+                refundAmount: claim.refundAmount.toString(),
+                claimed: claim.claimed,
+                timestamp: Number(claim.timestamp)
             };
-        } catch (error) {
-            console.error('❌ Error fetching insurance stats:', error);
-            return {
-                totalPurchased: 0,
-                totalCost: 0,
-                totalClaimed: 0,
-                totalClaimAmount: 0,
-                netBenefit: 0,
-                claimRate: '0'
-            };
+        } catch (error: any) {
+            logger.error(`❌ [INSURANCE] Failed to get insurance claim:`, error);
+            return null;
         }
     }
 
     /**
      * Check if user has insurance for a prediction
      */
-    static async hasInsurance(predictionId: number): Promise<boolean> {
+    public async hasInsurance(predictionId: string, userAddress: string): Promise<boolean> {
         try {
-            const [insurance] = await db
-                .select()
-                .from(predictionInsurance)
-                .where(eq(predictionInsurance.predictionId, predictionId))
-                .limit(1);
-
-            return !!insurance;
-        } catch (error) {
-            console.error('❌ Error checking insurance:', error);
+            const claim = await this.getInsuranceClaim(predictionId);
+            return claim !== null && claim.userAddress.toLowerCase() === userAddress.toLowerCase();
+        } catch (error: any) {
+            logger.error(`❌ [INSURANCE] Failed to check insurance:`, error);
             return false;
         }
     }
 
     /**
-     * Void insurance (cancel before prediction completes)
-     * Refunds 50% of insurance cost
+     * Calculate insurance cost for a stake amount
      */
-    static async voidInsurance(predictionId: number, userId: number): Promise<{ success: boolean; error?: string }> {
+    public async calculateInsuranceCost(stakeAmount: string): Promise<string> {
         try {
-            // Get insurance
-            const [insurance] = await db
-                .select()
-                .from(predictionInsurance)
-                .where(and(
-                    eq(predictionInsurance.predictionId, predictionId),
-                    eq(predictionInsurance.userId, userId),
-                    eq(predictionInsurance.status, 'active')
-                ))
-                .limit(1);
+            // Insurance cost is 10% of stake amount (1000 basis points)
+            const INSURANCE_COST_RATE = 1000; // 10%
+            const BASIS_POINTS = 10000;
 
-            if (!insurance) {
-                return { success: false, error: "Insurance not found or already processed" };
-            }
+            const cost = (BigInt(stakeAmount) * BigInt(INSURANCE_COST_RATE)) / BigInt(BASIS_POINTS);
+            return cost.toString();
+        } catch (error: any) {
+            logger.error(`❌ [INSURANCE] Failed to calculate insurance cost:`, error);
+            throw error;
+        }
+    }
 
-            // Check prediction is still pending
-            const [prediction] = await db
-                .select()
-                .from(predictions)
-                .where(and(
-                    eq(predictions.id, predictionId),
-                    eq(predictions.status, 'pending')
-                ))
-                .limit(1);
+    /**
+     * Calculate refund amount for insurance
+     */
+    public async calculateRefundAmount(insuranceCost: string): Promise<string> {
+        try {
+            // Refund is 50% of insurance cost (5000 basis points)
+            const REFUND_RATE = 5000; // 50%
+            const BASIS_POINTS = 10000;
 
-            if (!prediction) {
-                return { success: false, error: "Cannot void insurance for completed prediction" };
-            }
-
-            // Refund 50% of insurance cost
-            const refundAmount = Math.floor(insurance.insuranceCost * 0.50);
-
-            await db
-                .update(predictionInsurance)
-                .set({ status: 'void' })
-                .where(eq(predictionInsurance.id, insurance.id));
-
-            await db
-                .update(users)
-                .set({
-                    balance: db.$increment(users.balance, refundAmount)
-                })
-                .where(eq(users.id, userId));
-
-            console.log(`✅ Insurance voided: User ${userId}, Refund: ${refundAmount} NTIQ`);
-
-            return { success: true };
-        } catch (error) {
-            console.error('❌ Error voiding insurance:', error);
-            return { success: false, error: "Failed to void insurance" };
+            const refund = (BigInt(insuranceCost) * BigInt(REFUND_RATE)) / BigInt(BASIS_POINTS);
+            return refund.toString();
+        } catch (error: any) {
+            logger.error(`❌ [INSURANCE] Failed to calculate refund amount:`, error);
+            throw error;
         }
     }
 }
 
+// Export singleton instance
+export const predictionInsuranceService = PredictionInsuranceService.getInstance();

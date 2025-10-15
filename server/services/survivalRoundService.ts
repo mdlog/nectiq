@@ -1,6 +1,9 @@
 import { storage } from '../storage';
 import axios from 'axios';
 import { BalanceService } from './balanceService';
+import { db } from '../db';
+import { survivalTournaments } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 export class SurvivalRoundService {
   private static instance: SurvivalRoundService;
@@ -19,7 +22,7 @@ export class SurvivalRoundService {
   // Start global round checker that monitors all active tournaments
   private startGlobalRoundChecker() {
     console.log('🚀 Starting global survival round checker for automatic elimination...');
-    
+
     // Check every 10 seconds for expired rounds (faster debugging)
     setInterval(async () => {
       try {
@@ -28,7 +31,7 @@ export class SurvivalRoundService {
         console.error('Error in global round checker:', error);
       }
     }, 10000); // Check every 10 seconds
-    
+
     // Also run initial check after 5 seconds
     setTimeout(async () => {
       console.log('🚀 [CHECKER] Running initial check after server startup...');
@@ -41,7 +44,7 @@ export class SurvivalRoundService {
     try {
       console.log(`🔍 [CHECKER] Running global round checker at ${new Date().toISOString()}`);
       const activeTournaments = await storage.getActiveSurvivalTournaments();
-      
+
       if (activeTournaments.length > 0) {
         console.log(`🔍 [CHECKER] Found ${activeTournaments.length} active tournaments for expired rounds...`);
         for (const tournament of activeTournaments) {
@@ -68,9 +71,9 @@ export class SurvivalRoundService {
       const now = new Date();
       const endTime = new Date(currentRound.endTime);
       const timeLeft = endTime.getTime() - now.getTime();
-      
-      console.log(`🔍 [CHECKER] Tournament ${tournamentId} Round ${currentRound.roundNumber}: Status=${currentRound.status}, TimeLeft=${Math.round(timeLeft/1000)}s`);
-      
+
+      console.log(`🔍 [CHECKER] Tournament ${tournamentId} Round ${currentRound.roundNumber}: Status=${currentRound.status}, TimeLeft=${Math.round(timeLeft / 1000)}s`);
+
       // Check if current round has expired
       if (now >= endTime && currentRound.status === 'active') {
         console.log(`⏰ [CHECKER] Round ${currentRound.roundNumber} EXPIRED for tournament ${tournamentId}, processing...`);
@@ -100,7 +103,7 @@ export class SurvivalRoundService {
 
       // Get current price for the tournament's cryptocurrency
       const currentPrice = await this.getCurrentCryptoPrice(tournament.cryptocurrency);
-      
+
       // Complete the current round
       await this.completeRound(roundId, currentPrice);
 
@@ -109,7 +112,7 @@ export class SurvivalRoundService {
 
       // Check if tournament should continue
       const activeParticipants = await storage.getActiveParticipants(tournamentId);
-      
+
       if (activeParticipants.length <= 1) {
         // Tournament is finished - Single winner
         await this.finishTournament(tournamentId, activeParticipants[0]?.userId || null);
@@ -154,10 +157,10 @@ export class SurvivalRoundService {
   private async evaluateAndEliminateParticipants(tournamentId: number, roundNumber: number, startPrice: number, endPrice: number) {
     try {
       const participants = await storage.getTournamentParticipantsWithPredictions(tournamentId);
-      
+
       // Determine actual price direction
       const actualDirection = endPrice > startPrice ? 'up' : 'down';
-      
+
       console.log(`💰 Round ${roundNumber} result: ${startPrice} → ${endPrice} (${actualDirection.toUpperCase()})`);
 
       for (const participant of participants) {
@@ -165,7 +168,7 @@ export class SurvivalRoundService {
 
         // Check if participant made a prediction for this round
         const prediction = await storage.getParticipantRoundPrediction(participant.userId, tournamentId, roundNumber);
-        
+
         if (!prediction) {
           // No prediction = automatic elimination
           await this.eliminateParticipant(participant.userId, tournamentId, roundNumber, 'No prediction made');
@@ -197,7 +200,7 @@ export class SurvivalRoundService {
 
       // Get individual round duration from database fields first
       let roundDuration = tournament.roundDuration; // Default fallback
-      
+
       if (roundNumber === 1 && tournament.round1Duration) {
         roundDuration = tournament.round1Duration;
       } else if (roundNumber === 2 && tournament.round2Duration) {
@@ -253,17 +256,17 @@ export class SurvivalRoundService {
   async awardRetroactiveRewards() {
     try {
       console.log('🔍 Checking for completed tournaments without awarded rewards...');
-      
+
       // Get all completed tournaments with winners
       const completedTournaments = await storage.getCompletedTournamentsWithWinners();
-      
+
       for (const tournament of completedTournaments) {
         // Check if winner already received reward
         const existingReward = await storage.checkTournamentRewardAwarded(tournament.id);
-        
+
         if (!existingReward && tournament.prizePool > 0) {
           console.log(`🏆 Awarding retroactive reward: ${tournament.prizePool} NTIQ to winner ${tournament.winnerId} for tournament ${tournament.id}`);
-          
+
           // CRITICAL: Use BalanceService for guaranteed real-time balance updates
           try {
             const balanceResult = await BalanceService.processSurvivalReward(
@@ -272,7 +275,7 @@ export class SurvivalRoundService {
               tournament.prizePool,
               storage
             );
-            
+
             console.log(`✅ SURVIVAL REWARD: Tournament ${tournament.id} winner ${tournament.winnerId} received ${tournament.prizePool} NTIQ`);
           } catch (error) {
             console.error(`❌ SURVIVAL REWARD ERROR: Failed to process tournament ${tournament.id} reward:`, error);
@@ -284,12 +287,12 @@ export class SurvivalRoundService {
               description: `Survival tournament reward: ${tournament.title}`,
               relatedId: tournament.id
             }, storage);
-            
+
             console.log(`✅ Successfully awarded retroactive ${tournament.prizePool} NTIQ to tournament winner (fallback)`);
           }
         }
       }
-      
+
       console.log('✅ Retroactive reward check completed');
     } catch (error) {
       console.error('Error awarding retroactive rewards:', error);
@@ -301,12 +304,12 @@ export class SurvivalRoundService {
     try {
       if (winnerId) {
         await storage.setTournamentWinner(tournamentId, winnerId);
-        
+
         // Award prize pool to winner
         const tournament = await storage.getSurvivalTournament(tournamentId);
         if (tournament && tournament.prizePool > 0) {
           console.log(`🏆 Awarding ${tournament.prizePool} NTIQ to winner (User ID: ${winnerId})`);
-          
+
           // CRITICAL FIX: Use BalanceService for survival tournament rewards
           const balanceResult = await BalanceService.processTransaction({
             userId: winnerId,
@@ -315,12 +318,39 @@ export class SurvivalRoundService {
             description: `Survival tournament reward: ${tournament.title}`,
             relatedId: tournamentId
           }, storage);
-          
+
           console.log(`✅ Successfully awarded ${tournament.prizePool} NTIQ to tournament winner`);
+
+          // BLOCKCHAIN INTEGRATION: Distribute prize on smart contract
+          try {
+            const winner = await storage.getUser(winnerId);
+            if (winner?.walletAddress) {
+              const { blockchainService } = await import('./blockchainService');
+              const { tournamentPoolService } = await import('./tournamentPoolService');
+
+              const blockchainTournamentId = blockchainService.generateTournamentId(tournamentId);
+              const txHash = await tournamentPoolService.distributePrizes({
+                tournamentId: blockchainTournamentId,
+                winners: [winner.walletAddress],
+                amounts: [tournament.prizePool.toString()]
+              });
+
+              // Update tournament with distribute transaction hash
+              await db.update(survivalTournaments)
+                .set({ blockchainDistributeHash: txHash })
+                .where(eq(survivalTournaments.id, tournamentId));
+
+              const { logger } = await import('../../shared/logger');
+              logger.info(`🔗 [BLOCKCHAIN] Tournament ${tournamentId} prize distributed on blockchain: ${txHash}`);
+            }
+          } catch (blockchainError) {
+            const { logger } = await import('../../shared/logger');
+            logger.error(`❌ [BLOCKCHAIN] Failed to distribute tournament prize on blockchain:`, blockchainError);
+          }
         }
       }
       await storage.updateTournamentStatus(tournamentId, 'completed');
-      
+
       // Clear any interval for this tournament
       if (this.roundCheckers.has(tournamentId)) {
         clearTimeout(this.roundCheckers.get(tournamentId)!);
@@ -344,15 +374,15 @@ export class SurvivalRoundService {
         // Calculate prize per survivor (rounded down to avoid decimal issues)
         const prizePerSurvivor = Math.floor(tournament.prizePool / survivors.length);
         const remainingPrize = tournament.prizePool - (prizePerSurvivor * survivors.length);
-        
+
         console.log(`💰 Sharing ${tournament.prizePool} NTIQ among ${survivors.length} survivors (${prizePerSurvivor} NTIQ each)`);
-        
+
         // Award prize to each survivor
         for (let i = 0; i < survivors.length; i++) {
           const survivor = survivors[i];
           // First survivor gets any remaining NTIQ from rounding
           const finalAmount = i === 0 ? prizePerSurvivor + remainingPrize : prizePerSurvivor;
-          
+
           await BalanceService.processTransaction({
             userId: survivor.userId,
             type: 'survival_tournament_shared_reward',
@@ -360,22 +390,22 @@ export class SurvivalRoundService {
             description: `Survival tournament shared prize (${survivors.length} survivors): ${tournament.title}`,
             relatedId: tournamentId
           }, storage);
-          
+
           console.log(`✅ Awarded ${finalAmount} NTIQ to survivor ${survivor.username} (ID: ${survivor.userId})`);
         }
-        
+
         // Set first survivor as "winner" for display purposes, but mark as shared
         await storage.setTournamentWinner(tournamentId, survivors[0].userId);
       }
-      
+
       await storage.updateTournamentStatus(tournamentId, 'completed');
-      
+
       // Clear any interval for this tournament
       if (this.roundCheckers.has(tournamentId)) {
         clearTimeout(this.roundCheckers.get(tournamentId)!);
         this.roundCheckers.delete(tournamentId);
       }
-      
+
       console.log(`🎉 Prize sharing completed for tournament ${tournamentId}`);
     } catch (error) {
       console.error('Error finishing tournament with prize sharing:', error);
@@ -394,10 +424,10 @@ export class SurvivalRoundService {
 
       // End current round and calculate eliminations
       await this.endRound(currentRound.id);
-      
+
       // Check if tournament should continue
       const activeParticipants = await storage.getActiveParticipants(tournamentId);
-      
+
       if (activeParticipants.length <= 1) {
         // Tournament finished - declare winner
         await this.endTournament(tournamentId, activeParticipants[0]?.userId || null);
@@ -430,10 +460,10 @@ export class SurvivalRoundService {
       const currentPrice = cryptoData[tournament.cryptocurrency]?.usd || 0;
 
       const startTime = new Date();
-      
+
       // Use individual round duration based on round number
       let roundDuration = tournament.roundDuration; // Default fallback
-      
+
       // Check for individual round durations in database fields first
       if (nextRoundNumber === 1 && tournament.round1Duration) {
         roundDuration = tournament.round1Duration;
@@ -460,7 +490,7 @@ export class SurvivalRoundService {
       } else {
         console.log(`Round ${nextRoundNumber}: Using default duration of ${roundDuration} minutes (no individual durations set)`);
       }
-      
+
       const endTime = new Date(startTime.getTime() + roundDuration * 60 * 1000);
 
       // Create new round
@@ -476,7 +506,7 @@ export class SurvivalRoundService {
 
       // Get active participants
       const activeParticipants = await storage.getActiveParticipants(tournamentId);
-      
+
       // Update survivor count
       await storage.updateRoundSurvivorCount(newRound.id, activeParticipants.length);
 
@@ -515,14 +545,14 @@ export class SurvivalRoundService {
 
       // Get all predictions for this round
       const predictions = await storage.getRoundPredictions(roundId);
-      
+
       let eliminatedCount = 0;
       let correctPredictions = 0;
 
       // Process each prediction individually using their starting price
       for (const prediction of predictions) {
         const userStartingPrice = parseFloat(prediction.startingPrice || '0');
-        
+
         if (userStartingPrice === 0) {
           console.warn(`No starting price found for prediction ${prediction.id}, skipping`);
           continue;
@@ -537,7 +567,7 @@ export class SurvivalRoundService {
           // User predicted price would go DOWN - they're correct if endPrice < startingPrice
           isCorrect = endPrice < userStartingPrice;
         }
-        
+
         // Update prediction with ending price and result
         await storage.updateSurvivalPrediction(prediction.id, {
           endingPrice: endPrice.toString(),
@@ -605,7 +635,7 @@ export class SurvivalRoundService {
             description: `Survival tournament prize: ${tournament?.title || 'Tournament'}`,
             relatedId: tournamentId
           }, storage);
-          
+
           console.log(`Tournament ${tournamentId} completed!`);
           console.log(`Winner: ${winner.username} (ID: ${winnerId})`);
           console.log(`Prize: ${prizePool} NTIQ`);
@@ -622,10 +652,10 @@ export class SurvivalRoundService {
   async startTournamentRounds(tournamentId: number) {
     try {
       console.log(`🎯 Starting rounds for tournament ${tournamentId} only (isolated mode)`);
-      
+
       // Only check this specific tournament, not all tournaments
       await this.checkAndProcessExpiredRounds(tournamentId);
-      
+
       // Set up interval for just this tournament
       const interval = setInterval(async () => {
         try {
@@ -634,10 +664,10 @@ export class SurvivalRoundService {
           console.error(`Error checking tournament ${tournamentId}:`, error);
         }
       }, 30000); // Check every 30 seconds
-      
+
       this.roundIntervals.set(tournamentId, interval);
       console.log(`✅ Successfully started isolated round monitoring for tournament ${tournamentId}`);
-      
+
     } catch (error) {
       console.error(`Failed to start tournament rounds for ${tournamentId}:`, error);
     }

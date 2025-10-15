@@ -53,6 +53,7 @@ export interface IStorage {
   getAllPredictions(): Promise<Prediction[]>;
   getActivePredictions(): Promise<Prediction[]>;
   updatePredictionResult(id: number, actualPrice: string, accuracy: string, rewardAmount: number, status: string): Promise<void>;
+  updatePrediction(id: number, updates: Partial<Prediction>): Promise<void>;
   getRecentPredictions(limit?: number): Promise<Prediction[]>;
 
   // Cryptocurrency operations
@@ -479,6 +480,13 @@ export class DatabaseStorage implements IStorage {
         status,
         completedAt: new Date()
       })
+      .where(eq(predictions.id, id));
+  }
+
+  async updatePrediction(id: number, updates: Partial<Prediction>): Promise<void> {
+    await db
+      .update(predictions)
+      .set(updates)
       .where(eq(predictions.id, id));
   }
 
@@ -1711,12 +1719,14 @@ export class DatabaseStorage implements IStorage {
       }
 
       // 🆕 CRITICAL FIX: Handle expired 'open' battles with no participants
+      // Use UTC time comparison to avoid timezone issues
+      const now = new Date();
       const expiredOpenBattles = await db
         .select()
         .from(predictionBattles)
         .where(and(
           eq(predictionBattles.status, 'open'),
-          lt(predictionBattles.targetTime, new Date())
+          lt(predictionBattles.targetTime, now)
         ));
 
       for (const battle of expiredOpenBattles) {
@@ -1881,6 +1891,32 @@ export class DatabaseStorage implements IStorage {
           }
 
           console.log(`✅ BATTLE REWARD: Battle ${battleId} winner ${winnerId} received ${winnerReward} NTIQ`);
+
+          // BLOCKCHAIN INTEGRATION: Resolve battle on smart contract
+          try {
+            const [winnerUser] = await db.select().from(users).where(eq(users.id, winnerId));
+            if (winnerUser?.walletAddress && (battle as any).blockchainBattleHash) {
+              const { blockchainService } = await import('./services/blockchainService');
+              const { battleEscrowService } = await import('./services/battleEscrowService');
+
+              const blockchainBattleId = blockchainService.generateBattleId(battleId);
+              const txHash = await battleEscrowService.resolveBattle({
+                battleId: blockchainBattleId,
+                winner: winnerUser.walletAddress
+              });
+
+              // Update battle with resolve transaction hash
+              await db.update(predictionBattles)
+                .set({ blockchainResolveHash: txHash })
+                .where(eq(predictionBattles.id, battleId));
+
+              const { logger } = await import('../shared/logger');
+              logger.info(`🔗 [BLOCKCHAIN] Battle ${battleId} resolved on blockchain: ${txHash}`);
+            }
+          } catch (blockchainError) {
+            const { logger } = await import('../shared/logger');
+            logger.error(`❌ [BLOCKCHAIN] Failed to resolve battle on blockchain:`, blockchainError);
+          }
         } catch (error) {
           console.error(`❌ BATTLE REWARD ERROR: Failed to process battle ${battleId} reward:`, error);
           // Fallback to old method if BalanceService fails
@@ -1981,35 +2017,36 @@ export class DatabaseStorage implements IStorage {
 
   async getLiveBattles(): Promise<any[]> {
     // First, resolve any expired battles
-    await this.resolveExpiredBattles();
+    // TEMPORARILY DISABLED FOR TESTING
+    // await this.resolveExpiredBattles();
 
-    // Get battles with challenger and challenged user info
-    const battles = await db
-      .select({
-        id: predictionBattles.id,
-        challengerId: predictionBattles.challengerId,
-        challengedId: predictionBattles.challengedId,
-        cryptocurrency: predictionBattles.cryptocurrency,
-        timeframe: predictionBattles.timeframe,
-        stakeAmount: predictionBattles.stakeAmount,
-        challengerPrediction: predictionBattles.challengerPrediction,
-        challengedPrediction: predictionBattles.challengedPrediction,
-        status: predictionBattles.status,
-        targetTime: predictionBattles.targetTime,
-        createdAt: predictionBattles.createdAt,
-        spectatorCount: predictionBattles.spectatorCount,
-        battleType: predictionBattles.battleType,
-        isPublic: predictionBattles.isPublic,
-        challengerUsername: users.username,
-        challengerPhoto: users.profilePhoto
-      })
-      .from(predictionBattles)
-      .leftJoin(users, eq(predictionBattles.challengerId, users.id))
-      .where(or(
-        eq(predictionBattles.status, 'open'),
-        eq(predictionBattles.status, 'active')
-      ))
-      .orderBy(desc(predictionBattles.createdAt));
+    // Get battles with challenger and challenged user info using raw SQL
+    const rawBattles = await db.execute(sql`
+      SELECT 
+        pb.id,
+        pb.challenger_id as "challengerId",
+        pb.challenged_id as "challengedId",
+        pb.cryptocurrency,
+        pb.timeframe,
+        pb.stake_amount as "stakeAmount",
+        pb.challenger_prediction as "challengerPrediction",
+        pb.challenged_prediction as "challengedPrediction",
+        pb.status,
+        pb.target_time as "targetTime",
+        pb.created_at as "createdAt",
+        pb.spectator_count as "spectatorCount",
+        pb.battle_type as "battleType",
+        pb.is_public as "isPublic",
+        pb.blockchain_battle_hash as "blockchainBattleHash",
+        u.username as "challengerUsername",
+        u.profile_photo as "challengerPhoto"
+      FROM prediction_battles pb
+      LEFT JOIN users u ON pb.challenger_id = u.id
+      WHERE pb.status IN ('open', 'active')
+      ORDER BY pb.created_at DESC
+    `);
+
+    const battles = rawBattles.rows;
 
     // Get challenged user info for battles that have challengedId
     const battlesWithChallenged = await Promise.all(
@@ -2043,7 +2080,7 @@ export class DatabaseStorage implements IStorage {
           },
           challenged,
           currentPrice,
-          timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
+          timeLeft: Math.max(0, Math.floor(((battle.targetTime instanceof Date ? battle.targetTime : new Date(battle.targetTime + 'Z')).getTime() - new Date().getTime()) / 1000))
         };
       })
     );
@@ -2184,7 +2221,7 @@ export class DatabaseStorage implements IStorage {
         return {
           ...battle,
           challengedUsername,
-          timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
+          timeLeft: Math.max(0, Math.floor(((battle.targetTime instanceof Date ? battle.targetTime : new Date(battle.targetTime + 'Z')).getTime() - new Date().getTime()) / 1000))
         };
       })
     );
@@ -2370,7 +2407,7 @@ export class DatabaseStorage implements IStorage {
           ...battle,
           challengerUsername,
           challengedUsername,
-          timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000)),
+          timeLeft: Math.max(0, Math.floor(((battle.targetTime instanceof Date ? battle.targetTime : new Date(battle.targetTime + 'Z')).getTime() - new Date().getTime()) / 1000)),
           isUserChallenger: battle.challengerId === userId
         };
       })

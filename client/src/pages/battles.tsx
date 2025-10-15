@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { PredictionBattles } from '@/components/prediction-battles';
+import { BattleBlockchainForm } from '@/components/BattleBlockchainForm';
+import { JoinBattleBlockchainForm } from '@/components/JoinBattleBlockchainForm';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { CountdownTimer } from '@/components/countdown-timer';
@@ -76,7 +78,7 @@ export default function BattlesPage() {
   });
 
   const { toast } = useToast();
-  
+
   // Wallet requirement system
   const { isModalOpen, actionType, checkWalletRequired, onWalletConnected, closeModal } = useWalletRequired();
 
@@ -114,18 +116,18 @@ export default function BattlesPage() {
   // Filter battles based on search and filters
   const filteredBattles = (battles as Battle[]).filter((battle: Battle) => {
     const matchesSearch = battle.cryptocurrency.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         battle.challengerUsername?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         battle.challengedUsername?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      battle.challengerUsername?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      battle.challengedUsername?.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesStatus = statusFilter === 'all' || battle.status === statusFilter;
     const matchesCrypto = cryptoFilter === 'all' || battle.cryptocurrency === cryptoFilter;
-    
+
     return matchesSearch && matchesStatus && matchesCrypto;
   });
 
   // Filter battles for Open Battles tab (status = 'open')
   const openBattles = filteredBattles.filter((battle: Battle) => battle.status === 'open');
-  
+
   // Filter battles for Active Battles tab (status = 'active')
   const activeBattles = filteredBattles.filter((battle: Battle) => battle.status === 'active');
 
@@ -151,16 +153,16 @@ export default function BattlesPage() {
       hyperliquid: { name: 'Hyperliquid', symbol: 'HYPE' },
       'sahara-ai': { name: 'Sahara AI', symbol: 'SAHARA' }
     };
-    
+
     return displayMapping[cryptoId] || { name: cryptoId.charAt(0).toUpperCase() + cryptoId.slice(1), symbol: cryptoId.toUpperCase() };
   };
 
   const formatTimeLeft = (timeLeft: number) => {
     if (timeLeft <= 0) return 'Ended';
-    
+
     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -207,7 +209,7 @@ export default function BattlesPage() {
       });
 
       const result = await response.json();
-      
+
       toast({
         title: "Battle Joined!",
         description: `Successfully joined the ${selectedBattle.cryptocurrency} battle!`
@@ -215,17 +217,17 @@ export default function BattlesPage() {
       setJoinDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user'] }); // Refresh user balance in header
-      
+
     } catch (error: any) {
       console.error('Join battle error:', error);
-      
+
       // Extract error message from the error object
       let errorMessage = "An error occurred while joining the battle";
-      
+
       if (error?.message) {
         // Remove the error code prefix (e.g., "400: ") to show clean message
         errorMessage = error.message.replace(/^\d+:\s*/, '');
-        
+
         // Try to parse JSON from the error message if it looks like JSON
         try {
           const jsonMatch = errorMessage.match(/\{.*\}/);
@@ -239,7 +241,7 @@ export default function BattlesPage() {
           // If JSON parsing fails, use the original error message
         }
       }
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -266,12 +268,12 @@ export default function BattlesPage() {
         title: "Success",
         description: "Battle created successfully!",
       });
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/battles/live'] });
       queryClient.invalidateQueries({ queryKey: ['/api/battles/stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user'] }); // Refresh user balance in header
-      
+
       setCreateBattleDialogOpen(false);
       setCreateBattleForm({
         cryptocurrency: '',
@@ -328,7 +330,7 @@ export default function BattlesPage() {
         hyperliquid: 'https://assets.coingecko.com/coins/images/33223/small/hyperliquid.png',
         'sahara-ai': 'https://assets.coingecko.com/coins/images/66681/small/SAHARA-token-200.png'
       };
-      
+
       return imageMapping[cryptoId] || 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png';
     };
 
@@ -349,7 +351,7 @@ export default function BattlesPage() {
         hyperliquid: { name: 'Hyperliquid', symbol: 'HYPE' },
         'sahara-ai': { name: 'Sahara AI', symbol: 'SAHARA' }
       };
-      
+
       return displayMapping[cryptoId] || { name: cryptoId.charAt(0).toUpperCase() + cryptoId.slice(1), symbol: cryptoId.toUpperCase() };
     };
 
@@ -411,11 +413,10 @@ export default function BattlesPage() {
       <button
         key={page}
         onClick={() => handlePageChange(page)}
-        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-          isActive 
-            ? 'bg-blue-600 text-white' 
-            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700'
-        }`}
+        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
+          ? 'bg-blue-600 text-white'
+          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700'
+          }`}
       >
         {page}
       </button>
@@ -426,29 +427,29 @@ export default function BattlesPage() {
 
       const pages = [];
       const maxVisiblePages = 5;
-      
+
       if (totalPages <= maxVisiblePages) {
         for (let i = 1; i <= totalPages; i++) {
           pages.push(renderPaginationButton(i, i === historyPage));
         }
       } else {
         pages.push(renderPaginationButton(1, historyPage === 1));
-        
+
         if (historyPage > 3) {
           pages.push(<span key="ellipsis1" className="px-2 text-gray-400">...</span>);
         }
-        
+
         const start = Math.max(2, historyPage - 1);
         const end = Math.min(totalPages - 1, historyPage + 1);
-        
+
         for (let i = start; i <= end; i++) {
           pages.push(renderPaginationButton(i, i === historyPage));
         }
-        
+
         if (historyPage < totalPages - 2) {
           pages.push(<span key="ellipsis2" className="px-2 text-gray-400">...</span>);
         }
-        
+
         pages.push(renderPaginationButton(totalPages, historyPage === totalPages));
       }
 
@@ -485,15 +486,15 @@ export default function BattlesPage() {
             Battle History ({totalItems} completed)
           </h3>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {paginatedBattles.map((battle: any) => (
             <Card key={battle.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <img 
-                      src={getCryptoImageUrl(battle.cryptocurrency)} 
+                    <img
+                      src={getCryptoImageUrl(battle.cryptocurrency)}
                       alt={battle.cryptocurrency}
                       className="w-8 h-8 rounded-full"
                       onError={(e) => {
@@ -509,7 +510,7 @@ export default function BattlesPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100">
                       Completed
@@ -572,8 +573,8 @@ export default function BattlesPage() {
                       <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">Win Accuracy</p>
                       {battle.winner && battle.actualPrice ? (() => {
                         const actualPrice = parseFloat(battle.actualPrice);
-                        const winnerPrediction = battle.winner.id === battle.challengerId ? 
-                          parseFloat(battle.challengerPrediction) : 
+                        const winnerPrediction = battle.winner.id === battle.challengerId ?
+                          parseFloat(battle.challengerPrediction) :
                           parseFloat(battle.challengedPrediction || '0');
                         const accuracy = Math.abs(winnerPrediction - actualPrice) / actualPrice * 100;
                         return (
@@ -601,7 +602,7 @@ export default function BattlesPage() {
                       Timeframe: {battle.timeframe}
                     </div>
                   </div>
-                  
+
                   {(battle.winnerReward || battle.winner) && (
                     <div className="flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
                       <Award className="w-4 h-4 mr-1" />
@@ -613,7 +614,7 @@ export default function BattlesPage() {
             </Card>
           ))}
         </div>
-        
+
         {/* Pagination Controls */}
         {renderPagination()}
       </div>
@@ -623,7 +624,7 @@ export default function BattlesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <Header />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="text-center mb-12">
@@ -651,7 +652,7 @@ export default function BattlesPage() {
                 <div className="text-sm text-white dark:text-white font-bold">Total Battles</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4 text-center">
                 <Clock className="h-6 w-6 text-green-500 mx-auto mb-2" />
@@ -661,7 +662,7 @@ export default function BattlesPage() {
                 <div className="text-sm text-white dark:text-white font-bold">Active</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4 text-center">
                 <Users className="h-6 w-6 text-blue-500 mx-auto mb-2" />
@@ -671,7 +672,7 @@ export default function BattlesPage() {
                 <div className="text-sm text-white dark:text-white font-bold">Open</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4 text-center">
                 <DollarSign className="h-6 w-6 text-purple-500 mx-auto mb-2" />
@@ -697,7 +698,7 @@ export default function BattlesPage() {
                   className="pl-10"
                 />
               </div>
-              
+
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="Status" />
@@ -709,7 +710,7 @@ export default function BattlesPage() {
                   <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Select value={cryptoFilter} onValueChange={setCryptoFilter}>
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="Crypto" />
@@ -736,8 +737,8 @@ export default function BattlesPage() {
         <div className="mb-6 flex justify-center">
           <Dialog open={createBattleDialogOpen} onOpenChange={setCreateBattleDialogOpen}>
             <DialogTrigger asChild>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold"
                 onClick={() => {
                   if (!user) {
@@ -756,97 +757,29 @@ export default function BattlesPage() {
                 {user ? 'Create New Battle' : 'Login to Create Battle'}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Battle</DialogTitle>
               </DialogHeader>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="cryptocurrency">Cryptocurrency</Label>
-                  <Select
-                    value={createBattleForm.cryptocurrency}
-                    onValueChange={(value) => setCreateBattleForm(prev => ({ ...prev, cryptocurrency: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select cryptocurrency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cryptos.map((crypto: any) => (
-                        <SelectItem key={crypto.id} value={crypto.id}>
-                          <div className="flex items-center gap-2">
-                            <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
-                            <span>
-                              {crypto.symbol?.toUpperCase()} (${crypto.current_price.toFixed(2)})
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="timeframe">Timeframe</Label>
-                  <Select
-                    value={createBattleForm.timeframe}
-                    onValueChange={(value) => setCreateBattleForm(prev => ({ ...prev, timeframe: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select timeframe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1h">1 Hour</SelectItem>
-                      <SelectItem value="6h">6 Hours</SelectItem>
-                      <SelectItem value="24h">24 Hours</SelectItem>
-                      <SelectItem value="7d">7 Days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="stakeAmount">Stake Amount (NTIQ)</Label>
-                  <Input
-                    id="stakeAmount"
-                    type="number"
-                    min="50"
-                    max="500"
-                    value={createBattleForm.stakeAmount}
-                    onChange={(e) => setCreateBattleForm(prev => ({ ...prev, stakeAmount: parseInt(e.target.value) || 50 }))}
-                    placeholder="Enter stake amount..."
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="challengerPrediction">Your Price Prediction ($)</Label>
-                  <Input
-                    id="challengerPrediction"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={createBattleForm.challengerPrediction}
-                    onChange={(e) => setCreateBattleForm(prev => ({ ...prev, challengerPrediction: parseFloat(e.target.value) || 0 }))}
-                    placeholder="Enter your price prediction..."
-                  />
-                </div>
-                
-                <div className="flex gap-3 pt-4">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1"
-                    onClick={() => setCreateBattleDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
-                    onClick={submitCreateBattle}
-                    disabled={createBattleMutation.isPending || !createBattleForm.cryptocurrency || !createBattleForm.timeframe || !createBattleForm.stakeAmount || !createBattleForm.challengerPrediction}
-                  >
-                    {createBattleMutation.isPending ? 'Creating...' : 'Create Battle'}
-                  </Button>
-                </div>
-              </div>
+
+              {/* Blockchain Form with Backend Design */}
+              <BattleBlockchainForm
+                onClose={() => setCreateBattleDialogOpen(false)}
+                onSuccess={() => {
+                  setCreateBattleDialogOpen(false);
+                  setCreateBattleForm({
+                    cryptocurrency: '',
+                    timeframe: '',
+                    stakeAmount: 50,
+                    challengerPrediction: 0
+                  });
+                }}
+                availableCryptos={cryptos}
+                currentPrices={cryptos.reduce((acc: any, crypto: any) => {
+                  acc[crypto.id] = crypto.current_price;
+                  return acc;
+                }, {})}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -858,7 +791,7 @@ export default function BattlesPage() {
             <TabsTrigger value="create">Active Battles ({activeBattles.length})</TabsTrigger>
             <TabsTrigger value="history">History ({stats?.completedBattles || 0})</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="live" className="mt-8">
             <div className="space-y-4">
               {battlesLoading ? (
@@ -871,8 +804,8 @@ export default function BattlesPage() {
                   <CardContent className="p-8 text-center">
                     <Swords className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all' 
-                        ? 'No open battles match the current filters' 
+                      {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all'
+                        ? 'No open battles match the current filters'
                         : 'No open battles available yet'}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
@@ -913,7 +846,7 @@ export default function BattlesPage() {
                             </p>
                           </div>
                         </div>
-                        
+
                         {/* Battle Layout - 2x2 Layout */}
                         <div className="grid grid-cols-2 gap-4 mb-4">
                           {/* Left Column - Participants */}
@@ -960,8 +893,8 @@ export default function BattlesPage() {
                                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                                     Waiting...
                                   </p>
-                                  <Button 
-                                    size="sm" 
+                                  <Button
+                                    size="sm"
                                     className="bg-purple-600 hover:bg-purple-700 text-white"
                                     onClick={() => handleJoinBattle(battle)}
                                   >
@@ -982,18 +915,18 @@ export default function BattlesPage() {
                               <p className="text-lg font-bold text-gray-900 dark:text-white">
                                 {(() => {
                                   // Get live current price from Pyth Network data
-                                  const cryptoMatch = cryptos.find(crypto => 
-                                    crypto.id === battle.cryptocurrency.toLowerCase() || 
+                                  const cryptoMatch = cryptos.find(crypto =>
+                                    crypto.id === battle.cryptocurrency.toLowerCase() ||
                                     crypto.symbol.toLowerCase() === battle.cryptocurrency.toLowerCase() ||
                                     crypto.name.toLowerCase() === battle.cryptocurrency.toLowerCase()
                                   );
                                   const liveCurrentPrice = cryptoMatch?.current_price || battle.currentPrice;
-                                  
-                                  return liveCurrentPrice ? 
+
+                                  return liveCurrentPrice ?
                                     `$${parseFloat(liveCurrentPrice.toString()).toLocaleString(undefined, {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 2
-                                    })}` : 
+                                    })}` :
                                     'Loading...';
                                 })()}
                               </p>
@@ -1019,15 +952,15 @@ export default function BattlesPage() {
 
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                           <div className="flex items-center space-x-4">
-                            <div className="flex items-center text-sm text-gray-800 dark:text-gray-200 font-medium">
+                            <div className="flex items-center text-sm text-white font-medium">
                               <DollarSign className="w-4 h-4 mr-1 text-gray-600 dark:text-gray-300" />
                               Stake: {battle.stakeAmount} NTIQ
                             </div>
-                            <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">
+                            <div className="text-sm text-white font-medium">
                               Timeframe: {battle.timeframe}
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center text-sm font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-3 py-1 rounded-full">
                             <Clock className="w-4 h-4 mr-1" />
                             Open for Join
@@ -1040,7 +973,7 @@ export default function BattlesPage() {
               )}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="create" className="mt-8">
             <div className="space-y-4">
               {battlesLoading ? (
@@ -1053,8 +986,8 @@ export default function BattlesPage() {
                   <CardContent className="p-8 text-center">
                     <Swords className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all' 
-                        ? 'No active battles match the current filters' 
+                      {searchQuery || statusFilter !== 'all' || cryptoFilter !== 'all'
+                        ? 'No active battles match the current filters'
                         : 'No active battles at the moment'}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
@@ -1071,8 +1004,8 @@ export default function BattlesPage() {
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <img 
-                              src={getCryptoImageUrl(battle.cryptocurrency)} 
+                            <img
+                              src={getCryptoImageUrl(battle.cryptocurrency)}
                               alt={battle.cryptocurrency}
                               className="w-8 h-8 rounded-full"
                               onError={(e) => {
@@ -1092,7 +1025,7 @@ export default function BattlesPage() {
                           </Badge>
                         </div>
                       </CardHeader>
-                      
+
                       <CardContent className="space-y-4">
                         {/* Battle participants */}
                         <div className="grid grid-cols-2 gap-4">
@@ -1112,7 +1045,7 @@ export default function BattlesPage() {
                             </div>
                             <div className="text-xs text-muted-foreground">Challenger</div>
                           </div>
-                          
+
                           <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                             <div className="font-semibold text-red-700 dark:text-red-300">
                               {battle.challenged?.username || 'Opponent'}
@@ -1140,62 +1073,62 @@ export default function BattlesPage() {
                             <span className="font-semibold">
                               ${(() => {
                                 // Use live price from Pyth Network data
-                                const livePrice = cryptos.find(crypto => 
-                                  crypto.id === battle.cryptocurrency.toLowerCase() || 
+                                const livePrice = cryptos.find(crypto =>
+                                  crypto.id === battle.cryptocurrency.toLowerCase() ||
                                   crypto.symbol.toLowerCase() === battle.cryptocurrency.toLowerCase() ||
                                   crypto.name.toLowerCase() === battle.cryptocurrency.toLowerCase()
                                 )?.current_price;
-                                
+
                                 const finalPrice = livePrice || battle.currentPrice;
-                                return finalPrice ? 
+                                return finalPrice ?
                                   finalPrice.toLocaleString(undefined, {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2
-                                  }) : 
+                                  }) :
                                   'Loading...';
                               })()}
                             </span>
                           </div>
-                          
+
                           {/* Win Probability Bar */}
                           {battle.challengerPrediction && battle.challengedPrediction && (() => {
                             // Use same live price logic for win probability calculation
-                            const livePrice = cryptos.find(crypto => 
-                              crypto.id === battle.cryptocurrency.toLowerCase() || 
+                            const livePrice = cryptos.find(crypto =>
+                              crypto.id === battle.cryptocurrency.toLowerCase() ||
                               crypto.symbol.toLowerCase() === battle.cryptocurrency.toLowerCase() ||
                               crypto.name.toLowerCase() === battle.cryptocurrency.toLowerCase()
                             )?.current_price;
-                            
+
                             const currentPrice = livePrice || battle.currentPrice;
-                            
+
                             // Only show probability if we have a valid current price
                             if (!currentPrice) return null;
-                            
+
                             const challengerPrediction = parseFloat(battle.challengerPrediction);
                             const challengedPrediction = parseFloat(battle.challengedPrediction);
-                            
+
                             // Calculate accuracy percentages
                             const challengerAccuracy = Math.abs(challengerPrediction - currentPrice) / currentPrice * 100;
                             const challengedAccuracy = Math.abs(challengedPrediction - currentPrice) / currentPrice * 100;
-                            
+
                             // Calculate win probabilities (inverse of accuracy - lower error = higher probability)
                             const totalError = challengerAccuracy + challengedAccuracy;
                             const challengerWinProb = totalError > 0 ? Math.round((challengedAccuracy / totalError) * 100) : 50;
                             const challengedWinProb = 100 - challengerWinProb;
-                            
+
                             return (
                               <div className="mt-3 space-y-2">
                                 <div className="flex justify-between text-xs text-gray-900 dark:text-white font-medium">
                                   <span>Win Probability</span>
                                 </div>
-                                
+
                                 {/* Probability bar */}
                                 <div className="relative h-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                  <div 
+                                  <div
                                     className="absolute left-0 top-0 h-full bg-blue-500 transition-all duration-500"
                                     style={{ width: `${challengerWinProb}%` }}
                                   />
-                                  <div 
+                                  <div
                                     className="absolute right-0 top-0 h-full bg-red-500 transition-all duration-500"
                                     style={{ width: `${challengedWinProb}%` }}
                                   />
@@ -1203,7 +1136,7 @@ export default function BattlesPage() {
                                     <div className="w-0.5 h-4 bg-gray-800 dark:bg-gray-200"></div>
                                   </div>
                                 </div>
-                                
+
                                 {/* Percentage labels */}
                                 <div className="flex justify-between text-xs font-medium">
                                   <span className="text-blue-600 dark:text-blue-400">
@@ -1213,7 +1146,7 @@ export default function BattlesPage() {
                                     {battle.challenged?.username}: {challengedWinProb}%
                                   </span>
                                 </div>
-                                
+
                                 {/* Accuracy details */}
                                 <div className="flex justify-between text-xs text-gray-800 dark:text-gray-200 font-medium">
                                   <span>Error: {challengerAccuracy.toFixed(2)}%</span>
@@ -1230,83 +1163,51 @@ export default function BattlesPage() {
               )}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="history" className="mt-8">
             <BattleHistorySection />
           </TabsContent>
         </Tabs>
       </main>
-      
+
       {/* Join Battle Dialog */}
       <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Join Battle</DialogTitle>
           </DialogHeader>
-          
+
           {selectedBattle && (
-            <div className="space-y-4">
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <h3 className="font-semibold text-lg">
-                  {selectedBattle.cryptocurrency}
-                </h3>
-                <p className="text-sm text-gray-900 dark:text-white font-medium">
-                  Stake: {selectedBattle.stakeAmount} NTIQ
-                </p>
-                <p className="text-sm text-gray-900 dark:text-white font-medium">
-                  Current Price: ${(() => {
-                    // Use same live price logic as in open battle cards
-                    const livePrice = cryptos.find(crypto => 
-                      crypto.id === selectedBattle.cryptocurrency.toLowerCase() || 
-                      crypto.symbol.toLowerCase() === selectedBattle.cryptocurrency.toLowerCase() ||
-                      crypto.name.toLowerCase() === selectedBattle.cryptocurrency.toLowerCase()
-                    )?.current_price;
-                    
-                    const finalPrice = livePrice || selectedBattle.currentPrice;
-                    return finalPrice?.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    }) || 'Loading...';
-                  })()}
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="prediction">Your Price Prediction ($)</Label>
-                <Input
-                  id="prediction"
-                  type="number"
-                  placeholder="Enter your price prediction..."
-                  value={predictionPrice}
-                  onChange={(e) => setPredictionPrice(e.target.value)}
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              
-              <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => setJoinDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
-                  onClick={submitJoinBattle}
-                  disabled={!predictionPrice || parseFloat(predictionPrice) <= 0}
-                >
-                  Join Battle
-                </Button>
-              </div>
-            </div>
+            <JoinBattleBlockchainForm
+              battle={{
+                id: selectedBattle.id,
+                cryptocurrency: selectedBattle.cryptocurrency,
+                timeframe: selectedBattle.timeframe,
+                stakeAmount: selectedBattle.stakeAmount,
+                challengerPrediction: parseFloat(selectedBattle.challengerPrediction),
+                challengerUsername: selectedBattle.challengerUsername,
+                currentPrice: (() => {
+                  const livePrice = cryptos.find(crypto =>
+                    crypto.id === selectedBattle.cryptocurrency.toLowerCase() ||
+                    crypto.symbol.toLowerCase() === selectedBattle.cryptocurrency.toLowerCase() ||
+                    crypto.name.toLowerCase() === selectedBattle.cryptocurrency.toLowerCase()
+                  )?.current_price;
+                  return livePrice || selectedBattle.currentPrice;
+                })()
+              }}
+              onClose={() => setJoinDialogOpen(false)}
+              onSuccess={() => {
+                setJoinDialogOpen(false);
+                setPredictionPrice('');
+                setSelectedBattle(null);
+              }}
+            />
           )}
         </DialogContent>
       </Dialog>
-      
+
       <Footer />
-      
+
       {/* Wallet Required Modal */}
       {/* Wallet requirement functionality removed */}
     </div>

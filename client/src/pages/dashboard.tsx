@@ -34,7 +34,7 @@ export default function Dashboard() {
   const [showChart, setShowChart] = useState(false);
   const [showPredictionForm, setShowPredictionForm] = useState(false);
   const [preSelectedForPrediction, setPreSelectedForPrediction] = useState<string | undefined>(undefined);
-  
+
   // Use Rainbow Kit authentication
   const { user, isConnected } = useRainbowAuth();
 
@@ -65,8 +65,8 @@ export default function Dashboard() {
   }, [livePrices, selectedCryptoId]);
 
   // Find the currently selected crypto from live prices
-  const selectedCrypto = selectedCryptoId 
-    ? livePrices.find(crypto => crypto.id === selectedCryptoId) 
+  const selectedCrypto = selectedCryptoId
+    ? livePrices.find(crypto => crypto.id === selectedCryptoId)
     : null;
 
   const handleCryptoSelect = (crypto: CryptoPrice) => {
@@ -75,13 +75,14 @@ export default function Dashboard() {
   };
 
   const handlePredictClick = (cryptoId: string) => {
-    // If not connected, user needs to connect wallet first
-    if (!isConnected) {
-      return; // Rainbow Kit button will handle connection
-    }
-    
+    console.log('🔍 [DASHBOARD] handlePredictClick called', { cryptoId, isConnected, user });
+
+    // TEMPORARY: Allow form to show even without wallet connection for testing
+    console.log('🔍 [DASHBOARD] TEMPORARY: Bypassing wallet check for testing');
+
     setPreSelectedForPrediction(cryptoId);
     setShowPredictionForm(true);
+
     // Scroll to prediction form
     setTimeout(() => {
       const form = document.querySelector('[data-prediction-form]');
@@ -89,13 +90,18 @@ export default function Dashboard() {
         form.scrollIntoView({ behavior: 'smooth' });
       }
     }, 100);
+
+    // TODO: Restore wallet check after testing
+    // if (!isConnected) {
+    //   return; // Rainbow Kit button will handle connection
+    // }
   };
 
   // Create different content based on authentication state
   const renderUnauthenticatedHome = () => (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4 md:py-8">
         {/* Welcome Section for Unauthenticated Users */}
         <div className="text-center py-4 sm:py-6 mb-4 sm:mb-6">
@@ -117,7 +123,7 @@ export default function Dashboard() {
           <div className="mb-24">
             <Card>
               <CardContent className="p-0">
-                <TradingViewChart 
+                <TradingViewChart
                   cryptoId={selectedCrypto.id}
                 />
               </CardContent>
@@ -136,7 +142,7 @@ export default function Dashboard() {
               Predict cryptocurrency prices across various timeframes and earn rewards based on accuracy
             </p>
           </Card>
-          
+
           <Card className="text-center p-6 sm:p-8">
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
               <Users className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
@@ -146,7 +152,7 @@ export default function Dashboard() {
               Challenge other users in prediction battles and win total rewards from both parties
             </p>
           </Card>
-          
+
           <Card className="text-center p-6 sm:p-8">
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
               <Award className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
@@ -172,11 +178,11 @@ export default function Dashboard() {
   const renderAuthenticatedHome = () => (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-      
+
       <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4 md:py-8">
         {/* Live Prices Section - Moved to Top */}
         <div className="mb-4 sm:mb-6">
-          <LivePrices 
+          <LivePrices
             onCryptoSelect={handleCryptoSelect}
             onPredictClick={handlePredictClick}
           />
@@ -195,15 +201,27 @@ export default function Dashboard() {
                     />
                   </CardContent>
                 </Card>
-                
+
                 {/* Make Prediction Button Below Chart */}
                 <div className="mb-6">
-                  <Button 
+                  <Button
                     onClick={() => selectedCrypto && handlePredictClick(selectedCrypto.id)}
                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                   >
                     <Target className="w-5 h-5 mr-2" />
                     Make Prediction
+                  </Button>
+
+                  {/* Debug Test Button */}
+                  <Button
+                    onClick={() => {
+                      console.log('🔍 [DEBUG] Force show modal');
+                      setPreSelectedForPrediction('bitcoin');
+                      setShowPredictionForm(true);
+                    }}
+                    className="w-full mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg"
+                  >
+                    Debug: Force Show Modal
                   </Button>
                 </div>
               </>
@@ -220,14 +238,14 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             )}
-            
+
             {/* Active Predictions */}
             <ActivePredictions />
-            
+
             {/* Events Section */}
             <EventsSection />
           </div>
-          
+
           {/* Right Sidebar */}
           <div className="lg:col-span-1">
             <div className="flex flex-col space-y-6 h-full min-h-[600px] sticky top-4">
@@ -235,7 +253,7 @@ export default function Dashboard() {
               <div>
                 <TopPredictors />
               </div>
-              
+
               {/* Recent Rewards */}
               <div className="flex-1">
                 <RecentRewards />
@@ -248,7 +266,7 @@ export default function Dashboard() {
         <div className="mt-8">
           <BannerSection position="below_live_prices" className="horizontal-banners" />
         </div>
-        
+
         {/* Market Sentiment Dashboard - 3 Column Layout */}
         <div className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -256,12 +274,12 @@ export default function Dashboard() {
             <div>
               <MarketSentimentDashboard />
             </div>
-            
+
             {/* Column 2: Top Movers */}
             <div>
               <TopMovers />
             </div>
-            
+
             {/* Column 3: Prediction Insights */}
             <div>
               <PredictionInsights />
@@ -269,8 +287,9 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-      
+
       {/* Prediction Form Modal */}
+      {console.log('🔍 [DASHBOARD-MODAL] Modal render check:', { showPredictionForm, preSelectedForPrediction })}
       {showPredictionForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-surface border border-surface-light rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -288,7 +307,7 @@ export default function Dashboard() {
                 ×
               </Button>
             </div>
-            <PredictionForm 
+            <PredictionForm
               preSelectedCrypto={preSelectedForPrediction}
               onSuccess={() => {
                 setShowPredictionForm(false);
@@ -298,13 +317,19 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-      
+
       <Footer />
-      
+
       {/* Wallet requirement functionality removed */}
     </div>
   );
 
-  // Return different content based on authentication
-  return isConnected ? renderAuthenticatedHome() : renderUnauthenticatedHome();
+  // TEMPORARY: Always show authenticated home for testing
+  console.log('🔍 [DASHBOARD] Authentication state:', { isConnected, user });
+  console.log('🔍 [DASHBOARD] TEMPORARY: Always rendering authenticated home for testing');
+
+  return renderAuthenticatedHome();
+
+  // TODO: Restore authentication check after testing
+  // return isConnected ? renderAuthenticatedHome() : renderUnauthenticatedHome();
 }

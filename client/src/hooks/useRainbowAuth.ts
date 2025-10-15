@@ -21,16 +21,32 @@ export function useRainbowAuth() {
   const connectionStatus = useWalletConnectionStatus();
 
   // Get user data from backend
-  const { data: user, isLoading } = useQuery<User>({
+  const { data: user, isLoading, error: userError } = useQuery<User>({
     queryKey: ["/api/user"],
     enabled: isConnected && !!address,
     refetchInterval: 10000,
     staleTime: 5000,
+    retry: 3, // Retry 3 times before giving up
+    retryDelay: 1000, // Wait 1 second between retries
     // CRITICAL: Prevent using cached data after logout
     // This ensures admin status is always fresh from server
     placeholderData: undefined,
     gcTime: 0, // Don't keep data in garbage collection cache
   });
+
+  // Debug user query state
+  React.useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('👤 [USER-QUERY] State:', {
+        isConnected,
+        hasAddress: !!address,
+        hasUser: !!user,
+        isLoading,
+        error: userError?.message,
+        queryEnabled: isConnected && !!address
+      });
+    }
+  }, [isConnected, address, user, isLoading, userError]);
 
   // Wallet authentication mutation
   const authenticateWalletMutation = useMutation({

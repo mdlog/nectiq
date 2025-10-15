@@ -14,6 +14,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { Swords, Eye, MessageCircle, Flame, Rocket, ThumbsUp, Brain, Trophy, Clock, Users, DollarSign, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { CountdownTimer } from '@/components/countdown-timer';
+import { BattleBlockchainForm } from './BattleBlockchainForm';
+import { JoinBattleBlockchainForm } from './JoinBattleBlockchainForm';
 
 interface Battle {
   id: number;
@@ -29,6 +31,7 @@ interface Battle {
   targetTime: string;
   createdAt: string;
   spectatorCount: number;
+  blockchainBattleHash?: string;
   challenger: {
     username: string;
     profilePhoto?: string;
@@ -68,7 +71,7 @@ interface CryptoPrice {
 // Function to calculate win probability based on prediction accuracy
 const calculateWinProbability = (battle: Battle, liveCurrentPrice?: number): WinProbability => {
   const currentPrice = liveCurrentPrice || battle.currentPrice;
-  
+
   if (!battle.challengedPrediction || !currentPrice) {
     return {
       challengerWinChance: 50,
@@ -86,7 +89,7 @@ const calculateWinProbability = (battle: Battle, liveCurrentPrice?: number): Win
   // Calculate probability based on accuracy comparison
   let challengerWinChance: number;
   let challengedWinChance: number;
-  
+
   if (challengerAccuracy === challengedAccuracy) {
     challengerWinChance = 50;
     challengedWinChance = 50;
@@ -100,7 +103,7 @@ const calculateWinProbability = (battle: Battle, liveCurrentPrice?: number): Win
   // Determine confidence level based on accuracy difference
   const accuracyDiff = Math.abs(challengerAccuracy - challengedAccuracy);
   let confidenceLevel: 'low' | 'medium' | 'high';
-  
+
   if (accuracyDiff < 0.5) confidenceLevel = 'low';
   else if (accuracyDiff < 2) confidenceLevel = 'medium';
   else confidenceLevel = 'high';
@@ -117,15 +120,15 @@ const calculateWinProbability = (battle: Battle, liveCurrentPrice?: number): Win
 // Komponen grafik probabilitas menang-kalah
 const WinProbabilityChart = ({ battle, cryptoPrices }: { battle: Battle; cryptoPrices: any[] }) => {
   // Get live current price from Pyth Network data
-  const cryptoMatch = cryptoPrices.find(crypto => 
-    crypto.id === battle.cryptocurrency.toLowerCase() || 
+  const cryptoMatch = cryptoPrices.find(crypto =>
+    crypto.id === battle.cryptocurrency.toLowerCase() ||
     crypto.symbol.toLowerCase() === battle.cryptocurrency.toLowerCase() ||
     crypto.name.toLowerCase() === battle.cryptocurrency.toLowerCase()
   );
   const liveCurrentPrice = cryptoMatch?.current_price;
-  
+
   const probability = calculateWinProbability(battle, liveCurrentPrice);
-  
+
   if (!battle.challengedPrediction) {
     return (
       <Card className="bg-gray-50 dark:bg-gray-800">
@@ -161,8 +164,8 @@ const WinProbabilityChart = ({ battle, cryptoPrices }: { battle: Battle; cryptoP
         <CardTitle className="flex items-center text-sm font-semibold">
           <BarChart3 className="mr-2" size={16} />
           Analisis Probabilitas Menang
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className={`ml-auto ${getConfidenceColor(probability.confidenceLevel)}`}
           >
             Akurasi: {getConfidenceText(probability.confidenceLevel)}
@@ -191,21 +194,21 @@ const WinProbabilityChart = ({ battle, cryptoPrices }: { battle: Battle; cryptoP
               </div>
             </div>
           </div>
-          
+
           {/* Combined Probability Bar */}
           <div className="relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-6 overflow-hidden">
-            <div 
+            <div
               className="bg-blue-500 h-full transition-all duration-500 absolute left-0 rounded-l-full"
               style={{ width: `${probability.challengerWinChance}%` }}
             />
-            <div 
+            <div
               className="bg-purple-500 h-full transition-all duration-500 absolute right-0 rounded-r-full"
               style={{ width: `${probability.challengedWinChance}%` }}
             />
             {/* Center divider line */}
             <div className="absolute left-1/2 transform -translate-x-0.5 top-0 bottom-0 w-0.5 bg-white/70" />
           </div>
-          
+
           {/* Accuracy Information */}
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
@@ -224,27 +227,27 @@ const WinProbabilityChart = ({ battle, cryptoPrices }: { battle: Battle; cryptoP
             <span className="font-semibold">${(() => {
               // Use live current price from Pyth Network data if available
               const currentPrice = liveCurrentPrice || battle.currentPrice;
-              return parseFloat(currentPrice.toString()).toLocaleString(undefined, { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
+              return parseFloat(currentPrice.toString()).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
               });
             })()}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-gray-600 dark:text-gray-400">Prediksi Challenger:</span>
             <span className="text-blue-600 dark:text-blue-400 font-semibold">
-              ${battle.challengerPrediction.toLocaleString(undefined, { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
+              ${battle.challengerPrediction.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
               })}
             </span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-gray-600 dark:text-gray-400">Opponent Prediction:</span>
             <span className="text-purple-600 dark:text-purple-400 font-semibold">
-              ${battle.challengedPrediction.toLocaleString(undefined, { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
+              ${battle.challengedPrediction.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
               })}
             </span>
           </div>
@@ -279,7 +282,7 @@ export function PredictionBattles() {
     challengerPrediction: 0,
     isPublic: true
   });
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -289,11 +292,21 @@ export function PredictionBattles() {
     retry: false
   });
 
+  // Get real NTIQ balance from blockchain
+  const { data: realBalanceData, refetch: refetchRealBalance, isLoading: isRealBalanceLoading, error: realBalanceError } = useQuery({
+    queryKey: ["/api/user/real-balance"],
+    enabled: !!user, // Only fetch when user is authenticated
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 10000, // Consider data stale after 10 seconds
+  });
+
   // Fetch live battles with faster updates
-  const { data: liveBattles = [], isLoading } = useQuery<Battle[]>({
+  const { data: liveBattles = [], isLoading, error, dataUpdatedAt } = useQuery<Battle[]>({
     queryKey: ['/api/battles/live'],
     refetchInterval: 1000, // Ultra-fast battle updates - every 1 second to match Live Prices
     refetchIntervalInBackground: true, // Background updates for battles
+    staleTime: 0, // Force fresh data to avoid cache issues
+    refetchOnMount: true, // Force refetch on component mount
   });
 
   // SHARED CACHE APPROACH: Access exact same data as Live Prices
@@ -306,7 +319,7 @@ export function PredictionBattles() {
     refetchOnWindowFocus: true, // EXACT same as Live Prices
     refetchOnMount: true, // EXACT same as Live Prices
   });
-  
+
   // FORCE CACHE CONSISTENCY: Get Live Prices data from cache directly
   const livePricesFromCache = queryClient.getQueryData(["/api/crypto/pyth-prices"]) as any[] || [];
 
@@ -378,7 +391,7 @@ export function PredictionBattles() {
 
   // Add comment mutation
   const commentMutation = useMutation({
-    mutationFn: ({ battleId, message }: { battleId: number; message: string }) => 
+    mutationFn: ({ battleId, message }: { battleId: number; message: string }) =>
       apiRequest(`/api/battles/${battleId}/comment`, {
         method: 'POST',
         body: JSON.stringify({ message })
@@ -391,7 +404,7 @@ export function PredictionBattles() {
 
   // Join battle mutation
   const joinBattleMutation = useMutation({
-    mutationFn: ({ battleId, prediction }: { battleId: number; prediction: number }) => 
+    mutationFn: ({ battleId, prediction }: { battleId: number; prediction: number }) =>
       apiRequest(`/api/battles/${battleId}/join`, {
         method: 'POST',
         body: JSON.stringify({ challengedPrediction: prediction })
@@ -399,7 +412,7 @@ export function PredictionBattles() {
     onSuccess: (data: any) => {
       const fairnessInfo = data.fairnessInfo;
       let fairnessMessage = 'You have successfully joined this prediction battle.';
-      
+
       if (fairnessInfo) {
         fairnessMessage += `\n\nFairness Information:`;
         fairnessMessage += `\n• Price movement: ${fairnessInfo.priceMovement}%`;
@@ -407,7 +420,7 @@ export function PredictionBattles() {
         fairnessMessage += `\n• Join time bonus: ${fairnessInfo.joinTimeBonus}x`;
         fairnessMessage += `\n• Join time: ${fairnessInfo.joinTimePercentage}% of battle duration`;
       }
-      
+
       toast({
         title: 'Successfully Joined Battle!',
         description: fairnessMessage,
@@ -418,14 +431,14 @@ export function PredictionBattles() {
     },
     onError: (error: any) => {
       console.error('Join battle mutation error:', error);
-      
+
       // Extract clean error message
       let errorMessage = 'Failed to join battle';
-      
+
       if (error?.message) {
         // Remove the error code prefix (e.g., "400: ") to show clean message
         errorMessage = error.message.replace(/^\d+:\s*/, '');
-        
+
         // Try to parse JSON from the error message if it looks like JSON
         try {
           const jsonMatch = errorMessage.match(/\{.*\}/);
@@ -439,7 +452,7 @@ export function PredictionBattles() {
           // If JSON parsing fails, use the cleaned error message
         }
       }
-      
+
       toast({
         title: 'Error',
         description: errorMessage,
@@ -450,7 +463,7 @@ export function PredictionBattles() {
 
   // React to battle mutation
   const reactionMutation = useMutation({
-    mutationFn: ({ battleId, reactionType }: { battleId: number; reactionType: string }) => 
+    mutationFn: ({ battleId, reactionType }: { battleId: number; reactionType: string }) =>
       apiRequest(`/api/battles/${battleId}/react`, {
         method: 'POST',
         body: JSON.stringify({ reactionType })
@@ -468,7 +481,7 @@ export function PredictionBattles() {
         return crypto.image;
       }
     }
-    
+
     // Fallback to static mapping if live data not available
     const cryptoMap: { [key: string]: string } = {
       'bitcoin': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
@@ -492,12 +505,12 @@ export function PredictionBattles() {
   const getRealTimePrice = (cryptoId: string) => {
     // CRITICAL: Use EXACT same data source as Live Prices
     const cacheData = livePricesFromCache.length > 0 ? livePricesFromCache : cryptoPricesData;
-    
+
     if (import.meta.env.DEV) {
       console.log('🔍 [PRICE-DEBUG] Getting price for:', cryptoId);
       console.log('🔍 [PRICE-DEBUG] Cache data length:', livePricesFromCache.length, 'Query data length:', cryptoPricesData.length);
     }
-    
+
     if (cacheData && Array.isArray(cacheData) && cacheData.length > 0) {
       const crypto = cacheData.find((c: any) => c.id === cryptoId);
       if (crypto && crypto.current_price) {
@@ -568,11 +581,12 @@ export function PredictionBattles() {
       return;
     }
 
-    // Check if user has enough balance
-    if ((user as any)?.balance < joiningBattle.stakeAmount) {
+    // Check if user has enough real blockchain balance
+    const realBalance = realBalanceData?.realNTIQBalance || 0;
+    if (realBalance < joiningBattle.stakeAmount) {
       toast({
         title: 'Insufficient Balance',
-        description: `You need ${joiningBattle.stakeAmount} NTIQ to join this battle`,
+        description: `You need ${joiningBattle.stakeAmount} NTIQ to join this battle. Your current balance is ${realBalance.toLocaleString()} NTIQ.`,
         variant: 'destructive',
       });
       return;
@@ -589,14 +603,14 @@ export function PredictionBattles() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img 
-              src={getCryptoImageUrl(battle.cryptocurrency)} 
+            <img
+              src={getCryptoImageUrl(battle.cryptocurrency)}
               alt={battle.cryptocurrency}
               className="w-8 h-8 rounded-full"
             />
             <div>
               <CardTitle className="text-lg capitalize">{battle.cryptocurrency}</CardTitle>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-white">
                 <Clock className="w-4 h-4" />
                 {battle.timeframe} • <CountdownTimer targetTime={battle.targetTime} />
               </div>
@@ -607,7 +621,7 @@ export function PredictionBattles() {
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {/* Battle participants */}
         <div className="grid grid-cols-2 gap-4">
@@ -624,7 +638,7 @@ export function PredictionBattles() {
             </div>
             <div className="text-xs text-muted-foreground">Challenger</div>
           </div>
-          
+
           <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
             <div className="font-semibold text-red-700 dark:text-red-300">
               {battle.challenged?.username || 'Open'}
@@ -646,23 +660,23 @@ export function PredictionBattles() {
                 const livePrice = getRealTimePrice(battle.cryptocurrency);
                 console.log('🎯 [BATTLE-MATCH] Battle crypto ID:', battle.cryptocurrency);
                 console.log('🎯 [BATTLE-PRICE] Live price result:', livePrice);
-                
+
                 if (livePrice) {
-                  const formattedPrice = livePrice.toLocaleString(undefined, { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
+                  const formattedPrice = livePrice.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
                   });
                   console.log('💰 [BATTLE-FINAL] Formatted price:', formattedPrice, 'from raw:', livePrice);
                   return formattedPrice;
                 } else {
-                  const dbFormattedPrice = battle.currentPrice.toLocaleString(undefined, { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
+                  const dbFormattedPrice = battle.currentPrice.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
                   });
                   console.log('🔴 [BATTLE-DB] Using DB price:', dbFormattedPrice, 'from raw:', battle.currentPrice);
                   return dbFormattedPrice;
                 }
-              })()} 
+              })()}
               {/* Enhanced Live Price Badge with Better Visibility */}
               <div className="inline-flex items-center gap-1 ml-2 bg-black/20 dark:bg-white/20 rounded-md px-2 py-1">
                 <span className={`text-xs font-semibold ${getRealTimePrice(battle.cryptocurrency) ? 'text-green-400' : 'text-red-400'}`}>
@@ -675,13 +689,13 @@ export function PredictionBattles() {
               </div>
             </span>
           </div>
-          
+
           {battle.challengerPrediction && battle.challengedPrediction && (() => {
             // PROBABILITY CALCULATION USES getRealTimePrice FOR CONSISTENCY
             const currentPrice = getRealTimePrice(battle.cryptocurrency) || battle.currentPrice;
             const battleWithRealTimePrice = { ...battle, currentPrice };
             const probability = calculateWinProbability(battleWithRealTimePrice);
-            
+
             return (
               <div className="space-y-1">
                 {/* Percentage Labels Above Bar */}
@@ -703,14 +717,14 @@ export function PredictionBattles() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Combined Probability Bar */}
                 <div className="relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-                  <div 
+                  <div
                     className="bg-blue-500 h-full transition-all duration-500 absolute left-0 rounded-l-full"
                     style={{ width: `${probability.challengerWinChance}%` }}
                   />
-                  <div 
+                  <div
                     className="bg-purple-500 h-full transition-all duration-500 absolute right-0 rounded-r-full"
                     style={{ width: `${probability.challengedWinChance}%` }}
                   />
@@ -726,7 +740,7 @@ export function PredictionBattles() {
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
             <DollarSign className="w-4 h-4" />
-            <span>{battle.stakeAmount} NTIQ</span>
+            <span className="text-white">{battle.stakeAmount} NTIQ</span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4" />
@@ -738,8 +752,8 @@ export function PredictionBattles() {
         <div className="flex gap-2">
           {/* Show Join button if battle is open and user is not the challenger */}
           {battle.status === 'open' && !battle.challengedId && user && (user as any).id !== battle.challengerId ? (
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               onClick={() => setJoiningBattle(battle)}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white"
             >
@@ -747,9 +761,9 @@ export function PredictionBattles() {
               Join Battle
             </Button>
           ) : (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => spectatorMutation.mutate(battle.id)}
               className="flex-1"
             >
@@ -757,9 +771,9 @@ export function PredictionBattles() {
               Watch
             </Button>
           )}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setSelectedBattle(battle)}
             className="flex-1"
           >
@@ -784,10 +798,10 @@ export function PredictionBattles() {
             Challenge other traders in head-to-head prediction battles
           </p>
         </div>
-        
+
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
           <DialogTrigger asChild>
-            <Button 
+            <Button
               onClick={() => {
                 if (!user) {
                   toast({
@@ -805,87 +819,30 @@ export function PredictionBattles() {
               {user ? 'Create Battle' : 'Login to Create Battle'}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Battle</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Cryptocurrency</label>
-                <Select 
-                  value={createForm.cryptocurrency} 
-                  onValueChange={(value) => setCreateForm(prev => ({ ...prev, cryptocurrency: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select cryptocurrency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.isArray(cryptos) && (cryptos as any[]).map((crypto: any) => (
-                      <SelectItem key={crypto.id} value={crypto.id}>
-                        {crypto.name} ({crypto.symbol.toUpperCase()})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div>
-                <label className="text-sm font-medium">Timeframe</label>
-                <Select 
-                  value={createForm.timeframe} 
-                  onValueChange={(value) => setCreateForm(prev => ({ ...prev, timeframe: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select timeframe" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1h">1 Hour</SelectItem>
-                    <SelectItem value="6h">6 Hours</SelectItem>
-                    <SelectItem value="24h">24 Hours</SelectItem>
-                    <SelectItem value="7d">7 Days</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Stake Amount (NTIQ)</label>
-                <Input
-                  type="number"
-                  min="50"
-                  max="500"
-                  value={createForm.stakeAmount}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, stakeAmount: parseInt(e.target.value) || 0 }))}
-                />
-              </div>
-
-              {/* Your Price Prediction Field with Live Price Badge */}
-              <div>
-                <label className="text-sm font-medium flex items-center justify-between">
-                  Your Price Prediction ($)
-                  {/* HARD-CODED TEST BADGE */}
-                  <div className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold">
-                    LIVE BADGE TEST
-                  </div>
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={createForm.challengerPrediction}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, challengerPrediction: parseFloat(e.target.value) || 0 }))}
-                />
-              </div>
-              
-
-              
-              <Button 
-                onClick={handleCreateBattle} 
-                disabled={createBattleMutation.isPending}
-                className="w-full"
-              >
-                {createBattleMutation.isPending ? 'Creating...' : 'Create Battle'}
-              </Button>
-            </div>
+            {/* Blockchain Form with Backend Design */}
+            <BattleBlockchainForm
+              onClose={() => setShowCreateModal(false)}
+              onSuccess={() => {
+                setShowCreateModal(false);
+                setCreateForm({
+                  cryptocurrency: '',
+                  timeframe: '',
+                  stakeAmount: 50,
+                  challengerPrediction: 0,
+                  isPublic: true
+                });
+              }}
+              availableCryptos={cryptoPricesData}
+              currentPrices={cryptoPricesData.reduce((acc: any, crypto: any) => {
+                acc[crypto.id] = crypto.current_price;
+                return acc;
+              }, {})}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -901,9 +858,11 @@ export function PredictionBattles() {
         </div>
       ) : (liveBattles as Battle[]).length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(liveBattles as Battle[]).map((battle: Battle) => (
-            <BattleCard key={battle.id} battle={battle} />
-          ))}
+          {(liveBattles as Battle[])
+            // Show all open battles - blockchain hash validation will be done in JoinBattleBlockchainForm
+            .map((battle: Battle) => (
+              <BattleCard key={battle.id} battle={battle} />
+            ))}
         </div>
       ) : (
         <Card className="text-center py-12">
@@ -926,15 +885,15 @@ export function PredictionBattles() {
           <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <img 
-                  src={getCryptoImageUrl(selectedBattle.cryptocurrency)} 
+                <img
+                  src={getCryptoImageUrl(selectedBattle.cryptocurrency)}
                   alt={selectedBattle.cryptocurrency}
                   className="w-6 h-6 rounded-full"
                 />
                 {selectedBattle.cryptocurrency.toUpperCase()} Battle
               </DialogTitle>
             </DialogHeader>
-            
+
             <Tabs defaultValue="overview" className="space-y-4">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -942,7 +901,7 @@ export function PredictionBattles() {
                 <TabsTrigger value="chat">Chat</TabsTrigger>
                 <TabsTrigger value="spectators">Spectators</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="overview" className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -953,27 +912,27 @@ export function PredictionBattles() {
                       {selectedBattle.status === 'open' && !selectedBattle.challengedId && (user as any)?.id !== selectedBattle.challengerId ? (
                         <div className="text-lg text-gray-500 dark:text-gray-400">🔒 Hidden</div>
                       ) : (
-                        `$${selectedBattle.challengerPrediction.toLocaleString('en-US', { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
+                        `$${selectedBattle.challengerPrediction.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
                         })}`
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <div className="font-semibold text-red-700 dark:text-red-300">
                       {selectedBattle.challenged?.username || 'Open'}
                     </div>
                     <div className="text-2xl font-bold">
-                      {selectedBattle.challengedPrediction ? `$${selectedBattle.challengedPrediction.toLocaleString('en-US', { 
-                        minimumFractionDigits: 2, 
-                        maximumFractionDigits: 2 
+                      {selectedBattle.challengedPrediction ? `$${selectedBattle.challengedPrediction.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
                       })}` : '---'}
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="text-sm text-muted-foreground">Current Price (Live Pyth)</div>
                   <div className="text-3xl font-bold">
@@ -983,15 +942,15 @@ export function PredictionBattles() {
                       const livePriceCrypto = cacheData.find(c => c.id === selectedBattle.cryptocurrency);
                       if (livePriceCrypto && livePriceCrypto.current_price) {
                         console.log('💰 [DIALOG-CACHE] Using cached data:', livePriceCrypto.current_price);
-                        return parseFloat(livePriceCrypto.current_price.toString()).toLocaleString(undefined, { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
+                        return parseFloat(livePriceCrypto.current_price.toString()).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
                         });
                       } else {
                         console.log('🔴 [DIALOG-FALLBACK] Using database price:', selectedBattle.currentPrice);
-                        return parseFloat(selectedBattle.currentPrice.toString()).toLocaleString(undefined, { 
-                          minimumFractionDigits: 2, 
-                          maximumFractionDigits: 2 
+                        return parseFloat(selectedBattle.currentPrice.toString()).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
                         });
                       }
                     })()}
@@ -1028,14 +987,14 @@ export function PredictionBattles() {
                   ))}
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="probability" className="space-y-4">
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
                   <h3 className="text-lg font-semibold mb-4 text-center">Win Probability Analysis</h3>
                   {selectedBattle.status !== 'open' || selectedBattle.challengedId ? (
-                    <WinProbabilityChart 
-                      battle={selectedBattle} 
-                      cryptoPrices={cryptoPricesData} 
+                    <WinProbabilityChart
+                      battle={selectedBattle}
+                      cryptoPrices={cryptoPricesData}
                     />
                   ) : (
                     <div className="text-center py-8">
@@ -1048,7 +1007,7 @@ export function PredictionBattles() {
                   )}
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="chat" className="space-y-4">
                 <div className="h-48 border rounded-lg p-4 overflow-y-auto space-y-2">
                   {/* Sample comments - replace with real data */}
@@ -1060,7 +1019,7 @@ export function PredictionBattles() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-2">
                   <Textarea
                     placeholder="Add a comment..."
@@ -1069,7 +1028,7 @@ export function PredictionBattles() {
                     className="flex-1"
                     rows={2}
                   />
-                  <Button 
+                  <Button
                     onClick={() => commentMutation.mutate({ battleId: selectedBattle.id, message: newComment })}
                     disabled={!newComment.trim() || commentMutation.isPending}
                   >
@@ -1077,7 +1036,7 @@ export function PredictionBattles() {
                   </Button>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="spectators" className="space-y-4">
                 <div className="space-y-2">
                   {/* Sample spectators - replace with real data */}
@@ -1098,96 +1057,32 @@ export function PredictionBattles() {
       {/* Join Battle Dialog */}
       {joiningBattle && (
         <Dialog open={!!joiningBattle} onOpenChange={() => setJoiningBattle(null)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Join Prediction Battle</DialogTitle>
             </DialogHeader>
-            
-            <div className="space-y-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <div className="flex items-center gap-3 mb-3">
-                  <img 
-                    src={getCryptoImageUrl(joiningBattle.cryptocurrency)} 
-                    alt={joiningBattle.cryptocurrency}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <div>
-                    <div className="font-semibold capitalize">{joiningBattle.cryptocurrency}</div>
-                    <div className="text-sm text-muted-foreground">{joiningBattle.timeframe}</div>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <div className="text-muted-foreground">Stake</div>
-                    <div className="font-semibold">{joiningBattle.stakeAmount} NTIQ</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Opponent Prediction</div>
-                    <div className="font-semibold text-gray-500 dark:text-gray-400">🔒 Hidden</div>
-                  </div>
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center justify-between">
-                  Your Price Prediction (USD)
-                  {joiningBattle && cryptoPricesData.length > 0 && (
-                    <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded border border-green-500/30">
-                      Live: ${(() => {
-                        const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === joiningBattle.cryptocurrency);
-                        return cryptoData ? parseFloat(cryptoData.current_price.toString()).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        }) : '0.00';
-                      })()}
-                    </div>
-                  )}
-                </label>
-                <Input
-                  type="number"
-                  placeholder="Enter your price prediction..."
-                  min="0"
-                  step="0.01"
-                  value={joinPrediction === 0 ? '0' : (joinPrediction || '')}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '') {
-                      setJoinPrediction(0);
-                    } else {
-                      const numValue = parseFloat(value);
-                      if (!isNaN(numValue)) {
-                        setJoinPrediction(numValue);
-                      }
-                    }
-                  }}
-                  className="w-full"
-                />
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <div>The more accurate prediction wins {joiningBattle.stakeAmount * 2} NTIQ</div>
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded text-yellow-700 dark:text-yellow-300">
-                    🔒 Note: Your opponent's prediction is hidden until you join the battle
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setJoiningBattle(null)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleJoinBattle}
-                  disabled={joinBattleMutation.isPending || !joinPrediction}
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                >
-                  {joinBattleMutation.isPending ? 'Joining...' : 'Join Battle'}
-                </Button>
-              </div>
-            </div>
+            {/* Blockchain Form with Backend Design */}
+            <JoinBattleBlockchainForm
+              battle={{
+                id: joiningBattle.id,
+                cryptocurrency: joiningBattle.cryptocurrency,
+                timeframe: joiningBattle.timeframe,
+                stakeAmount: joiningBattle.stakeAmount,
+                challengerPrediction: joiningBattle.challengerPrediction,
+                challengerUsername: joiningBattle.challengerUsername,
+                blockchainBattleHash: joiningBattle.blockchainBattleHash,
+                currentPrice: (() => {
+                  const cryptoData = cryptoPricesData.find((crypto: CryptoPrice) => crypto.id === joiningBattle.cryptocurrency);
+                  return cryptoData ? parseFloat(cryptoData.current_price.toString()) : undefined;
+                })()
+              }}
+              onClose={() => setJoiningBattle(null)}
+              onSuccess={() => {
+                setJoiningBattle(null);
+                setJoinPrediction(0);
+              }}
+            />
           </DialogContent>
         </Dialog>
       )}

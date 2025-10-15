@@ -10,7 +10,7 @@ export class ParlayProcessorService {
   async processExpiredParlayPredictions() {
     try {
       console.log('🔍 [PARLAY-PROCESSOR] Checking for expired parlay prediction coins...');
-      
+
       // Get all expired parlay prediction coins that haven't been processed yet
       const now = new Date();
       const expiredCoins = await db
@@ -24,7 +24,7 @@ export class ParlayProcessorService {
             eq(parlayPredictions.status, 'active')
           )
         );
-      
+
       if (expiredCoins.length === 0) {
         console.log('✅ [PARLAY-PROCESSOR] No expired parlay prediction coins found');
         return;
@@ -39,16 +39,16 @@ export class ParlayProcessorService {
       for (const expiredCoin of expiredCoins) {
         const coinData = expiredCoin.parlay_prediction_coins;
         const parlayData = expiredCoin.parlay_predictions;
-        
+
         if (!coinData || !parlayData) continue;
 
         const currentPrice = priceMap.get(coinData.cryptocurrency) || 0;
         const startPrice = parseFloat(coinData.startPrice || '0');
-        
+
         // Determine if prediction was correct
         const priceWentUp = currentPrice > startPrice;
-        const wasCorrect = (coinData.prediction === 'up' && priceWentUp) || 
-                          (coinData.prediction === 'down' && !priceWentUp);
+        const wasCorrect = (coinData.prediction === 'up' && priceWentUp) ||
+          (coinData.prediction === 'down' && !priceWentUp);
 
         // Update the coin with end price and correctness directly via database
         await db
@@ -76,7 +76,7 @@ export class ParlayProcessorService {
   async processCompletedParlays() {
     try {
       console.log('🎯 [PARLAY-REWARDS] Checking for completed parlays...');
-      
+
       // Get all active parlays that might be completed
       const activeParlays = await db
         .select()
@@ -116,7 +116,7 @@ export class ParlayProcessorService {
       }
 
       // Check if all coins have been processed (have endPrice and isCorrect)
-      const processedCoins = parlayCoins.filter(coin => 
+      const processedCoins = parlayCoins.filter(coin =>
         coin.endPrice !== null && coin.isCorrect !== null
       );
 
@@ -129,11 +129,11 @@ export class ParlayProcessorService {
 
       // Check if all predictions are correct (parlay wins only if ALL are correct)
       const allCorrect = processedCoins.every(coin => coin.isCorrect === true);
-      
+
       if (allCorrect) {
         // Calculate parlay reward using compound multiplier system
         const totalReward = this.calculateParlayReward(parlay.stakeAmount, processedCoins);
-        
+
         console.log(`🏆 [PARLAY-REWARDS] Parlay ${parlay.id} WON! Stake: ${parlay.stakeAmount}, Reward: ${totalReward}`);
 
         // Award reward using BalanceService
@@ -161,7 +161,7 @@ export class ParlayProcessorService {
         // Update parlay status to completed with win
         await db
           .update(parlayPredictions)
-          .set({ 
+          .set({
             status: 'completed',
             result: 'win',
             rewardAmount: totalReward,
@@ -169,19 +169,73 @@ export class ParlayProcessorService {
           })
           .where(eq(parlayPredictions.id, parlay.id));
 
+        // BLOCKCHAIN INTEGRATION: Release compound reward on smart contract
+        try {
+          const user = await storage.getUser(parlay.userId);
+          if (user?.walletAddress && (parlay as any).blockchainStakeHash) {
+            const { blockchainService } = await import('./blockchainService');
+            const { parlayStakingService } = await import('./parlayStakingService');
+
+            const parlayId = blockchainService.generateParlayId(parlay.id);
+            const multiplier = totalReward / parlay.stakeAmount;
+            const txHash = await parlayStakingService.releaseCompoundReward({
+              parlayId,
+              userAddress: user.walletAddress,
+              multiplier
+            });
+
+            // Update parlay with reward transaction hash
+            await db.update(parlayPredictions)
+              .set({ blockchainRewardHash: txHash })
+              .where(eq(parlayPredictions.id, parlay.id));
+
+            const { logger } = await import('../../shared/logger');
+            logger.info(`🔗 [BLOCKCHAIN] Parlay ${parlay.id} reward released on blockchain: ${txHash}`);
+          }
+        } catch (blockchainError) {
+          const { logger } = await import('../../shared/logger');
+          logger.error(`❌ [BLOCKCHAIN] Failed to release parlay reward on blockchain:`, blockchainError);
+        }
+
       } else {
         console.log(`💔 [PARLAY-REWARDS] Parlay ${parlay.id} LOST - at least one prediction was wrong`);
-        
+
         // Update parlay status to completed with loss (no reward)
         await db
           .update(parlayPredictions)
-          .set({ 
+          .set({
             status: 'completed',
             result: 'lose',
             rewardAmount: 0,
             completedAt: new Date()
           })
           .where(eq(parlayPredictions.id, parlay.id));
+
+        // BLOCKCHAIN INTEGRATION: Forfeit parlay stake on smart contract
+        try {
+          const user = await storage.getUser(parlay.userId);
+          if (user?.walletAddress && (parlay as any).blockchainStakeHash) {
+            const { blockchainService } = await import('./blockchainService');
+            const { parlayStakingService } = await import('./parlayStakingService');
+
+            const parlayId = blockchainService.generateParlayId(parlay.id);
+            const txHash = await parlayStakingService.forfeitStake({
+              parlayId,
+              userAddress: user.walletAddress
+            });
+
+            // Update parlay with forfeit transaction hash
+            await db.update(parlayPredictions)
+              .set({ blockchainRewardHash: txHash })
+              .where(eq(parlayPredictions.id, parlay.id));
+
+            const { logger } = await import('../../shared/logger');
+            logger.info(`🔗 [BLOCKCHAIN] Parlay ${parlay.id} stake forfeited on blockchain: ${txHash}`);
+          }
+        } catch (blockchainError) {
+          const { logger } = await import('../../shared/logger');
+          logger.error(`❌ [BLOCKCHAIN] Failed to forfeit parlay stake on blockchain:`, blockchainError);
+        }
       }
 
     } catch (error) {
@@ -207,12 +261,12 @@ export class ParlayProcessorService {
     const duration = coins[0]?.duration || '1h';
     const durationMultiplier = getDurationMultiplier(duration);
     const numberOfPredictions = coins.length;
-    
+
     const totalMultiplier = Math.pow(1.5 * durationMultiplier, numberOfPredictions);
 
     // Calculate final reward
     const grossReward = Math.round(stakeAmount * totalMultiplier);
-    
+
     // Apply 6% platform fee (matching frontend documentation)
     const platformFee = Math.round(grossReward * 0.06);
     const netReward = grossReward - platformFee;

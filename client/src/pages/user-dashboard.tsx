@@ -504,24 +504,14 @@ export default function UserDashboard() {
                     <RefreshCw className="w-8 h-8 animate-spin mx-auto" />
                   ) : realBalanceError ? (
                     <div className="text-center">
-                      <div className="text-lg font-bold text-yellow-300">{user?.balance?.toLocaleString() || "0"}</div>
-                      <div className="text-xs text-orange-300 mt-1">Database Balance</div>
+                      <div className="text-lg font-bold text-red-300">Error</div>
+                      <div className="text-xs text-red-400 mt-1">Failed to load balance</div>
                     </div>
-                  ) : realBalanceData?.realNTIQBalance !== undefined ? (
-                    realBalanceData.realNTIQBalance.toLocaleString()
                   ) : (
-                    user?.balance?.toLocaleString() || "0"
+                    realBalanceData?.realNTIQBalance?.toLocaleString() || "0"
                   )}
                 </div>
                 <p className="text-xl text-yellow-300 font-semibold">NTIQ</p>
-                {/* Database Balance Comparison */}
-                {realBalanceData?.databaseBalance !== undefined && realBalanceData.databaseBalance !== realBalanceData.realNTIQBalance && (
-                  <div className="mt-2 pt-2 border-t border-white/10">
-                    <div className="text-xs text-slate-400">
-                      DB: {realBalanceData.databaseBalance.toLocaleString()} NTIQ
-                    </div>
-                  </div>
-                )}
                 <div className="mt-4 pt-4 border-t border-white/10">
                   <div className="flex items-center justify-center gap-2">
                     {getRankBadge(stats?.rank)}
@@ -2192,7 +2182,7 @@ function UserProfile() {
   });
 
   // Get real NTIQ balance from blockchain
-  const { data: realBalanceData, refetch: refetchRealBalance, isLoading: isRealBalanceLoading } = useQuery({
+  const { data: realBalanceData, refetch: refetchRealBalance, isLoading: isRealBalanceLoading, error: realBalanceError } = useQuery({
     queryKey: ["/api/user/real-balance"],
     enabled: !!user, // Only fetch when user is authenticated
     refetchInterval: 30000, // Refetch every 30 seconds
@@ -2527,17 +2517,20 @@ function UserProfile() {
                   <RefreshCw className="w-6 h-6 animate-spin mx-auto" />
                 ) : realBalanceError ? (
                   <div className="text-center">
-                    <div className="text-lg font-bold">{user.balance?.toLocaleString() || "0"}</div>
-                    <div className="text-xs text-orange-300 mt-1">Database</div>
+                    <div className="text-lg font-bold">Error</div>
+                    <div className="text-xs text-red-300 mt-1">Failed to load</div>
                   </div>
                 ) : realBalanceData?.realNTIQBalance !== undefined ? (
                   realBalanceData.realNTIQBalance.toLocaleString()
                 ) : (
-                  user.balance?.toLocaleString() || "0"
+                  <div className="text-center">
+                    <div className="text-lg font-bold">--</div>
+                    <div className="text-xs text-gray-300 mt-1">Loading...</div>
+                  </div>
                 )}
               </div>
               <div className="text-sm text-yellow-200 dark:text-yellow-200">
-                {realBalanceError ? "Database NTIQ Balance" : "Real NTIQ Balance"}
+                Real NTIQ Balance
               </div>
               {realBalanceData?.databaseBalance !== undefined && realBalanceData.databaseBalance !== realBalanceData.realNTIQBalance && (
                 <div className="text-xs text-slate-400 mt-1">

@@ -45,6 +45,10 @@ export const predictions = pgTable("predictions", {
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, completed, expired
   rewardAmount: integer("reward_amount").default(0),
   accuracy: numeric("accuracy", { precision: 5, scale: 2 }),
+  // Blockchain integration fields
+  blockchainStakeHash: varchar("blockchain_stake_hash", { length: 66 }), // Transaction hash for stake lock
+  blockchainRewardHash: varchar("blockchain_reward_hash", { length: 66 }), // Transaction hash for reward release
+  blockchainStatus: varchar("blockchain_status", { length: 20 }).default("pending"), // pending, confirmed, failed
 });
 
 export const cryptocurrencies = pgTable("cryptocurrencies", {
@@ -418,6 +422,12 @@ export const predictionBattles = pgTable("prediction_battles", {
   priceMovementPenalty: boolean("price_movement_penalty").default(true), // Apakah ada penalti movement
   fairnessMultiplier: numeric("fairness_multiplier", { precision: 5, scale: 2 }).default("1.00"), // Multiplier keadilan
   joinTimeBonus: numeric("join_time_bonus", { precision: 5, scale: 2 }).default("1.00"), // Bonus untuk join lebih awal
+
+  // Blockchain integration fields
+  blockchainBattleHash: varchar("blockchain_battle_hash", { length: 66 }), // Transaction hash for battle creation
+  blockchainAcceptHash: varchar("blockchain_accept_hash", { length: 66 }), // Transaction hash for battle acceptance
+  blockchainResolveHash: varchar("blockchain_resolve_hash", { length: 66 }), // Transaction hash for battle resolution
+  blockchainStatus: varchar("blockchain_status", { length: 20 }).default("pending"), // pending, confirmed, failed
 });
 
 export const battleSpectators = pgTable("battle_spectators", {
@@ -470,6 +480,10 @@ export const survivalTournaments = pgTable("survival_tournaments", {
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  // Blockchain integration fields
+  blockchainTournamentHash: varchar("blockchain_tournament_hash", { length: 66 }), // Transaction hash for tournament creation
+  blockchainDistributeHash: varchar("blockchain_distribute_hash", { length: 66 }), // Transaction hash for prize distribution
+  blockchainStatus: varchar("blockchain_status", { length: 20 }).default("pending"), // pending, confirmed, failed
 });
 
 export const survivalParticipants = pgTable("survival_participants", {
@@ -852,6 +866,10 @@ export const parlayPredictions = pgTable("parlay_predictions", {
   rewardAmount: integer("reward_amount").default(0),
   totalCoinCount: integer("total_coin_count").notNull(),
   correctPredictions: integer("correct_predictions").default(0),
+  // Blockchain integration fields
+  blockchainStakeHash: varchar("blockchain_stake_hash", { length: 66 }), // Transaction hash for parlay stake lock
+  blockchainRewardHash: varchar("blockchain_reward_hash", { length: 66 }), // Transaction hash for reward release
+  blockchainStatus: varchar("blockchain_status", { length: 20 }).default("pending"), // pending, confirmed, failed
 });
 
 export const parlayPredictionCoins = pgTable("parlay_prediction_coins", {

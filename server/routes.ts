@@ -31,6 +31,12 @@ import { logger } from "../shared/logger";
 import sharp from "sharp";
 import { PredictionInsuranceService } from "./services/predictionInsuranceService";
 import { CustomTournamentService } from "./services/customTournamentService";
+import { blockchainService } from "./services/blockchainService";
+import { predictionStakingService } from "./services/predictionStakingService";
+import { battleEscrowService } from "./services/battleEscrowService";
+import { parlayStakingService } from "./services/parlayStakingService";
+import { tournamentPoolService } from "./services/tournamentPoolService";
+import { ntiqTokenService } from "./services/ntiqTokenService";
 
 // Maintenance mode middleware
 const checkMaintenanceMode = async (req: any, res: any, next: any) => {
@@ -789,8 +795,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: user.username,
         walletAddress: user.walletAddress,
         isAdmin: isAuthorizedAdmin || user.isAdmin,
-        authMethod: user.authMethod,
-        balance: user.balance
+        authMethod: user.authMethod
+        // balance removed - use /api/user/ntiq-status for blockchain balance
       });
     } catch (error) {
       console.error("Auth me error:", error);
@@ -869,6 +875,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         console.log(`Auto-registered new user: ${username} with wallet ${finalAddress.slice(0, 6)}...${finalAddress.slice(-4)}, isAdmin: ${isAdmin}`);
+
+        // AUTO-AIRDROP: Give 1000 NTIQ to new users
+        try {
+          const { ntiqDepositService } = await import('./services/ntiqDepositService');
+          const airdropAmount = 1000;
+
+          logger.info(`🎁 [AUTO-AIRDROP] Sending ${airdropAmount} NTIQ to new user ${user.id}`);
+
+          const txHash = await ntiqDepositService.airdropToUser(finalAddress, airdropAmount);
+
+          logger.info(`✅ [AUTO-AIRDROP] Successfully sent ${airdropAmount} NTIQ to ${finalAddress}`);
+          logger.info(`   Transaction: ${txHash}`);
+          logger.info(`   Polygonscan: https://amoy.polygonscan.com/tx/${txHash}`);
+        } catch (airdropError: any) {
+          logger.error(`❌ [AUTO-AIRDROP] Failed to airdrop to new user:`, airdropError);
+          // Don't fail login if airdrop fails - user can request manually later
+        }
       }
 
       // Set session
@@ -898,7 +921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: user.id,
         username: user.username || `Admin_${finalAddress.slice(-6)}`,
         walletAddress: user.walletAddress,
-        balance: user.balance,
+        // balance removed - use /api/user/ntiq-status for blockchain balance
         isAdmin: user.isAdmin
       };
 
@@ -2135,6 +2158,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get blockchain balance with sync status
+  app.get("/api/user/blockchain-balance", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      const { balanceSyncService } = await import('./services/balanceSyncService');
+
+      const syncResult = await balanceSyncService.syncUserBalance(userId);
+
+      res.json({
+        success: syncResult.success,
+        databaseBalance: syncResult.databaseBalance,
+        blockchainBalance: syncResult.blockchainBalance,
+        synced: syncResult.synced,
+        discrepancy: syncResult.discrepancy,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.error('Error getting blockchain balance:', error);
+      res.status(500).json({ message: "Failed to get blockchain balance" });
+    }
+  });
+
+  // Manual balance sync endpoint
+  app.post("/api/user/sync-balance", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      const { balanceSyncService } = await import('./services/balanceSyncService');
+
+      const syncResult = await balanceSyncService.syncUserBalance(userId);
+
+      res.json({
+        success: syncResult.success,
+        message: syncResult.synced ? 'Balance already synced' : 'Balance synced successfully',
+        databaseBalance: syncResult.databaseBalance,
+        blockchainBalance: syncResult.blockchainBalance,
+        synced: syncResult.synced,
+        discrepancy: syncResult.discrepancy
+      });
+    } catch (error) {
+      logger.error('Error syncing balance:', error);
+      res.status(500).json({ message: "Failed to sync balance" });
+    }
+  });
+
+  // Request NTIQ airdrop (for testing/onboarding)
+  app.post("/api/user/request-ntiq", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      const { amount = 1000 } = req.body; // Default 1000 NTIQ
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.walletAddress) {
+        return res.status(400).json({
+          message: "Wallet address required. Please connect your wallet first."
+        });
+      }
+
+      // Check if user already has enough NTIQ
+      const currentBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      if (currentBalance >= amount) {
+        return res.json({
+          success: true,
+          message: "You already have sufficient NTIQ balance",
+          currentBalance,
+          airdropped: false
+        });
+      }
+
+      // Airdrop NTIQ to user
+      const { ntiqDepositService } = await import('./services/ntiqDepositService');
+      const txHash = await ntiqDepositService.airdropToUser(user.walletAddress, amount);
+
+      // Get new balance
+      const newBalance = await ntiqTokenService.getBalance(user.walletAddress);
+
+      logger.info(`✅ [NTIQ-AIRDROP] User ${userId} received ${amount} NTIQ: ${txHash}`);
+
+      res.json({
+        success: true,
+        message: `Successfully airdropped ${amount} NTIQ to your wallet`,
+        amount,
+        previousBalance: currentBalance,
+        newBalance,
+        txHash,
+        polygonscanUrl: `https://amoy.polygonscan.com/tx/${txHash}`
+      });
+    } catch (error: any) {
+      logger.error('Error requesting NTIQ airdrop:', error);
+      res.status(500).json({
+        message: "Failed to airdrop NTIQ. Please try again later.",
+        error: error.message
+      });
+    }
+  });
+
+  // Check NTIQ balance and suggest airdrop if needed
+  app.get("/api/user/ntiq-status", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.walletAddress) {
+        return res.json({
+          hasWallet: false,
+          message: "Please connect your wallet to check NTIQ balance"
+        });
+      }
+
+      const balance = await ntiqTokenService.getBalance(user.walletAddress);
+      const minRequired = 50; // Minimum for prediction
+      const needsAirdrop = balance < minRequired;
+
+      // Get contract addresses for frontend
+      const ntiqTokenAddress = process.env.NTIQ_TOKEN_SIMPLE_ADDRESS;
+      const predictionStakingAddress = process.env.PREDICTION_STAKING_ADDRESS;
+
+      res.json({
+        hasWallet: true,
+        balance,
+        minRequired,
+        needsAirdrop,
+        canStake: balance >= minRequired,
+        message: needsAirdrop
+          ? `You need at least ${minRequired} NTIQ to make predictions. Request an airdrop to get started!`
+          : `You have ${balance.toFixed(2)} NTIQ. You can make predictions!`,
+        contracts: {
+          ntiqToken: ntiqTokenAddress,
+          predictionStaking: predictionStakingAddress
+        },
+        instructions: {
+          step1: "Request NTIQ airdrop if balance is low",
+          step2: "Approve PredictionStaking contract to spend your NTIQ",
+          step3: "Create prediction - stake will be locked on blockchain"
+        }
+      });
+    } catch (error) {
+      logger.error('Error checking NTIQ status:', error);
+      res.status(500).json({ message: "Failed to check NTIQ status" });
+    }
+  });
+
   // Get user statistics
   app.get("/api/user/stats", async (req, res) => {
     try {
@@ -3192,28 +3364,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(429).json({ message: "Too many predictions. Maximum 5 per hour." });
       }
 
-      if (user.balance < validatedData.stakeAmount) {
-        return res.status(400).json({ message: "Insufficient balance" });
+      // CHECK REAL BLOCKCHAIN BALANCE instead of database balance
+      if (!user.walletAddress) {
+        return res.status(400).json({
+          message: "Wallet address required. Please connect your wallet to make predictions."
+        });
       }
+
+      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      logger.info(`💰 [PREDICTION] User ${userId} blockchain balance: ${blockchainBalance} NTIQ`);
+
+      if (blockchainBalance < validatedData.stakeAmount) {
+        return res.status(400).json({
+          message: `Insufficient NTIQ balance. Required: ${validatedData.stakeAmount} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`,
+          needsAirdrop: true,
+          currentBalance: blockchainBalance,
+          requiredAmount: validatedData.stakeAmount
+        });
+      }
+
+      logger.info(`✅ [PREDICTION] Balance check passed. Proceeding to lock stake on blockchain...`);
 
       const targetTime = predictionService.getTargetTime(validatedData.timeframe);
 
+      // BLOCKCHAIN FIRST: Lock stake in smart contract BEFORE creating prediction
+      let txHash: string;
+      try {
+        // Use temporary prediction ID for blockchain
+        const tempPredictionId = blockchainService.generatePredictionId(Date.now());
+        txHash = await predictionStakingService.lockStake({
+          predictionId: tempPredictionId,
+          userAddress: user.walletAddress,
+          stakeAmount: validatedData.stakeAmount.toString()
+        });
+
+        logger.info(`🔗 [BLOCKCHAIN] Stake locked on blockchain: ${txHash}`);
+      } catch (blockchainError: any) {
+        logger.error(`❌ [BLOCKCHAIN] Failed to lock stake on blockchain:`, blockchainError);
+        return res.status(500).json({
+          message: "Failed to lock stake on blockchain. Please ensure you have approved the contract to spend your NTIQ tokens.",
+          error: blockchainError.message
+        });
+      }
+
+      // Create prediction in database AFTER blockchain success
       const prediction = await storage.createPrediction({
         ...validatedData,
         userId: userId,
         targetTime
       });
 
-      // CRITICAL FIX: Use BalanceService for prediction stake deduction
-      const balanceResult = await BalanceService.processTransaction({
-        userId,
-        type: 'prediction_stake',
-        amount: validatedData.stakeAmount,
-        description: `Prediction stake - ${validatedData.cryptocurrency} ${validatedData.timeframe}`,
-        relatedId: prediction.id
-      }, storage);
+      // Update prediction with blockchain transaction hash
+      await db.update(predictions)
+        .set({
+          blockchainStakeHash: txHash,
+          blockchainStatus: 'confirmed'
+        })
+        .where(eq(predictions.id, prediction.id));
 
-      console.log(`✅ Balance deducted: User ${userId} stake ${validatedData.stakeAmount} NTIQ (Prediction ID: ${prediction.id})`);
+      // Log transaction for tracking (no balance change, just logging)
+      await storage.logTransaction({
+        userId,
+        type: 'prediction_stake_blockchain',
+        amount: validatedData.stakeAmount,
+        description: `Prediction stake (Blockchain) - ${validatedData.cryptocurrency} ${validatedData.timeframe}`,
+        relatedId: prediction.id,
+        status: 'completed'
+      });
+
+      logger.info(`✅ [PREDICTION] Created successfully: ID ${prediction.id}, Blockchain TX: ${txHash}`);
 
       // Check for achievement progress updates after prediction creation
       try {
@@ -3243,6 +3462,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create prediction from blockchain transaction (frontend-initiated)
+  app.post("/api/predictions/blockchain", checkMaintenanceMode, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const {
+        cryptocurrency,
+        timeframe,
+        predictedPrice,
+        stakeAmount,
+        blockchainTxHash,
+        blockchainStatus = 'confirmed'
+      } = req.body;
+
+      // Validate required fields
+      if (!cryptocurrency || !timeframe || !predictedPrice || !stakeAmount || !blockchainTxHash) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const numStakeAmount = parseFloat(stakeAmount);
+      const numPredictedPrice = parseFloat(predictedPrice);
+
+      if (isNaN(numStakeAmount) || numStakeAmount < 50) {
+        return res.status(400).json({ message: "Invalid stake amount" });
+      }
+
+      if (isNaN(numPredictedPrice) || numPredictedPrice <= 0) {
+        return res.status(400).json({ message: "Invalid predicted price" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.walletAddress) {
+        return res.status(400).json({
+          message: "Wallet address required. Please connect your wallet to make predictions."
+        });
+      }
+
+      logger.info(`🔗 [PREDICTION-BLOCKCHAIN] Creating prediction from blockchain transaction: ${blockchainTxHash}`);
+      logger.info(`🔗 [PREDICTION-BLOCKCHAIN] Prediction data: ${JSON.stringify({ userId, cryptocurrency, timeframe, predictedPrice: numPredictedPrice, stakeAmount: numStakeAmount })}`);
+
+      const targetTime = predictionService.getTargetTime(timeframe);
+
+      // Create prediction in database with blockchain transaction hash
+      const prediction = await storage.createPrediction({
+        userId,
+        cryptocurrency,
+        timeframe,
+        predictedPrice: numPredictedPrice,
+        stakeAmount: numStakeAmount,
+        targetTime
+      });
+
+      logger.info(`🔗 [PREDICTION-BLOCKCHAIN] Prediction created with ID: ${prediction.id}`);
+
+      // Update prediction with blockchain transaction hash
+      await db.update(predictions)
+        .set({
+          blockchainStakeHash: blockchainTxHash,
+          blockchainStatus: blockchainStatus
+        })
+        .where(eq(predictions.id, prediction.id));
+
+      // Log transaction for tracking
+      await storage.logTransaction({
+        userId,
+        type: 'prediction_stake_blockchain',
+        amount: numStakeAmount,
+        description: `Prediction stake (Blockchain) - ${cryptocurrency} ${timeframe}`,
+        relatedId: prediction.id,
+        status: 'completed'
+      });
+
+      logger.info(`✅ [PREDICTION-BLOCKCHAIN] Created successfully: ID ${prediction.id}, Blockchain TX: ${blockchainTxHash}`);
+
+      // Check for achievement progress updates after prediction creation
+      try {
+        const { AchievementService } = await import('./services/achievementService');
+        const achievementService = new AchievementService();
+        await achievementService.updatePredictionProgress(userId, numStakeAmount);
+      } catch (achievementError) {
+        logger.error('Failed to update achievement progress:', achievementError);
+      }
+
+      res.status(201).json({
+        id: prediction.id,
+        message: "Prediction created successfully",
+        blockchainTxHash: blockchainTxHash
+      });
+
+    } catch (error: any) {
+      logger.error("Failed to create prediction from blockchain:", error);
+      res.status(500).json({ message: "Failed to create prediction", error: String(error) });
+    }
+  });
+
   // Get user's active predictions
   app.get("/api/predictions/active", checkMaintenanceMode, async (req, res) => {
     try {
@@ -3251,8 +3572,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
+      logger.info(`🔍 [ACTIVE-PREDICTIONS] Fetching predictions for user ${userId}`);
+
       const predictions = await storage.getUserPredictions(userId);
       const activePredictions = predictions.filter(p => p.status === "pending");
+
+      logger.info(`🔍 [ACTIVE-PREDICTIONS] Found ${predictions.length} total predictions, ${activePredictions.length} active predictions for user ${userId}`);
 
       // Add current prices and time left
       const enrichedPredictions = await Promise.all(
@@ -3268,8 +3593,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       );
 
+      logger.info(`🔍 [ACTIVE-PREDICTIONS] Returning ${enrichedPredictions.length} enriched predictions for user ${userId}`);
       res.json(enrichedPredictions);
     } catch (error) {
+      logger.error("Failed to get active predictions:", error);
       res.status(500).json({ message: "Failed to get active predictions" });
     }
   });
@@ -3511,27 +3838,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Stake amount must be between 50 and 500 NTIQ' });
       }
 
-      // Check user balance
+      // Check blockchain balance
       const user = await storage.getUser(userId);
-      if (!user || user.balance < stakeAmount) {
-        return res.status(400).json({ message: 'Insufficient balance' });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      if (!user.walletAddress) {
+        return res.status(400).json({ message: 'Wallet address required. Please connect your wallet to create battles.' });
+      }
+
+      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      logger.info(`💰 [BATTLE] User ${userId} blockchain balance: ${blockchainBalance} NTIQ`);
+
+      if (blockchainBalance < stakeAmount) {
+        return res.status(400).json({
+          message: `Insufficient NTIQ balance. Required: ${stakeAmount} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`
+        });
       }
 
       // Calculate target time
       const now = new Date();
-      const targetTime = new Date(now);
+      let targetTime: Date;
       switch (timeframe) {
         case '1h':
-          targetTime.setHours(now.getHours() + 1);
+          targetTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour in milliseconds
           break;
         case '6h':
-          targetTime.setHours(now.getHours() + 6);
+          targetTime = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours in milliseconds
           break;
         case '24h':
-          targetTime.setHours(now.getHours() + 24);
+          targetTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours in milliseconds
           break;
         case '7d':
-          targetTime.setDate(now.getDate() + 7);
+          targetTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days in milliseconds
           break;
         default:
           return res.status(400).json({ message: 'Invalid timeframe' });
@@ -3546,7 +3886,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid cryptocurrency' });
       }
 
-      // Create battle in database
+      // BLOCKCHAIN FIRST: Create battle on blockchain BEFORE database
+      let txHash: string;
+      try {
+        const tempBattleId = blockchainService.generateBattleId(Date.now());
+        const challengedAddress = challengedId ?
+          (await storage.getUser(challengedId))?.walletAddress || ethers.ZeroAddress :
+          ethers.ZeroAddress;
+
+        txHash = await battleEscrowService.createBattle({
+          battleId: tempBattleId,
+          challenger: user.walletAddress,
+          challenged: challengedAddress,
+          stakeAmount: stakeAmount.toString()
+        });
+
+        logger.info(`🔗 [BLOCKCHAIN] Battle created on blockchain: ${txHash}`);
+      } catch (blockchainError: any) {
+        logger.error(`❌ [BLOCKCHAIN] Failed to create battle on blockchain:`, blockchainError);
+        return res.status(500).json({
+          message: "Failed to create battle on blockchain. Please ensure you have approved the contract to spend your NTIQ tokens.",
+          error: blockchainError.message
+        });
+      }
+
+      // Create battle in database AFTER blockchain success
       const battle = await storage.createBattle({
         challengerId: userId,
         challengedId: challengedId || null,
@@ -3561,41 +3925,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isPublic
       });
 
-      console.log(`🔍 DEBUG: Battle created with ID ${battle.id}`);
-      console.log(`🔍 DEBUG: Original balance: ${user.balance} NTIQ`);
-      console.log(`🔍 DEBUG: Stake amount: ${stakeAmount} NTIQ`);
-      console.log(`🔍 DEBUG: Calculating new balance: ${user.balance} - ${stakeAmount} = ${user.balance - stakeAmount}`);
+      // Update battle with blockchain transaction hash
+      await db.update(predictionBattles)
+        .set({
+          blockchainBattleHash: txHash,
+          blockchainStatus: 'confirmed'
+        })
+        .where(eq(predictionBattles.id, battle.id));
 
-      // Deduct stake amount from user balance
-      const newBalance = user.balance - stakeAmount;
-      await storage.updateUser(userId, {
-        balance: newBalance
+      // Log transaction for tracking (no balance change, just logging)
+      await storage.logTransaction({
+        userId,
+        type: 'battle_create_blockchain',
+        amount: stakeAmount,
+        description: `Battle created (Blockchain) - ${cryptocurrency} ${timeframe}`,
+        relatedId: battle.id,
+        status: 'completed'
       });
 
-      // Verify balance update
-      const updatedUser = await storage.getUser(userId);
-      console.log(`🔍 DEBUG: User balance after update: ${updatedUser?.balance} NTIQ`);
-
-      // Log transaction for battle creation with proper error handling
-      try {
-        await storage.logTransaction({
-          userId,
-          type: 'battle_create',
-          amount: stakeAmount,
-          relatedId: battle.id
-        });
-        console.log(`✅ Transaction logged successfully for battle ${battle.id}`);
-      } catch (logError) {
-        console.error('❌ Failed to log transaction for battle creation:', logError);
-        // Continue despite logging error - don't break battle creation
-      }
-
-      console.log(`✅ Battle created successfully by user ${userId}:`);
-      console.log(`   - Battle ID: ${battle.id}`);
-      console.log(`   - Stake: ${stakeAmount} NTIQ`);
-      console.log(`   - Balance before: ${user.balance} NTIQ`);
-      console.log(`   - Balance after: ${newBalance} NTIQ`);
-      console.log(`   - Actual balance in DB: ${updatedUser?.balance} NTIQ`);
+      logger.info(`✅ [BATTLE] Created successfully: ID ${battle.id}, Blockchain TX: ${txHash}`);
 
       res.json({
         message: 'Battle created successfully',
@@ -3613,6 +3961,234 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create battle from blockchain transaction (frontend-initiated)
+  app.post("/api/battles/blockchain", checkMaintenanceMode, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const {
+        cryptocurrency,
+        timeframe,
+        challengerPrediction,
+        stakeAmount,
+        isPublic = true,
+        blockchainTxHash,
+        blockchainStatus = 'confirmed'
+      } = req.body;
+
+      // Validate required fields
+      if (!cryptocurrency || !timeframe || !challengerPrediction || !stakeAmount || !blockchainTxHash) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const numStakeAmount = parseFloat(stakeAmount);
+      const numChallengerPrediction = parseFloat(challengerPrediction);
+
+      if (isNaN(numStakeAmount) || numStakeAmount < 50) {
+        return res.status(400).json({ message: "Invalid stake amount" });
+      }
+
+      if (isNaN(numChallengerPrediction) || numChallengerPrediction <= 0) {
+        return res.status(400).json({ message: "Invalid prediction price" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.walletAddress) {
+        return res.status(400).json({
+          message: "Wallet address required. Please connect your wallet to create battles."
+        });
+      }
+
+      logger.info(`⚔️ [BATTLE-BLOCKCHAIN] Creating battle from blockchain transaction: ${blockchainTxHash}`);
+      logger.info(`⚔️ [BATTLE-BLOCKCHAIN] Battle data: ${JSON.stringify({ userId, cryptocurrency, timeframe, challengerPrediction: numChallengerPrediction, stakeAmount: numStakeAmount })}`);
+
+      // Calculate target time
+      const now = new Date();
+      let targetTime: Date;
+      switch (timeframe) {
+        case '1h':
+          targetTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour in milliseconds
+          break;
+        case '6h':
+          targetTime = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours in milliseconds
+          break;
+        case '24h':
+          targetTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+          break;
+        case '7d':
+          targetTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days in milliseconds
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid timeframe' });
+      }
+
+      // Ensure target time is stored as UTC to avoid timezone issues
+      targetTime = new Date(targetTime.toISOString());
+
+      // Create battle in database with blockchain transaction hash
+      const battle = await storage.createBattle({
+        challengerId: userId,
+        challengedId: null, // Public battle
+        battleType: 'head_to_head', // Required field
+        cryptocurrency,
+        timeframe,
+        challengerPrediction: numChallengerPrediction,
+        stakeAmount: numStakeAmount,
+        targetTime,
+        isPublic
+      });
+
+      logger.info(`⚔️ [BATTLE-BLOCKCHAIN] Battle created with ID: ${battle.id}`);
+
+      // Update battle with blockchain transaction hash
+      await db.update(predictionBattles)
+        .set({
+          blockchainBattleHash: blockchainTxHash,
+          blockchainStatus: blockchainStatus
+        })
+        .where(eq(predictionBattles.id, battle.id));
+
+      // Log transaction for tracking
+      await storage.logTransaction({
+        userId,
+        type: 'battle_creation_blockchain',
+        amount: numStakeAmount,
+        description: `Battle creation (Blockchain) - ${cryptocurrency} ${timeframe}`,
+        relatedId: battle.id,
+        status: 'completed'
+      });
+
+      logger.info(`✅ [BATTLE-BLOCKCHAIN] Created successfully: ID ${battle.id}, Blockchain TX: ${blockchainTxHash}`);
+
+      // Check for achievement progress updates after battle creation
+      try {
+        const { AchievementService } = await import('./services/achievementService');
+        const achievementService = new AchievementService();
+        await achievementService.updateBattleProgress(userId, numStakeAmount);
+      } catch (achievementError) {
+        logger.error('Failed to update achievement progress:', achievementError);
+      }
+
+      res.status(201).json({
+        id: battle.id,
+        message: "Battle created successfully",
+        blockchainTxHash: blockchainTxHash
+      });
+
+    } catch (error: any) {
+      logger.error("Failed to create battle from blockchain:", error);
+      res.status(500).json({ message: "Failed to create battle", error: String(error) });
+    }
+  });
+
+  // Join battle from blockchain transaction (frontend-initiated)
+  app.post("/api/battles/:id/join-blockchain", checkMaintenanceMode, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const battleId = parseInt(req.params.id);
+      const {
+        challengedPrediction,
+        blockchainTxHash,
+        blockchainStatus = 'confirmed'
+      } = req.body;
+
+      // Validate required fields
+      if (!challengedPrediction || !blockchainTxHash) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const numChallengedPrediction = parseFloat(challengedPrediction);
+
+      if (isNaN(numChallengedPrediction) || numChallengedPrediction <= 0) {
+        return res.status(400).json({ message: "Invalid prediction price" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.walletAddress) {
+        return res.status(400).json({
+          message: "Wallet address required. Please connect your wallet to join battles."
+        });
+      }
+
+      // Get battle details
+      const battle = await storage.getBattle(battleId);
+      if (!battle) {
+        return res.status(404).json({ message: "Battle not found" });
+      }
+
+      if (battle.challengerId === userId) {
+        return res.status(400).json({ message: "Cannot join your own battle" });
+      }
+
+      if (battle.challengedId) {
+        return res.status(400).json({ message: "Battle is already full" });
+      }
+
+      logger.info(`⚔️ [JOIN-BATTLE-BLOCKCHAIN] Joining battle ${battleId} from blockchain transaction: ${blockchainTxHash}`);
+      logger.info(`⚔️ [JOIN-BATTLE-BLOCKCHAIN] Join data: ${JSON.stringify({ userId, battleId, challengedPrediction: numChallengedPrediction })}`);
+
+      // Join battle in database with blockchain transaction hash
+      const joinResult = await storage.joinBattle(battleId, userId, numChallengedPrediction);
+
+      logger.info(`⚔️ [JOIN-BATTLE-BLOCKCHAIN] Battle joined with result: ${JSON.stringify(joinResult)}`);
+
+      // Update battle with accept transaction hash
+      await db.update(predictionBattles)
+        .set({
+          blockchainAcceptHash: blockchainTxHash,
+          blockchainStatus: blockchainStatus
+        })
+        .where(eq(predictionBattles.id, battleId));
+
+      // Log transaction for tracking
+      await storage.logTransaction({
+        userId,
+        type: 'battle_join_blockchain',
+        amount: battle.stakeAmount,
+        description: `Joined battle (Blockchain) vs user ID ${battle.challengerId}`,
+        relatedId: battleId,
+        status: 'completed'
+      });
+
+      logger.info(`✅ [JOIN-BATTLE-BLOCKCHAIN] Joined successfully: Battle ${battleId}, Blockchain TX: ${blockchainTxHash}`);
+
+      // Check for achievement progress updates after battle join
+      try {
+        const { AchievementService } = await import('./services/achievementService');
+        const achievementService = new AchievementService();
+        await achievementService.updateBattleProgress(userId, battle.stakeAmount);
+      } catch (achievementError) {
+        logger.error('Failed to update achievement progress:', achievementError);
+      }
+
+      res.status(200).json({
+        message: "Battle joined successfully",
+        battle: joinResult,
+        fairnessInfo: joinResult.joinFairness,
+        blockchainTxHash: blockchainTxHash
+      });
+
+    } catch (error: any) {
+      logger.error("Failed to join battle from blockchain:", error);
+      res.status(500).json({ message: "Failed to join battle", error: String(error) });
+    }
+  });
+
   app.get('/api/battles/live', checkMaintenanceMode, async (req, res) => {
     try {
       // Fetch real battles from database
@@ -3627,7 +4203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         challengerPrediction: battle.challengerPrediction ? parseFloat(battle.challengerPrediction) : 0,
         challengedPrediction: battle.challengedPrediction ? parseFloat(battle.challengedPrediction) : null,
         currentPrice: priceMap.get(battle.cryptocurrency) || 0,
-        timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
+        timeLeft: Math.max(0, Math.floor(((battle.targetTime instanceof Date ? battle.targetTime : new Date(battle.targetTime + 'Z')).getTime() - new Date().getTime()) / 1000))
       }));
 
       res.json(battlesWithPrices);
@@ -3687,7 +4263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const battleWithPrice = {
         ...battle,
         currentPrice: priceMap.get(battle.cryptocurrency) || 0,
-        timeLeft: Math.max(0, Math.floor((new Date(battle.targetTime).getTime() - Date.now()) / 1000))
+        timeLeft: Math.max(0, Math.floor(((battle.targetTime instanceof Date ? battle.targetTime : new Date(battle.targetTime + 'Z')).getTime() - new Date().getTime()) / 1000))
       };
 
       res.json(battleWithPrice);
@@ -3737,26 +4313,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Battle already has a second participant' });
       }
 
-      // Check user balance
-      if (user.balance < battle.stakeAmount) {
-        return res.status(400).json({ message: `Insufficient balance. Required ${battle.stakeAmount} NTIQ` });
+      // Check blockchain balance
+      if (!user.walletAddress) {
+        return res.status(400).json({ message: 'Wallet address required. Please connect your wallet to join battles.' });
       }
 
-      // Use new anti-last-minute joining system
+      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      logger.info(`💰 [BATTLE-JOIN] User ${userId} blockchain balance: ${blockchainBalance} NTIQ`);
+
+      if (blockchainBalance < battle.stakeAmount) {
+        return res.status(400).json({
+          message: `Insufficient NTIQ balance. Required: ${battle.stakeAmount} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`
+        });
+      }
+
+      // BLOCKCHAIN FIRST: Accept battle on blockchain BEFORE database
+      let txHash: string;
+      try {
+        const blockchainBattleId = blockchainService.generateBattleId(battleId);
+        txHash = await battleEscrowService.acceptBattle({
+          battleId: blockchainBattleId,
+          challenged: user.walletAddress
+        });
+
+        logger.info(`🔗 [BLOCKCHAIN] Battle ${battleId} accepted on blockchain: ${txHash}`);
+      } catch (blockchainError: any) {
+        logger.error(`❌ [BLOCKCHAIN] Failed to accept battle on blockchain:`, blockchainError);
+        return res.status(500).json({
+          message: "Failed to accept battle on blockchain. Please ensure you have approved the contract to spend your NTIQ tokens.",
+          error: blockchainError.message
+        });
+      }
+
+      // Join battle in database AFTER blockchain success
       const joinResult = await storage.joinBattle(battleId, userId, parseFloat(challengedPrediction));
 
-      // Deduct stake from user balance
-      await storage.updateUser(userId, {
-        balance: user.balance - battle.stakeAmount
-      });
+      // Update battle with accept transaction hash
+      await db.update(predictionBattles)
+        .set({
+          blockchainAcceptHash: txHash,
+          blockchainStatus: 'confirmed'
+        })
+        .where(eq(predictionBattles.id, battleId));
 
-      // Log transaction
+      // Log transaction for tracking (no balance change, just logging)
       await storage.logTransaction({
         userId,
-        type: 'battle_join',
+        type: 'battle_join_blockchain',
         amount: battle.stakeAmount,
-        description: `Joined battle vs user ID ${battle.challengerId}`,
-        relatedId: battleId
+        description: `Joined battle (Blockchain) vs user ID ${battle.challengerId}`,
+        relatedId: battleId,
+        status: 'completed'
       });
 
       res.json({
@@ -4700,9 +5307,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         SELECT 
           timeframe,
           COUNT(*) as total_predictions,
-          AVG(CASE WHEN status = 'claimed' THEN accuracy_percentage ELSE NULL END) as avg_accuracy
+          AVG(CASE WHEN status = 'completed' THEN CAST(accuracy AS NUMERIC) ELSE NULL END) as avg_accuracy
         FROM predictions 
-        WHERE user_id = ${userId} AND status = 'claimed'
+        WHERE user_id = ${userId} AND status = 'completed'
         GROUP BY timeframe
         ORDER BY avg_accuracy DESC
         LIMIT 1
@@ -4713,9 +5320,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         SELECT 
           cryptocurrency,
           COUNT(*) as total_predictions,
-          AVG(CASE WHEN status = 'claimed' THEN accuracy_percentage ELSE NULL END) as avg_accuracy
+          AVG(CASE WHEN status = 'completed' THEN CAST(accuracy AS NUMERIC) ELSE NULL END) as avg_accuracy
         FROM predictions 
-        WHERE user_id = ${userId} AND status = 'claimed'
+        WHERE user_id = ${userId} AND status = 'completed'
         GROUP BY cryptocurrency
         ORDER BY total_predictions DESC, avg_accuracy DESC
         LIMIT 1
@@ -4724,10 +5331,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get overall user accuracy
       const overallStatsResult = await db.execute(sql`
         SELECT 
-          AVG(accuracy_percentage) as avg_accuracy,
+          AVG(CAST(accuracy AS NUMERIC)) as avg_accuracy,
           COUNT(*) as total_successful
         FROM predictions 
-        WHERE user_id = ${userId} AND status = 'claimed'
+        WHERE user_id = ${userId} AND status = 'completed'
       `);
 
       // Generate insights based on user data
@@ -9268,14 +9875,27 @@ Manual balance correction required IMMEDIATELY!`;
       const validatedData = withdrawalSchema.parse(req.body);
       console.log('✅ [WITHDRAWAL] Data validated:', validatedData);
 
-      // Check user balance
+      // Check user balance from blockchain
       console.log('🔍 [WITHDRAWAL] Getting user info for userId:', session.userId);
       const user = await storage.getUser(session.userId);
-      console.log('📊 [WITHDRAWAL] User balance:', user?.balance, 'Required:', validatedData.ntiqAmount);
 
-      if (!user || user.balance < validatedData.ntiqAmount) {
-        console.log('❌ [WITHDRAWAL] Insufficient balance');
-        return res.status(400).json({ message: "Insufficient NTIQ balance" });
+      if (!user || !user.walletAddress) {
+        console.log('❌ [WITHDRAWAL] User not found or no wallet address');
+        return res.status(400).json({ message: "Wallet address required for withdrawal" });
+      }
+
+      // Check real blockchain balance
+      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      console.log('📊 [WITHDRAWAL] Blockchain balance:', blockchainBalance, 'Required:', validatedData.ntiqAmount);
+
+      if (blockchainBalance < validatedData.ntiqAmount) {
+        console.log('❌ [WITHDRAWAL] Insufficient blockchain balance');
+        return res.status(400).json({
+          message: `Insufficient NTIQ balance. Required: ${validatedData.ntiqAmount} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`,
+          needsAirdrop: true,
+          currentBalance: blockchainBalance,
+          requiredAmount: validatedData.ntiqAmount
+        });
       }
 
       // Calculate USD amount (100 NTIQ = 1 USD)
@@ -9405,18 +10025,25 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(400).json({ message: "Invalid withdrawal amount" });
       }
 
-      // Get user and verify balance
+      // Get user and verify blockchain balance
       const user = await storage.getUser(session.userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      if (user.balance < ntiqAmount) {
-        return res.status(400).json({ message: "Insufficient NTIQ balance" });
-      }
-
       if (!user.walletAddress) {
         return res.status(400).json({ message: "No wallet address linked" });
+      }
+
+      // Check real blockchain balance
+      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      if (blockchainBalance < ntiqAmount) {
+        return res.status(400).json({
+          message: `Insufficient NTIQ balance. Required: ${ntiqAmount} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`,
+          needsAirdrop: true,
+          currentBalance: blockchainBalance,
+          requiredAmount: ntiqAmount
+        });
       }
 
       // Convert NTIQ to POL (1000 NTIQ = 1 POL, configurable)
@@ -9498,18 +10125,25 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(400).json({ message: "Invalid token information" });
       }
 
-      // Get user and verify balance
+      // Get user and verify blockchain balance
       const user = await storage.getUser(session.userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      if (user.balance < ntiqAmount) {
-        return res.status(400).json({ message: "Insufficient NTIQ balance" });
-      }
-
       if (!user.walletAddress) {
         return res.status(400).json({ message: "No wallet address linked" });
+      }
+
+      // Check real blockchain balance
+      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      if (blockchainBalance < ntiqAmount) {
+        return res.status(400).json({
+          message: `Insufficient NTIQ balance. Required: ${ntiqAmount} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`,
+          needsAirdrop: true,
+          currentBalance: blockchainBalance,
+          requiredAmount: ntiqAmount
+        });
       }
 
       // Verify wallet address matches
@@ -9824,10 +10458,23 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(400).json({ message: 'Minimum entry fee is 50 NTIQ' });
       }
 
-      // Validate user has enough balance for entry fee
+      // Validate user has blockchain balance for entry fee
       const user = await storage.getUser(userId);
-      if (!user || user.balance < entryFee) {
-        return res.status(400).json({ message: 'Insufficient balance for entry fee' });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      if (!user.walletAddress) {
+        return res.status(400).json({ message: 'Wallet address required. Please connect your wallet.' });
+      }
+
+      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      logger.info(`💰 [TOURNAMENT-CREATE] User ${userId} blockchain balance: ${blockchainBalance} NTIQ`);
+
+      if (blockchainBalance < entryFee) {
+        return res.status(400).json({
+          message: `Insufficient NTIQ balance. Required: ${entryFee} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`
+        });
       }
 
       // Allow multiple tournaments to run simultaneously
@@ -9899,10 +10546,21 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(400).json({ message: 'Already joined this tournament' });
       }
 
-      // Validate user has enough balance
+      // Validate user has enough blockchain balance
       const user = await storage.getUser(userId);
-      if (!user || user.balance < tournament.entryFee) {
-        return res.status(400).json({ message: 'Insufficient balance for entry fee' });
+      if (!user || !user.walletAddress) {
+        return res.status(400).json({ message: 'Wallet address required for tournament entry' });
+      }
+
+      // Check real blockchain balance
+      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      if (blockchainBalance < tournament.entryFee) {
+        return res.status(400).json({
+          message: `Insufficient NTIQ balance for entry fee. Required: ${tournament.entryFee} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`,
+          needsAirdrop: true,
+          currentBalance: blockchainBalance,
+          requiredAmount: tournament.entryFee
+        });
       }
 
       // CRITICAL FIX: Use BalanceService for tournament join fee
@@ -9916,6 +10574,26 @@ Manual balance correction required IMMEDIATELY!`;
 
       // Join tournament
       const participant = await storage.joinSurvivalTournament(tournamentId, userId);
+
+      // BLOCKCHAIN INTEGRATION: Join tournament in smart contract
+      try {
+        if (user.walletAddress) {
+          const blockchainTournamentId = blockchainService.generateTournamentId(tournamentId);
+          const txHash = await tournamentPoolService.joinTournament({
+            tournamentId: blockchainTournamentId,
+            userAddress: user.walletAddress,
+            entryFee: tournament.entryFee.toString()
+          });
+
+          // Update tournament with join transaction hash (store in participant or tournament)
+          logger.info(`🔗 [BLOCKCHAIN] User ${userId} joined tournament ${tournamentId} on blockchain: ${txHash}`);
+        } else {
+          logger.warn(`⚠️ [BLOCKCHAIN] User ${userId} has no wallet address, skipping blockchain tournament join`);
+        }
+      } catch (blockchainError: any) {
+        logger.error(`❌ [BLOCKCHAIN] Failed to join tournament on blockchain:`, blockchainError);
+        // Don't fail the tournament join if blockchain fails
+      }
 
       // Start tournament if full
       if (tournament.currentParticipants + 1 >= tournament.maxParticipants) {
@@ -12168,9 +12846,20 @@ Manual balance correction required IMMEDIATELY!`;
         return res.status(400).json({ message: "At least 2 coins required for parlay" });
       }
 
-      if (!user || user.balance < parseFloat(stakeAmount)) {
-        console.log("❌ [PARLAY-CLEAN] Insufficient balance");
-        return res.status(400).json({ message: "Insufficient balance" });
+      // Check blockchain balance
+      if (!user || !user.walletAddress) {
+        console.log("❌ [PARLAY-CLEAN] No wallet address");
+        return res.status(400).json({ message: "Wallet address required. Please connect your wallet." });
+      }
+
+      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      logger.info(`💰 [PARLAY] User ${user.id} blockchain balance: ${blockchainBalance} NTIQ`);
+
+      if (blockchainBalance < parseFloat(stakeAmount)) {
+        console.log("❌ [PARLAY-CLEAN] Insufficient blockchain balance");
+        return res.status(400).json({
+          message: `Insufficient NTIQ balance. Required: ${stakeAmount} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`
+        });
       }
 
       console.log("✅ [PARLAY-CLEAN] All validations passed");
@@ -12230,6 +12919,37 @@ Manual balance correction required IMMEDIATELY!`;
       }, storage);
 
       console.log("✅ [PARLAY-CLEAN] Balance deducted successfully");
+
+      // BLOCKCHAIN INTEGRATION: Lock parlay stake in smart contract
+      try {
+        if (user.walletAddress) {
+          const parlayId = blockchainService.generateParlayId(parlay.id);
+          const txHash = await parlayStakingService.lockParlayStake({
+            parlayId,
+            userAddress: user.walletAddress,
+            stakeAmount: stake.toString(),
+            coinCount: coins.length
+          });
+
+          // Update parlay with blockchain transaction hash
+          await db.update(parlayPredictions)
+            .set({
+              blockchainStakeHash: txHash,
+              blockchainStatus: 'confirmed'
+            })
+            .where(eq(parlayPredictions.id, parlay.id));
+
+          logger.info(`🔗 [BLOCKCHAIN] Parlay ${parlay.id} stake locked on blockchain: ${txHash}`);
+        } else {
+          logger.warn(`⚠️ [BLOCKCHAIN] User ${user.id} has no wallet address, skipping blockchain parlay stake`);
+        }
+      } catch (blockchainError: any) {
+        logger.error(`❌ [BLOCKCHAIN] Failed to lock parlay stake on blockchain:`, blockchainError);
+        // Don't fail the parlay creation if blockchain fails
+        await db.update(parlayPredictions)
+          .set({ blockchainStatus: 'failed' })
+          .where(eq(parlayPredictions.id, parlay.id));
+      }
 
       res.json({
         success: true,

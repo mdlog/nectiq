@@ -1,0 +1,9 @@
+{
+  "network": "polygonAmoy",
+  "chainId": 80002,
+  "deployer": "0x3e4d881819768fab30c5a79F3A9A7e69f0a935a4",
+  "timestamp": "2025-10-14T18:28:41.201Z",
+  "contract": {
+    "NFTAchievementSystem": "0x57c5aE2C1ed8ef90e264D165b5A7F7C750C50C3f"
+  }
+}

@@ -36,13 +36,24 @@ export class VaultEventListener {
             console.log(`📍 [VAULT-LISTENER] Contract address: ${VAULT_ADDRESS}`);
             console.log(`🌐 [VAULT-LISTENER] RPC endpoint: ${AMOY_RPC}`);
 
-            this.provider = new ethers.JsonRpcProvider(AMOY_RPC);
+            // Configure provider with longer polling interval to reduce RPC errors
+            this.provider = new ethers.JsonRpcProvider(AMOY_RPC, {
+                name: 'polygon-amoy',
+                chainId: 80002
+            });
+
+            // Set polling interval to 30 seconds to reduce RPC load
+            this.provider.pollingInterval = 30000;
+
             this.contract = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, this.provider);
 
-            // Add error handler to suppress "filter not found" errors
+            // Add comprehensive error handler to suppress RPC errors
             this.provider.on('error', (error: any) => {
+                const errorMsg = error?.message || error?.error?.message || error?.shortMessage || '';
                 // Suppress common RPC filter errors that don't affect functionality
-                if (error?.error?.message?.includes('filter not found')) {
+                if (errorMsg.includes('filter not found') ||
+                    errorMsg.includes('could not coalesce error') ||
+                    errorMsg.includes('eth_getFilterChanges')) {
                     // Silently ignore - this is normal when RPC node clears old filters
                     return;
                 }

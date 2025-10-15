@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ExternalLink, CheckCircle2, Coins, AlertTriangle } from 'lucide-react';
 
-const MULTI_TOKEN_VAULT_ADDRESS = (import.meta.env.VITE_MULTI_TOKEN_VAULT_ADDRESS || '0x07d47A12F2f1224e8a1bE4e25fA5Ce7d3C6812d2') as `0x${string}`;
+import { CONTRACTS } from '@/lib/contracts';
+
+const MULTI_TOKEN_VAULT_ADDRESS = CONTRACTS.MULTI_TOKEN_VAULT;
 const POLYGON_AMOY_CHAIN_ID = 80002;
 const NTIQ_PRICE_USD = 0.01; // 1 NTIQ = $0.01 USD
 
@@ -28,7 +30,7 @@ const TOKENS = {
     WETH: {
         name: 'Wrapped ETH',
         symbol: 'WETH',
-        address: (import.meta.env.VITE_AMOY_WETH_ADDRESS || '0x52eF3d68BaB452a294342DC3e5f464d7f610f72E') as `0x${string}`,
+        address: CONTRACTS.WETH,
         decimals: 18,
         min: 0.001,
         max: 10,
@@ -38,7 +40,7 @@ const TOKENS = {
     USDC: {
         name: 'USD Coin',
         symbol: 'USDC',
-        address: (import.meta.env.VITE_AMOY_USDC_ADDRESS || '0x8B0180f2101c8260d49339abfEe87927412494B4') as `0x${string}`,
+        address: CONTRACTS.USDC,
         decimals: 6,
         min: 1,
         max: 10000,
@@ -48,12 +50,22 @@ const TOKENS = {
     LINK: {
         name: 'Chainlink',
         symbol: 'LINK',
-        address: (import.meta.env.VITE_AMOY_LINK_ADDRESS || '0x0fd9E8d3Af1aAeE056eb9e902c3A762a667b1904') as `0x${string}`,
+        address: CONTRACTS.LINK,
         decimals: 18,
         min: 0.1,
         max: 1000,
         icon: '🔗',
         color: 'indigo'
+    },
+    NTIQ: {
+        name: 'Nectiq Token',
+        symbol: 'NTIQ',
+        address: CONTRACTS.NTIQ_TOKEN,
+        decimals: 18,
+        min: 50,
+        max: 10000000,
+        icon: '🚀',
+        color: 'purple'
     }
 } as const;
 

@@ -25,7 +25,9 @@ export function CountdownTimer({ targetTime, timeLeft: initialTimeLeft, predicti
     if (targetTime) {
       // Use targetTime mode (original functionality for Battles)
       const calculateTimeLeft = () => {
-        const target = new Date(targetTime).getTime();
+        // Handle timezone consistently - add 'Z' if not present to ensure UTC parsing
+        const targetTimeStr = targetTime.includes('Z') ? targetTime : targetTime + 'Z';
+        const target = new Date(targetTimeStr).getTime();
         const now = Date.now();
         const difference = Math.max(0, Math.floor((target - now) / 1000));
         return difference;
@@ -38,7 +40,7 @@ export function CountdownTimer({ targetTime, timeLeft: initialTimeLeft, predicti
       intervalRef.current = setInterval(() => {
         const newTimeLeft = calculateTimeLeft();
         setTimeLeft(newTimeLeft);
-        
+
         // Stop timer when it reaches 0
         if (newTimeLeft <= 0) {
           if (intervalRef.current) {
@@ -52,22 +54,22 @@ export function CountdownTimer({ targetTime, timeLeft: initialTimeLeft, predicti
       // Enhanced mode for Active Predictions with persistent state
       const countdownKey = `prediction_${predictionId}`;
       const now = Date.now();
-      
+
       // Check if we have existing state for this prediction
       let startTime: number;
       let duration: number;
-      
+
       const existingState = countdownStates.get(countdownKey);
       if (existingState) {
         // Use existing state to calculate current time left
         startTime = existingState.startTime;
         duration = existingState.duration;
-        
+
         // Calculate actual time left based on elapsed time
         const elapsedSeconds = Math.floor((now - startTime) / 1000);
         const currentTimeLeft = Math.max(0, duration - elapsedSeconds);
         setTimeLeft(currentTimeLeft);
-        
+
         console.log(`⏰ [COUNTDOWN-RESTORE] Prediction ${predictionId}: ${currentTimeLeft}s left (elapsed: ${elapsedSeconds}s from ${duration}s)`);
       } else {
         // First time - initialize state
@@ -75,7 +77,7 @@ export function CountdownTimer({ targetTime, timeLeft: initialTimeLeft, predicti
         startTime = now;
         countdownStates.set(countdownKey, { startTime, duration });
         setTimeLeft(duration);
-        
+
         console.log(`🆕 [COUNTDOWN-INIT] Prediction ${predictionId}: Starting ${duration}s countdown`);
       }
 
@@ -84,9 +86,9 @@ export function CountdownTimer({ targetTime, timeLeft: initialTimeLeft, predicti
         const currentTime = Date.now();
         const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
         const newTimeLeft = Math.max(0, duration - elapsedSeconds);
-        
+
         setTimeLeft(newTimeLeft);
-        
+
         // Stop timer when it reaches 0 and clean up state
         if (newTimeLeft <= 0) {
           countdownStates.delete(countdownKey);
@@ -129,18 +131,18 @@ export function CountdownTimer({ targetTime, timeLeft: initialTimeLeft, predicti
 
   const formatTime = (seconds: number) => {
     if (seconds <= 0) return format === 'compact' ? 'Expired' : 'Ended';
-    
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (format === 'compact') {
       if (hours > 0) {
         return `${hours}h ${minutes}m left`;
       }
       return `${minutes}m ${secs}s left`;
     }
-    
+
     // Default format
     if (hours > 0) {
       return `${hours}h • ${minutes}m`;

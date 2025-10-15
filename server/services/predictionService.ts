@@ -2,6 +2,9 @@ import { storage } from '../storage';
 import { cryptoService } from './cryptoService';
 import { BalanceService } from './balanceService';
 import { PredictionInsuranceService } from './predictionInsuranceService';
+import { blockchainService } from './blockchainService';
+import { predictionStakingService } from './predictionStakingService';
+import { logger } from '../../shared/logger';
 
 export class PredictionService {
   async checkAndProcessExpiredPredictions(): Promise<void> {
@@ -79,11 +82,52 @@ export class PredictionService {
             });
 
             console.log(`✅ PREDICTION REWARD: User ${user.username} received ${rewardAmount} NTIQ for ${accuracy.toFixed(2)}% accuracy`);
+
+            // BLOCKCHAIN INTEGRATION: Release reward on smart contract
+            if (user.walletAddress && (prediction as any).blockchainStakeHash) {
+              try {
+                const blockchainPredictionId = blockchainService.generatePredictionId(predictionId);
+                const txHash = await predictionStakingService.releaseReward({
+                  predictionId: blockchainPredictionId,
+                  userAddress: user.walletAddress,
+                  multiplier: accuracyMultiplier
+                });
+
+                // Update prediction with reward transaction hash
+                await storage.updatePrediction(predictionId, {
+                  blockchainRewardHash: txHash
+                });
+
+                logger.info(`🔗 [BLOCKCHAIN] Prediction ${predictionId} reward released on blockchain: ${txHash}`);
+              } catch (blockchainError) {
+                logger.error(`❌ [BLOCKCHAIN] Failed to release reward on blockchain:`, blockchainError);
+              }
+            }
           } catch (error) {
             console.error(`❌ PREDICTION REWARD ERROR: Failed to process reward for prediction ${predictionId}:`, error);
           }
         } else {
           console.log(`📊 PREDICTION COMPLETED: User ${user.username} - No reward (${accuracy.toFixed(2)}% accuracy)`);
+
+          // BLOCKCHAIN INTEGRATION: Forfeit stake on smart contract
+          if (user.walletAddress && (prediction as any).blockchainStakeHash) {
+            try {
+              const blockchainPredictionId = blockchainService.generatePredictionId(predictionId);
+              const txHash = await predictionStakingService.forfeitStake({
+                predictionId: blockchainPredictionId,
+                userAddress: user.walletAddress
+              });
+
+              // Update prediction with forfeit transaction hash
+              await storage.updatePrediction(predictionId, {
+                blockchainRewardHash: txHash
+              });
+
+              logger.info(`🔗 [BLOCKCHAIN] Prediction ${predictionId} stake forfeited on blockchain: ${txHash}`);
+            } catch (blockchainError) {
+              logger.error(`❌ [BLOCKCHAIN] Failed to forfeit stake on blockchain:`, blockchainError);
+            }
+          }
         }
       }
     } catch (error) {

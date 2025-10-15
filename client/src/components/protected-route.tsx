@@ -10,11 +10,11 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-export function ProtectedRoute({ 
-  children, 
-  requireWallet = true, 
+export function ProtectedRoute({
+  children,
+  requireWallet = true,
   requireAdmin = false,
-  redirectTo = '/home' 
+  redirectTo = '/home'
 }: ProtectedRouteProps) {
   const { isConnected, user, isLoading } = useRainbowAuth();
   const [, setLocation] = useLocation();
@@ -22,7 +22,10 @@ export function ProtectedRoute({
 
   useEffect(() => {
     // Don't redirect while still loading user data
-    if (isLoading) return;
+    if (isLoading) {
+      console.log('⏳ [PROTECTED-ROUTE] Still loading user data...');
+      return;
+    }
 
     if (requireWallet) {
       // Check if wallet is connected and user is authenticated
@@ -34,28 +37,35 @@ export function ProtectedRoute({
           userInfo: user ? { id: user.id, username: user.username } : null,
           currentPath: window.location.pathname
         });
-        
-        toast({
-          title: "Wallet Required",
-          description: "Please connect your wallet to access this page.",
-          variant: "destructive",
-        });
-        
-        // Redirect to home page
-        setLocation(redirectTo);
-        return;
+
+        // Only show toast and redirect if wallet is truly not connected
+        // Give some time for authentication to complete
+        const timeoutId = setTimeout(() => {
+          if (!isConnected || !user) {
+            toast({
+              title: "Wallet Required",
+              description: "Please connect your wallet to access this page.",
+              variant: "destructive",
+            });
+
+            // Redirect to home page
+            setLocation(redirectTo);
+          }
+        }, 2000); // Wait 2 seconds before redirecting
+
+        return () => clearTimeout(timeoutId);
       }
-      
+
       // Check admin access if required
       if (requireAdmin && !user.isAdmin) {
         console.log('🚫 [PROTECTED-ROUTE] Access denied - admin privileges required');
-        
+
         toast({
           title: "Admin Access Required",
           description: "You don't have permission to access this page.",
           variant: "destructive",
         });
-        
+
         // Redirect to home page
         setLocation(redirectTo);
         return;
@@ -79,7 +89,7 @@ export function ProtectedRoute({
   if (requireWallet && (!isConnected || !user)) {
     return null;
   }
-  
+
   // If admin is required but user is not admin, don't render children
   if (requireAdmin && (!user || !user.isAdmin)) {
     return null;

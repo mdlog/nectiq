@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Clock, TrendingUp, TrendingDown, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, TrendingUp, TrendingDown, Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import type { ActivePrediction } from "@/types";
 import type { User } from "@shared/schema";
@@ -10,18 +10,18 @@ import { EnhancedSkeleton } from "@/components/enhanced-skeleton";
 // Dynamic function to get crypto image from live API data
 function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
   // Try to find crypto by multiple matching methods
-  const cryptoData = cryptoPrices?.find(crypto => 
-    crypto.id === cryptoId.toLowerCase() || 
+  const cryptoData = cryptoPrices?.find(crypto =>
+    crypto.id === cryptoId.toLowerCase() ||
     crypto.symbol?.toLowerCase() === cryptoId.toLowerCase() ||
     crypto.name?.toLowerCase() === cryptoId.toLowerCase() ||
     crypto.id === cryptoId.replace(/\s+/g, '-').toLowerCase()
   );
-  
+
   // Return authentic image URL from API data or fallback
   if (cryptoData?.image) {
     return cryptoData.image;
   }
-  
+
   // Enhanced fallback mapping for common cryptocurrencies
   const fallbackMapping: Record<string, string> = {
     'bitcoin-cash': 'https://coin-images.coingecko.com/coins/images/780/large/bitcoin-cash-circle.png',
@@ -33,7 +33,7 @@ function getCryptoImageUrl(cryptoId: string, cryptoPrices: any[]): string {
     'dogecoin': 'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png',
     'litecoin': 'https://coin-images.coingecko.com/coins/images/2/large/litecoin.png',
   };
-  
+
   const normalizedId = cryptoId.toLowerCase().replace(/\s+/g, '-');
   return fallbackMapping[normalizedId] || `https://coin-images.coingecko.com/coins/images/1/large/${normalizedId}.png`;
 }
@@ -61,7 +61,7 @@ function getCryptoIcon(crypto: string): string {
     "avalanche-2": "AVAX",
     avalanche: "AVAX",
   };
-  
+
   const normalizedCrypto = crypto.toLowerCase().replace(/\s+/g, '-');
   return icons[normalizedCrypto] || icons[crypto.toLowerCase()] || crypto.toUpperCase().slice(0, 4);
 }
@@ -89,7 +89,7 @@ function getCryptoColor(crypto: string): string {
     "avalanche-2": "bg-red-600",
     avalanche: "bg-red-600",
   };
-  
+
   const normalizedCrypto = crypto.toLowerCase().replace(/\s+/g, '-');
   return colors[normalizedCrypto] || colors[crypto.toLowerCase()] || "bg-gray-500";
 }
@@ -98,13 +98,13 @@ function calculateAccuracy(predicted: string, current: string): number {
   const predictedNum = parseFloat(predicted);
   const currentNum = parseFloat(current);
   if (currentNum === 0) return 0;
-  
+
   // Using the new percentage accuracy formula:
   // accuracy = (1 - |Predicted Price - Actual Price| / Actual Price) × 100
   const difference = Math.abs(predictedNum - currentNum);
   const accuracyDecimal = 1 - (difference / currentNum);
   const accuracyPercentage = accuracyDecimal * 100;
-  
+
   // Ensure accuracy is between 0 and 100
   return Math.max(0, Math.min(100, accuracyPercentage));
 }
@@ -132,12 +132,28 @@ export function ActivePredictions() {
     retry: 3, // More retry attempts for reliability
   });
 
-  const { data: predictions = [], isLoading } = useQuery<ActivePrediction[]>({
+  const { data: predictions = [], isLoading, refetch: refetchPredictions } = useQuery<ActivePrediction[]>({
     queryKey: ["/api/predictions/active"],
     refetchInterval: false, // Disable auto-refresh to prevent rate limiting
     refetchIntervalInBackground: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes stale time
+    staleTime: 30 * 1000, // Reduced to 30 seconds for fresher data
     enabled: isAuthenticated, // Only enable query if authenticated
+    onSuccess: (data) => {
+      console.log('✅ [ACTIVE-PREDICTIONS] Query success:', data.length, 'predictions found');
+      if (data.length > 0) {
+        console.log('📊 [ACTIVE-PREDICTIONS] Sample prediction:', data[0]);
+      }
+    },
+    onError: (error) => {
+      console.error('❌ [ACTIVE-PREDICTIONS] Query error:', error);
+    },
+    onSettled: (data, error) => {
+      console.log('🔍 [ACTIVE-PREDICTIONS] Query settled:', {
+        dataLength: data?.length || 0,
+        hasError: !!error,
+        isAuthenticated
+      });
+    }
   });
 
   // Filter predictions based on search query
@@ -206,15 +222,33 @@ export function ActivePredictions() {
 
   return (
     <div className="bg-surface rounded-xl p-4 sm:p-6 border border-surface-light min-h-[500px]">
-      <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center">
-        <Clock className="text-warning mr-2" size={16} />
-        Active Predictions
-        {totalItems > 0 && (
-          <span className="ml-auto text-xs sm:text-sm text-slate-400">
-            {totalItems} predictions
-          </span>
-        )}
-      </h3>
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h3 className="text-base sm:text-lg font-bold flex items-center">
+          <Clock className="text-warning mr-2" size={16} />
+          Active Predictions
+          {totalItems > 0 && (
+            <span className="ml-2 text-xs sm:text-sm text-slate-400">
+              {totalItems} predictions
+            </span>
+          )}
+        </h3>
+        <button
+          onClick={async () => {
+            console.log('🔄 [ACTIVE-PREDICTIONS] Manual refresh clicked');
+            try {
+              const result = await refetchPredictions();
+              console.log('✅ [ACTIVE-PREDICTIONS] Manual refresh result:', result);
+            } catch (error) {
+              console.error('❌ [ACTIVE-PREDICTIONS] Manual refresh error:', error);
+            }
+          }}
+          disabled={isLoading}
+          className="p-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+          title="Refresh predictions"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
 
       {/* Search Bar */}
       {predictions.length > 0 && (
@@ -235,7 +269,7 @@ export function ActivePredictions() {
       {/* Results Info */}
       {searchQuery && (
         <div className="mb-4 text-sm text-slate-400">
-          {filteredPredictions.length > 0 
+          {filteredPredictions.length > 0
             ? `Found ${filteredPredictions.length} prediction${filteredPredictions.length !== 1 ? 's' : ''} for "${searchQuery}"`
             : `No predictions found for "${searchQuery}"`
           }
@@ -250,7 +284,7 @@ export function ActivePredictions() {
           <p className="text-sm">Try searching for a different cryptocurrency</p>
         </div>
       )}
-      
+
       {/* Predictions List */}
       {paginatedPredictions.length > 0 && (
         <div className="space-y-4">
@@ -258,28 +292,28 @@ export function ActivePredictions() {
             // Enhanced debugging for cryptocurrency matching
             console.log(`🔍 [PREDICTION-DEBUG] Processing prediction for: ${prediction.cryptocurrency}`);
             console.log(`📊 [CRYPTO-DATA] Available cryptoPrices:`, cryptoPrices?.map(c => ({ id: c.id, symbol: c.symbol, name: c.name, image: c.image })));
-            
+
             // Get live current price from Pyth Network data
-            const cryptoMatch = cryptoPrices.find(crypto => 
-              crypto.id === prediction.cryptocurrency.toLowerCase() || 
+            const cryptoMatch = cryptoPrices.find(crypto =>
+              crypto.id === prediction.cryptocurrency.toLowerCase() ||
               crypto.symbol.toLowerCase() === prediction.cryptocurrency.toLowerCase() ||
               crypto.name.toLowerCase() === prediction.cryptocurrency.toLowerCase()
             );
             console.log(`🎯 [MATCH-RESULT] Crypto match for ${prediction.cryptocurrency}:`, cryptoMatch ? { id: cryptoMatch.id, symbol: cryptoMatch.symbol, name: cryptoMatch.name, image: cryptoMatch.image } : 'No match found');
-            
+
             const liveCurrentPrice = cryptoMatch?.current_price || prediction.currentPrice;
-            
+
             const accuracy = calculateAccuracy(prediction.predictedPrice, liveCurrentPrice.toString());
             // Accuracy is now a percentage (0-100), determine if prediction is good based on threshold
             const isGoodPrediction = accuracy >= 90; // 90% minimum threshold for reward
             const isExpired = prediction.timeLeft <= 0;
-            
+
             return (
               <div key={prediction.id} className="bg-surface-light rounded-lg p-4 border border-slate-600">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-3">
                     <div className="relative w-8 h-8 flex-shrink-0">
-                      <img 
+                      <img
                         src={getCryptoImageUrl(prediction.cryptocurrency, cryptoPrices || [])}
                         alt={prediction.cryptocurrency}
                         className="w-8 h-8 rounded-full object-cover"
@@ -323,7 +357,7 @@ export function ActivePredictions() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
@@ -377,17 +411,16 @@ export function ActivePredictions() {
           <div className="text-sm text-slate-400">
             Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, totalItems)} of {totalItems} predictions
           </div>
-          
+
           <div className="flex items-center space-x-2">
             {/* Previous Button */}
             <button
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`flex items-center px-3 py-1 rounded text-sm ${
-                currentPage === 1
-                  ? 'text-slate-500 cursor-not-allowed'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700'
-              }`}
+              className={`flex items-center px-3 py-1 rounded text-sm ${currentPage === 1
+                ? 'text-slate-500 cursor-not-allowed'
+                : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                }`}
             >
               <ChevronLeft size={16} />
               Previous
@@ -399,11 +432,10 @@ export function ActivePredictions() {
                 <button
                   key={page}
                   onClick={() => goToPage(page)}
-                  className={`px-3 py-1 rounded text-sm ${
-                    page === currentPage
-                      ? 'bg-primary text-white'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-700'
-                  }`}
+                  className={`px-3 py-1 rounded text-sm ${page === currentPage
+                    ? 'bg-primary text-white'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                    }`}
                 >
                   {page}
                 </button>
@@ -414,11 +446,10 @@ export function ActivePredictions() {
             <button
               onClick={() => goToPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`flex items-center px-3 py-1 rounded text-sm ${
-                currentPage === totalPages
-                  ? 'text-slate-500 cursor-not-allowed'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700'
-              }`}
+              className={`flex items-center px-3 py-1 rounded text-sm ${currentPage === totalPages
+                ? 'text-slate-500 cursor-not-allowed'
+                : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                }`}
             >
               Next
               <ChevronRight size={16} />

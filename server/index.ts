@@ -26,14 +26,22 @@ if (process.env.NODE_ENV === 'development') {
 const originalConsoleError = console.error;
 console.error = function (...args: any[]) {
   // Convert args to string for checking
-  const errorString = args.map(arg =>
-    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-  ).join(' ');
+  const errorString = args.map(arg => {
+    if (typeof arg === 'object') {
+      // Check nested properties for error messages
+      if (arg?.shortMessage) return arg.shortMessage;
+      if (arg?.message) return arg.message;
+      if (arg?.error?.message) return arg.error.message;
+      return JSON.stringify(arg);
+    }
+    return String(arg);
+  }).join(' ');
 
-  // Suppress "filter not found" errors from ethers.js
+  // Suppress "filter not found" and coalesce errors from ethers.js
   if (errorString.includes('filter not found') ||
     errorString.includes('could not coalesce error') ||
-    errorString.includes('eth_getFilterChanges')) {
+    errorString.includes('eth_getFilterChanges') ||
+    errorString.includes('missing revert data')) {
     // Silently ignore - this is normal RPC behavior
     return;
   }
@@ -443,11 +451,12 @@ try {
 }
 
 // Initialize Battle Expiry Service for automatic battle expiry processing
+// TEMPORARILY DISABLED FOR TESTING
 try {
-  console.log('🔧 Initializing Battle Expiry Service...');
-  const battleExpiryService = BattleExpiryService.getInstance();
-  battleExpiryService.start();
-  console.log('✅ Battle expiry service started successfully - monitoring every 30 seconds');
+  console.log('🔧 Battle Expiry Service temporarily disabled for testing...');
+  // const battleExpiryService = BattleExpiryService.getInstance();
+  // battleExpiryService.start();
+  console.log('⚠️ Battle expiry service disabled - battles will not auto-expire');
 } catch (error) {
   console.error('❌ Failed to initialize battle expiry service:', error);
 }

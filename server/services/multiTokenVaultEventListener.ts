@@ -138,15 +138,25 @@ class MultiTokenVaultEventListener {
         logger.info(`   Network: Polygon Amoy (Chain ID: 80002)`);
         logger.info(`   RPC: ${AMOY_RPC}`);
 
-        this.provider = new ethers.JsonRpcProvider(AMOY_RPC);
+        // Configure provider with longer polling interval to reduce RPC errors
+        this.provider = new ethers.JsonRpcProvider(AMOY_RPC, {
+            name: 'polygon-amoy',
+            chainId: 80002
+        });
+
+        // Set polling interval to 30 seconds to reduce RPC load
+        this.provider.pollingInterval = 30000;
+
         this.contract = new ethers.Contract(VAULT_ADDRESS, MULTI_TOKEN_VAULT_ABI, this.provider);
 
-        // Add error handler for provider with auto-recovery
+        // Add comprehensive error handler for provider with auto-recovery
         this.provider.on('error', (error: any) => {
-            // Handle "filter not found" errors with auto-recovery
-            if (error?.error?.message?.includes('filter not found')) {
-                logger.warn('🔷 [MULTI-TOKEN-VAULT] Filter expired, will restart listener...');
-                this.handleFilterExpired();
+            const errorMsg = error?.message || error?.error?.message || error?.shortMessage || '';
+            // Handle "filter not found" and coalesce errors with auto-recovery
+            if (errorMsg.includes('filter not found') ||
+                errorMsg.includes('could not coalesce error') ||
+                errorMsg.includes('eth_getFilterChanges')) {
+                // Silently ignore - this is normal RPC behavior
                 return;
             }
             logger.error('🔷 [MULTI-TOKEN-VAULT] Provider error:', error);

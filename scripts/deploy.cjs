@@ -1,121 +1,121 @@
-const { ethers } = require("hardhat");
+const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
-  
-  console.log("Deploying contracts with the account:", deployer.address);
-  console.log("Account balance:", (await deployer.getBalance()).toString());
-  console.log("Network:", (await ethers.provider.getNetwork()).name);
-  
-  // Deploy NTIQ Token
-  console.log("\n1. Deploying NTIQ Token...");
-  const NTIQ = await ethers.getContractFactory("NTIQ");
-  const ntiq = await NTIQ.deploy();
-  await ntiq.deployed();
-  console.log("NTIQ Token deployed to:", ntiq.address);
-  
-  // Deploy Price Oracle
-  console.log("\n2. Deploying Price Oracle...");
-  const PriceOracle = await ethers.getContractFactory("PriceOracle");
-  const priceOracle = await PriceOracle.deploy();
-  await priceOracle.deployed();
-  console.log("Price Oracle deployed to:", priceOracle.address);
-  
-  // Deploy Prediction Battle
-  console.log("\n3. Deploying Prediction Battle...");
-  const PredictionBattle = await ethers.getContractFactory("PredictionBattle");
-  const predictionBattle = await PredictionBattle.deploy(ntiq.address, priceOracle.address);
-  await predictionBattle.deployed();
-  console.log("Prediction Battle deployed to:", predictionBattle.address);
-  
-  // Setup initial configurations
-  console.log("\n4. Setting up initial configurations...");
-  
-  // Authorize prediction battle contract as price oracle feeder
-  await priceOracle.setAuthorizedFeeder(predictionBattle.address, true);
-  console.log("✓ Authorized Prediction Battle as price feeder");
-  
-  // Transfer some NTIQ tokens to prediction battle contract for rewards
-  const rewardAmount = ethers.utils.parseEther("100000"); // 100k NTIQ
-  await ntiq.transfer(predictionBattle.address, rewardAmount);
-  console.log("✓ Transferred 100k NTIQ to Prediction Battle for rewards");
-  
-  // Set up initial test prices
-  const testPrices = [
-    ["bitcoin", ethers.utils.parseEther("43000")],
-    ["ethereum", ethers.utils.parseEther("2600")],
-    ["binancecoin", ethers.utils.parseEther("315")],
-    ["cardano", ethers.utils.parseEther("0.38")],
-    ["solana", ethers.utils.parseEther("98")],
-    ["chainlink", ethers.utils.parseEther("14.5")],
-    ["polkadot", ethers.utils.parseEther("6.8")],
-    ["litecoin", ethers.utils.parseEther("73")],
-    ["matic-network", ethers.utils.parseEther("0.85")],
-    ["hyperliquid", ethers.utils.parseEther("28")]
-  ];
-  
-  for (const [crypto, price] of testPrices) {
-    await priceOracle.updatePrice(crypto, price);
-  }
-  console.log("✓ Set up initial test prices for all cryptocurrencies");
-  
+  console.log("🚀 Starting deployment to Polygon Amoy...\n");
+
+  // Get deployer account
+  const [deployer] = await hre.ethers.getSigners();
+  console.log("📝 Deploying contracts with account:", deployer.address);
+
+  const balance = await hre.ethers.provider.getBalance(deployer.address);
+  console.log("💰 Account balance:", hre.ethers.formatEther(balance), "POL\n");
+
+  // Contract addresses from .env
+  const NTIQ_TOKEN_ADDRESS = process.env.NTIQ_TOKEN_SIMPLE_ADDRESS || "0xE276c3634b7747c46c1aBAB4Eff6b2f046C71A6f";
+  const TREASURY_ADDRESS = process.env.ADMIN_WALLET_ADDRESSES?.split(",")[0] || deployer.address;
+
+  console.log("🔧 Configuration:");
+  console.log("   NTIQ Token:", NTIQ_TOKEN_ADDRESS);
+  console.log("   Treasury:", TREASURY_ADDRESS);
+  console.log("");
+
+  // Deploy PredictionStaking
+  console.log("📦 Deploying PredictionStaking...");
+  const PredictionStaking = await hre.ethers.getContractFactory("PredictionStaking");
+  const predictionStaking = await PredictionStaking.deploy(
+    NTIQ_TOKEN_ADDRESS,
+    TREASURY_ADDRESS
+  );
+  await predictionStaking.waitForDeployment();
+  const predictionStakingAddress = await predictionStaking.getAddress();
+  console.log("✅ PredictionStaking deployed to:", predictionStakingAddress);
+  console.log("");
+
+  // Deploy BattleEscrow
+  console.log("📦 Deploying BattleEscrow...");
+  const BattleEscrow = await hre.ethers.getContractFactory("BattleEscrow");
+  const battleEscrow = await BattleEscrow.deploy(
+    NTIQ_TOKEN_ADDRESS,
+    TREASURY_ADDRESS
+  );
+  await battleEscrow.waitForDeployment();
+  const battleEscrowAddress = await battleEscrow.getAddress();
+  console.log("✅ BattleEscrow deployed to:", battleEscrowAddress);
+  console.log("");
+
+  // Deploy ParlayStaking
+  console.log("📦 Deploying ParlayStaking...");
+  const ParlayStaking = await hre.ethers.getContractFactory("ParlayStaking");
+  const parlayStaking = await ParlayStaking.deploy(
+    NTIQ_TOKEN_ADDRESS,
+    TREASURY_ADDRESS
+  );
+  await parlayStaking.waitForDeployment();
+  const parlayStakingAddress = await parlayStaking.getAddress();
+  console.log("✅ ParlayStaking deployed to:", parlayStakingAddress);
+  console.log("");
+
+  // Deploy TournamentPool
+  console.log("📦 Deploying TournamentPool...");
+  const TournamentPool = await hre.ethers.getContractFactory("TournamentPool");
+  const tournamentPool = await TournamentPool.deploy(NTIQ_TOKEN_ADDRESS);
+  await tournamentPool.waitForDeployment();
+  const tournamentPoolAddress = await tournamentPool.getAddress();
+  console.log("✅ TournamentPool deployed to:", tournamentPoolAddress);
+  console.log("");
+
   // Save deployment addresses
   const deploymentInfo = {
-    network: (await ethers.provider.getNetwork()).name,
-    chainId: (await ethers.provider.getNetwork()).chainId,
+    network: "polygonAmoy",
+    chainId: 80002,
     deployer: deployer.address,
+    timestamp: new Date().toISOString(),
     contracts: {
-      NTIQ: ntiq.address,
-      PriceOracle: priceOracle.address,
-      PredictionBattle: predictionBattle.address
+      ntiqToken: NTIQ_TOKEN_ADDRESS,
+      treasury: TREASURY_ADDRESS,
+      predictionStaking: predictionStakingAddress,
+      battleEscrow: battleEscrowAddress,
+      parlayStaking: parlayStakingAddress,
+      tournamentPool: tournamentPoolAddress,
     },
-    deploymentTime: new Date().toISOString()
   };
-  
-  console.log("\n" + "=".repeat(50));
-  console.log("DEPLOYMENT COMPLETE");
-  console.log("=".repeat(50));
-  console.log(JSON.stringify(deploymentInfo, null, 2));
-  console.log("=".repeat(50));
-  
-  // Verify contracts on testnet (if not local)
-  if (network.name !== "localhost" && network.name !== "hardhat") {
-    console.log("\nWaiting for block confirmations...");
-    await ntiq.deployTransaction.wait(5);
-    await priceOracle.deployTransaction.wait(5);
-    await predictionBattle.deployTransaction.wait(5);
-    
-    console.log("Verifying contracts on Etherscan...");
-    try {
-      await hre.run("verify:verify", {
-        address: ntiq.address,
-        constructorArguments: [],
-      });
-      console.log("✓ NTIQ Token verified");
-    } catch (error) {
-      console.log("NTIQ verification failed:", error.message);
-    }
-    
-    try {
-      await hre.run("verify:verify", {
-        address: priceOracle.address,
-        constructorArguments: [],
-      });
-      console.log("✓ Price Oracle verified");
-    } catch (error) {
-      console.log("Price Oracle verification failed:", error.message);
-    }
-    
-    try {
-      await hre.run("verify:verify", {
-        address: predictionBattle.address,
-        constructorArguments: [ntiq.address, priceOracle.address],
-      });
-      console.log("✓ Prediction Battle verified");
-    } catch (error) {
-      console.log("Prediction Battle verification failed:", error.message);
-    }
+
+  const deploymentsDir = path.join(__dirname, "..", "deployments");
+  if (!fs.existsSync(deploymentsDir)) {
+    fs.mkdirSync(deploymentsDir, { recursive: true });
   }
+
+  const deploymentFile = path.join(deploymentsDir, "polygonAmoy.json");
+  fs.writeFileSync(deploymentFile, JSON.stringify(deploymentInfo, null, 2));
+
+  console.log("📄 Deployment info saved to:", deploymentFile);
+  console.log("");
+
+  // Print summary
+  console.log("🎉 Deployment Complete!");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("");
+  console.log("📋 Contract Addresses:");
+  console.log("   PredictionStaking:", predictionStakingAddress);
+  console.log("   BattleEscrow:", battleEscrowAddress);
+  console.log("   ParlayStaking:", parlayStakingAddress);
+  console.log("   TournamentPool:", tournamentPoolAddress);
+  console.log("");
+  console.log("🔍 Verify contracts on Polygonscan:");
+  console.log(`   npx hardhat verify --network polygonAmoy ${predictionStakingAddress} ${NTIQ_TOKEN_ADDRESS} ${TREASURY_ADDRESS}`);
+  console.log(`   npx hardhat verify --network polygonAmoy ${battleEscrowAddress} ${NTIQ_TOKEN_ADDRESS} ${TREASURY_ADDRESS}`);
+  console.log(`   npx hardhat verify --network polygonAmoy ${parlayStakingAddress} ${NTIQ_TOKEN_ADDRESS} ${TREASURY_ADDRESS}`);
+  console.log(`   npx hardhat verify --network polygonAmoy ${tournamentPoolAddress} ${NTIQ_TOKEN_ADDRESS}`);
+  console.log("");
+  console.log("📝 Add these to .env file:");
+  console.log(`PREDICTION_STAKING_ADDRESS=${predictionStakingAddress}`);
+  console.log(`BATTLE_ESCROW_ADDRESS=${battleEscrowAddress}`);
+  console.log(`PARLAY_STAKING_ADDRESS=${parlayStakingAddress}`);
+  console.log(`TOURNAMENT_POOL_ADDRESS=${tournamentPoolAddress}`);
+  console.log("");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 }
 
 main()

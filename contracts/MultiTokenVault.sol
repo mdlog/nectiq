@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 /**
  * @title MultiTokenVault
  * @dev Manages multi-token deposits and withdrawals for NECTIQ platform on Polygon Amoy
- * @notice Supports POL (native), WETH, USDC, and LINK tokens
+ * @notice Supports POL (native), WETH, USDC, LINK, and NTIQ tokens
  * @author NECTIQ Team
  */
 contract MultiTokenVault is ReentrancyGuard, Ownable, Pausable {
@@ -32,6 +32,7 @@ contract MultiTokenVault is ReentrancyGuard, Ownable, Pausable {
     address public immutable WETH;
     address public immutable USDC;
     address public immutable LINK;
+    address public immutable NTIQ;
     
     /// @notice Minimum deposit amounts per token (in token's decimals)
     mapping(address => uint256) public minDeposit;
@@ -104,15 +105,17 @@ contract MultiTokenVault is ReentrancyGuard, Ownable, Pausable {
      * @param _weth WETH token address on Polygon Amoy
      * @param _usdc USDC token address on Polygon Amoy
      * @param _link LINK token address on Polygon Amoy
+     * @param _ntiq NTIQ token address
      */
     constructor(
         address _backendSigner,
         address _weth,
         address _usdc,
-        address _link
+        address _link,
+        address _ntiq
     ) Ownable(msg.sender) {
         if (_backendSigner == address(0)) revert ZeroAddress();
-        if (_weth == address(0) || _usdc == address(0) || _link == address(0)) {
+        if (_weth == address(0) || _usdc == address(0) || _link == address(0) || _ntiq == address(0)) {
             revert InvalidToken();
         }
         
@@ -120,12 +123,14 @@ contract MultiTokenVault is ReentrancyGuard, Ownable, Pausable {
         WETH = _weth;
         USDC = _usdc;
         LINK = _link;
+        NTIQ = _ntiq;
         
         // Enable supported tokens
         supportedTokens[NATIVE_TOKEN] = true; // POL
         supportedTokens[_weth] = true;
         supportedTokens[_usdc] = true;
         supportedTokens[_link] = true;
+        supportedTokens[_ntiq] = true;
         
         // Set default deposit limits for POL (18 decimals)
         minDeposit[NATIVE_TOKEN] = 0.01 ether; // 0.01 POL
@@ -142,6 +147,10 @@ contract MultiTokenVault is ReentrancyGuard, Ownable, Pausable {
         // Set default deposit limits for LINK (18 decimals)
         minDeposit[_link] = 0.1 ether; // 0.1 LINK
         maxDeposit[_link] = 1000 ether; // 1000 LINK
+        
+        // Set default deposit limits for NTIQ (18 decimals)
+        minDeposit[_ntiq] = 50 * 10**18; // 50 NTIQ
+        maxDeposit[_ntiq] = 10000000 * 10**18; // 10M NTIQ
     }
     
     // ============ DEPOSIT FUNCTIONS ============
