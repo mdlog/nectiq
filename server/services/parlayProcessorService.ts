@@ -176,25 +176,60 @@ export class ParlayProcessorService {
             const { blockchainService } = await import('./blockchainService');
             const { parlayStakingService } = await import('./parlayStakingService');
 
-            const parlayId = blockchainService.generateParlayId(parlay.id);
-            const multiplier = totalReward / parlay.stakeAmount;
-            const txHash = await parlayStakingService.releaseCompoundReward({
-              parlayId,
-              userAddress: user.walletAddress,
-              multiplier
-            });
+            // Try with database ID first
+            let parlayId = blockchainService.generateParlayId(parlay.id);
+            let txHash = null;
 
-            // Update parlay with reward transaction hash
-            await db.update(parlayPredictions)
-              .set({ blockchainRewardHash: txHash })
-              .where(eq(parlayPredictions.id, parlay.id));
+            try {
+              const multiplier = totalReward / parlay.stakeAmount;
+              txHash = await parlayStakingService.releaseCompoundReward({
+                parlayId,
+                userAddress: user.walletAddress,
+                multiplier
+              });
+              logger.info(`🔗 [BLOCKCHAIN] Parlay ${parlay.id} reward released with database ID: ${txHash}`);
+            } catch (dbIdError) {
+              logger.warn(`⚠️ [BLOCKCHAIN] Failed with database ID, trying alternative methods:`, dbIdError.message);
 
-            const { logger } = await import('../../shared/logger');
-            logger.info(`🔗 [BLOCKCHAIN] Parlay ${parlay.id} reward released on blockchain: ${txHash}`);
+              // Try to extract parlay ID from blockchain transaction
+              try {
+                const provider = blockchainService.getProvider();
+                const tx = await provider.getTransaction((parlay as any).blockchainStakeHash);
+
+                if (tx && tx.data) {
+                  // Extract parlay ID from transaction data (first parameter after function selector)
+                  const data = tx.data.substring(10); // Remove function selector
+                  const parlayIdHex = '0x' + data.substring(0, 64);
+
+                  logger.info(`🔍 [BLOCKCHAIN] Extracted parlay ID from transaction: ${parlayIdHex}`);
+
+                  const multiplier = totalReward / parlay.stakeAmount;
+                  txHash = await parlayStakingService.releaseCompoundReward({
+                    parlayId: parlayIdHex,
+                    userAddress: user.walletAddress,
+                    multiplier
+                  });
+
+                  logger.info(`🔗 [BLOCKCHAIN] Parlay ${parlay.id} reward released with extracted ID: ${txHash}`);
+                }
+              } catch (extractError) {
+                logger.error(`❌ [BLOCKCHAIN] Failed to extract parlay ID from transaction:`, extractError);
+                throw new Error(`Failed to release parlay reward: ${extractError.message}`);
+              }
+            }
+
+            if (txHash) {
+              // Update parlay with reward transaction hash
+              await db.update(parlayPredictions)
+                .set({ blockchainRewardHash: txHash })
+                .where(eq(parlayPredictions.id, parlay.id));
+              logger.info(`✅ [BLOCKCHAIN] Parlay ${parlay.id} reward released successfully: ${txHash}`);
+            }
           }
         } catch (blockchainError) {
           const { logger } = await import('../../shared/logger');
           logger.error(`❌ [BLOCKCHAIN] Failed to release parlay reward on blockchain:`, blockchainError);
+          // Don't throw error - reward is still processed in database
         }
 
       } else {

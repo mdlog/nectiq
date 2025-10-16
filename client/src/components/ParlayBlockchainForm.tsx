@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
+import { ethers } from 'ethers';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -72,7 +73,7 @@ export function ParlayBlockchainForm({
     // Get NTIQ token balance
     const { data: ntiqBalance, refetch: refetchNtiqBalance } = useReadContract({
         address: CONTRACTS.NTIQ_TOKEN,
-        abi: CONTRACTS.ABIS?.NTIQ_TOKEN || [],
+        abi: CONTRACTS.ABIS?.NTIQToken || [],
         functionName: 'balanceOf',
         args: address ? [address] : undefined,
         query: {
@@ -83,7 +84,7 @@ export function ParlayBlockchainForm({
     // Get NTIQ allowance for ParlayStaking contract
     const { data: allowance, refetch: refetchAllowance } = useReadContract({
         address: CONTRACTS.NTIQ_TOKEN,
-        abi: CONTRACTS.ABIS?.NTIQ_TOKEN || [],
+        abi: CONTRACTS.ABIS?.NTIQToken || [],
         functionName: 'allowance',
         args: address ? [address, CONTRACTS.ENHANCED_PARLAY_STAKING] : undefined,
         query: {
@@ -122,10 +123,41 @@ export function ParlayBlockchainForm({
 
     // Check if approval is needed
     const stakeAmountWei = watchedStakeAmount ? parseEther(watchedStakeAmount) : 0n;
-    const needsApproval = allowance && stakeAmountWei > allowance;
+    const needsApproval = !allowance || stakeAmountWei > allowance;
+
+    // Format allowance for display
+    const allowanceFormatted = allowance ? formatEther(allowance) : '0';
+
+    // Debug logging
+    console.log('🔍 [PARLAY-BLOCKCHAIN] Approval Check:', {
+        stakeAmount: watchedStakeAmount,
+        stakeAmountWei: stakeAmountWei.toString(),
+        allowance: allowance?.toString(),
+        allowanceFormatted: allowanceFormatted,
+        needsApproval,
+        contractAddress: CONTRACTS.ENHANCED_PARLAY_STAKING,
+        buttonState: {
+            isSubmitting,
+            isApprovePending,
+            isParlayPending,
+            hasAddress: !!address,
+            disabled: isSubmitting || isApprovePending || isParlayPending || !address
+        }
+    });
 
     const handleApprove = async () => {
+        console.log('🔵 [PARLAY-BLOCKCHAIN] Approve button clicked');
+        console.log('🔵 [PARLAY-BLOCKCHAIN] Approval params:', {
+            address,
+            chain: chain?.id,
+            stakeAmountWei: stakeAmountWei.toString(),
+            contractAddress: CONTRACTS.NTIQ_TOKEN,
+            spenderAddress: CONTRACTS.ENHANCED_PARLAY_STAKING,
+            abi: CONTRACTS.ABIS?.NTIQToken
+        });
+
         if (!address || !chain) {
+            console.log('❌ [PARLAY-BLOCKCHAIN] Wallet not connected');
             toast({
                 title: "Wallet Not Connected",
                 description: "Please connect your wallet to approve NTIQ tokens.",
@@ -135,14 +167,16 @@ export function ParlayBlockchainForm({
         }
 
         try {
+            console.log('🟢 [PARLAY-BLOCKCHAIN] Calling writeApproveContract...');
             await writeApproveContract({
                 address: CONTRACTS.NTIQ_TOKEN,
-                abi: CONTRACTS.ABIS?.NTIQ_TOKEN || [],
+                abi: CONTRACTS.ABIS?.NTIQToken || [],
                 functionName: 'approve',
                 args: [CONTRACTS.ENHANCED_PARLAY_STAKING, stakeAmountWei],
                 chainId: chain.id,
                 gas: 100000n, // Optimize gas limit for approve
             });
+            console.log('✅ [PARLAY-BLOCKCHAIN] Approval transaction submitted');
         } catch (error: any) {
             console.error('❌ [PARLAY-BLOCKCHAIN] Approval failed:', error);
             toast({
@@ -187,15 +221,36 @@ export function ParlayBlockchainForm({
         try {
             const stakeAmountWei = parseEther(watchedStakeAmount);
 
-            // Generate parlay ID (simple hash for now)
-            const parlayId = `0x${Date.now().toString(16).padStart(64, '0')}`;
+            // First create parlay in database to get ID
+            const coins = parlayCards.map(card => ({
+                cryptocurrency: card.cryptocurrency,
+                prediction: card.prediction,
+                duration: card.duration,
+                startPrice: card.startPrice
+            }));
+
+            const parlayResponse = await apiRequest('/api/parlay/create', {
+                method: 'POST',
+                body: JSON.stringify({
+                    stakeAmount: watchedStakeAmount,
+                    coins
+                })
+            });
+
+            if (!parlayResponse || !parlayResponse.id) {
+                throw new Error('Failed to create parlay in database');
+            }
+
+            // Generate parlay ID using database ID (consistent with backend)
+            const parlayId = ethers.id(`parlay_${parlayResponse.id}`);
 
             // Calculate duration (use max duration from cards)
             const durationMap = { '1h': 3600, '6h': 21600, '24h': 86400, '7d': 604800 };
             const maxDuration = Math.max(...parlayCards.map(card => durationMap[card.duration as keyof typeof durationMap] || 3600));
 
             console.log('🎯 [PARLAY-BLOCKCHAIN] Creating parlay:', {
-                parlayId,
+                dbId: parlayResponse.id,
+                blockchainId: parlayId,
                 stakeAmount: watchedStakeAmount,
                 stakeAmountWei: stakeAmountWei.toString(),
                 coinCount: parlayCards.length,
@@ -228,8 +283,8 @@ export function ParlayBlockchainForm({
         if (isParlaySuccess && parlayTxHash && !hasSubmittedToDB) {
             console.log('✅ [PARLAY-BLOCKCHAIN] Parlay transaction confirmed:', parlayTxHash);
 
-            // Submit to backend database
-            const submitToDatabase = async () => {
+            // Update parlay in database with blockchain transaction hash
+            const updateParlayInDB = async () => {
                 try {
                     const coins = parlayCards.map(card => ({
                         cryptocurrency: card.cryptocurrency,
@@ -244,7 +299,6 @@ export function ParlayBlockchainForm({
                             stakeAmount: watchedStakeAmount,
                             coins,
                             blockchainTxHash: parlayTxHash,
-                            parlayId: `0x${Date.now().toString(16).padStart(64, '0')}`,
                         }),
                     });
 
@@ -274,7 +328,7 @@ export function ParlayBlockchainForm({
                 }
             };
 
-            submitToDatabase();
+            updateParlayInDB();
         }
     }, [isParlaySuccess, parlayTxHash, hasSubmittedToDB]);
 
@@ -290,7 +344,6 @@ export function ParlayBlockchainForm({
     }, [isApproveSuccess, refetchAllowance]);
 
     const ntiqBalanceFormatted = ntiqBalance ? formatEther(ntiqBalance) : '0';
-    const allowanceFormatted = allowance ? formatEther(allowance) : '0';
 
     return (
         <div className="space-y-6">
@@ -320,6 +373,12 @@ export function ParlayBlockchainForm({
                                     {parseFloat(ntiqBalanceFormatted).toFixed(2)} NTIQ
                                 </p>
                                 <p className="text-green-500 dark:text-green-300 text-sm">Available Balance</p>
+                                <p className="text-blue-500 dark:text-blue-300 text-xs">
+                                    Allowance: {parseFloat(allowanceFormatted).toFixed(2)} NTIQ
+                                </p>
+                                <p className="text-orange-500 dark:text-orange-300 text-xs">
+                                    Needs Approval: {needsApproval ? 'Yes' : 'No'}
+                                </p>
                             </div>
                         </div>
                     </CardContent>
@@ -444,7 +503,10 @@ export function ParlayBlockchainForm({
                 {needsApproval ? (
                     <Button
                         type="button"
-                        onClick={handleApprove}
+                        onClick={() => {
+                            console.log('🔵 [PARLAY-BLOCKCHAIN] Button clicked, calling handleApprove');
+                            handleApprove();
+                        }}
                         disabled={isSubmitting || isApprovePending || isParlayPending || !address}
                         className="flex-1"
                     >

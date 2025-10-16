@@ -10,6 +10,7 @@ import AdminPanel from "@/pages/admin-working";
 import Leaderboard from "@/pages/leaderboard";
 import BattlesPage from "@/pages/battles";
 import ParlayPage from "@/pages/parlay-simple";
+import TestParlay from "@/pages/test-parlay";
 
 import SurvivalGame from "@/pages/survival-game";
 import NotFound from "@/pages/not-found";
@@ -108,6 +109,9 @@ function Router() {
           <ParlayPage />
         </ProtectedRoute>
       </Route>
+
+      {/* Test Parlay page - No authentication required */}
+      <Route path="/test-parlay" component={TestParlay} />
 
       {/* Battles page */}
       <Route path="/battles">

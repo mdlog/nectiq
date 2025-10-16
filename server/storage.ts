@@ -1899,23 +1899,56 @@ export class DatabaseStorage implements IStorage {
               const { blockchainService } = await import('./services/blockchainService');
               const { battleEscrowService } = await import('./services/battleEscrowService');
 
-              const blockchainBattleId = blockchainService.generateBattleId(battleId);
-              const txHash = await battleEscrowService.resolveBattle({
-                battleId: blockchainBattleId,
-                winner: winnerUser.walletAddress
-              });
+              // Try with database ID first
+              let blockchainBattleId = blockchainService.generateBattleId(battleId);
+              let txHash = null;
 
-              // Update battle with resolve transaction hash
-              await db.update(predictionBattles)
-                .set({ blockchainResolveHash: txHash })
-                .where(eq(predictionBattles.id, battleId));
+              try {
+                txHash = await battleEscrowService.resolveBattle({
+                  battleId: blockchainBattleId,
+                  winner: winnerUser.walletAddress
+                });
+                logger.info(`🔗 [BLOCKCHAIN] Battle ${battleId} resolved with database ID: ${txHash}`);
+              } catch (dbIdError) {
+                logger.warn(`⚠️ [BLOCKCHAIN] Failed with database ID, trying alternative methods:`, dbIdError.message);
 
-              const { logger } = await import('../shared/logger');
-              logger.info(`🔗 [BLOCKCHAIN] Battle ${battleId} resolved on blockchain: ${txHash}`);
+                // Try to extract battle ID from blockchain transaction
+                try {
+                  const provider = blockchainService.getProvider();
+                  const tx = await provider.getTransaction((battle as any).blockchainBattleHash);
+
+                  if (tx && tx.data) {
+                    // Extract battle ID from transaction data (first parameter after function selector)
+                    const data = tx.data.substring(10); // Remove function selector
+                    const battleIdHex = '0x' + data.substring(0, 64);
+
+                    logger.info(`🔍 [BLOCKCHAIN] Extracted battle ID from transaction: ${battleIdHex}`);
+
+                    txHash = await battleEscrowService.resolveBattle({
+                      battleId: battleIdHex,
+                      winner: winnerUser.walletAddress
+                    });
+
+                    logger.info(`🔗 [BLOCKCHAIN] Battle ${battleId} resolved with extracted ID: ${txHash}`);
+                  }
+                } catch (extractError) {
+                  logger.error(`❌ [BLOCKCHAIN] Failed to extract battle ID from transaction:`, extractError);
+                  throw new Error(`Failed to resolve battle: ${extractError.message}`);
+                }
+              }
+
+              if (txHash) {
+                // Update battle with resolve transaction hash
+                await db.update(predictionBattles)
+                  .set({ blockchainResolveHash: txHash })
+                  .where(eq(predictionBattles.id, battleId));
+                logger.info(`✅ [BLOCKCHAIN] Battle ${battleId} resolved successfully: ${txHash}`);
+              }
             }
           } catch (blockchainError) {
             const { logger } = await import('../shared/logger');
             logger.error(`❌ [BLOCKCHAIN] Failed to resolve battle on blockchain:`, blockchainError);
+            // Don't throw error - reward is still processed in database
           }
         } catch (error) {
           console.error(`❌ BATTLE REWARD ERROR: Failed to process battle ${battleId} reward:`, error);

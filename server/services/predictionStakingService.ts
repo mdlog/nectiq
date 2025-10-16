@@ -69,7 +69,8 @@ export class PredictionStakingService {
                 duration,
                 predictedPriceWei,
                 {
-                    from: userAddress
+                    from: userAddress,
+                    gasLimit: 300000n // Increased gas limit
                 }
             );
 
@@ -89,7 +90,23 @@ export class PredictionStakingService {
             return tx.hash;
         } catch (error: any) {
             logger.error(`❌ [PREDICTION] Error locking enhanced stake:`, error);
-            throw new Error(`Failed to lock enhanced stake: ${error.message}`);
+
+            // Enhanced error handling with specific error messages
+            if (error.message.includes("Insufficient balance")) {
+                throw new Error("User has insufficient NTIQ balance");
+            } else if (error.message.includes("Insufficient allowance")) {
+                throw new Error("User needs to approve NTIQ spending");
+            } else if (error.message.includes("execution reverted")) {
+                throw new Error("Smart contract execution failed - check parameters");
+            } else if (error.message.includes("gas required exceeds allowance")) {
+                throw new Error("Gas limit too low - transaction failed");
+            } else if (error.message.includes("nonce too low")) {
+                throw new Error("Transaction nonce error - please try again");
+            } else if (error.message.includes("insufficient funds")) {
+                throw new Error("Insufficient funds for gas fees");
+            } else {
+                throw new Error(`Failed to lock enhanced stake: ${error.message}`);
+            }
         }
     }
 

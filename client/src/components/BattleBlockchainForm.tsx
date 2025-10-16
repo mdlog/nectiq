@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
+import { ethers } from 'ethers';
 import { Loader2, Swords, CheckCircle2, AlertCircle, Coins, HelpCircle } from 'lucide-react';
 import { CONTRACTS, ABIS } from '@/lib/contracts';
 import { apiRequest } from "@/lib/queryClient";
@@ -147,11 +148,28 @@ export function BattleBlockchainForm({
         try {
             const stakeAmountWei = parseEther(data.stakeAmount.toString());
 
-            // Generate battle ID (simple hash for now)
-            const battleId = `0x${Date.now().toString(16).padStart(64, '0')}`;
+            // First create battle in database to get ID
+            const battleResponse = await apiRequest('/api/battles/create', {
+                method: 'POST',
+                body: JSON.stringify({
+                    cryptocurrency: data.cryptocurrency,
+                    timeframe: data.timeframe,
+                    stakeAmount: data.stakeAmount,
+                    challengerPrediction: data.challengerPrediction,
+                    isPublic: data.isPublic
+                })
+            });
+
+            if (!battleResponse || !battleResponse.id) {
+                throw new Error('Failed to create battle in database');
+            }
+
+            // Generate battle ID using database ID (consistent with backend)
+            const battleId = ethers.id(`battle_${battleResponse.id}`);
 
             console.log('⚔️ [BATTLE-BLOCKCHAIN] Creating battle:', {
-                battleId,
+                dbId: battleResponse.id,
+                blockchainId: battleId,
                 stakeAmount: data.stakeAmount,
                 stakeAmountWei: stakeAmountWei.toString(),
                 challenger: address,

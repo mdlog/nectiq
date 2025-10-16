@@ -86,21 +86,55 @@ export class PredictionService {
             // BLOCKCHAIN INTEGRATION: Release reward on smart contract
             if (user.walletAddress && (prediction as any).blockchainStakeHash) {
               try {
-                const blockchainPredictionId = blockchainService.generatePredictionId(predictionId);
-                const txHash = await predictionStakingService.releaseReward({
-                  predictionId: blockchainPredictionId,
-                  userAddress: user.walletAddress,
-                  multiplier: accuracyMultiplier
-                });
+                // Try with database ID first
+                let blockchainPredictionId = blockchainService.generatePredictionId(predictionId);
+                let txHash = null;
 
-                // Update prediction with reward transaction hash
-                await storage.updatePrediction(predictionId, {
-                  blockchainRewardHash: txHash
-                });
+                try {
+                  txHash = await predictionStakingService.releaseReward({
+                    predictionId: blockchainPredictionId,
+                    actualPrice: prediction.actualPrice.toString()
+                  });
+                  logger.info(`🔗 [BLOCKCHAIN] Prediction ${predictionId} reward released with database ID: ${txHash}`);
+                } catch (dbIdError) {
+                  logger.warn(`⚠️ [BLOCKCHAIN] Failed with database ID, trying alternative methods:`, dbIdError.message);
 
-                logger.info(`🔗 [BLOCKCHAIN] Prediction ${predictionId} reward released on blockchain: ${txHash}`);
+                  // Try to extract prediction ID from blockchain transaction
+                  try {
+                    const { blockchainService } = await import('./blockchainService');
+                    const provider = blockchainService.getProvider();
+                    const tx = await provider.getTransaction((prediction as any).blockchainStakeHash);
+
+                    if (tx && tx.data) {
+                      // Extract prediction ID from transaction data (first parameter after function selector)
+                      const data = tx.data.substring(10); // Remove function selector
+                      const predictionIdHex = '0x' + data.substring(0, 64);
+
+                      logger.info(`🔍 [BLOCKCHAIN] Extracted prediction ID from transaction: ${predictionIdHex}`);
+
+                      txHash = await predictionStakingService.releaseReward({
+                        predictionId: predictionIdHex,
+                        actualPrice: prediction.actualPrice.toString()
+                      });
+
+                      logger.info(`🔗 [BLOCKCHAIN] Prediction ${predictionId} reward released with extracted ID: ${txHash}`);
+                    }
+                  } catch (extractError) {
+                    logger.error(`❌ [BLOCKCHAIN] Failed to extract prediction ID from transaction:`, extractError);
+                    throw new Error(`Failed to release reward: ${extractError.message}`);
+                  }
+                }
+
+                if (txHash) {
+                  // Update prediction with reward transaction hash
+                  await storage.updatePrediction(predictionId, {
+                    blockchainRewardHash: txHash
+                  });
+                  logger.info(`✅ [BLOCKCHAIN] Prediction ${predictionId} reward released successfully: ${txHash}`);
+                }
               } catch (blockchainError) {
                 logger.error(`❌ [BLOCKCHAIN] Failed to release reward on blockchain:`, blockchainError);
+                // Don't throw error - reward is still processed in database
               }
             }
           } catch (error) {

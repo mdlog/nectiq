@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
+import { ethers } from 'ethers';
 import { Loader2, Shield, CheckCircle2, AlertCircle, Coins, HelpCircle } from 'lucide-react';
 import { CONTRACTS, ABIS } from '@/lib/contracts';
 import { apiRequest } from "@/lib/queryClient";
@@ -56,6 +57,7 @@ export function PredictionBlockchainForm({
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [hasSubmittedToDB, setHasSubmittedToDB] = useState(false);
 
     const form = useForm<PredictionFormData>({
         resolver: zodResolver(predictionFormSchema),
@@ -105,6 +107,47 @@ export function PredictionBlockchainForm({
 
     const needsApproval = allowance < form.watch('stakeAmount');
 
+    // Comprehensive validation function
+    const validatePrediction = (data: PredictionFormData): { isValid: boolean; error?: string } => {
+        // Check wallet connection
+        if (!address || !chain) {
+            return { isValid: false, error: "Wallet Not Connected" };
+        }
+
+        // Check NTIQ balance
+        if (ntiqBalance < data.stakeAmount) {
+            return {
+                isValid: false,
+                error: `Insufficient Balance: You need ${data.stakeAmount} NTIQ, but your balance is ${ntiqBalance.toFixed(2)} NTIQ`
+            };
+        }
+
+        // Check allowance
+        if (allowance < data.stakeAmount) {
+            return {
+                isValid: false,
+                error: "Approval Required: Please approve NTIQ spending first"
+            };
+        }
+
+        // Check minimum stake amount
+        if (data.stakeAmount < 1) {
+            return { isValid: false, error: "Minimum stake amount is 1 NTIQ" };
+        }
+
+        // Check predicted price
+        if (data.predictedPrice <= 0) {
+            return { isValid: false, error: "Predicted price must be greater than 0" };
+        }
+
+        // Check if balance is loading
+        if (ntiqBalance === 0 && !ntiqBalanceWei) {
+            return { isValid: false, error: "Loading balance, please wait..." };
+        }
+
+        return { isValid: true };
+    };
+
     const handleApprove = async (stakeAmount: number) => {
         if (!address || !chain) {
             toast({
@@ -124,7 +167,7 @@ export function PredictionBlockchainForm({
                 functionName: 'approve',
                 args: [CONTRACTS.ENHANCED_PREDICTION_STAKING, stakeAmountWei],
                 chainId: chain.id,
-                gas: 100000n, // Optimize gas limit for approve
+                gas: 150000n, // Increased gas limit for approve
             });
         } catch (error: any) {
             toast({
@@ -136,10 +179,12 @@ export function PredictionBlockchainForm({
     };
 
     const handlePredictionSubmit = async (data: PredictionFormData) => {
-        if (!address || !chain) {
+        // Validate before submission
+        const validation = validatePrediction(data);
+        if (!validation.isValid) {
             toast({
-                title: "Wallet Not Connected",
-                description: "Please connect your wallet to make predictions.",
+                title: "Validation Error",
+                description: validation.error,
                 variant: "destructive",
             });
             return;
@@ -151,12 +196,33 @@ export function PredictionBlockchainForm({
             const stakeAmountWei = parseEther(data.stakeAmount.toString());
             const predictedPriceWei = parseEther(data.predictedPrice);
 
-            // Generate prediction ID (simple hash for now)
-            const predictionId = `0x${Date.now().toString(16).padStart(64, '0')}`;
-
             // Calculate duration in seconds
             const durationMap = { '1h': 3600, '6h': 21600, '24h': 86400, '7d': 604800 };
             const duration = durationMap[data.timeframe];
+
+            // First create prediction in database to get ID
+            const predictionResponse = await apiRequest('/api/predictions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    cryptocurrency: data.cryptocurrency,
+                    predictedPrice: data.predictedPrice,
+                    timeframe: data.timeframe,
+                    stakeAmount: data.stakeAmount,
+                    duration: duration
+                })
+            });
+
+            if (!predictionResponse || !predictionResponse.id) {
+                throw new Error('Failed to create prediction in database');
+            }
+
+            // Generate prediction ID using database ID (consistent with backend)
+            const predictionId = ethers.id(`prediction_${predictionResponse.id}`);
+
+            console.log('🔗 [PREDICTION-BLOCKCHAIN] Using database ID for blockchain:', {
+                dbId: predictionResponse.id,
+                blockchainId: predictionId
+            });
 
             await writePredictionContract({
                 address: CONTRACTS.ENHANCED_PREDICTION_STAKING,
@@ -164,12 +230,35 @@ export function PredictionBlockchainForm({
                 functionName: 'lockStake',
                 args: [predictionId, stakeAmountWei, duration, predictedPriceWei],
                 chainId: chain.id,
-                gas: 250000n, // Optimize gas limit for prediction staking
+                gas: 300000n, // Increased gas limit for prediction staking
             });
         } catch (error: any) {
+            console.error('❌ [PREDICTION-BLOCKCHAIN] Error details:', error);
+
+            // Enhanced error handling with specific error messages
+            let errorTitle = "Prediction Failed";
+            let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
+
+            if (error.message?.includes("Insufficient balance")) {
+                errorTitle = "Insufficient Balance";
+                errorDescription = "You don't have enough NTIQ tokens for this prediction";
+            } else if (error.message?.includes("Approval Required")) {
+                errorTitle = "Approval Required";
+                errorDescription = "Please approve NTIQ spending first by clicking 'Approve NTIQ' button";
+            } else if (error.message?.includes("User rejected")) {
+                errorTitle = "Transaction Cancelled";
+                errorDescription = "You cancelled the transaction in MetaMask";
+            } else if (error.message?.includes("gas required exceeds allowance")) {
+                errorTitle = "Gas Limit Error";
+                errorDescription = "Transaction failed due to low gas limit. Please try again";
+            } else if (error.message?.includes("insufficient funds")) {
+                errorTitle = "Insufficient Funds";
+                errorDescription = "You don't have enough POL tokens for gas fees";
+            }
+
             toast({
-                title: "Prediction Failed",
-                description: error.shortMessage || error.message,
+                title: errorTitle,
+                description: errorDescription,
                 variant: "destructive",
             });
             setIsSubmitting(false);
@@ -178,9 +267,10 @@ export function PredictionBlockchainForm({
 
     // Handle successful prediction transaction
     React.useEffect(() => {
-        if (isPredictionSuccess && predictionTxHash) {
-            // Create prediction in database
-            const createPredictionInDB = async () => {
+        if (isPredictionSuccess && predictionTxHash && !hasSubmittedToDB) {
+            setHasSubmittedToDB(true); // Prevent multiple submissions
+            // Update prediction in database with blockchain transaction hash
+            const updatePredictionInDB = async () => {
                 try {
                     const formData = form.getValues();
 
@@ -254,9 +344,9 @@ export function PredictionBlockchainForm({
                 }
             };
 
-            createPredictionInDB();
+            updatePredictionInDB();
         }
-    }, [isPredictionSuccess, predictionTxHash, onSuccess, refetchNtiqBalance, refetchAllowance]);
+    }, [isPredictionSuccess, predictionTxHash, hasSubmittedToDB, onSuccess, refetchNtiqBalance, refetchAllowance]);
 
     // Handle approval success
     React.useEffect(() => {

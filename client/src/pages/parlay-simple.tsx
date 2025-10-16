@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Trash2, Plus, TrendingUp, TrendingDown } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { ParlayBlockchainForm } from "@/components/ParlayBlockchainForm";
 
 interface Cryptocurrency {
   id: string;
@@ -30,7 +30,7 @@ interface TrendRideCard {
 
 export default function TrendRideSimple() {
   console.log("🚀 [TRENDRIDE-SIMPLE] Component rendering...");
-  
+
   const [trendRideCards, setTrendRideCards] = useState<TrendRideCard[]>([]);
   const [stakeAmount, setStakeAmount] = useState("");
   const [totalMultiplier, setTotalMultiplier] = useState(1);
@@ -141,9 +141,9 @@ export default function TrendRideSimple() {
 
   // Check for duplicate cryptocurrency selection
   const isDuplicateCryptocurrency = (id: string, cryptocurrency: string) => {
-    return trendRideCards.some(card => 
-      card.id !== id && 
-      card.cryptocurrency === cryptocurrency && 
+    return trendRideCards.some(card =>
+      card.id !== id &&
+      card.cryptocurrency === cryptocurrency &&
       cryptocurrency !== ''
     );
   };
@@ -172,7 +172,7 @@ export default function TrendRideSimple() {
     setTrendRideCards(trendRideCards.map(card => {
       if (card.id === id) {
         const updatedCard = { ...card, [field]: value };
-        
+
         // If cryptocurrency changed, update start price
         if (field === 'cryptocurrency') {
           const crypto = cryptos.find(c => c.id === value);
@@ -180,7 +180,7 @@ export default function TrendRideSimple() {
             updatedCard.startPrice = crypto.current_price;
           }
         }
-        
+
         console.log("✏️ [TRENDRIDE] Updated card:", id, field, value);
         return updatedCard;
       }
@@ -188,87 +188,6 @@ export default function TrendRideSimple() {
     }));
   };
 
-  // Create TrendRide mutation
-  const createTrendRideMutation = useMutation({
-    mutationFn: async (data: { stakeAmount: string; coins: any[] }) => {
-      console.log("🟢 [TRENDRIDE] Creating TrendRide:", data);
-      return apiRequest("/api/parlay/create", {
-        method: "POST",
-        body: JSON.stringify(data)
-      });
-    },
-    onSuccess: (result) => {
-      console.log("✅ [TRENDRIDE] Created successfully:", result);
-      toast({
-        title: "TrendRide Created!",
-        description: "Your prediction has been submitted successfully",
-      });
-      setTrendRideCards([]);
-      setStakeAmount("");
-      queryClient.invalidateQueries({ queryKey: ["/api/parlay/user"] });
-    },
-    onError: (error: any) => {
-      console.error("❌ [TRENDRIDE] Creation failed:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create TrendRide",
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Handle submit
-  const handleSubmit = () => {
-    if (trendRideCards.length < 2) {
-      toast({
-        title: "Minimum 2 Predictions Required",
-        description: "Add at least 2 cryptocurrency predictions",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!stakeAmount || parseFloat(stakeAmount) < 50) {
-      toast({
-        title: "Invalid Stake Amount",
-        description: "Minimum stake amount is 50 NTIQ",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Check for incomplete cards
-    const incompleteCards = trendRideCards.filter(card => !card.cryptocurrency);
-    if (incompleteCards.length > 0) {
-      toast({
-        title: "Incomplete Predictions",
-        description: "Please select cryptocurrency for all prediction cards",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Check for duplicate cryptocurrencies
-    const selectedCryptos = trendRideCards.map(card => card.cryptocurrency);
-    const uniqueCryptos = new Set(selectedCryptos);
-    if (selectedCryptos.length !== uniqueCryptos.size) {
-      toast({
-        title: "Duplicate Cryptocurrencies",
-        description: "Each cryptocurrency can only be selected once per TrendRide",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const coins = trendRideCards.map(card => ({
-      cryptocurrency: card.cryptocurrency,
-      prediction: card.prediction,
-      duration: card.duration,
-      startPrice: card.startPrice
-    }));
-
-    createTrendRideMutation.mutate({ stakeAmount, coins });
-  };
 
   if (cryptosLoading) {
     return (
@@ -284,7 +203,7 @@ export default function TrendRideSimple() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white">
       <Header />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">TrendRide Predictions</h1>
@@ -304,8 +223,8 @@ export default function TrendRideSimple() {
               <CardContent className="space-y-6">
                 {/* Add Prediction Button */}
                 <div className="flex justify-between items-center">
-                  <Button 
-                    onClick={addTrendRideCard} 
+                  <Button
+                    onClick={addTrendRideCard}
                     variant="outline"
                     disabled={trendRideCards.length >= 5}
                   >
@@ -324,15 +243,15 @@ export default function TrendRideSimple() {
                       <div key={card.id} className="bg-gray-800/50 rounded-lg p-4 space-y-3">
                         <div className="flex justify-between items-center">
                           <h4 className="font-medium">Prediction #{index + 1}</h4>
-                          <Button 
-                            onClick={() => removeTrendRideCard(card.id)} 
-                            variant="destructive" 
+                          <Button
+                            onClick={() => removeTrendRideCard(card.id)}
+                            variant="destructive"
                             size="sm"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                           {/* Cryptocurrency Selection */}
                           <div>
@@ -348,8 +267,8 @@ export default function TrendRideSimple() {
                                 {cryptos.map((crypto) => {
                                   const isAlreadySelected = getSelectedCryptocurrencies(card.id).includes(crypto.id);
                                   return (
-                                    <SelectItem 
-                                      key={crypto.id} 
+                                    <SelectItem
+                                      key={crypto.id}
                                       value={crypto.id}
                                       disabled={isAlreadySelected}
                                     >
@@ -473,14 +392,19 @@ export default function TrendRideSimple() {
                   </div>
                 </div>
 
-                <Button 
-                  onClick={handleSubmit} 
-                  className="w-full" 
-                  size="lg"
-                  disabled={trendRideCards.length < 2 || !stakeAmount || createTrendRideMutation.isPending}
-                >
-                  {createTrendRideMutation.isPending ? "Creating..." : "Create TrendRide"}
-                </Button>
+                <ParlayBlockchainForm
+                  parlayCards={trendRideCards}
+                  stakeAmount={stakeAmount}
+                  setStakeAmount={setStakeAmount}
+                  onClose={() => { }}
+                  onSuccess={() => {
+                    setTrendRideCards([]);
+                    setStakeAmount("");
+                    queryClient.invalidateQueries({ queryKey: ["/api/parlay/user"] });
+                  }}
+                  availableCryptos={cryptos}
+                  currentPrices={{}}
+                />
               </CardContent>
             </Card>
 
@@ -504,385 +428,146 @@ export default function TrendRideSimple() {
         <div className="w-full">
           {/* TrendRide History Section - Tab-based Active vs Completed */}
           {!trendRidesError && safeTrendRides.length > 0 && (() => {
-              // Helper function to determine TrendRide status using DATABASE isCorrect
-              const getTrendRideStatus = (parlay: any) => {
-                const coinPredictions = parlay?.coins || [];
-                if (coinPredictions.length === 0) return 'pending';
-                
-                let hasActivePredictions = false;
-                let hasLosePredictions = false;
-                let allWin = true;
-                
-                for (const coin of coinPredictions) {
-                  if (!coin.startPrice) continue;
-                  
-                  // Check if duration has passed
-                  const now = new Date();
-                  const targetTime = new Date(coin.targetTime);
-                  const durationPassed = now >= targetTime;
-                  
-                  if (!durationPassed) {
-                    // Still active - prediction hasn't expired yet
-                    hasActivePredictions = true;
-                    allWin = false;
+            // Helper function to determine TrendRide status using DATABASE isCorrect
+            const getTrendRideStatus = (parlay: any) => {
+              const coinPredictions = parlay?.coins || [];
+              if (coinPredictions.length === 0) return 'pending';
+
+              let hasActivePredictions = false;
+              let hasLosePredictions = false;
+              let allWin = true;
+
+              for (const coin of coinPredictions) {
+                if (!coin.startPrice) continue;
+
+                // Check if duration has passed
+                const now = new Date();
+                const targetTime = new Date(coin.targetTime);
+                const durationPassed = now >= targetTime;
+
+                if (!durationPassed) {
+                  // Still active - prediction hasn't expired yet
+                  hasActivePredictions = true;
+                  allWin = false;
+                } else {
+                  // Duration has passed - check database result
+                  // CRITICAL: Use database isCorrect field set by ParlayProcessorService
+                  if (coin.isCorrect !== null && coin.isCorrect !== undefined) {
+                    // Database has processed result - most reliable
+                    if (!coin.isCorrect) {
+                      hasLosePredictions = true;
+                      break; // If any loses, entire TrendRide loses
+                    }
                   } else {
-                    // Duration has passed - check database result
-                    // CRITICAL: Use database isCorrect field set by ParlayProcessorService
-                    if (coin.isCorrect !== null && coin.isCorrect !== undefined) {
-                      // Database has processed result - most reliable
-                      if (!coin.isCorrect) {
-                        hasLosePredictions = true;
-                        break; // If any loses, entire TrendRide loses
-                      }
+                    // Not yet processed by ParlayProcessorService - calculate manually as fallback
+                    const startPrice = parseFloat(coin.startPrice);
+                    const isUp = coin.prediction === 'up';
+
+                    let finalPrice;
+                    if (coin.endPrice) {
+                      finalPrice = parseFloat(coin.endPrice);
                     } else {
-                      // Not yet processed by ParlayProcessorService - calculate manually as fallback
-                      const startPrice = parseFloat(coin.startPrice);
-                      const isUp = coin.prediction === 'up';
-                      
-                      let finalPrice;
-                      if (coin.endPrice) {
-                        finalPrice = parseFloat(coin.endPrice);
-                      } else {
-                        const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
-                        finalPrice = currentCrypto?.current_price || 0;
-                      }
-                      
-                      if (!finalPrice) continue;
-                      
-                      const priceChanged = finalPrice > startPrice;
-                      const isCorrect = (isUp === priceChanged);
-                      
-                      if (!isCorrect) {
-                        hasLosePredictions = true;
-                        break; // If any loses, entire TrendRide loses
-                      }
+                      const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                      finalPrice = currentCrypto?.current_price || 0;
+                    }
+
+                    if (!finalPrice) continue;
+
+                    const priceChanged = finalPrice > startPrice;
+                    const isCorrect = (isUp === priceChanged);
+
+                    if (!isCorrect) {
+                      hasLosePredictions = true;
+                      break; // If any loses, entire TrendRide loses
                     }
                   }
                 }
-                
-                // Return overall status
-                if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire TrendRide loses
-                if (hasActivePredictions) return 'active'; // Still has active predictions
-                if (allWin && !hasActivePredictions) return 'win'; // All won and none active
-                return 'pending';
-              };
-              
-              // Separate TrendRides into active and completed based on overall status
-              const activeTrendRides = safeTrendRides.filter((parlay: any) => {
-                const status = getTrendRideStatus(parlay);
-                return status === 'active' || status === 'pending'; // Only truly active TrendRides
-              });
-              
-              const completedTrendRides = safeTrendRides.filter((parlay: any) => {
-                const status = getTrendRideStatus(parlay);
-                return status === 'win' || status === 'lose'; // Completed TrendRides (won or lost)
-              });
-              
-              return (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Your TrendRide History</CardTitle>
-                    <p className="text-sm text-gray-400">Manage and track your TrendRide predictions</p>
-                  </CardHeader>
-                  <CardContent>
-                    <Tabs defaultValue="active" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="active" className="flex items-center gap-2">
-                          <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                          Active ({activeTrendRides.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="completed" className="flex items-center gap-2">
-                          <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
-                          History ({completedTrendRides.length})
-                        </TabsTrigger>
-                      </TabsList>
-                      
-                      {/* Active TrendRides Tab */}
-                      <TabsContent value="active" className="mt-4">
-                        {activeTrendRides.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {activeTrendRides.slice(0, 5).map((parlay: any) => {
-                      // Calculate potential win using server data structure
-                      const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
-                      const calculatedPotentialWin = parlay?.stakeAmount && multiplier ? 
-                        Math.round(parlay.stakeAmount * parseFloat(multiplier)) : 0;
-                      
-                      // Calculate expires at from targetTime 
-                      const expiresAt = parlay?.targetTime || parlay?.expiresAt;
-                      
-                      // Get coin prediction details
-                      const coinPredictions = parlay?.coins || [];
-                      
-                      // Helper function to determine win/lose status for individual coin
-                      const getPredictionStatus = (coin: any, currentPrice: number) => {
-                        if (!coin.startPrice || !currentPrice) return 'pending';
-                        
-                        const startPrice = parseFloat(coin.startPrice);
-                        const isUp = coin.prediction === 'up';
-                        const priceChanged = currentPrice > startPrice;
-                        
-                        // Check if duration has passed
-                        const now = new Date();
-                        const targetTime = new Date(coin.targetTime);
-                        const durationPassed = now >= targetTime;
-                        
-                        if (!durationPassed) return 'active';
-                        
-                        return (isUp === priceChanged) ? 'win' : 'lose';
-                      };
-                      
-                      // Calculate overall parlay status: IF ANY SINGLE PREDICTION LOSES, ENTIRE PARLAY LOSES
-                      const getOverallParlayStatus = () => {
-                        if (coinPredictions.length === 0) return 'pending';
-                        
-                        let hasActivePredictions = false;
-                        let hasLosePredictions = false;
-                        let allWin = true;
-                        
-                        for (const coin of coinPredictions) {
-                          const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
-                          const currentPrice = currentCrypto?.current_price || 0;
-                          const status = getPredictionStatus(coin, currentPrice);
-                          
-                          if (status === 'lose') {
-                            hasLosePredictions = true;
-                            break; // If any loses, entire parlay loses
-                          } else if (status === 'active' || status === 'pending') {
-                            hasActivePredictions = true;
-                            allWin = false;
-                          } else if (status !== 'win') {
-                            allWin = false;
-                          }
-                        }
-                        
-                        // Return overall status
-                        if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire parlay loses
-                        if (hasActivePredictions) return 'active';
-                        if (allWin) return 'win';
-                        return 'pending';
-                      };
-                      
-                      const overallStatus = getOverallParlayStatus();
-                      
-                      // Get border color based on overall status
-                      const getBorderColor = (status: string) => {
-                        switch (status) {
-                          case 'win': return 'border-green-500';
-                          case 'lose': return 'border-red-500';
-                          case 'active': return 'border-blue-500';
-                          default: return 'border-gray-500';
-                        }
-                      };
-                      
-                      return (
-                        <div key={parlay?.id || Math.random()} className={`bg-gray-800 p-4 rounded border-l-4 ${getBorderColor(overallStatus)}`}>
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex gap-2">
-                              <Badge variant="secondary">
-                                {multiplier ? `${parseFloat(multiplier).toFixed(2)}x` : 'N/A'} Multiplier
-                              </Badge>
-                              <Badge 
-                                variant={overallStatus === 'win' ? 'default' : overallStatus === 'lose' ? 'destructive' : 'secondary'}
-                                className="font-semibold"
-                              >
-                                {overallStatus === 'win' ? '🏆 TRENDRIDE WIN' : 
-                                 overallStatus === 'lose' ? '💔 TRENDRIDE LOST' : 
-                                 overallStatus === 'active' ? '⏳ ACTIVE' : '⌛ PENDING'}
-                              </Badge>
-                            </div>
-                            <span className="text-sm text-gray-400">
-                              {parlay?.createdAt ? new Date(parlay.createdAt).toLocaleDateString() : 'N/A'}
-                            </span>
-                          </div>
-                          
-                          {/* Stakes and Potential Win */}
-                          <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                            <div>
-                              <span className="text-gray-400">Stake:</span>
-                              <span className="ml-2 font-semibold">{parlay?.stakeAmount || 0} NTIQ</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-400">Potential Win:</span>
-                              <span className="ml-2 font-semibold text-green-400">
-                                {calculatedPotentialWin} NTIQ
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Coin Predictions Details */}
-                          {coinPredictions.length > 0 && (
-                            <div className="space-y-2 mb-3">
-                              <h4 className="text-xs font-semibold text-gray-300">Predictions ({coinPredictions.length}):</h4>
-                              {coinPredictions.map((coin: any, index: number) => {
-                                // Find current price for this cryptocurrency
-                                const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
-                                const liveCurrentPrice = parseFloat((currentCrypto?.current_price || 0).toFixed(2));
-                                const startPrice = parseFloat(coin.startPrice || '0');
-                                
-                                // Check if duration has passed to determine which price to use
-                                const now = new Date();
-                                const targetTime = new Date(coin.targetTime);
-                                const durationPassed = now >= targetTime;
-                                
-                                // CRITICAL: Always use endPrice if available (snapshot is permanent), otherwise use live price
-                                const displayPrice = coin.endPrice ? 
-                                  parseFloat(coin.endPrice) : liveCurrentPrice;
-                                
-                                // Debug logging for price formatting
-                                console.log(`🎯 [PARLAY-PRICE-DEBUG] ${coin.cryptocurrency} - Raw: ${currentCrypto?.current_price}, Live: ${liveCurrentPrice}, Display: ${displayPrice}, Formatted: ${displayPrice.toFixed(2)}`);
-                                
-                                const status = getPredictionStatus(coin, liveCurrentPrice);
-                                
-                                // Price change calculation using appropriate price
-                                const priceChange = startPrice ? ((displayPrice - startPrice) / startPrice * 100) : 0;
-                                const isPositiveChange = priceChange > 0;
-                                
-                                return (
-                                  <div key={index} className="bg-gray-700 p-2 rounded text-xs">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <span className="font-semibold text-blue-300 capitalize">
-                                        {coin.cryptocurrency} 
-                                        <span className={`ml-1 px-1 rounded ${coin.prediction === 'up' ? 'bg-green-600' : 'bg-red-600'}`}>
-                                          {coin.prediction === 'up' ? '↑' : '↓'}
-                                        </span>
-                                      </span>
-                                      <span className={`text-xs font-mono ${isCountdownExpired(coin.targetTime) ? 'text-red-400' : 'text-green-400'}`}>
-                                        {isCountdownExpired(coin.targetTime) ? 'EXPIRED' : formatCountdown(coin.targetTime)}
-                                      </span>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-2 text-xs">
-                                      <div>
-                                        <span className="text-gray-400">Start:</span>
-                                        <span className="ml-1 font-mono">${startPrice.toFixed(2)}</span>
-                                      </div>
-                                      <div>
-                                        <span className="text-gray-400">
-                                          {coin.endPrice ? 'Final:' : 'Current:'}
-                                        </span>
-                                        <span className="ml-1 font-mono">${displayPrice.toFixed(2)}</span>
-                                        {coin.endPrice && (
-                                          <span className="ml-1 text-xs text-orange-400">📸</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="flex justify-between items-center mt-1">
-                                      <span className={`text-xs ${isPositiveChange ? 'text-green-400' : 'text-red-400'}`}>
-                                        {isPositiveChange ? '+' : ''}{priceChange.toFixed(2)}%
-                                      </span>
-                                      <Badge 
-                                        variant={status === 'win' ? 'default' : status === 'lose' ? 'destructive' : 'secondary'}
-                                        className="text-xs"
-                                      >
-                                        {status === 'win' ? '✓ WIN' : status === 'lose' ? '✗ LOSE' : status === 'active' ? '⏳ ACTIVE' : '⌛ PENDING'}
-                                      </Badge>
-                                    </div>
-                                    
-                                    <div className="text-xs mt-1 flex justify-between items-center">
-                                      <span className="text-gray-500">Time:</span>
-                                      <span className={`font-mono font-bold ${isCountdownExpired(coin.targetTime) ? 'text-red-400' : 'text-green-400'}`}>
-                                        {isCountdownExpired(coin.targetTime) ? 'EXPIRED' : formatCountdown(coin.targetTime)}
-                                      </span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                          
-                          <div className="text-xs border-t border-gray-600 pt-2 flex justify-between items-center">
-                            <span className="text-gray-500">Total TrendRide:</span>
-                            <span className={`font-mono font-bold ${isCountdownExpired(expiresAt) ? 'text-red-400' : 'text-green-400'}`}>
-                              {expiresAt ? (isCountdownExpired(expiresAt) ? 'EXPIRED' : formatCountdown(expiresAt)) : 'N/A'}
-                            </span>
-                          </div>
-                        </div>
-                      );
+              }
 
-                            })}
-                            {activeTrendRides.length > 5 && (
-                              <p className="text-center text-gray-400 text-sm">
-                                +{activeTrendRides.length - 5} more active TrendRides
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8">
-                            <p className="text-gray-400">No active TrendRides at the moment</p>
-                            <p className="text-sm text-gray-500 mt-2">Create a new TrendRide prediction to get started</p>
-                          </div>
-                        )}
-                      </TabsContent>
-                      
-                      {/* Completed TrendRides Tab */}
-                      <TabsContent value="completed" className="mt-4">
-                        {completedTrendRides.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {completedTrendRides.slice(0, 5).map((parlay: any) => {
+              // Return overall status
+              if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire TrendRide loses
+              if (hasActivePredictions) return 'active'; // Still has active predictions
+              if (allWin && !hasActivePredictions) return 'win'; // All won and none active
+              return 'pending';
+            };
+
+            // Separate TrendRides into active and completed based on overall status
+            const activeTrendRides = safeTrendRides.filter((parlay: any) => {
+              const status = getTrendRideStatus(parlay);
+              return status === 'active' || status === 'pending'; // Only truly active TrendRides
+            });
+
+            const completedTrendRides = safeTrendRides.filter((parlay: any) => {
+              const status = getTrendRideStatus(parlay);
+              return status === 'win' || status === 'lose'; // Completed TrendRides (won or lost)
+            });
+
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your TrendRide History</CardTitle>
+                  <p className="text-sm text-gray-400">Manage and track your TrendRide predictions</p>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="active" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="active" className="flex items-center gap-2">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                        Active ({activeTrendRides.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="completed" className="flex items-center gap-2">
+                        <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                        History ({completedTrendRides.length})
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {/* Active TrendRides Tab */}
+                    <TabsContent value="active" className="mt-4">
+                      {activeTrendRides.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {activeTrendRides.slice(0, 5).map((parlay: any) => {
                             // Calculate potential win using server data structure
                             const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
-                            const calculatedPotentialWin = parlay?.stakeAmount && multiplier ? 
+                            const calculatedPotentialWin = parlay?.stakeAmount && multiplier ?
                               Math.round(parlay.stakeAmount * parseFloat(multiplier)) : 0;
-                            
+
                             // Calculate expires at from targetTime 
                             const expiresAt = parlay?.targetTime || parlay?.expiresAt;
-                            
+
                             // Get coin prediction details
                             const coinPredictions = parlay?.coins || [];
-                            
-                            // DEBUG: Log TrendRide data in History tab for troubleshooting
-                            if (coinPredictions.length > 0) {
-                              console.log(`🔍 [HISTORY-DEBUG] TrendRide ${parlay.id} coins data:`, coinPredictions.map((coin: any) => ({
-                                crypto: coin.cryptocurrency,
-                                startPrice: coin.startPrice,
-                                endPrice: coin.endPrice,
-                                isCorrect: coin.isCorrect,
-                                hasEndPrice: !!coin.endPrice
-                              })));
-                            }
-                            
+
                             // Helper function to determine win/lose status for individual coin
                             const getPredictionStatus = (coin: any, currentPrice: number) => {
                               if (!coin.startPrice || !currentPrice) return 'pending';
-                              
+
                               const startPrice = parseFloat(coin.startPrice);
                               const isUp = coin.prediction === 'up';
                               const priceChanged = currentPrice > startPrice;
-                              
+
                               // Check if duration has passed
                               const now = new Date();
                               const targetTime = new Date(coin.targetTime);
                               const durationPassed = now >= targetTime;
-                              
+
                               if (!durationPassed) return 'active';
-                              
+
                               return (isUp === priceChanged) ? 'win' : 'lose';
                             };
-                            
-                            // Calculate overall TrendRide status: IF ANY SINGLE PREDICTION LOSES, ENTIRE TRENDRIDE LOSES
-                            const getOverallTrendRideStatus = () => {
+
+                            // Calculate overall parlay status: IF ANY SINGLE PREDICTION LOSES, ENTIRE PARLAY LOSES
+                            const getOverallParlayStatus = () => {
                               if (coinPredictions.length === 0) return 'pending';
-                              
+
                               let hasActivePredictions = false;
                               let hasLosePredictions = false;
                               let allWin = true;
-                              
+
                               for (const coin of coinPredictions) {
-                                let status;
-                                
-                                // CRITICAL: For completed parlays, ALWAYS use database isCorrect field if available
-                                if (coin.isCorrect !== null && coin.isCorrect !== undefined) {
-                                  // Use permanent database result (most reliable)
-                                  status = coin.isCorrect ? 'win' : 'lose';
-                                } else {
-                                  // Fallback: calculate from current/end price
-                                  const finalPrice = coin.endPrice ? 
-                                    parseFloat(coin.endPrice) : 
-                                    (cryptos.find(c => c.id === coin.cryptocurrency)?.current_price || 0);
-                                  status = getPredictionStatus(coin, finalPrice);
-                                }
-                                
+                                const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                                const currentPrice = currentCrypto?.current_price || 0;
+                                const status = getPredictionStatus(coin, currentPrice);
+
                                 if (status === 'lose') {
                                   hasLosePredictions = true;
                                   break; // If any loses, entire parlay loses
@@ -893,16 +578,16 @@ export default function TrendRideSimple() {
                                   allWin = false;
                                 }
                               }
-                              
+
                               // Return overall status
-                              if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire TrendRide loses
+                              if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire parlay loses
                               if (hasActivePredictions) return 'active';
                               if (allWin) return 'win';
                               return 'pending';
                             };
-                            
-                            const overallStatus = getOverallTrendRideStatus();
-                            
+
+                            const overallStatus = getOverallParlayStatus();
+
                             // Get border color based on overall status
                             const getBorderColor = (status: string) => {
                               switch (status) {
@@ -912,7 +597,246 @@ export default function TrendRideSimple() {
                                 default: return 'border-gray-500';
                               }
                             };
-                            
+
+                            return (
+                              <div key={parlay?.id || Math.random()} className={`bg-gray-800 p-4 rounded border-l-4 ${getBorderColor(overallStatus)}`}>
+                                <div className="flex justify-between items-start mb-3">
+                                  <div className="flex gap-2">
+                                    <Badge variant="secondary">
+                                      {multiplier ? `${parseFloat(multiplier).toFixed(2)}x` : 'N/A'} Multiplier
+                                    </Badge>
+                                    <Badge
+                                      variant={overallStatus === 'win' ? 'default' : overallStatus === 'lose' ? 'destructive' : 'secondary'}
+                                      className="font-semibold"
+                                    >
+                                      {overallStatus === 'win' ? '🏆 TRENDRIDE WIN' :
+                                        overallStatus === 'lose' ? '💔 TRENDRIDE LOST' :
+                                          overallStatus === 'active' ? '⏳ ACTIVE' : '⌛ PENDING'}
+                                    </Badge>
+                                  </div>
+                                  <span className="text-sm text-gray-400">
+                                    {parlay?.createdAt ? new Date(parlay.createdAt).toLocaleDateString() : 'N/A'}
+                                  </span>
+                                </div>
+
+                                {/* Stakes and Potential Win */}
+                                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                                  <div>
+                                    <span className="text-gray-400">Stake:</span>
+                                    <span className="ml-2 font-semibold">{parlay?.stakeAmount || 0} NTIQ</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400">Potential Win:</span>
+                                    <span className="ml-2 font-semibold text-green-400">
+                                      {calculatedPotentialWin} NTIQ
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Coin Predictions Details */}
+                                {coinPredictions.length > 0 && (
+                                  <div className="space-y-2 mb-3">
+                                    <h4 className="text-xs font-semibold text-gray-300">Predictions ({coinPredictions.length}):</h4>
+                                    {coinPredictions.map((coin: any, index: number) => {
+                                      // Find current price for this cryptocurrency
+                                      const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
+                                      const liveCurrentPrice = parseFloat((currentCrypto?.current_price || 0).toFixed(2));
+                                      const startPrice = parseFloat(coin.startPrice || '0');
+
+                                      // Check if duration has passed to determine which price to use
+                                      const now = new Date();
+                                      const targetTime = new Date(coin.targetTime);
+                                      const durationPassed = now >= targetTime;
+
+                                      // CRITICAL: Always use endPrice if available (snapshot is permanent), otherwise use live price
+                                      const displayPrice = coin.endPrice ?
+                                        parseFloat(coin.endPrice) : liveCurrentPrice;
+
+                                      // Debug logging for price formatting
+                                      console.log(`🎯 [PARLAY-PRICE-DEBUG] ${coin.cryptocurrency} - Raw: ${currentCrypto?.current_price}, Live: ${liveCurrentPrice}, Display: ${displayPrice}, Formatted: ${displayPrice.toFixed(2)}`);
+
+                                      const status = getPredictionStatus(coin, liveCurrentPrice);
+
+                                      // Price change calculation using appropriate price
+                                      const priceChange = startPrice ? ((displayPrice - startPrice) / startPrice * 100) : 0;
+                                      const isPositiveChange = priceChange > 0;
+
+                                      return (
+                                        <div key={index} className="bg-gray-700 p-2 rounded text-xs">
+                                          <div className="flex justify-between items-center mb-1">
+                                            <span className="font-semibold text-blue-300 capitalize">
+                                              {coin.cryptocurrency}
+                                              <span className={`ml-1 px-1 rounded ${coin.prediction === 'up' ? 'bg-green-600' : 'bg-red-600'}`}>
+                                                {coin.prediction === 'up' ? '↑' : '↓'}
+                                              </span>
+                                            </span>
+                                            <span className={`text-xs font-mono ${isCountdownExpired(coin.targetTime) ? 'text-red-400' : 'text-green-400'}`}>
+                                              {isCountdownExpired(coin.targetTime) ? 'EXPIRED' : formatCountdown(coin.targetTime)}
+                                            </span>
+                                          </div>
+
+                                          <div className="grid grid-cols-2 gap-2 text-xs">
+                                            <div>
+                                              <span className="text-gray-400">Start:</span>
+                                              <span className="ml-1 font-mono">${startPrice.toFixed(2)}</span>
+                                            </div>
+                                            <div>
+                                              <span className="text-gray-400">
+                                                {coin.endPrice ? 'Final:' : 'Current:'}
+                                              </span>
+                                              <span className="ml-1 font-mono">${displayPrice.toFixed(2)}</span>
+                                              {coin.endPrice && (
+                                                <span className="ml-1 text-xs text-orange-400">📸</span>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <div className="flex justify-between items-center mt-1">
+                                            <span className={`text-xs ${isPositiveChange ? 'text-green-400' : 'text-red-400'}`}>
+                                              {isPositiveChange ? '+' : ''}{priceChange.toFixed(2)}%
+                                            </span>
+                                            <Badge
+                                              variant={status === 'win' ? 'default' : status === 'lose' ? 'destructive' : 'secondary'}
+                                              className="text-xs"
+                                            >
+                                              {status === 'win' ? '✓ WIN' : status === 'lose' ? '✗ LOSE' : status === 'active' ? '⏳ ACTIVE' : '⌛ PENDING'}
+                                            </Badge>
+                                          </div>
+
+                                          <div className="text-xs mt-1 flex justify-between items-center">
+                                            <span className="text-gray-500">Time:</span>
+                                            <span className={`font-mono font-bold ${isCountdownExpired(coin.targetTime) ? 'text-red-400' : 'text-green-400'}`}>
+                                              {isCountdownExpired(coin.targetTime) ? 'EXPIRED' : formatCountdown(coin.targetTime)}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
+                                <div className="text-xs border-t border-gray-600 pt-2 flex justify-between items-center">
+                                  <span className="text-gray-500">Total TrendRide:</span>
+                                  <span className={`font-mono font-bold ${isCountdownExpired(expiresAt) ? 'text-red-400' : 'text-green-400'}`}>
+                                    {expiresAt ? (isCountdownExpired(expiresAt) ? 'EXPIRED' : formatCountdown(expiresAt)) : 'N/A'}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+
+                          })}
+                          {activeTrendRides.length > 5 && (
+                            <p className="text-center text-gray-400 text-sm">
+                              +{activeTrendRides.length - 5} more active TrendRides
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-gray-400">No active TrendRides at the moment</p>
+                          <p className="text-sm text-gray-500 mt-2">Create a new TrendRide prediction to get started</p>
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    {/* Completed TrendRides Tab */}
+                    <TabsContent value="completed" className="mt-4">
+                      {completedTrendRides.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {completedTrendRides.slice(0, 5).map((parlay: any) => {
+                            // Calculate potential win using server data structure
+                            const multiplier = parlay?.totalMultiplier || parlay?.multiplier || 0;
+                            const calculatedPotentialWin = parlay?.stakeAmount && multiplier ?
+                              Math.round(parlay.stakeAmount * parseFloat(multiplier)) : 0;
+
+                            // Calculate expires at from targetTime 
+                            const expiresAt = parlay?.targetTime || parlay?.expiresAt;
+
+                            // Get coin prediction details
+                            const coinPredictions = parlay?.coins || [];
+
+                            // DEBUG: Log TrendRide data in History tab for troubleshooting
+                            if (coinPredictions.length > 0) {
+                              console.log(`🔍 [HISTORY-DEBUG] TrendRide ${parlay.id} coins data:`, coinPredictions.map((coin: any) => ({
+                                crypto: coin.cryptocurrency,
+                                startPrice: coin.startPrice,
+                                endPrice: coin.endPrice,
+                                isCorrect: coin.isCorrect,
+                                hasEndPrice: !!coin.endPrice
+                              })));
+                            }
+
+                            // Helper function to determine win/lose status for individual coin
+                            const getPredictionStatus = (coin: any, currentPrice: number) => {
+                              if (!coin.startPrice || !currentPrice) return 'pending';
+
+                              const startPrice = parseFloat(coin.startPrice);
+                              const isUp = coin.prediction === 'up';
+                              const priceChanged = currentPrice > startPrice;
+
+                              // Check if duration has passed
+                              const now = new Date();
+                              const targetTime = new Date(coin.targetTime);
+                              const durationPassed = now >= targetTime;
+
+                              if (!durationPassed) return 'active';
+
+                              return (isUp === priceChanged) ? 'win' : 'lose';
+                            };
+
+                            // Calculate overall TrendRide status: IF ANY SINGLE PREDICTION LOSES, ENTIRE TRENDRIDE LOSES
+                            const getOverallTrendRideStatus = () => {
+                              if (coinPredictions.length === 0) return 'pending';
+
+                              let hasActivePredictions = false;
+                              let hasLosePredictions = false;
+                              let allWin = true;
+
+                              for (const coin of coinPredictions) {
+                                let status;
+
+                                // CRITICAL: For completed parlays, ALWAYS use database isCorrect field if available
+                                if (coin.isCorrect !== null && coin.isCorrect !== undefined) {
+                                  // Use permanent database result (most reliable)
+                                  status = coin.isCorrect ? 'win' : 'lose';
+                                } else {
+                                  // Fallback: calculate from current/end price
+                                  const finalPrice = coin.endPrice ?
+                                    parseFloat(coin.endPrice) :
+                                    (cryptos.find(c => c.id === coin.cryptocurrency)?.current_price || 0);
+                                  status = getPredictionStatus(coin, finalPrice);
+                                }
+
+                                if (status === 'lose') {
+                                  hasLosePredictions = true;
+                                  break; // If any loses, entire parlay loses
+                                } else if (status === 'active' || status === 'pending') {
+                                  hasActivePredictions = true;
+                                  allWin = false;
+                                } else if (status !== 'win') {
+                                  allWin = false;
+                                }
+                              }
+
+                              // Return overall status
+                              if (hasLosePredictions) return 'lose'; // Critical: ANY lose = entire TrendRide loses
+                              if (hasActivePredictions) return 'active';
+                              if (allWin) return 'win';
+                              return 'pending';
+                            };
+
+                            const overallStatus = getOverallTrendRideStatus();
+
+                            // Get border color based on overall status
+                            const getBorderColor = (status: string) => {
+                              switch (status) {
+                                case 'win': return 'border-green-500';
+                                case 'lose': return 'border-red-500';
+                                case 'active': return 'border-blue-500';
+                                default: return 'border-gray-500';
+                              }
+                            };
+
                             return (
                               <div key={`completed-${parlay?.id || Math.random()}`} className={`bg-gray-800 p-4 rounded border-l-4 ${getBorderColor(overallStatus)} opacity-80`}>
                                 <div className="flex justify-between items-start mb-3">
@@ -920,20 +844,20 @@ export default function TrendRideSimple() {
                                     <Badge variant="secondary">
                                       {multiplier ? `${parseFloat(multiplier).toFixed(2)}x` : 'N/A'} Multiplier
                                     </Badge>
-                                    <Badge 
+                                    <Badge
                                       variant={overallStatus === 'win' ? 'default' : overallStatus === 'lose' ? 'destructive' : 'secondary'}
                                       className="font-semibold"
                                     >
-                                      {overallStatus === 'win' ? '🏆 WON' : 
-                                       overallStatus === 'lose' ? '💔 LOST' : 
-                                       '✅ COMPLETED'}
+                                      {overallStatus === 'win' ? '🏆 WON' :
+                                        overallStatus === 'lose' ? '💔 LOST' :
+                                          '✅ COMPLETED'}
                                     </Badge>
                                   </div>
                                   <span className="text-sm text-gray-400">
                                     {parlay?.createdAt ? new Date(parlay.createdAt).toLocaleDateString() : 'N/A'}
                                   </span>
                                 </div>
-                                
+
                                 {/* Stakes and Final Result */}
                                 <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                                   <div>
@@ -949,19 +873,19 @@ export default function TrendRideSimple() {
                                     </span>
                                   </div>
                                 </div>
-                                
+
                                 {/* Coin Predictions Details */}
                                 {coinPredictions.length > 0 && (
                                   <div className="space-y-2 mb-3">
                                     <h4 className="text-xs font-semibold text-gray-300">Final Results ({coinPredictions.length}):</h4>
                                     {coinPredictions.map((coin: any, index: number) => {
                                       const startPrice = parseFloat(coin.startPrice || '0');
-                                      
+
                                       // CRITICAL: For completed parlays, ALWAYS use endPrice if available (permanent snapshot)
                                       // Never use live prices for historical data!
                                       let finalPrice;
                                       let isHistoricalSnapshot = false;
-                                      
+
                                       if (coin.endPrice) {
                                         // Use permanent snapshot price from ParlayProcessorService
                                         finalPrice = parseFloat(coin.endPrice);
@@ -971,12 +895,12 @@ export default function TrendRideSimple() {
                                         const currentCrypto = cryptos.find(c => c.id === coin.cryptocurrency);
                                         finalPrice = currentCrypto?.current_price || 0;
                                       }
-                                      
+
                                       // Calculate status using FINAL PRICE (not live price) for accuracy
                                       const isUp = coin.prediction === 'up';
                                       const priceChanged = finalPrice > startPrice;
                                       let status;
-                                      
+
                                       // Use database isCorrect if available (most reliable)
                                       if (coin.isCorrect !== null && coin.isCorrect !== undefined) {
                                         status = coin.isCorrect ? 'win' : 'lose';
@@ -984,16 +908,16 @@ export default function TrendRideSimple() {
                                         // Fallback calculation
                                         status = (isUp === priceChanged) ? 'win' : 'lose';
                                       }
-                                      
+
                                       // Price change calculation using FINAL PRICE (not live price)
                                       const priceChange = startPrice ? ((finalPrice - startPrice) / startPrice * 100) : 0;
                                       const isPositiveChange = priceChange > 0;
-                                      
+
                                       return (
                                         <div key={index} className="bg-gray-700 p-2 rounded text-xs border border-gray-600">
                                           <div className="flex justify-between items-center mb-1">
                                             <span className="font-semibold text-blue-300 capitalize">
-                                              {coin.cryptocurrency} 
+                                              {coin.cryptocurrency}
                                               <span className={`ml-1 px-1 rounded ${coin.prediction === 'up' ? 'bg-green-600' : 'bg-red-600'}`}>
                                                 {coin.prediction === 'up' ? '↑' : '↓'}
                                               </span>
@@ -1002,7 +926,7 @@ export default function TrendRideSimple() {
                                               {isHistoricalSnapshot ? 'SNAPSHOT' : 'FINISHED'}
                                             </span>
                                           </div>
-                                          
+
                                           <div className="grid grid-cols-2 gap-2 text-xs">
                                             <div>
                                               <span className="text-gray-400">Start:</span>
@@ -1016,12 +940,12 @@ export default function TrendRideSimple() {
                                               )}
                                             </div>
                                           </div>
-                                          
+
                                           <div className="flex justify-between items-center mt-1">
                                             <span className={`text-xs ${isPositiveChange ? 'text-green-400' : 'text-red-400'}`}>
                                               {isPositiveChange ? '+' : ''}{priceChange.toFixed(2)}%
                                             </span>
-                                            <Badge 
+                                            <Badge
                                               variant={status === 'win' ? 'default' : status === 'lose' ? 'destructive' : 'secondary'}
                                               className="text-xs"
                                             >
@@ -1033,7 +957,7 @@ export default function TrendRideSimple() {
                                     })}
                                   </div>
                                 )}
-                                
+
                                 <div className="text-xs border-t border-gray-600 pt-2 flex justify-between items-center">
                                   <span className="text-gray-500">Status:</span>
                                   <span className="font-mono font-bold text-red-400">
@@ -1043,30 +967,30 @@ export default function TrendRideSimple() {
                               </div>
                             );
 
-                            })}
-                            {completedTrendRides.length > 5 && (
-                              <p className="text-center text-gray-400 text-sm">
-                                +{completedTrendRides.length - 5} more completed TrendRides
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8">
-                            <p className="text-gray-400">No completed TrendRides yet</p>
-                            <p className="text-sm text-gray-500 mt-2">Your completed TrendRide history will appear here</p>
-                          </div>
-                        )}
-                      </TabsContent>
-                    </Tabs>
-                  </CardContent>
-                </Card>
-              );
-            })()}
+                          })}
+                          {completedTrendRides.length > 5 && (
+                            <p className="text-center text-gray-400 text-sm">
+                              +{completedTrendRides.length - 5} more completed TrendRides
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-gray-400">No completed TrendRides yet</p>
+                          <p className="text-sm text-gray-500 mt-2">Your completed TrendRide history will appear here</p>
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
 
 
       </main>
-      
+
       <Footer />
     </div>
   );

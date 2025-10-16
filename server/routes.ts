@@ -3343,6 +3343,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid timeframe" });
       }
 
+      // RATE LIMITING: Check for recent predictions from same user (last 30 seconds)
+      const recentPredictions = await db
+        .select()
+        .from(predictions)
+        .where(and(
+          eq(predictions.userId, userId),
+          gte(predictions.createdAt, new Date(Date.now() - 30000)) // Last 30 seconds
+        ));
+
+      if (recentPredictions.length > 0) {
+        logger.warn(`🚨 [RATE-LIMITING] User ${userId} attempted to submit prediction too quickly`);
+        return res.status(429).json({
+          message: "Please wait before submitting another prediction",
+          retryAfter: 30
+        });
+      }
+
       const validatedData = {
         cryptocurrency,
         predictedPrice: numPredictedPrice.toString(),
@@ -3357,10 +3374,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check for prediction abuse (max 5 predictions per hour)
       const userPredictions = await storage.getUserPredictions(userId);
-      const recentPredictions = userPredictions.filter(p =>
+      const hourlyPredictions = userPredictions.filter(p =>
         new Date(p.createdAt).getTime() > Date.now() - 3600000
       );
-      if (recentPredictions.length >= 5) {
+      if (hourlyPredictions.length >= 5) {
         return res.status(429).json({ message: "Too many predictions. Maximum 5 per hour." });
       }
 
@@ -3401,9 +3418,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         logger.info(`🔗 [BLOCKCHAIN] Stake locked on blockchain: ${txHash}`);
       } catch (blockchainError: any) {
         logger.error(`❌ [BLOCKCHAIN] Failed to lock stake on blockchain:`, blockchainError);
-        return res.status(500).json({
-          message: "Failed to lock stake on blockchain. Please ensure you have approved the contract to spend your NTIQ tokens.",
-          error: blockchainError.message
+
+        // Enhanced error handling with specific error messages
+        let errorMessage = "Failed to lock stake on blockchain";
+        let statusCode = 500;
+
+        if (blockchainError.message.includes("User has insufficient NTIQ balance")) {
+          errorMessage = `Insufficient NTIQ balance. You need ${validatedData.stakeAmount} NTIQ but your balance is ${blockchainBalance.toFixed(2)} NTIQ`;
+          statusCode = 400;
+        } else if (blockchainError.message.includes("User needs to approve NTIQ spending")) {
+          errorMessage = "Please approve NTIQ spending first. Click 'Approve NTIQ' button before creating prediction";
+          statusCode = 400;
+        } else if (blockchainError.message.includes("Smart contract execution failed")) {
+          errorMessage = "Smart contract execution failed. Please check your prediction parameters";
+          statusCode = 400;
+        } else if (blockchainError.message.includes("Gas limit too low")) {
+          errorMessage = "Transaction failed due to low gas limit. Please try again";
+          statusCode = 500;
+        } else if (blockchainError.message.includes("Transaction nonce error")) {
+          errorMessage = "Transaction error. Please wait a moment and try again";
+          statusCode = 500;
+        } else if (blockchainError.message.includes("Insufficient funds for gas fees")) {
+          errorMessage = "Insufficient funds for gas fees. Please ensure you have enough POL tokens";
+          statusCode = 400;
+        }
+
+        return res.status(statusCode).json({
+          message: errorMessage,
+          error: blockchainError.message,
+          details: {
+            userBalance: blockchainBalance,
+            requiredAmount: validatedData.stakeAmount,
+            userAddress: user.walletAddress
+          }
         });
       }
 
@@ -3493,6 +3540,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (isNaN(numPredictedPrice) || numPredictedPrice <= 0) {
         return res.status(400).json({ message: "Invalid predicted price" });
+      }
+
+      // DUPLICATE PREVENTION: Check if blockchain transaction hash already exists
+      const existingPrediction = await db
+        .select()
+        .from(predictions)
+        .where(eq(predictions.blockchainStakeHash, blockchainTxHash))
+        .limit(1);
+
+      if (existingPrediction.length > 0) {
+        logger.warn(`🚨 [DUPLICATE-PREVENTION] Prediction with blockchain hash ${blockchainTxHash} already exists (ID: ${existingPrediction[0].id})`);
+        return res.status(400).json({
+          message: "Prediction with this transaction hash already exists",
+          existingId: existingPrediction[0].id,
+          duplicate: true
+        });
+      }
+
+      // RATE LIMITING: Check for recent predictions from same user (last 30 seconds)
+      const recentPredictions = await db
+        .select()
+        .from(predictions)
+        .where(and(
+          eq(predictions.userId, userId),
+          gte(predictions.createdAt, new Date(Date.now() - 30000)) // Last 30 seconds
+        ));
+
+      if (recentPredictions.length > 0) {
+        logger.warn(`🚨 [RATE-LIMITING] User ${userId} attempted to submit prediction too quickly`);
+        return res.status(429).json({
+          message: "Please wait before submitting another prediction",
+          retryAfter: 30
+        });
       }
 
       const user = await storage.getUser(userId);

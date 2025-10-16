@@ -43,3 +43,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Documentation files (except README.md)
+*.md
+!README.md
