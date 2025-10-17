@@ -18,6 +18,7 @@ import { dailyChallengeService } from "./services/dailyChallengeService";
 import * as schema from "@shared/schema";
 import { insertPredictionSchema, insertCryptocurrencySchema, insertDepositSchema, insertWithdrawalSchema, insertParlayPredictionSchema, insertParlayPredictionCoinSchema, survivalParticipants, survivalTournaments, survivalPredictions, transactionLogs, predictionBattles, users, predictions, deposits, withdrawals, rewards, achievements, dailyChallenges, banners, cryptocurrencies, cryptoTransactions, purchases, parlayPredictions, parlayPredictionCoins } from "@shared/schema";
 import { eq, and, or, desc, sql, isNotNull, gte, count } from "drizzle-orm";
+import { delete as drizzleDelete } from "drizzle-orm";
 import { z } from "zod";
 import { ethers } from "ethers";
 import { SecurityValidator } from "./security";
@@ -3582,6 +3583,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       logger.error("Failed to create prediction from blockchain:", error);
       res.status(500).json({ message: "Failed to create prediction", error: String(error) });
+    }
+  });
+
+  // Update prediction blockchain transaction hash
+  app.put("/api/predictions/:id/blockchain", checkMaintenanceMode, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const predictionId = parseInt(req.params.id);
+      if (!predictionId || isNaN(predictionId)) {
+        return res.status(400).json({ message: "Invalid prediction ID" });
+      }
+
+      const { blockchainStakeHash, blockchainStatus } = req.body;
+
+      if (!blockchainStakeHash) {
+        return res.status(400).json({ message: "Blockchain stake hash is required" });
+      }
+
+      // Verify the prediction belongs to the user
+      const prediction = await storage.getPrediction(predictionId);
+      if (!prediction) {
+        return res.status(404).json({ message: "Prediction not found" });
+      }
+
+      if (prediction.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Update the prediction with blockchain transaction hash
+      await db.update(predictions)
+        .set({
+          blockchainStakeHash: blockchainStakeHash,
+          blockchainStatus: blockchainStatus || 'confirmed'
+        })
+        .where(eq(predictions.id, predictionId));
+
+      logger.info(`✅ [PREDICTION-UPDATE] Updated prediction ${predictionId} with blockchain hash: ${blockchainStakeHash}`);
+
+      res.json({
+        id: predictionId,
+        message: "Prediction updated successfully",
+        blockchainStakeHash: blockchainStakeHash,
+        blockchainStatus: blockchainStatus || 'confirmed'
+      });
+
+    } catch (error: any) {
+      logger.error("Failed to update prediction blockchain hash:", error);
+      res.status(500).json({ message: "Failed to update prediction", error: String(error) });
+    }
+  });
+
+  // Delete prediction (for cleanup when blockchain transaction fails)
+  app.delete("/api/predictions/:id", checkMaintenanceMode, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const predictionId = parseInt(req.params.id);
+      if (!predictionId || isNaN(predictionId)) {
+        return res.status(400).json({ message: "Invalid prediction ID" });
+      }
+
+      // Verify the prediction belongs to the user
+      const prediction = await storage.getPrediction(predictionId);
+      if (!prediction) {
+        return res.status(404).json({ message: "Prediction not found" });
+      }
+
+      if (prediction.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Only allow deletion of predictions without blockchain stake hash (failed blockchain transactions)
+      if (prediction.blockchainStakeHash) {
+        return res.status(400).json({ message: "Cannot delete prediction with confirmed blockchain transaction" });
+      }
+
+      // Delete the prediction
+      await db.delete(predictions).where(eq(predictions.id, predictionId));
+
+      logger.info(`🗑️ [PREDICTION-DELETE] Deleted prediction ${predictionId} for user ${userId}`);
+
+      res.json({
+        id: predictionId,
+        message: "Prediction deleted successfully"
+      });
+
+    } catch (error: any) {
+      logger.error("Failed to delete prediction:", error);
+      res.status(500).json({ message: "Failed to delete prediction", error: String(error) });
     }
   });
 

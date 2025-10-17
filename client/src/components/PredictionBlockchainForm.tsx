@@ -304,6 +304,34 @@ export function PredictionBlockchainForm({
 
             console.log('✅ [PREDICTION-BLOCKCHAIN] Blockchain transaction successful:', txHash);
 
+            // If blockchain transaction fails, we need to clean up the database prediction
+            if (!txHash) {
+                throw new Error('Blockchain transaction failed - no transaction hash returned');
+            }
+
+            // Step 3: Update database with blockchain transaction hash
+            console.log('💾 [PREDICTION-BLOCKCHAIN] Updating database with transaction hash...');
+            try {
+                const updateResponse = await apiRequest(`/api/predictions/${predictionResponse.id}/blockchain`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        blockchainStakeHash: txHash,
+                        blockchainStatus: 'confirmed'
+                    })
+                });
+                
+                const updateResult = await updateResponse.json();
+                console.log('✅ [PREDICTION-BLOCKCHAIN] Database updated successfully:', updateResult);
+            } catch (updateError) {
+                console.error('❌ [PREDICTION-BLOCKCHAIN] Failed to update database:', updateError);
+                // Don't throw error here - blockchain transaction was successful
+                toast({
+                    title: "Warning: Database Update Failed",
+                    description: "Blockchain transaction succeeded but database update failed. Please contact support.",
+                    variant: "destructive"
+                });
+            }
+
             // Show success message
             toast({
                 title: "Prediction Submitted Successfully!",
@@ -331,6 +359,19 @@ export function PredictionBlockchainForm({
 
         } catch (error: any) {
             console.error('❌ [PREDICTION-BLOCKCHAIN] Error details:', error);
+
+            // If blockchain transaction failed, clean up the database prediction
+            if (predictionResponse && predictionResponse.id) {
+                console.log('🧹 [PREDICTION-BLOCKCHAIN] Cleaning up database prediction due to blockchain failure...');
+                try {
+                    await apiRequest(`/api/predictions/${predictionResponse.id}`, {
+                        method: 'DELETE'
+                    });
+                    console.log('✅ [PREDICTION-BLOCKCHAIN] Database prediction cleaned up successfully');
+                } catch (cleanupError) {
+                    console.error('❌ [PREDICTION-BLOCKCHAIN] Failed to clean up database prediction:', cleanupError);
+                }
+            }
 
             // Enhanced error handling with specific error messages
             let errorTitle = "Prediction Failed";
