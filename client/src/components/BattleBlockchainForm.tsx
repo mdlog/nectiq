@@ -90,7 +90,7 @@ export function BattleBlockchainForm({
     });
     const ntiqBalance = ntiqBalanceWei ? parseFloat(formatEther(ntiqBalanceWei)) : 0;
 
-    // Read allowance for battle escrow contract
+    // Read NTIQ allowance for Battle Escrow
     const { data: allowanceWei, refetch: refetchAllowance } = useReadContract({
         address: CONTRACTS.NTIQ_TOKEN,
         abi: CONTRACTS.ABIS?.NTIQToken || CONTRACTS.ABIS?.ERC20 || ABIS?.NTIQToken || ABIS?.ERC20,
@@ -146,6 +146,15 @@ export function BattleBlockchainForm({
         setIsSubmitting(true);
 
         try {
+            // Validate contract configuration
+            if (!CONTRACTS.BATTLE_ESCROW) {
+                throw new Error('Battle escrow contract address not configured');
+            }
+            
+            if (!CONTRACTS.ABIS?.BATTLE_ESCROW && !ABIS?.BATTLE_ESCROW) {
+                throw new Error('Battle escrow contract ABI not configured');
+            }
+
             const stakeAmountWei = parseEther(data.stakeAmount.toString());
 
             // First create battle in database to get ID
@@ -167,13 +176,33 @@ export function BattleBlockchainForm({
             // Generate battle ID using database ID (consistent with backend)
             const battleId = ethers.id(`battle_${battleResponse.id}`);
 
+            // Check NTIQ balance
+            const ntiqBalanceWei = await refetchNtiqBalance();
+            const currentBalance = ntiqBalanceWei.data ? Number(formatEther(ntiqBalanceWei.data)) : 0;
+            
+            if (currentBalance < data.stakeAmount) {
+                throw new Error(`Insufficient NTIQ balance. You have ${currentBalance.toFixed(2)} NTIQ but need ${data.stakeAmount} NTIQ`);
+            }
+
+            // Check allowance
+            const allowanceWei = await refetchAllowance();
+            const currentAllowance = allowanceWei.data ? Number(formatEther(allowanceWei.data)) : 0;
+            
+            if (currentAllowance < data.stakeAmount) {
+                throw new Error(`Insufficient allowance. You need to approve ${data.stakeAmount} NTIQ spending first`);
+            }
+
             console.log('⚔️ [BATTLE-BLOCKCHAIN] Creating battle:', {
                 dbId: battleResponse.id,
                 blockchainId: battleId,
                 stakeAmount: data.stakeAmount,
                 stakeAmountWei: stakeAmountWei.toString(),
                 challenger: address,
-                chainId: chain.id
+                chainId: chain.id,
+                contractAddress: CONTRACTS.BATTLE_ESCROW,
+                abi: CONTRACTS.ABIS?.BATTLE_ESCROW ? 'Available' : 'Missing',
+                ntiqBalance: currentBalance,
+                allowance: currentAllowance
             });
 
             await writeBattleContract({
@@ -186,9 +215,43 @@ export function BattleBlockchainForm({
             });
         } catch (error: any) {
             console.error('❌ [BATTLE-BLOCKCHAIN] Battle creation failed:', error);
+            
+            let errorTitle = "Battle Creation Failed";
+            let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
+            
+            // Handle specific error cases
+            if (error.message?.includes("Battle escrow contract address not configured")) {
+                errorTitle = "Contract Configuration Error";
+                errorDescription = "Battle escrow contract address is not configured. Please contact support.";
+            } else if (error.message?.includes("Battle escrow contract ABI not configured")) {
+                errorTitle = "Contract Configuration Error";
+                errorDescription = "Battle escrow contract ABI is not configured. Please contact support.";
+            } else if (error.message?.includes("UNSUPPORTED_OPERATION")) {
+                errorTitle = "Contract Error";
+                errorDescription = "The battle contract operation is not supported. Please check your wallet connection and try again.";
+            } else if (error.message?.includes("Insufficient balance")) {
+                errorTitle = "Insufficient Balance";
+                errorDescription = "You don't have enough NTIQ tokens for this battle";
+            } else if (error.message?.includes("Approval Required")) {
+                errorTitle = "Approval Required";
+                errorDescription = "Please approve NTIQ spending first by clicking 'Approve NTIQ' button";
+            } else if (error.message?.includes("User rejected")) {
+                errorTitle = "Transaction Cancelled";
+                errorDescription = "You cancelled the transaction in MetaMask";
+            } else if (error.message?.includes("gas required exceeds allowance")) {
+                errorTitle = "Gas Limit Error";
+                errorDescription = "Transaction failed due to low gas limit. Please try again";
+            } else if (error.message?.includes("insufficient funds")) {
+                errorTitle = "Insufficient Funds";
+                errorDescription = "You don't have enough POL tokens for gas fees";
+            } else if (error.message?.includes("Failed to create battle in database")) {
+                errorTitle = "Database Error";
+                errorDescription = "Failed to create battle in database. Please try again.";
+            }
+            
             toast({
-                title: "Battle Creation Failed",
-                description: error.shortMessage || error.message,
+                title: errorTitle,
+                description: errorDescription,
                 variant: "destructive",
             });
             setIsSubmitting(false);
