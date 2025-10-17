@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useAccount, useReadContract } from 'wagmi';
 import { formatEther } from 'viem';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, Target, CheckCircle2, AlertCircle, Coins, HelpCircle } from 'lucide-react';
 import { CONTRACTS, ABIS } from '@/lib/contracts';
 import { apiRequest } from "@/lib/queryClient";
 
@@ -237,63 +238,159 @@ export function PredictionBlockchainForm({
 
     return (
         <div className="space-y-6">
+            {/* Balance Display */}
+            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-medium text-white">Your NTIQ Balance</h3>
+                        <div className="flex items-center space-x-2 mt-2">
+                            <Coins className="w-6 h-6 text-yellow-400" />
+                            <span className="text-3xl font-bold text-yellow-400">
+                                {ntiqBalance.toFixed(2)}
+                            </span>
+                            <span className="text-sm text-slate-400">NTIQ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Step Indicator */}
+            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${needsApproval
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-green-500 text-white'
+                            }`}>
+                            {needsApproval ? '1' : '✓'}
+                        </div>
+                        <div>
+                            <h3 className="text-white font-medium">Step 1: Approve NTIQ Spending</h3>
+                            <p className="text-slate-400 text-sm">
+                                {needsApproval
+                                    ? 'Approve the Prediction Staking contract to spend your NTIQ tokens'
+                                    : 'NTIQ spending approved ✓'
+                                }
+                            </p>
+                        </div>
+                    </div>
+                    {!needsApproval && (
+                        <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-500 text-white">
+                                2
+                            </div>
+                            <div>
+                                <h3 className="text-white font-medium">Step 2: Create Prediction</h3>
+                                <p className="text-slate-400 text-sm">Ready to create your prediction</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Approval Status */}
+            {needsApproval && (
+                <div className="bg-orange-900/20 border border-orange-500/50 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                        <AlertCircle className="w-5 h-5 text-orange-400" />
+                        <span className="text-orange-300 font-medium">Approval Required</span>
+                    </div>
+                    <p className="text-orange-200 text-sm mt-1">
+                        You need to approve the Prediction Staking contract to spend your NTIQ tokens first.
+                        Click the "Approve NTIQ Tokens" button below to proceed.
+                    </p>
+                </div>
+            )}
+
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(handlePredictionSubmit)} className="space-y-6">
-                    {/* Cryptocurrency Selection */}
-                    <FormField
-                        control={form.control}
-                        name="cryptocurrency"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Cryptocurrency</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a cryptocurrency" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {availableCryptos.map((crypto) => (
-                                            <SelectItem key={crypto.id} value={crypto.id}>
-                                                <div className="flex items-center space-x-2">
-                                                    <span className="font-medium">{crypto.symbol}</span>
-                                                    <span className="text-sm text-muted-foreground">
-                                                        ${currentPrices[crypto.id]?.toFixed(2) || '0.00'}
-                                                    </span>
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Cryptocurrency Selection */}
+                        <FormField
+                            control={form.control}
+                            name="cryptocurrency"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-slate-300 flex items-center">
+                                        Select Cryptocurrency
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <HelpCircle className="ml-2 h-4 w-4 text-slate-400 cursor-help" />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Choose the cryptocurrency for your prediction.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="bg-surface-light border-surface-light">
+                                                <SelectValue placeholder="Choose a coin..." />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {availableCryptos.length === 0 ? (
+                                                <SelectItem value="loading" disabled>Loading cryptocurrencies...</SelectItem>
+                                            ) : availableCryptos.length > 0 ? (
+                                                availableCryptos.map((crypto) => (
+                                                    <SelectItem key={crypto.id} value={crypto.id}>
+                                                        <div className="flex items-center gap-2">
+                                                            <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
+                                                            <span>
+                                                                {crypto.symbol?.toUpperCase()} (${crypto.current_price?.toFixed(2)})
+                                                            </span>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <SelectItem value="none" disabled>No cryptocurrencies available</SelectItem>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                    {/* Timeframe Selection */}
-                    <FormField
-                        control={form.control}
-                        name="timeframe"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Timeframe</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select timeframe" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="1h">1 Hour</SelectItem>
-                                        <SelectItem value="6h">6 Hours</SelectItem>
-                                        <SelectItem value="24h">24 Hours</SelectItem>
-                                        <SelectItem value="7d">7 Days</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                        {/* Timeframe Selection */}
+                        <FormField
+                            control={form.control}
+                            name="timeframe"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-slate-300 flex items-center">
+                                        Prediction Timeframe
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <HelpCircle className="ml-2 h-4 w-4 text-slate-400 cursor-help" />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Choose how long your prediction will last.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="bg-surface-light border-surface-light">
+                                                <SelectValue placeholder="Select timeframe..." />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="1h">1 Hour</SelectItem>
+                                            <SelectItem value="6h">6 Hours</SelectItem>
+                                            <SelectItem value="24h">24 Hours</SelectItem>
+                                            <SelectItem value="7d">7 Days</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
 
                     {/* Predicted Price */}
                     <FormField
@@ -301,16 +398,35 @@ export function PredictionBlockchainForm({
                         name="predictedPrice"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Predicted Price (USD)</FormLabel>
+                                <FormLabel className="text-slate-300 flex items-center">
+                                    Your Prediction Price (USD)
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <HelpCircle className="ml-2 h-4 w-4 text-slate-400 cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Enter the price you predict the cryptocurrency will reach.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </FormLabel>
                                 <FormControl>
                                     <Input
                                         type="number"
-                                        step="0.01"
-                                        placeholder="Enter your predicted price"
+                                        step="any"
+                                        placeholder={`e.g., ${currentPrices[form.watch('cryptocurrency')] ? (currentPrices[form.watch('cryptocurrency')] * 1.05).toFixed(2) : '52000.00'}`}
+                                        className="bg-surface-light border-surface-light text-white placeholder:text-slate-400"
                                         {...field}
+                                        onChange={(e) => field.onChange(e.target.value)}
                                     />
                                 </FormControl>
                                 <FormMessage />
+                                {form.watch('cryptocurrency') && currentPrices[form.watch('cryptocurrency')] && (
+                                    <div className="text-sm text-slate-400">
+                                        Current price: ${currentPrices[form.watch('cryptocurrency')].toFixed(2)}
+                                    </div>
+                                )}
                             </FormItem>
                         )}
                     />
@@ -321,52 +437,57 @@ export function PredictionBlockchainForm({
                         name="stakeAmount"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Stake Amount (NTIQ)</FormLabel>
+                                <FormLabel className="text-slate-300 flex items-center">
+                                    Stake Amount (NTIQ)
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <HelpCircle className="ml-2 h-4 w-4 text-slate-400 cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Amount of NTIQ tokens you want to stake on this prediction.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </FormLabel>
                                 <FormControl>
                                     <Input
                                         type="number"
-                                        min="50"
-                                        max="10000"
-                                        step="10"
-                                        placeholder="Enter stake amount"
+                                        step="1"
+                                        placeholder="e.g., 100"
+                                        className="bg-surface-light border-surface-light text-white placeholder:text-slate-400"
                                         {...field}
-                                        onChange={(e) => {
-                                            const value = parseInt(e.target.value) || 0;
-                                            field.onChange(value);
-                                            if (setSelectedStake) {
-                                                setSelectedStake(value);
-                                            }
-                                        }}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
                                     />
                                 </FormControl>
                                 <FormMessage />
+                                <div className="flex space-x-2 mt-2">
+                                    {[50, 100, 500, 1000].map((amount) => (
+                                        <Button
+                                            key={amount}
+                                            type="button"
+                                            variant={selectedStake === amount ? "default" : "outline"}
+                                            onClick={() => {
+                                                if (setSelectedStake) {
+                                                    setSelectedStake(amount);
+                                                }
+                                                form.setValue("stakeAmount", amount);
+                                            }}
+                                            className="flex-1 bg-surface-light hover:bg-surface border-surface-light text-white"
+                                        >
+                                            {amount} NTIQ
+                                        </Button>
+                                    ))}
+                                </div>
                             </FormItem>
                         )}
                     />
-
-                    {/* Balance and Allowance Info */}
-                    <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Your NTIQ Balance:</span>
-                            <span className="text-sm">{ntiqBalance.toFixed(2)} NTIQ</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Approved Amount:</span>
-                            <span className="text-sm">{allowance.toFixed(2)} NTIQ</span>
-                        </div>
-                        {needsApproval && (
-                            <div className="flex items-center space-x-2 text-amber-600">
-                                <AlertCircle className="h-4 w-4" />
-                                <span className="text-sm">Approval required for NTIQ spending</span>
-                            </div>
-                        )}
-                    </div>
 
                     {/* Submit Button */}
                     <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full gradient-bg hover:opacity-90 text-white font-semibold py-3 px-6 transition-all transform hover:scale-105"
+                        className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold py-3 px-6 transition-all transform hover:scale-105"
                     >
                         {isSubmitting ? (
                             <>
@@ -375,7 +496,7 @@ export function PredictionBlockchainForm({
                             </>
                         ) : (
                             <>
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                <Target className="mr-2 h-4 w-4" />
                                 Submit Prediction
                             </>
                         )}
