@@ -104,6 +104,18 @@ export function BattleBlockchainForm({
     const currentStakeAmount = form.watch('stakeAmount') || 0;
     const needsApproval = allowance < currentStakeAmount;
 
+    // Debug logging for allowance detection
+    React.useEffect(() => {
+        console.log('🔍 [BATTLE-APPROVAL] Allowance Debug:', {
+            allowance,
+            currentStakeAmount,
+            needsApproval,
+            allowanceWei: allowanceWei?.toString(),
+            address,
+            chainId: chain?.id
+        });
+    }, [allowance, currentStakeAmount, needsApproval, allowanceWei, address, chain?.id]);
+
     const handleApprove = async (stakeAmount: number) => {
         if (!address || !chain) {
             toast({
@@ -190,8 +202,19 @@ export function BattleBlockchainForm({
             const currentAllowance = allowanceWei.data ? Number(formatEther(allowanceWei.data)) : 0;
 
             if (currentAllowance < data.stakeAmount) {
+                console.error('❌ [BATTLE-BLOCKCHAIN] Insufficient allowance detected:', {
+                    currentAllowance,
+                    requiredAmount: data.stakeAmount,
+                    difference: data.stakeAmount - currentAllowance
+                });
                 throw new Error(`Insufficient allowance. You have ${currentAllowance.toFixed(2)} NTIQ allowance but need ${data.stakeAmount} NTIQ. Please approve NTIQ spending first.`);
             }
+
+            console.log('✅ [BATTLE-BLOCKCHAIN] Allowance check passed:', {
+                currentAllowance,
+                requiredAmount: data.stakeAmount,
+                allowanceSufficient: currentAllowance >= data.stakeAmount
+            });
 
             console.log('⚔️ [BATTLE-BLOCKCHAIN] Creating battle:', {
                 dbId: battleResponse.id,
@@ -203,7 +226,8 @@ export function BattleBlockchainForm({
                 contractAddress: CONTRACTS.BATTLE_ESCROW,
                 abi: CONTRACTS.ABIS?.BATTLE_ESCROW ? 'Available' : 'Missing',
                 ntiqBalance: currentBalance,
-                allowance: currentAllowance
+                allowance: currentAllowance,
+                needsApproval: currentAllowance < data.stakeAmount
             });
 
             await writeBattleContract({
@@ -416,17 +440,16 @@ export function BattleBlockchainForm({
             <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                            needsApproval 
-                                ? 'bg-orange-500 text-white' 
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${needsApproval
+                                ? 'bg-orange-500 text-white'
                                 : 'bg-green-500 text-white'
-                        }`}>
+                            }`}>
                             {needsApproval ? '1' : '✓'}
                         </div>
                         <div>
                             <h3 className="text-white font-medium">Step 1: Approve NTIQ Spending</h3>
                             <p className="text-slate-400 text-sm">
-                                {needsApproval 
+                                {needsApproval
                                     ? 'Approve the Battle Escrow contract to spend your NTIQ tokens'
                                     : 'NTIQ spending approved ✓'
                                 }
@@ -455,7 +478,7 @@ export function BattleBlockchainForm({
                         <span className="text-orange-300 font-medium">Approval Required</span>
                     </div>
                     <p className="text-orange-200 text-sm mt-1">
-                        You need to approve the Battle Escrow contract to spend your NTIQ tokens first. 
+                        You need to approve the Battle Escrow contract to spend your NTIQ tokens first.
                         Click the "Approve NTIQ Tokens" button below to proceed.
                     </p>
                 </div>
@@ -660,11 +683,10 @@ export function BattleBlockchainForm({
                     <Button
                         type="submit"
                         disabled={isSubmitting || isApprovePending || isBattlePending || isApproveConfirming || isBattleConfirming}
-                        className={`w-full font-semibold py-3 px-6 transition-all transform hover:scale-105 ${
-                            needsApproval 
-                                ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                        className={`w-full font-semibold py-3 px-6 transition-all transform hover:scale-105 ${needsApproval
+                                ? 'bg-orange-600 hover:bg-orange-700 text-white'
                                 : 'gradient-bg hover:opacity-90 text-white'
-                        }`}
+                            }`}
                     >
                         {isSubmitting || isApprovePending || isBattlePending || isApproveConfirming || isBattleConfirming ? (
                             <>
