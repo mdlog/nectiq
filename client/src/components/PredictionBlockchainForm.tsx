@@ -78,7 +78,7 @@ export function PredictionBlockchainForm({
     // Read NTIQ balance with error handling
     const { data: ntiqBalanceWei, refetch: refetchNtiqBalance } = useReadContract({
         address: CONTRACTS.NTIQ_TOKEN,
-        abi: CONTRACTS.ABIS?.NTIQ_TOKEN || ABIS?.NTIQ_TOKEN,
+        abi: CONTRACTS.ABIS?.NTIQToken || ABIS?.NTIQToken,
         functionName: 'balanceOf',
         args: address ? [address] : undefined,
         query: { enabled: !!address },
@@ -87,7 +87,7 @@ export function PredictionBlockchainForm({
     // Read allowance with error handling
     const { data: allowanceWei, refetch: refetchAllowance } = useReadContract({
         address: CONTRACTS.NTIQ_TOKEN,
-        abi: CONTRACTS.ABIS?.NTIQ_TOKEN || ABIS?.NTIQ_TOKEN,
+        abi: CONTRACTS.ABIS?.NTIQToken || ABIS?.NTIQToken,
         functionName: 'allowance',
         args: address && CONTRACTS.ENHANCED_PREDICTION_STAKING ? [address, CONTRACTS.ENHANCED_PREDICTION_STAKING] : undefined,
         query: { enabled: !!address && !!CONTRACTS.ENHANCED_PREDICTION_STAKING },
@@ -127,7 +127,15 @@ export function PredictionBlockchainForm({
     }, [isApproveError, toast]);
 
     const handleApprove = async (stakeAmount: number) => {
+        console.log('🔵 [PREDICTION-APPROVAL] handleApprove called with stakeAmount:', stakeAmount);
+        console.log('🔵 [PREDICTION-APPROVAL] address:', address);
+        console.log('🔵 [PREDICTION-APPROVAL] chain:', chain);
+        console.log('🔵 [PREDICTION-APPROVAL] CONTRACTS.NTIQ_TOKEN:', CONTRACTS.NTIQ_TOKEN);
+        console.log('🔵 [PREDICTION-APPROVAL] CONTRACTS.ENHANCED_PREDICTION_STAKING:', CONTRACTS.ENHANCED_PREDICTION_STAKING);
+        console.log('🔵 [PREDICTION-APPROVAL] ABI available:', !!(CONTRACTS.ABIS?.NTIQToken || ABIS?.NTIQToken));
+
         if (!address || !chain) {
+            console.log('❌ [PREDICTION-APPROVAL] Wallet not connected');
             toast({
                 title: "Wallet Not Connected",
                 description: "Please connect your wallet to create predictions.",
@@ -136,18 +144,42 @@ export function PredictionBlockchainForm({
             return;
         }
 
+        if (!CONTRACTS.NTIQ_TOKEN) {
+            console.log('❌ [PREDICTION-APPROVAL] NTIQ_TOKEN contract not configured');
+            toast({
+                title: "Contract Error",
+                description: "NTIQ Token contract address not configured.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (!CONTRACTS.ENHANCED_PREDICTION_STAKING) {
+            console.log('❌ [PREDICTION-APPROVAL] ENHANCED_PREDICTION_STAKING contract not configured');
+            toast({
+                title: "Contract Error",
+                description: "Prediction Staking contract address not configured.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         try {
             const stakeAmountWei = parseEther(stakeAmount.toString());
+            console.log('🔵 [PREDICTION-APPROVAL] stakeAmountWei:', stakeAmountWei.toString());
 
+            console.log('🔵 [PREDICTION-APPROVAL] Calling writeApproveContract...');
             await writeApproveContract({
                 address: CONTRACTS.NTIQ_TOKEN,
-                abi: CONTRACTS.ABIS?.NTIQ_TOKEN || ABIS?.NTIQ_TOKEN,
+                abi: CONTRACTS.ABIS?.NTIQToken || ABIS?.NTIQToken,
                 functionName: 'approve',
                 args: [CONTRACTS.ENHANCED_PREDICTION_STAKING, stakeAmountWei],
                 chainId: chain.id,
                 gas: 150000n, // Optimize gas limit for approve
             });
+            console.log('✅ [PREDICTION-APPROVAL] writeApproveContract called successfully');
         } catch (error: any) {
+            console.error('❌ [PREDICTION-APPROVAL] Error details:', error);
             toast({
                 title: "Approval Failed",
                 description: error.shortMessage || error.message,
@@ -297,9 +329,16 @@ export function PredictionBlockchainForm({
     };
 
     const onSubmit = (data: PredictionFormData) => {
+        console.log('🔵 [PREDICTION-SUBMIT] onSubmit called with data:', data);
+        console.log('🔵 [PREDICTION-SUBMIT] needsApproval:', needsApproval);
+        console.log('🔵 [PREDICTION-SUBMIT] currentStakeAmount:', currentStakeAmount);
+        console.log('🔵 [PREDICTION-SUBMIT] allowance:', allowance);
+        
         if (needsApproval) {
+            console.log('🔵 [PREDICTION-SUBMIT] Calling handleApprove with stakeAmount:', data.stakeAmount);
             handleApprove(data.stakeAmount);
         } else {
+            console.log('🔵 [PREDICTION-SUBMIT] Calling handlePredictionSubmit');
             handlePredictionSubmit(data);
         }
     };
