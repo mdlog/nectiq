@@ -55,13 +55,20 @@ export function PredictionBlockchainForm({
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [createdPredictionId, setCreatedPredictionId] = useState<number | null>(null);
 
     // Wagmi hooks for blockchain interaction
     const { writeContract: writeApproveContract, data: approveTxHash, isPending: isApprovePending } = useWriteContract();
+    const { writeContract: writePredictionContract, data: predictionTxHash, isPending: isPredictionPending } = useWriteContract();
 
     const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess, isError: isApproveError } = useWaitForTransactionReceipt({
         hash: approveTxHash,
         query: { enabled: !!approveTxHash },
+    });
+
+    const { isLoading: isPredictionConfirming, isSuccess: isPredictionSuccess, isError: isPredictionError } = useWaitForTransactionReceipt({
+        hash: predictionTxHash,
+        query: { enabled: !!predictionTxHash },
     });
 
     const form = useForm<PredictionFormData>({
@@ -126,6 +133,72 @@ export function PredictionBlockchainForm({
             });
         }
     }, [isApproveError, toast]);
+
+    // Handle prediction success
+    React.useEffect(() => {
+        if (isPredictionSuccess && predictionTxHash && createdPredictionId) {
+            console.log('✅ [PREDICTION-BLOCKCHAIN] Prediction transaction confirmed:', predictionTxHash);
+            console.log('✅ [PREDICTION-BLOCKCHAIN] Prediction ID:', createdPredictionId);
+            
+            // Update database with blockchain transaction hash
+            const updateDatabase = async () => {
+                try {
+                    console.log('🔄 [PREDICTION-BLOCKCHAIN] Updating prediction:', createdPredictionId);
+
+                    const updateResponse = await apiRequest(`/api/predictions/${createdPredictionId}/blockchain`, {
+                        method: "PUT",
+                        body: JSON.stringify({
+                            blockchainStakeHash: predictionTxHash,
+                            blockchainStatus: 'confirmed'
+                        }),
+                    });
+
+                    if (updateResponse.ok) {
+                        const updateData = await updateResponse.json();
+                        console.log('✅ [PREDICTION-BLOCKCHAIN] Database updated:', updateData);
+
+                        toast({
+                            title: "Prediction Submitted Successfully!",
+                            description: "Your prediction has been recorded and staked on the blockchain.",
+                        });
+
+                        // Refresh data
+                        await queryClient.invalidateQueries({ queryKey: ["/api/predictions/active"] });
+                        await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                        await queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
+
+                        // Call success callback
+                        if (onSuccess) {
+                            onSuccess();
+                        }
+                        if (onClose) {
+                            onClose();
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ [PREDICTION-BLOCKCHAIN] Failed to update database:', error);
+                    toast({
+                        title: "Warning: Database Update Failed",
+                        description: "Blockchain transaction succeeded but database update failed. Please contact support.",
+                        variant: "destructive"
+                    });
+                }
+            };
+
+            updateDatabase();
+        }
+    }, [isPredictionSuccess, predictionTxHash, createdPredictionId, toast, queryClient, onSuccess, onClose]);
+
+    // Handle prediction errors
+    React.useEffect(() => {
+        if (isPredictionError) {
+            toast({
+                title: "Prediction Transaction Failed",
+                description: "The blockchain transaction failed. Please try again.",
+                variant: "destructive",
+            });
+        }
+    }, [isPredictionError, toast]);
 
     const handleApprove = async (stakeAmount: number) => {
         console.log('🔵 [PREDICTION-APPROVAL] handleApprove called with stakeAmount:', stakeAmount);
@@ -273,6 +346,9 @@ export function PredictionBlockchainForm({
                 throw new Error('Failed to create prediction');
             }
 
+            // Store the prediction ID for later use
+            setCreatedPredictionId(predictionResponse.id);
+
             console.log('✅ [PREDICTION-BLOCKCHAIN] Prediction created in database:', predictionResponse);
 
             // Step 2: Now do blockchain transaction from frontend (this will show MetaMask popup)
@@ -293,10 +369,9 @@ export function PredictionBlockchainForm({
             console.log('   Predicted Price:', predictedPriceWei.toString());
             
             // Use wagmi writeContract for blockchain transaction
-            const { writeContractAsync } = await import('wagmi/actions');
-            const { config } = await import('@/lib/web3Config');
+            console.log('🔗 [PREDICTION-BLOCKCHAIN] Calling writePredictionContract...');
             
-            const txHash = await writeContractAsync(config, {
+            await writePredictionContract({
                 address: CONTRACTS.ENHANCED_PREDICTION_STAKING,
                 abi: CONTRACTS.ABIS?.ENHANCED_PREDICTION_STAKING || ABIS?.ENHANCED_PREDICTION_STAKING,
                 functionName: 'lockStake',
@@ -304,60 +379,10 @@ export function PredictionBlockchainForm({
                 gas: 300000n,
             });
 
-            console.log('✅ [PREDICTION-BLOCKCHAIN] Blockchain transaction successful:', txHash);
-
-            // If blockchain transaction fails, we need to clean up the database prediction
-            if (!txHash) {
-                throw new Error('Blockchain transaction failed - no transaction hash returned');
-            }
-
-            // Step 3: Update database with blockchain transaction hash
-            console.log('💾 [PREDICTION-BLOCKCHAIN] Updating database with transaction hash...');
-            try {
-                const updateResponse = await apiRequest(`/api/predictions/${predictionResponse.id}/blockchain`, {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        blockchainStakeHash: txHash,
-                        blockchainStatus: 'confirmed'
-                    })
-                });
-                
-                const updateResult = await updateResponse.json();
-                console.log('✅ [PREDICTION-BLOCKCHAIN] Database updated successfully:', updateResult);
-            } catch (updateError) {
-                console.error('❌ [PREDICTION-BLOCKCHAIN] Failed to update database:', updateError);
-                // Don't throw error here - blockchain transaction was successful
-                toast({
-                    title: "Warning: Database Update Failed",
-                    description: "Blockchain transaction succeeded but database update failed. Please contact support.",
-                    variant: "destructive"
-                });
-            }
-
-            // Show success message
-            toast({
-                title: "Prediction Submitted Successfully!",
-                description: "Your prediction has been recorded and staked on the blockchain.",
-            });
-
-            // Refresh data
-            await queryClient.invalidateQueries({ queryKey: ["/api/predictions/active"] });
-            await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-            await queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
-            await queryClient.invalidateQueries({ queryKey: ["/api/predictions/live-feed"] });
-            await queryClient.invalidateQueries({ queryKey: ["/api/activities/live"] });
-
-            // Refresh NTIQ balance
-            await refetchNtiqBalance();
-            await refetchAllowance();
-
-            // Call success callback
-            if (onSuccess) {
-                onSuccess();
-            }
-            if (onClose) {
-                onClose();
-            }
+            console.log('✅ [PREDICTION-BLOCKCHAIN] Prediction contract call initiated successfully');
+            console.log('⏳ [PREDICTION-BLOCKCHAIN] Waiting for transaction confirmation...');
+            // The useWaitForTransactionReceipt hook will handle the confirmation
+            // We'll update the database in the useEffect when isPredictionSuccess becomes true
 
         } catch (error: any) {
             console.error('❌ [PREDICTION-BLOCKCHAIN] Error details:', error);
