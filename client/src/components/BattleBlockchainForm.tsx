@@ -218,7 +218,7 @@ export function BattleBlockchainForm({
             console.error('❌ [BATTLE-BLOCKCHAIN] Battle creation failed:', error);
             console.error('❌ [BATTLE-BLOCKCHAIN] Error data:', error.data);
             console.error('❌ [BATTLE-BLOCKCHAIN] Error code:', error.code);
-            
+
             let errorTitle = "Battle Creation Failed";
             let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
 
@@ -357,8 +357,8 @@ export function BattleBlockchainForm({
     React.useEffect(() => {
         if (isApproveSuccess) {
             toast({
-                title: "Approval Successful",
-                description: "You can now create battles.",
+                title: "✅ NTIQ Approval Successful",
+                description: "You can now create battles. Click 'Step 2: Create Battle' to proceed.",
             });
             refetchAllowance();
         }
@@ -412,6 +412,41 @@ export function BattleBlockchainForm({
                 </div>
             </div>
 
+            {/* Step Indicator */}
+            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            needsApproval 
+                                ? 'bg-orange-500 text-white' 
+                                : 'bg-green-500 text-white'
+                        }`}>
+                            {needsApproval ? '1' : '✓'}
+                        </div>
+                        <div>
+                            <h3 className="text-white font-medium">Step 1: Approve NTIQ Spending</h3>
+                            <p className="text-slate-400 text-sm">
+                                {needsApproval 
+                                    ? 'Approve the Battle Escrow contract to spend your NTIQ tokens'
+                                    : 'NTIQ spending approved ✓'
+                                }
+                            </p>
+                        </div>
+                    </div>
+                    {!needsApproval && (
+                        <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-500 text-white">
+                                2
+                            </div>
+                            <div>
+                                <h3 className="text-white font-medium">Step 2: Create Battle</h3>
+                                <p className="text-slate-400 text-sm">Ready to create your battle</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Approval Status */}
             {needsApproval && (
                 <div className="bg-orange-900/20 border border-orange-500/50 rounded-lg p-4">
@@ -420,7 +455,8 @@ export function BattleBlockchainForm({
                         <span className="text-orange-300 font-medium">Approval Required</span>
                     </div>
                     <p className="text-orange-200 text-sm mt-1">
-                        You need to approve the Battle Escrow contract to spend your NTIQ tokens first.
+                        You need to approve the Battle Escrow contract to spend your NTIQ tokens first. 
+                        Click the "Approve NTIQ Tokens" button below to proceed.
                     </p>
                 </div>
             )}
@@ -624,22 +660,26 @@ export function BattleBlockchainForm({
                     <Button
                         type="submit"
                         disabled={isSubmitting || isApprovePending || isBattlePending || isApproveConfirming || isBattleConfirming}
-                        className="w-full gradient-bg hover:opacity-90 text-white font-semibold py-3 px-6 transition-all transform hover:scale-105"
+                        className={`w-full font-semibold py-3 px-6 transition-all transform hover:scale-105 ${
+                            needsApproval 
+                                ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                                : 'gradient-bg hover:opacity-90 text-white'
+                        }`}
                     >
                         {isSubmitting || isApprovePending || isBattlePending || isApproveConfirming || isBattleConfirming ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {needsApproval ? "Approving..." : "Creating Battle..."}
+                                {needsApproval ? "Approving NTIQ..." : "Creating Battle..."}
                             </>
                         ) : needsApproval ? (
                             <>
                                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Approve NTIQ Tokens
+                                Step 1: Approve NTIQ Tokens
                             </>
                         ) : (
                             <>
                                 <Swords className="mr-2 h-4 w-4" />
-                                Create Battle
+                                Step 2: Create Battle
                             </>
                         )}
                     </Button>
