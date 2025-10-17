@@ -200,17 +200,32 @@ export function PredictionBlockchainForm({
             const durationMap = { '1h': 3600, '6h': 21600, '24h': 86400, '7d': 604800 };
             const duration = durationMap[data.timeframe];
 
-            // First create prediction in database to get ID
-            const predictionResponse = await apiRequest('/api/predictions', {
-                method: 'POST',
-                body: JSON.stringify({
-                    cryptocurrency: data.cryptocurrency,
-                    predictedPrice: data.predictedPrice,
-                    timeframe: data.timeframe,
-                    stakeAmount: data.stakeAmount,
-                    duration: duration
-                })
+            console.log('🔄 [PREDICTION-BLOCKCHAIN] Starting prediction submission...');
+
+            // Show loading toast for database operation
+            toast({
+                title: "Creating Prediction...",
+                description: "Setting up your prediction in the database...",
             });
+
+            // First create prediction in database to get ID with timeout
+            const databaseTimeout = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Database operation timed out after 10 seconds')), 10000)
+            );
+
+            const predictionResponse = await Promise.race([
+                apiRequest('/api/predictions', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        cryptocurrency: data.cryptocurrency,
+                        predictedPrice: data.predictedPrice,
+                        timeframe: data.timeframe,
+                        stakeAmount: data.stakeAmount,
+                        duration: duration
+                    })
+                }),
+                databaseTimeout
+            ]);
 
             if (!predictionResponse || !predictionResponse.id) {
                 throw new Error('Failed to create prediction in database');
@@ -224,14 +239,28 @@ export function PredictionBlockchainForm({
                 blockchainId: predictionId
             });
 
-            await writePredictionContract({
-                address: CONTRACTS.ENHANCED_PREDICTION_STAKING,
-                abi: CONTRACTS.ABIS?.ENHANCED_PREDICTION_STAKING || ABIS?.ENHANCED_PREDICTION_STAKING,
-                functionName: 'lockStake',
-                args: [predictionId, stakeAmountWei, duration, predictedPriceWei],
-                chainId: chain.id,
-                gas: 300000n, // Increased gas limit for prediction staking
+            // Show loading toast for blockchain operation
+            toast({
+                title: "Preparing Blockchain Transaction...",
+                description: "Please wait for MetaMask popup to appear...",
             });
+
+            // Add timeout for blockchain call
+            const blockchainTimeout = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Blockchain transaction timed out after 30 seconds')), 30000)
+            );
+
+            await Promise.race([
+                writePredictionContract({
+                    address: CONTRACTS.ENHANCED_PREDICTION_STAKING,
+                    abi: CONTRACTS.ABIS?.ENHANCED_PREDICTION_STAKING || ABIS?.ENHANCED_PREDICTION_STAKING,
+                    functionName: 'lockStake',
+                    args: [predictionId, stakeAmountWei, duration, predictedPriceWei],
+                    chainId: chain.id,
+                    gas: 300000n, // Increased gas limit for prediction staking
+                }),
+                blockchainTimeout
+            ]);
         } catch (error: any) {
             console.error('❌ [PREDICTION-BLOCKCHAIN] Error details:', error);
 
@@ -239,7 +268,13 @@ export function PredictionBlockchainForm({
             let errorTitle = "Prediction Failed";
             let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
 
-            if (error.message?.includes("Insufficient balance")) {
+            if (error.message?.includes("Database operation timed out")) {
+                errorTitle = "Database Timeout";
+                errorDescription = "Database operation took too long. Please try again.";
+            } else if (error.message?.includes("Blockchain transaction timed out")) {
+                errorTitle = "Transaction Timeout";
+                errorDescription = "MetaMask popup didn't appear or transaction took too long. Please try again.";
+            } else if (error.message?.includes("Insufficient balance")) {
                 errorTitle = "Insufficient Balance";
                 errorDescription = "You don't have enough NTIQ tokens for this prediction";
             } else if (error.message?.includes("Approval Required")) {
@@ -654,7 +689,9 @@ export function PredictionBlockchainForm({
                         {isSubmitting || isApprovePending || isPredictionPending || isApproveConfirming || isPredictionConfirming ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {needsApproval ? "Approving..." : "Submitting Prediction..."}
+                                {isApprovePending || isApproveConfirming ? "Approving NTIQ..." : 
+                                 isPredictionPending || isPredictionConfirming ? "Submitting to Blockchain..." : 
+                                 "Processing..."}
                             </>
                         ) : needsApproval ? (
                             <>
