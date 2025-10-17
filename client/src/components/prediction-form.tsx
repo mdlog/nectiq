@@ -69,6 +69,14 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
   useEffect(() => {
     if (livePrices) {
       setCurrentPrices(livePrices);
+    } else {
+      // Use fallback prices if live prices are not available
+      const fallbackPrices = {
+        'bitcoin': 50000,
+        'ethereum': 3000,
+        'binancecoin': 300
+      };
+      setCurrentPrices(fallbackPrices);
     }
   }, [livePrices]);
 
@@ -82,18 +90,25 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
     }
   }, [availableCryptos]);
 
+  // 🔑 FALLBACK DATA: Provide fallback data to prevent empty form
+  const fallbackCryptos = [
+    { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', current_price: 50000, image: '/api/placeholder/32/32' },
+    { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', current_price: 3000, image: '/api/placeholder/32/32' },
+    { id: 'binancecoin', symbol: 'BNB', name: 'BNB', current_price: 300, image: '/api/placeholder/32/32' }
+  ];
+
   // 🔑 USE LAST VALID DATA: Always use last valid data if current is empty
-  const cryptosToUse = (availableCryptos && availableCryptos.length > 0) ? availableCryptos : lastValidCryptos;
+  const cryptosToUse = (availableCryptos && availableCryptos.length > 0) ? availableCryptos : 
+                      (lastValidCryptos.length > 0) ? lastValidCryptos : fallbackCryptos;
 
   // Show loading state ONLY on FIRST LOAD when no data exists and actively loading
   // Never show loading during subsequent fetches - this prevents form from disappearing
-  if (cryptosLoading && cryptosToUse.length === 0 && !hasLoadedOnce) {
+  if (cryptosLoading && cryptosToUse.length === 0 && !hasLoadedOnce && fallbackCryptos.length === 0) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
-        <h2 className="text-xl font-bold mb-6 flex items-center">
-          <Gem className="text-primary mr-3" size={20} />
-          Make New Prediction
-        </h2>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white">Make New Prediction</h2>
+        </div>
         <div className="space-y-4 animate-pulse">
           <div className="h-4 bg-slate-700 rounded w-1/4"></div>
           <div className="h-10 bg-slate-700 rounded"></div>
@@ -105,13 +120,12 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
   }
 
   // Don't render form if no cryptocurrencies are available AND we never had data before (first load failure)
-  if (!cryptosLoading && cryptosToUse.length === 0 && !hasLoadedOnce) {
+  if (!cryptosLoading && cryptosToUse.length === 0 && !hasLoadedOnce && fallbackCryptos.length === 0) {
     return (
-      <div className="bg-surface rounded-xl p-6 border border-surface-light">
-        <h2 className="text-xl font-bold mb-6 flex items-center">
-          <Gem className="text-primary mr-3" size={20} />
-          Make New Prediction
-        </h2>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white">Make New Prediction</h2>
+        </div>
         <div className="text-center py-8">
           <Gem className="h-12 w-12 text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-slate-300 mb-2">

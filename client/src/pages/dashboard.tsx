@@ -298,6 +298,10 @@ export default function Dashboard() {
             </div>
             <PredictionForm
               preSelectedCrypto={preSelectedForPrediction}
+              onClose={() => {
+                setShowPredictionForm(false);
+                setPreSelectedForPrediction(undefined);
+              }}
               onSuccess={() => {
                 setShowPredictionForm(false);
                 setPreSelectedForPrediction(undefined);

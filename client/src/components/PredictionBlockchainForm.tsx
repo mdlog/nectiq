@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,8 +8,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { parseEther, formatEther } from 'viem';
+import { useAccount, useReadContract } from 'wagmi';
+import { formatEther } from 'viem';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { CONTRACTS, ABIS } from '@/lib/contracts';
 import { apiRequest } from "@/lib/queryClient";
@@ -49,11 +49,10 @@ export function PredictionBlockchainForm({
     useInsurance = false,
     setUseInsurance
 }: PredictionBlockchainFormProps) {
-
+    
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [hasSubmittedToDB, setHasSubmittedToDB] = useState(false);
 
     const form = useForm<PredictionFormData>({
         resolver: zodResolver(predictionFormSchema),
@@ -63,20 +62,6 @@ export function PredictionBlockchainForm({
             predictedPrice: "",
             stakeAmount: 100,
         },
-    });
-
-    // Wagmi hooks for blockchain interaction
-    const { writeContract: writePredictionContract, data: predictionTxHash, isPending: isPredictionPending } = useWriteContract();
-    const { writeContract: writeApproveContract, data: approveTxHash, isPending: isApprovePending } = useWriteContract();
-
-    const { isLoading: isPredictionConfirming, isSuccess: isPredictionSuccess, isError: isPredictionError } = useWaitForTransactionReceipt({
-        hash: predictionTxHash,
-        query: { enabled: !!predictionTxHash },
-    });
-
-    const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess, isError: isApproveError } = useWaitForTransactionReceipt({
-        hash: approveTxHash,
-        query: { enabled: !!approveTxHash },
     });
 
     // Read NTIQ balance
@@ -116,15 +101,15 @@ export function PredictionBlockchainForm({
             return { isValid: false, error: "Wallet Not Connected" };
         }
         if (ntiqBalance < data.stakeAmount) {
-            return {
-                isValid: false,
-                error: `Insufficient Balance: You need ${data.stakeAmount} NTIQ, but your balance is ${ntiqBalance.toFixed(2)} NTIQ`
+            return { 
+                isValid: false, 
+                error: `Insufficient Balance: You need ${data.stakeAmount} NTIQ, but your balance is ${ntiqBalance.toFixed(2)} NTIQ` 
             };
         }
         if (allowance < data.stakeAmount) {
-            return {
-                isValid: false,
-                error: "Approval Required: Please approve NTIQ spending first"
+            return { 
+                isValid: false, 
+                error: "Approval Required: Please approve NTIQ spending first" 
             };
         }
         if (data.stakeAmount < 1) {
@@ -137,37 +122,6 @@ export function PredictionBlockchainForm({
             return { isValid: false, error: "Loading balance, please wait..." };
         }
         return { isValid: true };
-    };
-
-    const handleApproval = async () => {
-        if (!address || !chain) {
-            toast({
-                title: "Wallet Not Connected",
-                description: "Please connect your wallet first",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        try {
-            const stakeAmountWei = parseEther(currentStakeAmount.toString());
-
-            await writeApproveContract({
-                address: CONTRACTS.NTIQ_TOKEN,
-                abi: CONTRACTS.ABIS?.NTIQ_TOKEN || ABIS?.NTIQ_TOKEN,
-                functionName: 'approve',
-                args: [CONTRACTS.ENHANCED_PREDICTION_STAKING, stakeAmountWei],
-                chainId: chain.id,
-                gas: 150000n, // Increased gas limit for approval
-            });
-        } catch (error: any) {
-            console.error('❌ [PREDICTION-APPROVAL] Error details:', error);
-            toast({
-                title: "Approval Failed",
-                description: error.shortMessage || error.message || "Failed to approve NTIQ spending",
-                variant: "destructive",
-            });
-        }
     };
 
     const handlePredictionSubmit = async (data: PredictionFormData) => {
@@ -194,7 +148,7 @@ export function PredictionBlockchainForm({
             });
 
             // Use backend API which handles blockchain call automatically
-            const apiTimeout = new Promise((_, reject) =>
+            const apiTimeout = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error('Prediction creation timed out after 60 seconds')), 60000)
             );
 
@@ -218,8 +172,30 @@ export function PredictionBlockchainForm({
 
             console.log('✅ [PREDICTION-BLOCKCHAIN] Prediction created successfully:', predictionResponse);
 
-            // Mark as submitted and trigger refresh
-            setHasSubmittedToDB(true);
+            // Show success message
+            toast({
+                title: "Prediction Submitted Successfully!",
+                description: "Your prediction has been recorded and staked on the blockchain.",
+            });
+
+            // Refresh data
+            await queryClient.invalidateQueries({ queryKey: ["/api/predictions/active"] });
+            await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            await queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
+            await queryClient.invalidateQueries({ queryKey: ["/api/predictions/live-feed"] });
+            await queryClient.invalidateQueries({ queryKey: ["/api/activities/live"] });
+
+            // Refresh NTIQ balance
+            await refetchNtiqBalance();
+            await refetchAllowance();
+
+            // Call success callback
+            if (onSuccess) {
+                onSuccess();
+            }
+            if (onClose) {
+                onClose();
+            }
 
         } catch (error: any) {
             console.error('❌ [PREDICTION-BLOCKCHAIN] Error details:', error);
@@ -253,73 +229,10 @@ export function PredictionBlockchainForm({
                 description: errorDescription,
                 variant: "destructive",
             });
+        } finally {
             setIsSubmitting(false);
         }
     };
-
-    // Handle successful prediction creation
-    React.useEffect(() => {
-        if (hasSubmittedToDB) {
-            // Refresh data after successful prediction creation
-            const refreshData = async () => {
-                try {
-                    toast({
-                        title: "Prediction Submitted Successfully!",
-                        description: "Your prediction has been recorded and staked on the blockchain.",
-                    });
-
-                    console.log('🔄 [PREDICTION-BLOCKCHAIN] Starting query invalidation...');
-
-                    // Refresh data - Force immediate refetch
-                    await queryClient.invalidateQueries({ queryKey: ["/api/predictions/active"] });
-                    await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-                    await queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
-                    await queryClient.invalidateQueries({ queryKey: ["/api/predictions/live-feed"] });
-                    await queryClient.invalidateQueries({ queryKey: ["/api/activities/live"] });
-
-                    // Refresh NTIQ balance
-                    await refetchNtiqBalance();
-                    await refetchAllowance();
-
-                    console.log('✅ [PREDICTION-BLOCKCHAIN] All data refreshed successfully');
-
-                    // Call success callback
-                    if (onSuccess) {
-                        onSuccess();
-                    }
-                    if (onClose) {
-                        onClose();
-                    }
-                } catch (error: any) {
-                    console.error('❌ [PREDICTION-BLOCKCHAIN] Data refresh error:', error);
-                }
-            };
-
-            refreshData();
-        }
-    }, [hasSubmittedToDB, queryClient, refetchNtiqBalance, refetchAllowance, onSuccess, onClose]);
-
-    // Handle approval success
-    React.useEffect(() => {
-        if (isApproveSuccess) {
-            toast({
-                title: "Approval Successful!",
-                description: "NTIQ spending has been approved. You can now create predictions.",
-            });
-            refetchAllowance();
-        }
-    }, [isApproveSuccess, refetchAllowance]);
-
-    // Handle approval error
-    React.useEffect(() => {
-        if (isApproveError) {
-            toast({
-                title: "Approval Failed",
-                description: "Failed to approve NTIQ spending. Please try again.",
-                variant: "destructive",
-            });
-        }
-    }, [isApproveError]);
 
     // Calculate duration in seconds
     const durationMap = { '1h': 3600, '6h': 21600, '24h': 86400, '7d': 604800 };
@@ -452,45 +365,16 @@ export function PredictionBlockchainForm({
                         )}
                     </div>
 
-                    {/* Approval Button */}
-                    {needsApproval && (
-                        <Button
-                            type="button"
-                            onClick={handleApproval}
-                            disabled={isApprovePending || isApproveConfirming}
-                            className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-                        >
-                            {isApprovePending || isApproveConfirming ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Approving NTIQ...
-                                </>
-                            ) : (
-                                <>
-                                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                                    Approve NTIQ Tokens
-                                </>
-                            )}
-                        </Button>
-                    )}
-
                     {/* Submit Button */}
                     <Button
                         type="submit"
-                        disabled={isSubmitting || isApprovePending || isPredictionPending || isApproveConfirming || isPredictionConfirming}
+                        disabled={isSubmitting}
                         className="w-full gradient-bg hover:opacity-90 text-white font-semibold py-3 px-6 transition-all transform hover:scale-105"
                     >
-                        {isSubmitting || isApprovePending || isPredictionPending || isApproveConfirming || isPredictionConfirming ? (
+                        {isSubmitting ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {isApprovePending || isApproveConfirming ? "Approving NTIQ..." :
-                                    isPredictionPending || isPredictionConfirming ? "Submitting to Blockchain..." :
-                                        "Processing..."}
-                            </>
-                        ) : needsApproval ? (
-                            <>
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Approve NTIQ Tokens
+                                Creating Prediction...
                             </>
                         ) : (
                             <>
