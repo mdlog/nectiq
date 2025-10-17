@@ -250,7 +250,7 @@ export function PredictionBlockchainForm({
             console.log('🔵 [PREDICTION-SUBMIT] Sending request to backend with address:', address);
 
             // Step 1: Create prediction in database
-            const predictionResponse = await Promise.race([
+            const response = await Promise.race([
                 apiRequest('/api/predictions', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -264,6 +264,9 @@ export function PredictionBlockchainForm({
                 }),
                 apiTimeout
             ]);
+
+            const predictionResponse = await response.json();
+            console.log('📊 [PREDICTION-SUBMIT] Backend response:', predictionResponse);
 
             if (!predictionResponse || !predictionResponse.id) {
                 throw new Error('Failed to create prediction');
@@ -289,7 +292,7 @@ export function PredictionBlockchainForm({
             
             // Use wagmi writeContract for blockchain transaction
             const { writeContractAsync } = await import('wagmi/actions');
-            const { config } = await import('@/lib/wagmi');
+            const { config } = await import('@/lib/web3Config');
             
             const txHash = await writeContractAsync(config, {
                 address: CONTRACTS.ENHANCED_PREDICTION_STAKING,
