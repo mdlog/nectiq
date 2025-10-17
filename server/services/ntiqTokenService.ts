@@ -89,10 +89,22 @@ export class NTIQTokenService {
    */
   async getBalance(address: string): Promise<number> {
     try {
-      const balance = await this.contract.balanceOf(address);
-      return parseFloat(ethers.formatEther(balance));
+      logger.info(`🔍 [NTIQ-BALANCE] Getting balance for address: ${address}`);
+      logger.info(`🔍 [NTIQ-BALANCE] Using contract address: ${NTIQ_TOKEN_ADDRESS}`);
+      
+      // Normalize address to checksum format for consistency
+      const normalizedAddress = ethers.getAddress(address);
+      logger.info(`🔍 [NTIQ-BALANCE] Normalized address: ${normalizedAddress}`);
+      
+      const balance = await this.contract.balanceOf(normalizedAddress);
+      const balanceInNTIQ = parseFloat(ethers.formatEther(balance));
+      
+      logger.info(`💰 [NTIQ-BALANCE] Raw balance (wei): ${balance.toString()}`);
+      logger.info(`💰 [NTIQ-BALANCE] Balance in NTIQ: ${balanceInNTIQ}`);
+      
+      return balanceInNTIQ;
     } catch (error) {
-      logger.error(`Failed to get NTIQ balance for ${address}:`, error);
+      logger.error(`❌ [NTIQ-BALANCE] Failed to get NTIQ balance for ${address}:`, error);
       return 0;
     }
   }

@@ -3391,6 +3391,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use wallet address from frontend if provided, otherwise use database address
       const currentWalletAddress = walletAddress || user.walletAddress;
       logger.info(`🔗 [PREDICTION] Using wallet address: ${currentWalletAddress} (from ${walletAddress ? 'frontend' : 'database'})`);
+      logger.info(`🔗 [PREDICTION] Frontend wallet address: ${walletAddress || 'not provided'}`);
+      logger.info(`🔗 [PREDICTION] Database wallet address: ${user.walletAddress}`);
 
       const blockchainBalance = await ntiqTokenService.getBalance(currentWalletAddress);
       logger.info(`💰 [PREDICTION] User ${userId} blockchain balance: ${blockchainBalance} NTIQ`);

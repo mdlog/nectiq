@@ -300,13 +300,15 @@ export function PredictionBlockchainForm({
             // Enhanced error handling with specific error messages
             let errorTitle = "Prediction Failed";
             let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
+            let showAirdropButton = false;
 
             if (error.message?.includes("Prediction creation timed out")) {
                 errorTitle = "Request Timeout";
                 errorDescription = "Prediction creation took too long. Please try again.";
-            } else if (error.message?.includes("Insufficient balance")) {
+            } else if (error.message?.includes("Insufficient balance") || error.message?.includes("Insufficient NTIQ balance")) {
                 errorTitle = "Insufficient Balance";
                 errorDescription = "You don't have enough NTIQ tokens for this prediction";
+                showAirdropButton = true;
             } else if (error.message?.includes("Approval Required")) {
                 errorTitle = "Approval Required";
                 errorDescription = "Please approve NTIQ spending first by clicking 'Approve NTIQ' button";
