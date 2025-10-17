@@ -259,11 +259,27 @@ export function BattleBlockchainForm({
                 throw new Error('Invalid stake amount');
             }
             if (!chain || chain.id !== 80002) {
+                console.error('❌ [BATTLE-BLOCKCHAIN] Wrong network detected:', {
+                    currentChainId: chain?.id,
+                    expectedChainId: 80002,
+                    chainName: chain?.name
+                });
                 throw new Error(`Wrong network. Please switch to Polygon Amoy (Chain ID: 80002). Current chain: ${chain?.id || 'Unknown'}`);
             }
             if (!address) {
                 throw new Error('Wallet address not available');
             }
+
+            console.log('🚀 [BATTLE-BLOCKCHAIN] About to call writeBattleContract with:', {
+                address: CONTRACTS.BATTLE_ESCROW,
+                abiAvailable: !!(CONTRACTS.ABIS?.BATTLE_ESCROW || ABIS?.BATTLE_ESCROW),
+                functionName: 'createBattle',
+                args: [battleId, stakeAmountWei],
+                chainId: chain.id,
+                gas: 300000n,
+                battleIdType: typeof battleId,
+                stakeAmountWeiType: typeof stakeAmountWei
+            });
 
             await writeBattleContract({
                 address: CONTRACTS.BATTLE_ESCROW,
