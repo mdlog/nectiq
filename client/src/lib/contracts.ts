@@ -192,33 +192,39 @@ const ABIS = {
     // Battle Escrow ABI (key functions)
     BATTLE_ESCROW: [
         {
+            inputs: [
+                { internalType: 'bytes32', name: 'battleId', type: 'bytes32' },
+                { internalType: 'uint256', name: 'stakeAmount', type: 'uint256' }
+            ],
             name: 'createBattle',
-            type: 'function',
-            stateMutability: 'nonpayable',
-            inputs: [
-                { name: 'battleId', type: 'bytes32' },
-                { name: 'stakeAmount', type: 'uint256' },
+            outputs: [
+                { internalType: 'bool', name: '', type: 'bool' }
             ],
-            outputs: [{ name: '', type: 'bool' }],
+            stateMutability: 'nonpayable',
+            type: 'function'
         },
         {
+            inputs: [
+                { internalType: 'bytes32', name: 'battleId', type: 'bytes32' }
+            ],
             name: 'acceptBattle',
-            type: 'function',
-            stateMutability: 'nonpayable',
-            inputs: [
-                { name: 'battleId', type: 'bytes32' },
+            outputs: [
+                { internalType: 'bool', name: '', type: 'bool' }
             ],
-            outputs: [{ name: '', type: 'bool' }],
+            stateMutability: 'nonpayable',
+            type: 'function'
         },
         {
-            name: 'resolveBattle',
-            type: 'function',
-            stateMutability: 'nonpayable',
             inputs: [
-                { name: 'battleId', type: 'bytes32' },
-                { name: 'winner', type: 'address' },
+                { internalType: 'bytes32', name: 'battleId', type: 'bytes32' },
+                { internalType: 'address', name: 'winner', type: 'address' }
             ],
-            outputs: [{ name: '', type: 'bool' }],
+            name: 'resolveBattle',
+            outputs: [
+                { internalType: 'bool', name: '', type: 'bool' }
+            ],
+            stateMutability: 'nonpayable',
+            type: 'function'
         },
     ] as const,
 
