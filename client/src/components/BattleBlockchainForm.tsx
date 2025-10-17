@@ -101,7 +101,8 @@ export function BattleBlockchainForm({
     });
     const allowance = allowanceWei ? parseFloat(formatEther(allowanceWei)) : 0;
 
-    const needsApproval = allowance < form.watch('stakeAmount');
+    const currentStakeAmount = form.watch('stakeAmount') || 0;
+    const needsApproval = allowance < currentStakeAmount;
 
     const handleApprove = async (stakeAmount: number) => {
         if (!address || !chain) {
@@ -150,7 +151,7 @@ export function BattleBlockchainForm({
             if (!CONTRACTS.BATTLE_ESCROW) {
                 throw new Error('Battle escrow contract address not configured');
             }
-            
+
             if (!CONTRACTS.ABIS?.BATTLE_ESCROW && !ABIS?.BATTLE_ESCROW) {
                 throw new Error('Battle escrow contract ABI not configured');
             }
@@ -179,7 +180,7 @@ export function BattleBlockchainForm({
             // Check NTIQ balance
             const ntiqBalanceWei = await refetchNtiqBalance();
             const currentBalance = ntiqBalanceWei.data ? Number(formatEther(ntiqBalanceWei.data)) : 0;
-            
+
             if (currentBalance < data.stakeAmount) {
                 throw new Error(`Insufficient NTIQ balance. You have ${currentBalance.toFixed(2)} NTIQ but need ${data.stakeAmount} NTIQ`);
             }
@@ -189,7 +190,7 @@ export function BattleBlockchainForm({
             const currentAllowance = allowanceWei.data ? Number(formatEther(allowanceWei.data)) : 0;
             
             if (currentAllowance < data.stakeAmount) {
-                throw new Error(`Insufficient allowance. You need to approve ${data.stakeAmount} NTIQ spending first`);
+                throw new Error(`Insufficient allowance. You have ${currentAllowance.toFixed(2)} NTIQ allowance but need ${data.stakeAmount} NTIQ. Please approve NTIQ spending first.`);
             }
 
             console.log('⚔️ [BATTLE-BLOCKCHAIN] Creating battle:', {
@@ -215,10 +216,10 @@ export function BattleBlockchainForm({
             });
         } catch (error: any) {
             console.error('❌ [BATTLE-BLOCKCHAIN] Battle creation failed:', error);
-            
+
             let errorTitle = "Battle Creation Failed";
             let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
-            
+
             // Handle specific error cases
             if (error.message?.includes("Battle escrow contract address not configured")) {
                 errorTitle = "Contract Configuration Error";
@@ -229,12 +230,15 @@ export function BattleBlockchainForm({
             } else if (error.message?.includes("UNSUPPORTED_OPERATION")) {
                 errorTitle = "Contract Error";
                 errorDescription = "The battle contract operation is not supported. Please check your wallet connection and try again.";
+            } else if (error.message?.includes("execution reverted") && error.message?.includes("unknown custom error")) {
+                errorTitle = "Approval Required";
+                errorDescription = "You need to approve NTIQ spending first. Please click 'Approve NTIQ' button before creating battle.";
             } else if (error.message?.includes("Insufficient balance")) {
                 errorTitle = "Insufficient Balance";
                 errorDescription = "You don't have enough NTIQ tokens for this battle";
-            } else if (error.message?.includes("Approval Required")) {
+            } else if (error.message?.includes("Approval Required") || error.message?.includes("Insufficient allowance")) {
                 errorTitle = "Approval Required";
-                errorDescription = "Please approve NTIQ spending first by clicking 'Approve NTIQ' button";
+                errorDescription = error.message || "Please approve NTIQ spending first by clicking 'Approve NTIQ' button";
             } else if (error.message?.includes("User rejected")) {
                 errorTitle = "Transaction Cancelled";
                 errorDescription = "You cancelled the transaction in MetaMask";
@@ -248,7 +252,7 @@ export function BattleBlockchainForm({
                 errorTitle = "Database Error";
                 errorDescription = "Failed to create battle in database. Please try again.";
             }
-            
+
             toast({
                 title: errorTitle,
                 description: errorDescription,
