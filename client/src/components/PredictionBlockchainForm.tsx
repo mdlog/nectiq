@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { useAccount, useReadContract } from 'wagmi';
-import { formatEther } from 'viem';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { formatEther, parseEther } from 'viem';
 import { Loader2, Target, CheckCircle2, AlertCircle, Coins, HelpCircle } from 'lucide-react';
 import { CONTRACTS, ABIS } from '@/lib/contracts';
 import { apiRequest } from "@/lib/queryClient";
@@ -55,6 +55,14 @@ export function PredictionBlockchainForm({
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Wagmi hooks for blockchain interaction
+    const { writeContract: writeApproveContract, data: approveTxHash, isPending: isApprovePending } = useWriteContract();
+
+    const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess, isError: isApproveError } = useWaitForTransactionReceipt({
+        hash: approveTxHash,
+        query: { enabled: !!approveTxHash },
+    });
+
     const form = useForm<PredictionFormData>({
         resolver: zodResolver(predictionFormSchema),
         defaultValues: {
@@ -95,6 +103,58 @@ export function PredictionBlockchainForm({
 
     // Check if approval is needed
     const needsApproval = !allowanceWei || allowance === 0 || allowance < currentStakeAmount;
+
+    // Handle approval success
+    React.useEffect(() => {
+        if (isApproveSuccess) {
+            toast({
+                title: "✅ NTIQ Approval Successful",
+                description: "You can now create predictions. Click 'Step 2: Create Prediction' to proceed.",
+            });
+            refetchAllowance();
+        }
+    }, [isApproveSuccess, toast, refetchAllowance]);
+
+    // Handle approval errors
+    React.useEffect(() => {
+        if (isApproveError) {
+            toast({
+                title: "Approval Transaction Failed",
+                description: "The approval transaction failed. Please try again.",
+                variant: "destructive",
+            });
+        }
+    }, [isApproveError, toast]);
+
+    const handleApprove = async (stakeAmount: number) => {
+        if (!address || !chain) {
+            toast({
+                title: "Wallet Not Connected",
+                description: "Please connect your wallet to create predictions.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            const stakeAmountWei = parseEther(stakeAmount.toString());
+
+            await writeApproveContract({
+                address: CONTRACTS.NTIQ_TOKEN,
+                abi: CONTRACTS.ABIS?.NTIQ_TOKEN || ABIS?.NTIQ_TOKEN,
+                functionName: 'approve',
+                args: [CONTRACTS.ENHANCED_PREDICTION_STAKING, stakeAmountWei],
+                chainId: chain.id,
+                gas: 150000n, // Optimize gas limit for approve
+            });
+        } catch (error: any) {
+            toast({
+                title: "Approval Failed",
+                description: error.shortMessage || error.message,
+                variant: "destructive",
+            });
+        }
+    };
 
     // Validation function
     const validatePrediction = (data: PredictionFormData): { isValid: boolean; error?: string } => {
@@ -236,6 +296,14 @@ export function PredictionBlockchainForm({
         }
     };
 
+    const onSubmit = (data: PredictionFormData) => {
+        if (needsApproval) {
+            handleApprove(data.stakeAmount);
+        } else {
+            handlePredictionSubmit(data);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Balance Display */}
@@ -303,7 +371,7 @@ export function PredictionBlockchainForm({
             )}
 
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(handlePredictionSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Cryptocurrency Selection */}
                         <FormField
@@ -486,18 +554,26 @@ export function PredictionBlockchainForm({
                     {/* Submit Button */}
                     <Button
                         type="submit"
-                        disabled={isSubmitting}
-                        className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold py-3 px-6 transition-all transform hover:scale-105"
+                        disabled={isSubmitting || isApprovePending || isApproveConfirming}
+                        className={`w-full font-semibold py-3 px-6 transition-all transform hover:scale-105 ${needsApproval
+                            ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                            : 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white'
+                            }`}
                     >
-                        {isSubmitting ? (
+                        {isSubmitting || isApprovePending || isApproveConfirming ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Creating Prediction...
+                                {needsApproval ? "Approving NTIQ..." : "Creating Prediction..."}
+                            </>
+                        ) : needsApproval ? (
+                            <>
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                Step 1: Approve NTIQ Tokens
                             </>
                         ) : (
                             <>
                                 <Target className="mr-2 h-4 w-4" />
-                                Submit Prediction
+                                Step 2: Create Prediction
                             </>
                         )}
                     </Button>
