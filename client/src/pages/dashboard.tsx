@@ -212,17 +212,6 @@ export default function Dashboard() {
                     Make Prediction
                   </Button>
 
-                  {/* Debug Test Button */}
-                  <Button
-                    onClick={() => {
-                      console.log('🔍 [DEBUG] Force show modal');
-                      setPreSelectedForPrediction('bitcoin');
-                      setShowPredictionForm(true);
-                    }}
-                    className="w-full mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg"
-                  >
-                    Debug: Force Show Modal
-                  </Button>
                 </div>
               </>
             ) : (
