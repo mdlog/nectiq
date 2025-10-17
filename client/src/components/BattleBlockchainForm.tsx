@@ -122,7 +122,7 @@ export function BattleBlockchainForm({
             allowanceIsZero: allowance === 0,
             stakeAmountGreaterThanAllowance: currentStakeAmount > allowance
         });
-        
+
         // Force show Step 1 if allowance is 0 or undefined
         if (!allowanceWei || allowance === 0) {
             console.log('⚠️ [BATTLE-APPROVAL] Forcing Step 1 - No allowance detected');
@@ -240,8 +240,30 @@ export function BattleBlockchainForm({
                 abi: CONTRACTS.ABIS?.BATTLE_ESCROW ? 'Available' : 'Missing',
                 ntiqBalance: currentBalance,
                 allowance: currentAllowance,
-                needsApproval: currentAllowance < data.stakeAmount
+                needsApproval: currentAllowance < data.stakeAmount,
+                battleIdHex: battleId,
+                stakeAmountWeiHex: stakeAmountWei.toString()
             });
+
+            // Additional validation before contract call
+            if (!CONTRACTS.BATTLE_ESCROW) {
+                throw new Error('Battle escrow contract address not configured');
+            }
+            if (!CONTRACTS.ABIS?.BATTLE_ESCROW && !ABIS?.BATTLE_ESCROW) {
+                throw new Error('Battle escrow contract ABI not configured');
+            }
+            if (!battleId || battleId === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+                throw new Error('Invalid battle ID generated');
+            }
+            if (!stakeAmountWei || stakeAmountWei === 0n) {
+                throw new Error('Invalid stake amount');
+            }
+            if (!chain || chain.id !== 80002) {
+                throw new Error(`Wrong network. Please switch to Polygon Amoy (Chain ID: 80002). Current chain: ${chain?.id || 'Unknown'}`);
+            }
+            if (!address) {
+                throw new Error('Wallet address not available');
+            }
 
             await writeBattleContract({
                 address: CONTRACTS.BATTLE_ESCROW,
@@ -255,6 +277,9 @@ export function BattleBlockchainForm({
             console.error('❌ [BATTLE-BLOCKCHAIN] Battle creation failed:', error);
             console.error('❌ [BATTLE-BLOCKCHAIN] Error data:', error.data);
             console.error('❌ [BATTLE-BLOCKCHAIN] Error code:', error.code);
+            console.error('❌ [BATTLE-BLOCKCHAIN] Error message:', error.message);
+            console.error('❌ [BATTLE-BLOCKCHAIN] Error shortMessage:', error.shortMessage);
+            console.error('❌ [BATTLE-BLOCKCHAIN] Full error object:', JSON.stringify(error, null, 2));
 
             let errorTitle = "Battle Creation Failed";
             let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
@@ -278,6 +303,24 @@ export function BattleBlockchainForm({
                     errorTitle = "Contract Error";
                     errorDescription = "The battle contract operation failed. Please check your wallet connection and try again.";
                 }
+            } else if (error.message?.includes("Wrong network")) {
+                errorTitle = "Wrong Network";
+                errorDescription = error.message;
+            } else if (error.message?.includes("Battle escrow contract address not configured")) {
+                errorTitle = "Contract Configuration Error";
+                errorDescription = "Battle escrow contract address is not configured. Please contact support.";
+            } else if (error.message?.includes("Battle escrow contract ABI not configured")) {
+                errorTitle = "Contract Configuration Error";
+                errorDescription = "Battle escrow contract ABI is not configured. Please contact support.";
+            } else if (error.message?.includes("Invalid battle ID generated")) {
+                errorTitle = "Battle ID Error";
+                errorDescription = "Failed to generate valid battle ID. Please try again.";
+            } else if (error.message?.includes("Invalid stake amount")) {
+                errorTitle = "Invalid Stake Amount";
+                errorDescription = "Stake amount is invalid. Please check your input.";
+            } else if (error.message?.includes("Wallet address not available")) {
+                errorTitle = "Wallet Error";
+                errorDescription = "Wallet address is not available. Please reconnect your wallet.";
             } else if (error.message?.includes("Insufficient balance")) {
                 errorTitle = "Insufficient Balance";
                 errorDescription = "You don't have enough NTIQ tokens for this battle";

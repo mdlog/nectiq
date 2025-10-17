@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 import nectiqLogo from "@/assets/nectiq-logo.png";
 import { PlatformStats } from "@/components/platform-stats";
 
@@ -76,6 +77,7 @@ function CryptoPriceTicker() {
 
 function LandingHeader() {
   const [, setLocation] = useLocation();
+  const { openConnectModal } = useConnectModal();
   
   // Check if user is authenticated
   const { data: user } = useQuery({
@@ -90,8 +92,13 @@ function LandingHeader() {
       // If authenticated, go to home page
       setLocation("/home");
     } else {
-      // If not authenticated, show login prompt
-      setLocation("/home");
+      // If not authenticated, open wallet connection modal
+      if (openConnectModal) {
+        openConnectModal();
+      } else {
+        // Fallback to home page if modal not available
+        setLocation("/home");
+      }
     }
   };
 
@@ -125,13 +132,13 @@ function LandingHeader() {
             </a>
           </nav>
 
-          {/* Login/Sign Up Button */}
+          {/* Connect Wallet Button */}
           <div className="flex items-center">
             <Button 
               onClick={handleGetStarted}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              Login or Sign Up
+              {user ? "Go to Dashboard" : "Connect Wallet"}
             </Button>
           </div>
         </div>

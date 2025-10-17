@@ -85,9 +85,17 @@ console.warn = (...args) => {
 function Router() {
   return (
     <Switch>
-      {/* Home page - conditional content based on authentication */}
-      <Route path="/" component={Dashboard} />
-      <Route path="/home" component={Dashboard} />
+      {/* Home page - PROTECTED - requires wallet connection */}
+      <Route path="/">
+        <ProtectedRoute requireWallet={true} redirectTo="/landing">
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/home">
+        <ProtectedRoute requireWallet={true} redirectTo="/landing">
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
 
       <Route path="/user-dashboard">
         <ProtectedRoute requireWallet={true}>
@@ -140,6 +148,9 @@ function Router() {
           <AdminPanel />
         </ProtectedRoute>
       </Route>
+
+      {/* Landing page - PUBLIC - for users without wallet */}
+      <Route path="/landing" component={LandingPage} />
 
       {/* Public pages */}
       <Route path="/leaderboard" component={Leaderboard} />
