@@ -69,7 +69,6 @@ export class PredictionStakingService {
                 duration,
                 predictedPriceWei,
                 {
-                    from: userAddress,
                     gasLimit: 300000n // Increased gas limit
                 }
             );

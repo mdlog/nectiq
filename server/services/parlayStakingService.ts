@@ -64,10 +64,7 @@ export class ParlayStakingService {
                 parlayId,
                 stakeAmountWei,
                 coinCount,
-                duration,
-                {
-                    from: userAddress
-                }
+                duration
             );
 
             logger.info(`📝 [PARLAY] Transaction sent: ${tx.hash}`);

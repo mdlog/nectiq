@@ -42,10 +42,7 @@ export class PredictionInsuranceService {
 
             const tx = await this.contract.buyInsurance(
                 params.predictionId,
-                params.stakeAmount,
-                {
-                    from: params.userAddress
-                }
+                params.stakeAmount
             );
 
             logger.info(`✅ [INSURANCE] Insurance purchased: ${tx.hash}`);
@@ -68,10 +65,7 @@ export class PredictionInsuranceService {
             logger.info(`   User: ${params.userAddress}`);
 
             const tx = await this.contract.claimInsurance(
-                params.predictionId,
-                {
-                    from: params.userAddress
-                }
+                params.predictionId
             );
 
             logger.info(`✅ [INSURANCE] Insurance claimed: ${tx.hash}`);
