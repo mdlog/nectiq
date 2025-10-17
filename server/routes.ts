@@ -3312,7 +3312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Enhanced security validation for predictions
-      const { cryptocurrency, predictedPrice, stakeAmount, timeframe } = req.body;
+      const { cryptocurrency, predictedPrice, stakeAmount, timeframe, walletAddress } = req.body;
 
       if (!cryptocurrency || !predictedPrice || !stakeAmount || !timeframe) {
         return res.status(400).json({ message: "All fields are required" });
@@ -3388,7 +3388,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      // Use wallet address from frontend if provided, otherwise use database address
+      const currentWalletAddress = walletAddress || user.walletAddress;
+      logger.info(`🔗 [PREDICTION] Using wallet address: ${currentWalletAddress} (from ${walletAddress ? 'frontend' : 'database'})`);
+
+      const blockchainBalance = await ntiqTokenService.getBalance(currentWalletAddress);
       logger.info(`💰 [PREDICTION] User ${userId} blockchain balance: ${blockchainBalance} NTIQ`);
 
       if (blockchainBalance < validatedData.stakeAmount) {
@@ -3411,7 +3415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const tempPredictionId = blockchainService.generatePredictionId(Date.now());
         txHash = await predictionStakingService.lockStake({
           predictionId: tempPredictionId,
-          userAddress: user.walletAddress,
+          userAddress: currentWalletAddress,
           stakeAmount: validatedData.stakeAmount.toString()
         });
 
@@ -3449,7 +3453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details: {
             userBalance: blockchainBalance,
             requiredAmount: validatedData.stakeAmount,
-            userAddress: user.walletAddress
+            userAddress: currentWalletAddress
           }
         });
       }

@@ -246,6 +246,8 @@ export function PredictionBlockchainForm({
                 setTimeout(() => reject(new Error('Prediction creation timed out after 60 seconds')), 60000)
             );
 
+            console.log('🔵 [PREDICTION-SUBMIT] Sending request to backend with address:', address);
+
             const predictionResponse = await Promise.race([
                 apiRequest('/api/predictions', {
                     method: 'POST',
@@ -254,7 +256,8 @@ export function PredictionBlockchainForm({
                         predictedPrice: data.predictedPrice,
                         timeframe: data.timeframe,
                         stakeAmount: data.stakeAmount,
-                        duration: duration
+                        duration: duration,
+                        walletAddress: address // Send current wallet address to ensure consistency
                     })
                 }),
                 apiTimeout
