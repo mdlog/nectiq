@@ -51,10 +51,7 @@ export class AchievementSystemService {
                 params.name,
                 params.description,
                 params.threshold,
-                params.isMintable,
-                {
-                    from: blockchainService.getSigner().address
-                }
+                params.isMintable
             );
 
             const receipt = await blockchainService.waitForTransaction(tx.hash);
@@ -85,10 +82,7 @@ export class AchievementSystemService {
             const tx = await this.contract.updateProgress(
                 params.userAddress,
                 params.category,
-                params.amount,
-                {
-                    from: blockchainService.getSigner().address
-                }
+                params.amount
             );
 
             logger.info(`✅ [ACHIEVEMENT] Progress updated: ${tx.hash}`);
@@ -111,10 +105,7 @@ export class AchievementSystemService {
 
             const tx = await this.contract.mintAchievement(
                 params.achievementId,
-                params.userAddress,
-                {
-                    from: blockchainService.getSigner().address
-                }
+                params.userAddress
             );
 
             logger.info(`✅ [ACHIEVEMENT] Achievement minted: ${tx.hash}`);

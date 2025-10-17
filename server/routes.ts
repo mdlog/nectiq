@@ -3410,82 +3410,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const targetTime = predictionService.getTargetTime(validatedData.timeframe);
 
-      // BLOCKCHAIN FIRST: Lock stake in smart contract BEFORE creating prediction
-      let txHash: string;
-      try {
-        // Use temporary prediction ID for blockchain
-        const tempPredictionId = blockchainService.generatePredictionId(Date.now());
-        txHash = await predictionStakingService.lockStake({
-          predictionId: tempPredictionId,
-          userAddress: currentWalletAddress,
-          stakeAmount: validatedData.stakeAmount.toString()
-        });
+      // Create prediction in database first (no blockchain transaction from backend)
+      logger.info(`🔗 [PREDICTION] Creating prediction in database (blockchain transaction will be handled by frontend)`);
 
-        logger.info(`🔗 [BLOCKCHAIN] Stake locked on blockchain: ${txHash}`);
-      } catch (blockchainError: any) {
-        logger.error(`❌ [BLOCKCHAIN] Failed to lock stake on blockchain:`, blockchainError);
-
-        // Enhanced error handling with specific error messages
-        let errorMessage = "Failed to lock stake on blockchain";
-        let statusCode = 500;
-
-        if (blockchainError.message.includes("User has insufficient NTIQ balance")) {
-          errorMessage = `Insufficient NTIQ balance. You need ${validatedData.stakeAmount} NTIQ but your balance is ${blockchainBalance.toFixed(2)} NTIQ`;
-          statusCode = 400;
-        } else if (blockchainError.message.includes("User needs to approve NTIQ spending")) {
-          errorMessage = "Please approve NTIQ spending first. Click 'Approve NTIQ' button before creating prediction";
-          statusCode = 400;
-        } else if (blockchainError.message.includes("Smart contract execution failed")) {
-          errorMessage = "Smart contract execution failed. Please check your prediction parameters";
-          statusCode = 400;
-        } else if (blockchainError.message.includes("Gas limit too low")) {
-          errorMessage = "Transaction failed due to low gas limit. Please try again";
-          statusCode = 500;
-        } else if (blockchainError.message.includes("Transaction nonce error")) {
-          errorMessage = "Transaction error. Please wait a moment and try again";
-          statusCode = 500;
-        } else if (blockchainError.message.includes("Insufficient funds for gas fees")) {
-          errorMessage = "Insufficient funds for gas fees. Please ensure you have enough POL tokens";
-          statusCode = 400;
-        }
-
-        return res.status(statusCode).json({
-          message: errorMessage,
-          error: blockchainError.message,
-          details: {
-            userBalance: blockchainBalance,
-            requiredAmount: validatedData.stakeAmount,
-            userAddress: currentWalletAddress
-          }
-        });
-      }
-
-      // Create prediction in database AFTER blockchain success
+      // Create prediction in database
       const prediction = await storage.createPrediction({
         ...validatedData,
         userId: userId,
         targetTime
       });
 
-      // Update prediction with blockchain transaction hash
-      await db.update(predictions)
-        .set({
-          blockchainStakeHash: txHash,
-          blockchainStatus: 'confirmed'
-        })
-        .where(eq(predictions.id, prediction.id));
-
-      // Log transaction for tracking (no balance change, just logging)
-      await storage.logTransaction({
-        userId,
-        type: 'prediction_stake_blockchain',
-        amount: validatedData.stakeAmount,
-        description: `Prediction stake (Blockchain) - ${validatedData.cryptocurrency} ${validatedData.timeframe}`,
-        relatedId: prediction.id,
-        status: 'completed'
-      });
-
-      logger.info(`✅ [PREDICTION] Created successfully: ID ${prediction.id}, Blockchain TX: ${txHash}`);
+      logger.info(`✅ [PREDICTION] Created successfully: ID ${prediction.id}`);
 
       // Check for achievement progress updates after prediction creation
       try {

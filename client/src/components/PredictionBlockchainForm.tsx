@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from "@/hooks/use-toast";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
+import { ethers } from 'ethers';
 import { Loader2, Target, CheckCircle2, AlertCircle, Coins, HelpCircle } from 'lucide-react';
 import { CONTRACTS, ABIS } from '@/lib/contracts';
 import { apiRequest } from "@/lib/queryClient";
@@ -248,6 +249,7 @@ export function PredictionBlockchainForm({
 
             console.log('🔵 [PREDICTION-SUBMIT] Sending request to backend with address:', address);
 
+            // Step 1: Create prediction in database
             const predictionResponse = await Promise.race([
                 apiRequest('/api/predictions', {
                     method: 'POST',
@@ -267,7 +269,37 @@ export function PredictionBlockchainForm({
                 throw new Error('Failed to create prediction');
             }
 
-            console.log('✅ [PREDICTION-BLOCKCHAIN] Prediction created successfully:', predictionResponse);
+            console.log('✅ [PREDICTION-BLOCKCHAIN] Prediction created in database:', predictionResponse);
+
+            // Step 2: Now do blockchain transaction from frontend
+            console.log('🔗 [PREDICTION-BLOCKCHAIN] Starting blockchain transaction...');
+            
+            // Generate prediction ID for blockchain (using database ID)
+            const blockchainPredictionId = ethers.id(`prediction_${predictionResponse.id}`);
+            
+            // Call blockchain contract directly from frontend
+            const stakeAmountWei = parseEther(data.stakeAmount.toString());
+            const predictedPriceWei = parseEther(data.predictedPrice);
+            
+            console.log('🔗 [PREDICTION-BLOCKCHAIN] Calling blockchain contract...');
+            console.log('   Prediction ID:', blockchainPredictionId);
+            console.log('   Stake Amount:', stakeAmountWei.toString());
+            console.log('   Duration:', duration);
+            console.log('   Predicted Price:', predictedPriceWei.toString());
+            
+            // Use wagmi writeContract for blockchain transaction
+            const { writeContractAsync } = await import('wagmi/actions');
+            const { config } = await import('@/lib/wagmi');
+            
+            const txHash = await writeContractAsync(config, {
+                address: CONTRACTS.ENHANCED_PREDICTION_STAKING,
+                abi: CONTRACTS.ABIS?.ENHANCED_PREDICTION_STAKING || ABIS?.ENHANCED_PREDICTION_STAKING,
+                functionName: 'lockStake',
+                args: [blockchainPredictionId, stakeAmountWei, BigInt(duration), predictedPriceWei],
+                gas: 300000n,
+            });
+
+            console.log('✅ [PREDICTION-BLOCKCHAIN] Blockchain transaction successful:', txHash);
 
             // Show success message
             toast({

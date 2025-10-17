@@ -44,10 +44,7 @@ export class ReferralSystemService {
 
             const tx = await this.contract.registerReferral(
                 params.referrer,
-                params.referee,
-                {
-                    from: params.referee
-                }
+                params.referee
             );
 
             logger.info(`✅ [REFERRAL] Referral registered: ${tx.hash}`);
@@ -74,10 +71,7 @@ export class ReferralSystemService {
             const tx = await this.contract.batchDistributeReferralRewards(
                 [params.referee],
                 [params.activityAmount],
-                [params.activityType],
-                {
-                    from: blockchainService.getSigner().address
-                }
+                [params.activityType]
             );
 
             logger.info(`✅ [REFERRAL] Reward distributed: ${tx.hash}`);
@@ -102,10 +96,7 @@ export class ReferralSystemService {
             const tx = await this.contract.batchDistributeReferralRewards(
                 params.referees,
                 params.activityAmounts,
-                params.activityTypes,
-                {
-                    from: blockchainService.getSigner().address
-                }
+                params.activityTypes
             );
 
             logger.info(`✅ [REFERRAL] Batch rewards distributed: ${tx.hash}`);
@@ -207,10 +198,7 @@ export class ReferralSystemService {
 
             const tx = await this.contract.updateReferralStatus(
                 params.referee,
-                params.newStatus,
-                {
-                    from: blockchainService.getSigner().address
-                }
+                params.newStatus
             );
 
             logger.info(`✅ [REFERRAL] Status updated: ${tx.hash}`);

@@ -125,10 +125,7 @@ export class PredictionStakingService {
             // Call enhanced smart contract - it will automatically calculate accuracy and multipliers
             const tx = await this.contract.releaseReward(
                 predictionId,
-                actualPriceWei,
-                {
-                    from: blockchainService.getSigner().address
-                }
+                actualPriceWei
             );
 
             logger.info(`📝 [PREDICTION] Transaction sent: ${tx.hash}`);

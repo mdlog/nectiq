@@ -96,10 +96,7 @@ export class ParlayStakingService {
 
             // Enhanced contract automatically calculates compound multiplier based on duration and coin count
             const tx = await this.contract.releaseCompoundReward(
-                parlayId,
-                {
-                    from: blockchainService.getSigner().address
-                }
+                parlayId
             );
 
             logger.info(`📝 [PARLAY] Transaction sent: ${tx.hash}`);
