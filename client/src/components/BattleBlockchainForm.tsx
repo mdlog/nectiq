@@ -53,6 +53,7 @@ export function BattleBlockchainForm({
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasSubmittedToDB, setHasSubmittedToDB] = useState(false);
+    const [createdBattleId, setCreatedBattleId] = useState<number | null>(null);
 
     const form = useForm<BattleFormData>({
         resolver: zodResolver(battleFormSchema),
@@ -199,6 +200,9 @@ export function BattleBlockchainForm({
                 throw new Error('Failed to create battle in database');
             }
 
+            // Store the battle ID for later use
+            setCreatedBattleId(battleResponse.id);
+
             // Generate battle ID using database ID (consistent with backend)
             const battleId = ethers.id(`battle_${battleResponse.id}`);
 
@@ -281,6 +285,8 @@ export function BattleBlockchainForm({
                 stakeAmountWeiType: typeof stakeAmountWei
             });
 
+            console.log('🔗 [BATTLE-BLOCKCHAIN] MetaMask popup should appear now for battle creation...');
+
             await writeBattleContract({
                 address: CONTRACTS.BATTLE_ESCROW,
                 abi: CONTRACTS.ABIS?.BATTLE_ESCROW || ABIS?.BATTLE_ESCROW,
@@ -289,6 +295,15 @@ export function BattleBlockchainForm({
                 chainId: chain.id,
                 gas: 300000n, // Optimize gas limit for create battle
             });
+
+            console.log('✅ [BATTLE-BLOCKCHAIN] Battle contract call initiated successfully');
+
+            // Wait for transaction to be confirmed
+            if (battleTxHash) {
+                console.log('⏳ [BATTLE-BLOCKCHAIN] Waiting for transaction confirmation...');
+                // The useWaitForTransactionReceipt hook will handle the confirmation
+                // We'll update the database in the useEffect when isBattleSuccess becomes true
+            }
         } catch (error: any) {
             console.error('❌ [BATTLE-BLOCKCHAIN] Battle creation failed:', error);
             console.error('❌ [BATTLE-BLOCKCHAIN] Error data:', error.data);
@@ -296,6 +311,19 @@ export function BattleBlockchainForm({
             console.error('❌ [BATTLE-BLOCKCHAIN] Error message:', error.message);
             console.error('❌ [BATTLE-BLOCKCHAIN] Error shortMessage:', error.shortMessage);
             console.error('❌ [BATTLE-BLOCKCHAIN] Full error object:', JSON.stringify(error, null, 2));
+
+            // If blockchain transaction failed, clean up the database battle
+            if (createdBattleId) {
+                console.log('🧹 [BATTLE-BLOCKCHAIN] Cleaning up database battle due to blockchain failure...');
+                try {
+                    await apiRequest(`/api/battles/${createdBattleId}`, {
+                        method: 'DELETE'
+                    });
+                    console.log('✅ [BATTLE-BLOCKCHAIN] Database battle cleaned up successfully');
+                } catch (cleanupError) {
+                    console.error('❌ [BATTLE-BLOCKCHAIN] Failed to clean up database battle:', cleanupError);
+                }
+            }
 
             let errorTitle = "Battle Creation Failed";
             let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
@@ -368,29 +396,27 @@ export function BattleBlockchainForm({
 
     // Handle successful battle transaction
     React.useEffect(() => {
-        if (isBattleSuccess && battleTxHash && !hasSubmittedToDB) {
+        if (isBattleSuccess && battleTxHash && !hasSubmittedToDB && createdBattleId) {
             setHasSubmittedToDB(true); // Prevent multiple submissions
 
-            // Create battle in database
-            const createBattleInDB = async () => {
+            // Update battle in database with blockchain transaction hash
+            const updateBattleInDB = async () => {
                 try {
-                    const formData = form.getValues();
+                    console.log('🔄 [BATTLE-BLOCKCHAIN] Updating battle in database with blockchain hash...');
+                    console.log('🔄 [BATTLE-BLOCKCHAIN] Battle ID:', createdBattleId);
+                    console.log('🔄 [BATTLE-BLOCKCHAIN] Transaction Hash:', battleTxHash);
 
-                    console.log('🔄 [BATTLE-BLOCKCHAIN] Creating battle in database...');
-
-                    const response = await apiRequest("/api/battles/blockchain", {
-                        method: "POST",
+                    const updateResponse = await apiRequest(`/api/battles/${createdBattleId}/blockchain`, {
+                        method: "PUT",
                         body: JSON.stringify({
-                            ...formData,
-                            challengerPrediction: parseFloat(formData.challengerPrediction),
-                            blockchainTxHash: battleTxHash,
-                            blockchainStatus: 'confirmed',
+                            blockchainBattleHash: battleTxHash,
+                            blockchainStatus: 'confirmed'
                         }),
                     });
 
-                    if (response.ok) {
-                        const responseData = await response.json();
-                        console.log('✅ [BATTLE-BLOCKCHAIN] Database response:', responseData);
+                    if (updateResponse.ok) {
+                        const updateData = await updateResponse.json();
+                        console.log('✅ [BATTLE-BLOCKCHAIN] Database updated:', updateData);
 
                         toast({
                             title: "Battle Created Successfully!",

@@ -247,9 +247,10 @@ export function PredictionBlockchainForm({
                 setTimeout(() => reject(new Error('Prediction creation timed out after 60 seconds')), 60000)
             );
 
-            console.log('🔵 [PREDICTION-SUBMIT] Sending request to backend with address:', address);
+            console.log('🔵 [PREDICTION-SUBMIT] Starting prediction creation flow...');
 
-            // Step 1: Create prediction in database
+            // Step 1: First create prediction in database to get ID
+            console.log('💾 [PREDICTION-SUBMIT] Creating prediction in database...');
             const response = await Promise.race([
                 apiRequest('/api/predictions', {
                     method: 'POST',
@@ -274,8 +275,9 @@ export function PredictionBlockchainForm({
 
             console.log('✅ [PREDICTION-BLOCKCHAIN] Prediction created in database:', predictionResponse);
 
-            // Step 2: Now do blockchain transaction from frontend
+            // Step 2: Now do blockchain transaction from frontend (this will show MetaMask popup)
             console.log('🔗 [PREDICTION-BLOCKCHAIN] Starting blockchain transaction...');
+            console.log('🔗 [PREDICTION-BLOCKCHAIN] MetaMask popup should appear now...');
             
             // Generate prediction ID for blockchain (using database ID)
             const blockchainPredictionId = ethers.id(`prediction_${predictionResponse.id}`);

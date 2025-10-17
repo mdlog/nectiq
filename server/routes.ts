@@ -4004,31 +4004,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid cryptocurrency' });
       }
 
-      // BLOCKCHAIN FIRST: Create battle on blockchain BEFORE database
-      let txHash: string;
-      try {
-        const tempBattleId = blockchainService.generateBattleId(Date.now());
-        const challengedAddress = challengedId ?
-          (await storage.getUser(challengedId))?.walletAddress || ethers.ZeroAddress :
-          ethers.ZeroAddress;
+      // Create battle in database first (blockchain transaction will be handled by frontend)
+      logger.info(`🔗 [BATTLE] Creating battle in database (blockchain transaction will be handled by frontend)`);
 
-        txHash = await battleEscrowService.createBattle({
-          battleId: tempBattleId,
-          challenger: user.walletAddress,
-          challenged: challengedAddress,
-          stakeAmount: stakeAmount.toString()
-        });
-
-        logger.info(`🔗 [BLOCKCHAIN] Battle created on blockchain: ${txHash}`);
-      } catch (blockchainError: any) {
-        logger.error(`❌ [BLOCKCHAIN] Failed to create battle on blockchain:`, blockchainError);
-        return res.status(500).json({
-          message: "Failed to create battle on blockchain. Please ensure you have approved the contract to spend your NTIQ tokens.",
-          error: blockchainError.message
-        });
-      }
-
-      // Create battle in database AFTER blockchain success
       const battle = await storage.createBattle({
         challengerId: userId,
         challengedId: challengedId || null,
@@ -4043,25 +4021,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isPublic
       });
 
-      // Update battle with blockchain transaction hash
-      await db.update(predictionBattles)
-        .set({
-          blockchainBattleHash: txHash,
-          blockchainStatus: 'confirmed'
-        })
-        .where(eq(predictionBattles.id, battle.id));
+      logger.info(`✅ [BATTLE] Created successfully: ID ${battle.id}`);
 
       // Log transaction for tracking (no balance change, just logging)
       await storage.logTransaction({
         userId,
-        type: 'battle_create_blockchain',
+        type: 'battle_create',
         amount: stakeAmount,
-        description: `Battle created (Blockchain) - ${cryptocurrency} ${timeframe}`,
+        description: `Battle created - ${cryptocurrency} ${timeframe}`,
         relatedId: battle.id,
         status: 'completed'
       });
 
-      logger.info(`✅ [BATTLE] Created successfully: ID ${battle.id}, Blockchain TX: ${txHash}`);
+      logger.info(`✅ [BATTLE] Created successfully: ID ${battle.id}`);
 
       res.json({
         message: 'Battle created successfully',
@@ -4076,6 +4048,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating battle:', error);
       res.status(500).json({ message: 'Failed to create battle' });
+    }
+  });
+
+  // Update battle blockchain transaction hash
+  app.put("/api/battles/:id/blockchain", checkMaintenanceMode, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const battleId = parseInt(req.params.id);
+      if (!battleId || isNaN(battleId)) {
+        return res.status(400).json({ message: "Invalid battle ID" });
+      }
+
+      const { blockchainBattleHash, blockchainStatus } = req.body;
+
+      if (!blockchainBattleHash) {
+        return res.status(400).json({ message: "Blockchain battle hash is required" });
+      }
+
+      // Verify the battle belongs to the user
+      const battle = await storage.getBattle(battleId);
+      if (!battle) {
+        return res.status(404).json({ message: "Battle not found" });
+      }
+
+      if (battle.challengerId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Update the battle with blockchain transaction hash
+      await db.update(predictionBattles)
+        .set({
+          blockchainBattleHash: blockchainBattleHash,
+          blockchainStatus: blockchainStatus || 'confirmed'
+        })
+        .where(eq(predictionBattles.id, battleId));
+
+      logger.info(`✅ [BATTLE-UPDATE] Updated battle ${battleId} with blockchain hash: ${blockchainBattleHash}`);
+
+      res.json({
+        id: battleId,
+        message: "Battle updated successfully",
+        blockchainBattleHash: blockchainBattleHash,
+        blockchainStatus: blockchainStatus || 'confirmed'
+      });
+
+    } catch (error: any) {
+      logger.error("Failed to update battle blockchain hash:", error);
+      res.status(500).json({ message: "Failed to update battle", error: String(error) });
+    }
+  });
+
+  // Delete battle (for cleanup when blockchain transaction fails)
+  app.delete("/api/battles/:id", checkMaintenanceMode, async (req, res) => {
+    try {
+      const userId = (req as any).session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const battleId = parseInt(req.params.id);
+      if (!battleId || isNaN(battleId)) {
+        return res.status(400).json({ message: "Invalid battle ID" });
+      }
+
+      // Verify the battle belongs to the user
+      const battle = await storage.getBattle(battleId);
+      if (!battle) {
+        return res.status(404).json({ message: "Battle not found" });
+      }
+
+      if (battle.challengerId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Only allow deletion of battles without blockchain battle hash (failed blockchain transactions)
+      if (battle.blockchainBattleHash) {
+        return res.status(400).json({ message: "Cannot delete battle with confirmed blockchain transaction" });
+      }
+
+      // Delete the battle
+      await db.delete(predictionBattles).where(eq(predictionBattles.id, battleId));
+
+      logger.info(`🗑️ [BATTLE-DELETE] Deleted battle ${battleId} for user ${userId}`);
+
+      res.json({
+        id: battleId,
+        message: "Battle deleted successfully"
+      });
+
+    } catch (error: any) {
+      logger.error("Failed to delete battle:", error);
+      res.status(500).json({ message: "Failed to delete battle", error: String(error) });
     }
   });
 
