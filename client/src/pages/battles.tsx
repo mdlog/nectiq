@@ -125,11 +125,20 @@ export default function BattlesPage() {
     return matchesSearch && matchesStatus && matchesCrypto;
   });
 
-  // Filter battles for Open Battles tab (status = 'open')
-  const openBattles = filteredBattles.filter((battle: Battle) => battle.status === 'open');
+  // Filter battles for Open Battles tab (status = 'open' AND not expired)
+  const openBattles = filteredBattles.filter((battle: Battle) => 
+    battle.status === 'open' && battle.timeLeft > 0
+  );
 
-  // Filter battles for Active Battles tab (status = 'active')
-  const activeBattles = filteredBattles.filter((battle: Battle) => battle.status === 'active');
+  // Filter battles for Active Battles tab (status = 'active' AND not expired)
+  const activeBattles = filteredBattles.filter((battle: Battle) => 
+    battle.status === 'active' && battle.timeLeft > 0
+  );
+
+  // Get expired battles (for History tab)
+  const expiredBattles = filteredBattles.filter((battle: Battle) => 
+    battle.timeLeft <= 0 && (battle.status === 'open' || battle.status === 'active')
+  );
 
   const getCryptoImageUrl = (cryptoId: string) => {
     const crypto = (cryptos as any[]).find((c: any) => c.id === cryptoId);
@@ -313,6 +322,7 @@ export default function BattlesPage() {
       queryKey: ['/api/battles/history'],
     });
 
+
     const getCryptoImageUrl = (cryptoId: string) => {
       const imageMapping: { [key: string]: string } = {
         bitcoin: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
@@ -377,8 +387,20 @@ export default function BattlesPage() {
     }
 
     const completedBattles = battleHistory as any[] || [];
+    
+    // Combine completed battles with expired battles
+    const allHistoryBattles = [
+      ...completedBattles,
+      ...expiredBattles.map((battle: Battle) => ({
+        ...battle,
+        status: 'expired',
+        winnerId: null,
+        winnerUsername: null,
+        winnerReward: 0
+      }))
+    ].sort((a, b) => new Date(b.createdAt || b.targetTime).getTime() - new Date(a.createdAt || a.targetTime).getTime());
 
-    if (completedBattles.length === 0) {
+    if (allHistoryBattles.length === 0) {
       return (
         <Card>
           <CardContent className="p-8 text-center">
@@ -391,7 +413,7 @@ export default function BattlesPage() {
               No Battle History
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              No completed battles found. Start participating in battles to see your history here.
+              No completed or expired battles found. Start participating in battles to see your history here.
             </p>
           </CardContent>
         </Card>
@@ -399,11 +421,11 @@ export default function BattlesPage() {
     }
 
     // Pagination logic
-    const totalItems = completedBattles.length;
+    const totalItems = allHistoryBattles.length;
     const totalPages = Math.ceil(totalItems / historyItemsPerPage);
     const startIndex = (historyPage - 1) * historyItemsPerPage;
     const endIndex = startIndex + historyItemsPerPage;
-    const paginatedBattles = completedBattles.slice(startIndex, endIndex);
+    const paginatedBattles = allHistoryBattles.slice(startIndex, endIndex);
 
     const handlePageChange = (page: number) => {
       setHistoryPage(page);
@@ -512,9 +534,15 @@ export default function BattlesPage() {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100">
-                      Completed
-                    </Badge>
+                    {battle.status === 'expired' ? (
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
+                        Expired
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100">
+                        Completed
+                      </Badge>
+                    )}
                     {battle.winner && (
                       <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
                         <Award className="w-3 h-3 mr-1" />
@@ -542,12 +570,14 @@ export default function BattlesPage() {
                     {/* Opponent */}
                     <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                       <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">Opponent</p>
-                      <p className="font-semibold text-gray-900 dark:text-white">{battle.challenged?.username || 'N/A'}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {battle.challenged?.username || battle.challengedUsername || 'No Opponent'}
+                      </p>
                       <p className="text-lg font-bold text-red-900 dark:text-red-100">
                         {battle.challengedPrediction ? `$${parseFloat(battle.challengedPrediction).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 6
-                        })}` : 'N/A'}
+                        })}` : 'No Prediction'}
                       </p>
                     </div>
                   </div>
@@ -558,10 +588,14 @@ export default function BattlesPage() {
                     <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Final Price</p>
                       <p className="text-lg font-bold text-gray-900 dark:text-white">
-                        ${battle.actualPrice ? parseFloat(battle.actualPrice).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 6
-                        }) : 'N/A'}
+                        {battle.status === 'expired' ? (
+                          'Expired'
+                        ) : (
+                          battle.actualPrice ? `$${parseFloat(battle.actualPrice).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 6
+                          })}` : 'N/A'
+                        )}
                       </p>
                       <p className="text-sm text-gray-900 dark:text-white font-medium">
                         {new Date(battle.targetTime).toLocaleTimeString()}
@@ -571,7 +605,9 @@ export default function BattlesPage() {
                     {/* Win Accuracy */}
                     <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                       <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">Win Accuracy</p>
-                      {battle.winner && battle.actualPrice ? (() => {
+                      {battle.status === 'expired' ? (
+                        <p className="text-gray-500 dark:text-gray-400">Battle Expired</p>
+                      ) : battle.winner && battle.actualPrice ? (() => {
                         const actualPrice = parseFloat(battle.actualPrice);
                         const winnerPrediction = battle.winner.id === battle.challengerId ?
                           parseFloat(battle.challengerPrediction) :
@@ -789,7 +825,7 @@ export default function BattlesPage() {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="live">Open Battles ({openBattles.length})</TabsTrigger>
             <TabsTrigger value="create">Active Battles ({activeBattles.length})</TabsTrigger>
-            <TabsTrigger value="history">History ({stats?.completedBattles || 0})</TabsTrigger>
+            <TabsTrigger value="history">History ({expiredBattles.length + (stats?.completedBattles || 0)})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="live" className="mt-8">
