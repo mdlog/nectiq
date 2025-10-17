@@ -126,17 +126,17 @@ export default function BattlesPage() {
   });
 
   // Filter battles for Open Battles tab (status = 'open' AND not expired)
-  const openBattles = filteredBattles.filter((battle: Battle) => 
+  const openBattles = filteredBattles.filter((battle: Battle) =>
     battle.status === 'open' && battle.timeLeft > 0
   );
 
   // Filter battles for Active Battles tab (status = 'active' AND not expired)
-  const activeBattles = filteredBattles.filter((battle: Battle) => 
+  const activeBattles = filteredBattles.filter((battle: Battle) =>
     battle.status === 'active' && battle.timeLeft > 0
   );
 
   // Get expired battles (for History tab)
-  const expiredBattles = filteredBattles.filter((battle: Battle) => 
+  const expiredBattles = filteredBattles.filter((battle: Battle) =>
     battle.timeLeft <= 0 && (battle.status === 'open' || battle.status === 'active')
   );
 
@@ -387,7 +387,7 @@ export default function BattlesPage() {
     }
 
     const completedBattles = battleHistory as any[] || [];
-    
+
     // Combine completed battles with expired battles
     const allHistoryBattles = [
       ...completedBattles,

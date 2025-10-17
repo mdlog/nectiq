@@ -7,14 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
-import { ethers } from 'ethers';
-import { Loader2, Shield, CheckCircle2, AlertCircle, Coins, HelpCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { CONTRACTS, ABIS } from '@/lib/contracts';
 import { apiRequest } from "@/lib/queryClient";
 
@@ -53,7 +49,7 @@ export function PredictionBlockchainForm({
     useInsurance = false,
     setUseInsurance
 }: PredictionBlockchainFormProps) {
-    
+
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,15 +116,15 @@ export function PredictionBlockchainForm({
             return { isValid: false, error: "Wallet Not Connected" };
         }
         if (ntiqBalance < data.stakeAmount) {
-            return { 
-                isValid: false, 
-                error: `Insufficient Balance: You need ${data.stakeAmount} NTIQ, but your balance is ${ntiqBalance.toFixed(2)} NTIQ` 
+            return {
+                isValid: false,
+                error: `Insufficient Balance: You need ${data.stakeAmount} NTIQ, but your balance is ${ntiqBalance.toFixed(2)} NTIQ`
             };
         }
         if (allowance < data.stakeAmount) {
-            return { 
-                isValid: false, 
-                error: "Approval Required: Please approve NTIQ spending first" 
+            return {
+                isValid: false,
+                error: "Approval Required: Please approve NTIQ spending first"
             };
         }
         if (data.stakeAmount < 1) {
@@ -155,7 +151,7 @@ export function PredictionBlockchainForm({
 
         try {
             const stakeAmountWei = parseEther(currentStakeAmount.toString());
-            
+
             await writeApproveContract({
                 address: CONTRACTS.NTIQ_TOKEN,
                 abi: CONTRACTS.ABIS?.NTIQ_TOKEN || ABIS?.NTIQ_TOKEN,
@@ -198,7 +194,7 @@ export function PredictionBlockchainForm({
             });
 
             // Use backend API which handles blockchain call automatically
-            const apiTimeout = new Promise((_, reject) => 
+            const apiTimeout = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Prediction creation timed out after 60 seconds')), 60000)
             );
 
@@ -487,9 +483,9 @@ export function PredictionBlockchainForm({
                         {isSubmitting || isApprovePending || isPredictionPending || isApproveConfirming || isPredictionConfirming ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {isApprovePending || isApproveConfirming ? "Approving NTIQ..." : 
-                                 isPredictionPending || isPredictionConfirming ? "Submitting to Blockchain..." : 
-                                 "Processing..."}
+                                {isApprovePending || isApproveConfirming ? "Approving NTIQ..." :
+                                    isPredictionPending || isPredictionConfirming ? "Submitting to Blockchain..." :
+                                        "Processing..."}
                             </>
                         ) : needsApproval ? (
                             <>

@@ -20,7 +20,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
 
   // Fetch live Pyth Network prices for real-time updates
   const { data: livePrices, isLoading: pricesLoading } = useQuery({
-    queryKey: ["/api/crypto/pyth-prices"],
+    queryKey: ["/api/crypto/pyth-prices", "prices"],
     refetchInterval: 1000, // Same as other pages - ultra-fast updates
     refetchIntervalInBackground: true, // Enable background updates
     staleTime: 500, // Same as other pages - very fresh data
@@ -43,7 +43,7 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
 
   // Fetch available cryptocurrencies from database
   const { data: availableCryptos = [], isLoading: cryptosLoading, isError } = useQuery({
-    queryKey: ["/api/crypto/pyth-prices"],
+    queryKey: ["/api/crypto/pyth-prices", "cryptos"],
     refetchInterval: 1000, // Same as other pages - ultra-fast updates
     refetchIntervalInBackground: true, // Enable background updates
     staleTime: 500, // Same as other pages - very fresh data

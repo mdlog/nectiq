@@ -1,7 +1,6 @@
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import LandingPage from "@/pages/landing";
 import { ProtectedRoute } from "@/components/protected-route";
 import Dashboard from "@/pages/dashboard";
 import UserDashboard from "@/pages/user-dashboard";
@@ -85,17 +84,9 @@ console.warn = (...args) => {
 function Router() {
   return (
     <Switch>
-      {/* Home page - PROTECTED - requires wallet connection */}
-      <Route path="/">
-        <ProtectedRoute requireWallet={true} redirectTo="/landing">
-          <Dashboard />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/home">
-        <ProtectedRoute requireWallet={true} redirectTo="/landing">
-          <Dashboard />
-        </ProtectedRoute>
-      </Route>
+      {/* Home page - PUBLIC - shows different content based on authentication */}
+      <Route path="/" component={Dashboard} />
+      <Route path="/home" component={Dashboard} />
 
       <Route path="/user-dashboard">
         <ProtectedRoute requireWallet={true}>
@@ -148,9 +139,6 @@ function Router() {
           <AdminPanel />
         </ProtectedRoute>
       </Route>
-
-      {/* Landing page - PUBLIC - for users without wallet */}
-      <Route path="/landing" component={LandingPage} />
 
       {/* Public pages */}
       <Route path="/leaderboard" component={Leaderboard} />

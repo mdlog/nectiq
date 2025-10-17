@@ -313,12 +313,8 @@ export default function Dashboard() {
     </div>
   );
 
-  // TEMPORARY: Always show authenticated home for testing
+  // Show different content based on authentication state
   console.log('🔍 [DASHBOARD] Authentication state:', { isConnected, user });
-  console.log('🔍 [DASHBOARD] TEMPORARY: Always rendering authenticated home for testing');
 
-  return renderAuthenticatedHome();
-
-  // TODO: Restore authentication check after testing
-  // return isConnected ? renderAuthenticatedHome() : renderUnauthenticatedHome();
+  return isConnected && user ? renderAuthenticatedHome() : renderUnauthenticatedHome();
 }
