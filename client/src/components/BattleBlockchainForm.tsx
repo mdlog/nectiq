@@ -102,7 +102,8 @@ export function BattleBlockchainForm({
     const allowance = allowanceWei ? parseFloat(formatEther(allowanceWei)) : 0;
 
     const currentStakeAmount = form.watch('stakeAmount') || 0;
-    const needsApproval = allowance < currentStakeAmount;
+    // Force needsApproval to true if allowance is 0 or undefined, or if stake amount is greater than allowance
+    const needsApproval = !allowanceWei || allowance === 0 || allowance < currentStakeAmount;
 
     // Debug logging for allowance detection
     React.useEffect(() => {
@@ -112,8 +113,20 @@ export function BattleBlockchainForm({
             needsApproval,
             allowanceWei: allowanceWei?.toString(),
             address,
-            chainId: chain?.id
+            chainId: chain?.id,
+            ntiqTokenAddress: CONTRACTS.NTIQ_TOKEN,
+            battleEscrowAddress: CONTRACTS.BATTLE_ESCROW,
+            ntiqAbi: CONTRACTS.ABIS?.NTIQToken ? 'Available' : 'Missing',
+            erc20Abi: CONTRACTS.ABIS?.ERC20 ? 'Available' : 'Missing',
+            hasAllowanceWei: !!allowanceWei,
+            allowanceIsZero: allowance === 0,
+            stakeAmountGreaterThanAllowance: currentStakeAmount > allowance
         });
+        
+        // Force show Step 1 if allowance is 0 or undefined
+        if (!allowanceWei || allowance === 0) {
+            console.log('⚠️ [BATTLE-APPROVAL] Forcing Step 1 - No allowance detected');
+        }
     }, [allowance, currentStakeAmount, needsApproval, allowanceWei, address, chain?.id]);
 
     const handleApprove = async (stakeAmount: number) => {
@@ -441,8 +454,8 @@ export function BattleBlockchainForm({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${needsApproval
-                                ? 'bg-orange-500 text-white'
-                                : 'bg-green-500 text-white'
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-green-500 text-white'
                             }`}>
                             {needsApproval ? '1' : '✓'}
                         </div>
@@ -684,8 +697,8 @@ export function BattleBlockchainForm({
                         type="submit"
                         disabled={isSubmitting || isApprovePending || isBattlePending || isApproveConfirming || isBattleConfirming}
                         className={`w-full font-semibold py-3 px-6 transition-all transform hover:scale-105 ${needsApproval
-                                ? 'bg-orange-600 hover:bg-orange-700 text-white'
-                                : 'gradient-bg hover:opacity-90 text-white'
+                            ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                            : 'gradient-bg hover:opacity-90 text-white'
                             }`}
                     >
                         {isSubmitting || isApprovePending || isBattlePending || isApproveConfirming || isBattleConfirming ? (
