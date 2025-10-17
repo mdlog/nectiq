@@ -188,7 +188,7 @@ export function BattleBlockchainForm({
             // Check allowance
             const allowanceWei = await refetchAllowance();
             const currentAllowance = allowanceWei.data ? Number(formatEther(allowanceWei.data)) : 0;
-            
+
             if (currentAllowance < data.stakeAmount) {
                 throw new Error(`Insufficient allowance. You have ${currentAllowance.toFixed(2)} NTIQ allowance but need ${data.stakeAmount} NTIQ. Please approve NTIQ spending first.`);
             }
@@ -216,7 +216,9 @@ export function BattleBlockchainForm({
             });
         } catch (error: any) {
             console.error('❌ [BATTLE-BLOCKCHAIN] Battle creation failed:', error);
-
+            console.error('❌ [BATTLE-BLOCKCHAIN] Error data:', error.data);
+            console.error('❌ [BATTLE-BLOCKCHAIN] Error code:', error.code);
+            
             let errorTitle = "Battle Creation Failed";
             let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
 
@@ -231,8 +233,14 @@ export function BattleBlockchainForm({
                 errorTitle = "Contract Error";
                 errorDescription = "The battle contract operation is not supported. Please check your wallet connection and try again.";
             } else if (error.message?.includes("execution reverted") && error.message?.includes("unknown custom error")) {
-                errorTitle = "Approval Required";
-                errorDescription = "You need to approve NTIQ spending first. Please click 'Approve NTIQ' button before creating battle.";
+                // Check if it's an InsufficientAllowance error (0xfb8f41b2)
+                if (error.data && error.data.startsWith('0xfb8f41b2')) {
+                    errorTitle = "Approval Required";
+                    errorDescription = "You need to approve NTIQ spending first. Please click 'Approve NTIQ' button before creating battle.";
+                } else {
+                    errorTitle = "Contract Error";
+                    errorDescription = "The battle contract operation failed. Please check your wallet connection and try again.";
+                }
             } else if (error.message?.includes("Insufficient balance")) {
                 errorTitle = "Insufficient Balance";
                 errorDescription = "You don't have enough NTIQ tokens for this battle";
