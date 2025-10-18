@@ -3625,6 +3625,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       logger.info(`✅ [PREDICTION-UPDATE] Updated prediction ${predictionId} with blockchain hash: ${blockchainStakeHash}`);
 
+      // CRITICAL: Deduct balance after successful blockchain transaction
+      try {
+        const { BalanceService } = await import('./services/balanceService');
+        const balanceResult = await BalanceService.processTransaction({
+          userId: userId,
+          type: 'prediction_stake',
+          amount: prediction.stakeAmount,
+          description: `Prediction stake for ${prediction.cryptocurrency.toUpperCase()} - ${prediction.timeframe}`,
+          relatedId: predictionId,
+          metadata: {
+            predictionId: predictionId,
+            cryptocurrency: prediction.cryptocurrency,
+            timeframe: prediction.timeframe,
+            blockchainTxHash: blockchainStakeHash
+          }
+        }, storage);
+
+        logger.info(`💰 [PREDICTION-UPDATE] Balance deducted: ${prediction.stakeAmount} NTIQ from user ${userId}. New balance: ${balanceResult.newBalance}`);
+      } catch (balanceError) {
+        logger.error(`❌ [PREDICTION-UPDATE] Failed to deduct balance for prediction ${predictionId}:`, balanceError);
+        // Don't fail the entire request, but log the error
+      }
+
       res.json({
         id: predictionId,
         message: "Prediction updated successfully",
