@@ -5,6 +5,9 @@ server/public
 vite.config.ts.*
 *.tar.gz
 
+# Smart contracts
+contracts/
+
 # Environment variables
 .env
 .env.local
