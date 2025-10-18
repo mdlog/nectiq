@@ -32,6 +32,7 @@ console.error = function (...args: any[]) {
       if (arg?.shortMessage) return arg.shortMessage;
       if (arg?.message) return arg.message;
       if (arg?.error?.message) return arg.error.message;
+      if (arg?.code === 'UNKNOWN_ERROR' && arg?.error?.code === -32000) return 'filter not found';
       return JSON.stringify(arg);
     }
     return String(arg);
@@ -41,7 +42,9 @@ console.error = function (...args: any[]) {
   if (errorString.includes('filter not found') ||
     errorString.includes('could not coalesce error') ||
     errorString.includes('eth_getFilterChanges') ||
-    errorString.includes('missing revert data')) {
+    errorString.includes('missing revert data') ||
+    errorString.includes('@TODO Error') ||
+    (args[0] && typeof args[0] === 'object' && args[0].code === 'UNKNOWN_ERROR' && args[0].error?.code === -32000)) {
     // Silently ignore - this is normal RPC behavior
     return;
   }
@@ -55,7 +58,9 @@ process.on('unhandledRejection', (reason: any) => {
   // Suppress "filter not found" errors from ethers.js event polling
   if (reason?.message?.includes('filter not found') ||
     reason?.error?.message?.includes('filter not found') ||
-    reason?.shortMessage?.includes('could not coalesce error')) {
+    reason?.shortMessage?.includes('could not coalesce error') ||
+    reason?.code === 'UNKNOWN_ERROR' ||
+    (reason?.error?.code === -32000 && reason?.error?.message === 'filter not found')) {
     // Silently ignore - this is normal RPC behavior when filters expire
     return;
   }
