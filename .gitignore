@@ -9,6 +9,9 @@ vite.config.ts.*
 contracts/
 artifacts/
 
+# Kiro specs
+.kiro/
+
 # Environment variables
 .env
 .env.local
