@@ -370,8 +370,10 @@ export function PredictionBlockchainForm({
             
             // Use wagmi writeContract for blockchain transaction
             console.log('🔗 [PREDICTION-BLOCKCHAIN] Calling writePredictionContract...');
+            console.log('🔗 [PREDICTION-BLOCKCHAIN] MetaMask popup should appear now for stake confirmation...');
             
-            await writePredictionContract({
+            // Call the contract function - this will trigger MetaMask popup
+            writePredictionContract({
                 address: CONTRACTS.ENHANCED_PREDICTION_STAKING,
                 abi: CONTRACTS.ABIS?.ENHANCED_PREDICTION_STAKING || ABIS?.ENHANCED_PREDICTION_STAKING,
                 functionName: 'lockStake',
@@ -383,6 +385,9 @@ export function PredictionBlockchainForm({
             console.log('⏳ [PREDICTION-BLOCKCHAIN] Waiting for transaction confirmation...');
             // The useWaitForTransactionReceipt hook will handle the confirmation
             // We'll update the database in the useEffect when isPredictionSuccess becomes true
+            
+            // Reset submitting state since we're now waiting for blockchain confirmation
+            setIsSubmitting(false);
 
         } catch (error: any) {
             console.error('❌ [PREDICTION-BLOCKCHAIN] Error details:', error);
@@ -431,7 +436,6 @@ export function PredictionBlockchainForm({
                 description: errorDescription,
                 variant: "destructive",
             });
-        } finally {
             setIsSubmitting(false);
         }
     };
