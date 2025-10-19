@@ -75,13 +75,16 @@ export default function Dashboard() {
   };
 
   const handlePredictClick = (cryptoId: string) => {
-    console.log('🔍 [DASHBOARD] handlePredictClick called', { cryptoId, isConnected, user });
+    console.log('🔍 [DASHBOARD-PREDICT-CLICK] handlePredictClick called', { cryptoId, isConnected, user });
+    console.log('🔍 [DASHBOARD] Current state before update:', { showPredictionForm, preSelectedForPrediction });
 
     // TEMPORARY: Allow form to show even without wallet connection for testing
     console.log('🔍 [DASHBOARD] TEMPORARY: Bypassing wallet check for testing');
 
     setPreSelectedForPrediction(cryptoId);
     setShowPredictionForm(true);
+
+    console.log('🔍 [DASHBOARD] State updated, should show modal now');
 
     // Scroll to prediction form
     setTimeout(() => {
@@ -291,14 +294,15 @@ export default function Dashboard() {
       {/* Prediction Form Modal */}
       {console.log('🔍 [DASHBOARD-MODAL] Modal render check:', { showPredictionForm, preSelectedForPrediction })}
       {showPredictionForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-surface border border-surface-light rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white">Make New Prediction</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
+                  console.log('🔍 [DASHBOARD-MODAL] Close button clicked');
                   setShowPredictionForm(false);
                   setPreSelectedForPrediction(undefined);
                 }}
@@ -307,17 +311,21 @@ export default function Dashboard() {
                 ×
               </Button>
             </div>
-            <PredictionForm
-              preSelectedCrypto={preSelectedForPrediction}
-              onClose={() => {
-                setShowPredictionForm(false);
-                setPreSelectedForPrediction(undefined);
-              }}
-              onSuccess={() => {
-                setShowPredictionForm(false);
-                setPreSelectedForPrediction(undefined);
-              }}
-            />
+            <div className="min-h-[400px]">
+              <PredictionForm
+                preSelectedCrypto={preSelectedForPrediction}
+                onClose={() => {
+                  console.log('🔍 [DASHBOARD-MODAL] PredictionForm onClose called');
+                  setShowPredictionForm(false);
+                  setPreSelectedForPrediction(undefined);
+                }}
+                onSuccess={() => {
+                  console.log('🔍 [DASHBOARD-MODAL] PredictionForm onSuccess called');
+                  setShowPredictionForm(false);
+                  setPreSelectedForPrediction(undefined);
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
