@@ -318,13 +318,19 @@ export default function BattlesPage() {
 
   // Battle History Section Component
   const BattleHistorySection = () => {
-    const { data: battleHistory, isLoading: isLoadingHistory, error } = useQuery({
+    const { data: battleHistory, isLoading: isLoadingHistory, error, refetch } = useQuery({
       queryKey: ['/api/battles/history'],
       retry: 3,
       retryDelay: 1000,
-      staleTime: 30000,
+      staleTime: 0, // Force fresh data
       refetchInterval: 5000, // Refetch every 5 seconds for testing
     });
+
+    // Force refetch on mount
+    React.useEffect(() => {
+      console.log('🔄 [BATTLE-HISTORY] Component mounted, forcing refetch');
+      refetch();
+    }, [refetch]);
 
 
     const getCryptoImageUrl = (cryptoId: string) => {
@@ -370,6 +376,7 @@ export default function BattlesPage() {
     };
 
     if (isLoadingHistory) {
+      console.log('🔄 [BATTLE-HISTORY] Loading state active');
       return (
         <Card>
           <CardContent className="p-8 text-center">
@@ -408,6 +415,7 @@ export default function BattlesPage() {
     }
 
     if (allHistoryBattles.length === 0) {
+      console.log('❌ [BATTLE-HISTORY] No battles found, showing empty state');
       return (
         <Card>
           <CardContent className="p-8 text-center">
