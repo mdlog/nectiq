@@ -4386,10 +4386,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get battle history (completed battles)
   app.get('/api/battles/history', checkMaintenanceMode, async (req, res) => {
     try {
+      console.log('🔍 [API] Fetching battle history...');
       const completedBattles = await storage.getBattleHistory();
+      console.log('✅ [API] Battle history fetched:', completedBattles.length, 'battles');
       res.json(completedBattles);
     } catch (error) {
-      console.error('Error fetching battle history:', error);
+      console.error('❌ [API] Error fetching battle history:', error);
       res.status(500).json({ message: 'Failed to fetch battle history' });
     }
   });

@@ -319,7 +319,7 @@ export default function BattlesPage() {
   // Battle History Section Component
   const BattleHistorySection = () => {
     const { data: battleHistory, isLoading: isLoadingHistory, error, refetch } = useQuery({
-      queryKey: ['/api/battles/history'],
+      queryKey: ['battles', 'history', 'debug'],
       retry: 3,
       retryDelay: 1000,
       staleTime: 0, // Force fresh data
