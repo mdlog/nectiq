@@ -143,6 +143,10 @@ export function PredictionBlockchainForm({
                 try {
                     console.log('🔄 [PREDICTION-BLOCKCHAIN] Creating prediction with confirmed blockchain transaction...');
 
+                    // Get current form values
+                    const formData = form.getValues();
+                    console.log('🔍 [PREDICTION-BLOCKCHAIN] Form data:', formData);
+
                     const createResponse = await apiRequest('/api/predictions/blockchain', {
                         method: 'POST',
                         body: JSON.stringify({
@@ -192,7 +196,7 @@ export function PredictionBlockchainForm({
 
             createPrediction();
         }
-    }, [isPredictionSuccess, predictionTxHash, formData, toast, queryClient, onSuccess, onClose]);
+    }, [isPredictionSuccess, predictionTxHash, form, toast, queryClient, onSuccess, onClose]);
 
     // Handle prediction errors
     React.useEffect(() => {
