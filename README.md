@@ -75,6 +75,9 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 - 📊 **Live Leaderboards** and achievements
 - 🎁 **Referral System** with rewards
 - 🔔 **Real-time Notifications** via WebSocket
+- 🔗 **On-Chain Reward System** - All rewards processed on blockchain with real transaction hashes
+- ✅ **Blockchain-First Architecture** - Predictions, battles, and parlays require blockchain confirmation
+- 💎 **Real Wallet Rewards** - Users receive rewards directly in their blockchain wallets
 
 ---
 
@@ -88,6 +91,8 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 - Real-time price updates every second
 - Instant result verification
 - Win multipliers based on difficulty
+- **On-chain rewards** with real blockchain transaction hashes
+- **Blockchain-first creation** - Only active after blockchain confirmation
 
 #### 2. **Prediction Battles**
 - Challenge other players in head-to-head battles
@@ -95,6 +100,8 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 - Public and private battle modes
 - Real-time battle updates
 - Winner takes all (minus platform fee)
+- **On-chain battle resolution** with real blockchain transaction hashes
+- **Blockchain-first creation** - Only active after blockchain confirmation
 
 #### 3. **Survival Tournaments**
 - Multi-round elimination tournaments
@@ -109,6 +116,8 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 - All predictions must win
 - Boosted multipliers
 - Strategic gameplay
+- **On-chain parlay rewards** with real blockchain transaction hashes
+- **Blockchain-first creation** - Only active after blockchain confirmation
 
 #### 5. **Financial Management**
 - **Multi-chain deposits** (POL, WETH, USDC, USDT, LINK)
@@ -145,6 +154,8 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 - ✅ **Blockchain-First Architecture** (all predictions/battles/parlays require blockchain confirmation)
 - ✅ **Smart Contract Integration** (7 deployed contracts on Polygon Amoy)
 - ✅ **Transparent Operations** (all actions verifiable on blockchain)
+- ✅ **On-Chain Reward System** (real blockchain transaction hashes for all rewards)
+- ✅ **Smart Contract Reward Processing** (predictions, battles, parlays processed on blockchain)
 
 ---
 
@@ -169,6 +180,7 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 - **Real-time:** WebSocket
 - **Session:** express-session
 - **Security:** Helmet, CORS
+- **Blockchain Services:** predictionStakingService, battleEscrowService, parlayStakingService
 
 ### Blockchain & APIs
 - **Price Feeds:** Pyth Network
@@ -418,23 +430,29 @@ Once running, access the application at:
 - **State:** React Query for server state, React Context for app state
 
 #### Backend (`/server`)
-- **Routes:** Authentication, Predictions, Battles, Deposits, Withdrawals, Admin
+- **Routes:** Authentication, Predictions, Battles, Deposits, Withdrawals, Admin, Blockchain Reward Release
 - **Services:** 
   - `PythPriceService` - Real-time price feeds
   - `DepositMonitorService` - Automated deposit verification
   - `BalanceService` - Transaction ledger management
   - `AchievementService` - User achievements
   - `ReferralService` - Referral tracking
+  - `PredictionStakingService` - Blockchain prediction rewards
+  - `BattleEscrowService` - Blockchain battle resolution
+  - `ParlayStakingService` - Blockchain parlay rewards
 - **Middleware:** Authentication, rate limiting, CORS, session management
 - **WebSocket:** Real-time notifications and updates
+- **Blockchain Integration:** On-chain reward processing with real transaction hashes
 
 #### Database (`/shared/schema.ts`)
 - **Users:** Wallet-based authentication, balances, profiles
-- **Predictions:** Price predictions with results
-- **Battles:** Head-to-head competitions
+- **Predictions:** Price predictions with results and blockchain transaction hashes
+- **Battles:** Head-to-head competitions with blockchain resolution hashes
+- **Parlays:** Multi-prediction combinations with blockchain reward hashes
 - **Tournaments:** Survival mode tournaments
 - **Deposits/Withdrawals:** Financial transactions
 - **Transaction Logs:** Audit trail for all balance changes
+- **Blockchain Integration:** All rewards linked to real blockchain transaction hashes
 
 ---
 
@@ -464,6 +482,9 @@ NECTIQ uses a comprehensive suite of smart contracts deployed on **Polygon Amoy 
 - ✅ **Smart Contract Security:** OpenZeppelin standards with access control
 - ✅ **Transparent Operations:** All transactions verifiable on blockchain
 - ✅ **Automated Processing:** Backend monitors and processes transactions
+- ✅ **On-Chain Rewards:** All rewards processed on blockchain with real transaction hashes
+- ✅ **Smart Contract Integration:** Predictions, battles, and parlays use smart contracts for rewards
+- ✅ **Real Wallet Rewards:** Users receive rewards in their actual blockchain wallets
 
 ### 📖 Complete Documentation
 
@@ -559,6 +580,69 @@ Create a new deposit request.
     "status": "pending",
     "expiresAt": "2025-10-07T17:30:00.000Z"
   }
+}
+```
+
+### Blockchain Reward Release
+
+#### POST `/api/predictions/blockchain-release`
+Release prediction reward on blockchain (admin endpoint).
+
+**Request:**
+```json
+{
+  "predictionId": 4,
+  "actualPrice": "1083.42329176",
+  "userAddress": "0x6be12e8db9605859ce5e881116e776378b5ec5af"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Reward released on blockchain successfully",
+  "transactionHash": "0x9d10601bbf93bd2753945198f67e5caa791543ef23727ff2552f00d8ce8b4b8c",
+  "predictionId": 4
+}
+```
+
+#### POST `/api/battles/blockchain-release`
+Release battle reward on blockchain (admin endpoint).
+
+**Request:**
+```json
+{
+  "battleId": 1,
+  "winnerAddress": "0x6be12e8db9605859ce5e881116e776378b5ec5af"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Battle reward released on blockchain successfully",
+  "transactionHash": "0x...",
+  "battleId": 1
+}
+```
+
+#### POST `/api/parlays/blockchain-release`
+Release parlay reward on blockchain (admin endpoint).
+
+**Request:**
+```json
+{
+  "parlayId": 1,
+  "userAddress": "0x6be12e8db9605859ce5e881116e776378b5ec5af"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Parlay reward released on blockchain successfully",
+  "transactionHash": "0x...",
+  "parlayId": 1
 }
 ```
 
@@ -860,9 +944,13 @@ If you have questions about the license or need clarification on usage rights, p
 
 **PHASE 1: PATH TO FUNDING (2.5 Months)**
 - ✅ **Wave 1-2 (Week 1-4):** Foundation & Setup - COMPLETED
-  - MVP built, Sepolia testnet live, investor materials ready
+  - MVP built, Polygon Amoy testnet live, investor materials ready
+  - ✅ **Blockchain-First Architecture** implemented
+  - ✅ **On-Chain Reward System** fully functional with real transaction hashes
+  - ✅ **Smart Contract Integration** for predictions, battles, and parlays
 - 🔜 **Wave 3-4 (Week 5-8):** Build & Optimize - NEXT
-  - User acquisition (1,000+ beta users), Polygon Mumbai testnet, business model validation
+  - User acquisition (1,000+ beta users), business model validation
+  - Enhanced UI/UX, performance optimization
 - 🎯 **Wave 5 (Week 9-10):** Pitch & Raise - FUNDING FOCUSED
   - **Target: $500K-$1M seed round**, 20+ VC meetings, term sheet execution
 
