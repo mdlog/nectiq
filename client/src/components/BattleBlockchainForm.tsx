@@ -102,8 +102,10 @@ export function BattleBlockchainForm({
     const allowance = allowanceWei ? parseFloat(formatEther(allowanceWei)) : 0;
 
     const currentStakeAmount = form.watch('stakeAmount') || 0;
-    // Force needsApproval to true if allowance is 0 or undefined, or if stake amount is greater than allowance
-    const needsApproval = !allowanceWei || allowance === 0 || allowance < currentStakeAmount;
+    
+    // Check if approval is needed - only true if allowance is 0 or undefined
+    // Once approved, user doesn't need to approve again for the same contract
+    const needsApproval = !allowanceWei || allowance === 0;
 
     // Debug logging for allowance detection
     React.useEffect(() => {

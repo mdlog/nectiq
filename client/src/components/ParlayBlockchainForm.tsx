@@ -122,9 +122,10 @@ export function ParlayBlockchainForm({
     // Calculate potential win
     const potentialWin = parseFloat(watchedStakeAmount || '0') * totalMultiplier;
 
-    // Check if approval is needed
+    // Check if approval is needed - only true if allowance is 0 or undefined
+    // Once approved, user doesn't need to approve again for the same contract
     const stakeAmountWei = watchedStakeAmount ? parseEther(watchedStakeAmount) : 0n;
-    const needsApproval = !allowance || stakeAmountWei > allowance;
+    const needsApproval = !allowance || allowance === 0n;
 
     // Format allowance for display
     const allowanceFormatted = allowance ? formatEther(allowance) : '0';

@@ -108,8 +108,9 @@ export function PredictionBlockchainForm({
     const watchedStakeAmount = form.watch('stakeAmount');
     const currentStakeAmount = watchedStakeAmount || 0;
 
-    // Check if approval is needed
-    const needsApproval = !allowanceWei || allowance === 0 || allowance < currentStakeAmount;
+    // Check if approval is needed - only true if allowance is 0 or undefined
+    // Once approved, user doesn't need to approve again for the same contract
+    const needsApproval = !allowanceWei || allowance === 0;
 
     // Handle approval success
     React.useEffect(() => {
