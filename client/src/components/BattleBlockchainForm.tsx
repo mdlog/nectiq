@@ -301,30 +301,10 @@ export function BattleBlockchainForm({
                 allowanceSufficient: currentAllowance >= data.stakeAmount
             });
 
-            // Create battle in database first (blockchain-first approach)
-            console.log('💾 [BATTLE-BLOCKCHAIN] Creating battle in database...');
-            const battleResponse = await apiRequest('/api/battles/blockchain', {
-                method: 'POST',
-                body: JSON.stringify({
-                    cryptocurrency: data.cryptocurrency,
-                    timeframe: data.timeframe,
-                    challengerPrediction: parseFloat(data.challengerPrediction),
-                    stakeAmount: data.stakeAmount,
-                    isPublic: data.isPublic,
-                    blockchainStatus: 'pending'
-                }),
-            });
-
-            if (!battleResponse.ok) {
-                const errorData = await battleResponse.json();
-                throw new Error(errorData.message || 'Failed to create battle in database');
-            }
-
-            const battleData = await battleResponse.json();
-            const createdBattleId = battleData.id;
+            // Generate battle ID using timestamp (blockchain-first approach)
+            const battleId = ethers.id(`battle_${Date.now()}_${Math.random()}`);
 
             console.log('⚔️ [BATTLE-BLOCKCHAIN] Creating battle:', {
-                dbId: createdBattleId,
                 blockchainId: battleId,
                 stakeAmount: data.stakeAmount,
                 stakeAmountWei: stakeAmountWei.toString(),
@@ -418,18 +398,6 @@ export function BattleBlockchainForm({
             console.error('❌ [BATTLE-BLOCKCHAIN] Error shortMessage:', error.shortMessage);
             console.error('❌ [BATTLE-BLOCKCHAIN] Full error object:', JSON.stringify(error, null, 2));
 
-            // If blockchain transaction failed, clean up the database battle
-            if (createdBattleId) {
-                console.log('🧹 [BATTLE-BLOCKCHAIN] Cleaning up database battle due to blockchain failure...');
-                try {
-                    await apiRequest(`/api/battles/${createdBattleId}`, {
-                        method: 'DELETE'
-                    });
-                    console.log('✅ [BATTLE-BLOCKCHAIN] Database battle cleaned up successfully');
-                } catch (cleanupError) {
-                    console.error('❌ [BATTLE-BLOCKCHAIN] Failed to clean up database battle:', cleanupError);
-                }
-            }
 
             let errorMessage = "Battle creation failed. Please try again.";
             if (error.message?.includes("insufficient funds")) {
@@ -464,84 +432,68 @@ export function BattleBlockchainForm({
 
     // Handle successful battle transaction
     React.useEffect(() => {
-        if (isTxSuccess && txHash && currentTxType === 'battle' && !hasSubmittedToDB && createdBattleId) {
-            setHasSubmittedToDB(true); // Prevent multiple submissions
+        if (isTxSuccess && txHash && currentTxType === 'battle') {
+            console.log('✅ [BATTLE-BLOCKCHAIN] Transaction confirmed:', txHash);
 
-            // Update battle in database with blockchain transaction hash
-            const updateBattleInDB = async () => {
+            // Create battle in database with confirmed blockchain transaction
+            const createBattle = async () => {
                 try {
-                    console.log('🔄 [BATTLE-BLOCKCHAIN] Updating battle in database with blockchain hash...');
-                    console.log('🔄 [BATTLE-BLOCKCHAIN] Battle ID:', createdBattleId);
-                    console.log('🔄 [BATTLE-BLOCKCHAIN] Transaction Hash:', txHash);
+                    console.log('🔄 [BATTLE-BLOCKCHAIN] Creating battle with confirmed blockchain transaction...');
 
-                    const updateResponse = await apiRequest(`/api/battles/${createdBattleId}/blockchain`, {
-                        method: "PUT",
+                    const formData = form.getValues();
+                    const createResponse = await apiRequest('/api/battles/blockchain', {
+                        method: 'POST',
                         body: JSON.stringify({
+                            cryptocurrency: formData.cryptocurrency,
+                            timeframe: formData.timeframe,
+                            challengerPrediction: parseFloat(formData.challengerPrediction),
+                            stakeAmount: parseFloat(formData.stakeAmount.toString()),
+                            isPublic: formData.isPublic,
                             blockchainBattleHash: txHash,
                             blockchainStatus: 'confirmed'
                         }),
                     });
 
-                    if (updateResponse.ok) {
-                        const updateData = await updateResponse.json();
-                        console.log('✅ [BATTLE-BLOCKCHAIN] Database updated:', updateData);
+                    if (createResponse.ok) {
+                        const battleData = await createResponse.json();
+                        console.log('✅ [BATTLE-BLOCKCHAIN] Battle created in database:', battleData);
 
                         toast({
                             title: "Battle Created Successfully!",
                             description: "Your battle has been recorded and staked on the blockchain.",
                         });
 
-                        console.log('🔄 [BATTLE-BLOCKCHAIN] Starting query invalidation...');
-
-                        // Refresh data - Force immediate refetch
+                        // Refresh data
                         await queryClient.invalidateQueries({ queryKey: ["/api/battles/live"] });
-                        console.log('✅ [BATTLE-BLOCKCHAIN] Invalidated /api/battles/live');
-
                         await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-                        console.log('✅ [BATTLE-BLOCKCHAIN] Invalidated /api/user');
-
                         await queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
-                        console.log('✅ [BATTLE-BLOCKCHAIN] Invalidated /api/user/stats');
-
                         await queryClient.invalidateQueries({ queryKey: ["/api/battles/stats"] });
-                        console.log('✅ [BATTLE-BLOCKCHAIN] Invalidated /api/battles/stats');
-
-                        console.log('🔄 [BATTLE-BLOCKCHAIN] Starting force refetch...');
-
-                        // Force refetch all related queries
-                        const refetchBattles = await queryClient.refetchQueries({ queryKey: ["/api/battles/live"] });
-                        console.log('✅ [BATTLE-BLOCKCHAIN] Refetched /api/battles/live:', refetchBattles);
-
-                        const refetchUser = await queryClient.refetchQueries({ queryKey: ["/api/user"] });
-                        console.log('✅ [BATTLE-BLOCKCHAIN] Refetched /api/user:', refetchUser);
 
                         refetchNtiqBalance();
                         refetchAllowance();
-
-                        console.log('✅ [BATTLE-BLOCKCHAIN] All queries refreshed successfully');
 
                         // Call success callback
                         if (onSuccess) {
                             onSuccess();
                         }
                     } else {
-                        throw new Error('Failed to create battle in database');
+                        const errorData = await createResponse.json();
+                        throw new Error(errorData.message || 'Failed to create battle');
                     }
                 } catch (error: any) {
-                    console.error('❌ [BATTLE-BLOCKCHAIN] Failed to create battle in database:', error);
+                    console.error('❌ [BATTLE-BLOCKCHAIN] Failed to create battle:', error);
+                    
                     toast({
-                        title: "Database Error",
-                        description: "Battle was staked on blockchain but failed to save in database. Please contact support.",
+                        title: "Database Creation Failed",
+                        description: "Blockchain transaction succeeded but battle creation failed. Please contact support.",
                         variant: "destructive",
                     });
-                } finally {
-                    setIsSubmitting(false);
                 }
             };
 
-            createBattleInDB();
+            createBattle();
         }
-    }, [isTxSuccess, txHash, currentTxType, hasSubmittedToDB]);
+    }, [isTxSuccess, txHash, currentTxType, form, toast, queryClient, onSuccess, refetchNtiqBalance, refetchAllowance]);
 
     // Handle errors
     React.useEffect(() => {
