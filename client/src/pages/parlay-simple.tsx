@@ -362,16 +362,6 @@ export default function TrendRideSimple() {
                 <CardTitle>TrendRide Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Stake Amount (NTIQ)</label>
-                  <Input
-                    type="number"
-                    placeholder="Minimum 50 NTIQ"
-                    value={stakeAmount}
-                    onChange={(e) => setStakeAmount(e.target.value)}
-                    min="50"
-                  />
-                </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between">
