@@ -386,19 +386,7 @@ export default function BattlesPage() {
       );
     }
 
-    const completedBattles = battleHistory as any[] || [];
-
-    // Combine completed battles with expired battles
-    const allHistoryBattles = [
-      ...completedBattles,
-      ...expiredBattles.map((battle: Battle) => ({
-        ...battle,
-        status: 'expired',
-        winnerId: null,
-        winnerUsername: null,
-        winnerReward: 0
-      }))
-    ].sort((a, b) => new Date(b.createdAt || b.targetTime).getTime() - new Date(a.createdAt || a.targetTime).getTime());
+    const allHistoryBattles = battleHistory as any[] || [];
 
     if (allHistoryBattles.length === 0) {
       return (
@@ -505,7 +493,7 @@ export default function BattlesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            Battle History ({totalItems} completed)
+            Battle History ({totalItems} total)
           </h3>
         </div>
 
@@ -534,7 +522,7 @@ export default function BattlesPage() {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    {battle.status === 'expired' ? (
+                    {battle.statusDisplay === 'expired' || battle.isExpired ? (
                       <Badge variant="secondary" className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
                         Expired
                       </Badge>
@@ -588,7 +576,7 @@ export default function BattlesPage() {
                     <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Final Price</p>
                       <p className="text-lg font-bold text-gray-900 dark:text-white">
-                        {battle.status === 'expired' ? (
+                        {battle.statusDisplay === 'expired' || battle.isExpired ? (
                           'Expired'
                         ) : (
                           battle.actualPrice ? `$${parseFloat(battle.actualPrice).toLocaleString(undefined, {
@@ -605,7 +593,7 @@ export default function BattlesPage() {
                     {/* Win Accuracy */}
                     <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                       <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">Win Accuracy</p>
-                      {battle.status === 'expired' ? (
+                      {battle.statusDisplay === 'expired' || battle.isExpired ? (
                         <p className="text-gray-500 dark:text-gray-400">Battle Expired</p>
                       ) : battle.winner && battle.actualPrice ? (() => {
                         const actualPrice = parseFloat(battle.actualPrice);

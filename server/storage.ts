@@ -2157,11 +2157,14 @@ export class DatabaseStorage implements IStorage {
 
   async getBattleHistory(): Promise<any[]> {
     try {
-      // Get completed battles without complex joins first
+      // Get completed and cancelled (expired) battles without complex joins first
       const battles = await db
         .select()
         .from(predictionBattles)
-        .where(eq(predictionBattles.status, 'completed'))
+        .where(or(
+          eq(predictionBattles.status, 'completed'),
+          eq(predictionBattles.status, 'cancelled')
+        ))
         .orderBy(desc(predictionBattles.createdAt))
         .limit(50);
 
@@ -2210,7 +2213,10 @@ export class DatabaseStorage implements IStorage {
             challenger,
             challenged,
             challengedUsername: challenged?.username || null,
-            winner
+            winner,
+            // Add status display info
+            statusDisplay: battle.status === 'cancelled' ? 'expired' : battle.status,
+            isExpired: battle.status === 'cancelled'
           };
         })
       );
