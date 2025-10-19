@@ -53,6 +53,7 @@ export function BattleBlockchainForm({
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasSubmittedToDB, setHasSubmittedToDB] = useState(false);
+    const [currentTxType, setCurrentTxType] = useState<'approve' | 'battle' | null>(null);
 
     const form = useForm<BattleFormData>({
         resolver: zodResolver(battleFormSchema),
@@ -65,18 +66,12 @@ export function BattleBlockchainForm({
         },
     });
 
-    // Wagmi hooks for blockchain interaction - Separate hooks for different contract calls
-    const { writeContract: writeBattleContract, data: battleTxHash, isPending: isBattlePending } = useWriteContract();
-    const { writeContract: writeApproveContract, data: approveTxHash, isPending: isApprovePending } = useWriteContract();
+    // Wagmi hooks for blockchain interaction - Single hook for all contract calls
+    const { writeContract, data: txHash, isPending: isTxPending, error: txError } = useWriteContract();
 
-    const { isLoading: isBattleConfirming, isSuccess: isBattleSuccess, isError: isBattleError } = useWaitForTransactionReceipt({
-        hash: battleTxHash,
-        query: { enabled: !!battleTxHash },
-    });
-
-    const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess, isError: isApproveError } = useWaitForTransactionReceipt({
-        hash: approveTxHash,
-        query: { enabled: !!approveTxHash },
+    const { isLoading: isTxConfirming, isSuccess: isTxSuccess, isError: isTxError } = useWaitForTransactionReceipt({
+        hash: txHash,
+        query: { enabled: !!txHash },
     });
 
     // Read NTIQ balance
@@ -181,7 +176,8 @@ export function BattleBlockchainForm({
                     attempt: retryCount + 1
                 });
 
-                await writeApproveContract({
+                setCurrentTxType('approve');
+                await writeContract({
                     address: CONTRACTS.NTIQ_TOKEN,
                     abi: CONTRACTS.ABIS?.NTIQToken || CONTRACTS.ABIS?.ERC20 || ABIS?.NTIQToken || ABIS?.ERC20,
                     functionName: 'approve',
@@ -392,7 +388,8 @@ export function BattleBlockchainForm({
             });
 
             try {
-                await writeBattleContract({
+                setCurrentTxType('battle');
+                await writeContract({
                     address: CONTRACTS.BATTLE_ESCROW,
                     abi: CONTRACTS.ABIS?.BATTLE_ESCROW || ABIS?.BATTLE_ESCROW,
                     functionName: 'createBattle',
@@ -403,15 +400,15 @@ export function BattleBlockchainForm({
 
                 console.log('✅ [BATTLE-BLOCKCHAIN] Battle contract call initiated successfully');
             } catch (contractError) {
-                console.error('❌ [BATTLE-BLOCKCHAIN] writeBattleContract failed:', contractError);
+                console.error('❌ [BATTLE-BLOCKCHAIN] writeContract failed:', contractError);
                 throw contractError;
             }
 
             // Wait for transaction to be confirmed
-            if (battleTxHash) {
+            if (txHash) {
                 console.log('⏳ [BATTLE-BLOCKCHAIN] Waiting for transaction confirmation...');
                 // The useWaitForTransactionReceipt hook will handle the confirmation
-                // We'll update the database in the useEffect when isBattleSuccess becomes true
+                // We'll update the database in the useEffect when isTxSuccess becomes true
             }
         } catch (error: any) {
             console.error('❌ [BATTLE-BLOCKCHAIN] Battle creation failed:', error);
@@ -453,9 +450,21 @@ export function BattleBlockchainForm({
         }
     };
 
+    // Handle successful transaction
+    React.useEffect(() => {
+        if (isTxSuccess && txHash && currentTxType === 'approve') {
+            toast({
+                title: "✅ NTIQ Approval Successful",
+                description: "You can now create battles. Click 'Step 2: Create Battle' to proceed.",
+            });
+            refetchAllowance();
+            setCurrentTxType(null);
+        }
+    }, [isTxSuccess, txHash, currentTxType, toast, refetchAllowance]);
+
     // Handle successful battle transaction
     React.useEffect(() => {
-        if (isBattleSuccess && battleTxHash && !hasSubmittedToDB && createdBattleId) {
+        if (isTxSuccess && txHash && currentTxType === 'battle' && !hasSubmittedToDB && createdBattleId) {
             setHasSubmittedToDB(true); // Prevent multiple submissions
 
             // Update battle in database with blockchain transaction hash
@@ -463,12 +472,12 @@ export function BattleBlockchainForm({
                 try {
                     console.log('🔄 [BATTLE-BLOCKCHAIN] Updating battle in database with blockchain hash...');
                     console.log('🔄 [BATTLE-BLOCKCHAIN] Battle ID:', createdBattleId);
-                    console.log('🔄 [BATTLE-BLOCKCHAIN] Transaction Hash:', battleTxHash);
+                    console.log('🔄 [BATTLE-BLOCKCHAIN] Transaction Hash:', txHash);
 
                     const updateResponse = await apiRequest(`/api/battles/${createdBattleId}/blockchain`, {
                         method: "PUT",
                         body: JSON.stringify({
-                            blockchainBattleHash: battleTxHash,
+                            blockchainBattleHash: txHash,
                             blockchainStatus: 'confirmed'
                         }),
                     });
@@ -532,40 +541,24 @@ export function BattleBlockchainForm({
 
             createBattleInDB();
         }
-    }, [isBattleSuccess, battleTxHash, hasSubmittedToDB]);
-
-    // Handle approval success
-    React.useEffect(() => {
-        if (isApproveSuccess) {
-            toast({
-                title: "✅ NTIQ Approval Successful",
-                description: "You can now create battles. Click 'Step 2: Create Battle' to proceed.",
-            });
-            refetchAllowance();
-        }
-    }, [isApproveSuccess, toast, refetchAllowance]);
+    }, [isTxSuccess, txHash, currentTxType, hasSubmittedToDB]);
 
     // Handle errors
     React.useEffect(() => {
-        if (isBattleError) {
+        if (isTxError && currentTxType) {
+            const errorTitle = currentTxType === 'approve' ? "Approval Transaction Failed" : "Battle Transaction Failed";
+            const errorDescription = currentTxType === 'approve' 
+                ? "The approval transaction failed. Please try again."
+                : "The battle transaction failed. Please try again.";
+            
             toast({
-                title: "Battle Transaction Failed",
-                description: "The blockchain transaction failed. Please try again.",
+                title: errorTitle,
+                description: errorDescription,
                 variant: "destructive",
             });
-            setIsSubmitting(false);
+            setCurrentTxType(null);
         }
-    }, [isBattleError, toast]);
-
-    React.useEffect(() => {
-        if (isApproveError) {
-            toast({
-                title: "Approval Transaction Failed",
-                description: "The approval transaction failed. Please try again.",
-                variant: "destructive",
-            });
-        }
-    }, [isApproveError, toast]);
+    }, [isTxError, currentTxType, toast]);
 
     const onSubmit = (data: BattleFormData) => {
         console.log('🔍 [BATTLE-FORM] onSubmit called:', {
@@ -848,13 +841,13 @@ export function BattleBlockchainForm({
                     {/* Submit Button */}
                     <Button
                         type="submit"
-                        disabled={isSubmitting || isApprovePending || isBattlePending || isApproveConfirming || isBattleConfirming}
+                        disabled={isSubmitting || isTxPending || isTxConfirming}
                         className={`w-full font-semibold py-3 px-6 transition-all transform hover:scale-105 ${needsApproval
                             ? 'bg-orange-600 hover:bg-orange-700 text-white'
                             : 'gradient-bg hover:opacity-90 text-white'
                             }`}
                     >
-                        {isSubmitting || isApprovePending || isBattlePending || isApproveConfirming || isBattleConfirming ? (
+                        {isSubmitting || isTxPending || isTxConfirming ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 {needsApproval ? "Approving NTIQ..." : "Creating Battle..."}
