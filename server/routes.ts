@@ -5554,6 +5554,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Release reward on blockchain (admin endpoint)
+  app.post("/api/predictions/blockchain-release", async (req, res) => {
+    try {
+      const { predictionId, actualPrice, userAddress } = req.body;
+      
+      if (!predictionId || !actualPrice || !userAddress) {
+        return res.status(400).json({ 
+          message: "Missing required parameters: predictionId, actualPrice, userAddress" 
+        });
+      }
+
+      console.log(`🔗 [BLOCKCHAIN-RELEASE] Releasing reward for prediction ${predictionId}`);
+      console.log(`   Actual Price: ${actualPrice}`);
+      console.log(`   User Address: ${userAddress}`);
+
+      // Import blockchain service
+      const { predictionStakingService } = await import('./services/predictionStakingService');
+      const { blockchainService } = await import('./services/blockchainService');
+      
+      // Generate blockchain prediction ID
+      const blockchainPredictionId = blockchainService.generatePredictionId(predictionId);
+      
+      // Release reward on blockchain
+      const txHash = await predictionStakingService.releaseReward({
+        predictionId: blockchainPredictionId,
+        actualPrice: actualPrice.toString()
+      });
+
+      console.log(`✅ [BLOCKCHAIN-RELEASE] Reward released successfully`);
+      console.log(`   Transaction Hash: ${txHash}`);
+
+      // Update database with blockchain reward hash
+      await db
+        .update(predictions)
+        .set({ blockchainRewardHash: txHash })
+        .where(eq(predictions.id, predictionId));
+
+      res.json({ 
+        message: "Reward released on blockchain successfully",
+        transactionHash: txHash,
+        predictionId: predictionId
+      });
+      
+    } catch (error: any) {
+      console.error('❌ [BLOCKCHAIN-RELEASE] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to release reward on blockchain",
+        error: error.message 
+      });
+    }
+  });
+
   // Admin routes - protected by wallet-based authentication
   app.get("/api/admin/parlays", requireAdmin, async (req, res) => {
     try {
