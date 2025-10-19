@@ -53,7 +53,6 @@ export function BattleBlockchainForm({
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasSubmittedToDB, setHasSubmittedToDB] = useState(false);
-    const [createdBattleId, setCreatedBattleId] = useState<number | null>(null);
 
     const form = useForm<BattleFormData>({
         resolver: zodResolver(battleFormSchema),
@@ -184,27 +183,8 @@ export function BattleBlockchainForm({
 
             const stakeAmountWei = parseEther(data.stakeAmount.toString());
 
-            // First create battle in database to get ID
-            const battleResponse = await apiRequest('/api/battles/create', {
-                method: 'POST',
-                body: JSON.stringify({
-                    cryptocurrency: data.cryptocurrency,
-                    timeframe: data.timeframe,
-                    stakeAmount: data.stakeAmount,
-                    challengerPrediction: data.challengerPrediction,
-                    isPublic: data.isPublic
-                })
-            });
-
-            if (!battleResponse || !battleResponse.id) {
-                throw new Error('Failed to create battle in database');
-            }
-
-            // Store the battle ID for later use
-            setCreatedBattleId(battleResponse.id);
-
-            // Generate battle ID using database ID (consistent with backend)
-            const battleId = ethers.id(`battle_${battleResponse.id}`);
+            // Generate battle ID using timestamp (blockchain-first approach)
+            const battleId = ethers.id(`battle_${Date.now()}_${address}`);
 
             // Check NTIQ balance
             const ntiqBalanceWei = await refetchNtiqBalance();

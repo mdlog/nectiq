@@ -34,7 +34,9 @@ interface ParlayBlockchainFormProps {
 }
 
 const parlayFormSchema = z.object({
-    stakeAmount: z.string().min(1, 'Stake amount is required'),
+    stakeAmount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 50, {
+        message: "Minimum stake is 50 NTIQ",
+    }),
 });
 
 type ParlayFormData = z.infer<typeof parlayFormSchema>;
@@ -295,7 +297,7 @@ export function ParlayBlockchainForm({
                     const response = await apiRequest('/api/parlay/blockchain', {
                         method: 'POST',
                         body: JSON.stringify({
-                            stakeAmount: watchedStakeAmount,
+                            stakeAmount: parseFloat(watchedStakeAmount || '0'),
                             coins,
                             blockchainTxHash: parlayTxHash,
                         }),
