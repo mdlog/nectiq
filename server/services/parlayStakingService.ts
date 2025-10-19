@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { blockchainService } from './blockchainService';
 import { logger } from '../../shared/logger';
+import { storage } from '../storage';
 
 export interface LockParlayStakeParams {
     parlayId: string;
@@ -212,6 +213,128 @@ export class ParlayStakingService {
 
             callback(parlayId, user, amount);
         });
+    }
+
+    /**
+     * Check and process completed parlays without blockchain rewards
+     */
+    async checkAndProcessCompletedParlays(): Promise<void> {
+        try {
+            console.log('🔍 [PARLAY-PROCESSOR] Checking completed parlays without blockchain rewards...');
+
+            // Get all completed parlays that don't have blockchain reward hash
+            const completedParlays = await storage.getCompletedParlaysWithoutBlockchainReward();
+
+            if (completedParlays.length === 0) {
+                console.log('✅ [PARLAY-PROCESSOR] No completed parlays without blockchain rewards found');
+                return;
+            }
+
+            console.log(`🔍 [PARLAY-PROCESSOR] Found ${completedParlays.length} completed parlays without blockchain rewards`);
+
+            for (const parlay of completedParlays) {
+                await this.processCompletedParlayReward(parlay);
+            }
+        } catch (error) {
+            console.error('❌ [PARLAY-PROCESSOR] Error processing completed parlays:', error);
+        }
+    }
+
+    /**
+     * Process completed parlay reward
+     */
+    async processCompletedParlayReward(parlay: any): Promise<void> {
+        try {
+            console.log(`🔍 [PARLAY-BLOCKCHAIN-REWARD] Processing completed parlay ${parlay.id} for blockchain reward...`);
+
+            // Check if parlay has blockchain stake hash
+            if (!parlay.blockchainStakeHash) {
+                console.log(`⚠️ [PARLAY-BLOCKCHAIN-REWARD] Parlay ${parlay.id} has no blockchain stake hash - skipping`);
+                return;
+            }
+
+            // Check if parlay already has blockchain reward hash
+            if (parlay.blockchainRewardHash) {
+                console.log(`✅ [PARLAY-BLOCKCHAIN-REWARD] Parlay ${parlay.id} already has blockchain reward hash - skipping`);
+                return;
+            }
+
+            // Check if parlay has reward amount
+            if (!parlay.rewardAmount || parlay.rewardAmount <= 0) {
+                console.log(`⚠️ [PARLAY-BLOCKCHAIN-REWARD] Parlay ${parlay.id} has no reward amount - skipping`);
+                return;
+            }
+
+            // Get user information
+            const user = await storage.getUser(parlay.userId);
+            if (!user || !user.walletAddress) {
+                console.log(`⚠️ [PARLAY-BLOCKCHAIN-REWARD] Parlay ${parlay.id} has no user or wallet address - skipping`);
+                return;
+            }
+
+            console.log(`💰 [PARLAY-BLOCKCHAIN-REWARD] Processing reward for parlay ${parlay.id}:`);
+            console.log(`   User: ${user.username}`);
+            console.log(`   Wallet: ${user.walletAddress}`);
+            console.log(`   Reward Amount: ${parlay.rewardAmount} NTIQ`);
+            console.log(`   Blockchain Stake Hash: ${parlay.blockchainStakeHash}`);
+
+            // Try to release compound reward on blockchain
+            try {
+                // Try with database ID first
+                let blockchainParlayId = blockchainService.generateParlayId(parlay.id);
+                let txHash = null;
+
+                try {
+                    txHash = await this.releaseCompoundReward({
+                        parlayId: blockchainParlayId,
+                        userAddress: user.walletAddress
+                    });
+                    logger.info(`🔗 [PARLAY-BLOCKCHAIN-REWARD] Parlay ${parlay.id} reward released with database ID: ${txHash}`);
+                } catch (dbIdError) {
+                    logger.warn(`⚠️ [PARLAY-BLOCKCHAIN-REWARD] Failed with database ID, trying alternative methods:`, dbIdError.message);
+
+                    // Try to extract parlay ID from blockchain transaction
+                    try {
+                        const provider = blockchainService.getProvider();
+                        const tx = await provider.getTransaction(parlay.blockchainStakeHash);
+
+                        if (tx && tx.data) {
+                            // Extract parlay ID from transaction data (first parameter after function selector)
+                            const data = tx.data.substring(10); // Remove function selector
+                            const parlayIdHex = '0x' + data.substring(0, 64);
+
+                            logger.info(`🔍 [PARLAY-BLOCKCHAIN-REWARD] Extracted parlay ID from transaction: ${parlayIdHex}`);
+
+                            txHash = await this.releaseCompoundReward({
+                                parlayId: parlayIdHex,
+                                userAddress: user.walletAddress
+                            });
+
+                            logger.info(`🔗 [PARLAY-BLOCKCHAIN-REWARD] Parlay ${parlay.id} reward released with extracted ID: ${txHash}`);
+                        }
+                    } catch (extractError) {
+                        logger.error(`❌ [PARLAY-BLOCKCHAIN-REWARD] Failed to extract parlay ID from transaction:`, extractError);
+                        throw new Error(`Failed to release compound reward: ${extractError.message}`);
+                    }
+                }
+
+                if (txHash) {
+                    // Update parlay with reward transaction hash
+                    await storage.updateParlay(parlay.id, {
+                        blockchainRewardHash: txHash
+                    });
+                    logger.info(`✅ [PARLAY-BLOCKCHAIN-REWARD] Parlay ${parlay.id} reward released successfully: ${txHash}`);
+                    console.log(`✅ [PARLAY-BLOCKCHAIN-REWARD] Successfully processed reward for parlay ${parlay.id}`);
+                } else {
+                    logger.error(`❌ [PARLAY-BLOCKCHAIN-REWARD] Failed to get transaction hash for parlay ${parlay.id}`);
+                }
+            } catch (blockchainError) {
+                logger.error(`❌ [PARLAY-BLOCKCHAIN-REWARD] Failed to release compound reward on blockchain for parlay ${parlay.id}:`, blockchainError);
+                console.log(`❌ [PARLAY-BLOCKCHAIN-REWARD] Failed to process blockchain reward for parlay ${parlay.id}: ${blockchainError.message}`);
+            }
+        } catch (error) {
+            console.error(`❌ [PARLAY-BLOCKCHAIN-REWARD] Error processing completed parlay ${parlay.id}:`, error);
+        }
     }
 }
 

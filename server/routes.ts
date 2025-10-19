@@ -5558,10 +5558,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/predictions/blockchain-release", async (req, res) => {
     try {
       const { predictionId, actualPrice, userAddress } = req.body;
-      
+
       if (!predictionId || !actualPrice || !userAddress) {
-        return res.status(400).json({ 
-          message: "Missing required parameters: predictionId, actualPrice, userAddress" 
+        return res.status(400).json({
+          message: "Missing required parameters: predictionId, actualPrice, userAddress"
         });
       }
 
@@ -5572,10 +5572,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import blockchain service
       const { predictionStakingService } = await import('./services/predictionStakingService');
       const { blockchainService } = await import('./services/blockchainService');
-      
+
       // Generate blockchain prediction ID
       const blockchainPredictionId = blockchainService.generatePredictionId(predictionId);
-      
+
       // Release reward on blockchain
       const txHash = await predictionStakingService.releaseReward({
         predictionId: blockchainPredictionId,
@@ -5591,17 +5591,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .set({ blockchainRewardHash: txHash })
         .where(eq(predictions.id, predictionId));
 
-      res.json({ 
+      res.json({
         message: "Reward released on blockchain successfully",
         transactionHash: txHash,
         predictionId: predictionId
       });
-      
+
     } catch (error: any) {
       console.error('❌ [BLOCKCHAIN-RELEASE] Error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to release reward on blockchain",
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -5610,10 +5610,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/battles/blockchain-release", async (req, res) => {
     try {
       const { battleId, winnerAddress } = req.body;
-      
+
       if (!battleId || !winnerAddress) {
-        return res.status(400).json({ 
-          message: "Missing required parameters: battleId, winnerAddress" 
+        return res.status(400).json({
+          message: "Missing required parameters: battleId, winnerAddress"
         });
       }
 
@@ -5623,10 +5623,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import blockchain service
       const { battleEscrowService } = await import('./services/battleEscrowService');
       const { blockchainService } = await import('./services/blockchainService');
-      
+
       // Generate blockchain battle ID
       const blockchainBattleId = blockchainService.generateBattleId(battleId);
-      
+
       // Resolve battle on blockchain (this releases rewards)
       const txHash = await battleEscrowService.resolveBattle({
         battleId: blockchainBattleId,
@@ -5642,17 +5642,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .set({ blockchainResolveHash: txHash })
         .where(eq(predictionBattles.id, battleId));
 
-      res.json({ 
+      res.json({
         message: "Battle reward released on blockchain successfully",
         transactionHash: txHash,
         battleId: battleId
       });
-      
+
     } catch (error: any) {
       console.error('❌ [BATTLE-BLOCKCHAIN-RELEASE] Error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to release battle reward on blockchain",
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -5661,10 +5661,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/parlays/blockchain-release", async (req, res) => {
     try {
       const { parlayId, userAddress } = req.body;
-      
+
       if (!parlayId || !userAddress) {
-        return res.status(400).json({ 
-          message: "Missing required parameters: parlayId, userAddress" 
+        return res.status(400).json({
+          message: "Missing required parameters: parlayId, userAddress"
         });
       }
 
@@ -5674,10 +5674,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import blockchain service
       const { parlayStakingService } = await import('./services/parlayStakingService');
       const { blockchainService } = await import('./services/blockchainService');
-      
+
       // Generate blockchain parlay ID
       const blockchainParlayId = blockchainService.generateParlayId(parlayId);
-      
+
       // Release compound reward on blockchain
       const txHash = await parlayStakingService.releaseCompoundReward({
         parlayId: blockchainParlayId,
@@ -5693,17 +5693,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .set({ blockchainRewardHash: txHash })
         .where(eq(parlayPredictions.id, parlayId));
 
-      res.json({ 
+      res.json({
         message: "Parlay reward released on blockchain successfully",
         transactionHash: txHash,
         parlayId: parlayId
       });
-      
+
     } catch (error: any) {
       console.error('❌ [PARLAY-BLOCKCHAIN-RELEASE] Error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to release parlay reward on blockchain",
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -12001,6 +12001,38 @@ Manual balance correction required IMMEDIATELY!`;
     }
   }, 60000); // Check every minute
 
+  // Start background task to check completed predictions without blockchain rewards every 2 minutes
+  setInterval(async () => {
+    try {
+      console.log('🔍 [INTERVAL] Checking completed predictions without blockchain rewards...');
+      await predictionService.checkAndProcessCompletedPredictions();
+    } catch (error) {
+      console.error("Error in completed prediction processing background task:", error);
+    }
+  }, 120000); // Check every 2 minutes
+
+  // Start background task to check completed battles without blockchain rewards every 3 minutes
+  setInterval(async () => {
+    try {
+      console.log('🔍 [INTERVAL] Checking completed battles without blockchain rewards...');
+      const { battleEscrowService } = await import('./services/battleEscrowService.js');
+      await battleEscrowService.checkAndProcessCompletedBattles();
+    } catch (error) {
+      console.error("Error in completed battle processing background task:", error);
+    }
+  }, 180000); // Check every 3 minutes
+
+  // Start background task to check completed parlays without blockchain rewards every 3 minutes
+  setInterval(async () => {
+    try {
+      console.log('🔍 [INTERVAL] Checking completed parlays without blockchain rewards...');
+      const { parlayStakingService } = await import('./services/parlayStakingService.js');
+      await parlayStakingService.checkAndProcessCompletedParlays();
+    } catch (error) {
+      console.error("Error in completed parlay processing background task:", error);
+    }
+  }, 180000); // Check every 3 minutes
+
   // Test endpoint to manually trigger parlay processor
   app.post('/api/test-parlay-processor', async (req, res) => {
     try {
@@ -12014,6 +12046,51 @@ Manual balance correction required IMMEDIATELY!`;
       res.json({ success: true, message: 'Parlay processor executed successfully' });
     } catch (error) {
       console.error("❌ [TEST] Error in manual parlay processing:", error);
+      res.status(500).json({ success: false, error: error.message, stack: error.stack });
+    }
+  });
+
+  // Test endpoint to manually trigger completed prediction processor
+  app.post('/api/test-completed-prediction-processor', async (req, res) => {
+    try {
+      console.log('🔍 [TEST] Starting manual completed prediction processor test...');
+      const { predictionService } = await import('./services/predictionService.js');
+      console.log('🔍 [TEST] Successfully imported predictionService');
+      await predictionService.checkAndProcessCompletedPredictions();
+      console.log('🔍 [TEST] Successfully executed checkAndProcessCompletedPredictions');
+      res.json({ success: true, message: 'Completed prediction processor executed successfully' });
+    } catch (error) {
+      console.error("❌ [TEST] Error in manual completed prediction processing:", error);
+      res.status(500).json({ success: false, error: error.message, stack: error.stack });
+    }
+  });
+
+  // Test endpoint to manually trigger completed battle processor
+  app.post('/api/test-completed-battle-processor', async (req, res) => {
+    try {
+      console.log('🔍 [TEST] Starting manual completed battle processor test...');
+      const { battleEscrowService } = await import('./services/battleEscrowService.js');
+      console.log('🔍 [TEST] Successfully imported battleEscrowService');
+      await battleEscrowService.checkAndProcessCompletedBattles();
+      console.log('🔍 [TEST] Successfully executed checkAndProcessCompletedBattles');
+      res.json({ success: true, message: 'Completed battle processor executed successfully' });
+    } catch (error) {
+      console.error("❌ [TEST] Error in manual completed battle processing:", error);
+      res.status(500).json({ success: false, error: error.message, stack: error.stack });
+    }
+  });
+
+  // Test endpoint to manually trigger completed parlay processor
+  app.post('/api/test-completed-parlay-processor', async (req, res) => {
+    try {
+      console.log('🔍 [TEST] Starting manual completed parlay processor test...');
+      const { parlayStakingService } = await import('./services/parlayStakingService.js');
+      console.log('🔍 [TEST] Successfully imported parlayStakingService');
+      await parlayStakingService.checkAndProcessCompletedParlays();
+      console.log('🔍 [TEST] Successfully executed checkAndProcessCompletedParlays');
+      res.json({ success: true, message: 'Completed parlay processor executed successfully' });
+    } catch (error) {
+      console.error("❌ [TEST] Error in manual completed parlay processing:", error);
       res.status(500).json({ success: false, error: error.message, stack: error.stack });
     }
   });

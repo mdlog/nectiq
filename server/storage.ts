@@ -52,6 +52,9 @@ export interface IStorage {
   getUserPredictions(userId: number): Promise<Prediction[]>;
   getAllPredictions(): Promise<Prediction[]>;
   getActivePredictions(): Promise<Prediction[]>;
+  getCompletedPredictionsWithoutBlockchainReward(): Promise<Prediction[]>;
+  getCompletedBattlesWithoutBlockchainReward(): Promise<any[]>;
+  getCompletedParlaysWithoutBlockchainReward(): Promise<any[]>;
   updatePredictionResult(id: number, actualPrice: string, accuracy: string, rewardAmount: number, status: string): Promise<void>;
   updatePrediction(id: number, updates: Partial<Prediction>): Promise<void>;
   getRecentPredictions(limit?: number): Promise<Prediction[]>;
@@ -468,6 +471,36 @@ export class DatabaseStorage implements IStorage {
 
   async getActivePredictions(): Promise<Prediction[]> {
     return await db.select().from(predictions).where(eq(predictions.status, "pending"));
+  }
+
+  async getCompletedPredictionsWithoutBlockchainReward(): Promise<Prediction[]> {
+    return await db.select().from(predictions)
+      .where(and(
+        eq(predictions.status, 'completed'),
+        isNull(predictions.blockchainRewardHash),
+        isNotNull(predictions.blockchainStakeHash),
+        gt(predictions.rewardAmount, 0)
+      ));
+  }
+
+  async getCompletedBattlesWithoutBlockchainReward(): Promise<any[]> {
+    return await db.select().from(predictionBattles)
+      .where(and(
+        eq(predictionBattles.status, 'completed'),
+        isNull(predictionBattles.blockchainResolveHash),
+        isNotNull(predictionBattles.blockchainBattleHash),
+        gt(predictionBattles.winnerReward, 0)
+      ));
+  }
+
+  async getCompletedParlaysWithoutBlockchainReward(): Promise<any[]> {
+    return await db.select().from(parlayPredictions)
+      .where(and(
+        eq(parlayPredictions.status, 'completed'),
+        isNull(parlayPredictions.blockchainRewardHash),
+        isNotNull(parlayPredictions.blockchainStakeHash),
+        gt(parlayPredictions.rewardAmount, 0)
+      ));
   }
 
   async updatePredictionResult(id: number, actualPrice: string, accuracy: string, rewardAmount: number, status: string): Promise<void> {
