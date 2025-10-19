@@ -5558,10 +5558,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/predictions/blockchain-release", async (req, res) => {
     try {
       const { predictionId, actualPrice, userAddress } = req.body;
-      
+
       if (!predictionId || !actualPrice || !userAddress) {
-        return res.status(400).json({ 
-          message: "Missing required parameters: predictionId, actualPrice, userAddress" 
+        return res.status(400).json({
+          message: "Missing required parameters: predictionId, actualPrice, userAddress"
         });
       }
 
@@ -5572,10 +5572,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import blockchain service
       const { predictionStakingService } = await import('./services/predictionStakingService');
       const { blockchainService } = await import('./services/blockchainService');
-      
+
       // Generate blockchain prediction ID
       const blockchainPredictionId = blockchainService.generatePredictionId(predictionId);
-      
+
       // Release reward on blockchain
       const txHash = await predictionStakingService.releaseReward({
         predictionId: blockchainPredictionId,
@@ -5591,17 +5591,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .set({ blockchainRewardHash: txHash })
         .where(eq(predictions.id, predictionId));
 
-      res.json({ 
+      res.json({
         message: "Reward released on blockchain successfully",
         transactionHash: txHash,
         predictionId: predictionId
       });
-      
+
     } catch (error: any) {
       console.error('❌ [BLOCKCHAIN-RELEASE] Error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to release reward on blockchain",
-        error: error.message 
+        error: error.message
       });
     }
   });

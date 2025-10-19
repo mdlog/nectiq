@@ -97,7 +97,7 @@ export function BattleBlockchainForm({
     const allowance = allowanceWei ? parseFloat(formatEther(allowanceWei)) : 0;
 
     const currentStakeAmount = form.watch('stakeAmount') || 0;
-    
+
     // Check if approval is needed - only true if allowance is 0 or undefined
     // Once approved, user doesn't need to approve again for the same contract
     const needsApproval = !allowanceWei || allowance === 0;
@@ -165,7 +165,7 @@ export function BattleBlockchainForm({
         while (retryCount < maxRetries) {
             try {
                 const stakeAmountWei = parseEther(stakeAmount.toString());
-                
+
                 console.log(`🟢 [BATTLE-BLOCKCHAIN] Attempt ${retryCount + 1}/${maxRetries} - Calling writeApproveContract...`);
                 console.log('🟢 [BATTLE-BLOCKCHAIN] Contract details:', {
                     ntiqToken: CONTRACTS.NTIQ_TOKEN,
@@ -188,11 +188,11 @@ export function BattleBlockchainForm({
                 });
                 console.log('✅ [BATTLE-BLOCKCHAIN] Approval transaction submitted successfully');
                 return; // Success, exit retry loop
-                
+
             } catch (error: any) {
                 lastError = error;
                 retryCount++;
-                
+
                 console.error(`❌ [BATTLE-BLOCKCHAIN] Attempt ${retryCount} failed:`, error);
                 console.error('❌ [BATTLE-BLOCKCHAIN] Error details:', {
                     message: error.message,
@@ -204,9 +204,9 @@ export function BattleBlockchainForm({
 
                 // Check if it's a retryable error
                 const isRetryableError = error.message?.includes("Internal JSON-RPC error") ||
-                                       error.message?.includes("-32603") ||
-                                       error.message?.includes("network") ||
-                                       error.message?.includes("timeout");
+                    error.message?.includes("-32603") ||
+                    error.message?.includes("network") ||
+                    error.message?.includes("timeout");
 
                 if (retryCount < maxRetries && isRetryableError) {
                     console.log(`🔄 [BATTLE-BLOCKCHAIN] Retrying in ${retryCount * 2} seconds...`);
@@ -215,7 +215,7 @@ export function BattleBlockchainForm({
                         description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
                         variant: "default",
                     });
-                    
+
                     // Wait before retry (exponential backoff)
                     await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
                 } else {
@@ -226,7 +226,7 @@ export function BattleBlockchainForm({
 
         // All retries failed
         console.error('❌ [BATTLE-BLOCKCHAIN] All approval attempts failed:', lastError);
-        
+
         let errorMessage = "Approval transaction failed after multiple attempts.";
         if (lastError?.message?.includes("insufficient funds")) {
             errorMessage = "Insufficient POL tokens for gas fees. Please add more POL to your wallet.";
@@ -479,7 +479,7 @@ export function BattleBlockchainForm({
                     }
                 } catch (error: any) {
                     console.error('❌ [BATTLE-BLOCKCHAIN] Failed to create battle:', error);
-                    
+
                     toast({
                         title: "Database Creation Failed",
                         description: "Blockchain transaction succeeded but battle creation failed. Please contact support.",
@@ -496,10 +496,10 @@ export function BattleBlockchainForm({
     React.useEffect(() => {
         if (isTxError && currentTxType) {
             const errorTitle = currentTxType === 'approve' ? "Approval Transaction Failed" : "Battle Transaction Failed";
-            const errorDescription = currentTxType === 'approve' 
+            const errorDescription = currentTxType === 'approve'
                 ? "The approval transaction failed. Please try again."
                 : "The battle transaction failed. Please try again.";
-            
+
             toast({
                 title: errorTitle,
                 description: errorDescription,
