@@ -168,49 +168,113 @@ export function ParlayBlockchainForm({
             return;
         }
 
-        try {
-            console.log('🟢 [PARLAY-BLOCKCHAIN] Calling writeApproveContract...');
-            console.log('🟢 [PARLAY-BLOCKCHAIN] Contract details:', {
-                ntiqToken: CONTRACTS.NTIQ_TOKEN,
-                parlayStaking: CONTRACTS.ENHANCED_PARLAY_STAKING,
-                stakeAmountWei: stakeAmountWei.toString(),
-                chainId: chain.id,
-                abiExists: !!CONTRACTS.ABIS?.NTIQToken
-            });
-
-            await writeApproveContract({
-                address: CONTRACTS.NTIQ_TOKEN,
-                abi: CONTRACTS.ABIS?.NTIQToken || [],
-                functionName: 'approve',
-                args: [CONTRACTS.ENHANCED_PARLAY_STAKING, stakeAmountWei],
-                chainId: chain.id,
-                gas: 150000n, // Increase gas limit for approve
-            });
-            console.log('✅ [PARLAY-BLOCKCHAIN] Approval transaction submitted');
-        } catch (error: any) {
-            console.error('❌ [PARLAY-BLOCKCHAIN] Approval failed:', error);
-            console.error('❌ [PARLAY-BLOCKCHAIN] Error details:', {
-                message: error.message,
-                shortMessage: error.shortMessage,
-                code: error.code,
-                data: error.data
-            });
-            
-            let errorMessage = "Approval transaction failed. Please try again.";
-            if (error.message?.includes("insufficient funds")) {
-                errorMessage = "Insufficient POL tokens for gas fees. Please add more POL to your wallet.";
-            } else if (error.message?.includes("user rejected")) {
-                errorMessage = "Transaction was cancelled in MetaMask.";
-            } else if (error.message?.includes("gas required exceeds allowance")) {
-                errorMessage = "Gas limit too low. Please try again.";
-            }
-
+        // Pre-transaction validation
+        if (!CONTRACTS.NTIQ_TOKEN || !CONTRACTS.ENHANCED_PARLAY_STAKING) {
+            console.error('❌ [PARLAY-BLOCKCHAIN] Contract addresses not configured');
             toast({
-                title: "Approval Failed",
-                description: errorMessage,
+                title: "Configuration Error",
+                description: "Contract addresses not properly configured. Please refresh the page.",
                 variant: "destructive",
             });
+            return;
         }
+
+        if (!CONTRACTS.ABIS?.NTIQToken || CONTRACTS.ABIS.NTIQToken.length === 0) {
+            console.error('❌ [PARLAY-BLOCKCHAIN] ABI not available');
+            toast({
+                title: "Contract Error",
+                description: "Contract ABI not available. Please refresh the page.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Retry mechanism for RPC errors
+        let retryCount = 0;
+        const maxRetries = 3;
+        let lastError: any = null;
+
+        while (retryCount < maxRetries) {
+            try {
+                console.log(`🟢 [PARLAY-BLOCKCHAIN] Attempt ${retryCount + 1}/${maxRetries} - Calling writeApproveContract...`);
+                console.log('🟢 [PARLAY-BLOCKCHAIN] Contract details:', {
+                    ntiqToken: CONTRACTS.NTIQ_TOKEN,
+                    parlayStaking: CONTRACTS.ENHANCED_PARLAY_STAKING,
+                    stakeAmountWei: stakeAmountWei.toString(),
+                    chainId: chain.id,
+                    abiExists: !!CONTRACTS.ABIS?.NTIQToken,
+                    attempt: retryCount + 1
+                });
+
+                await writeApproveContract({
+                    address: CONTRACTS.NTIQ_TOKEN,
+                    abi: CONTRACTS.ABIS?.NTIQToken || [],
+                    functionName: 'approve',
+                    args: [CONTRACTS.ENHANCED_PARLAY_STAKING, stakeAmountWei],
+                    chainId: chain.id,
+                    gas: 200000n, // Further increase gas limit
+                    gasPrice: undefined, // Let MetaMask estimate
+                });
+                
+                console.log('✅ [PARLAY-BLOCKCHAIN] Approval transaction submitted successfully');
+                return; // Success, exit retry loop
+                
+            } catch (error: any) {
+                lastError = error;
+                retryCount++;
+                
+                console.error(`❌ [PARLAY-BLOCKCHAIN] Attempt ${retryCount} failed:`, error);
+                console.error('❌ [PARLAY-BLOCKCHAIN] Error details:', {
+                    message: error.message,
+                    shortMessage: error.shortMessage,
+                    code: error.code,
+                    data: error.data,
+                    attempt: retryCount
+                });
+
+                // Check if it's a retryable error
+                const isRetryableError = error.message?.includes("Internal JSON-RPC error") ||
+                                       error.message?.includes("-32603") ||
+                                       error.message?.includes("network") ||
+                                       error.message?.includes("timeout");
+
+                if (retryCount < maxRetries && isRetryableError) {
+                    console.log(`🔄 [PARLAY-BLOCKCHAIN] Retrying in ${retryCount * 2} seconds...`);
+                    toast({
+                        title: "Retrying Transaction",
+                        description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
+                        variant: "default",
+                    });
+                    
+                    // Wait before retry (exponential backoff)
+                    await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
+                } else {
+                    break; // Exit retry loop
+                }
+            }
+        }
+
+        // All retries failed
+        console.error('❌ [PARLAY-BLOCKCHAIN] All approval attempts failed:', lastError);
+        
+        let errorMessage = "Approval transaction failed after multiple attempts.";
+        if (lastError?.message?.includes("insufficient funds")) {
+            errorMessage = "Insufficient POL tokens for gas fees. Please add more POL to your wallet.";
+        } else if (lastError?.message?.includes("user rejected")) {
+            errorMessage = "Transaction was cancelled in MetaMask.";
+        } else if (lastError?.message?.includes("Internal JSON-RPC error") || lastError?.message?.includes("-32603")) {
+            errorMessage = "MetaMask RPC error. Please try: 1) Refresh the page, 2) Clear MetaMask cache, 3) Try again.";
+        } else if (lastError?.message?.includes("gas required exceeds allowance")) {
+            errorMessage = "Gas limit too low. Please try again with higher gas limit.";
+        } else if (lastError?.message?.includes("network")) {
+            errorMessage = "Network error. Please check your internet connection and try again.";
+        }
+
+        toast({
+            title: "Approval Failed",
+            description: errorMessage,
+            variant: "destructive",
+        });
     };
 
     const handleParlaySubmit = async () => {
