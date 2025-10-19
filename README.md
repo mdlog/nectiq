@@ -759,7 +759,74 @@ npm run build
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**NECTIQ** is licensed under the **MIT License** - a permissive open-source license that allows for maximum flexibility and adoption.
+
+### 📋 License Summary
+
+The MIT License allows you to:
+- ✅ **Use** the software for any purpose
+- ✅ **Modify** the software for your needs
+- ✅ **Distribute** copies of the software
+- ✅ **Sublicense** the software under different terms
+- ✅ **Sell** the software or include it in commercial products
+
+### 🔒 License Requirements
+
+The only requirement is that you include the original copyright notice and license text in any copy or substantial portion of the software.
+
+### 📜 Full License Text
+
+```
+MIT License
+
+Copyright (c) 2025 NECTIQ Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+ whosoever, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### 🏢 Commercial Use
+
+**NECTIQ** can be used in commercial applications without any restrictions. The MIT License is business-friendly and allows for:
+
+- **Startups** to build commercial products using NECTIQ
+- **Enterprises** to integrate NECTIQ into their systems
+- **Developers** to create derivative works and monetize them
+- **Contributors** to maintain their own commercial rights
+
+### 🤝 Contributing
+
+When contributing to NECTIQ, you agree that your contributions will be licensed under the same MIT License. This ensures consistency and clarity for all users and contributors.
+
+### 📞 License Questions
+
+If you have questions about the license or need clarification on usage rights, please contact us:
+
+- **Email:** legal@nectiq.io
+- **GitHub Issues:** [License Questions](https://github.com/mdlog/nectiq/issues)
+- **Documentation:** See [LICENSE](LICENSE) file for the complete license text
+
+### 🔗 Related Documentation
+
+- **[LICENSE](LICENSE)** - Complete license file
+- **[Contributing Guidelines](#-contributing)** - How to contribute to NECTIQ
+- **[Code of Conduct](CODE_OF_CONDUCT.md)** - Community guidelines
+- **[Security Policy](SECURITY.md)** - Security reporting and policies
 
 ---
 
