@@ -55,6 +55,7 @@ export function PredictionBlockchainForm({
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [blockchainPredictionId, setBlockchainPredictionId] = useState<string | null>(null);
 
     // Wagmi hooks for blockchain interaction
     const { writeContract: writeApproveContract, data: approveTxHash, isPending: isApprovePending } = useWriteContract();
@@ -155,6 +156,7 @@ export function PredictionBlockchainForm({
                             predictedPrice: parseFloat(formData.predictedPrice.toString()),
                             timeframe: formData.timeframe,
                             stakeAmount: parseFloat(formData.stakeAmount.toString()),
+                            blockchainPredictionId: blockchainPredictionId, // Send blockchain prediction ID
                             blockchainTxHash: predictionTxHash,
                             blockchainStatus: 'confirmed'
                         }),
@@ -187,7 +189,7 @@ export function PredictionBlockchainForm({
                     }
                 } catch (error) {
                     console.error('❌ [PREDICTION-BLOCKCHAIN] Failed to create prediction:', error);
-                    
+
                     // Try to get more specific error message
                     let errorMessage = "Blockchain transaction succeeded but prediction creation failed. Please contact support.";
                     if (createResponse && !createResponse.ok) {
@@ -198,7 +200,7 @@ export function PredictionBlockchainForm({
                             console.error('Failed to parse error response:', parseError);
                         }
                     }
-                    
+
                     toast({
                         title: "Warning: Database Creation Failed",
                         description: errorMessage,
@@ -312,11 +314,11 @@ export function PredictionBlockchainForm({
                 });
                 console.log('✅ [PREDICTION-APPROVAL] writeApproveContract called successfully');
                 return; // Success, exit retry loop
-                
+
             } catch (error: any) {
                 lastError = error;
                 retryCount++;
-                
+
                 console.error(`❌ [PREDICTION-APPROVAL] Attempt ${retryCount} failed:`, error);
                 console.error('❌ [PREDICTION-APPROVAL] Error details:', {
                     message: error.message,
@@ -328,9 +330,9 @@ export function PredictionBlockchainForm({
 
                 // Check if it's a retryable error
                 const isRetryableError = error.message?.includes("Internal JSON-RPC error") ||
-                                       error.message?.includes("-32603") ||
-                                       error.message?.includes("network") ||
-                                       error.message?.includes("timeout");
+                    error.message?.includes("-32603") ||
+                    error.message?.includes("network") ||
+                    error.message?.includes("timeout");
 
                 if (retryCount < maxRetries && isRetryableError) {
                     console.log(`🔄 [PREDICTION-APPROVAL] Retrying in ${retryCount * 2} seconds...`);
@@ -339,7 +341,7 @@ export function PredictionBlockchainForm({
                         description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
                         variant: "default",
                     });
-                    
+
                     // Wait before retry (exponential backoff)
                     await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
                 } else {
@@ -350,7 +352,7 @@ export function PredictionBlockchainForm({
 
         // All retries failed
         console.error('❌ [PREDICTION-APPROVAL] All approval attempts failed:', lastError);
-        
+
         let errorMessage = "Approval transaction failed after multiple attempts.";
         if (lastError?.message?.includes("insufficient funds")) {
             errorMessage = "Insufficient POL tokens for gas fees. Please add more POL to your wallet.";
@@ -437,6 +439,7 @@ export function PredictionBlockchainForm({
 
             // Generate prediction ID for blockchain (using timestamp for uniqueness)
             const blockchainPredictionId = ethers.id(`prediction_${Date.now()}_${Math.random()}`);
+            setBlockchainPredictionId(blockchainPredictionId); // Store for later use
 
             // Call blockchain contract directly from frontend
             const stakeAmountWei = parseEther(data.stakeAmount.toString());

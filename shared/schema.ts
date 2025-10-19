@@ -46,6 +46,7 @@ export const predictions = pgTable("predictions", {
   rewardAmount: integer("reward_amount").default(0),
   accuracy: numeric("accuracy", { precision: 5, scale: 2 }),
   // Blockchain integration fields
+  blockchainPredictionId: varchar("blockchain_prediction_id", { length: 66 }), // Prediction ID used in smart contract
   blockchainStakeHash: varchar("blockchain_stake_hash", { length: 66 }), // Transaction hash for stake lock
   blockchainRewardHash: varchar("blockchain_reward_hash", { length: 66 }), // Transaction hash for reward release
   blockchainStatus: varchar("blockchain_status", { length: 20 }).default("pending"), // pending, confirmed, failed
@@ -424,6 +425,7 @@ export const predictionBattles = pgTable("prediction_battles", {
   joinTimeBonus: numeric("join_time_bonus", { precision: 5, scale: 2 }).default("1.00"), // Bonus untuk join lebih awal
 
   // Blockchain integration fields
+  blockchainBattleId: varchar("blockchain_battle_id", { length: 66 }), // Battle ID used in smart contract
   blockchainBattleHash: varchar("blockchain_battle_hash", { length: 66 }), // Transaction hash for battle creation
   blockchainAcceptHash: varchar("blockchain_accept_hash", { length: 66 }), // Transaction hash for battle acceptance
   blockchainResolveHash: varchar("blockchain_resolve_hash", { length: 66 }), // Transaction hash for battle resolution
@@ -867,6 +869,7 @@ export const parlayPredictions = pgTable("parlay_predictions", {
   totalCoinCount: integer("total_coin_count").notNull(),
   correctPredictions: integer("correct_predictions").default(0),
   // Blockchain integration fields
+  blockchainParlayId: varchar("blockchain_parlay_id", { length: 66 }), // Parlay ID used in smart contract
   blockchainStakeHash: varchar("blockchain_stake_hash", { length: 66 }), // Transaction hash for parlay stake lock
   blockchainRewardHash: varchar("blockchain_reward_hash", { length: 66 }), // Transaction hash for reward release
   blockchainStatus: varchar("blockchain_status", { length: 20 }).default("pending"), // pending, confirmed, failed

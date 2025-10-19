@@ -3436,13 +3436,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeframe,
         predictedPrice,
         stakeAmount,
+        blockchainPredictionId,
         blockchainTxHash,
         blockchainStatus = 'confirmed'
       } = req.body;
 
       // Validate required fields
-      if (!cryptocurrency || !timeframe || !predictedPrice || !stakeAmount || !blockchainTxHash) {
-        return res.status(400).json({ message: "Missing required fields" });
+      if (!cryptocurrency || !timeframe || !predictedPrice || !stakeAmount || !blockchainPredictionId || !blockchainTxHash) {
+        return res.status(400).json({ message: "Missing required fields including blockchainPredictionId" });
       }
 
       // Only accept confirmed blockchain transactions
@@ -3521,7 +3522,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeframe,
         predictedPrice: numPredictedPrice,
         stakeAmount: numStakeAmount,
-        targetTime
+        targetTime,
+        blockchainPredictionId
       });
 
       logger.info(`🔗 [PREDICTION-BLOCKCHAIN] Prediction created with ID: ${prediction.id}`);
@@ -5575,8 +5577,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { predictionStakingService } = await import('./services/predictionStakingService');
       const { blockchainService } = await import('./services/blockchainService');
 
-      // Generate blockchain prediction ID
-      const blockchainPredictionId = blockchainService.generatePredictionId(predictionId);
+      // Get prediction from database to check for stored blockchainPredictionId
+      const prediction = await storage.getPrediction(predictionId);
+      if (!prediction) {
+        return res.status(404).json({ message: "Prediction not found" });
+      }
+
+      // Use stored blockchainPredictionId if available, otherwise generate from database ID
+      const blockchainPredictionId = prediction.blockchainPredictionId || blockchainService.generatePredictionId(predictionId);
+
+      if (prediction.blockchainPredictionId) {
+        console.log(`🔍 [BLOCKCHAIN-RELEASE] Using stored blockchain prediction ID: ${prediction.blockchainPredictionId}`);
+      } else {
+        console.log(`🔍 [BLOCKCHAIN-RELEASE] No stored blockchain prediction ID, generating from database ID: ${blockchainPredictionId}`);
+      }
 
       // Release reward on blockchain
       const txHash = await predictionStakingService.releaseReward({

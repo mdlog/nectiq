@@ -325,18 +325,25 @@ export class PredictionService {
 
       // Try to release reward on blockchain
       try {
-        // Try with database ID first
-        let blockchainPredictionId = blockchainService.generatePredictionId(prediction.id);
         let txHash = null;
+
+        // Use stored blockchainPredictionId if available, otherwise generate from database ID
+        let blockchainPredictionId = prediction.blockchainPredictionId || blockchainService.generatePredictionId(prediction.id);
+
+        if (prediction.blockchainPredictionId) {
+          console.log(`🔍 [BLOCKCHAIN-REWARD] Using stored blockchain prediction ID: ${prediction.blockchainPredictionId}`);
+        } else {
+          console.log(`🔍 [BLOCKCHAIN-REWARD] No stored blockchain prediction ID, generating from database ID: ${blockchainPredictionId}`);
+        }
 
         try {
           txHash = await predictionStakingService.releaseReward({
             predictionId: blockchainPredictionId,
             actualPrice: prediction.actualPrice.toString()
           });
-          logger.info(`🔗 [BLOCKCHAIN-REWARD] Prediction ${prediction.id} reward released with database ID: ${txHash}`);
-        } catch (dbIdError) {
-          logger.warn(`⚠️ [BLOCKCHAIN-REWARD] Failed with database ID, trying alternative methods:`, dbIdError.message);
+          logger.info(`🔗 [BLOCKCHAIN-REWARD] Prediction ${prediction.id} reward released with blockchain ID: ${txHash}`);
+        } catch (blockchainIdError) {
+          logger.warn(`⚠️ [BLOCKCHAIN-REWARD] Failed with stored blockchain ID, trying alternative methods:`, blockchainIdError.message);
 
           // Try to extract prediction ID from blockchain transaction
           try {
