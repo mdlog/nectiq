@@ -5558,10 +5558,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/predictions/blockchain-release", async (req, res) => {
     try {
       const { predictionId, actualPrice, userAddress } = req.body;
-
+      
       if (!predictionId || !actualPrice || !userAddress) {
-        return res.status(400).json({
-          message: "Missing required parameters: predictionId, actualPrice, userAddress"
+        return res.status(400).json({ 
+          message: "Missing required parameters: predictionId, actualPrice, userAddress" 
         });
       }
 
@@ -5572,10 +5572,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import blockchain service
       const { predictionStakingService } = await import('./services/predictionStakingService');
       const { blockchainService } = await import('./services/blockchainService');
-
+      
       // Generate blockchain prediction ID
       const blockchainPredictionId = blockchainService.generatePredictionId(predictionId);
-
+      
       // Release reward on blockchain
       const txHash = await predictionStakingService.releaseReward({
         predictionId: blockchainPredictionId,
@@ -5591,17 +5591,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .set({ blockchainRewardHash: txHash })
         .where(eq(predictions.id, predictionId));
 
-      res.json({
+      res.json({ 
         message: "Reward released on blockchain successfully",
         transactionHash: txHash,
         predictionId: predictionId
       });
-
+      
     } catch (error: any) {
       console.error('❌ [BLOCKCHAIN-RELEASE] Error:', error);
-      res.status(500).json({
+      res.status(500).json({ 
         message: "Failed to release reward on blockchain",
-        error: error.message
+        error: error.message 
+      });
+    }
+  });
+
+  // Release battle reward on blockchain (admin endpoint)
+  app.post("/api/battles/blockchain-release", async (req, res) => {
+    try {
+      const { battleId, winnerAddress } = req.body;
+      
+      if (!battleId || !winnerAddress) {
+        return res.status(400).json({ 
+          message: "Missing required parameters: battleId, winnerAddress" 
+        });
+      }
+
+      console.log(`🔗 [BATTLE-BLOCKCHAIN-RELEASE] Releasing reward for battle ${battleId}`);
+      console.log(`   Winner Address: ${winnerAddress}`);
+
+      // Import blockchain service
+      const { battleEscrowService } = await import('./services/battleEscrowService');
+      const { blockchainService } = await import('./services/blockchainService');
+      
+      // Generate blockchain battle ID
+      const blockchainBattleId = blockchainService.generateBattleId(battleId);
+      
+      // Resolve battle on blockchain (this releases rewards)
+      const txHash = await battleEscrowService.resolveBattle({
+        battleId: blockchainBattleId,
+        winner: winnerAddress
+      });
+
+      console.log(`✅ [BATTLE-BLOCKCHAIN-RELEASE] Battle reward released successfully`);
+      console.log(`   Transaction Hash: ${txHash}`);
+
+      // Update database with blockchain resolve hash
+      await db
+        .update(predictionBattles)
+        .set({ blockchainResolveHash: txHash })
+        .where(eq(predictionBattles.id, battleId));
+
+      res.json({ 
+        message: "Battle reward released on blockchain successfully",
+        transactionHash: txHash,
+        battleId: battleId
+      });
+      
+    } catch (error: any) {
+      console.error('❌ [BATTLE-BLOCKCHAIN-RELEASE] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to release battle reward on blockchain",
+        error: error.message 
+      });
+    }
+  });
+
+  // Release parlay reward on blockchain (admin endpoint)
+  app.post("/api/parlays/blockchain-release", async (req, res) => {
+    try {
+      const { parlayId, userAddress } = req.body;
+      
+      if (!parlayId || !userAddress) {
+        return res.status(400).json({ 
+          message: "Missing required parameters: parlayId, userAddress" 
+        });
+      }
+
+      console.log(`🔗 [PARLAY-BLOCKCHAIN-RELEASE] Releasing reward for parlay ${parlayId}`);
+      console.log(`   User Address: ${userAddress}`);
+
+      // Import blockchain service
+      const { parlayStakingService } = await import('./services/parlayStakingService');
+      const { blockchainService } = await import('./services/blockchainService');
+      
+      // Generate blockchain parlay ID
+      const blockchainParlayId = blockchainService.generateParlayId(parlayId);
+      
+      // Release compound reward on blockchain
+      const txHash = await parlayStakingService.releaseCompoundReward({
+        parlayId: blockchainParlayId,
+        userAddress: userAddress
+      });
+
+      console.log(`✅ [PARLAY-BLOCKCHAIN-RELEASE] Parlay reward released successfully`);
+      console.log(`   Transaction Hash: ${txHash}`);
+
+      // Update database with blockchain reward hash
+      await db
+        .update(parlayPredictions)
+        .set({ blockchainRewardHash: txHash })
+        .where(eq(parlayPredictions.id, parlayId));
+
+      res.json({ 
+        message: "Parlay reward released on blockchain successfully",
+        transactionHash: txHash,
+        parlayId: parlayId
+      });
+      
+    } catch (error: any) {
+      console.error('❌ [PARLAY-BLOCKCHAIN-RELEASE] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to release parlay reward on blockchain",
+        error: error.message 
       });
     }
   });
