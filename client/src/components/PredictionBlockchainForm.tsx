@@ -518,12 +518,12 @@ export function PredictionBlockchainForm({
                                                 <SelectValue placeholder="Choose a coin..." />
                                             </SelectTrigger>
                                         </FormControl>
-                                        <SelectContent>
+                                        <SelectContent className="z-[99999] bg-gray-900 border-gray-700">
                                             {availableCryptos.length === 0 ? (
                                                 <SelectItem value="loading" disabled>Loading cryptocurrencies...</SelectItem>
                                             ) : availableCryptos.length > 0 ? (
                                                 availableCryptos.map((crypto) => (
-                                                    <SelectItem key={crypto.id} value={crypto.id}>
+                                                    <SelectItem key={crypto.id} value={crypto.id} className="hover:bg-gray-800 focus:bg-gray-800">
                                                         <div className="flex items-center gap-2">
                                                             <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
                                                             <span>
@@ -567,11 +567,11 @@ export function PredictionBlockchainForm({
                                                 <SelectValue placeholder="Select timeframe..." />
                                             </SelectTrigger>
                                         </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="1h">1 Hour</SelectItem>
-                                            <SelectItem value="6h">6 Hours</SelectItem>
-                                            <SelectItem value="24h">24 Hours</SelectItem>
-                                            <SelectItem value="7d">7 Days</SelectItem>
+                                        <SelectContent className="z-[99999] bg-gray-900 border-gray-700">
+                                            <SelectItem value="1h" className="hover:bg-gray-800 focus:bg-gray-800">1 Hour</SelectItem>
+                                            <SelectItem value="6h" className="hover:bg-gray-800 focus:bg-gray-800">6 Hours</SelectItem>
+                                            <SelectItem value="24h" className="hover:bg-gray-800 focus:bg-gray-800">24 Hours</SelectItem>
+                                            <SelectItem value="7d" className="hover:bg-gray-800 focus:bg-gray-800">7 Days</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
