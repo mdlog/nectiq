@@ -65,7 +65,7 @@ export function BattleBlockchainForm({
         },
     });
 
-    // Wagmi hooks for blockchain interaction
+    // Wagmi hooks for blockchain interaction - Separate hooks for different contract calls
     const { writeContract: writeBattleContract, data: battleTxHash, isPending: isBattlePending } = useWriteContract();
     const { writeContract: writeApproveContract, data: approveTxHash, isPending: isApprovePending } = useWriteContract();
 
@@ -305,8 +305,30 @@ export function BattleBlockchainForm({
                 allowanceSufficient: currentAllowance >= data.stakeAmount
             });
 
+            // Create battle in database first (blockchain-first approach)
+            console.log('💾 [BATTLE-BLOCKCHAIN] Creating battle in database...');
+            const battleResponse = await apiRequest('/api/battles/blockchain', {
+                method: 'POST',
+                body: JSON.stringify({
+                    cryptocurrency: data.cryptocurrency,
+                    timeframe: data.timeframe,
+                    challengerPrediction: parseFloat(data.challengerPrediction),
+                    stakeAmount: data.stakeAmount,
+                    isPublic: data.isPublic,
+                    blockchainStatus: 'pending'
+                }),
+            });
+
+            if (!battleResponse.ok) {
+                const errorData = await battleResponse.json();
+                throw new Error(errorData.message || 'Failed to create battle in database');
+            }
+
+            const battleData = await battleResponse.json();
+            const createdBattleId = battleData.id;
+
             console.log('⚔️ [BATTLE-BLOCKCHAIN] Creating battle:', {
-                dbId: battleResponse.id,
+                dbId: createdBattleId,
                 blockchainId: battleId,
                 stakeAmount: data.stakeAmount,
                 stakeAmountWei: stakeAmountWei.toString(),
@@ -358,17 +380,32 @@ export function BattleBlockchainForm({
             });
 
             console.log('🔗 [BATTLE-BLOCKCHAIN] MetaMask popup should appear now for battle creation...');
-
-            await writeBattleContract({
+            console.log('🔗 [BATTLE-BLOCKCHAIN] Contract call parameters:', {
                 address: CONTRACTS.BATTLE_ESCROW,
-                abi: CONTRACTS.ABIS?.BATTLE_ESCROW || ABIS?.BATTLE_ESCROW,
+                abiAvailable: !!(CONTRACTS.ABIS?.BATTLE_ESCROW || ABIS?.BATTLE_ESCROW),
                 functionName: 'createBattle',
                 args: [battleId, stakeAmountWei],
                 chainId: chain.id,
-                gas: 300000n, // Optimize gas limit for create battle
+                gas: 300000n,
+                battleIdType: typeof battleId,
+                stakeAmountWeiType: typeof stakeAmountWei
             });
 
-            console.log('✅ [BATTLE-BLOCKCHAIN] Battle contract call initiated successfully');
+            try {
+                await writeBattleContract({
+                    address: CONTRACTS.BATTLE_ESCROW,
+                    abi: CONTRACTS.ABIS?.BATTLE_ESCROW || ABIS?.BATTLE_ESCROW,
+                    functionName: 'createBattle',
+                    args: [battleId, stakeAmountWei],
+                    chainId: chain.id,
+                    gas: 300000n, // Optimize gas limit for create battle
+                });
+
+                console.log('✅ [BATTLE-BLOCKCHAIN] Battle contract call initiated successfully');
+            } catch (contractError) {
+                console.error('❌ [BATTLE-BLOCKCHAIN] writeBattleContract failed:', contractError);
+                throw contractError;
+            }
 
             // Wait for transaction to be confirmed
             if (battleTxHash) {
@@ -397,71 +434,21 @@ export function BattleBlockchainForm({
                 }
             }
 
-            let errorTitle = "Battle Creation Failed";
-            let errorDescription = error.shortMessage || error.message || "Unknown error occurred";
-
-            // Handle specific error cases
-            if (error.message?.includes("Battle escrow contract address not configured")) {
-                errorTitle = "Contract Configuration Error";
-                errorDescription = "Battle escrow contract address is not configured. Please contact support.";
-            } else if (error.message?.includes("Battle escrow contract ABI not configured")) {
-                errorTitle = "Contract Configuration Error";
-                errorDescription = "Battle escrow contract ABI is not configured. Please contact support.";
-            } else if (error.message?.includes("UNSUPPORTED_OPERATION")) {
-                errorTitle = "Contract Error";
-                errorDescription = "The battle contract operation is not supported. Please check your wallet connection and try again.";
-            } else if (error.message?.includes("execution reverted") && error.message?.includes("unknown custom error")) {
-                // Check if it's an InsufficientAllowance error (0xfb8f41b2)
-                if (error.data && error.data.startsWith('0xfb8f41b2')) {
-                    errorTitle = "Approval Required";
-                    errorDescription = "You need to approve NTIQ spending first. Please click 'Approve NTIQ' button before creating battle.";
-                } else {
-                    errorTitle = "Contract Error";
-                    errorDescription = "The battle contract operation failed. Please check your wallet connection and try again.";
-                }
-            } else if (error.message?.includes("Wrong network")) {
-                errorTitle = "Wrong Network";
-                errorDescription = error.message;
-            } else if (error.message?.includes("Battle escrow contract address not configured")) {
-                errorTitle = "Contract Configuration Error";
-                errorDescription = "Battle escrow contract address is not configured. Please contact support.";
-            } else if (error.message?.includes("Battle escrow contract ABI not configured")) {
-                errorTitle = "Contract Configuration Error";
-                errorDescription = "Battle escrow contract ABI is not configured. Please contact support.";
-            } else if (error.message?.includes("Invalid battle ID generated")) {
-                errorTitle = "Battle ID Error";
-                errorDescription = "Failed to generate valid battle ID. Please try again.";
-            } else if (error.message?.includes("Invalid stake amount")) {
-                errorTitle = "Invalid Stake Amount";
-                errorDescription = "Stake amount is invalid. Please check your input.";
-            } else if (error.message?.includes("Wallet address not available")) {
-                errorTitle = "Wallet Error";
-                errorDescription = "Wallet address is not available. Please reconnect your wallet.";
-            } else if (error.message?.includes("Insufficient balance")) {
-                errorTitle = "Insufficient Balance";
-                errorDescription = "You don't have enough NTIQ tokens for this battle";
-            } else if (error.message?.includes("Approval Required") || error.message?.includes("Insufficient allowance")) {
-                errorTitle = "Approval Required";
-                errorDescription = error.message || "Please approve NTIQ spending first by clicking 'Approve NTIQ' button";
-            } else if (error.message?.includes("User rejected")) {
-                errorTitle = "Transaction Cancelled";
-                errorDescription = "You cancelled the transaction in MetaMask";
-            } else if (error.message?.includes("gas required exceeds allowance")) {
-                errorTitle = "Gas Limit Error";
-                errorDescription = "Transaction failed due to low gas limit. Please try again";
-            } else if (error.message?.includes("insufficient funds")) {
-                errorTitle = "Insufficient Funds";
-                errorDescription = "You don't have enough POL tokens for gas fees";
-            } else if (error.message?.includes("Failed to create battle in database")) {
-                errorTitle = "Database Error";
-                errorDescription = "Failed to create battle in database. Please try again.";
+            let errorMessage = "Battle creation failed. Please try again.";
+            if (error.message?.includes("insufficient funds")) {
+                errorMessage = "Insufficient NTIQ tokens for gas fees. Please add more NTIQ to your wallet.";
+            } else if (error.message?.includes("user rejected")) {
+                errorMessage = "Transaction was cancelled in MetaMask.";
+            } else if (error.message?.includes("Internal JSON-RPC error")) {
+                errorMessage = "MetaMask RPC error. Please try: 1) Refresh the page, 2) Clear MetaMask cache, 3) Try again.";
             }
 
             toast({
-                title: errorTitle,
-                description: errorDescription,
+                title: "Battle Creation Failed",
+                description: errorMessage,
                 variant: "destructive",
             });
+        } finally {
             setIsSubmitting(false);
         }
     };
@@ -581,9 +568,18 @@ export function BattleBlockchainForm({
     }, [isApproveError, toast]);
 
     const onSubmit = (data: BattleFormData) => {
+        console.log('🔍 [BATTLE-FORM] onSubmit called:', {
+            needsApproval,
+            data,
+            allowance,
+            currentStakeAmount: data.stakeAmount
+        });
+
         if (needsApproval) {
+            console.log('🔍 [BATTLE-FORM] Calling handleApprove...');
             handleApprove(data.stakeAmount);
         } else {
+            console.log('🔍 [BATTLE-FORM] Calling handleBattleSubmit...');
             handleBattleSubmit(data);
         }
     };
