@@ -44,6 +44,8 @@
 
 **NECTIQ** is a cutting-edge Web3 gaming platform where users can predict cryptocurrency price movements and compete against others in real-time battles. Built with modern web technologies and blockchain integration, NECTIQ offers a seamless, secure, and engaging prediction gaming experience.
 
+> 🚧 **Development Status:** NECTIQ is currently in **development phase** and deployed on **Polygon Amoy Testnet only**. The platform is fully functional for testing and development purposes on the testnet environment.
+
 ### 🎯 What Makes NECTIQ Unique?
 
 **NECTIQ is a hybrid platform that combines three powerful Web3 categories:**
@@ -171,10 +173,13 @@ Unlike pure DeFi prediction markets (boring UI, limited engagement) or pure Game
 ### Blockchain & APIs
 - **Price Feeds:** Pyth Network
 - **Blockchain APIs:** Etherscan, BSCScan, BaseScan, Arbiscan, Optimism Etherscan
-- **Networks:** Ethereum, Base, BSC, Optimism, Arbitrum, Sepolia, Holesky, Polygon Amoy
+- **Networks:** **Currently deployed on Polygon Amoy Testnet only** (testnet support for development)
+- **Deposit Networks:** Ethereum, Base, BSC, Optimism, Arbitrum, Sepolia, Holesky (for multi-chain deposits only)
 - **Wallets:** MetaMask, WalletConnect, Coinbase Wallet, Pelagus
 - **Smart Contracts:** Enhanced Prediction Staking, Battle Escrow, Parlay Staking, Multi-Token Vault, Prediction Insurance, Referral System, NFT Achievement System
 - **Development:** Hardhat, OpenZeppelin Contracts
+
+> ⚠️ **Important Note:** The application is currently deployed on **Polygon Amoy Testnet only**. Smart contracts and main functionality are only available on Polygon Amoy Testnet. Other networks are supported only for deposit functionality.
 
 ### DevOps & Tools
 - **Package Manager:** npm
@@ -193,6 +198,10 @@ Before you begin, ensure you have the following installed:
 - **npm** 9 or higher (comes with Node.js)
 - **PostgreSQL** 15+ or access to [Neon Database](https://neon.tech)
 - **Git** for version control
+- **MetaMask** or compatible Web3 wallet with **Polygon Amoy Testnet** configured
+- **Testnet MATIC** for gas fees on Polygon Amoy Testnet
+
+> 🌐 **Network Requirement:** The application currently runs on **Polygon Amoy Testnet only**. Ensure your wallet is configured with Polygon Amoy Testnet and you have testnet MATIC for transaction fees.
 
 ### Required API Keys (Free)
 
@@ -375,6 +384,8 @@ Once running, access the application at:
 - **Local:** http://localhost:5003
 - **Production:** https://yourdomain.com
 
+> ⚠️ **Important:** Ensure your wallet is connected to **Polygon Amoy Testnet** to interact with smart contracts. The application will only function properly when connected to the correct network.
+
 ---
 
 ## 🏗 Architecture
@@ -430,6 +441,8 @@ Once running, access the application at:
 ## 🔗 Smart Contracts
 
 NECTIQ uses a comprehensive suite of smart contracts deployed on **Polygon Amoy Testnet** to ensure transparency, security, and decentralization. All contracts follow a **blockchain-first architecture**, meaning predictions, battles, and parlays are only created after successful blockchain transaction confirmation.
+
+> 🚧 **Current Status:** The application is **temporarily limited to Polygon Amoy Testnet only**. All smart contracts, predictions, battles, and parlays are currently deployed and functional only on Polygon Amoy Testnet for development and testing purposes.
 
 ### 📋 Quick Reference
 
@@ -774,6 +787,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Current Status:** Wave 1-2 Complete ✅ | **Next:** Wave 3-4 (Build & Optimize) 🔜
 
+> 🚧 **Current Deployment:** The platform is currently deployed on **Polygon Amoy Testnet only** for development and testing purposes. Mainnet deployment is planned for future waves.
+
 ### 🎯 Development Path (5 Months)
 
 **PHASE 1: PATH TO FUNDING (2.5 Months)**
@@ -788,6 +803,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 📋 **Wave 6-7:** Smart contracts & on-chain logic on Polygon PoS mainnet
 - 📋 **Wave 8-9:** DAO governance, zkEVM integration, scaling optimization
 - 🚀 **Wave 10:** Production mainnet launch with full features
+
+> 🌐 **Network Migration:** Currently on Polygon Amoy Testnet → Future migration to Polygon PoS Mainnet planned in Wave 6-7
 
 ### 📊 Application Category
 

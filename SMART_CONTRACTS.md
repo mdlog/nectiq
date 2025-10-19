@@ -2,6 +2,10 @@
 
 NECTIQ uses a comprehensive suite of smart contracts deployed on **Polygon Amoy Testnet** to ensure transparency, security, and decentralization. All contracts are **blockchain-first**, meaning predictions, battles, and parlays are only created after successful blockchain transaction confirmation.
 
+> 🚧 **Current Status:** The application is **temporarily limited to Polygon Amoy Testnet only**. All smart contracts, predictions, battles, and parlays are currently deployed and functional only on Polygon Amoy Testnet for development and testing purposes.
+
+> ⚠️ **Important:** This is a **testnet deployment** for development and testing. Real funds should not be used. The platform will migrate to mainnet in future development phases.
+
 ## 📍 Contract Addresses (Polygon Amoy Testnet)
 
 | Contract | Address | Purpose |
@@ -275,19 +279,23 @@ function tokenOfOwnerByIndex(address owner, uint256 index) external view returns
 
 ## 🌐 Network Configuration
 
-**Primary Network:** Polygon Amoy Testnet
+**Primary Network:** Polygon Amoy Testnet (Testnet Only)
 - **Chain ID:** 80002
 - **RPC URL:** `https://rpc-amoy.polygon.technology`
 - **Explorer:** `https://amoy.polygonscan.com`
-- **Native Token:** MATIC
+- **Native Token:** MATIC (Testnet)
 
-**Supported Networks for Deposits:**
-- Ethereum (Mainnet & Sepolia)
-- Base (Mainnet)
-- BSC (Mainnet)
-- Optimism (Mainnet)
-- Arbitrum (Mainnet)
-- Polygon (Amoy Testnet)
+> 🚧 **Current Limitation:** The application is **temporarily limited to Polygon Amoy Testnet only**. All smart contracts and main functionality are deployed only on this testnet for development and testing purposes.
+
+**Supported Networks for Deposits Only:**
+- Ethereum (Mainnet & Sepolia) - Deposit functionality only
+- Base (Mainnet) - Deposit functionality only
+- BSC (Mainnet) - Deposit functionality only
+- Optimism (Mainnet) - Deposit functionality only
+- Arbitrum (Mainnet) - Deposit functionality only
+- Polygon (Amoy Testnet) - Full functionality (smart contracts, predictions, battles, parlays)
+
+> ⚠️ **Important:** While deposits are supported from multiple networks, all smart contract interactions (predictions, battles, parlays) are currently limited to Polygon Amoy Testnet only.
 
 ## 📊 Contract Interaction Flow
 
@@ -316,21 +324,25 @@ graph TD
 
 ### Smart Contract Configuration
 
+> 🚧 **Network Limitation:** All contract addresses below are for **Polygon Amoy Testnet only**. The application currently does not support mainnet deployment.
+
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
-| `ENHANCED_PREDICTION_STAKING_ADDRESS` | Enhanced Prediction Staking contract address | Yes | - |
-| `ENHANCED_PARLAY_STAKING_ADDRESS` | Enhanced Parlay Staking contract address | Yes | - |
-| `BATTLE_ESCROW_ADDRESS` | Battle Escrow contract address | Yes | - |
-| `MULTI_TOKEN_VAULT_ADDRESS` | Multi-Token Vault contract address | Yes | - |
-| `PREDICTION_INSURANCE_ADDRESS` | Prediction Insurance contract address | Yes | - |
-| `REFERRAL_SYSTEM_ADDRESS` | Referral System contract address | Yes | - |
-| `NFT_ACHIEVEMENT_SYSTEM_ADDRESS` | NFT Achievement System contract address | Yes | - |
+| `ENHANCED_PREDICTION_STAKING_ADDRESS` | Enhanced Prediction Staking contract address (Polygon Amoy Testnet) | Yes | - |
+| `ENHANCED_PARLAY_STAKING_ADDRESS` | Enhanced Parlay Staking contract address (Polygon Amoy Testnet) | Yes | - |
+| `BATTLE_ESCROW_ADDRESS` | Battle Escrow contract address (Polygon Amoy Testnet) | Yes | - |
+| `MULTI_TOKEN_VAULT_ADDRESS` | Multi-Token Vault contract address (Polygon Amoy Testnet) | Yes | - |
+| `PREDICTION_INSURANCE_ADDRESS` | Prediction Insurance contract address (Polygon Amoy Testnet) | Yes | - |
+| `REFERRAL_SYSTEM_ADDRESS` | Referral System contract address (Polygon Amoy Testnet) | Yes | - |
+| `NFT_ACHIEVEMENT_SYSTEM_ADDRESS` | NFT Achievement System contract address (Polygon Amoy Testnet) | Yes | - |
 | `BACKEND_SIGNER_PRIVATE_KEY` | Backend signer private key for contract interactions | Yes | - |
 
 ### Example .env Configuration
 
+> ⚠️ **Testnet Only:** The configuration below is for **Polygon Amoy Testnet only**. These are testnet contract addresses and should not be used with real funds.
+
 ```bash
-# Smart Contract Addresses (Polygon Amoy Testnet)
+# Smart Contract Addresses (Polygon Amoy Testnet - Testnet Only)
 ENHANCED_PREDICTION_STAKING_ADDRESS=0xcf62251Aa622519A1E83BE270CDfE78C073F9fd3
 ENHANCED_PARLAY_STAKING_ADDRESS=0x87D08a494D960240d3a2D5CdB155084CAF222584
 BATTLE_ESCROW_ADDRESS=0x65CBABb0864de26fc753F5044277644f72Df8490
@@ -342,17 +354,21 @@ NFT_ACHIEVEMENT_SYSTEM_ADDRESS=0x57c5aE2C1ed8ef90e264D165b5A7F7C750C50C3f
 # Backend Signer
 BACKEND_SIGNER_PRIVATE_KEY=your_backend_signer_private_key
 
-# NTIQ Token (Polygon Amoy)
+# NTIQ Token (Polygon Amoy Testnet - Testnet Only)
 NTIQ_TOKEN_ADDRESS_AMOY=0xE276c3634b7747c46c1aBAB4Eff6b2f046C71A6f
 POLYGON_AMOY_RPC_URL=https://polygon-amoy.infura.io/v3/your_project_id
 ```
 
 ## 🚀 Deployment Information
 
+> 🚧 **Testnet Deployment Only:** All contracts are currently deployed on **Polygon Amoy Testnet only**. This is a testnet deployment for development and testing purposes.
+
 ### Contract Verification
 All contracts are verified on Polygon Amoy Testnet and can be viewed on:
 - **Explorer:** https://amoy.polygonscan.com
 - **Search by contract address** to view source code and transactions
+
+> ⚠️ **Important:** These are testnet contracts only. Do not use real funds with these contracts.
 
 ### Contract Interactions
 - **Frontend Integration:** Uses Wagmi + RainbowKit for wallet connections
@@ -361,10 +377,12 @@ All contracts are verified on Polygon Amoy Testnet and can be viewed on:
 - **Error Handling:** Comprehensive error handling for failed transactions
 
 ### Testing
-- **Testnet Deployment:** All contracts deployed on Polygon Amoy Testnet
-- **Integration Testing:** Full integration testing with frontend and backend
+- **Testnet Deployment:** All contracts deployed on Polygon Amoy Testnet (testnet only)
+- **Integration Testing:** Full integration testing with frontend and backend on testnet
 - **Security Auditing:** Contracts follow OpenZeppelin security standards
-- **Gas Optimization:** Optimized for efficient transaction costs
+- **Gas Optimization:** Optimized for efficient transaction costs on testnet
+
+> 🚧 **Current Limitation:** Testing is currently limited to **Polygon Amoy Testnet only**. Mainnet testing and deployment will be available in future development phases.
 
 ---
 
