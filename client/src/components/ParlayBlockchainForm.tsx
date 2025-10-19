@@ -170,20 +170,44 @@ export function ParlayBlockchainForm({
 
         try {
             console.log('🟢 [PARLAY-BLOCKCHAIN] Calling writeApproveContract...');
+            console.log('🟢 [PARLAY-BLOCKCHAIN] Contract details:', {
+                ntiqToken: CONTRACTS.NTIQ_TOKEN,
+                parlayStaking: CONTRACTS.ENHANCED_PARLAY_STAKING,
+                stakeAmountWei: stakeAmountWei.toString(),
+                chainId: chain.id,
+                abiExists: !!CONTRACTS.ABIS?.NTIQToken
+            });
+
             await writeApproveContract({
                 address: CONTRACTS.NTIQ_TOKEN,
                 abi: CONTRACTS.ABIS?.NTIQToken || [],
                 functionName: 'approve',
                 args: [CONTRACTS.ENHANCED_PARLAY_STAKING, stakeAmountWei],
                 chainId: chain.id,
-                gas: 100000n, // Optimize gas limit for approve
+                gas: 150000n, // Increase gas limit for approve
             });
             console.log('✅ [PARLAY-BLOCKCHAIN] Approval transaction submitted');
         } catch (error: any) {
             console.error('❌ [PARLAY-BLOCKCHAIN] Approval failed:', error);
+            console.error('❌ [PARLAY-BLOCKCHAIN] Error details:', {
+                message: error.message,
+                shortMessage: error.shortMessage,
+                code: error.code,
+                data: error.data
+            });
+            
+            let errorMessage = "Approval transaction failed. Please try again.";
+            if (error.message?.includes("insufficient funds")) {
+                errorMessage = "Insufficient POL tokens for gas fees. Please add more POL to your wallet.";
+            } else if (error.message?.includes("user rejected")) {
+                errorMessage = "Transaction was cancelled in MetaMask.";
+            } else if (error.message?.includes("gas required exceeds allowance")) {
+                errorMessage = "Gas limit too low. Please try again.";
+            }
+
             toast({
                 title: "Approval Failed",
-                description: error.shortMessage || error.message,
+                description: errorMessage,
                 variant: "destructive",
             });
         }
