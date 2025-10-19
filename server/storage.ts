@@ -2109,8 +2109,7 @@ export class DatabaseStorage implements IStorage {
       FROM prediction_battles pb
       LEFT JOIN users u ON pb.challenger_id = u.id
       WHERE pb.status IN ('open', 'active')
-        AND pb.blockchain_battle_hash IS NOT NULL
-        AND pb.blockchain_status = 'confirmed'
+        AND (pb.blockchain_status = 'confirmed' OR pb.blockchain_status = 'pending')
       ORDER BY pb.created_at DESC
     `);
 
