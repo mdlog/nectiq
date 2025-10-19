@@ -151,9 +151,9 @@ export function PredictionBlockchainForm({
                         method: 'POST',
                         body: JSON.stringify({
                             cryptocurrency: formData.cryptocurrency,
-                            predictedPrice: formData.predictedPrice,
+                            predictedPrice: parseFloat(formData.predictedPrice.toString()),
                             timeframe: formData.timeframe,
-                            stakeAmount: formData.stakeAmount,
+                            stakeAmount: parseFloat(formData.stakeAmount.toString()),
                             blockchainTxHash: predictionTxHash,
                             blockchainStatus: 'confirmed'
                         }),
@@ -186,9 +186,21 @@ export function PredictionBlockchainForm({
                     }
                 } catch (error) {
                     console.error('❌ [PREDICTION-BLOCKCHAIN] Failed to create prediction:', error);
+                    
+                    // Try to get more specific error message
+                    let errorMessage = "Blockchain transaction succeeded but prediction creation failed. Please contact support.";
+                    if (createResponse && !createResponse.ok) {
+                        try {
+                            const errorData = await createResponse.json();
+                            errorMessage = errorData.message || errorMessage;
+                        } catch (parseError) {
+                            console.error('Failed to parse error response:', parseError);
+                        }
+                    }
+                    
                     toast({
                         title: "Warning: Database Creation Failed",
-                        description: "Blockchain transaction succeeded but prediction creation failed. Please contact support.",
+                        description: errorMessage,
                         variant: "destructive"
                     });
                 }
@@ -288,8 +300,8 @@ export function PredictionBlockchainForm({
                 error: "Approval Required: Please approve NTIQ spending first"
             };
         }
-        if (data.stakeAmount < 1) {
-            return { isValid: false, error: "Minimum stake amount is 1 NTIQ" };
+        if (data.stakeAmount < 50) {
+            return { isValid: false, error: "Minimum stake amount is 50 NTIQ" };
         }
         if (data.predictedPrice <= 0) {
             return { isValid: false, error: "Predicted price must be greater than 0" };
