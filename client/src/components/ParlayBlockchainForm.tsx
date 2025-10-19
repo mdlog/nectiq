@@ -372,13 +372,14 @@ export function ParlayBlockchainForm({
 
     // Handle parlay success - Create parlay in database after blockchain confirmation
     React.useEffect(() => {
-        if (isParlaySuccess && parlayTxHash) {
+        if (isParlaySuccess && parlayTxHash && !hasSubmittedToDB) {
             console.log('✅ [PARLAY-BLOCKCHAIN] Transaction confirmed:', parlayTxHash);
 
             // Create parlay in database with confirmed blockchain transaction
             const createParlay = async () => {
                 try {
                     console.log('🔄 [PARLAY-BLOCKCHAIN] Creating parlay with confirmed blockchain transaction...');
+                    setHasSubmittedToDB(true); // Prevent duplicate submissions
 
                     const coins = parlayCards.map(card => ({
                         cryptocurrency: card.cryptocurrency,
@@ -420,14 +421,39 @@ export function ParlayBlockchainForm({
                         }
                     } else {
                         const errorData = await createResponse.json();
+                        
+                        // Handle duplicate parlay case
+                        if (createResponse.status === 409) {
+                            console.log('⚠️ [PARLAY-BLOCKCHAIN] Parlay already exists:', errorData.parlayId);
+                            toast({
+                                title: "Parlay Already Created",
+                                description: "This parlay has already been created successfully.",
+                            });
+                            
+                            // Still call success callbacks since parlay exists
+                            if (onSuccess) {
+                                onSuccess();
+                            }
+                            if (onClose) {
+                                onClose();
+                            }
+                            return;
+                        }
+                        
                         throw new Error(errorData.message || 'Failed to create parlay');
                     }
-                } catch (error) {
+                } catch (error: any) {
                     console.error('❌ [PARLAY-BLOCKCHAIN] Failed to create parlay:', error);
+                    
+                    // Reset the flag so user can try again
+                    setHasSubmittedToDB(false);
+                    
+                    // Show more specific error message
+                    const errorMessage = error.message || 'Unknown error occurred';
                     
                     toast({
                         title: "Database Creation Failed",
-                        description: "Blockchain transaction succeeded but parlay creation failed. Please contact support.",
+                        description: `Blockchain transaction succeeded but parlay creation failed: ${errorMessage}`,
                         variant: "destructive",
                     });
                 }
@@ -435,7 +461,7 @@ export function ParlayBlockchainForm({
 
             createParlay();
         }
-    }, [isParlaySuccess, parlayTxHash, parlayCards, watchedStakeAmount, toast, queryClient, onSuccess, onClose]);
+    }, [isParlaySuccess, parlayTxHash, parlayCards, watchedStakeAmount, toast, queryClient, onSuccess, onClose, hasSubmittedToDB]);
 
     // Handle approval success
     React.useEffect(() => {

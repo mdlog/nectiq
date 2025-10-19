@@ -13363,6 +13363,21 @@ Manual balance correction required IMMEDIATELY!`;
 
       console.log("✅ [PARLAY-BLOCKCHAIN] All validations passed");
 
+      // Check if parlay with this blockchain transaction hash already exists
+      const existingParlay = await db
+        .select()
+        .from(parlayPredictions)
+        .where(eq(parlayPredictions.blockchainStakeHash, blockchainTxHash))
+        .limit(1);
+
+      if (existingParlay.length > 0) {
+        console.log("⚠️ [PARLAY-BLOCKCHAIN] Parlay with this blockchain hash already exists:", existingParlay[0].id);
+        return res.status(409).json({
+          message: "Parlay with this blockchain transaction already exists",
+          parlayId: existingParlay[0].id
+        });
+      }
+
       // Calculate multiplier
       let totalMultiplier = 1;
       const durationMap = { '1h': 1.2, '6h': 1.5, '24h': 2.0, '7d': 3.0 };
