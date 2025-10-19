@@ -24,6 +24,7 @@ attached_assets/
 # Test files
 test_*.js
 *.test.js
+test/
 !test/*.test.js
 !test/*.test.cjs
 
