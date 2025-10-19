@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Coins, Clock, DollarSign } from 'lucide-react';
+import { Loader2, Coins, Clock, DollarSign, AlertCircle, CheckCircle2, TrendingUp } from 'lucide-react';
 
 interface ParlayCard {
     id: string;
