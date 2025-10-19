@@ -10,6 +10,8 @@ interface PredictionFormProps {
 }
 
 export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: PredictionFormProps) {
+  console.log('🔍 [PREDICTION-FORM] PredictionForm rendered with props:', { preSelectedCrypto, onClose: !!onClose, onSuccess: !!onSuccess });
+  
   const [selectedStake, setSelectedStake] = useState<number | null>(null);
   const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
   const [useInsurance, setUseInsurance] = useState(false);
@@ -139,6 +141,8 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
     );
   }
 
+  console.log('🔍 [PREDICTION-FORM] Rendering form with cryptosToUse:', cryptosToUse.length, 'currentPrices:', Object.keys(currentPrices).length);
+  
   return (
     <div>
       {/* Blockchain Form with Backend Design */}
