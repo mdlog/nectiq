@@ -359,26 +359,25 @@ export default function TrendRideSimple() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>TrendRide Summary</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>TrendRide Summary</span>
+                  <Badge variant="outline">{trendRideCards.length} cards</Badge>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Cards:</span>
-                    <span>{trendRideCards.length}</span>
+                {/* Simplified Summary */}
+                <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">Multiplier</span>
+                    <Badge variant="secondary" className="text-lg px-3 py-1">
+                      {totalMultiplier.toFixed(2)}x
+                    </Badge>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Total Multiplier:</span>
-                    <Badge variant="secondary">{totalMultiplier.toFixed(2)}x</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Stake:</span>
-                    <span>{stakeAmount || 0} NTIQ</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-lg border-t border-gray-600 pt-2">
-                    <span>Potential Win:</span>
-                    <span className="text-green-400">{potentialWin.toFixed(0)} NTIQ</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">Potential Win</span>
+                    <span className="text-green-400 font-bold text-lg">
+                      {potentialWin.toFixed(0)} NTIQ
+                    </span>
                   </div>
                 </div>
 
@@ -398,17 +397,16 @@ export default function TrendRideSimple() {
               </CardContent>
             </Card>
 
-            {/* Info Card */}
+            {/* Simplified Info Card */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">How TrendRide Works</h3>
-                <ul className="text-sm text-gray-400 space-y-1">
-                  <li>• Combine 2-5 cryptocurrency predictions</li>
-                  <li>• Each coin has individual duration</li>
-                  <li>• Multipliers compound for higher rewards</li>
-                  <li>• All predictions must be correct to win</li>
-                  <li>• Minimum stake: 50 NTIQ</li>
-                </ul>
+                <div className="text-center">
+                  <h3 className="font-semibold mb-3 text-lg">Quick Guide</h3>
+                  <div className="text-sm text-gray-400 space-y-2">
+                    <p>Combine 2-5 predictions for bigger rewards</p>
+                    <p>All must be correct to win • Min: 50 NTIQ</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

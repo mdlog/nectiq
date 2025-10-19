@@ -402,11 +402,14 @@ export default function ParlayWorking() {
             )}
           </div>
 
-          {/* Summary Section */}
+          {/* Simplified Summary Section */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>TrendRide Summary</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>TrendRide Summary</span>
+                  <Badge variant="outline">{parlayCards.length} cards</Badge>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -420,22 +423,19 @@ export default function ParlayWorking() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Cards:</span>
-                    <span>{parlayCards.length}</span>
+                {/* Simplified Summary */}
+                <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">Multiplier</span>
+                    <Badge variant="secondary" className="text-lg px-3 py-1">
+                      {totalMultiplier.toFixed(2)}x
+                    </Badge>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Total Multiplier:</span>
-                    <Badge variant="secondary">{totalMultiplier.toFixed(2)}x</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Stake:</span>
-                    <span>{stakeAmount || 0} NTIQ</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-lg border-t border-gray-600 pt-2">
-                    <span>Potential Win:</span>
-                    <span className="text-green-400">{potentialWin.toFixed(0)} NTIQ</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300">Potential Win</span>
+                    <span className="text-green-400 font-bold text-lg">
+                      {potentialWin.toFixed(0)} NTIQ
+                    </span>
                   </div>
                 </div>
 
