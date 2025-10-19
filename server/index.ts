@@ -456,12 +456,12 @@ try {
 }
 
 // Initialize Battle Expiry Service for automatic battle expiry processing
-// TEMPORARILY DISABLED FOR TESTING
 try {
-  console.log('🔧 Battle Expiry Service temporarily disabled for testing...');
-  // const battleExpiryService = BattleExpiryService.getInstance();
-  // battleExpiryService.start();
-  console.log('⚠️ Battle expiry service disabled - battles will not auto-expire');
+  console.log('🔧 Initializing Battle Expiry Service...');
+  const { BattleExpiryService } = await import('./services/battleExpiryService.js');
+  const battleExpiryService = BattleExpiryService.getInstance();
+  battleExpiryService.start();
+  console.log('✅ Battle expiry service started successfully - processing expired battles every 60 seconds');
 } catch (error) {
   console.error('❌ Failed to initialize battle expiry service:', error);
 }

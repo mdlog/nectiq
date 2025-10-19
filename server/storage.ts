@@ -2083,8 +2083,7 @@ export class DatabaseStorage implements IStorage {
 
   async getLiveBattles(): Promise<any[]> {
     // First, resolve any expired battles
-    // TEMPORARILY DISABLED FOR TESTING
-    // await this.resolveExpiredBattles();
+    await this.resolveExpiredBattles();
 
     // Get battles with challenger and challenged user info using raw SQL
     const rawBattles = await db.execute(sql`
@@ -2110,6 +2109,7 @@ export class DatabaseStorage implements IStorage {
       LEFT JOIN users u ON pb.challenger_id = u.id
       WHERE pb.status IN ('open', 'active')
         AND (pb.blockchain_status = 'confirmed' OR pb.blockchain_status = 'pending')
+        AND pb.target_time > NOW()
       ORDER BY pb.created_at DESC
     `);
 
