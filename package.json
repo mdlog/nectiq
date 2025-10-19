@@ -19,6 +19,7 @@
     "@ledgerhq/hw-transport-webhid": "^6.30.3",
     "@ledgerhq/hw-transport-webusb": "^6.29.7",
     "@neondatabase/serverless": "^0.10.4",
+    "@nomicfoundation/solidity-analyzer-linux-x64-gnu": "^0.1.2",
     "@pythnetwork/hermes-client": "^2.0.0",
     "@radix-ui/react-accordion": "^1.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.7",
