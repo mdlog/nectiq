@@ -271,9 +271,6 @@ export function BattleBlockchainForm({
 
             const stakeAmountWei = parseEther(data.stakeAmount.toString());
 
-            // Generate battle ID using timestamp (blockchain-first approach)
-            const battleId = ethers.id(`battle_${Date.now()}_${address}`);
-
             // Check NTIQ balance
             const ntiqBalanceWei = await refetchNtiqBalance();
             const currentBalance = ntiqBalanceWei.data ? Number(formatEther(ntiqBalanceWei.data)) : 0;
