@@ -452,224 +452,111 @@ export function ParlayBlockchainForm({
 
     return (
         <div className="space-y-6">
-            {/* Wallet Connection Status */}
+            {/* Simplified Wallet & Status */}
             {!address ? (
-                <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-                    <CardContent className="pt-6">
-                        <p className="text-red-600 dark:text-red-400 text-center">
-                            Please connect your wallet to create parlay predictions
-                        </p>
-                    </CardContent>
-                </Card>
-            ) : (
-                <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-green-600 dark:text-green-400 font-medium">
-                                    Wallet Connected
-                                </p>
-                                <p className="text-green-500 dark:text-green-300 text-sm">
-                                    {address.slice(0, 6)}...{address.slice(-4)}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-green-600 dark:text-green-400 font-medium">
-                                    {parseFloat(ntiqBalanceFormatted).toFixed(2)} NTIQ
-                                </p>
-                                <p className="text-green-500 dark:text-green-300 text-sm">Available Balance</p>
-                                <p className="text-blue-500 dark:text-blue-300 text-xs">
-                                    Allowance: {parseFloat(allowanceFormatted).toFixed(2)} NTIQ
-                                </p>
-                                <p className="text-orange-500 dark:text-orange-300 text-xs">
-                                    Needs Approval: {needsApproval ? 'Yes' : 'No'}
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Step Indicator */}
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${needsApproval
-                            ? 'bg-orange-500 text-white'
-                            : 'bg-green-500 text-white'
-                            }`}>
-                            {needsApproval ? '1' : '✓'}
-                        </div>
-                        <div>
-                            <h3 className="text-white font-medium">Step 1: Approve NTIQ Spending</h3>
-                            <p className="text-slate-400 text-sm">
-                                {needsApproval
-                                    ? 'Approve the Parlay Staking contract to spend your NTIQ tokens'
-                                    : 'NTIQ spending approved ✓'
-                                }
-                            </p>
-                        </div>
-                    </div>
-                    {!needsApproval && (
-                        <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-500 text-white">
-                                2
-                            </div>
-                            <div>
-                                <h3 className="text-white font-medium">Step 2: Create Parlay</h3>
-                                <p className="text-slate-400 text-sm">Create your parlay prediction</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Approval Status */}
-            {needsApproval && (
-                <div className="bg-orange-900/20 border border-orange-500/50 rounded-lg p-4">
-                    <div className="flex items-center space-x-2">
-                        <AlertCircle className="w-5 h-5 text-orange-400" />
-                        <span className="text-orange-300 font-medium">Approval Required</span>
-                    </div>
-                    <p className="text-orange-200 text-sm mt-2">
-                        You need to approve NTIQ spending before creating a parlay. Click "Approve NTIQ" to proceed.
+                <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+                    <p className="text-red-400 text-center">
+                        Please connect your wallet to create parlay predictions
                     </p>
                 </div>
+            ) : (
+                <div className="bg-gray-800/50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="text-white font-medium">Wallet</span>
+                            <span className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
+                                {address.slice(0, 6)}...{address.slice(-4)}
+                            </span>
+                            {needsApproval && (
+                                <span className="text-xs bg-orange-500/20 text-orange-300 px-2 py-1 rounded">
+                                    Needs Approval
+                                </span>
+                            )}
+                        </div>
+                        <div className="text-right">
+                            <div className="text-white font-medium">
+                                {parseFloat(ntiqBalanceFormatted).toFixed(2)} NTIQ
+                            </div>
+                            <div className="text-xs text-gray-400">Available</div>
+                        </div>
+                    </div>
+                </div>
             )}
 
 
-            {/* Stake Amount */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <DollarSign className="w-5 h-5" />
-                        Stake Amount
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <label htmlFor="stakeAmount" className="text-sm font-medium">
-                            NTIQ Amount
-                        </label>
-                        <Input
-                            id="stakeAmount"
-                            type="number"
-                            placeholder="50"
-                            min="50"
-                            step="1"
-                            {...form.register('stakeAmount')}
-                            className="text-lg"
-                        />
-                        <p className="text-sm text-muted-foreground">
-                            Minimum stake: 50 NTIQ
-                        </p>
-                    </div>
+            {/* Simplified Stake Amount */}
+            <div className="bg-gray-800/50 rounded-lg p-4 space-y-4">
+                <div className="space-y-2">
+                    <label htmlFor="stakeAmount" className="text-sm font-medium text-gray-300">
+                        Stake Amount (NTIQ)
+                    </label>
+                    <Input
+                        id="stakeAmount"
+                        type="number"
+                        placeholder="50"
+                        min="50"
+                        step="1"
+                        {...form.register('stakeAmount')}
+                        className="text-lg bg-gray-700 border-gray-600"
+                    />
+                </div>
 
-                    {/* Stake Presets */}
-                    <div className="grid grid-cols-4 gap-2">
-                        {[50, 100, 250, 500].map((amount) => (
-                            <Button
-                                key={amount}
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => form.setValue('stakeAmount', amount.toString())}
-                                className={watchedStakeAmount === amount.toString() ? 'bg-primary text-primary-foreground' : ''}
-                            >
-                                {amount}
-                            </Button>
-                        ))}
-                    </div>
+                {/* Quick Amount Buttons */}
+                <div className="grid grid-cols-4 gap-2">
+                    {[50, 100, 250, 500].map((amount) => (
+                        <Button
+                            key={amount}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => form.setValue('stakeAmount', amount.toString())}
+                            className={`${watchedStakeAmount === amount.toString() ? 'bg-primary text-primary-foreground' : 'bg-gray-700 border-gray-600'} text-xs`}
+                        >
+                            {amount}
+                        </Button>
+                    ))}
+                </div>
 
-                    {/* Potential Win */}
-                    {watchedStakeAmount && parseFloat(watchedStakeAmount) >= 50 && (
-                        <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                            <div className="flex items-center justify-between">
-                                <span className="text-green-700 dark:text-green-300 font-medium">
-                                    Potential Win
-                                </span>
-                                <span className="text-green-700 dark:text-green-300 font-bold text-lg">
-                                    {potentialWin.toFixed(2)} NTIQ
-                                </span>
-                            </div>
-                            <p className="text-green-600 dark:text-green-400 text-sm mt-1">
-                                {watchedStakeAmount} NTIQ × {totalMultiplier.toFixed(2)}x multiplier
-                            </p>
+                {/* Potential Win Display */}
+                {watchedStakeAmount && parseFloat(watchedStakeAmount) >= 50 && (
+                    <div className="bg-green-900/20 border border-green-500/30 rounded p-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-green-300 font-medium">Potential Win</span>
+                            <span className="text-green-400 font-bold text-lg">
+                                {potentialWin.toFixed(0)} NTIQ
+                            </span>
                         </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onClose}
-                    className="flex-1"
-                    disabled={isSubmitting || isApprovePending || isParlayPending}
-                >
-                    Cancel
-                </Button>
-
-                {needsApproval ? (
-                    <Button
-                        type="button"
-                        onClick={() => {
-                            console.log('🔵 [PARLAY-BLOCKCHAIN] Button clicked, calling handleApprove');
-                            handleApprove();
-                        }}
-                        disabled={isSubmitting || isApprovePending || isParlayPending || !address}
-                        className="flex-1"
-                    >
-                        {isApprovePending ? (
-                            <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Approving...
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                Step 1: Approve NTIQ Tokens
-                            </>
-                        )}
-                    </Button>
-                ) : (
-                    <Button
-                        type="button"
-                        onClick={handleParlaySubmit}
-                        disabled={isSubmitting || isApprovePending || isParlayPending || !address}
-                        className="flex-1"
-                    >
-                        {isSubmitting || isParlayPending ? (
-                            <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Creating Parlay...
-                            </>
-                        ) : (
-                            <>
-                                <TrendingUp className="w-4 h-4 mr-2" />
-                                Step 2: Create Parlay
-                            </>
-                        )}
-                    </Button>
+                    </div>
                 )}
             </div>
 
-            {/* Status Messages */}
-            {isApprovePending && (
-                <div className="text-center text-blue-600 dark:text-blue-400">
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                    Approving NTIQ tokens...
-                </div>
-            )}
-
-            {isParlayPending && (
-                <div className="text-center text-blue-600 dark:text-blue-400">
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                    Creating parlay on blockchain...
-                </div>
-            )}
+            {/* Simplified Action Button */}
+            <Button
+                type="button"
+                onClick={needsApproval ? () => {
+                    console.log('🔵 [PARLAY-BLOCKCHAIN] Button clicked, calling handleApprove');
+                    handleApprove();
+                } : handleParlaySubmit}
+                disabled={isSubmitting || isApprovePending || isParlayPending || !address}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3"
+            >
+                {isApprovePending || isParlayPending ? (
+                    <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {isApprovePending ? 'Approving...' : 'Creating...'}
+                    </>
+                ) : needsApproval ? (
+                    <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Approve NTIQ Spending
+                    </>
+                ) : (
+                    <>
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Create TrendRide
+                    </>
+                )}
+            </Button>
         </div>
     );
 }
