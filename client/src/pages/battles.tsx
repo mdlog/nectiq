@@ -320,6 +320,10 @@ export default function BattlesPage() {
   const BattleHistorySection = () => {
     const { data: battleHistory, isLoading: isLoadingHistory, error } = useQuery({
       queryKey: ['/api/battles/history'],
+      retry: 3,
+      retryDelay: 1000,
+      staleTime: 30000,
+      refetchInterval: 5000, // Refetch every 5 seconds for testing
     });
 
 
@@ -377,16 +381,31 @@ export default function BattlesPage() {
     }
 
     if (error) {
+      console.error('❌ [BATTLE-HISTORY] Error:', error);
       return (
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-red-600 dark:text-red-400">Error loading battle history. Please try again.</p>
+            <p className="text-red-600 dark:text-red-400">Error loading battle history: {error.message}</p>
           </CardContent>
         </Card>
       );
     }
 
     const allHistoryBattles = battleHistory as any[] || [];
+
+    console.log('🔍 [BATTLE-HISTORY] Debug info:', {
+      battleHistory,
+      allHistoryBattles,
+      isLoadingHistory,
+      error,
+      battleHistoryType: typeof battleHistory,
+      battleHistoryLength: battleHistory?.length
+    });
+
+    // Temporary debug: force show data if we have it
+    if (battleHistory && battleHistory.length > 0) {
+      console.log('✅ [BATTLE-HISTORY] Data found, forcing display');
+    }
 
     if (allHistoryBattles.length === 0) {
       return (
