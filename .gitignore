@@ -51,6 +51,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Documentation files (except README.md)
+# Documentation files (except README.md and SMART_CONTRACTS.md)
 *.md
 !README.md
+!SMART_CONTRACTS.md
