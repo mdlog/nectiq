@@ -265,6 +265,14 @@ export function PredictionBlockchainForm({
             console.log('🔵 [PREDICTION-APPROVAL] stakeAmountWei:', stakeAmountWei.toString());
 
             console.log('🔵 [PREDICTION-APPROVAL] Calling writeApproveContract...');
+            console.log('🔵 [PREDICTION-APPROVAL] Contract details:', {
+                ntiqToken: CONTRACTS.NTIQ_TOKEN,
+                predictionStaking: CONTRACTS.ENHANCED_PREDICTION_STAKING,
+                stakeAmountWei: stakeAmountWei.toString(),
+                chainId: chain.id,
+                abiExists: !!CONTRACTS.ABIS?.NTIQToken
+            });
+
             await writeApproveContract({
                 address: CONTRACTS.NTIQ_TOKEN,
                 abi: CONTRACTS.ABIS?.NTIQToken || ABIS?.NTIQToken,
@@ -276,9 +284,25 @@ export function PredictionBlockchainForm({
             console.log('✅ [PREDICTION-APPROVAL] writeApproveContract called successfully');
         } catch (error: any) {
             console.error('❌ [PREDICTION-APPROVAL] Error details:', error);
+            console.error('❌ [PREDICTION-APPROVAL] Error details:', {
+                message: error.message,
+                shortMessage: error.shortMessage,
+                code: error.code,
+                data: error.data
+            });
+            
+            let errorMessage = "Approval transaction failed. Please try again.";
+            if (error.message?.includes("insufficient funds")) {
+                errorMessage = "Insufficient POL tokens for gas fees. Please add more POL to your wallet.";
+            } else if (error.message?.includes("user rejected")) {
+                errorMessage = "Transaction was cancelled in MetaMask.";
+            } else if (error.message?.includes("gas required exceeds allowance")) {
+                errorMessage = "Gas limit too low. Please try again.";
+            }
+
             toast({
                 title: "Approval Failed",
-                description: error.shortMessage || error.message,
+                description: errorMessage,
                 variant: "destructive",
             });
         }

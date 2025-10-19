@@ -143,6 +143,15 @@ export function BattleBlockchainForm({
 
         try {
             const stakeAmountWei = parseEther(stakeAmount.toString());
+            
+            console.log('🟢 [BATTLE-BLOCKCHAIN] Calling writeApproveContract...');
+            console.log('🟢 [BATTLE-BLOCKCHAIN] Contract details:', {
+                ntiqToken: CONTRACTS.NTIQ_TOKEN,
+                battleEscrow: CONTRACTS.BATTLE_ESCROW,
+                stakeAmountWei: stakeAmountWei.toString(),
+                chainId: chain.id,
+                abiExists: !!CONTRACTS.ABIS?.NTIQToken
+            });
 
             await writeApproveContract({
                 address: CONTRACTS.NTIQ_TOKEN,
@@ -150,12 +159,30 @@ export function BattleBlockchainForm({
                 functionName: 'approve',
                 args: [CONTRACTS.BATTLE_ESCROW, stakeAmountWei],
                 chainId: chain.id,
-                gas: 100000n, // Optimize gas limit for approve
+                gas: 150000n, // Increase gas limit for approve
             });
+            console.log('✅ [BATTLE-BLOCKCHAIN] Approval transaction submitted');
         } catch (error: any) {
+            console.error('❌ [BATTLE-BLOCKCHAIN] Approval failed:', error);
+            console.error('❌ [BATTLE-BLOCKCHAIN] Error details:', {
+                message: error.message,
+                shortMessage: error.shortMessage,
+                code: error.code,
+                data: error.data
+            });
+            
+            let errorMessage = "Approval transaction failed. Please try again.";
+            if (error.message?.includes("insufficient funds")) {
+                errorMessage = "Insufficient POL tokens for gas fees. Please add more POL to your wallet.";
+            } else if (error.message?.includes("user rejected")) {
+                errorMessage = "Transaction was cancelled in MetaMask.";
+            } else if (error.message?.includes("gas required exceeds allowance")) {
+                errorMessage = "Gas limit too low. Please try again.";
+            }
+
             toast({
                 title: "Approval Failed",
-                description: error.shortMessage || error.message,
+                description: errorMessage,
                 variant: "destructive",
             });
         }
