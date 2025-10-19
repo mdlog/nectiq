@@ -27,6 +27,28 @@ test_*.js
 !test/*.test.js
 !test/*.test.cjs
 
+# Testing and temporary scripts
+check-*.cjs
+check-*.js
+analyze-*.cjs
+analyze-*.js
+direct-*.cjs
+direct-*.js
+implement-*.cjs
+implement-*.js
+manual-*.cjs
+manual-*.js
+release-*.cjs
+release-*.js
+update-*.cjs
+update-*.js
+*test*.cjs
+*test*.js
+*temp*.cjs
+*temp*.js
+*debug*.cjs
+*debug*.js
+
 # Temporary files
 *.tmp
 *.temp
