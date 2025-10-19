@@ -386,6 +386,53 @@ export function ParlayBlockchainForm({
                 </Card>
             )}
 
+            {/* Step Indicator */}
+            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${needsApproval
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-green-500 text-white'
+                            }`}>
+                            {needsApproval ? '1' : '✓'}
+                        </div>
+                        <div>
+                            <h3 className="text-white font-medium">Step 1: Approve NTIQ Spending</h3>
+                            <p className="text-slate-400 text-sm">
+                                {needsApproval
+                                    ? 'Approve the Parlay Staking contract to spend your NTIQ tokens'
+                                    : 'NTIQ spending approved ✓'
+                                }
+                            </p>
+                        </div>
+                    </div>
+                    {!needsApproval && (
+                        <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-blue-500 text-white">
+                                2
+                            </div>
+                            <div>
+                                <h3 className="text-white font-medium">Step 2: Create Parlay</h3>
+                                <p className="text-slate-400 text-sm">Create your parlay prediction</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Approval Status */}
+            {needsApproval && (
+                <div className="bg-orange-900/20 border border-orange-500/50 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                        <AlertCircle className="w-5 h-5 text-orange-400" />
+                        <span className="text-orange-300 font-medium">Approval Required</span>
+                    </div>
+                    <p className="text-orange-200 text-sm mt-2">
+                        You need to approve NTIQ spending before creating a parlay. Click "Approve NTIQ" to proceed.
+                    </p>
+                </div>
+            )}
+
 
             {/* Stake Amount */}
             <Card>
@@ -478,8 +525,8 @@ export function ParlayBlockchainForm({
                             </>
                         ) : (
                             <>
-                                <Coins className="w-4 h-4 mr-2" />
-                                Approve NTIQ
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                Step 1: Approve NTIQ Tokens
                             </>
                         )}
                     </Button>
@@ -498,7 +545,7 @@ export function ParlayBlockchainForm({
                         ) : (
                             <>
                                 <TrendingUp className="w-4 h-4 mr-2" />
-                                Create Parlay
+                                Step 2: Create Parlay
                             </>
                         )}
                     </Button>
