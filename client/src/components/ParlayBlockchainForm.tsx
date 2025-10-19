@@ -12,9 +12,8 @@ import { CONTRACTS } from '@/lib/contracts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Coins, TrendingUp, Clock, DollarSign } from 'lucide-react';
+import { Loader2, Coins, Clock, DollarSign } from 'lucide-react';
 
 interface ParlayCard {
     id: string;
@@ -385,46 +384,6 @@ export function ParlayBlockchainForm({
                 </Card>
             )}
 
-            {/* Parlay Cards Summary */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5" />
-                        Parlay Summary
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Total Coins</p>
-                            <p className="text-2xl font-bold">{parlayCards.length}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Total Multiplier</p>
-                            <p className="text-2xl font-bold text-green-600">{totalMultiplier.toFixed(2)}x</p>
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-2">
-                        {parlayCards.map((card, index) => (
-                            <div key={card.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <Badge variant="outline">{index + 1}</Badge>
-                                    <div>
-                                        <p className="font-medium">{card.cryptocurrency.toUpperCase()}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Target: ${card.prediction} | Duration: {card.duration}
-                                        </p>
-                                    </div>
-                                </div>
-                                <Badge variant="secondary">{card.duration}</Badge>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
 
             {/* Stake Amount */}
             <Card>

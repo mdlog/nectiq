@@ -3407,41 +3407,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      logger.info(`✅ [PREDICTION] Balance check passed. Proceeding to lock stake on blockchain...`);
+      logger.info(`✅ [PREDICTION] Balance check passed. Blockchain transaction required before creating prediction.`);
 
-      const targetTime = predictionService.getTargetTime(validatedData.timeframe);
-
-      // Create prediction in database first (no blockchain transaction from backend)
-      logger.info(`🔗 [PREDICTION] Creating prediction in database (blockchain transaction will be handled by frontend)`);
-
-      // Create prediction in database
-      const prediction = await storage.createPrediction({
-        ...validatedData,
-        userId: userId,
-        targetTime
+      // BLOCKCHAIN-FIRST APPROACH: Only create prediction after blockchain transaction is confirmed
+      return res.status(400).json({
+        message: "All predictions must be created through blockchain transaction. Please use the blockchain prediction form.",
+        requiresBlockchain: true
       });
-
-      logger.info(`✅ [PREDICTION] Created successfully: ID ${prediction.id}`);
-
-      // Check for achievement progress updates after prediction creation
-      try {
-        const { AchievementService } = await import('./services/achievementService');
-        const achievementService = new AchievementService();
-        await achievementService.checkAndUpdateAchievements(userId);
-      } catch (error) {
-        console.error('Error checking achievements after prediction:', error);
-      }
-
-      // Check for daily challenge progress updates after prediction creation
-      try {
-        const { DailyChallengeService } = await import('./services/dailyChallengeService');
-        const dailyChallengeService = new DailyChallengeService();
-        await dailyChallengeService.updateChallengeProgress(userId);
-      } catch (error) {
-        console.error('Error checking daily challenges after prediction:', error);
-      }
-
-      res.json(prediction);
     } catch (error) {
       console.error("Prediction creation error:", error);
       if (error instanceof z.ZodError) {
@@ -3471,6 +3443,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate required fields
       if (!cryptocurrency || !timeframe || !predictedPrice || !stakeAmount || !blockchainTxHash) {
         return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Only accept confirmed blockchain transactions
+      if (blockchainStatus !== 'confirmed') {
+        return res.status(400).json({
+          message: "Only confirmed blockchain transactions are accepted. Please wait for transaction confirmation.",
+          currentStatus: blockchainStatus,
+          requiredStatus: 'confirmed'
+        });
       }
 
       const numStakeAmount = parseFloat(stakeAmount);
@@ -3716,7 +3697,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       logger.info(`🔍 [ACTIVE-PREDICTIONS] Fetching predictions for user ${userId}`);
 
       const predictions = await storage.getUserPredictions(userId);
-      const activePredictions = predictions.filter(p => p.status === "pending");
+      // Only show predictions that have confirmed blockchain transactions
+      const activePredictions = predictions.filter(p =>
+        p.status === "pending" &&
+        p.blockchainStakeHash &&
+        p.blockchainStatus === "confirmed"
+      );
 
       logger.info(`🔍 [ACTIVE-PREDICTIONS] Found ${predictions.length} total predictions, ${activePredictions.length} active predictions for user ${userId}`);
 
@@ -4027,46 +4013,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid cryptocurrency' });
       }
 
-      // Create battle in database first (blockchain transaction will be handled by frontend)
-      logger.info(`🔗 [BATTLE] Creating battle in database (blockchain transaction will be handled by frontend)`);
+      // BLOCKCHAIN-FIRST APPROACH: Only create battle after blockchain transaction is confirmed
+      logger.info(`✅ [BATTLE] Balance check passed. Blockchain transaction required before creating battle.`);
 
-      const battle = await storage.createBattle({
-        challengerId: userId,
-        challengedId: challengedId || null,
-        cryptocurrency,
-        timeframe,
-        stakeAmount,
-        challengerPrediction,
-        currentPrice: cryptoPrice.current_price,
-        status: 'open',
-        targetTime,
-        battleType,
-        isPublic
-      });
-
-      logger.info(`✅ [BATTLE] Created successfully: ID ${battle.id}`);
-
-      // Log transaction for tracking (no balance change, just logging)
-      await storage.logTransaction({
-        userId,
-        type: 'battle_create',
-        amount: stakeAmount,
-        description: `Battle created - ${cryptocurrency} ${timeframe}`,
-        relatedId: battle.id,
-        status: 'completed'
-      });
-
-      logger.info(`✅ [BATTLE] Created successfully: ID ${battle.id}`);
-
-      res.json({
-        message: 'Battle created successfully',
-        battle: {
-          ...battle,
-          challenger: {
-            username: user.username,
-            profilePhoto: user.profilePhoto
-          }
-        }
+      return res.status(400).json({
+        message: "All battles must be created through blockchain transaction. Please use the blockchain battle form.",
+        requiresBlockchain: true
       });
     } catch (error) {
       console.error('Error creating battle:', error);
@@ -4191,6 +4143,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate required fields
       if (!cryptocurrency || !timeframe || !challengerPrediction || !stakeAmount || !blockchainTxHash) {
         return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Only accept confirmed blockchain transactions
+      if (blockchainStatus !== 'confirmed') {
+        return res.status(400).json({
+          message: "Only confirmed blockchain transactions are accepted. Please wait for transaction confirmation.",
+          currentStatus: blockchainStatus,
+          requiredStatus: 'confirmed'
+        });
       }
 
       const numStakeAmount = parseFloat(stakeAmount);
@@ -13073,98 +13034,14 @@ Manual balance correction required IMMEDIATELY!`;
 
       console.log("✅ [PARLAY-CLEAN] All validations passed");
 
-      // Calculate multiplier
-      let totalMultiplier = 1;
-      const durationMap = { '1h': 1.2, '6h': 1.5, '24h': 2.0, '7d': 3.0 };
+      // BLOCKCHAIN-FIRST APPROACH: Only create parlay after blockchain transaction is confirmed
+      logger.info(`✅ [PARLAY] Balance check passed. Blockchain transaction required before creating parlay.`);
 
-      for (const coin of coins) {
-        const coinMultiplier = 1.5 * (durationMap[coin.duration] || 1.2);
-        totalMultiplier *= coinMultiplier;
-      }
-
-      console.log("🟢 [PARLAY-CLEAN] Total multiplier:", totalMultiplier);
-
-      // Create parlay in database
-      const stake = parseFloat(stakeAmount);
-      const now = new Date();
-      const targetTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
-      const [parlay] = await db.insert(parlayPredictions).values({
-        userId: user.id,
-        stakeAmount: stake,
-        targetTime,
-        totalMultiplier: totalMultiplier.toFixed(2),
-        totalCoinCount: coins.length,
-        status: 'active'
-      }).returning();
-
-      console.log("✅ [PARLAY-CLEAN] Parlay created with ID:", parlay.id);
-
-      // Create coin predictions
-      for (const coin of coins) {
-        const coinTargetTime = new Date(now);
-        const hours = { '1h': 1, '6h': 6, '24h': 24, '7d': 168 }[coin.duration] || 1;
-        coinTargetTime.setHours(coinTargetTime.getHours() + hours);
-
-        await db.insert(parlayPredictionCoins).values({
-          parlayId: parlay.id,
-          cryptocurrency: coin.cryptocurrency,
-          prediction: coin.prediction,
-          startPrice: coin.startPrice.toString(),
-          duration: coin.duration,
-          targetTime: coinTargetTime
-        });
-      }
-
-      console.log("✅ [PARLAY-CLEAN] All coin predictions created");
-
-      // Deduct balance
-      await BalanceService.processTransaction({
-        userId: user.id,
-        type: 'parlay_stake',
-        amount: -stake,
-        description: `Parlay prediction - ${coins.length} coins`,
-        relatedId: parlay.id
-      }, storage);
-
-      console.log("✅ [PARLAY-CLEAN] Balance deducted successfully");
-
-      // BLOCKCHAIN INTEGRATION: Lock parlay stake in smart contract
-      try {
-        if (user.walletAddress) {
-          const parlayId = blockchainService.generateParlayId(parlay.id);
-          const txHash = await parlayStakingService.lockParlayStake({
-            parlayId,
-            userAddress: user.walletAddress,
-            stakeAmount: stake.toString(),
-            coinCount: coins.length
-          });
-
-          // Update parlay with blockchain transaction hash
-          await db.update(parlayPredictions)
-            .set({
-              blockchainStakeHash: txHash,
-              blockchainStatus: 'confirmed'
-            })
-            .where(eq(parlayPredictions.id, parlay.id));
-
-          logger.info(`🔗 [BLOCKCHAIN] Parlay ${parlay.id} stake locked on blockchain: ${txHash}`);
-        } else {
-          logger.warn(`⚠️ [BLOCKCHAIN] User ${user.id} has no wallet address, skipping blockchain parlay stake`);
-        }
-      } catch (blockchainError: any) {
-        logger.error(`❌ [BLOCKCHAIN] Failed to lock parlay stake on blockchain:`, blockchainError);
-        // Don't fail the parlay creation if blockchain fails
-        await db.update(parlayPredictions)
-          .set({ blockchainStatus: 'failed' })
-          .where(eq(parlayPredictions.id, parlay.id));
-      }
-
-      res.json({
-        success: true,
-        parlay,
-        message: "Parlay created successfully"
+      return res.status(400).json({
+        message: "All parlays must be created through blockchain transaction. Please use the blockchain parlay form.",
+        requiresBlockchain: true
       });
+
 
     } catch (error) {
       console.error("❌ [PARLAY-CLEAN] Error:", error);
@@ -13180,10 +13057,17 @@ Manual balance correction required IMMEDIATELY!`;
     try {
       const user = req.user as any;
 
+      // Only show parlays that have confirmed blockchain transactions
       const parlays = await db
         .select()
         .from(parlayPredictions)
-        .where(eq(parlayPredictions.userId, user.id))
+        .where(
+          and(
+            eq(parlayPredictions.userId, user.id),
+            isNotNull(parlayPredictions.blockchainStakeHash),
+            eq(parlayPredictions.blockchainStatus, 'confirmed')
+          )
+        )
         .orderBy(desc(parlayPredictions.createdAt));
 
       // Get coins for each parlay
@@ -13232,6 +13116,16 @@ Manual balance correction required IMMEDIATELY!`;
       if (!blockchainTxHash) {
         console.log("❌ [PARLAY-BLOCKCHAIN] Missing blockchain transaction hash");
         return res.status(400).json({ message: "Blockchain transaction hash is required" });
+      }
+
+      // Only accept confirmed blockchain transactions
+      const blockchainStatus = req.body.blockchainStatus || 'confirmed';
+      if (blockchainStatus !== 'confirmed') {
+        return res.status(400).json({
+          message: "Only confirmed blockchain transactions are accepted. Please wait for transaction confirmation.",
+          currentStatus: blockchainStatus,
+          requiredStatus: 'confirmed'
+        });
       }
 
       console.log("✅ [PARLAY-BLOCKCHAIN] All validations passed");
