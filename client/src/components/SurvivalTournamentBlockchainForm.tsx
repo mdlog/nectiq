@@ -61,10 +61,10 @@ export function SurvivalTournamentBlockchainForm({
     }
   }, [onClose]);
 
-  // Debug wallet state (only log once)
+  // Debug wallet state (only log once when component mounts)
   useEffect(() => {
-    console.log('🔘 [SURVIVAL-FORM] Wallet state:', { address, chain });
-  }, [address, chain]);
+    console.log('🔘 [SURVIVAL-FORM] Component mounted, wallet state:', { address, chain });
+  }, []); // Empty dependency array - only run once
 
   // Function definitions
   const handleJoinTournament = useCallback(async () => {
@@ -81,10 +81,7 @@ export function SurvivalTournamentBlockchainForm({
     let retryCount = 0;
     let lastError: any = null;
 
-    console.log('🏆 [SURVIVAL-JOIN] Starting join tournament process...');
-    console.log('   Tournament:', tournament.title);
-    console.log('   Entry Fee:', tournament.entryFee, 'NTIQ');
-    console.log('   User:', address);
+    // Starting join tournament process
 
     while (retryCount < maxRetries) {
       try {
@@ -93,8 +90,7 @@ export function SurvivalTournamentBlockchainForm({
 
         const entryFeeWei = parseEther(tournament.entryFee.toString());
         
-        console.log(`🏆 [SURVIVAL-JOIN] Attempt ${retryCount + 1}/${maxRetries}`);
-        console.log('   Entry Fee Wei:', entryFeeWei.toString());
+        // Attempt ${retryCount + 1}/${maxRetries}
 
         // Join tournament
         const joinTxHash = await writeJoinContract({
@@ -108,7 +104,6 @@ export function SurvivalTournamentBlockchainForm({
 
         if (joinTxHash) {
           setJoinTxHash(joinTxHash);
-          console.log('🏆 [SURVIVAL-JOIN] Join transaction sent:', joinTxHash);
           
           toast({
             title: "Join Transaction Sent",
@@ -129,7 +124,6 @@ export function SurvivalTournamentBlockchainForm({
           error.message?.includes("timeout");
 
         if (retryCount < maxRetries && isRetryableError) {
-          console.log(`🔄 [SURVIVAL-JOIN] Retrying in ${retryCount * 2} seconds...`);
           toast({
             title: "Retrying Transaction",
             description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
@@ -168,13 +162,11 @@ export function SurvivalTournamentBlockchainForm({
 
   const handleDatabaseUpdate = useCallback(async () => {
     if (hasSubmittedToDB) {
-      console.log('⚠️ [SURVIVAL-DB] Database already updated, skipping...');
       return;
     }
 
     try {
       setHasSubmittedToDB(true);
-      console.log('💾 [SURVIVAL-DB] Updating database with tournament join...');
 
       // Update database with tournament join
       const response = await apiRequest(`/api/survival-tournaments/${tournament.id}/join`, {
@@ -188,7 +180,7 @@ export function SurvivalTournamentBlockchainForm({
         throw new Error(`Database update failed: ${response.status}`);
       }
 
-      console.log('✅ [SURVIVAL-DB] Database updated successfully');
+      // Database updated successfully
       
       toast({
         title: "Successfully Joined!",
@@ -232,10 +224,7 @@ export function SurvivalTournamentBlockchainForm({
     let retryCount = 0;
     let lastError: any = null;
 
-    console.log('🔐 [SURVIVAL-APPROVE] Starting approval process...');
-    console.log('   Tournament:', tournament.title);
-    console.log('   Entry Fee:', tournament.entryFee, 'NTIQ');
-    console.log('   User:', address);
+    // Starting approval process
 
     while (retryCount < maxRetries) {
       try {
@@ -244,8 +233,7 @@ export function SurvivalTournamentBlockchainForm({
 
         const entryFeeWei = parseEther(tournament.entryFee.toString());
         
-        console.log(`🔐 [SURVIVAL-APPROVE] Attempt ${retryCount + 1}/${maxRetries}`);
-        console.log('   Entry Fee Wei:', entryFeeWei.toString());
+        // Attempt ${retryCount + 1}/${maxRetries}
 
         // Approve NTIQ token spending
         const approveTxHash = await writeApproveContract({
@@ -259,7 +247,6 @@ export function SurvivalTournamentBlockchainForm({
 
         if (approveTxHash) {
           setApproveTxHash(approveTxHash);
-          console.log('🔐 [SURVIVAL-APPROVE] Approval transaction sent:', approveTxHash);
           
           toast({
             title: "Approval Transaction Sent",
@@ -280,7 +267,6 @@ export function SurvivalTournamentBlockchainForm({
           error.message?.includes("timeout");
 
         if (retryCount < maxRetries && isRetryableError) {
-          console.log(`🔄 [SURVIVAL-APPROVE] Retrying in ${retryCount * 2} seconds...`);
           toast({
             title: "Retrying Transaction",
             description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
@@ -320,7 +306,6 @@ export function SurvivalTournamentBlockchainForm({
   // Handle approve transaction success
   useEffect(() => {
     if (isApproveSuccess && !hasSubmittedToDB) {
-      console.log('✅ [SURVIVAL-APPROVE] Approval successful, proceeding to join tournament...');
       setCurrentTxType('join');
       handleJoinTournament();
     }
@@ -329,7 +314,6 @@ export function SurvivalTournamentBlockchainForm({
   // Handle join transaction success
   useEffect(() => {
     if (isJoinSuccess && !hasSubmittedToDB) {
-      console.log('✅ [SURVIVAL-JOIN] Join transaction successful, updating database...');
       handleDatabaseUpdate();
     }
   }, [isJoinSuccess, hasSubmittedToDB, handleDatabaseUpdate]);
