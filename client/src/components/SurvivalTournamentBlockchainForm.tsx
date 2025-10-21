@@ -101,7 +101,7 @@ export function SurvivalTournamentBlockchainForm({
       // Approve NTIQ token spending
       const approveTxHash = await writeApproveContract({
         address: CONTRACTS.NTIQ_TOKEN,
-        abi: CONTRACTS.ABIS?.NTIQ_TOKEN || [],
+        abi: CONTRACTS.ABIS?.NTIQToken || [],
         functionName: 'approve',
         args: [CONTRACTS.TOURNAMENT_POOL, entryFeeWei],
         chainId: chain.id,
