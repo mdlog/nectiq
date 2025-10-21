@@ -11048,14 +11048,11 @@ Manual balance correction required IMMEDIATELY!`;
         });
       }
 
-      // CRITICAL FIX: Use BalanceService for tournament join fee
-      const balanceResult = await BalanceService.processTransaction({
-        userId,
-        type: 'survival_entry',
-        amount: tournament.entryFee,
-        description: `Joined survival tournament - ${tournament.title}`,
-        relatedId: tournamentId
-      }, storage);
+      // Deduct entry fee from user balance
+      if (user) {
+        const newBalance = user.balance - tournament.entryFee;
+        await storage.updateUserBalance(userId, newBalance);
+      }
 
       // Join tournament
       const participant = await storage.joinSurvivalTournament(tournamentId, userId);
