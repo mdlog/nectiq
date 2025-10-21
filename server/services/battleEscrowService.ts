@@ -240,7 +240,14 @@ export class BattleEscrowService {
      */
     async checkAndProcessCompletedBattles(): Promise<void> {
         try {
-            console.log('🔍 [BATTLE-PROCESSOR] Checking completed battles without blockchain rewards...');
+            console.log('🔍 [BATTLE-PROCESSOR] Starting completed battles check...');
+
+            // Validate blockchain service configuration first
+            const { BlockchainService } = await import('./blockchainService');
+            if (!BlockchainService.validateConfiguration()) {
+                console.error('❌ [BATTLE-PROCESSOR] Blockchain service configuration invalid - skipping reward processing');
+                return;
+            }
 
             // Get all completed battles that don't have blockchain resolve hash
             const completedBattles = await storage.getCompletedBattlesWithoutBlockchainReward();
@@ -252,11 +259,23 @@ export class BattleEscrowService {
 
             console.log(`🔍 [BATTLE-PROCESSOR] Found ${completedBattles.length} completed battles without blockchain rewards`);
 
+            let successCount = 0;
+            let failureCount = 0;
+
             for (const battle of completedBattles) {
-                await this.processCompletedBattleReward(battle);
+                try {
+                    await this.processCompletedBattleReward(battle);
+                    successCount++;
+                } catch (error) {
+                    failureCount++;
+                    console.error(`❌ [BATTLE-PROCESSOR] Failed to process battle ${battle.id}:`, error);
+                }
             }
+
+            console.log(`✅ [BATTLE-PROCESSOR] Processing complete: ${successCount} successful, ${failureCount} failed`);
         } catch (error) {
-            console.error('❌ [BATTLE-PROCESSOR] Error processing completed battles:', error);
+            console.error('❌ [BATTLE-PROCESSOR] Critical error in completed battles processing:', error);
+            // Don't throw error to prevent scheduled task from crashing
         }
     }
 
@@ -264,102 +283,135 @@ export class BattleEscrowService {
      * Process completed battle reward
      */
     async processCompletedBattleReward(battle: any): Promise<void> {
-        try {
-            console.log(`🔍 [BATTLE-BLOCKCHAIN-REWARD] Processing completed battle ${battle.id} for blockchain reward...`);
+        const maxRetries = 3;
+        let retryCount = 0;
 
-            // Check if battle has blockchain battle hash
-            if (!battle.blockchainBattleHash) {
-                console.log(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} has no blockchain battle hash - skipping`);
-                return;
-            }
-
-            // Check if battle already has blockchain resolve hash
-            if (battle.blockchainResolveHash) {
-                console.log(`✅ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} already has blockchain resolve hash - skipping`);
-                return;
-            }
-
-            // Check if battle has winner reward
-            if (!battle.winnerReward || battle.winnerReward <= 0) {
-                console.log(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} has no winner reward - skipping`);
-                return;
-            }
-
-            // Check if battle has winner
-            if (!battle.winnerId) {
-                console.log(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} has no winner - skipping`);
-                return;
-            }
-
-            // Get winner user information
-            const winnerUser = await storage.getUser(battle.winnerId);
-            if (!winnerUser || !winnerUser.walletAddress) {
-                console.log(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} winner has no wallet address - skipping`);
-                return;
-            }
-
-            console.log(`💰 [BATTLE-BLOCKCHAIN-REWARD] Processing reward for battle ${battle.id}:`);
-            console.log(`   Winner: ${winnerUser.username}`);
-            console.log(`   Winner Wallet: ${winnerUser.walletAddress}`);
-            console.log(`   Winner Reward: ${battle.winnerReward} NTIQ`);
-            console.log(`   Blockchain Battle Hash: ${battle.blockchainBattleHash}`);
-
-            // Try to resolve battle on blockchain
+        while (retryCount < maxRetries) {
             try {
-                // Try with database ID first
-                let blockchainBattleId = blockchainService.generateBattleId(battle.id);
-                let txHash = null;
+                console.log(`🔍 [BATTLE-BLOCKCHAIN-REWARD] Processing completed battle ${battle.id} for blockchain reward... (Attempt ${retryCount + 1}/${maxRetries})`);
 
+                // Check if battle has blockchain battle hash
+                if (!battle.blockchainBattleHash) {
+                    console.log(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} has no blockchain battle hash - skipping`);
+                    return;
+                }
+
+                // Check if battle already has blockchain resolve hash
+                if (battle.blockchainResolveHash) {
+                    console.log(`✅ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} already has blockchain resolve hash - skipping`);
+                    return;
+                }
+
+                // Check if battle has winner reward
+                if (!battle.winnerReward || battle.winnerReward <= 0) {
+                    console.log(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} has no winner reward - skipping`);
+                    return;
+                }
+
+                // Check if battle has winner
+                if (!battle.winnerId) {
+                    console.log(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} has no winner - skipping`);
+                    return;
+                }
+
+                // Get winner user information
+                const winnerUser = await storage.getUser(battle.winnerId);
+                if (!winnerUser || !winnerUser.walletAddress) {
+                    console.log(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} winner has no wallet address - skipping`);
+                    return;
+                }
+
+                console.log(`💰 [BATTLE-BLOCKCHAIN-REWARD] Processing reward for battle ${battle.id}:`);
+                console.log(`   Winner: ${winnerUser.username}`);
+                console.log(`   Winner Wallet: ${winnerUser.walletAddress}`);
+                console.log(`   Winner Reward: ${battle.winnerReward} NTIQ`);
+                console.log(`   Blockchain Battle Hash: ${battle.blockchainBattleHash}`);
+
+                // Try to resolve battle on blockchain
                 try {
-                    txHash = await this.resolveBattle({
-                        battleId: blockchainBattleId,
-                        winner: winnerUser.walletAddress
-                    });
-                    logger.info(`🔗 [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} resolved with database ID: ${txHash}`);
-                } catch (dbIdError) {
-                    logger.warn(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Failed with database ID, trying alternative methods:`, dbIdError.message);
+                    // Try with database ID first
+                    let blockchainBattleId = blockchainService.generateBattleId(battle.id);
+                    let txHash = null;
 
-                    // Try to extract battle ID from blockchain transaction
                     try {
-                        const provider = blockchainService.getProvider();
-                        const tx = await provider.getTransaction(battle.blockchainBattleHash);
+                        txHash = await this.resolveBattle({
+                            battleId: blockchainBattleId,
+                            winner: winnerUser.walletAddress
+                        });
+                        logger.info(`🔗 [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} resolved with database ID: ${txHash}`);
+                    } catch (dbIdError) {
+                        logger.warn(`⚠️ [BATTLE-BLOCKCHAIN-REWARD] Failed with database ID, trying alternative methods:`, dbIdError.message);
 
-                        if (tx && tx.data) {
-                            // Extract battle ID from transaction data (first parameter after function selector)
-                            const data = tx.data.substring(10); // Remove function selector
-                            const battleIdHex = '0x' + data.substring(0, 64);
+                        // Try to extract battle ID from blockchain transaction
+                        try {
+                            const provider = blockchainService.getProvider();
+                            const tx = await provider.getTransaction(battle.blockchainBattleHash);
 
-                            logger.info(`🔍 [BATTLE-BLOCKCHAIN-REWARD] Extracted battle ID from transaction: ${battleIdHex}`);
+                            if (tx && tx.data) {
+                                // Extract battle ID from transaction data (first parameter after function selector)
+                                const data = tx.data.substring(10); // Remove function selector
+                                const battleIdHex = '0x' + data.substring(0, 64);
 
-                            txHash = await this.resolveBattle({
-                                battleId: battleIdHex,
-                                winner: winnerUser.walletAddress
-                            });
+                                logger.info(`🔍 [BATTLE-BLOCKCHAIN-REWARD] Extracted battle ID from transaction: ${battleIdHex}`);
 
-                            logger.info(`🔗 [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} resolved with extracted ID: ${txHash}`);
+                                txHash = await this.resolveBattle({
+                                    battleId: battleIdHex,
+                                    winner: winnerUser.walletAddress
+                                });
+
+                                logger.info(`🔗 [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} resolved with extracted ID: ${txHash}`);
+                            }
+                        } catch (extractError) {
+                            logger.error(`❌ [BATTLE-BLOCKCHAIN-REWARD] Failed to extract battle ID from transaction:`, extractError);
+                            throw new Error(`Failed to resolve battle: ${extractError.message}`);
                         }
-                    } catch (extractError) {
-                        logger.error(`❌ [BATTLE-BLOCKCHAIN-REWARD] Failed to extract battle ID from transaction:`, extractError);
-                        throw new Error(`Failed to resolve battle: ${extractError.message}`);
+                    }
+
+                    if (txHash) {
+                        // Update battle with resolve transaction hash
+                        await storage.updateBattle(battle.id, {
+                            blockchainResolveHash: txHash
+                        });
+
+                        // CRITICAL: Update user.totalRewards for leaderboard ranking
+                        if (battle.winnerId && battle.rewardAmount > 0) {
+                            const currentUser = await storage.getUser(battle.winnerId);
+                            if (currentUser) {
+                                const newTotalRewards = currentUser.totalRewards + battle.rewardAmount;
+                                await storage.updateUserStats(
+                                    battle.winnerId,
+                                    currentUser.totalPredictions,
+                                    currentUser.correctPredictions,
+                                    newTotalRewards
+                                );
+                                console.log(`📊 [LEADERBOARD] Updated user ${battle.winnerId} totalRewards: ${currentUser.totalRewards} -> ${newTotalRewards} (+${battle.rewardAmount})`);
+                            }
+                        }
+
+                        logger.info(`✅ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} resolved successfully: ${txHash}`);
+                        console.log(`✅ [BATTLE-BLOCKCHAIN-REWARD] Successfully processed reward for battle ${battle.id}`);
+                        return; // Success - exit retry loop
+                    } else {
+                        throw new Error('Failed to get transaction hash from blockchain service');
+                    }
+                } catch (blockchainError) {
+                    logger.error(`❌ [BATTLE-BLOCKCHAIN-REWARD] Failed to resolve battle on blockchain for battle ${battle.id}:`, blockchainError);
+                    console.log(`❌ [BATTLE-BLOCKCHAIN-REWARD] Failed to process blockchain reward for battle ${battle.id}: ${blockchainError.message}`);
+
+                    retryCount++;
+                    if (retryCount < maxRetries) {
+                        const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+                        console.log(`🔄 [BATTLE-BLOCKCHAIN-REWARD] Retrying in ${delay}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } else {
+                        console.error(`❌ [BATTLE-BLOCKCHAIN-REWARD] Max retries reached for battle ${battle.id}`);
+                        throw blockchainError;
                     }
                 }
-
-                if (txHash) {
-                    // Update battle with resolve transaction hash
-                    await storage.updateBattle(battle.id, {
-                        blockchainResolveHash: txHash
-                    });
-                    logger.info(`✅ [BATTLE-BLOCKCHAIN-REWARD] Battle ${battle.id} resolved successfully: ${txHash}`);
-                    console.log(`✅ [BATTLE-BLOCKCHAIN-REWARD] Successfully processed reward for battle ${battle.id}`);
-                } else {
-                    logger.error(`❌ [BATTLE-BLOCKCHAIN-REWARD] Failed to get transaction hash for battle ${battle.id}`);
-                }
-            } catch (blockchainError) {
-                logger.error(`❌ [BATTLE-BLOCKCHAIN-REWARD] Failed to resolve battle on blockchain for battle ${battle.id}:`, blockchainError);
-                console.log(`❌ [BATTLE-BLOCKCHAIN-REWARD] Failed to process blockchain reward for battle ${battle.id}: ${blockchainError.message}`);
+            } catch (error) {
+                console.error(`❌ [BATTLE-BLOCKCHAIN-REWARD] Critical error processing completed battle ${battle.id}:`, error);
+                throw error;
             }
-        } catch (error) {
-            console.error(`❌ [BATTLE-BLOCKCHAIN-REWARD] Error processing completed battle ${battle.id}:`, error);
         }
     }
 }

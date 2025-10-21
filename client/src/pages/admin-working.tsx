@@ -159,6 +159,8 @@ interface User {
   emailVerified?: boolean;
   walletAddress: string | null;
   balance: number;
+  realWalletBalance?: number;
+  realWalletBalanceError?: string;
   isAdmin: boolean;
   authMethod: string;
   totalPredictions: number;
@@ -262,9 +264,10 @@ export default function AdminPanel() {
 
   // Transaction filter and pagination states
   const [transactionFilter, setTransactionFilter] = useState({
-    type: 'all', // all, deposit, withdrawal
-    status: 'all', // all, pending, completed, failed
-    token: 'all', // all, ETH, USDC, USDT, etc
+    type: 'all', // all, deposit, withdrawal, prediction_stake, battle_create, etc
+    status: 'all', // all, pending, completed, failed, confirmed, processing
+    token: 'all', // all, ETH, USDC, USDT, NTIQ, etc
+    network: 'all', // all, ethereum, polygon, polygon-amoy, internal
     dateRange: 'all' // all, today, week, month
   });
   const [transactionPage, setTransactionPage] = useState(1);
@@ -380,14 +383,14 @@ export default function AdminPanel() {
       hasPreviousPage: boolean;
     };
   }>({
-    queryKey: ["/api/admin/users", currentPage, usersPerPage], // Use main endpoint
+    queryKey: ["/api/admin/users/with-real-balance", currentPage, usersPerPage], // Use real balance endpoint
     queryFn: async () => {
       if (import.meta.env.DEV) {
-        console.log(`🎯 [USERS-MAIN] Calling main admin users endpoint: /api/admin/users?page=${currentPage}&limit=${usersPerPage}`);
+        console.log(`🔗 [USERS-REAL-BALANCE] Calling real balance endpoint: /api/admin/users/with-real-balance?page=${currentPage}&limit=${usersPerPage}`);
       }
 
       try {
-        const response = await fetch(`/api/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
+        const response = await fetch(`/api/admin/users/with-real-balance?page=${currentPage}&limit=${usersPerPage}`, {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -398,10 +401,10 @@ export default function AdminPanel() {
 
         if (!response.ok) {
           if (import.meta.env.DEV) {
-            console.log(`❌ [USERS-MAIN] Main endpoint failed, trying debug fallback`);
+            console.log(`❌ [USERS-REAL-BALANCE] Real balance endpoint failed (${response.status}), trying fallback`);
           }
-          // Fallback to debug endpoint
-          const debugResponse = await fetch(`/api/debug/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
+          // Fallback to regular endpoint
+          const fallbackResponse = await fetch(`/api/admin/users?page=${currentPage}&limit=${usersPerPage}`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -410,20 +413,28 @@ export default function AdminPanel() {
             }
           });
 
-          if (!debugResponse.ok) {
-            throw new Error(`Both endpoints failed: ${response.status} and ${debugResponse.status}`);
+          if (!fallbackResponse.ok) {
+            throw new Error(`Both endpoints failed: ${response.status} and ${fallbackResponse.status}`);
           }
 
-          const debugResult = await debugResponse.json();
+          const fallbackResult = await fallbackResponse.json();
           if (import.meta.env.DEV) {
-            console.log(`✅ [USERS-FALLBACK] Debug fallback success:`, debugResult);
+            console.log(`✅ [USERS-FALLBACK] Regular endpoint fallback success:`, fallbackResult);
           }
-          return debugResult;
+          return fallbackResult;
+        }
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error(`❌ [USERS-REAL-BALANCE] Response is not JSON, content-type: ${contentType}`);
+          throw new Error(`Response is not JSON. Content-Type: ${contentType}`);
         }
 
         const result = await response.json();
+
         if (import.meta.env.DEV) {
-          console.log(`✅ [USERS-MAIN] Main endpoint success:`, result);
+          console.log(`✅ [USERS-REAL-BALANCE] Real balance endpoint success:`, result);
         }
         return result;
       } catch (error) {
@@ -1548,6 +1559,13 @@ export default function AdminPanel() {
     // Filter by token
     if (transactionFilter.token !== 'all' && transaction.token?.toLowerCase() !== transactionFilter.token.toLowerCase()) return false;
 
+    // Filter by network
+    if (transactionFilter.network !== 'all') {
+      const transactionNetwork = transaction.chainName || transaction.networkName || 'internal';
+      if (transactionFilter.network === 'internal' && transactionNetwork !== 'internal') return false;
+      if (transactionFilter.network !== 'internal' && transactionNetwork !== transactionFilter.network) return false;
+    }
+
     // Filter by date range
     if (transactionFilter.dateRange !== 'all') {
       const transactionDate = new Date(transaction.createdAt);
@@ -2442,7 +2460,22 @@ export default function AdminPanel() {
                           <TableCell className="font-mono text-xs">
                             {user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : 'N/A'}
                           </TableCell>
-                          <TableCell>{formatNumber(user.balance)} NTIQ</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-sm font-mono">
+                                DB: {formatNumber(user.balance)} NTIQ
+                              </div>
+                              {user.realWalletBalance !== undefined && (
+                                <div className={`text-xs font-mono ${user.realWalletBalanceError ? 'text-red-400' : 'text-green-400'
+                                  }`}>
+                                  {user.realWalletBalanceError ?
+                                    `Error: ${user.realWalletBalanceError}` :
+                                    `Wallet: ${formatNumber(user.realWalletBalance)} NTIQ`
+                                  }
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge variant={user.isAdmin ? "default" : "secondary"}>
                               {user.isAdmin ? "Admin" : "User"}
@@ -3708,7 +3741,7 @@ export default function AdminPanel() {
                       <p className="text-3xl font-bold text-white">
                         ${currentFinancialSummary.totalDeposits.toLocaleString()}
                       </p>
-                      <p className="text-green-200 text-xs mt-1">Completed deposits</p>
+                      <p className="text-green-200 text-xs mt-1">Blockchain confirmed</p>
                     </div>
                     <CheckCircle className="h-12 w-12 text-green-400" />
                   </div>
@@ -3723,7 +3756,7 @@ export default function AdminPanel() {
                       <p className="text-3xl font-bold text-white">
                         ${currentFinancialSummary.totalWithdrawals.toLocaleString()}
                       </p>
-                      <p className="text-red-200 text-xs mt-1">Completed withdrawals</p>
+                      <p className="text-red-200 text-xs mt-1">Blockchain processed</p>
                     </div>
                     <XCircle className="h-12 w-12 text-red-400" />
                   </div>
@@ -3734,11 +3767,11 @@ export default function AdminPanel() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-blue-100 text-sm font-medium">NTIQ Rewards</p>
+                      <p className="text-blue-100 text-sm font-medium">Onchain Rewards</p>
                       <p className="text-3xl font-bold text-white">
                         {currentFinancialSummary.ntiqRewards.toLocaleString()}
                       </p>
-                      <p className="text-blue-200 text-xs mt-1">Total rewards distributed</p>
+                      <p className="text-blue-200 text-xs mt-1">Blockchain distributed</p>
                     </div>
                     <Coins className="h-12 w-12 text-blue-400" />
                   </div>
@@ -3753,7 +3786,7 @@ export default function AdminPanel() {
                       <p className="text-3xl font-bold text-white">
                         {currentFinancialSummary.pendingTransactions}
                       </p>
-                      <p className="text-yellow-200 text-xs mt-1">Awaiting approval</p>
+                      <p className="text-yellow-200 text-xs mt-1">Awaiting blockchain confirmation</p>
                     </div>
                     <Clock className="h-12 w-12 text-yellow-400" />
                   </div>
@@ -3794,6 +3827,18 @@ export default function AdminPanel() {
                         <SelectItem value="all">All Types</SelectItem>
                         <SelectItem value="deposit">Deposit</SelectItem>
                         <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                        <SelectItem value="prediction_stake">Prediction Stake</SelectItem>
+                        <SelectItem value="prediction_reward">Prediction Reward</SelectItem>
+                        <SelectItem value="battle_create">Battle Creation</SelectItem>
+                        <SelectItem value="battle_reward">Battle Reward</SelectItem>
+                        <SelectItem value="battle_refund">Battle Refund</SelectItem>
+                        <SelectItem value="parlay_stake">Parlay Stake</SelectItem>
+                        <SelectItem value="parlay_reward">Parlay Reward</SelectItem>
+                        <SelectItem value="survival_entry">Survival Entry</SelectItem>
+                        <SelectItem value="survival_reward">Survival Reward</SelectItem>
+                        <SelectItem value="achievement_reward">Achievement Reward</SelectItem>
+                        <SelectItem value="referral_reward">Referral Reward</SelectItem>
+                        <SelectItem value="crypto_purchase">Crypto Purchase</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -3815,6 +3860,8 @@ export default function AdminPanel() {
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
                         <SelectItem value="failed">Failed</SelectItem>
+                        <SelectItem value="confirmed">Blockchain Confirmed</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -3836,6 +3883,28 @@ export default function AdminPanel() {
                         {availableTokens.map((token: string) => (
                           <SelectItem key={token} value={token}>{token.toUpperCase()}</SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-white text-sm">Network</Label>
+                    <Select
+                      value={transactionFilter.network}
+                      onValueChange={(value) => {
+                        setTransactionFilter(prev => ({ ...prev, network: value }));
+                        setTransactionPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-slate-700 border-slate-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        <SelectItem value="all">All Networks</SelectItem>
+                        <SelectItem value="ethereum">Ethereum</SelectItem>
+                        <SelectItem value="polygon">Polygon</SelectItem>
+                        <SelectItem value="polygon-amoy">Polygon Amoy</SelectItem>
+                        <SelectItem value="internal">Internal</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -3874,10 +3943,11 @@ export default function AdminPanel() {
                         <TableHead>ID</TableHead>
                         <TableHead>User</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead>NTIQ Amount</TableHead>
-                        <TableHead>Crypto Amount</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Token</TableHead>
+                        <TableHead>Network</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Hash</TableHead>
+                        <TableHead>Blockchain Hash</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -3926,48 +3996,47 @@ export default function AdminPanel() {
                             <Badge variant={
                               transaction.type === 'deposit' ? 'default' :
                                 transaction.type === 'withdrawal' ? 'destructive' :
-                                  'secondary'
+                                  transaction.type?.includes('reward') ? 'default' :
+                                    transaction.type?.includes('stake') ? 'secondary' :
+                                      transaction.type?.includes('battle') ? 'outline' :
+                                        transaction.type?.includes('prediction') ? 'outline' :
+                                          transaction.type?.includes('parlay') ? 'outline' :
+                                            transaction.type?.includes('survival') ? 'outline' :
+                                              'secondary'
                             }>
-                              {transaction.type}
+                              {transaction.type?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {transaction.type === 'deposit'
-                              ? `${transaction.amount.toLocaleString()} NTIQ`
-                              : `${transaction.amount.toLocaleString()} NTIQ`
-                            }
+                            <div className="font-mono text-sm">
+                              {transaction.amount ? `${transaction.amount.toLocaleString()}` : '0'}
+                            </div>
                           </TableCell>
                           <TableCell>
-                            {transaction.type === 'withdrawal' && transaction.netAmount
-                              ? `${parseFloat(transaction.netAmount).toFixed(6)} ${transaction.token}` // Untuk withdrawal: tampilkan setelah dipotong fee
-                              : transaction.type === 'deposit' && transaction.usdAmount && transaction.token === 'ETH'
-                                ? (() => {
-                                  // Untuk deposit ETH: hitung crypto amount yang benar berdasarkan USD / harga snapshot + fee 2%
-                                  // Menggunakan data historis dari database yang disimpan di ethPriceSnapshot
-                                  const ethPriceSnapshot = transaction.ethPriceSnapshot || 3477; // Harga ETH saat deposit dari database
-                                  const baseCryptoAmount = parseFloat(transaction.usdAmount) / ethPriceSnapshot;
-                                  const cryptoAmountWithFee = baseCryptoAmount * 1.02; // Tambahkan fee 2% sesuai user dashboard
-                                  return `${cryptoAmountWithFee.toFixed(6)} ${transaction.token}`;
-                                })()
-                                : transaction.type === 'deposit' && transaction.usdAmount
-                                  ? (() => {
-                                    // Untuk deposit USDC/USDT: tambahkan fee 2% sesuai user dashboard
-                                    const baseAmount = parseFloat(transaction.usdAmount);
-                                    const amountWithFee = baseAmount * 1.02; // Tambahkan fee 2%
-                                    return `${amountWithFee.toFixed(6)} ${transaction.token}`;
-                                  })() // Untuk token USDC/USDT dengan fee 2%
-                                  : transaction.usdAmount
-                                    ? `${parseFloat(transaction.usdAmount).toFixed(6)} ${transaction.token}`
-                                    : `${(transaction.amount / 1000).toFixed(6)} ${transaction.token}`
-                            }
+                            <Badge variant="outline" className="text-xs">
+                              {transaction.token || 'NTIQ'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              transaction.chainName === 'Ethereum' ? 'default' :
+                                transaction.chainName === 'Polygon' ? 'secondary' :
+                                  transaction.chainName === 'Polygon Amoy' ? 'outline' :
+                                    'secondary'
+                            } className="text-xs">
+                              {transaction.chainName || transaction.networkName || 'Internal'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge variant={
                               transaction.status === 'completed' ? 'default' :
-                                transaction.status === 'pending' ? 'secondary' :
-                                  'destructive'
+                                transaction.status === 'confirmed' ? 'default' :
+                                  transaction.status === 'processing' ? 'secondary' :
+                                    transaction.status === 'pending' ? 'secondary' :
+                                      transaction.status === 'failed' ? 'destructive' :
+                                        'secondary'
                             }>
-                              {transaction.status}
+                              {transaction.status?.toUpperCase() || 'UNKNOWN'}
                             </Badge>
                           </TableCell>
                           <TableCell className="font-mono text-xs">

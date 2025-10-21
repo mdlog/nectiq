@@ -1,270 +1,51 @@
-/**
- * Balance Service - Universal Real-time Balance Management System
- * Ensures ALL balance changes (stakes, rewards, wins, losses) are immediately reflected in database
- */
+import { ethers } from 'ethers';
 
-interface BalanceTransactionData {
-  userId: number;
-  type: 'prediction_stake' | 'prediction_reward' | 'battle_create' | 'battle_reward' | 'battle_refund' | 'survival_entry' | 'survival_tournament_reward' | 'survival_tournament_shared_reward' | 'achievement_reward' | 'daily_challenge_reward' | 'crypto_purchase' | 'withdrawal' | 'withdrawal_pending' | 'withdrawal_completed' | 'withdrawal_refund' | 'deposit_credit' | 'referral_reward' | 'referral_bonus' | 'parlay_stake' | 'parlay_reward';
-  amount: number;
-  description?: string;
-  relatedId?: number | string;
-  metadata?: any;
-  token?: string;
-  hash?: string;
-}
+// NTIQ Token contract configuration
+const NTIQ_TOKEN_ADDRESS = process.env.NTIQ_TOKEN_SIMPLE_ADDRESS || '0xE276c3634b7747c46c1aBAB4Eff6b2f046C71A6f';
+const POLYGON_AMOY_RPC = process.env.POLYGON_AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology';
+
+// NTIQ Token ABI (minimal for balance checking)
+const NTIQ_TOKEN_ABI = [
+  "function balanceOf(address account) external view returns (uint256)",
+  "function decimals() external view returns (uint8)"
+];
 
 export class BalanceService {
-  
+  private provider: ethers.JsonRpcProvider;
+  private contract: ethers.Contract;
+
+  constructor() {
+    // Initialize provider
+    this.provider = new ethers.JsonRpcProvider(POLYGON_AMOY_RPC);
+
+    // Initialize contract
+    this.contract = new ethers.Contract(NTIQ_TOKEN_ADDRESS, NTIQ_TOKEN_ABI, this.provider);
+  }
+
   /**
-   * Universal transaction processor - ensures balance and transaction log are ALWAYS synchronized
+   * Get NTIQ token balance for a wallet address
+   * @param address - Wallet address to check balance for
+   * @returns Promise<number> - Balance in NTIQ tokens (formatted)
    */
-  static async processTransaction(transactionData: BalanceTransactionData, storage: any): Promise<{ success: boolean; newBalance: number; transactionId?: number }> {
+  async getBalance(address: string): Promise<number> {
     try {
-      const { userId, type, amount, description, relatedId, metadata } = transactionData;
-      
-      // Get current user balance
-      const user = await storage.getUser(userId);
-      if (!user) {
-        throw new Error(`User not found: ${userId}`);
-      }
-      
-      let newBalance: number;
-      let transactionAmount: number;
-      let finalDescription: string;
-      
-      // Calculate new balance based on transaction type
-      switch (type) {
-        case 'prediction_stake':
-        case 'battle_create':
-        case 'survival_entry':
-        case 'parlay_stake':
-          // Deduct amounts
-          newBalance = user.balance - Math.abs(amount);
-          transactionAmount = -Math.abs(amount);
-          finalDescription = description || `${type.replace('_', ' ')} deduction`;
-          break;
-          
-        case 'prediction_reward':
-        case 'battle_reward':
-        case 'battle_refund':
-        case 'survival_reward':
-        case 'survival_tournament_reward':
-        case 'survival_tournament_shared_reward':
-        case 'achievement_reward':
-        case 'daily_challenge_reward':
-        case 'crypto_purchase':
-        case 'withdrawal_refund':
-        case 'deposit_credit':
-        case 'referral_reward':
-        case 'referral_bonus':
-        case 'parlay_reward':
-          // Add amounts
-          newBalance = user.balance + Math.abs(amount);
-          transactionAmount = Math.abs(amount);
-          finalDescription = description || `${type.replace('_', ' ')} reward`;
-          break;
-          
-        case 'withdrawal':
-          // Deduct withdrawal amount
-          newBalance = user.balance - Math.abs(amount);
-          transactionAmount = -Math.abs(amount);
-          finalDescription = description || 'Withdrawal processed';
-          break;
-          
-        case 'withdrawal_pending':
-          // Deduct withdrawal amount for pending withdrawal
-          newBalance = user.balance - Math.abs(amount);
-          transactionAmount = -Math.abs(amount);
-          finalDescription = description || 'Withdrawal pending approval';
-          break;
-          
-        case 'withdrawal_completed':
-          // NO BALANCE DEDUCTION - balance already deducted during withdrawal_pending
-          // This is just a status update log for completed withdrawal
-          newBalance = user.balance; // Keep current balance unchanged
-          transactionAmount = 0; // No amount change for completed status
-          finalDescription = description || 'Withdrawal completed successfully (balance already deducted)';
-          break;
-          
-        default:
-          throw new Error(`Unknown transaction type: ${type}`);
-      }
-      
-      // Validate balance won't go negative (except for specific cases)
-      if (newBalance < 0 && !['withdrawal', 'withdrawal_pending'].includes(type)) {
-        throw new Error(`Insufficient balance. Required: ${Math.abs(amount)} NTIQ, Available: ${user.balance} NTIQ`);
-      }
-      
-      // ATOMIC OPERATION: Update balance and log transaction simultaneously
-      const transactionLog = await storage.logTransaction({
-        userId,
-        type,
-        amount: transactionAmount,
-        token: 'NTIQ',
-        description: finalDescription,
-        relatedId,
-        metadata: metadata ? JSON.stringify(metadata) : null
-      });
-      
-      // Update user balance in database
-      await storage.updateUserBalance(userId, newBalance);
-      
-      // Verify balance was actually updated
-      const updatedUser = await storage.getUser(userId);
-      if (!updatedUser || updatedUser.balance !== newBalance) {
-        throw new Error(`Balance update verification failed. Expected: ${newBalance}, Actual: ${updatedUser?.balance}`);
-      }
-      
-      console.log(`✅ BALANCE SERVICE: ${type} processed successfully`);
-      console.log(`   - User: ${userId} (${user.username})`);
-      console.log(`   - Amount: ${transactionAmount} NTIQ`);
-      console.log(`   - Balance: ${user.balance} → ${newBalance} NTIQ`);
-      console.log(`   - Transaction ID: ${transactionLog?.id}`);
-      console.log(`   - Related ID: ${relatedId}`);
-      
-      return {
-        success: true,
-        newBalance,
-        transactionId: transactionLog?.id
-      };
-      
+      console.log(`🔍 [BALANCE-SERVICE] Getting balance for address: ${address}`);
+
+      // Get balance from contract
+      const balanceWei = await this.contract.balanceOf(address);
+      console.log(`🔍 [BALANCE-SERVICE] Raw balance (wei): ${balanceWei.toString()}`);
+
+      // Convert from wei to tokens
+      const balance = parseFloat(ethers.formatEther(balanceWei));
+      console.log(`🔍 [BALANCE-SERVICE] Formatted balance: ${balance}`);
+
+      return balance;
     } catch (error) {
-      console.error(`❌ BALANCE SERVICE ERROR: Failed to process ${transactionData.type}:`, error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Process prediction reward with accuracy multipliers
-   */
-  static async processPredictionReward(
-    userId: number, 
-    predictionId: number, 
-    baseStake: number, 
-    accuracyMultiplier: number, 
-    storage: any
-  ): Promise<{ success: boolean; newBalance: number; rewardAmount: number }> {
-    const rewardAmount = Math.round(baseStake * accuracyMultiplier);
-    
-    const result = await this.processTransaction({
-      userId,
-      type: 'prediction_reward',
-      amount: rewardAmount,
-      description: `Prediction reward (${accuracyMultiplier}x multiplier)`,
-      relatedId: predictionId,
-      metadata: {
-        baseStake,
-        accuracyMultiplier,
-        calculatedReward: rewardAmount
-      }
-    }, storage);
-    
-    return {
-      ...result,
-      rewardAmount
-    };
-  }
-  
-  /**
-   * Process battle reward with winner determination (Simplified System)
-   */
-  static async processBattleReward(
-    winnerId: number, 
-    battleId: number, 
-    stakeAmount: number, 
-    storage: any
-  ): Promise<{ success: boolean; newBalance: number; rewardAmount: number }> {
-    // Calculate total pool from both stakes
-    const totalPool = stakeAmount * 2;
-    
-    // Apply platform fee (3.5%)
-    const platformFee = Math.round(totalPool * 0.035);
-    const rewardAmount = totalPool - platformFee;
-    
-    const result = await this.processTransaction({
-      userId: winnerId,
-      type: 'battle_reward',
-      amount: rewardAmount,
-      description: `Battle victory reward (Total pool: ${totalPool}, Platform fee: ${platformFee})`,
-      relatedId: battleId,
-      metadata: {
-        originalStake: stakeAmount,
-        totalPool,
-        platformFee,
-        calculatedReward: rewardAmount
-      }
-    }, storage);
-    
-    return {
-      ...result,
-      rewardAmount
-    };
-  }
-  
-  /**
-   * Process survival tournament winner reward
-   */
-  static async processSurvivalReward(
-    winnerId: number, 
-    tournamentId: number, 
-    prizePool: number, 
-    storage: any
-  ): Promise<{ success: boolean; newBalance: number; rewardAmount: number }> {
-    const result = await this.processTransaction({
-      userId: winnerId,
-      type: 'survival_reward',
-      amount: prizePool,
-      description: `Survival tournament winner reward`,
-      relatedId: tournamentId,
-      metadata: {
-        tournamentId,
-        prizePool
-      }
-    }, storage);
-    
-    return {
-      ...result,
-      rewardAmount: prizePool
-    };
-  }
-  
-  /**
-   * Verify balance consistency across all user transactions
-   */
-  static async verifyUserBalanceConsistency(userId: number, storage: any): Promise<{
-    currentBalance: number;
-    calculatedBalance: number;
-    isConsistent: boolean;
-    discrepancy: number;
-  }> {
-    try {
-      const user = await storage.getUser(userId);
-      if (!user) {
-        throw new Error(`User not found: ${userId}`);
-      }
-      
-      // Get all user transactions
-      const transactions = await storage.getUserTransactions(userId);
-      
-      // Calculate balance from transaction history (starting from 1000 NTIQ)
-      const calculatedBalance = transactions.reduce((balance, transaction) => {
-        return balance + transaction.amount;
-      }, 1000); // Starting balance
-      
-      const discrepancy = user.balance - calculatedBalance;
-      const isConsistent = Math.abs(discrepancy) < 0.01; // Allow for tiny rounding differences
-      
-      return {
-        currentBalance: user.balance,
-        calculatedBalance,
-        isConsistent,
-        discrepancy
-      };
-      
-    } catch (error) {
-      console.error(`Error verifying balance consistency for user ${userId}:`, error);
+      console.error(`❌ [BALANCE-SERVICE] Error getting balance for ${address}:`, error);
       throw error;
     }
   }
 }
+
+// Export singleton instance
+export const balanceService = new BalanceService();

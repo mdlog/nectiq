@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -319,18 +319,50 @@ export default function BattlesPage() {
   // Battle History Section Component
   const BattleHistorySection = () => {
     const { data: battleHistory, isLoading: isLoadingHistory, error, refetch } = useQuery({
-      queryKey: ['battles', 'history', 'debug'],
+      queryKey: ['/api/battles/history'],
+      queryFn: async () => {
+        try {
+          const response = await apiRequest('/api/battles/history');
+          return response;
+        } catch (err) {
+          console.error('❌ [BATTLE-HISTORY] API Error:', err);
+          throw err;
+        }
+      },
       retry: 3,
       retryDelay: 1000,
-      staleTime: 0, // Force fresh data
-      refetchInterval: 5000, // Refetch every 5 seconds for testing
+      staleTime: 30000, // 30 seconds
     });
 
     // Force refetch on mount
-    React.useEffect(() => {
+    useEffect(() => {
       console.log('🔄 [BATTLE-HISTORY] Component mounted, forcing refetch');
       refetch();
     }, [refetch]);
+
+    // Add error boundary fallback
+    if (error && !battleHistory) {
+      return (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="h-12 w-12 text-red-400 mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-full h-full">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              Error Loading History
+            </h3>
+            <p className="text-red-600 dark:text-red-400 mb-4">
+              Failed to load battle history. Please try again.
+            </p>
+            <Button onClick={() => refetch()} variant="outline">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
 
 
     const getCryptoImageUrl = (cryptoId: string) => {
@@ -392,13 +424,27 @@ export default function BattlesPage() {
       return (
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-red-600 dark:text-red-400">Error loading battle history: {error.message}</p>
+            <div className="h-12 w-12 text-red-400 mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-full h-full">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              Error Loading History
+            </h3>
+            <p className="text-red-600 dark:text-red-400 mb-4">
+              Failed to load battle history. Please try again.
+            </p>
+            <Button onClick={() => refetch()} variant="outline">
+              Try Again
+            </Button>
           </CardContent>
         </Card>
       );
     }
 
-    const allHistoryBattles = battleHistory as any[] || [];
+    // Safe data handling with fallback
+    const allHistoryBattles = Array.isArray(battleHistory) ? battleHistory : [];
 
     console.log('🔍 [BATTLE-HISTORY] Debug info:', {
       battleHistory,
@@ -406,11 +452,12 @@ export default function BattlesPage() {
       isLoadingHistory,
       error,
       battleHistoryType: typeof battleHistory,
-      battleHistoryLength: battleHistory?.length
+      battleHistoryLength: battleHistory?.length,
+      isArray: Array.isArray(battleHistory)
     });
 
     // Temporary debug: force show data if we have it
-    if (battleHistory && battleHistory.length > 0) {
+    if (battleHistory && Array.isArray(battleHistory) && battleHistory.length > 0) {
       console.log('✅ [BATTLE-HISTORY] Data found, forcing display');
     }
 
@@ -1216,7 +1263,9 @@ export default function BattlesPage() {
           </TabsContent>
 
           <TabsContent value="history" className="mt-8">
-            <BattleHistorySection />
+            <div className="min-h-[400px]">
+              <BattleHistorySection />
+            </div>
           </TabsContent>
         </Tabs>
       </main>

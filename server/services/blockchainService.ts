@@ -56,73 +56,101 @@ export class BlockchainService {
         });
         this.provider.pollingInterval = 30000; // 30 seconds
 
-        // Initialize signer (admin wallet)
+        // Initialize signer (admin wallet) with better error handling
         if (!DEPLOYER_PRIVATE_KEY) {
-            throw new Error('DEPLOYER_PRIVATE_KEY not set in environment');
+            logger.error('❌ [BLOCKCHAIN-SERVICE] DEPLOYER_PRIVATE_KEY not set in environment');
+            throw new Error('DEPLOYER_PRIVATE_KEY not set in environment. Please check your .env file.');
         }
-        this.signer = new ethers.Wallet(DEPLOYER_PRIVATE_KEY, this.provider);
+
+        try {
+            this.signer = new ethers.Wallet(DEPLOYER_PRIVATE_KEY, this.provider);
+            logger.info('✅ [BLOCKCHAIN-SERVICE] Wallet initialized successfully');
+        } catch (error) {
+            logger.error('❌ [BLOCKCHAIN-SERVICE] Failed to initialize wallet:', error);
+            throw new Error(`Failed to initialize wallet: ${error.message}`);
+        }
 
         // Initialize enhanced contracts
-        this.enhancedPredictionStakingContract = new ethers.Contract(
-            ENHANCED_PREDICTION_STAKING_ADDRESS,
-            PredictionStakingABI.abi,
-            this.signer
-        );
+        if (ENHANCED_PREDICTION_STAKING_ADDRESS) {
+            this.enhancedPredictionStakingContract = new ethers.Contract(
+                ENHANCED_PREDICTION_STAKING_ADDRESS,
+                PredictionStakingABI.abi,
+                this.signer
+            );
+        }
 
-        this.battleEscrowContract = new ethers.Contract(
-            BATTLE_ESCROW_ADDRESS,
-            BattleEscrowABI.abi,
-            this.signer
-        );
+        if (BATTLE_ESCROW_ADDRESS) {
+            this.battleEscrowContract = new ethers.Contract(
+                BATTLE_ESCROW_ADDRESS,
+                BattleEscrowABI.abi,
+                this.signer
+            );
+        }
 
-        this.enhancedParlayStakingContract = new ethers.Contract(
-            ENHANCED_PARLAY_STAKING_ADDRESS,
-            ParlayStakingABI.abi,
-            this.signer
-        );
+        if (ENHANCED_PARLAY_STAKING_ADDRESS) {
+            this.enhancedParlayStakingContract = new ethers.Contract(
+                ENHANCED_PARLAY_STAKING_ADDRESS,
+                ParlayStakingABI.abi,
+                this.signer
+            );
+        }
 
-        this.tournamentPoolContract = new ethers.Contract(
-            TOURNAMENT_POOL_ADDRESS,
-            TournamentPoolABI.abi,
-            this.signer
-        );
+        if (TOURNAMENT_POOL_ADDRESS) {
+            this.tournamentPoolContract = new ethers.Contract(
+                TOURNAMENT_POOL_ADDRESS,
+                TournamentPoolABI.abi,
+                this.signer
+            );
+        }
 
-        this.multiTokenVaultContract = new ethers.Contract(
-            MULTI_TOKEN_VAULT_ADDRESS,
-            MultiTokenVaultABI.abi,
-            this.signer
-        );
+        if (MULTI_TOKEN_VAULT_ADDRESS) {
+            this.multiTokenVaultContract = new ethers.Contract(
+                MULTI_TOKEN_VAULT_ADDRESS,
+                MultiTokenVaultABI.abi,
+                this.signer
+            );
+        }
 
-        this.predictionInsuranceContract = new ethers.Contract(
-            PREDICTION_INSURANCE_ADDRESS,
-            PredictionInsuranceABI.abi,
-            this.signer
-        );
+        if (PREDICTION_INSURANCE_ADDRESS) {
+            this.predictionInsuranceContract = new ethers.Contract(
+                PREDICTION_INSURANCE_ADDRESS,
+                PredictionInsuranceABI.abi,
+                this.signer
+            );
+        }
 
-        this.referralSystemContract = new ethers.Contract(
-            REFERRAL_SYSTEM_ADDRESS,
-            ReferralSystemABI.abi,
-            this.signer
-        );
+        if (REFERRAL_SYSTEM_ADDRESS) {
+            this.referralSystemContract = new ethers.Contract(
+                REFERRAL_SYSTEM_ADDRESS,
+                ReferralSystemABI.abi,
+                this.signer
+            );
+        }
 
-        this.nftAchievementSystemContract = new ethers.Contract(
-            NFT_ACHIEVEMENT_SYSTEM_ADDRESS,
-            AchievementSystemABI.abi,
-            this.signer
-        );
+        if (NFT_ACHIEVEMENT_SYSTEM_ADDRESS) {
+            this.nftAchievementSystemContract = new ethers.Contract(
+                NFT_ACHIEVEMENT_SYSTEM_ADDRESS,
+                AchievementSystemABI.abi,
+                this.signer
+            );
+        }
 
         // Initialize legacy contracts (backward compatibility)
-        this.predictionStakingContract = new ethers.Contract(
-            PREDICTION_STAKING_ADDRESS,
-            PredictionStakingABI.abi,
-            this.signer
-        );
+        if (PREDICTION_STAKING_ADDRESS) {
+            this.predictionStakingContract = new ethers.Contract(
+                PREDICTION_STAKING_ADDRESS,
+                PredictionStakingABI.abi,
+                this.signer
+            );
+        }
 
-        this.parlayStakingContract = new ethers.Contract(
-            PARLAY_STAKING_ADDRESS,
-            ParlayStakingABI.abi,
-            this.signer
-        );
+        if (PARLAY_STAKING_ADDRESS) {
+            this.parlayStakingContract = new ethers.Contract(
+                PARLAY_STAKING_ADDRESS,
+                ParlayStakingABI.abi,
+                this.signer
+            );
+        }
 
         logger.info('🔗 [BLOCKCHAIN] Blockchain service initialized');
         logger.info(`   Provider: ${POLYGON_AMOY_RPC}`);
@@ -146,6 +174,37 @@ export class BlockchainService {
             BlockchainService.instance = new BlockchainService();
         }
         return BlockchainService.instance;
+    }
+
+    // Method to validate blockchain service configuration
+    public static validateConfiguration(): boolean {
+        try {
+            if (!DEPLOYER_PRIVATE_KEY) {
+                logger.error('❌ [BLOCKCHAIN-SERVICE] DEPLOYER_PRIVATE_KEY not configured');
+                return false;
+            }
+
+            if (!ENHANCED_PREDICTION_STAKING_ADDRESS) {
+                logger.error('❌ [BLOCKCHAIN-SERVICE] ENHANCED_PREDICTION_STAKING_ADDRESS not configured');
+                return false;
+            }
+
+            if (!BATTLE_ESCROW_ADDRESS) {
+                logger.error('❌ [BLOCKCHAIN-SERVICE] BATTLE_ESCROW_ADDRESS not configured');
+                return false;
+            }
+
+            if (!ENHANCED_PARLAY_STAKING_ADDRESS) {
+                logger.error('❌ [BLOCKCHAIN-SERVICE] ENHANCED_PARLAY_STAKING_ADDRESS not configured');
+                return false;
+            }
+
+            logger.info('✅ [BLOCKCHAIN-SERVICE] Configuration validated successfully');
+            return true;
+        } catch (error) {
+            logger.error('❌ [BLOCKCHAIN-SERVICE] Configuration validation failed:', error);
+            return false;
+        }
     }
 
     /**

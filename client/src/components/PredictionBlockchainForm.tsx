@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,6 +55,7 @@ export function PredictionBlockchainForm({
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [hasSubmittedToDB, setHasSubmittedToDB] = useState(false);
     const [blockchainPredictionId, setBlockchainPredictionId] = useState<string | null>(null);
 
     // Wagmi hooks for blockchain interaction
@@ -80,6 +81,22 @@ export function PredictionBlockchainForm({
             stakeAmount: 100,
         },
     });
+
+    // Reset state when form opens
+    useEffect(() => {
+        setHasSubmittedToDB(false);
+        setIsSubmitting(false);
+        setBlockchainPredictionId(null);
+    }, []);
+
+    // Reset state when preSelectedCrypto changes (form reopened)
+    useEffect(() => {
+        if (preSelectedCrypto) {
+            setHasSubmittedToDB(false);
+            setIsSubmitting(false);
+            setBlockchainPredictionId(null);
+        }
+    }, [preSelectedCrypto]);
 
     const { address, chain } = useAccount();
 
@@ -137,11 +154,19 @@ export function PredictionBlockchainForm({
 
     // Handle prediction success - Create prediction in database after blockchain confirmation
     React.useEffect(() => {
-        if (isPredictionSuccess && predictionTxHash) {
+        if (isPredictionSuccess && predictionTxHash && !hasSubmittedToDB) {
             console.log('✅ [PREDICTION-BLOCKCHAIN] Transaction confirmed:', predictionTxHash);
 
             // Create prediction in database with confirmed blockchain transaction
             const createPrediction = async () => {
+                // Prevent duplicate submissions
+                if (hasSubmittedToDB) {
+                    console.log('⚠️ [PREDICTION-BLOCKCHAIN] Already submitted, skipping...');
+                    return;
+                }
+
+                setHasSubmittedToDB(true);
+
                 try {
                     console.log('🔄 [PREDICTION-BLOCKCHAIN] Creating prediction with confirmed blockchain transaction...');
 
@@ -211,7 +236,7 @@ export function PredictionBlockchainForm({
 
             createPrediction();
         }
-    }, [isPredictionSuccess, predictionTxHash, form, toast, queryClient, onSuccess, onClose]);
+    }, [isPredictionSuccess, predictionTxHash, hasSubmittedToDB, form, toast, queryClient, onSuccess, onClose, blockchainPredictionId]);
 
     // Handle prediction errors
     React.useEffect(() => {

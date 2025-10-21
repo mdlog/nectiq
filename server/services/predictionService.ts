@@ -20,6 +20,15 @@ export class PredictionService {
 
   async checkAndProcessCompletedPredictions(): Promise<void> {
     try {
+      console.log('🔍 [PREDICTION-PROCESSOR] Starting completed predictions check...');
+
+      // Validate blockchain service configuration first
+      const { BlockchainService } = await import('./blockchainService');
+      if (!BlockchainService.validateConfiguration()) {
+        console.error('❌ [PREDICTION-PROCESSOR] Blockchain service configuration invalid - skipping reward processing');
+        return;
+      }
+
       // Get all completed predictions that don't have blockchain reward hash
       const completedPredictions = await storage.getCompletedPredictionsWithoutBlockchainReward();
 
@@ -30,11 +39,23 @@ export class PredictionService {
 
       console.log(`🔍 [PREDICTION-PROCESSOR] Found ${completedPredictions.length} completed predictions without blockchain rewards`);
 
+      let successCount = 0;
+      let failureCount = 0;
+
       for (const prediction of completedPredictions) {
-        await this.processCompletedPredictionReward(prediction);
+        try {
+          await this.processCompletedPredictionReward(prediction);
+          successCount++;
+        } catch (error) {
+          failureCount++;
+          console.error(`❌ [PREDICTION-PROCESSOR] Failed to process prediction ${prediction.id}:`, error);
+        }
       }
+
+      console.log(`✅ [PREDICTION-PROCESSOR] Processing complete: ${successCount} successful, ${failureCount} failed`);
     } catch (error) {
-      console.error('❌ [PREDICTION-PROCESSOR] Error processing completed predictions:', error);
+      console.error('❌ [PREDICTION-PROCESSOR] Critical error in completed predictions processing:', error);
+      // Don't throw error to prevent scheduled task from crashing
     }
   }
 
@@ -87,10 +108,9 @@ export class PredictionService {
         const newTotalPredictions = user.totalPredictions + 1;
         // Mark as correct if accuracy is 90% or higher (minimum threshold for reward)
         const newCorrectPredictions = user.correctPredictions + (accuracy >= 90 ? 1 : 0);
-        const newTotalRewards = user.totalRewards + rewardAmount;
 
-        // Update user stats
-        await storage.updateUserStats(prediction.userId, newTotalPredictions, newCorrectPredictions, newTotalRewards);
+        // Update user stats (predictions and accuracy only)
+        await storage.updateUserStats(prediction.userId, newTotalPredictions, newCorrectPredictions, user.totalRewards);
 
         // CRITICAL: Use BalanceService for guaranteed real-time balance and transaction updates
         if (rewardAmount > 0) {
@@ -288,105 +308,136 @@ export class PredictionService {
   }
 
   async processCompletedPredictionReward(prediction: any): Promise<void> {
-    try {
-      console.log(`🔍 [BLOCKCHAIN-REWARD] Processing completed prediction ${prediction.id} for blockchain reward...`);
+    const maxRetries = 3;
+    let retryCount = 0;
 
-      // Check if prediction has blockchain stake hash
-      if (!prediction.blockchainStakeHash) {
-        console.log(`⚠️ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} has no blockchain stake hash - skipping`);
-        return;
-      }
-
-      // Check if prediction already has blockchain reward hash
-      if (prediction.blockchainRewardHash) {
-        console.log(`✅ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} already has blockchain reward hash - skipping`);
-        return;
-      }
-
-      // Check if prediction has reward amount
-      if (!prediction.rewardAmount || prediction.rewardAmount <= 0) {
-        console.log(`⚠️ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} has no reward amount - skipping`);
-        return;
-      }
-
-      // Get user information
-      const user = await storage.getUser(prediction.userId);
-      if (!user || !user.walletAddress) {
-        console.log(`⚠️ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} has no user or wallet address - skipping`);
-        return;
-      }
-
-      console.log(`💰 [BLOCKCHAIN-REWARD] Processing reward for prediction ${prediction.id}:`);
-      console.log(`   User: ${user.username}`);
-      console.log(`   Wallet: ${user.walletAddress}`);
-      console.log(`   Reward Amount: ${prediction.rewardAmount} NTIQ`);
-      console.log(`   Accuracy: ${prediction.accuracy}%`);
-      console.log(`   Blockchain Stake Hash: ${prediction.blockchainStakeHash}`);
-
-      // Try to release reward on blockchain
+    while (retryCount < maxRetries) {
       try {
-        let txHash = null;
+        console.log(`🔍 [BLOCKCHAIN-REWARD] Processing completed prediction ${prediction.id} for blockchain reward... (Attempt ${retryCount + 1}/${maxRetries})`);
 
-        // Use stored blockchainPredictionId if available, otherwise generate from database ID
-        let blockchainPredictionId = prediction.blockchainPredictionId || blockchainService.generatePredictionId(prediction.id);
-
-        if (prediction.blockchainPredictionId) {
-          console.log(`🔍 [BLOCKCHAIN-REWARD] Using stored blockchain prediction ID: ${prediction.blockchainPredictionId}`);
-        } else {
-          console.log(`🔍 [BLOCKCHAIN-REWARD] No stored blockchain prediction ID, generating from database ID: ${blockchainPredictionId}`);
+        // Check if prediction has blockchain stake hash
+        if (!prediction.blockchainStakeHash) {
+          console.log(`⚠️ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} has no blockchain stake hash - skipping`);
+          return;
         }
 
+        // Check if prediction already has blockchain reward hash
+        if (prediction.blockchainRewardHash) {
+          console.log(`✅ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} already has blockchain reward hash - skipping`);
+          return;
+        }
+
+        // Check if prediction has reward amount
+        if (!prediction.rewardAmount || prediction.rewardAmount <= 0) {
+          console.log(`⚠️ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} has no reward amount - skipping`);
+          return;
+        }
+
+        // Get user information
+        const user = await storage.getUser(prediction.userId);
+        if (!user || !user.walletAddress) {
+          console.log(`⚠️ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} has no user or wallet address - skipping`);
+          return;
+        }
+
+        console.log(`💰 [BLOCKCHAIN-REWARD] Processing reward for prediction ${prediction.id}:`);
+        console.log(`   User: ${user.username}`);
+        console.log(`   Wallet: ${user.walletAddress}`);
+        console.log(`   Reward Amount: ${prediction.rewardAmount} NTIQ`);
+        console.log(`   Accuracy: ${prediction.accuracy}%`);
+        console.log(`   Blockchain Stake Hash: ${prediction.blockchainStakeHash}`);
+
+        // Try to release reward on blockchain
         try {
-          txHash = await predictionStakingService.releaseReward({
-            predictionId: blockchainPredictionId,
-            actualPrice: prediction.actualPrice.toString()
-          });
-          logger.info(`🔗 [BLOCKCHAIN-REWARD] Prediction ${prediction.id} reward released with blockchain ID: ${txHash}`);
-        } catch (blockchainIdError) {
-          logger.warn(`⚠️ [BLOCKCHAIN-REWARD] Failed with stored blockchain ID, trying alternative methods:`, blockchainIdError.message);
+          let txHash = null;
 
-          // Try to extract prediction ID from blockchain transaction
+          // Use stored blockchainPredictionId if available, otherwise generate from database ID
+          let blockchainPredictionId = prediction.blockchainPredictionId || blockchainService.generatePredictionId(prediction.id);
+
+          if (prediction.blockchainPredictionId) {
+            console.log(`🔍 [BLOCKCHAIN-REWARD] Using stored blockchain prediction ID: ${prediction.blockchainPredictionId}`);
+          } else {
+            console.log(`🔍 [BLOCKCHAIN-REWARD] No stored blockchain prediction ID, generating from database ID: ${blockchainPredictionId}`);
+          }
+
           try {
-            const { blockchainService } = await import('./blockchainService');
-            const provider = blockchainService.getProvider();
-            const tx = await provider.getTransaction(prediction.blockchainStakeHash);
+            txHash = await predictionStakingService.releaseReward({
+              predictionId: blockchainPredictionId,
+              actualPrice: prediction.actualPrice.toString()
+            });
+            logger.info(`🔗 [BLOCKCHAIN-REWARD] Prediction ${prediction.id} reward released with blockchain ID: ${txHash}`);
+          } catch (blockchainIdError) {
+            logger.warn(`⚠️ [BLOCKCHAIN-REWARD] Failed with stored blockchain ID, trying alternative methods:`, blockchainIdError.message);
 
-            if (tx && tx.data) {
-              // Extract prediction ID from transaction data (first parameter after function selector)
-              const data = tx.data.substring(10); // Remove function selector
-              const predictionIdHex = '0x' + data.substring(0, 64);
+            // Try to extract prediction ID from blockchain transaction
+            try {
+              const { blockchainService } = await import('./blockchainService');
+              const provider = blockchainService.getProvider();
+              const tx = await provider.getTransaction(prediction.blockchainStakeHash);
 
-              logger.info(`🔍 [BLOCKCHAIN-REWARD] Extracted prediction ID from transaction: ${predictionIdHex}`);
+              if (tx && tx.data) {
+                // Extract prediction ID from transaction data (first parameter after function selector)
+                const data = tx.data.substring(10); // Remove function selector
+                const predictionIdHex = '0x' + data.substring(0, 64);
 
-              txHash = await predictionStakingService.releaseReward({
-                predictionId: predictionIdHex,
-                actualPrice: prediction.actualPrice.toString()
-              });
+                logger.info(`🔍 [BLOCKCHAIN-REWARD] Extracted prediction ID from transaction: ${predictionIdHex}`);
 
-              logger.info(`🔗 [BLOCKCHAIN-REWARD] Prediction ${prediction.id} reward released with extracted ID: ${txHash}`);
+                txHash = await predictionStakingService.releaseReward({
+                  predictionId: predictionIdHex,
+                  actualPrice: prediction.actualPrice.toString()
+                });
+
+                logger.info(`🔗 [BLOCKCHAIN-REWARD] Prediction ${prediction.id} reward released with extracted ID: ${txHash}`);
+              }
+            } catch (extractError) {
+              logger.error(`❌ [BLOCKCHAIN-REWARD] Failed to extract prediction ID from transaction:`, extractError);
+              throw new Error(`Failed to release reward: ${extractError.message}`);
             }
-          } catch (extractError) {
-            logger.error(`❌ [BLOCKCHAIN-REWARD] Failed to extract prediction ID from transaction:`, extractError);
-            throw new Error(`Failed to release reward: ${extractError.message}`);
+          }
+
+          if (txHash) {
+            // Update prediction with reward transaction hash
+            await storage.updatePrediction(prediction.id, {
+              blockchainRewardHash: txHash
+            });
+
+            // CRITICAL: Update user.totalRewards for leaderboard ranking
+            const currentUser = await storage.getUser(prediction.userId);
+            if (currentUser && prediction.rewardAmount > 0) {
+              const newTotalRewards = currentUser.totalRewards + prediction.rewardAmount;
+              await storage.updateUserStats(
+                prediction.userId,
+                currentUser.totalPredictions,
+                currentUser.correctPredictions,
+                newTotalRewards
+              );
+              console.log(`📊 [LEADERBOARD] Updated user ${prediction.userId} totalRewards: ${currentUser.totalRewards} -> ${newTotalRewards} (+${prediction.rewardAmount})`);
+            }
+
+            logger.info(`✅ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} reward released successfully: ${txHash}`);
+            console.log(`✅ [BLOCKCHAIN-REWARD] Successfully processed reward for prediction ${prediction.id}`);
+            return; // Success - exit retry loop
+          } else {
+            throw new Error('Failed to get transaction hash from blockchain service');
+          }
+        } catch (blockchainError) {
+          logger.error(`❌ [BLOCKCHAIN-REWARD] Failed to release reward on blockchain for prediction ${prediction.id}:`, blockchainError);
+          console.log(`❌ [BLOCKCHAIN-REWARD] Failed to process blockchain reward for prediction ${prediction.id}: ${blockchainError.message}`);
+
+          retryCount++;
+          if (retryCount < maxRetries) {
+            const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+            console.log(`🔄 [BLOCKCHAIN-REWARD] Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          } else {
+            console.error(`❌ [BLOCKCHAIN-REWARD] Max retries reached for prediction ${prediction.id}`);
+            throw blockchainError;
           }
         }
-
-        if (txHash) {
-          // Update prediction with reward transaction hash
-          await storage.updatePrediction(prediction.id, {
-            blockchainRewardHash: txHash
-          });
-          logger.info(`✅ [BLOCKCHAIN-REWARD] Prediction ${prediction.id} reward released successfully: ${txHash}`);
-          console.log(`✅ [BLOCKCHAIN-REWARD] Successfully processed reward for prediction ${prediction.id}`);
-        } else {
-          logger.error(`❌ [BLOCKCHAIN-REWARD] Failed to get transaction hash for prediction ${prediction.id}`);
-        }
-      } catch (blockchainError) {
-        logger.error(`❌ [BLOCKCHAIN-REWARD] Failed to release reward on blockchain for prediction ${prediction.id}:`, blockchainError);
-        console.log(`❌ [BLOCKCHAIN-REWARD] Failed to process blockchain reward for prediction ${prediction.id}: ${blockchainError.message}`);
+      } catch (error) {
+        console.error(`❌ [BLOCKCHAIN-REWARD] Critical error processing completed prediction ${prediction.id}:`, error);
+        throw error;
       }
-    } catch (error) {
-      console.error(`❌ [BLOCKCHAIN-REWARD] Error processing completed prediction ${prediction.id}:`, error);
     }
   }
 }

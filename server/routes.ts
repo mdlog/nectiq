@@ -8,6 +8,7 @@ import fs from "fs";
 import { storage, DatabaseStorage } from "./storage";
 import { db } from "./db";
 import { cryptoService } from "./services/cryptoService";
+import { balanceService } from "./services/balanceService";
 import { PythPriceService } from "./services/PythPriceService.js";
 import { predictionService } from "./services/predictionService";
 
@@ -4205,27 +4206,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       targetTime = new Date(targetTime.toISOString());
 
       // Create battle in database with blockchain transaction hash
-      const battle = await storage.createBattle({
-        challengerId: userId,
-        challengedId: null, // Public battle
-        battleType: 'head_to_head', // Required field
-        cryptocurrency,
-        timeframe,
-        challengerPrediction: numChallengerPrediction,
-        stakeAmount: numStakeAmount,
-        targetTime,
-        isPublic
-      });
+      let battle;
+      try {
+        battle = await storage.createBattle({
+          challengerId: userId,
+          challengedId: null, // Public battle
+          battleType: 'head_to_head', // Required field
+          cryptocurrency,
+          timeframe,
+          challengerPrediction: numChallengerPrediction,
+          stakeAmount: numStakeAmount,
+          targetTime,
+          isPublic
+        });
 
-      logger.info(`⚔️ [BATTLE-BLOCKCHAIN] Battle created with ID: ${battle.id}`);
+        logger.info(`⚔️ [BATTLE-BLOCKCHAIN] Battle created with ID: ${battle.id}`);
+      } catch (createError) {
+        logger.error(`❌ [BATTLE-BLOCKCHAIN] Failed to create battle in database:`, createError);
+        return res.status(500).json({
+          message: "Database creation failed",
+          error: "Blockchain transaction succeeded but battle creation failed. Please contact support.",
+          blockchainTxHash: blockchainTxHash
+        });
+      }
 
       // Update battle with blockchain transaction hash
-      await db.update(predictionBattles)
-        .set({
-          blockchainBattleHash: blockchainTxHash,
-          blockchainStatus: blockchainStatus
-        })
-        .where(eq(predictionBattles.id, battle.id));
+      try {
+        await db.update(predictionBattles)
+          .set({
+            blockchainBattleHash: blockchainTxHash,
+            blockchainStatus: blockchainStatus
+          })
+          .where(eq(predictionBattles.id, battle.id));
+
+        logger.info(`✅ [BATTLE-BLOCKCHAIN] Updated battle ${battle.id} with blockchain hash: ${blockchainTxHash}`);
+      } catch (updateError) {
+        logger.error(`❌ [BATTLE-BLOCKCHAIN] Failed to update battle with blockchain hash:`, updateError);
+        // Don't fail the request - battle is created, just hash update failed
+        // This can be fixed later by admin
+      }
 
       // Log transaction for tracking
       await storage.logTransaction({
@@ -4238,6 +4257,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       logger.info(`✅ [BATTLE-BLOCKCHAIN] Created successfully: ID ${battle.id}, Blockchain TX: ${blockchainTxHash}`);
+
+      // Verify battle was created and is visible in frontend
+      setTimeout(async () => {
+        try {
+          const verifyBattle = await storage.getBattle(battle.id);
+          if (verifyBattle) {
+            logger.info(`✅ [BATTLE-VERIFY] Battle ${battle.id} verified in database`);
+          } else {
+            logger.error(`❌ [BATTLE-VERIFY] Battle ${battle.id} NOT FOUND in database after creation!`);
+          }
+        } catch (verifyError) {
+          logger.error(`❌ [BATTLE-VERIFY] Error verifying battle ${battle.id}:`, verifyError);
+        }
+      }, 5000); // Check after 5 seconds
 
       // Check for achievement progress updates after battle creation
       try {
@@ -6090,6 +6123,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New endpoint to get users with real wallet balance - MUST be before /api/admin/users
+  app.get("/api/admin/users/with-real-balance", async (req, res) => {
+    console.log("🔗 [ADMIN-USERS-REAL-BALANCE] ===== GET USERS WITH REAL BALANCE =====");
+    console.log("🔗 [ADMIN-USERS-REAL-BALANCE] Request URL:", req.url);
+    console.log("🔗 [ADMIN-USERS-REAL-BALANCE] Request method:", req.method);
+
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+
+      console.log("📊 [ADMIN-USERS-REAL-BALANCE] Pagination params:", { page, limit, offset });
+
+      const users = await storage.getAllUsers();
+      const totalUsers = users.length;
+      console.log("📊 [ADMIN-USERS-REAL-BALANCE] Retrieved total users count:", totalUsers);
+
+      // Apply pagination
+      const paginatedUsers = users.slice(offset, offset + limit);
+      console.log("📊 [ADMIN-USERS-REAL-BALANCE] Paginated users count:", paginatedUsers.length);
+
+      // Get real wallet balances for each user using NTIQ token service
+      const usersWithRealBalance = await Promise.all(
+        paginatedUsers.map(async (user) => {
+          let realWalletBalance = 0;
+          let realWalletBalanceError = null;
+
+          if (user.walletAddress) {
+            try {
+              // Get real NTIQ token balance from blockchain
+              realWalletBalance = await balanceService.getBalance(user.walletAddress);
+
+              console.log(`💰 [REAL-BALANCE] User ${user.username} (${user.walletAddress}): NTIQ=${realWalletBalance}`);
+            } catch (error) {
+              console.error(`❌ [REAL-BALANCE] Error getting balance for user ${user.username}:`, error);
+              realWalletBalanceError = error.message;
+            }
+          }
+
+          return {
+            ...user,
+            realWalletBalance,
+            realWalletBalanceError,
+            battleRewards: 0,
+            survivalRewards: 0,
+            totalBattles: 0,
+            wonBattles: 0,
+            totalSurvivalTournaments: 0,
+            wonSurvivalTournaments: 0,
+            lastActive: user.createdAt,
+            createdAt: user.createdAt || new Date()
+          };
+        })
+      );
+
+      console.log("📊 [ADMIN-USERS-REAL-BALANCE] Enhanced users with real wallet balances");
+      if (usersWithRealBalance.length > 0) {
+        console.log("📊 [ADMIN-USERS-REAL-BALANCE] First user sample:", usersWithRealBalance[0]);
+      }
+
+      const totalPages = Math.ceil(totalUsers / limit);
+
+      const response = {
+        users: usersWithRealBalance,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalUsers,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
+      };
+
+      console.log("📊 [ADMIN-USERS-REAL-BALANCE] Sending response with real balances");
+      res.json(response);
+    } catch (error) {
+      console.error("❌ [ADMIN-USERS-REAL-BALANCE] Error getting users with real balance:", error);
+      res.status(500).json({ message: "Failed to get users with real balance", error: error.message });
+    }
+  });
+
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     console.log("🎯 [ADMIN-USERS] ===== GET USERS ENDPOINT REACHED SUCCESSFULLY =====");
     console.log("🎯 [ADMIN-USERS] Query params:", req.query);
@@ -6148,6 +6263,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("❌ [ADMIN-USERS] Error enhancing users with statistics:", error);
       res.status(500).json({ message: "Failed to get users" });
     }
+  });
+
+  // Test endpoint for debugging
+  app.get("/api/test-endpoint", async (req, res) => {
+    console.log("🧪 [TEST-ENDPOINT] Test endpoint called");
+    res.json({ message: "Test endpoint working", timestamp: new Date().toISOString() });
   });
 
   // Admin: Create new user
@@ -12020,32 +12141,53 @@ Manual balance correction required IMMEDIATELY!`;
   // Start background task to check completed predictions without blockchain rewards every 2 minutes
   setInterval(async () => {
     try {
+      const startTime = Date.now();
       console.log('🔍 [INTERVAL] Checking completed predictions without blockchain rewards...');
+      console.log(`⏰ [INTERVAL] Started at: ${new Date().toISOString()}`);
+
       await predictionService.checkAndProcessCompletedPredictions();
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ [INTERVAL] Completed prediction processing finished in ${duration}ms`);
     } catch (error) {
-      console.error("Error in completed prediction processing background task:", error);
+      console.error("❌ [INTERVAL] Error in completed prediction processing background task:", error);
+      console.error(`⏰ [INTERVAL] Error occurred at: ${new Date().toISOString()}`);
     }
   }, 120000); // Check every 2 minutes
 
   // Start background task to check completed battles without blockchain rewards every 3 minutes
   setInterval(async () => {
     try {
+      const startTime = Date.now();
       console.log('🔍 [INTERVAL] Checking completed battles without blockchain rewards...');
+      console.log(`⏰ [INTERVAL] Started at: ${new Date().toISOString()}`);
+
       const { battleEscrowService } = await import('./services/battleEscrowService.js');
       await battleEscrowService.checkAndProcessCompletedBattles();
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ [INTERVAL] Completed battle processing finished in ${duration}ms`);
     } catch (error) {
-      console.error("Error in completed battle processing background task:", error);
+      console.error("❌ [INTERVAL] Error in completed battle processing background task:", error);
+      console.error(`⏰ [INTERVAL] Error occurred at: ${new Date().toISOString()}`);
     }
   }, 180000); // Check every 3 minutes
 
   // Start background task to check completed parlays without blockchain rewards every 3 minutes
   setInterval(async () => {
     try {
+      const startTime = Date.now();
       console.log('🔍 [INTERVAL] Checking completed parlays without blockchain rewards...');
+      console.log(`⏰ [INTERVAL] Started at: ${new Date().toISOString()}`);
+
       const { parlayStakingService } = await import('./services/parlayStakingService.js');
       await parlayStakingService.checkAndProcessCompletedParlays();
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ [INTERVAL] Completed parlay processing finished in ${duration}ms`);
     } catch (error) {
-      console.error("Error in completed parlay processing background task:", error);
+      console.error("❌ [INTERVAL] Error in completed parlay processing background task:", error);
+      console.error(`⏰ [INTERVAL] Error occurred at: ${new Date().toISOString()}`);
     }
   }, 180000); // Check every 3 minutes
 
@@ -12108,6 +12250,81 @@ Manual balance correction required IMMEDIATELY!`;
     } catch (error) {
       console.error("❌ [TEST] Error in manual completed parlay processing:", error);
       res.status(500).json({ success: false, error: error.message, stack: error.stack });
+    }
+  });
+
+  // Health check endpoint for reward processing system
+  app.get('/api/health/reward-processing', async (req, res) => {
+    try {
+      const { BlockchainService } = await import('./services/blockchainService');
+
+      // Check blockchain service configuration
+      const blockchainConfigValid = BlockchainService.validateConfiguration();
+
+      // Check database connectivity
+      const dbCheck = await db.select().from(predictions).limit(1);
+
+      // Check pending rewards
+      const pendingPredictions = await storage.getCompletedPredictionsWithoutBlockchainReward();
+      const pendingBattles = await storage.getCompletedBattlesWithoutBlockchainReward();
+      const pendingParlays = await storage.getCompletedParlaysWithoutBlockchainReward();
+
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        blockchain: {
+          configured: blockchainConfigValid,
+          status: blockchainConfigValid ? 'ready' : 'misconfigured'
+        },
+        database: {
+          connected: true,
+          status: 'healthy'
+        },
+        pendingRewards: {
+          predictions: pendingPredictions.length,
+          battles: pendingBattles.length,
+          parlays: pendingParlays.length,
+          total: pendingPredictions.length + pendingBattles.length + pendingParlays.length
+        },
+        scheduledTasks: {
+          predictionProcessor: 'running',
+          battleProcessor: 'running',
+          parlayProcessor: 'running'
+        }
+      });
+    } catch (error) {
+      console.error('❌ [HEALTH] Error in health check:', error);
+      res.status(500).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: error.message
+      });
+    }
+  });
+
+  // System status endpoint
+  app.get('/api/system/status', async (req, res) => {
+    try {
+      const uptime = process.uptime();
+      const memoryUsage = process.memoryUsage();
+
+      res.json({
+        status: 'running',
+        uptime: Math.floor(uptime),
+        memory: {
+          used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+          total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+          external: Math.round(memoryUsage.external / 1024 / 1024)
+        },
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 

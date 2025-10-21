@@ -20,6 +20,23 @@ if (process.env.NODE_ENV === 'development') {
   console.log("🔍 Environment variables loaded:");
   console.log("   ADMIN_WALLET_ADDRESSES:", process.env.ADMIN_WALLET_ADDRESSES);
   console.log("   NODE_ENV:", process.env.NODE_ENV);
+  console.log("   DEPLOYER_PRIVATE_KEY:", process.env.DEPLOYER_PRIVATE_KEY ? "✅ Set" : "❌ Missing");
+  console.log("   POLYGON_AMOY_RPC_URL:", process.env.POLYGON_AMOY_RPC_URL ? "✅ Set" : "❌ Missing");
+}
+
+// Validate blockchain service configuration on startup
+try {
+  console.log('🔧 Validating blockchain service configuration...');
+  const { BlockchainService } = await import('./services/blockchainService.js');
+
+  if (BlockchainService.validateConfiguration()) {
+    console.log('✅ Blockchain service configuration is valid');
+  } else {
+    console.error('❌ Blockchain service configuration is invalid - reward processing may fail');
+    console.error('   Please check your .env file for missing blockchain configuration');
+  }
+} catch (error) {
+  console.error('❌ Failed to validate blockchain service configuration:', error);
 }
 
 // Override console.error to filter out RPC "filter not found" spam

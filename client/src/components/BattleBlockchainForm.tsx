@@ -53,6 +53,7 @@ export function BattleBlockchainForm({
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasSubmittedToDB, setHasSubmittedToDB] = useState(false);
+    const [isCreatingBattle, setIsCreatingBattle] = useState(false);
     const [currentTxType, setCurrentTxType] = useState<'approve' | 'battle' | null>(null);
 
     const form = useForm<BattleFormData>({
@@ -429,11 +430,20 @@ export function BattleBlockchainForm({
 
     // Handle successful battle transaction
     React.useEffect(() => {
-        if (isTxSuccess && txHash && currentTxType === 'battle') {
+        if (isTxSuccess && txHash && currentTxType === 'battle' && !isCreatingBattle && !hasSubmittedToDB) {
             console.log('✅ [BATTLE-BLOCKCHAIN] Transaction confirmed:', txHash);
 
             // Create battle in database with confirmed blockchain transaction
             const createBattle = async () => {
+                // Prevent duplicate submissions
+                if (isCreatingBattle || hasSubmittedToDB) {
+                    console.log('⚠️ [BATTLE-BLOCKCHAIN] Already creating battle or already submitted, skipping...');
+                    return;
+                }
+
+                setIsCreatingBattle(true);
+                setHasSubmittedToDB(true);
+
                 try {
                     console.log('🔄 [BATTLE-BLOCKCHAIN] Creating battle with confirmed blockchain transaction...');
 
@@ -485,12 +495,14 @@ export function BattleBlockchainForm({
                         description: "Blockchain transaction succeeded but battle creation failed. Please contact support.",
                         variant: "destructive",
                     });
+                } finally {
+                    setIsCreatingBattle(false);
                 }
             };
 
             createBattle();
         }
-    }, [isTxSuccess, txHash, currentTxType, form, toast, queryClient, onSuccess, refetchNtiqBalance, refetchAllowance]);
+    }, [isTxSuccess, txHash, currentTxType, isCreatingBattle, hasSubmittedToDB, form, toast, queryClient, onSuccess, refetchNtiqBalance, refetchAllowance]);
 
     // Handle errors
     React.useEffect(() => {

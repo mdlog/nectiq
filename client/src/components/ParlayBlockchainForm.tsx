@@ -215,14 +215,14 @@ export function ParlayBlockchainForm({
                     gas: 200000n, // Further increase gas limit
                     gasPrice: undefined, // Let MetaMask estimate
                 });
-                
+
                 console.log('✅ [PARLAY-BLOCKCHAIN] Approval transaction submitted successfully');
                 return; // Success, exit retry loop
-                
+
             } catch (error: any) {
                 lastError = error;
                 retryCount++;
-                
+
                 console.error(`❌ [PARLAY-BLOCKCHAIN] Attempt ${retryCount} failed:`, error);
                 console.error('❌ [PARLAY-BLOCKCHAIN] Error details:', {
                     message: error.message,
@@ -234,9 +234,9 @@ export function ParlayBlockchainForm({
 
                 // Check if it's a retryable error
                 const isRetryableError = error.message?.includes("Internal JSON-RPC error") ||
-                                       error.message?.includes("-32603") ||
-                                       error.message?.includes("network") ||
-                                       error.message?.includes("timeout");
+                    error.message?.includes("-32603") ||
+                    error.message?.includes("network") ||
+                    error.message?.includes("timeout");
 
                 if (retryCount < maxRetries && isRetryableError) {
                     console.log(`🔄 [PARLAY-BLOCKCHAIN] Retrying in ${retryCount * 2} seconds...`);
@@ -245,7 +245,7 @@ export function ParlayBlockchainForm({
                         description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
                         variant: "default",
                     });
-                    
+
                     // Wait before retry (exponential backoff)
                     await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
                 } else {
@@ -256,7 +256,7 @@ export function ParlayBlockchainForm({
 
         // All retries failed
         console.error('❌ [PARLAY-BLOCKCHAIN] All approval attempts failed:', lastError);
-        
+
         let errorMessage = "Approval transaction failed after multiple attempts.";
         if (lastError?.message?.includes("insufficient funds")) {
             errorMessage = "Insufficient POL tokens for gas fees. Please add more POL to your wallet.";
@@ -348,7 +348,7 @@ export function ParlayBlockchainForm({
             console.log('✅ [PARLAY-BLOCKCHAIN] Parlay contract call initiated successfully');
         } catch (error: any) {
             console.error('❌ [PARLAY-BLOCKCHAIN] Failed to create parlay:', error);
-            
+
             // Try to get more specific error message
             let errorMessage = "Blockchain transaction succeeded but parlay creation failed. Please contact support.";
             if (parlayResponse && !parlayResponse.ok) {
@@ -359,7 +359,7 @@ export function ParlayBlockchainForm({
                     console.error('Failed to parse error response:', parseError);
                 }
             }
-            
+
             toast({
                 title: "Parlay Creation Failed",
                 description: errorMessage,
@@ -377,9 +377,16 @@ export function ParlayBlockchainForm({
 
             // Create parlay in database with confirmed blockchain transaction
             const createParlay = async () => {
+                // Prevent duplicate submissions
+                if (hasSubmittedToDB) {
+                    console.log('⚠️ [PARLAY-BLOCKCHAIN] Already submitted, skipping...');
+                    return;
+                }
+
+                setHasSubmittedToDB(true); // Prevent duplicate submissions
+
                 try {
                     console.log('🔄 [PARLAY-BLOCKCHAIN] Creating parlay with confirmed blockchain transaction...');
-                    setHasSubmittedToDB(true); // Prevent duplicate submissions
 
                     const coins = parlayCards.map(card => ({
                         cryptocurrency: card.cryptocurrency,
@@ -421,7 +428,7 @@ export function ParlayBlockchainForm({
                         }
                     } else {
                         const errorData = await createResponse.json();
-                        
+
                         // Handle duplicate parlay case
                         if (createResponse.status === 409) {
                             console.log('⚠️ [PARLAY-BLOCKCHAIN] Parlay already exists:', errorData.parlayId);
@@ -429,7 +436,7 @@ export function ParlayBlockchainForm({
                                 title: "Parlay Already Created",
                                 description: "This parlay has already been created successfully.",
                             });
-                            
+
                             // Still call success callbacks since parlay exists
                             if (onSuccess) {
                                 onSuccess();
@@ -439,18 +446,18 @@ export function ParlayBlockchainForm({
                             }
                             return;
                         }
-                        
+
                         throw new Error(errorData.message || 'Failed to create parlay');
                     }
                 } catch (error: any) {
                     console.error('❌ [PARLAY-BLOCKCHAIN] Failed to create parlay:', error);
-                    
+
                     // Reset the flag so user can try again
                     setHasSubmittedToDB(false);
-                    
+
                     // Show more specific error message
                     const errorMessage = error.message || 'Unknown error occurred';
-                    
+
                     toast({
                         title: "Database Creation Failed",
                         description: `Blockchain transaction succeeded but parlay creation failed: ${errorMessage}`,
