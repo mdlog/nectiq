@@ -5081,10 +5081,28 @@ export default function AdminPanel() {
                   <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                     <SelectValue placeholder="Select cryptocurrency" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                    <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-                    <SelectItem value="SOL">Solana (SOL)</SelectItem>
+                  <SelectContent className="z-[99999] bg-slate-800 border-slate-700">
+                    {cryptoLoading ? (
+                      <SelectItem value="loading" disabled>Loading cryptocurrencies...</SelectItem>
+                    ) : cryptocurrencies && cryptocurrencies.length > 0 ? (
+                      cryptocurrencies.map((crypto) => (
+                        <SelectItem key={crypto.id} value={crypto.id} className="hover:bg-slate-700 focus:bg-slate-700">
+                          <div className="flex items-center gap-2">
+                            <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
+                            <span>
+                              {crypto.symbol?.toUpperCase()} 
+                              {cryptoPrices && cryptoPrices[crypto.id] && (
+                                <span className="text-slate-400 ml-1">
+                                  (${cryptoPrices[crypto.id].toFixed(2)})
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>No cryptocurrencies available</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
