@@ -16,9 +16,15 @@ export default defineConfig({
   },
   server: {
     hmr: false, // Disable hot module replacement
+    fs: {
+      strict: true,
+      deny: ["**/.*"],
+    },
   },
   build: {
     minify: false, // Disable minification for debugging
+    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    emptyOutDir: true,
   },
   optimizeDeps: {
     include: ['react', 'react-dom']
@@ -31,14 +37,4 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
-  },
-  server: {
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
-    },
-  },
 });

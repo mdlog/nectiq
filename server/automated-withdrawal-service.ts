@@ -659,7 +659,7 @@ IMMEDIATE MANUAL REVIEW REQUIRED!`;
   /**
    * Send notifications
    */
-  private async sendSuccessNotification(withdrawal: any, txHash: string): Promise<void> {
+  private async sendSuccessNotificationWebhook(withdrawal: any, txHash: string): Promise<void> {
     if (this.config.webhookUrl) {
       try {
         await axios.post(this.config.webhookUrl, {

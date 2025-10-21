@@ -3024,7 +3024,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(survivalPredictions.roundId, roundId));
   }
 
-  async updatePrediction(predictionId: number, updates: any): Promise<void> {
+  async updateSurvivalPredictionVoid(predictionId: number, updates: any): Promise<void> {
     await db
       .update(survivalPredictions)
       .set(updates)
@@ -4132,7 +4132,7 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getReferralData(userId: number): Promise<any> {
+  async getReferralDataDetailed(userId: number): Promise<any> {
     try {
       console.log('🎯 [GET-REFERRAL-DATA] Starting for userId:', userId);
 
@@ -4227,7 +4227,7 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async createReferral(data: any): Promise<any> {
+  async createReferralRecord(data: any): Promise<any> {
     try {
       // This method can be used for creating referral records if needed
       // For now, referrals are handled through user.referredBy field
@@ -4243,7 +4243,7 @@ export class MemStorage implements IStorage {
 
   // ==================== PLATFORM STATISTICS METHODS ====================
 
-  async getPlatformStats(): Promise<any> {
+  async getPlatformStatsDetailed(): Promise<any> {
     try {
       // Get comprehensive platform statistics
       const [totalUsers] = await db.select({ count: count() }).from(users);
@@ -4556,7 +4556,7 @@ export class MemStorage implements IStorage {
     return result;
   }
 
-  async getPlatformStats(): Promise<any> {
+  async getPlatformStatsSimple(): Promise<any> {
     const [userCount] = await db.select({ count: count() }).from(users);
     const [predictionCount] = await db.select({ count: count() }).from(predictions);
     const totalRewardsResult = await db.select({

@@ -403,7 +403,7 @@ try {
 // Initialize Vault Event Listener for Smart Contract deposits/withdrawals
 console.log('🔧 Initializing Vault Event Listener...');
 try {
-  const vaultListener = initVaultEventListener(storage);
+  const vaultListener = initVaultEventListener(storage as any);
   await vaultListener.start();
   console.log('✅ Vault event listener started successfully');
 } catch (error) {
@@ -445,7 +445,7 @@ try {
   const { setupAutomatedWithdrawals } = await import('./withdrawal-scheduler');
 
   // Setup automated withdrawal processing
-  setupAutomatedWithdrawals(storage);
+  setupAutomatedWithdrawals(storage as any);
   console.log('✅ Automated withdrawal system initialized successfully');
 } catch (error) {
   console.error('❌ Failed to initialize automated withdrawal service:', error);
