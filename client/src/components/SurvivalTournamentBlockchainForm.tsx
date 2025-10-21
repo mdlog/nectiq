@@ -64,22 +64,150 @@ export function SurvivalTournamentBlockchainForm({
     console.log('🔘 [SURVIVAL-FORM] Wallet state:', { address, chain });
   }, [address, chain]);
 
-  // Handle approve transaction success
-  useEffect(() => {
-    if (isApproveSuccess && !hasSubmittedToDB) {
-      console.log('✅ [SURVIVAL-APPROVE] Approval successful, proceeding to join tournament...');
-      setCurrentTxType('join');
-      handleJoinTournament();
+  // Function definitions
+  const handleJoinTournament = useCallback(async () => {
+    if (!address || !chain) {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet to join the tournament",
+        variant: "destructive",
+      });
+      return;
     }
-  }, [isApproveSuccess, hasSubmittedToDB, handleJoinTournament]);
 
-  // Handle join transaction success
-  useEffect(() => {
-    if (isJoinSuccess && !hasSubmittedToDB) {
-      console.log('✅ [SURVIVAL-JOIN] Join transaction successful, updating database...');
-      handleDatabaseUpdate();
+    const maxRetries = 3;
+    let retryCount = 0;
+    let lastError: any = null;
+
+    console.log('🏆 [SURVIVAL-JOIN] Starting join tournament process...');
+    console.log('   Tournament:', tournament.title);
+    console.log('   Entry Fee:', tournament.entryFee, 'NTIQ');
+    console.log('   User:', address);
+
+    while (retryCount < maxRetries) {
+      try {
+        setIsSubmitting(true);
+        setCurrentTxType('join');
+
+        const entryFeeWei = parseEther(tournament.entryFee.toString());
+        
+        console.log(`🏆 [SURVIVAL-JOIN] Attempt ${retryCount + 1}/${maxRetries}`);
+        console.log('   Entry Fee Wei:', entryFeeWei.toString());
+
+        // Join tournament
+        const joinTxHash = await writeJoinContract({
+          address: CONTRACTS.TOURNAMENT_POOL,
+          abi: CONTRACTS.ABIS?.TOURNAMENT_POOL || [],
+          functionName: 'joinTournament',
+          args: [tournament.id, entryFeeWei],
+          chainId: chain.id,
+          gas: 200000n,
+        });
+
+        if (joinTxHash) {
+          setJoinTxHash(joinTxHash);
+          console.log('🏆 [SURVIVAL-JOIN] Join transaction sent:', joinTxHash);
+          
+          toast({
+            title: "Join Transaction Sent",
+            description: "Please confirm the join in MetaMask",
+          });
+          return; // Success, exit retry loop
+        }
+
+      } catch (error: any) {
+        console.error(`❌ [SURVIVAL-JOIN] Attempt ${retryCount + 1} failed:`, error);
+        lastError = error;
+        retryCount++;
+
+        // Check if error is retryable
+        const isRetryableError = 
+          error.message?.includes("Internal JSON-RPC error") ||
+          error.message?.includes("network") ||
+          error.message?.includes("timeout");
+
+        if (retryCount < maxRetries && isRetryableError) {
+          console.log(`🔄 [SURVIVAL-JOIN] Retrying in ${retryCount * 2} seconds...`);
+          toast({
+            title: "Retrying Transaction",
+            description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
+            variant: "default",
+          });
+
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
+        } else {
+          break; // Exit retry loop
+        }
+      }
     }
-  }, [isJoinSuccess, hasSubmittedToDB, handleDatabaseUpdate]);
+
+    // All retries failed
+    console.error('❌ [SURVIVAL-JOIN] All join attempts failed:', lastError);
+
+    let errorMessage = "Join tournament transaction failed after multiple attempts.";
+    if (lastError?.message?.includes("insufficient funds")) {
+      errorMessage = "Insufficient funds for gas fees. Please add more ETH to your wallet.";
+    } else if (lastError?.message?.includes("user rejected")) {
+      errorMessage = "Transaction was rejected by user.";
+    } else if (lastError?.message?.includes("Internal JSON-RPC error")) {
+      errorMessage = "Network error occurred. Please try again in a few moments.";
+    }
+
+    toast({
+      title: "Join Failed",
+      description: errorMessage,
+      variant: "destructive",
+    });
+
+    setIsSubmitting(false);
+    setCurrentTxType(null);
+  }, [address, chain, tournament.id, writeJoinContract, toast]);
+
+  const handleDatabaseUpdate = useCallback(async () => {
+    if (hasSubmittedToDB) {
+      console.log('⚠️ [SURVIVAL-DB] Database already updated, skipping...');
+      return;
+    }
+
+    try {
+      setHasSubmittedToDB(true);
+      console.log('💾 [SURVIVAL-DB] Updating database with tournament join...');
+
+      // Update database with tournament join
+      const response = await apiRequest(`/api/survival-tournaments/${tournament.id}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Database update failed: ${response.status}`);
+      }
+
+      console.log('✅ [SURVIVAL-DB] Database updated successfully');
+      
+      toast({
+        title: "Successfully Joined!",
+        description: "You've joined the survival tournament. Good luck!",
+      });
+
+      onSuccess();
+      onClose();
+
+    } catch (error: any) {
+      console.error('❌ [SURVIVAL-DB] Database update failed:', error);
+      toast({
+        title: "Database Update Failed",
+        description: "Tournament joined on blockchain but database update failed. Please contact support.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+      setCurrentTxType(null);
+    }
+  }, [hasSubmittedToDB, tournament.id, toast, onSuccess, onClose]);
 
   const handleApprove = async () => {
     if (!address || !chain) {
@@ -132,21 +260,13 @@ export function SurvivalTournamentBlockchainForm({
         }
 
       } catch (error: any) {
+        console.error(`❌ [SURVIVAL-APPROVE] Attempt ${retryCount + 1} failed:`, error);
         lastError = error;
         retryCount++;
 
-        console.error(`❌ [SURVIVAL-APPROVE] Attempt ${retryCount} failed:`, error);
-        console.error('❌ [SURVIVAL-APPROVE] Error details:', {
-          message: error.message,
-          shortMessage: error.shortMessage,
-          code: error.code,
-          data: error.data,
-          attempt: retryCount
-        });
-
-        // Check if it's a retryable error
-        const isRetryableError = error.message?.includes("Internal JSON-RPC error") ||
-          error.message?.includes("-32603") ||
+        // Check if error is retryable
+        const isRetryableError = 
+          error.message?.includes("Internal JSON-RPC error") ||
           error.message?.includes("network") ||
           error.message?.includes("timeout");
 
@@ -188,158 +308,22 @@ export function SurvivalTournamentBlockchainForm({
     setCurrentTxType(null);
   };
 
-  const handleJoinTournament = useCallback(async () => {
-    if (!address || !chain) {
-      toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet to join the tournament",
-        variant: "destructive",
-      });
-      return;
+  // Handle approve transaction success
+  useEffect(() => {
+    if (isApproveSuccess && !hasSubmittedToDB) {
+      console.log('✅ [SURVIVAL-APPROVE] Approval successful, proceeding to join tournament...');
+      setCurrentTxType('join');
+      handleJoinTournament();
     }
+  }, [isApproveSuccess, hasSubmittedToDB, handleJoinTournament]);
 
-    const maxRetries = 3;
-    let retryCount = 0;
-    let lastError: any = null;
-
-    console.log('🏆 [SURVIVAL-JOIN] Starting tournament join process...');
-    console.log('   Tournament:', tournament.title);
-    console.log('   Entry Fee:', tournament.entryFee, 'NTIQ');
-    console.log('   User:', address);
-
-    while (retryCount < maxRetries) {
-      try {
-        const entryFeeWei = parseEther(tournament.entryFee.toString());
-        const tournamentId = `0x${tournament.id.toString(16).padStart(64, '0')}`; // Convert to bytes32
-
-        console.log(`🏆 [SURVIVAL-JOIN] Attempt ${retryCount + 1}/${maxRetries}`);
-        console.log('   Tournament ID:', tournamentId);
-        console.log('   Entry Fee Wei:', entryFeeWei.toString());
-
-        // Join tournament on blockchain
-        const joinTxHash = await writeJoinContract({
-          address: CONTRACTS.TOURNAMENT_POOL,
-          abi: CONTRACTS.ABIS?.TOURNAMENT_POOL || [],
-          functionName: 'joinTournament',
-          args: [tournamentId, entryFeeWei],
-          chainId: chain.id,
-          gas: 200000n,
-        });
-
-        if (joinTxHash) {
-          setJoinTxHash(joinTxHash);
-          console.log('🏆 [SURVIVAL-JOIN] Join transaction sent:', joinTxHash);
-          
-          toast({
-            title: "Join Transaction Sent",
-            description: "Please confirm the join transaction in MetaMask",
-          });
-          return; // Success, exit retry loop
-        }
-
-      } catch (error: any) {
-        lastError = error;
-        retryCount++;
-
-        console.error(`❌ [SURVIVAL-JOIN] Attempt ${retryCount} failed:`, error);
-        console.error('❌ [SURVIVAL-JOIN] Error details:', {
-          message: error.message,
-          shortMessage: error.shortMessage,
-          code: error.code,
-          data: error.data,
-          attempt: retryCount
-        });
-
-        // Check if it's a retryable error
-        const isRetryableError = error.message?.includes("Internal JSON-RPC error") ||
-          error.message?.includes("-32603") ||
-          error.message?.includes("network") ||
-          error.message?.includes("timeout");
-
-        if (retryCount < maxRetries && isRetryableError) {
-          console.log(`🔄 [SURVIVAL-JOIN] Retrying in ${retryCount * 2} seconds...`);
-          toast({
-            title: "Retrying Transaction",
-            description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
-            variant: "default",
-          });
-
-          // Wait before retry (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
-        } else {
-          break; // Exit retry loop
-        }
-      }
+  // Handle join transaction success
+  useEffect(() => {
+    if (isJoinSuccess && !hasSubmittedToDB) {
+      console.log('✅ [SURVIVAL-JOIN] Join transaction successful, updating database...');
+      handleDatabaseUpdate();
     }
-
-    // All retries failed
-    console.error('❌ [SURVIVAL-JOIN] All join attempts failed:', lastError);
-
-    let errorMessage = "Join tournament failed after multiple attempts.";
-    if (lastError?.message?.includes("insufficient funds")) {
-      errorMessage = "Insufficient funds for gas fees. Please add more ETH to your wallet.";
-    } else if (lastError?.message?.includes("user rejected")) {
-      errorMessage = "Transaction was rejected by user.";
-    } else if (lastError?.message?.includes("Internal JSON-RPC error")) {
-      errorMessage = "Network error occurred. Please try again in a few moments.";
-    }
-
-    toast({
-      title: "Join Failed",
-      description: errorMessage,
-      variant: "destructive",
-    });
-
-    setIsSubmitting(false);
-    setCurrentTxType(null);
-  }, [address, chain, tournament.id, writeJoinContract, toast]);
-
-  const handleDatabaseUpdate = useCallback(async () => {
-    if (hasSubmittedToDB) {
-      console.log('⚠️ [SURVIVAL-DB] Database already updated, skipping...');
-      return;
-    }
-
-    try {
-      setHasSubmittedToDB(true);
-      console.log('💾 [SURVIVAL-DB] Updating database with tournament join...');
-
-      // Update database with tournament join
-      const response = await apiRequest(`/api/survival-tournaments/${tournament.id}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          blockchainTxHash: joinTxHash,
-          entryFee: tournament.entryFee
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update database');
-      }
-
-      console.log('✅ [SURVIVAL-DB] Database updated successfully');
-      
-      toast({
-        title: "Successfully Joined!",
-        description: "You've joined the survival tournament. Good luck!",
-      });
-
-      onSuccess();
-      onClose();
-
-    } catch (error: any) {
-      console.error('❌ [SURVIVAL-DB] Database update failed:', error);
-      toast({
-        title: "Database Update Failed",
-        description: "Tournament joined on blockchain but database update failed. Please contact support.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-      setCurrentTxType(null);
-    }
-  }, [hasSubmittedToDB, tournament.id, toast, onSuccess, onClose]);
+  }, [isJoinSuccess, hasSubmittedToDB, handleDatabaseUpdate]);
 
   const handleSubmit = () => {
     if (!address || !chain) {
@@ -378,67 +362,51 @@ export function SurvivalTournamentBlockchainForm({
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="bg-slate-800 border-slate-700 max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center">
-            🏆 Join Survival Tournament
-          </DialogTitle>
-          <DialogDescription className="text-slate-400">
-            Join the tournament using your NTIQ tokens
+          <DialogTitle className="text-white">Join Survival Tournament</DialogTitle>
+          <DialogDescription className="text-slate-300">
+            Join "{tournament.title}" for {tournament.entryFee} NTIQ
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Tournament Info */}
-          <div className="bg-slate-700 p-4 rounded-lg">
+          <div className="bg-slate-700/50 rounded-lg p-4">
             <h3 className="text-white font-semibold mb-2">{tournament.title}</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Cryptocurrency:</span>
-                <span className="text-white capitalize">{tournament.cryptocurrency}</span>
-              </div>
-              <div className="flex justify-between">
+            <div className="grid grid-cols-2 gap-4 text-sm text-slate-300">
+              <div>
                 <span className="text-slate-400">Entry Fee:</span>
-                <span className="text-green-400 font-semibold">{tournament.entryFee} NTIQ</span>
+                <div className="font-medium">{tournament.entryFee} NTIQ</div>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <span className="text-slate-400">Participants:</span>
-                <span className="text-white">{tournament.currentParticipants}/{tournament.maxParticipants}</span>
+                <div className="font-medium">{tournament.currentParticipants}/{tournament.maxParticipants}</div>
               </div>
             </div>
           </div>
 
           {/* Transaction Steps */}
           <div className="space-y-3">
-            <div className={`flex items-center space-x-3 p-3 rounded-lg ${
-              currentTxType === 'approve' ? 'bg-blue-900/50 border border-blue-500' : 
-              isApproveSuccess ? 'bg-green-900/50 border border-green-500' : 
-              'bg-slate-700'
-            }`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                isApproveSuccess ? 'bg-green-500' : 
-                currentTxType === 'approve' ? 'bg-blue-500' : 
-                'bg-slate-500'
+            <div className="flex items-center space-x-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                currentTxType === 'approve' ? 'bg-blue-600 text-white' : 
+                isApproveSuccess ? 'bg-green-600 text-white' : 'bg-slate-600 text-slate-300'
               }`}>
-                {isApproveSuccess ? '✓' : '1'}
+                1
               </div>
-              <div>
+              <div className="flex-1">
                 <div className="text-white font-medium">Approve NTIQ Token</div>
                 <div className="text-slate-400 text-sm">Allow tournament contract to spend your NTIQ</div>
               </div>
             </div>
 
-            <div className={`flex items-center space-x-3 p-3 rounded-lg ${
-              currentTxType === 'join' ? 'bg-blue-900/50 border border-blue-500' : 
-              isJoinSuccess ? 'bg-green-900/50 border border-green-500' : 
-              'bg-slate-700'
-            }`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                isJoinSuccess ? 'bg-green-500' : 
-                currentTxType === 'join' ? 'bg-blue-500' : 
-                'bg-slate-500'
+            <div className="flex items-center space-x-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                currentTxType === 'join' ? 'bg-blue-600 text-white' : 
+                isJoinSuccess ? 'bg-green-600 text-white' : 'bg-slate-600 text-slate-300'
               }`}>
-                {isJoinSuccess ? '✓' : '2'}
+                2
               </div>
-              <div>
+              <div className="flex-1">
                 <div className="text-white font-medium">Join Tournament</div>
                 <div className="text-slate-400 text-sm">Stake your NTIQ and join the tournament</div>
               </div>
@@ -448,10 +416,9 @@ export function SurvivalTournamentBlockchainForm({
           {/* Action Buttons */}
           <div className="flex space-x-3">
             <Button
-              variant="outline"
               onClick={onClose}
+              variant="outline"
               className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
-              disabled={isSubmitting}
             >
               Cancel
             </Button>
