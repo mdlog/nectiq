@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { SurvivalTournamentBlockchainForm } from './SurvivalTournamentBlockchainForm';
 import { format } from 'date-fns';
 import { CountdownTimer } from '@/components/countdown-timer';
 import PredictionTimingIndicator from '@/components/prediction-timing-indicator';
@@ -73,6 +74,7 @@ interface TournamentCardProps {
 export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequired }: TournamentCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
   
   // Wallet requirement system
   const { checkWalletRequired } = useWalletRequired();
@@ -128,27 +130,20 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
     refetchInterval: 3000,
   });
 
-  // Join tournament mutation
-  const joinTournamentMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/survival-tournaments/${tournament.id}/join`, {
-      method: 'POST'
-    }),
-    onSuccess: () => {
-      toast({
-        title: "Successfully Joined!",
-        description: "You have joined the survival tournament. Good luck!",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/survival-tournaments/${tournament.id}/participants-with-predictions`] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to Join",
-        description: error.message || "Unable to join tournament",
-        variant: "destructive",
-      });
+  // Handle join tournament with Web3
+  const handleJoinTournament = () => {
+    if (!user) {
+      onWalletRequired?.(() => {}, 'tournament');
+      return;
     }
-  });
+    setShowJoinDialog(true);
+  };
+
+  const handleJoinSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['/api/survival-tournaments'] });
+    queryClient.invalidateQueries({ queryKey: [`/api/survival-tournaments/${tournament.id}/participants-with-predictions`] });
+    queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+  };
 
   // UP/DOWN prediction mutations
   const predictUpMutation = useMutation({
@@ -231,6 +226,7 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
 
   try {
     return (
+      <>
       <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700 text-white">
         <CardContent className="p-6">
         {/* Header */}
@@ -450,15 +446,10 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
             <p className="text-center text-gray-400">Please login to participate</p>
           ) : tournament.status === 'open' && !hasJoined ? (
             <Button
-              onClick={() => {
-                checkWalletRequired(() => {
-                  joinTournamentMutation.mutate();
-                }, 'survival');
-              }}
-              disabled={joinTournamentMutation.isPending}
+              onClick={handleJoinTournament}
               className="w-full bg-green-600 hover:bg-green-700"
             >
-              {joinTournamentMutation.isPending ? 'Joining...' : `Join Tournament (${tournament.entryFee} NTIQ)`}
+              Join Tournament ({tournament.entryFee} NTIQ)
             </Button>
           ) : tournament.status === 'open' && hasJoined ? (
             <div className="text-center">
@@ -608,6 +599,16 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
         </div>
       </CardContent>
     </Card>
+
+    {/* Web3 Join Dialog */}
+    {showJoinDialog && (
+      <SurvivalTournamentBlockchainForm
+        tournament={tournament}
+        onClose={() => setShowJoinDialog(false)}
+        onSuccess={handleJoinSuccess}
+      />
+    )}
+    </>
     );
   } catch (error) {
     console.error('TournamentCard error:', error);

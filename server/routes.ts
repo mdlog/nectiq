@@ -10806,7 +10806,7 @@ Manual balance correction required IMMEDIATELY!`;
     try {
       // Get all survival tournaments for admin panel
       const tournaments = await storage.getAllSurvivalTournaments();
-      
+
       // Add participant count for each tournament
       const tournamentsWithCounts = await Promise.all(
         tournaments.map(async (tournament) => {
@@ -10817,7 +10817,7 @@ Manual balance correction required IMMEDIATELY!`;
           };
         })
       );
-      
+
       res.json(tournamentsWithCounts);
     } catch (error) {
       console.error('Error fetching admin survival data:', error);
@@ -11004,42 +11004,61 @@ Manual balance correction required IMMEDIATELY!`;
   // Join survival tournament
   app.post('/api/survival-tournaments/:id/join', requireAuth, async (req: Request, res: Response) => {
     try {
+      console.log('🏆 [JOIN-TOURNAMENT] Starting tournament join process...');
+      
       const tournamentId = parseInt(req.params.id);
       const userId = req.session?.userId;
 
+      console.log(`🏆 [JOIN-TOURNAMENT] Tournament ID: ${tournamentId}, User ID: ${userId}`);
+
       if (!userId) {
+        console.log('❌ [JOIN-TOURNAMENT] No user ID in session');
         return res.status(401).json({ message: 'Authentication required' });
       }
 
+      console.log('🏆 [JOIN-TOURNAMENT] Fetching tournament data...');
       const tournament = await storage.getSurvivalTournament(tournamentId);
       if (!tournament) {
+        console.log(`❌ [JOIN-TOURNAMENT] Tournament ${tournamentId} not found`);
         return res.status(404).json({ message: 'Tournament not found' });
       }
 
+      console.log(`🏆 [JOIN-TOURNAMENT] Tournament status: ${tournament.status}, participants: ${tournament.currentParticipants}/${tournament.maxParticipants}`);
+
       if (tournament.status !== 'open') {
+        console.log(`❌ [JOIN-TOURNAMENT] Tournament is not open (status: ${tournament.status})`);
         return res.status(400).json({ message: 'Tournament is not open for registration' });
       }
 
       if (tournament.currentParticipants >= tournament.maxParticipants) {
+        console.log(`❌ [JOIN-TOURNAMENT] Tournament is full`);
         return res.status(400).json({ message: 'Tournament is full' });
       }
 
+      console.log('🏆 [JOIN-TOURNAMENT] Checking if user already joined...');
       // Check if user already joined
       const participants = await storage.getSurvivalParticipants(tournamentId);
       const alreadyJoined = participants.some(p => p.userId === userId);
       if (alreadyJoined) {
+        console.log(`❌ [JOIN-TOURNAMENT] User ${userId} already joined tournament ${tournamentId}`);
         return res.status(400).json({ message: 'Already joined this tournament' });
       }
 
+      console.log('🏆 [JOIN-TOURNAMENT] Validating user and wallet...');
       // Validate user has enough blockchain balance
       const user = await storage.getUser(userId);
       if (!user || !user.walletAddress) {
+        console.log(`❌ [JOIN-TOURNAMENT] User ${userId} has no wallet address`);
         return res.status(400).json({ message: 'Wallet address required for tournament entry' });
       }
 
+      console.log(`🏆 [JOIN-TOURNAMENT] Checking blockchain balance for ${user.walletAddress}...`);
       // Check real blockchain balance
       const blockchainBalance = await ntiqTokenService.getBalance(user.walletAddress);
+      console.log(`🏆 [JOIN-TOURNAMENT] Blockchain balance: ${blockchainBalance}, Required: ${tournament.entryFee}`);
+      
       if (blockchainBalance < tournament.entryFee) {
+        console.log(`❌ [JOIN-TOURNAMENT] Insufficient balance: ${blockchainBalance} < ${tournament.entryFee}`);
         return res.status(400).json({
           message: `Insufficient NTIQ balance for entry fee. Required: ${tournament.entryFee} NTIQ, Available: ${blockchainBalance.toFixed(2)} NTIQ`,
           needsAirdrop: true,
@@ -11048,18 +11067,23 @@ Manual balance correction required IMMEDIATELY!`;
         });
       }
 
+      console.log('🏆 [JOIN-TOURNAMENT] Deducting entry fee from user balance...');
       // Deduct entry fee from user balance
       if (user) {
         const newBalance = user.balance - tournament.entryFee;
         await storage.updateUserBalance(userId, newBalance);
+        console.log(`🏆 [JOIN-TOURNAMENT] Updated user balance: ${user.balance} -> ${newBalance}`);
       }
 
+      console.log('🏆 [JOIN-TOURNAMENT] Adding user to tournament...');
       // Join tournament
       const participant = await storage.joinSurvivalTournament(tournamentId, userId);
+      console.log(`🏆 [JOIN-TOURNAMENT] User added to tournament:`, participant);
 
       // BLOCKCHAIN INTEGRATION: Join tournament in smart contract
       try {
         if (user.walletAddress) {
+          console.log('🏆 [JOIN-TOURNAMENT] Joining tournament on blockchain...');
           const blockchainTournamentId = blockchainService.generateTournamentId(tournamentId);
           const txHash = await tournamentPoolService.joinTournament({
             tournamentId: blockchainTournamentId,
@@ -11068,27 +11092,36 @@ Manual balance correction required IMMEDIATELY!`;
           });
 
           // Update tournament with join transaction hash (store in participant or tournament)
-          logger.info(`🔗 [BLOCKCHAIN] User ${userId} joined tournament ${tournamentId} on blockchain: ${txHash}`);
+          console.log(`🔗 [BLOCKCHAIN] User ${userId} joined tournament ${tournamentId} on blockchain: ${txHash}`);
         } else {
-          logger.warn(`⚠️ [BLOCKCHAIN] User ${userId} has no wallet address, skipping blockchain tournament join`);
+          console.log(`⚠️ [BLOCKCHAIN] User ${userId} has no wallet address, skipping blockchain tournament join`);
         }
       } catch (blockchainError: any) {
-        logger.error(`❌ [BLOCKCHAIN] Failed to join tournament on blockchain:`, blockchainError);
+        console.error(`❌ [BLOCKCHAIN] Failed to join tournament on blockchain:`, blockchainError);
         // Don't fail the tournament join if blockchain fails
       }
 
       // Start tournament if full
       if (tournament.currentParticipants + 1 >= tournament.maxParticipants) {
+        console.log('🏆 [JOIN-TOURNAMENT] Tournament is now full, starting tournament...');
         await storage.startSurvivalTournament(tournamentId);
 
         // Start automatic rounds
         const { survivalRoundService } = await import('./services/survivalRoundService');
         await survivalRoundService.startTournamentRounds(tournamentId);
+        console.log('🏆 [JOIN-TOURNAMENT] Tournament rounds started');
       }
 
+      console.log('✅ [JOIN-TOURNAMENT] Tournament join successful');
       res.json(participant);
     } catch (error) {
-      console.error('Error joining survival tournament:', error);
+      console.error('❌ [JOIN-TOURNAMENT] Error joining survival tournament:', error);
+      console.error('❌ [JOIN-TOURNAMENT] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        tournamentId: req.params.id,
+        userId: req.session?.userId
+      });
       res.status(500).json({ message: 'Failed to join survival tournament' });
     }
   });
