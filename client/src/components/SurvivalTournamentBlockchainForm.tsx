@@ -30,6 +30,7 @@ export function SurvivalTournamentBlockchainForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentTxType, setCurrentTxType] = useState<'approve' | 'join' | null>(null);
   const [hasSubmittedToDB, setHasSubmittedToDB] = useState(false);
+  const [isApprovalStarted, setIsApprovalStarted] = useState(false);
 
   // Web3 hooks
   const { writeContract: writeApproveContract, isPending: isApprovePending, error: approveError } = useWriteContract();
@@ -56,6 +57,7 @@ export function SurvivalTournamentBlockchainForm({
       setCurrentTxType(null);
       setApproveTxHash(null);
       setJoinTxHash(null);
+      setIsApprovalStarted(false);
     }
   }, [onClose]);
 
@@ -209,7 +211,7 @@ export function SurvivalTournamentBlockchainForm({
     }
   }, [hasSubmittedToDB, tournament.id, toast, onSuccess, onClose]);
 
-  const handleApprove = async () => {
+  const handleApprove = useCallback(async () => {
     if (!address || !chain) {
       toast({
         title: "Wallet Required",
@@ -218,6 +220,13 @@ export function SurvivalTournamentBlockchainForm({
       });
       return;
     }
+
+    if (isApprovalStarted) {
+      console.log('⚠️ [SURVIVAL-APPROVE] Approval already started, skipping...');
+      return;
+    }
+
+    setIsApprovalStarted(true);
 
     const maxRetries = 3;
     let retryCount = 0;
@@ -306,7 +315,7 @@ export function SurvivalTournamentBlockchainForm({
 
     setIsSubmitting(false);
     setCurrentTxType(null);
-  };
+  }, [address, chain, tournament.entryFee, tournament.title, writeApproveContract, toast, isApprovalStarted]);
 
   // Handle approve transaction success
   useEffect(() => {
