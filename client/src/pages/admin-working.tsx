@@ -5091,9 +5091,9 @@ export default function AdminPanel() {
                             <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
                             <span>
                               {crypto.symbol?.toUpperCase()} 
-                              {cryptoPrices && cryptoPrices[crypto.id] && (
+                              {cryptoPrices && Array.isArray(cryptoPrices) && cryptoPrices.find((price: any) => price.id === crypto.id) && (
                                 <span className="text-slate-400 ml-1">
-                                  (${cryptoPrices[crypto.id].toFixed(2)})
+                                  (${cryptoPrices.find((price: any) => price.id === crypto.id)?.current_price?.toFixed(2) || 'N/A'})
                                 </span>
                               )}
                             </span>
