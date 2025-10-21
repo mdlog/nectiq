@@ -210,6 +210,17 @@ export default function AdminPanel() {
   const [showAddUser, setShowAddUser] = useState(false);
   const [showAddCrypto, setShowAddCrypto] = useState(false);
   const [showCreateSurvival, setShowCreateSurvival] = useState(false);
+  const [survivalFormData, setSurvivalFormData] = useState({
+    title: '',
+    description: '',
+    cryptocurrency: '',
+    entryFee: 100,
+    maxParticipants: 32,
+    roundDuration: 60,
+    round1Duration: 15,
+    round2Duration: 30,
+    round3Duration: 60
+  });
 
   // State untuk event management
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -702,6 +713,41 @@ export default function AdminPanel() {
       toast({
         title: "Error",
         description: error.message || "Failed to create event",
+        variant: "destructive"
+      });
+    },
+  });
+
+  // Create survival tournament mutation
+  const createSurvivalMutation = useMutation({
+    mutationFn: async (tournamentData: any) => {
+      return apiRequest("/api/survival-tournaments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tournamentData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/survival-tournaments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/survival-tournaments"] });
+      toast({ title: "Success", description: "Survival tournament created successfully" });
+      setShowCreateSurvival(false);
+      setSurvivalFormData({
+        title: '',
+        description: '',
+        cryptocurrency: '',
+        entryFee: 100,
+        maxParticipants: 32,
+        roundDuration: 60,
+        round1Duration: 15,
+        round2Duration: 30,
+        round3Duration: 60
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create tournament",
         variant: "destructive"
       });
     },
@@ -5070,14 +5116,16 @@ export default function AdminPanel() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Tournament Title</label>
-                <Input
+                <Input 
                   placeholder="Enter tournament title"
                   className="bg-slate-700 border-slate-600 text-white"
+                  value={survivalFormData.title}
+                  onChange={(e) => setSurvivalFormData({...survivalFormData, title: e.target.value})}
                 />
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Cryptocurrency</label>
-                <Select>
+                <Select value={survivalFormData.cryptocurrency} onValueChange={(value) => setSurvivalFormData({...survivalFormData, cryptocurrency: value})}>
                   <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                     <SelectValue placeholder="Select cryptocurrency" />
                   </SelectTrigger>
@@ -5110,35 +5158,43 @@ export default function AdminPanel() {
 
             <div>
               <label className="text-sm font-medium text-slate-300 mb-2 block">Description</label>
-              <textarea
+              <textarea 
                 placeholder="Enter tournament description"
                 className="w-full h-20 p-3 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400"
+                value={survivalFormData.description}
+                onChange={(e) => setSurvivalFormData({...survivalFormData, description: e.target.value})}
               />
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Entry Fee (NTIQ)</label>
-                <Input
+                <Input 
                   type="number"
                   placeholder="100"
                   className="bg-slate-700 border-slate-600 text-white"
+                  value={survivalFormData.entryFee}
+                  onChange={(e) => setSurvivalFormData({...survivalFormData, entryFee: parseInt(e.target.value) || 100})}
                 />
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Max Participants</label>
-                <Input
+                <Input 
                   type="number"
                   placeholder="32"
                   className="bg-slate-700 border-slate-600 text-white"
+                  value={survivalFormData.maxParticipants}
+                  onChange={(e) => setSurvivalFormData({...survivalFormData, maxParticipants: parseInt(e.target.value) || 32})}
                 />
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-300 mb-2 block">Round Duration (min)</label>
-                <Input
+                <Input 
                   type="number"
                   placeholder="60"
                   className="bg-slate-700 border-slate-600 text-white"
+                  value={survivalFormData.roundDuration}
+                  onChange={(e) => setSurvivalFormData({...survivalFormData, roundDuration: parseInt(e.target.value) || 60})}
                 />
               </div>
             </div>
@@ -5162,16 +5218,23 @@ export default function AdminPanel() {
             </Button>
             <Button
               onClick={() => {
-                // TODO: Implement create survival tournament
-                setShowCreateSurvival(false);
-                toast({
-                  title: "Tournament Created",
-                  description: "Survival tournament created successfully with blockchain integration",
-                });
+                // Validate required fields
+                if (!survivalFormData.title || !survivalFormData.cryptocurrency) {
+                  toast({
+                    title: "Validation Error",
+                    description: "Please fill in all required fields.",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+
+                // Create tournament
+                createSurvivalMutation.mutate(survivalFormData);
               }}
+              disabled={createSurvivalMutation.isPending}
               className="bg-green-600 hover:bg-green-700"
             >
-              Create Tournament
+              {createSurvivalMutation.isPending ? "Creating..." : "Create Tournament"}
             </Button>
           </div>
         </DialogContent>
