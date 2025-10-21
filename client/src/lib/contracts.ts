@@ -228,6 +228,45 @@ const ABIS = {
         },
     ] as const,
 
+    // Tournament Pool ABI (key functions)
+    TOURNAMENT_POOL: [
+        {
+            inputs: [
+                { internalType: 'bytes32', name: 'tournamentId', type: 'bytes32' },
+                { internalType: 'uint256', name: 'entryFee', type: 'uint256' }
+            ],
+            name: 'joinTournament',
+            outputs: [
+                { internalType: 'bool', name: '', type: 'bool' }
+            ],
+            stateMutability: 'nonpayable',
+            type: 'function'
+        },
+        {
+            inputs: [
+                { internalType: 'bytes32', name: 'tournamentId', type: 'bytes32' }
+            ],
+            name: 'createTournament',
+            outputs: [
+                { internalType: 'bool', name: '', type: 'bool' }
+            ],
+            stateMutability: 'nonpayable',
+            type: 'function'
+        },
+        {
+            inputs: [
+                { internalType: 'bytes32', name: 'tournamentId', type: 'bytes32' },
+                { internalType: 'address', name: 'winner', type: 'address' }
+            ],
+            name: 'resolveTournament',
+            outputs: [
+                { internalType: 'bool', name: '', type: 'bool' }
+            ],
+            stateMutability: 'nonpayable',
+            type: 'function'
+        },
+    ] as const,
+
     // Multi-Token Vault ABI (key functions)
     MULTI_TOKEN_VAULT: [
         {
@@ -366,6 +405,7 @@ export const CONTRACTS = {
     PREDICTION_INSURANCE: (import.meta.env.VITE_PREDICTION_INSURANCE_ADDRESS || '0x170aF9d61945c6AbD8619d6cafbd03E5fC8ae3Ce') as `0x${string}`,
     REFERRAL_SYSTEM: (import.meta.env.VITE_REFERRAL_SYSTEM_ADDRESS || '0x7E9F85CDDb70A0d3Ab7738B61610d1774867c8e2') as `0x${string}`,
     NFT_ACHIEVEMENT_SYSTEM: (import.meta.env.VITE_NFT_ACHIEVEMENT_SYSTEM_ADDRESS || '0x57c5aE2C1ed8ef90e264D165b5A7F7C750C50C3f') as `0x${string}`,
+    TOURNAMENT_POOL: (import.meta.env.VITE_TOURNAMENT_POOL_ADDRESS || '') as `0x${string}`,
 
     // NTIQ Token
     NTIQ_TOKEN: (import.meta.env.VITE_NTIQ_TOKEN_ADDRESS || '0xE276c3634b7747c46c1aBAB4Eff6b2f046C71A6f') as `0x${string}`,
