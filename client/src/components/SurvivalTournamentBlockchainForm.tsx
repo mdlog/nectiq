@@ -86,48 +86,101 @@ export function SurvivalTournamentBlockchainForm({
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      setCurrentTxType('approve');
+    const maxRetries = 3;
+    let retryCount = 0;
+    let lastError: any = null;
 
-      const entryFeeWei = parseEther(tournament.entryFee.toString());
-      
-      console.log('🔐 [SURVIVAL-APPROVE] Approving NTIQ token spending...');
-      console.log('   Tournament:', tournament.title);
-      console.log('   Entry Fee:', tournament.entryFee, 'NTIQ');
-      console.log('   Entry Fee Wei:', entryFeeWei.toString());
-      console.log('   User:', address);
+    console.log('🔐 [SURVIVAL-APPROVE] Starting approval process...');
+    console.log('   Tournament:', tournament.title);
+    console.log('   Entry Fee:', tournament.entryFee, 'NTIQ');
+    console.log('   User:', address);
 
-      // Approve NTIQ token spending
-      const approveTxHash = await writeApproveContract({
-        address: CONTRACTS.NTIQ_TOKEN,
-        abi: CONTRACTS.ABIS?.NTIQToken || [],
-        functionName: 'approve',
-        args: [CONTRACTS.TOURNAMENT_POOL, entryFeeWei],
-        chainId: chain.id,
-        gas: 100000n,
-      });
+    while (retryCount < maxRetries) {
+      try {
+        setIsSubmitting(true);
+        setCurrentTxType('approve');
 
-      if (approveTxHash) {
-        setApproveTxHash(approveTxHash);
-        console.log('🔐 [SURVIVAL-APPROVE] Approval transaction sent:', approveTxHash);
+        const entryFeeWei = parseEther(tournament.entryFee.toString());
         
-        toast({
-          title: "Approval Transaction Sent",
-          description: "Please confirm the approval in MetaMask",
-        });
-      }
+        console.log(`🔐 [SURVIVAL-APPROVE] Attempt ${retryCount + 1}/${maxRetries}`);
+        console.log('   Entry Fee Wei:', entryFeeWei.toString());
 
-    } catch (error: any) {
-      console.error('❌ [SURVIVAL-APPROVE] Approval failed:', error);
-      toast({
-        title: "Approval Failed",
-        description: error.message || "Failed to approve NTIQ token spending",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-      setCurrentTxType(null);
+        // Approve NTIQ token spending
+        const approveTxHash = await writeApproveContract({
+          address: CONTRACTS.NTIQ_TOKEN,
+          abi: CONTRACTS.ABIS?.NTIQToken || [],
+          functionName: 'approve',
+          args: [CONTRACTS.TOURNAMENT_POOL, entryFeeWei],
+          chainId: chain.id,
+          gas: 100000n,
+        });
+
+        if (approveTxHash) {
+          setApproveTxHash(approveTxHash);
+          console.log('🔐 [SURVIVAL-APPROVE] Approval transaction sent:', approveTxHash);
+          
+          toast({
+            title: "Approval Transaction Sent",
+            description: "Please confirm the approval in MetaMask",
+          });
+          return; // Success, exit retry loop
+        }
+
+      } catch (error: any) {
+        lastError = error;
+        retryCount++;
+
+        console.error(`❌ [SURVIVAL-APPROVE] Attempt ${retryCount} failed:`, error);
+        console.error('❌ [SURVIVAL-APPROVE] Error details:', {
+          message: error.message,
+          shortMessage: error.shortMessage,
+          code: error.code,
+          data: error.data,
+          attempt: retryCount
+        });
+
+        // Check if it's a retryable error
+        const isRetryableError = error.message?.includes("Internal JSON-RPC error") ||
+          error.message?.includes("-32603") ||
+          error.message?.includes("network") ||
+          error.message?.includes("timeout");
+
+        if (retryCount < maxRetries && isRetryableError) {
+          console.log(`🔄 [SURVIVAL-APPROVE] Retrying in ${retryCount * 2} seconds...`);
+          toast({
+            title: "Retrying Transaction",
+            description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
+            variant: "default",
+          });
+
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
+        } else {
+          break; // Exit retry loop
+        }
+      }
     }
+
+    // All retries failed
+    console.error('❌ [SURVIVAL-APPROVE] All approval attempts failed:', lastError);
+
+    let errorMessage = "Approval transaction failed after multiple attempts.";
+    if (lastError?.message?.includes("insufficient funds")) {
+      errorMessage = "Insufficient funds for gas fees. Please add more ETH to your wallet.";
+    } else if (lastError?.message?.includes("user rejected")) {
+      errorMessage = "Transaction was rejected by user.";
+    } else if (lastError?.message?.includes("Internal JSON-RPC error")) {
+      errorMessage = "Network error occurred. Please try again in a few moments.";
+    }
+
+    toast({
+      title: "Approval Failed",
+      description: errorMessage,
+      variant: "destructive",
+    });
+
+    setIsSubmitting(false);
+    setCurrentTxType(null);
   };
 
   const handleJoinTournament = async () => {
@@ -140,45 +193,100 @@ export function SurvivalTournamentBlockchainForm({
       return;
     }
 
-    try {
-      const entryFeeWei = parseEther(tournament.entryFee.toString());
-      const tournamentId = `0x${tournament.id.toString(16).padStart(64, '0')}`; // Convert to bytes32
+    const maxRetries = 3;
+    let retryCount = 0;
+    let lastError: any = null;
 
-      console.log('🏆 [SURVIVAL-JOIN] Joining tournament on blockchain...');
-      console.log('   Tournament ID:', tournamentId);
-      console.log('   Entry Fee Wei:', entryFeeWei.toString());
-      console.log('   User:', address);
+    console.log('🏆 [SURVIVAL-JOIN] Starting tournament join process...');
+    console.log('   Tournament:', tournament.title);
+    console.log('   Entry Fee:', tournament.entryFee, 'NTIQ');
+    console.log('   User:', address);
 
-      // Join tournament on blockchain
-      const joinTxHash = await writeJoinContract({
-        address: CONTRACTS.TOURNAMENT_POOL,
-        abi: CONTRACTS.ABIS?.TOURNAMENT_POOL || [],
-        functionName: 'joinTournament',
-        args: [tournamentId, entryFeeWei],
-        chainId: chain.id,
-        gas: 200000n,
-      });
+    while (retryCount < maxRetries) {
+      try {
+        const entryFeeWei = parseEther(tournament.entryFee.toString());
+        const tournamentId = `0x${tournament.id.toString(16).padStart(64, '0')}`; // Convert to bytes32
 
-      if (joinTxHash) {
-        setJoinTxHash(joinTxHash);
-        console.log('🏆 [SURVIVAL-JOIN] Join transaction sent:', joinTxHash);
-        
-        toast({
-          title: "Join Transaction Sent",
-          description: "Please confirm the join transaction in MetaMask",
+        console.log(`🏆 [SURVIVAL-JOIN] Attempt ${retryCount + 1}/${maxRetries}`);
+        console.log('   Tournament ID:', tournamentId);
+        console.log('   Entry Fee Wei:', entryFeeWei.toString());
+
+        // Join tournament on blockchain
+        const joinTxHash = await writeJoinContract({
+          address: CONTRACTS.TOURNAMENT_POOL,
+          abi: CONTRACTS.ABIS?.TOURNAMENT_POOL || [],
+          functionName: 'joinTournament',
+          args: [tournamentId, entryFeeWei],
+          chainId: chain.id,
+          gas: 200000n,
         });
-      }
 
-    } catch (error: any) {
-      console.error('❌ [SURVIVAL-JOIN] Join failed:', error);
-      toast({
-        title: "Join Failed",
-        description: error.message || "Failed to join tournament",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-      setCurrentTxType(null);
+        if (joinTxHash) {
+          setJoinTxHash(joinTxHash);
+          console.log('🏆 [SURVIVAL-JOIN] Join transaction sent:', joinTxHash);
+          
+          toast({
+            title: "Join Transaction Sent",
+            description: "Please confirm the join transaction in MetaMask",
+          });
+          return; // Success, exit retry loop
+        }
+
+      } catch (error: any) {
+        lastError = error;
+        retryCount++;
+
+        console.error(`❌ [SURVIVAL-JOIN] Attempt ${retryCount} failed:`, error);
+        console.error('❌ [SURVIVAL-JOIN] Error details:', {
+          message: error.message,
+          shortMessage: error.shortMessage,
+          code: error.code,
+          data: error.data,
+          attempt: retryCount
+        });
+
+        // Check if it's a retryable error
+        const isRetryableError = error.message?.includes("Internal JSON-RPC error") ||
+          error.message?.includes("-32603") ||
+          error.message?.includes("network") ||
+          error.message?.includes("timeout");
+
+        if (retryCount < maxRetries && isRetryableError) {
+          console.log(`🔄 [SURVIVAL-JOIN] Retrying in ${retryCount * 2} seconds...`);
+          toast({
+            title: "Retrying Transaction",
+            description: `Attempt ${retryCount + 1}/${maxRetries}. Please wait...`,
+            variant: "default",
+          });
+
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
+        } else {
+          break; // Exit retry loop
+        }
+      }
     }
+
+    // All retries failed
+    console.error('❌ [SURVIVAL-JOIN] All join attempts failed:', lastError);
+
+    let errorMessage = "Join tournament failed after multiple attempts.";
+    if (lastError?.message?.includes("insufficient funds")) {
+      errorMessage = "Insufficient funds for gas fees. Please add more ETH to your wallet.";
+    } else if (lastError?.message?.includes("user rejected")) {
+      errorMessage = "Transaction was rejected by user.";
+    } else if (lastError?.message?.includes("Internal JSON-RPC error")) {
+      errorMessage = "Network error occurred. Please try again in a few moments.";
+    }
+
+    toast({
+      title: "Join Failed",
+      description: errorMessage,
+      variant: "destructive",
+    });
+
+    setIsSubmitting(false);
+    setCurrentTxType(null);
   };
 
   const handleDatabaseUpdate = async () => {
