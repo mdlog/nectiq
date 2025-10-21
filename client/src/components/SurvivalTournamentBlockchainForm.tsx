@@ -28,6 +28,9 @@ export function SurvivalTournamentBlockchainForm({
   const { toast } = useToast();
   const { address, chain } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Debug wallet state
+  console.log('🔘 [SURVIVAL-FORM] Wallet state:', { address, chain });
   const [currentTxType, setCurrentTxType] = useState<'approve' | 'join' | null>(null);
   const [hasSubmittedToDB, setHasSubmittedToDB] = useState(false);
 
@@ -337,7 +340,12 @@ export function SurvivalTournamentBlockchainForm({
   };
 
   const handleSubmit = () => {
+    console.log('🔘 [SURVIVAL-BUTTON] Button clicked!');
+    console.log('🔘 [SURVIVAL-BUTTON] Wallet state:', { address, chain });
+    console.log('🔘 [SURVIVAL-BUTTON] Button disabled:', isButtonDisabled());
+    
     if (!address || !chain) {
+      console.log('❌ [SURVIVAL-BUTTON] No wallet connected');
       toast({
         title: "Wallet Required",
         description: "Please connect your wallet to join the tournament",
@@ -346,6 +354,7 @@ export function SurvivalTournamentBlockchainForm({
       return;
     }
 
+    console.log('✅ [SURVIVAL-BUTTON] Starting approval process...');
     handleApprove();
   };
 
@@ -366,7 +375,17 @@ export function SurvivalTournamentBlockchainForm({
   };
 
   const isButtonDisabled = () => {
-    return isSubmitting || isApprovePending || isApproveConfirming || isJoinPending || isJoinConfirming;
+    const disabled = isSubmitting || isApprovePending || isApproveConfirming || isJoinPending || isJoinConfirming;
+    console.log('🔘 [SURVIVAL-BUTTON] Button disabled state:', {
+      isSubmitting,
+      isApprovePending,
+      isApproveConfirming,
+      isJoinPending,
+      isJoinConfirming,
+      disabled,
+      currentTxType
+    });
+    return disabled;
   };
 
   return (
