@@ -10801,6 +10801,18 @@ Manual balance correction required IMMEDIATELY!`;
 
   // ===== SURVIVAL TOURNAMENT ROUTES =====
 
+  // Admin: Get survival tournament data for admin panel
+  app.get('/api/admin/survival', requireAdmin, async (req: Request, res: Response) => {
+    try {
+      // Get all survival predictions/entries for admin panel
+      const survivalData = await storage.getAllSurvivalPredictions();
+      res.json(survivalData);
+    } catch (error) {
+      console.error('Error fetching admin survival data:', error);
+      res.status(500).json({ message: 'Failed to fetch survival data' });
+    }
+  });
+
   // Get all survival tournaments
   // Admin: Get all survival tournaments for management
   app.get('/api/admin/survival-tournaments', requireAdmin, async (req: Request, res: Response) => {

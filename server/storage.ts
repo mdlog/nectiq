@@ -196,6 +196,7 @@ export interface IStorage {
   // Survival Tournament operations
   createSurvivalTournament(tournament: any): Promise<any>;
   getAllSurvivalTournaments(): Promise<any[]>;
+  getAllSurvivalPredictions(): Promise<any[]>;
   getSurvivalTournament(id: number): Promise<any>;
   joinSurvivalTournament(tournamentId: number, userId: number): Promise<any>;
   startSurvivalTournament(tournamentId: number): Promise<void>;
@@ -2729,6 +2730,36 @@ export class DatabaseStorage implements IStorage {
     );
 
     return tournamentsWithRounds;
+  }
+
+  // Get all survival predictions for admin panel
+  async getAllSurvivalPredictions(): Promise<any[]> {
+    return await db
+      .select({
+        id: survivalPredictions.id,
+        userId: survivalPredictions.userId,
+        tournamentId: survivalPredictions.tournamentId,
+        roundId: survivalPredictions.roundId,
+        cryptocurrency: survivalPredictions.cryptocurrency,
+        prediction: survivalPredictions.prediction,
+        direction: survivalPredictions.direction,
+        duration: survivalPredictions.duration,
+        startingPrice: survivalPredictions.startingPrice,
+        endingPrice: survivalPredictions.endingPrice,
+        isCorrect: survivalPredictions.isCorrect,
+        status: survivalPredictions.status,
+        stakeAmount: survivalPredictions.stakeAmount,
+        rewardAmount: survivalPredictions.rewardAmount,
+        eliminationRound: survivalPredictions.eliminationRound,
+        createdAt: survivalPredictions.createdAt,
+        targetTime: survivalPredictions.targetTime,
+        processedAt: survivalPredictions.processedAt,
+        username: users.username,
+        profilePhoto: users.profilePhoto
+      })
+      .from(survivalPredictions)
+      .leftJoin(users, eq(survivalPredictions.userId, users.id))
+      .orderBy(desc(survivalPredictions.createdAt));
   }
 
   async getSurvivalTournament(id: number): Promise<any> {

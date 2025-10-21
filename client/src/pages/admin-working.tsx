@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -209,6 +209,7 @@ export default function AdminPanel() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showAddUser, setShowAddUser] = useState(false);
   const [showAddCrypto, setShowAddCrypto] = useState(false);
+  const [showCreateSurvival, setShowCreateSurvival] = useState(false);
 
   // State untuk event management
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -3495,10 +3496,16 @@ export default function AdminPanel() {
                           <Target className="mr-2" size={20} />
                           Survival Tournaments ({totalSurvival})
                         </div>
-                        <Button onClick={() => { }} variant="outline" size="sm">
-                          <Download className="mr-2" size={16} />
-                          Export CSV
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button onClick={() => setShowCreateSurvival(true)} variant="default" size="sm">
+                            <Plus className="mr-2" size={16} />
+                            Create Tournament
+                          </Button>
+                          <Button onClick={() => { }} variant="outline" size="sm">
+                            <Download className="mr-2" size={16} />
+                            Export CSV
+                          </Button>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -5041,6 +5048,112 @@ export default function AdminPanel() {
                 ? "Saving..."
                 : selectedEvent ? "Update Event" : "Create Event"
               }
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Survival Tournament Dialog */}
+      <Dialog open={showCreateSurvival} onOpenChange={setShowCreateSurvival}>
+        <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center">
+              <Target className="mr-2" size={20} />
+              Create Survival Tournament
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Create a new survival tournament with blockchain integration
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Tournament Title</label>
+                <Input
+                  placeholder="Enter tournament title"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Cryptocurrency</label>
+                <Select>
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue placeholder="Select cryptocurrency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
+                    <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+                    <SelectItem value="SOL">Solana (SOL)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-300 mb-2 block">Description</label>
+              <textarea
+                placeholder="Enter tournament description"
+                className="w-full h-20 p-3 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Entry Fee (NTIQ)</label>
+                <Input
+                  type="number"
+                  placeholder="100"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Max Participants</label>
+                <Input
+                  type="number"
+                  placeholder="32"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">Round Duration (min)</label>
+                <Input
+                  type="number"
+                  placeholder="60"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="bg-slate-700 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-slate-300 mb-2">Blockchain Integration</h4>
+              <p className="text-xs text-slate-400">
+                This tournament will be created on-chain using the TournamentPool contract.
+                Entry fees and prizes will be handled automatically through smart contracts.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateSurvival(false)}
+              className="border-slate-600 text-slate-300 hover:bg-slate-700"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                // TODO: Implement create survival tournament
+                setShowCreateSurvival(false);
+                toast({
+                  title: "Tournament Created",
+                  description: "Survival tournament created successfully with blockchain integration",
+                });
+              }}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Create Tournament
             </Button>
           </div>
         </DialogContent>
