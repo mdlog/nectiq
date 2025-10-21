@@ -3565,46 +3565,51 @@ export default function AdminPanel() {
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Tournament ID</TableHead>
-                                <TableHead>Player</TableHead>
-                                <TableHead>Round</TableHead>
+                                <TableHead>Title</TableHead>
                                 <TableHead>Cryptocurrency</TableHead>
-                                <TableHead>Prediction</TableHead>
+                                <TableHead>Entry Fee</TableHead>
+                                <TableHead>Participants</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Score</TableHead>
                                 <TableHead>Created</TableHead>
+                                <TableHead>Actions</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {paginatedSurvival.map((entry: any) => (
-                                <TableRow key={`${entry.tournamentId}-${entry.userId}-${entry.round}`}>
-                                  <TableCell>#{entry.tournamentId}</TableCell>
+                              {paginatedSurvival.map((tournament: any) => (
+                                <TableRow key={tournament.id}>
+                                  <TableCell>#{tournament.id}</TableCell>
                                   <TableCell className="font-medium text-white">
-                                    {entry.username || `User ${entry.userId}`}
-                                  </TableCell>
-                                  <TableCell className="font-semibold text-blue-400">
-                                    Round {entry.round}
+                                    {tournament.title}
                                   </TableCell>
                                   <TableCell className="font-medium text-white capitalize">
-                                    {entry.cryptocurrency}
+                                    {tournament.cryptocurrency}
                                   </TableCell>
-                                  <TableCell>
-                                    <Badge variant="outline" className="text-green-400 border-green-400">
-                                      {entry.direction === 'up' ? '↑ Higher' : '↓ Lower'}
-                                    </Badge>
+                                  <TableCell className="text-green-400">
+                                    {tournament.entryFee} NTIQ
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {tournament.participantCount || 0}
                                   </TableCell>
                                   <TableCell>
                                     <Badge variant={
-                                      entry.status === 'eliminated' ? 'destructive' :
-                                        entry.status === 'advancing' ? 'default' : 'secondary'
+                                      tournament.status === 'active' ? 'default' :
+                                        tournament.status === 'completed' ? 'secondary' : 'outline'
                                     }>
-                                      {entry.status}
+                                      {tournament.status}
                                     </Badge>
                                   </TableCell>
-                                  <TableCell className="text-yellow-400 font-semibold">
-                                    {entry.score || 0} pts
+                                  <TableCell className="text-slate-400">
+                                    {new Date(tournament.createdAt).toLocaleDateString()}
                                   </TableCell>
-                                  <TableCell className="text-xs text-slate-400">
-                                    {new Date(entry.createdAt).toLocaleDateString()}
+                                  <TableCell>
+                                    <div className="flex gap-2">
+                                      <Button size="sm" variant="outline">
+                                        View
+                                      </Button>
+                                      <Button size="sm" variant="outline">
+                                        Edit
+                                      </Button>
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -3615,7 +3620,7 @@ export default function AdminPanel() {
                           {totalSurvivalPages > 1 && (
                             <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
                               <div className="text-sm text-slate-400">
-                                Showing {survivalStartIndex + 1}-{Math.min(survivalEndIndex, totalSurvival)} of {totalSurvival} tournament entries
+                                Showing {survivalStartIndex + 1}-{Math.min(survivalEndIndex, totalSurvival)} of {totalSurvival} tournaments
                               </div>
                               <div className="flex space-x-2">
                                 <Button

@@ -10804,9 +10804,21 @@ Manual balance correction required IMMEDIATELY!`;
   // Admin: Get survival tournament data for admin panel
   app.get('/api/admin/survival', requireAdmin, async (req: Request, res: Response) => {
     try {
-      // Get all survival predictions/entries for admin panel
-      const survivalData = await storage.getAllSurvivalPredictions();
-      res.json(survivalData);
+      // Get all survival tournaments for admin panel
+      const tournaments = await storage.getAllSurvivalTournaments();
+      
+      // Add participant count for each tournament
+      const tournamentsWithCounts = await Promise.all(
+        tournaments.map(async (tournament) => {
+          const participants = await storage.getSurvivalParticipants(tournament.id);
+          return {
+            ...tournament,
+            participantCount: participants.length
+          };
+        })
+      );
+      
+      res.json(tournamentsWithCounts);
     } catch (error) {
       console.error('Error fetching admin survival data:', error);
       res.status(500).json({ message: 'Failed to fetch survival data' });
