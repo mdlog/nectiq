@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { SurvivalTournamentBlockchainForm } from './SurvivalTournamentBlockchainForm';
+import SurvivalJoinModal from './SurvivalJoinModal';
 import { format } from 'date-fns';
 import { CountdownTimer } from '@/components/countdown-timer';
 import PredictionTimingIndicator from '@/components/prediction-timing-indicator';
@@ -601,13 +601,12 @@ export const TournamentCard = ({ tournament, user, cryptoPrices, onWalletRequire
     </Card>
 
     {/* Web3 Join Dialog */}
-    {showJoinDialog && (
-      <SurvivalTournamentBlockchainForm
-        tournament={tournament}
-        onClose={() => setShowJoinDialog(false)}
-        onSuccess={handleJoinSuccess}
-      />
-    )}
+    <SurvivalJoinModal
+      isOpen={showJoinDialog}
+      onClose={() => setShowJoinDialog(false)}
+      tournament={tournament}
+      onSuccess={handleJoinSuccess}
+    />
     </>
     );
   } catch (error) {
