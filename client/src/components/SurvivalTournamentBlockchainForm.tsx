@@ -52,14 +52,13 @@ export function SurvivalTournamentBlockchainForm({
 
   // Reset form when dialog opens
   useEffect(() => {
-    if (onClose) {
-      setHasSubmittedToDB(false);
-      setCurrentTxType(null);
-      setApproveTxHash(null);
-      setJoinTxHash(null);
-      setIsApprovalStarted(false);
-    }
-  }, [onClose]);
+    setHasSubmittedToDB(false);
+    setCurrentTxType(null);
+    setApproveTxHash(null);
+    setJoinTxHash(null);
+    setIsApprovalStarted(false);
+    setIsSubmitting(false);
+  }, []);
 
   // Component mounted
 
@@ -316,14 +315,7 @@ export function SurvivalTournamentBlockchainForm({
   }, [isJoinSuccess, hasSubmittedToDB, handleDatabaseUpdate]);
 
   const handleSubmit = () => {
-    console.log('🔘 [SURVIVAL-BUTTON] Button clicked!');
-    console.log('🔘 [SURVIVAL-BUTTON] Wallet state:', { address, chain });
-    console.log('🔘 [SURVIVAL-BUTTON] Button disabled:', isButtonDisabled());
-    console.log('🔘 [SURVIVAL-BUTTON] Current tx type:', currentTxType);
-    console.log('🔘 [SURVIVAL-BUTTON] Is submitting:', isSubmitting);
-    
     if (!address || !chain) {
-      console.log('❌ [SURVIVAL-BUTTON] No wallet connected');
       toast({
         title: "Wallet Required",
         description: "Please connect your wallet to join the tournament",
@@ -332,7 +324,6 @@ export function SurvivalTournamentBlockchainForm({
       return;
     }
 
-    console.log('✅ [SURVIVAL-BUTTON] Starting approval process...');
     handleApprove();
   };
 
@@ -353,16 +344,7 @@ export function SurvivalTournamentBlockchainForm({
   };
 
   const isButtonDisabled = () => {
-    const disabled = isSubmitting || isApprovePending || isApproveConfirming || isJoinPending || isJoinConfirming;
-    console.log('🔘 [SURVIVAL-BUTTON] Button disabled state:', {
-      isSubmitting,
-      isApprovePending,
-      isApproveConfirming,
-      isJoinPending,
-      isJoinConfirming,
-      disabled
-    });
-    return disabled;
+    return isSubmitting || isApprovePending || isApproveConfirming || isJoinPending || isJoinConfirming;
   };
 
   return (
