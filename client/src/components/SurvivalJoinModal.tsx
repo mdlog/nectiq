@@ -119,11 +119,19 @@ export default function SurvivalJoinModal({
       console.log('🏆 [SURVIVAL-JOIN] Tournament Pool address:', CONTRACTS.TOURNAMENT_POOL);
       console.log('🆔 [SURVIVAL-JOIN] Tournament ID:', tournament.id);
 
+      // Convert tournament ID to bytes32
+      const tournamentIdBytes32 = `0x${tournament.id.toString(16).padStart(64, '0')}` as `0x${string}`;
+      
+      console.log('🆔 [SURVIVAL-JOIN] Tournament ID conversion:', {
+        originalId: tournament.id,
+        bytes32: tournamentIdBytes32
+      });
+
       await writeJoin({
         address: CONTRACTS.TOURNAMENT_POOL as `0x${string}`,
-        abi: CONTRACTS.ABIS?.TournamentPool,
+        abi: CONTRACTS.ABIS?.TOURNAMENT_POOL,
         functionName: 'joinTournament',
-        args: [BigInt(tournament.id), entryFeeWei],
+        args: [tournamentIdBytes32],
       });
 
       console.log('📝 [SURVIVAL-JOIN] writeJoin called successfully');
@@ -205,11 +213,11 @@ export default function SurvivalJoinModal({
       hasJoinTxHash: !!joinTxHash,
       joinError
     });
-    
+
     if (joinError) {
       console.error('❌ [SURVIVAL-JOIN] useWriteContract error:', joinError);
     }
-    
+
     if (joinData && !joinTxHash) {
       console.log('✅ [SURVIVAL-JOIN] Transaction hash received from joinData:', joinData);
       setJoinTxHash(joinData);
