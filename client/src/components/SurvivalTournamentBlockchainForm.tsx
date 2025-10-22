@@ -61,10 +61,7 @@ export function SurvivalTournamentBlockchainForm({
     }
   }, [onClose]);
 
-  // Debug wallet state (only log once when component mounts)
-  useEffect(() => {
-    console.log('🔘 [SURVIVAL-FORM] Component mounted, wallet state:', { address, chain });
-  }, []); // Empty dependency array - only run once
+  // Component mounted
 
   // Function definitions
   const handleJoinTournament = useCallback(async () => {
