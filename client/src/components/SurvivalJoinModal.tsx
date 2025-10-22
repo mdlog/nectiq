@@ -71,12 +71,21 @@ export default function SurvivalJoinModal({
       console.log('🏦 [SURVIVAL-APPROVE] NTIQ Token address:', CONTRACTS.NTIQ_TOKEN);
       console.log('🏆 [SURVIVAL-APPROVE] Tournament Pool address:', CONTRACTS.TOURNAMENT_POOL);
 
+      // Add gas limit for approve to prevent overestimation
+      console.log('⛽ [SURVIVAL-APPROVE] Gas estimation info:', {
+        entryFee: tournament.entryFee,
+        entryFeeWei: entryFeeWei.toString(),
+        spender: CONTRACTS.TOURNAMENT_POOL
+      });
+
       console.log('🔄 [SURVIVAL-APPROVE] Calling writeApprove...');
       await writeApprove({
         address: CONTRACTS.NTIQ_TOKEN as `0x${string}`,
         abi: CONTRACTS.ABIS?.NTIQToken,
         functionName: 'approve',
         args: [CONTRACTS.TOURNAMENT_POOL as `0x${string}`, entryFeeWei],
+        // Add gas limit for approve to prevent overestimation
+        gas: 100000n, // Reasonable gas limit for ERC20 approve
       });
 
       console.log('📝 [SURVIVAL-APPROVE] writeApprove called successfully');
@@ -127,11 +136,20 @@ export default function SurvivalJoinModal({
         bytes32: tournamentIdBytes32
       });
 
+      // Add gas estimation logging
+      console.log('⛽ [SURVIVAL-JOIN] Gas estimation info:', {
+        entryFee: tournament.entryFee,
+        entryFeeWei: entryFeeWei.toString(),
+        tournamentId: tournamentIdBytes32
+      });
+
       await writeJoin({
         address: CONTRACTS.TOURNAMENT_POOL as `0x${string}`,
         abi: CONTRACTS.ABIS?.TOURNAMENT_POOL,
         functionName: 'joinTournament',
         args: [tournamentIdBytes32],
+        // Add gas limit to prevent overestimation
+        gas: 300000n, // Reasonable gas limit for join tournament
       });
 
       console.log('📝 [SURVIVAL-JOIN] writeJoin called successfully');
