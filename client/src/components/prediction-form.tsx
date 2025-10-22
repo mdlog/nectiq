@@ -23,11 +23,11 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
   // Fetch live Pyth Network prices for real-time updates
   const { data: livePrices, isLoading: pricesLoading } = useQuery({
     queryKey: ["/api/crypto/pyth-prices", "prices"],
-    refetchInterval: 1000,
+    refetchInterval: 5000, // Reduced from 1000ms to 5 seconds for better performance
     refetchIntervalInBackground: true,
-    staleTime: 500,
-    retry: 5,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    staleTime: 2000, // Increased from 500ms to 2 seconds
+    retry: 3, // Reduced from 5 to 3 retries
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Reduced max delay
     keepPreviousData: true,
     placeholderData: (previousData) => previousData,
     gcTime: 600000,
@@ -46,11 +46,11 @@ export function PredictionForm({ preSelectedCrypto, onClose, onSuccess }: Predic
   // Fetch available cryptocurrencies from database
   const { data: availableCryptos = [], isLoading: cryptosLoading, isError } = useQuery({
     queryKey: ["/api/crypto/pyth-prices", "cryptos"],
-    refetchInterval: 1000,
+    refetchInterval: 30000, // Reduced from 1000ms to 30 seconds for better performance
     refetchIntervalInBackground: true,
-    staleTime: 500,
-    retry: 5,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    staleTime: 10000, // Increased from 500ms to 10 seconds
+    retry: 3, // Reduced from 5 to 3 retries
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Reduced max delay
     keepPreviousData: true,
     placeholderData: (previousData) => previousData,
     gcTime: 600000,

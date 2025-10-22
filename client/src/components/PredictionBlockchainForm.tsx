@@ -648,12 +648,24 @@ export function PredictionBlockchainForm({
                                         </FormControl>
                                         <SelectContent className="z-[99999] bg-gray-900 border-gray-700">
                                             {availableCryptos.length === 0 ? (
-                                                <SelectItem value="loading" disabled>Loading cryptocurrencies...</SelectItem>
+                                                <div className="p-2 text-center">
+                                                    <div className="flex items-center justify-center gap-2 text-slate-400">
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                                                        <span>Loading cryptocurrencies...</span>
+                                                    </div>
+                                                </div>
                                             ) : availableCryptos.length > 0 ? (
                                                 availableCryptos.map((crypto) => (
                                                     <SelectItem key={crypto.id} value={crypto.id} className="hover:bg-gray-800 focus:bg-gray-800">
                                                         <div className="flex items-center gap-2">
-                                                            <img src={crypto.image} alt={crypto.name} className="w-4 h-4" />
+                                                            <img 
+                                                                src={crypto.image} 
+                                                                alt={crypto.name} 
+                                                                className="w-4 h-4 rounded-full"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.src = '/api/placeholder/16/16';
+                                                                }}
+                                                            />
                                                             <span>
                                                                 {crypto.symbol?.toUpperCase()} (${crypto.current_price?.toFixed(2)})
                                                             </span>

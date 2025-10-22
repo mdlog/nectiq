@@ -60,46 +60,62 @@ export class PythPriceService {
   }
 
   /**
-   * Load cryptocurrency data from database
+   * Load cryptocurrency data from database with smart caching
    */
   private async loadCryptocurrenciesFromDB(): Promise<void> {
-    try {
-      // FORCE RELOAD: Always clear cache to get fresh data
-      this.cryptoDataCache.clear();
-      this.lastCacheUpdate = 0;
+    const now = Date.now();
+    const CACHE_DURATION = 5 * 60 * 1000; // Cache for 5 minutes
 
-      logger.debug("🔄 [PYTH] Loading cryptocurrency data from database...");
+    // Use cached data if it's still fresh
+    if (this.cryptoDataCache.size > 0 && (now - this.lastCacheUpdate) < CACHE_DURATION) {
+      logger.debug(`📦 [PYTH] Using cached cryptocurrency data (${this.cryptoDataCache.size} items, age: ${Math.round((now - this.lastCacheUpdate) / 1000)}s)`);
+      return;
+    }
+
+    try {
+      logger.debug("🔄 [PYTH] Loading fresh cryptocurrency data from database...");
       const cryptos = await db.select().from(cryptocurrencies);
       
-      this.cryptoDataCache.clear();
-      for (const crypto of cryptos) {
-        if (crypto.pythFeedId) {
-          logger.debug(`🔍 [PYTH-DEBUG] Loading crypto: ${crypto.id}, image: ${crypto.image}`);
-          this.cryptoDataCache.set(crypto.id, {
-            id: crypto.id,
-            name: crypto.name,
-            symbol: crypto.symbol,
-            pythFeedId: crypto.pythFeedId,
-            image: crypto.image // Use image directly from database without fallback
-          });
+      // Only clear cache if we have new data
+      if (cryptos.length > 0) {
+        this.cryptoDataCache.clear();
+        for (const crypto of cryptos) {
+          if (crypto.pythFeedId) {
+            logger.debug(`🔍 [PYTH-DEBUG] Loading crypto: ${crypto.id}, image: ${crypto.image}`);
+            this.cryptoDataCache.set(crypto.id, {
+              id: crypto.id,
+              name: crypto.name,
+              symbol: crypto.symbol,
+              pythFeedId: crypto.pythFeedId,
+              image: crypto.image // Use image directly from database without fallback
+            });
+          }
         }
-      }
 
-      this.lastCacheUpdate = Date.now();
-      console.log(`✅ [PYTH] Loaded ${this.cryptoDataCache.size} cryptocurrencies from database`);
+        this.lastCacheUpdate = now;
+        console.log(`✅ [PYTH] Loaded ${this.cryptoDataCache.size} cryptocurrencies from database`);
+      } else {
+        console.warn("⚠️ [PYTH] No cryptocurrencies found in database, keeping existing cache");
+      }
     } catch (error: any) {
       console.error("❌ [PYTH] Error loading cryptocurrencies from database:", error.message);
-      console.warn("🔓 [PYTH] Falling back to hardcoded cryptocurrency list");
       
-      // Fallback to hardcoded list
-      const hardcodedCryptos = this.getHardcodedCryptos();
-      this.cryptoDataCache.clear();
-      for (const crypto of hardcodedCryptos) {
-        this.cryptoDataCache.set(crypto.id, crypto);
+      // Only fallback to hardcoded if we have no cached data
+      if (this.cryptoDataCache.size === 0) {
+        console.warn("🔓 [PYTH] Falling back to hardcoded cryptocurrency list");
+        
+        // Fallback to hardcoded list
+        const hardcodedCryptos = this.getHardcodedCryptos();
+        this.cryptoDataCache.clear();
+        for (const crypto of hardcodedCryptos) {
+          this.cryptoDataCache.set(crypto.id, crypto);
+        }
+        
+        this.lastCacheUpdate = now;
+        console.log(`✅ [PYTH] Loaded ${this.cryptoDataCache.size} cryptocurrencies from fallback list`);
+      } else {
+        console.log("📦 [PYTH] Using existing cached data due to database error");
       }
-      
-      this.lastCacheUpdate = Date.now();
-      console.log(`✅ [PYTH] Loaded ${this.cryptoDataCache.size} cryptocurrencies from fallback list`);
     }
   }
 
