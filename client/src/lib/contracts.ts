@@ -232,8 +232,7 @@ const ABIS = {
     TOURNAMENT_POOL: [
         {
             inputs: [
-                { internalType: 'bytes32', name: 'tournamentId', type: 'bytes32' },
-                { internalType: 'uint256', name: 'entryFee', type: 'uint256' }
+                { internalType: 'bytes32', name: 'tournamentId', type: 'bytes32' }
             ],
             name: 'joinTournament',
             outputs: [

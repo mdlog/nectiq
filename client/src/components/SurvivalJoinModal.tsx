@@ -121,7 +121,7 @@ export default function SurvivalJoinModal({
 
       // Convert tournament ID to bytes32
       const tournamentIdBytes32 = `0x${tournament.id.toString(16).padStart(64, '0')}` as `0x${string}`;
-      
+
       console.log('🆔 [SURVIVAL-JOIN] Tournament ID conversion:', {
         originalId: tournament.id,
         bytes32: tournamentIdBytes32
