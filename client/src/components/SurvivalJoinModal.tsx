@@ -66,12 +66,15 @@ export default function SurvivalJoinModal({
       console.log('🏦 [SURVIVAL-APPROVE] NTIQ Token address:', CONTRACTS.NTIQ_TOKEN);
       console.log('🏆 [SURVIVAL-APPROVE] Tournament Pool address:', CONTRACTS.TOURNAMENT_POOL);
       
+      console.log('🔄 [SURVIVAL-APPROVE] Calling writeApprove...');
       const hash = await writeApprove({
         address: CONTRACTS.NTIQ_TOKEN as `0x${string}`,
         abi: CONTRACTS.ABIS?.NTIQToken,
         functionName: 'approve',
         args: [CONTRACTS.TOURNAMENT_POOL as `0x${string}`, entryFeeWei],
       });
+
+      console.log('📝 [SURVIVAL-APPROVE] writeApprove result:', hash);
 
       if (hash) {
         console.log('✅ [SURVIVAL-APPROVE] Transaction hash received:', hash);
@@ -81,6 +84,8 @@ export default function SurvivalJoinModal({
           title: "Success",
           description: "Approval transaction submitted",
         });
+      } else {
+        console.log('⚠️ [SURVIVAL-APPROVE] No hash returned from writeApprove');
       }
     } catch (error: any) {
       console.error('❌ [SURVIVAL-APPROVE] Approve error:', error);
