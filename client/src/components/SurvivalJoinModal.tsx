@@ -34,8 +34,8 @@ export default function SurvivalJoinModal({
   const [joinTxHash, setJoinTxHash] = useState<string | null>(null);
 
   // Contract write hooks
-  const { writeContract: writeApprove, isPending: isApprovePending, data: approveData } = useWriteContract();
-  const { writeContract: writeJoin, isPending: isJoinPending, data: joinData } = useWriteContract();
+  const { writeContract: writeApprove, isPending: isApprovePending, data: approveData, error: approveError } = useWriteContract();
+  const { writeContract: writeJoin, isPending: isJoinPending, data: joinData, error: joinError } = useWriteContract();
 
   // Transaction receipt hooks
   const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
@@ -52,7 +52,7 @@ export default function SurvivalJoinModal({
       console.log('⚠️ [SURVIVAL-APPROVE] Approve already in progress, ignoring click');
       return;
     }
-    
+
     console.log('🔘 [SURVIVAL-APPROVE] Button clicked, starting approve process');
 
     if (!address || !chain) {
@@ -100,7 +100,7 @@ export default function SurvivalJoinModal({
       console.log('⚠️ [SURVIVAL-JOIN] Join already in progress, ignoring click');
       return;
     }
-    
+
     console.log('🔘 [SURVIVAL-JOIN] Button clicked, starting join process');
 
     if (!address || !chain) {
@@ -133,6 +133,12 @@ export default function SurvivalJoinModal({
       });
     } catch (error: any) {
       console.error('❌ [SURVIVAL-JOIN] Join error:', error);
+      console.error('❌ [SURVIVAL-JOIN] Error details:', {
+        message: error?.message,
+        code: error?.code,
+        name: error?.name,
+        stack: error?.stack
+      });
       toast({
         title: "Error",
         description: error?.message || "Failed to join tournament",
@@ -192,11 +198,23 @@ export default function SurvivalJoinModal({
 
   // Handle joinData (transaction hash) from useWriteContract
   React.useEffect(() => {
+    console.log('🔍 [SURVIVAL-JOIN-DATA] useEffect triggered:', {
+      joinData,
+      joinTxHash,
+      hasJoinData: !!joinData,
+      hasJoinTxHash: !!joinTxHash,
+      joinError
+    });
+    
+    if (joinError) {
+      console.error('❌ [SURVIVAL-JOIN] useWriteContract error:', joinError);
+    }
+    
     if (joinData && !joinTxHash) {
       console.log('✅ [SURVIVAL-JOIN] Transaction hash received from joinData:', joinData);
       setJoinTxHash(joinData);
     }
-  }, [joinData, joinTxHash]);
+  }, [joinData, joinTxHash, joinError]);
 
   // Effects for transaction flow
   React.useEffect(() => {
