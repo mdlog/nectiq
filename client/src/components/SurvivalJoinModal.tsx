@@ -61,10 +61,10 @@ export default function SurvivalJoinModal({
       const entryFeeWei = BigInt(tournament.entryFee * 10**18);
       
       const hash = await writeApprove({
-        address: CONTRACTS.ADDRESSES.NTIQToken as `0x${string}`,
+        address: CONTRACTS.NTIQ_TOKEN as `0x${string}`,
         abi: CONTRACTS.ABIS?.NTIQToken,
         functionName: 'approve',
-        args: [CONTRACTS.ADDRESSES.TournamentPool as `0x${string}`, entryFeeWei],
+        args: [CONTRACTS.TOURNAMENT_POOL as `0x${string}`, entryFeeWei],
       });
 
       if (hash) {
@@ -99,7 +99,7 @@ export default function SurvivalJoinModal({
       const entryFeeWei = BigInt(tournament.entryFee * 10**18);
       
       const hash = await writeJoin({
-        address: CONTRACTS.ADDRESSES.TournamentPool as `0x${string}`,
+        address: CONTRACTS.TOURNAMENT_POOL as `0x${string}`,
         abi: CONTRACTS.ABIS?.TournamentPool,
         functionName: 'joinTournament',
         args: [BigInt(tournament.id), entryFeeWei],
