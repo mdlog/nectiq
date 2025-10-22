@@ -48,7 +48,10 @@ export default function SurvivalJoinModal({
 
   // Handle approve NTIQ token
   const handleApprove = useCallback(async () => {
+    console.log('🔘 [SURVIVAL-APPROVE] Button clicked, starting approve process');
+    
     if (!address || !chain) {
+      console.log('❌ [SURVIVAL-APPROVE] No wallet connected');
       toast({
         title: "Wallet Required",
         description: "Please connect your wallet",
@@ -59,6 +62,9 @@ export default function SurvivalJoinModal({
 
     try {
       const entryFeeWei = BigInt(tournament.entryFee * 10**18);
+      console.log('💰 [SURVIVAL-APPROVE] Entry fee wei:', entryFeeWei.toString());
+      console.log('🏦 [SURVIVAL-APPROVE] NTIQ Token address:', CONTRACTS.NTIQ_TOKEN);
+      console.log('🏆 [SURVIVAL-APPROVE] Tournament Pool address:', CONTRACTS.TOURNAMENT_POOL);
       
       const hash = await writeApprove({
         address: CONTRACTS.NTIQ_TOKEN as `0x${string}`,
@@ -68,6 +74,7 @@ export default function SurvivalJoinModal({
       });
 
       if (hash) {
+        console.log('✅ [SURVIVAL-APPROVE] Transaction hash received:', hash);
         setApproveTxHash(hash);
         toast({
           title: "Success",
@@ -75,7 +82,7 @@ export default function SurvivalJoinModal({
         });
       }
     } catch (error: any) {
-      console.error('Approve error:', error);
+      console.error('❌ [SURVIVAL-APPROVE] Approve error:', error);
       toast({
         title: "Error",
         description: error?.message || "Failed to approve NTIQ token",
@@ -86,7 +93,10 @@ export default function SurvivalJoinModal({
 
   // Handle join tournament
   const handleJoin = useCallback(async () => {
+    console.log('🔘 [SURVIVAL-JOIN] Button clicked, starting join process');
+    
     if (!address || !chain) {
+      console.log('❌ [SURVIVAL-JOIN] No wallet connected');
       toast({
         title: "Wallet Required",
         description: "Please connect your wallet",
@@ -97,6 +107,9 @@ export default function SurvivalJoinModal({
 
     try {
       const entryFeeWei = BigInt(tournament.entryFee * 10**18);
+      console.log('💰 [SURVIVAL-JOIN] Entry fee wei:', entryFeeWei.toString());
+      console.log('🏆 [SURVIVAL-JOIN] Tournament Pool address:', CONTRACTS.TOURNAMENT_POOL);
+      console.log('🆔 [SURVIVAL-JOIN] Tournament ID:', tournament.id);
       
       const hash = await writeJoin({
         address: CONTRACTS.TOURNAMENT_POOL as `0x${string}`,
@@ -106,6 +119,7 @@ export default function SurvivalJoinModal({
       });
 
       if (hash) {
+        console.log('✅ [SURVIVAL-JOIN] Transaction hash received:', hash);
         setJoinTxHash(hash);
         toast({
           title: "Success",
@@ -113,7 +127,7 @@ export default function SurvivalJoinModal({
         });
       }
     } catch (error: any) {
-      console.error('Join error:', error);
+      console.error('❌ [SURVIVAL-JOIN] Join error:', error);
       toast({
         title: "Error",
         description: error?.message || "Failed to join tournament",
@@ -165,7 +179,14 @@ export default function SurvivalJoinModal({
 
   // Effects for transaction flow
   React.useEffect(() => {
+    console.log('🔍 [SURVIVAL-FLOW] useEffect triggered:', {
+      isApproveSuccess,
+      step,
+      approveTxHash
+    });
+    
     if (isApproveSuccess && step === 'approve') {
+      console.log('✅ [SURVIVAL-FLOW] Approve success, moving to join step');
       setStep('join');
       // Don't auto-call handleJoin, let user click the button
     }
