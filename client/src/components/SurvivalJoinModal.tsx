@@ -19,23 +19,23 @@ interface SurvivalJoinModalProps {
   onSuccess?: () => void;
 }
 
-export default function SurvivalJoinModal({ 
-  isOpen, 
-  onClose, 
-  tournament, 
-  onSuccess 
+export default function SurvivalJoinModal({
+  isOpen,
+  onClose,
+  tournament,
+  onSuccess
 }: SurvivalJoinModalProps) {
   const { address, chain } = useAccount();
   const { toast } = useToast();
-  
+
   // State management
   const [step, setStep] = useState<'approve' | 'join' | 'complete'>('approve');
   const [approveTxHash, setApproveTxHash] = useState<string | null>(null);
   const [joinTxHash, setJoinTxHash] = useState<string | null>(null);
 
   // Contract write hooks
-  const { writeContract: writeApprove, isPending: isApprovePending } = useWriteContract();
-  const { writeContract: writeJoin, isPending: isJoinPending } = useWriteContract();
+  const { writeContract: writeApprove, isPending: isApprovePending, data: approveData } = useWriteContract();
+  const { writeContract: writeJoin, isPending: isJoinPending, data: joinData } = useWriteContract();
 
   // Transaction receipt hooks
   const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
@@ -49,7 +49,7 @@ export default function SurvivalJoinModal({
   // Handle approve NTIQ token
   const handleApprove = useCallback(async () => {
     console.log('🔘 [SURVIVAL-APPROVE] Button clicked, starting approve process');
-    
+
     if (!address || !chain) {
       console.log('❌ [SURVIVAL-APPROVE] No wallet connected');
       toast({
@@ -61,32 +61,24 @@ export default function SurvivalJoinModal({
     }
 
     try {
-      const entryFeeWei = BigInt(tournament.entryFee * 10**18);
+      const entryFeeWei = BigInt(tournament.entryFee * 10 ** 18);
       console.log('💰 [SURVIVAL-APPROVE] Entry fee wei:', entryFeeWei.toString());
       console.log('🏦 [SURVIVAL-APPROVE] NTIQ Token address:', CONTRACTS.NTIQ_TOKEN);
       console.log('🏆 [SURVIVAL-APPROVE] Tournament Pool address:', CONTRACTS.TOURNAMENT_POOL);
-      
+
       console.log('🔄 [SURVIVAL-APPROVE] Calling writeApprove...');
-      const hash = await writeApprove({
+      await writeApprove({
         address: CONTRACTS.NTIQ_TOKEN as `0x${string}`,
         abi: CONTRACTS.ABIS?.NTIQToken,
         functionName: 'approve',
         args: [CONTRACTS.TOURNAMENT_POOL as `0x${string}`, entryFeeWei],
       });
 
-      console.log('📝 [SURVIVAL-APPROVE] writeApprove result:', hash);
-
-      if (hash) {
-        console.log('✅ [SURVIVAL-APPROVE] Transaction hash received:', hash);
-        setApproveTxHash(hash);
-        console.log('🔄 [SURVIVAL-APPROVE] Setting approveTxHash to:', hash);
-        toast({
-          title: "Success",
-          description: "Approval transaction submitted",
-        });
-      } else {
-        console.log('⚠️ [SURVIVAL-APPROVE] No hash returned from writeApprove');
-      }
+      console.log('📝 [SURVIVAL-APPROVE] writeApprove called successfully');
+      toast({
+        title: "Success",
+        description: "Approval transaction submitted",
+      });
     } catch (error: any) {
       console.error('❌ [SURVIVAL-APPROVE] Approve error:', error);
       toast({
@@ -100,7 +92,7 @@ export default function SurvivalJoinModal({
   // Handle join tournament
   const handleJoin = useCallback(async () => {
     console.log('🔘 [SURVIVAL-JOIN] Button clicked, starting join process');
-    
+
     if (!address || !chain) {
       console.log('❌ [SURVIVAL-JOIN] No wallet connected');
       toast({
@@ -112,26 +104,23 @@ export default function SurvivalJoinModal({
     }
 
     try {
-      const entryFeeWei = BigInt(tournament.entryFee * 10**18);
+      const entryFeeWei = BigInt(tournament.entryFee * 10 ** 18);
       console.log('💰 [SURVIVAL-JOIN] Entry fee wei:', entryFeeWei.toString());
       console.log('🏆 [SURVIVAL-JOIN] Tournament Pool address:', CONTRACTS.TOURNAMENT_POOL);
       console.log('🆔 [SURVIVAL-JOIN] Tournament ID:', tournament.id);
-      
-      const hash = await writeJoin({
+
+      await writeJoin({
         address: CONTRACTS.TOURNAMENT_POOL as `0x${string}`,
         abi: CONTRACTS.ABIS?.TournamentPool,
         functionName: 'joinTournament',
         args: [BigInt(tournament.id), entryFeeWei],
       });
 
-      if (hash) {
-        console.log('✅ [SURVIVAL-JOIN] Transaction hash received:', hash);
-        setJoinTxHash(hash);
-        toast({
-          title: "Success",
-          description: "Join tournament transaction submitted",
-        });
-      }
+      console.log('📝 [SURVIVAL-JOIN] writeJoin called successfully');
+      toast({
+        title: "Success",
+        description: "Join tournament transaction submitted",
+      });
     } catch (error: any) {
       console.error('❌ [SURVIVAL-JOIN] Join error:', error);
       toast({
@@ -164,11 +153,11 @@ export default function SurvivalJoinModal({
         description: "Successfully joined tournament!",
       });
       setStep('complete');
-      
+
       if (onSuccess) {
         onSuccess();
       }
-      
+
       // Close modal after 2 seconds
       setTimeout(() => {
         onClose();
@@ -182,6 +171,22 @@ export default function SurvivalJoinModal({
       });
     }
   }, [tournament.id, tournament.entryFee, onSuccess, onClose, toast]);
+
+  // Handle approveData (transaction hash) from useWriteContract
+  React.useEffect(() => {
+    if (approveData && !approveTxHash) {
+      console.log('✅ [SURVIVAL-APPROVE] Transaction hash received from approveData:', approveData);
+      setApproveTxHash(approveData);
+    }
+  }, [approveData, approveTxHash]);
+
+  // Handle joinData (transaction hash) from useWriteContract
+  React.useEffect(() => {
+    if (joinData && !joinTxHash) {
+      console.log('✅ [SURVIVAL-JOIN] Transaction hash received from joinData:', joinData);
+      setJoinTxHash(joinData);
+    }
+  }, [joinData, joinTxHash]);
 
   // Effects for transaction flow
   React.useEffect(() => {
@@ -281,21 +286,18 @@ export default function SurvivalJoinModal({
 
           {/* Step Indicator */}
           <div className="flex items-center justify-center space-x-4">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-              step === 'approve' ? 'bg-blue-600 text-white' : 
-              step === 'join' ? 'bg-green-600 text-white' : 
-              'bg-slate-600 text-slate-300'
-            }`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 'approve' ? 'bg-blue-600 text-white' :
+              step === 'join' ? 'bg-green-600 text-white' :
+                'bg-slate-600 text-slate-300'
+              }`}>
               1
             </div>
-            <div className={`w-16 h-1 rounded ${
-              step === 'join' || step === 'complete' ? 'bg-green-600' : 'bg-slate-600'
-            }`} />
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-              step === 'join' ? 'bg-blue-600 text-white' : 
-              step === 'complete' ? 'bg-green-600 text-white' : 
-              'bg-slate-600 text-slate-300'
-            }`}>
+            <div className={`w-16 h-1 rounded ${step === 'join' || step === 'complete' ? 'bg-green-600' : 'bg-slate-600'
+              }`} />
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 'join' ? 'bg-blue-600 text-white' :
+              step === 'complete' ? 'bg-green-600 text-white' :
+                'bg-slate-600 text-slate-300'
+              }`}>
               2
             </div>
           </div>
