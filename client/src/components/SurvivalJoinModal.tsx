@@ -48,6 +48,11 @@ export default function SurvivalJoinModal({
 
   // Handle approve NTIQ token
   const handleApprove = useCallback(async () => {
+    if (isApprovePending || isApproveConfirming) {
+      console.log('⚠️ [SURVIVAL-APPROVE] Approve already in progress, ignoring click');
+      return;
+    }
+    
     console.log('🔘 [SURVIVAL-APPROVE] Button clicked, starting approve process');
 
     if (!address || !chain) {
@@ -91,6 +96,11 @@ export default function SurvivalJoinModal({
 
   // Handle join tournament
   const handleJoin = useCallback(async () => {
+    if (isJoinPending || isJoinConfirming) {
+      console.log('⚠️ [SURVIVAL-JOIN] Join already in progress, ignoring click');
+      return;
+    }
+    
     console.log('🔘 [SURVIVAL-JOIN] Button clicked, starting join process');
 
     if (!address || !chain) {
@@ -196,7 +206,7 @@ export default function SurvivalJoinModal({
       approveTxHash,
       isApproveConfirming
     });
-    
+
     if (isApproveSuccess && step === 'approve') {
       console.log('✅ [SURVIVAL-FLOW] Approve success, moving to join step');
       setStep('join');
