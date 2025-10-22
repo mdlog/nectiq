@@ -76,6 +76,7 @@ export default function SurvivalJoinModal({
       if (hash) {
         console.log('✅ [SURVIVAL-APPROVE] Transaction hash received:', hash);
         setApproveTxHash(hash);
+        console.log('🔄 [SURVIVAL-APPROVE] Setting approveTxHash to:', hash);
         toast({
           title: "Success",
           description: "Approval transaction submitted",
@@ -182,7 +183,8 @@ export default function SurvivalJoinModal({
     console.log('🔍 [SURVIVAL-FLOW] useEffect triggered:', {
       isApproveSuccess,
       step,
-      approveTxHash
+      approveTxHash,
+      isApproveConfirming
     });
     
     if (isApproveSuccess && step === 'approve') {
@@ -190,7 +192,7 @@ export default function SurvivalJoinModal({
       setStep('join');
       // Don't auto-call handleJoin, let user click the button
     }
-  }, [isApproveSuccess, step]);
+  }, [isApproveSuccess, step, approveTxHash, isApproveConfirming]);
 
   React.useEffect(() => {
     if (isJoinSuccess && step === 'join') {
