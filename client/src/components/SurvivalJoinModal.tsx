@@ -95,9 +95,30 @@ export default function SurvivalJoinModal({
       });
     } catch (error: any) {
       console.error('❌ [SURVIVAL-APPROVE] Approve error:', error);
+      console.error('❌ [SURVIVAL-APPROVE] Error details:', {
+        message: error?.message,
+        code: error?.code,
+        name: error?.name,
+        stack: error?.stack,
+        cause: error?.cause,
+        shortMessage: error?.shortMessage
+      });
+
+      // Parse specific error messages for approve
+      let errorMessage = "Failed to approve NTIQ token";
+      if (error?.message) {
+        if (error.message.includes("insufficient balance")) {
+          errorMessage = "Insufficient NTIQ token balance for approval.";
+        } else if (error.message.includes("execution reverted")) {
+          errorMessage = "Approval transaction reverted. Check your token balance.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       toast({
-        title: "Error",
-        description: error?.message || "Failed to approve NTIQ token",
+        title: "Approval Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -143,6 +164,17 @@ export default function SurvivalJoinModal({
         tournamentId: tournamentIdBytes32
       });
 
+      // Add detailed debugging for contract interaction
+      console.log('🔍 [SURVIVAL-JOIN] Contract interaction details:', {
+        tournamentId: tournament.id,
+        tournamentIdBytes32,
+        entryFee: tournament.entryFee,
+        entryFeeWei: entryFeeWei.toString(),
+        contractAddress: CONTRACTS.TOURNAMENT_POOL,
+        userAddress: address,
+        chainId: chain?.id
+      });
+
       await writeJoin({
         address: CONTRACTS.TOURNAMENT_POOL as `0x${string}`,
         abi: CONTRACTS.ABIS?.TOURNAMENT_POOL,
@@ -163,11 +195,34 @@ export default function SurvivalJoinModal({
         message: error?.message,
         code: error?.code,
         name: error?.name,
-        stack: error?.stack
+        stack: error?.stack,
+        cause: error?.cause,
+        shortMessage: error?.shortMessage
       });
+
+      // Parse specific error messages
+      let errorMessage = "Failed to join tournament";
+      if (error?.message) {
+        if (error.message.includes("Tournament not found")) {
+          errorMessage = "Tournament not found. Please refresh and try again.";
+        } else if (error.message.includes("Tournament not open")) {
+          errorMessage = "Tournament is not open for joining.";
+        } else if (error.message.includes("Already joined")) {
+          errorMessage = "You have already joined this tournament.";
+        } else if (error.message.includes("insufficient allowance")) {
+          errorMessage = "Insufficient token allowance. Please approve more tokens.";
+        } else if (error.message.includes("insufficient balance")) {
+          errorMessage = "Insufficient NTIQ token balance.";
+        } else if (error.message.includes("execution reverted")) {
+          errorMessage = "Transaction reverted. Check your token balance and allowance.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       toast({
-        title: "Error",
-        description: error?.message || "Failed to join tournament",
+        title: "Join Tournament Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     }
