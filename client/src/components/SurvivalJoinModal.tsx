@@ -167,9 +167,9 @@ export default function SurvivalJoinModal({
   React.useEffect(() => {
     if (isApproveSuccess && step === 'approve') {
       setStep('join');
-      handleJoin();
+      // Don't auto-call handleJoin, let user click the button
     }
-  }, [isApproveSuccess, step, handleJoin]);
+  }, [isApproveSuccess, step]);
 
   React.useEffect(() => {
     if (isJoinSuccess && step === 'join') {
