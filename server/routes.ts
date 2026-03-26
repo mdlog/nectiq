@@ -1820,8 +1820,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Debug endpoint for deployment testing
-  app.get("/api/debug/session", async (req, res) => {
+  // Debug endpoint for deployment testing (admin only)
+  app.get("/api/debug/session", requireAdmin, async (req, res) => {
     try {
       const debugInfo = {
         session: {
@@ -3156,15 +3156,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin status check endpoint (public, checks wallet only)
-  app.get('/api/check-admin/:walletAddress', async (req, res) => {
+  // Admin status check endpoint (authenticated users only, restricted to own wallet)
+  app.get('/api/check-admin/:walletAddress', requireAuth, async (req, res) => {
     try {
       const { walletAddress } = req.params;
-      console.log(`🔍 [ADMIN-CHECK] Received request for wallet: ${walletAddress}`);
+      const user = (req as any).user;
 
       if (!walletAddress) {
-        console.log(`❌ [ADMIN-CHECK] No wallet address provided`);
         return res.json({ isAdmin: false });
+      }
+
+      // Only allow users to check their own wallet's admin status
+      if (user.walletAddress?.toLowerCase() !== walletAddress.toLowerCase()) {
+        return res.status(403).json({ message: "You can only check your own admin status" });
       }
 
       const isAdmin = await isAuthorizedAdmin(walletAddress);
@@ -6065,8 +6069,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Temporary debug endpoint for users without requireAdmin middleware
-  app.get("/api/debug/admin/users", async (req, res) => {
+  // Debug endpoint for users (admin only)
+  app.get("/api/debug/admin/users", requireAdmin, async (req, res) => {
     console.log("🔧 [DEBUG-USERS] ===== DEBUG USERS ENDPOINT REACHED =====");
     console.log("🔧 [DEBUG-USERS] Session:", JSON.stringify(req.session, null, 2));
     try {
